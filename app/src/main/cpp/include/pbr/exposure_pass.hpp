@@ -19,7 +19,8 @@ class ExposurePass final
         };
 
     private:
-        VkBufferMemoryBarrier               _exposureBarrier {};
+        VkBufferMemoryBarrier               _exposureBeforeBarrier {};
+        VkBufferMemoryBarrier               _exposureAfterBarrier {};
         Memory                              _exposureMemory {};
 
         VkCommandBuffer                     _commandBuffer = VK_NULL_HANDLE;
@@ -38,21 +39,12 @@ class ExposurePass final
 
         bool                                _isNeedTransitLayout = true;
 
-        VkBuffer                            _globalCounter = VK_NULL_HANDLE;
+        VkBufferMemoryBarrier               _computeOnlyBarriers[ 2U ];
         Memory                              _globalCounterMemory {};
-
-        ExposureDescriptorSetLayout         _layout {};
-
-        VkBuffer                            _luma = VK_NULL_HANDLE;
         Memory                              _lumaMemory {};
 
+        ExposureDescriptorSetLayout         _layout {};
         ExposureProgram                     _program {};
-
-        VkBuffer                            _transferGlobalCounter = VK_NULL_HANDLE;
-        Memory                              _transferGlobalCounterMemory {};
-
-        VkBuffer                            _transferLuma = VK_NULL_HANDLE;
-        Memory                              _transferLumaMemory {};
 
     public:
         ExposurePass () = default;
@@ -66,7 +58,7 @@ class ExposurePass final
         ~ExposurePass () = default;
 
         void Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
-        void FreeTransferResources ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
+        void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
         [[nodiscard]] VkBuffer GetExposure () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept;
@@ -96,18 +88,14 @@ class ExposurePass final
             VkExtent2D resolution
         ) noexcept;
 
-        [[nodiscard]] bool BindTargetToDescriptorSet ( VkDevice device,
-            android_vulkan::Texture2D const &hdrImage
-        ) noexcept;
-
+        void BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept;
         [[nodiscard]] float EyeAdaptationFactor ( float deltaTime ) const noexcept;
         void FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
-        void FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
 
         [[nodiscard]] bool StartCommandBuffer ( VkCommandPool commandPool, VkDevice device ) noexcept;
         [[nodiscard]] bool SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept;
+        void SyncBefore ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,

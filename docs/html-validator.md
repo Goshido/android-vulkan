@@ -42,8 +42,8 @@ Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 
 ### <a id="requirements">Requirements</a>
 
-- _Windows 10+_
-- _Visual Studio 2022 Community 17.10.0_
+- _Windows 11+_
+- _Visual Studio 2022 Community 17.10.2_
 - _Desktop development with C++_
 - _MSBuild_
 - _MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.40-17.10)_

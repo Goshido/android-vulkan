@@ -14,6 +14,9 @@ constexpr float DEFAULT_EXPOSURE_COMPENSATION_EV = -10.0F;
 constexpr float DEFAULT_MIN_LUMA_EV = -1.28F;
 constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 
+constexpr size_t GLOBAL_COUNTER_IDX = 0U;
+constexpr size_t LUMA_IDX = 1U;
+
 } // end of anonymous
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -21,7 +24,7 @@ constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
     AV_VULKAN_GROUP ( commandBuffer, "Exposure" )
-    TransitSync5Mip ( commandBuffer );
+    SyncBefore ( commandBuffer );
 
     _program.Bind ( commandBuffer );
 
@@ -39,23 +42,21 @@ void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime ) no
         0U,
         nullptr,
         1U,
-        &_exposureBarrier,
+        &_exposureAfterBarrier,
         0U,
         nullptr
     );
 }
 
-void ExposurePass::FreeTransferResources ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
+void ExposurePass::FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
     vkFreeCommandBuffers ( device, commandPool, 1U, &_commandBuffer );
     _commandBuffer = VK_NULL_HANDLE;
-    FreeTransferBuffer ( renderer, device );
 }
 
 VkBuffer ExposurePass::GetExposure () const noexcept
 {
-    return _exposureBarrier.buffer;
+    return _exposureBeforeBarrier.buffer;
 }
 
 bool ExposurePass::Init ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
@@ -79,11 +80,12 @@ bool ExposurePass::Init ( android_vulkan::Renderer &renderer, VkCommandPool comm
 void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
+    VkBuffer &globalCounter = _computeOnlyBarriers[ GLOBAL_COUNTER_IDX ].buffer;
 
-    if ( _globalCounter != VK_NULL_HANDLE )
+    if ( globalCounter != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyBuffer ( device, _globalCounter, nullptr );
-        _globalCounter = VK_NULL_HANDLE;
+        vkDestroyBuffer ( device, globalCounter, nullptr );
+        globalCounter = VK_NULL_HANDLE;
     }
 
     if ( _globalCounterMemory._memory != VK_NULL_HANDLE )
@@ -93,10 +95,10 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _globalCounterMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
-    if ( _exposureBarrier.buffer != VK_NULL_HANDLE )
+    if ( _exposureBeforeBarrier.buffer != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyBuffer ( device, _exposureBarrier.buffer, nullptr );
-        _exposureBarrier.buffer = VK_NULL_HANDLE;
+        vkDestroyBuffer ( device, _exposureBeforeBarrier.buffer, nullptr );
+        _exposureBeforeBarrier.buffer = VK_NULL_HANDLE;
     }
 
     if ( _exposureMemory._memory != VK_NULL_HANDLE )
@@ -106,13 +108,15 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _exposureMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
-    if ( _luma != VK_NULL_HANDLE )
+    VkBuffer &luma = _computeOnlyBarriers[ LUMA_IDX ].buffer;
+
+    if ( luma != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyBuffer ( device, _luma, nullptr );
-        _luma = VK_NULL_HANDLE;
+        vkDestroyBuffer ( device, luma, nullptr );
+        luma = VK_NULL_HANDLE;
     }
 
-    if ( _lumaMemory._memory != VK_NULL_HANDLE )
+    if ( _lumaMemory._memory != VK_NULL_HANDLE ) [[likely]]
     {
         renderer.FreeMemory ( _lumaMemory._memory, _lumaMemory._offset );
         _lumaMemory._memory = VK_NULL_HANDLE;
@@ -121,14 +125,13 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
     FreeTargetResources ( renderer, device );
 
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
     }
 
     _layout.Destroy ( device );
-    FreeTransferBuffer ( renderer, device );
 }
 
 void ExposurePass::SetMaximumBrightness ( float exposureValue ) noexcept
@@ -159,15 +162,19 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulka
     ExposureProgram::SpecializationInfo specData {};
     ExposureProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
 
-    return
-        UpdateMipCount ( renderer,
+    bool const status = UpdateMipCount ( renderer,
             device,
             static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( mipResolution ) ),
             specData
         ) &&
 
-        CreateSyncMip5 ( renderer, device, specData._mip5Resolution ) &&
-        BindTargetToDescriptorSet ( device, hdrImage );
+        CreateSyncMip5 ( renderer, device, specData._mip5Resolution );
+
+    if (!status) [[unlikely]]
+        return false;
+
+    BindTargetToDescriptorSet ( device, hdrImage );
+    return true;
 }
 
 VkExtent2D ExposurePass::AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept
@@ -256,17 +263,17 @@ bool ExposurePass::CreateDescriptorSet ( VkDevice device ) noexcept
 
 bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
 {
-    _exposureBarrier =
+    _exposureBeforeBarrier =
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_UNIFORM_READ_BIT,
+        .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
-        .size = static_cast<VkDeviceSize> ( sizeof ( float ) )
+        .size = VK_WHOLE_SIZE
     };
 
     constexpr VkBufferCreateInfo bufferInfo
@@ -282,7 +289,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     };
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_exposureBarrier.buffer ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_exposureBeforeBarrier.buffer ),
         "pbr::ExposurePass::CreateExposureResources",
         "Can't create buffer"
     );
@@ -290,10 +297,10 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _exposureBarrier.buffer, VK_OBJECT_TYPE_BUFFER, "Exposure" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _exposureBeforeBarrier.buffer, VK_OBJECT_TYPE_BUFFER, "Exposure" )
 
     VkMemoryRequirements memoryRequirements {};
-    vkGetBufferMemoryRequirements ( device, _exposureBarrier.buffer, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, _exposureBeforeBarrier.buffer, &memoryRequirements );
 
     result = renderer.TryAllocateMemory ( _exposureMemory._memory,
         _exposureMemory._offset,
@@ -305,17 +312,47 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    return android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _exposureBarrier.buffer, _exposureMemory._memory, _exposureMemory._offset ),
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, _exposureBeforeBarrier.buffer, _exposureMemory._memory, _exposureMemory._offset ),
         "pbr::ExposurePass::CreateExposureResources",
         "Can't memory"
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _exposureAfterBarrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _exposureBeforeBarrier.buffer,
+        .offset = 0U,
+        .size = VK_WHOLE_SIZE
+    };
+
+    return true;
 }
 
 bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
 {
-    constexpr VkBufferUsageFlags usageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
+    VkBufferMemoryBarrier &barrier = _computeOnlyBarriers[ GLOBAL_COUNTER_IDX ];
+
+    barrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+        .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = VK_WHOLE_SIZE
+    };
 
     VkBufferCreateInfo bufferInfo
     {
@@ -323,14 +360,16 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( uint32_t ),
-        .usage = usageFlags,
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
+    VkBuffer &globalCounter = barrier.buffer;
+
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_globalCounter ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &globalCounter ),
         "pbr::ExposurePass::CreateGlobalCounter",
         "Can't create global counter buffer"
     );
@@ -338,10 +377,10 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _globalCounter, VK_OBJECT_TYPE_BUFFER, "Exposure SPD global counter" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, globalCounter, VK_OBJECT_TYPE_BUFFER, "Exposure SPD global counter" )
 
     VkMemoryRequirements memoryRequirements {};
-    vkGetBufferMemoryRequirements ( device, _globalCounter, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, globalCounter, &memoryRequirements );
 
     result = renderer.TryAllocateMemory ( _globalCounterMemory._memory,
         _globalCounterMemory._offset,
@@ -354,7 +393,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _globalCounter, _globalCounterMemory._memory, _globalCounterMemory._offset ),
+        vkBindBufferMemory ( device, globalCounter, _globalCounterMemory._memory, _globalCounterMemory._offset ),
         "pbr::ExposurePass::CreateGlobalCounter",
         "Can't bind global counter memory"
     );
@@ -362,87 +401,19 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    bufferInfo.usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_SRC_BIT );
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferGlobalCounter ),
-        "pbr::ExposurePass::CreateGlobalCounter",
-        "Can't create transfer buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transferGlobalCounter, VK_OBJECT_TYPE_BUFFER, "Exposure SPD staging buffer" )
-
-    vkGetBufferMemoryRequirements ( device, _transferGlobalCounter, &memoryRequirements );
-
-    constexpr VkMemoryPropertyFlags memoryFlags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
-
-    result = renderer.TryAllocateMemory ( _transferGlobalCounterMemory._memory,
-        _transferGlobalCounterMemory._offset,
-        memoryRequirements,
-        memoryFlags,
-        "Can't allocate transfer buffer memory (pbr::ExposurePass::CreateGlobalCounter)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device,
-            _transferGlobalCounter,
-            _transferGlobalCounterMemory._memory,
-            _transferGlobalCounterMemory._offset
-        ),
-
-        "pbr::ExposurePass::CreateGlobalCounter",
-        "Can't bind transfer memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    void* destination = nullptr;
-
-    result = renderer.MapMemory ( destination,
-        _transferGlobalCounterMemory._memory,
-        _transferGlobalCounterMemory._offset,
-        "pbr::ExposurePass::CreateGlobalCounter",
-        "Can't map transfer memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    auto* mappedBuffer = static_cast<uint32_t*> ( destination );
-    std::memset ( mappedBuffer, 0, sizeof ( uint32_t ) );
-    renderer.UnmapMemory ( _transferGlobalCounterMemory._memory );
-
-    constexpr VkBufferCopy copyInfo
-    {
-        .srcOffset = 0U,
-        .dstOffset = 0U,
-        .size = static_cast<VkDeviceSize> ( sizeof ( uint32_t ) )
-    };
-
-    vkCmdCopyBuffer ( _commandBuffer, _transferGlobalCounter, _globalCounter, 1U, &copyInfo );
-
-    constexpr VkAccessFlags dstAccessFlags = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    vkCmdFillBuffer ( _commandBuffer, globalCounter, 0U, VK_WHOLE_SIZE, 0U );
 
     VkBufferMemoryBarrier const barrierInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
         .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = dstAccessFlags,
+        .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ),
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _globalCounter,
+        .buffer = globalCounter,
         .offset = 0U,
-        .size = copyInfo.size
+        .size = VK_WHOLE_SIZE
     };
 
     vkCmdPipelineBarrier ( _commandBuffer,
@@ -462,8 +433,20 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkD
 
 bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
 {
-    constexpr VkBufferUsageFlags usageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
+    VkBufferMemoryBarrier &barrier = _computeOnlyBarriers[ LUMA_IDX ];
+
+    barrier =
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+        .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = VK_NULL_HANDLE,
+        .offset = 0U,
+        .size = VK_WHOLE_SIZE
+    };
 
     VkBufferCreateInfo bufferInfo
     {
@@ -471,14 +454,16 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( float ),
-        .usage = usageFlags,
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
+    VkBuffer &luma = barrier.buffer;
+
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_luma ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &luma ),
         "pbr::ExposurePass::CreateLumaResources",
         "Can't create buffer"
     );
@@ -486,10 +471,10 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _luma, VK_OBJECT_TYPE_BUFFER, "Luma" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, luma, VK_OBJECT_TYPE_BUFFER, "Luma" )
 
     VkMemoryRequirements memoryRequirements {};
-    vkGetBufferMemoryRequirements ( device, _luma, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, luma, &memoryRequirements );
 
     result = renderer.TryAllocateMemory ( _lumaMemory._memory,
         _lumaMemory._offset,
@@ -502,7 +487,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _luma, _lumaMemory._memory, _lumaMemory._offset ),
+        vkBindBufferMemory ( device, luma, _lumaMemory._memory, _lumaMemory._offset ),
         "pbr::ExposurePass::CreateLumaResources",
         "Can't memory"
     );
@@ -510,67 +495,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     if ( !result ) [[unlikely]]
         return false;
 
-    bufferInfo.usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_SRC_BIT );
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferLuma ),
-        "pbr::ExposurePass::CreateLumaResources",
-        "Can't create transfer buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transferLuma, VK_OBJECT_TYPE_BUFFER, "Luma staging" )
-
-    vkGetBufferMemoryRequirements ( device, _transferLuma, &memoryRequirements );
-
-    constexpr VkMemoryPropertyFlags memoryFlags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
-
-    result = renderer.TryAllocateMemory ( _transferLumaMemory._memory,
-        _transferLumaMemory._offset,
-        memoryRequirements,
-        memoryFlags,
-        "Can't allocate transfer buffer memory (pbr::ExposurePass::CreateLumaResources)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _transferLuma, _transferLumaMemory._memory, _transferLumaMemory._offset ),
-        "pbr::ExposurePass::CreateLumaResources",
-        "Can't bind transfer memory"
-    );
-
-    if ( !result )
-        return false;
-
-    void* destination = nullptr;
-
-    result = renderer.MapMemory ( destination,
-        _transferLumaMemory._memory,
-        _transferLumaMemory._offset,
-        "pbr::ExposurePass::CreateLumaResources",
-        "Can't map transfer memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    auto* mappedBuffer = static_cast<float*> ( destination );
-    std::memset ( mappedBuffer, 0, sizeof ( float ) );
-    renderer.UnmapMemory ( _transferLumaMemory._memory );
-
-    constexpr VkBufferCopy copyInfo
-    {
-        .srcOffset = 0U,
-        .dstOffset = 0U,
-        .size = static_cast<VkDeviceSize> ( sizeof ( float ) )
-    };
-
-    vkCmdCopyBuffer ( _commandBuffer, _transferLuma, _luma, 1U, &copyInfo );
+    vkCmdFillBuffer ( _commandBuffer, luma, 0U, VK_WHOLE_SIZE, 0U );
 
     constexpr VkAccessFlags dstAccessFlags = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
         AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
@@ -583,9 +508,9 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
         .dstAccessMask = dstAccessFlags,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _globalCounter,
+        .buffer = luma,
         .offset = 0U,
-        .size = copyInfo.size
+        .size = VK_WHOLE_SIZE
     };
 
     vkCmdPipelineBarrier ( _commandBuffer,
@@ -707,7 +632,7 @@ bool ExposurePass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-bool ExposurePass::BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept
+void ExposurePass::BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept
 {
     VkDescriptorImageInfo const hrdImageInfo
     {
@@ -725,21 +650,21 @@ bool ExposurePass::BindTargetToDescriptorSet ( VkDevice device, android_vulkan::
 
     VkDescriptorBufferInfo const exposureBufferInfo
     {
-        .buffer = _exposureBarrier.buffer,
+        .buffer = _exposureBeforeBarrier.buffer,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( float ) )
     };
 
     VkDescriptorBufferInfo const globalBufferInfo
     {
-        .buffer = _globalCounter,
+        .buffer = _computeOnlyBarriers[ GLOBAL_COUNTER_IDX ].buffer,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( uint32_t ) )
     };
 
     VkDescriptorBufferInfo const temporalLumaBufferInfo
     {
-        .buffer = _luma,
+        .buffer = _computeOnlyBarriers[ LUMA_IDX ].buffer,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( float ) )
     };
@@ -809,7 +734,6 @@ bool ExposurePass::BindTargetToDescriptorSet ( VkDevice device, android_vulkan::
     };
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
-    return true;
 }
 
 float ExposurePass::EyeAdaptationFactor ( float deltaTime ) const noexcept
@@ -839,35 +763,6 @@ void ExposurePass::FreeTargetResources ( android_vulkan::Renderer &renderer, VkD
     }
 
     _program.Destroy ( device );
-}
-
-void ExposurePass::FreeTransferBuffer ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept
-{
-    if ( _transferGlobalCounter != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyBuffer ( device, _transferGlobalCounter, nullptr );
-        _transferGlobalCounter = VK_NULL_HANDLE;
-    }
-
-    if ( _transferGlobalCounterMemory._memory != VK_NULL_HANDLE ) [[likely]]
-    {
-        renderer.FreeMemory ( _transferGlobalCounterMemory._memory, _transferGlobalCounterMemory._offset );
-        _transferGlobalCounterMemory._memory = VK_NULL_HANDLE;
-        _transferGlobalCounterMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
-    }
-
-    if ( _transferLuma != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyBuffer ( device, _transferLuma, nullptr );
-        _transferLuma = VK_NULL_HANDLE;
-    }
-
-    if ( _transferLumaMemory._memory == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    renderer.FreeMemory ( _transferLumaMemory._memory, _transferLumaMemory._offset );
-    _transferLumaMemory._memory = VK_NULL_HANDLE;
-    _transferLumaMemory._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
 bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice device ) noexcept
@@ -936,7 +831,7 @@ bool ExposurePass::SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) no
     );
 }
 
-void ExposurePass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept
+void ExposurePass::SyncBefore ( VkCommandBuffer commandBuffer ) noexcept
 {
     constexpr VkAccessFlags const srcAccess[] = { VK_ACCESS_SHADER_WRITE_BIT, 0U };
     constexpr VkImageLayout const oldImageLayout[] = { VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_UNDEFINED };
@@ -979,6 +874,34 @@ void ExposurePass::TransitSync5Mip ( VkCommandBuffer commandBuffer ) noexcept
         nullptr,
         1U,
         &barrier
+    );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( std::size ( _computeOnlyBarriers ) ),
+        _computeOnlyBarriers,
+        0U,
+        nullptr
+    );
+
+    constexpr auto stages = static_cast<VkPipelineStageFlags> ( AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT )
+    );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        stages,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &_exposureBeforeBarrier,
+        0U,
+        nullptr
     );
 
     _isNeedTransitLayout = false;

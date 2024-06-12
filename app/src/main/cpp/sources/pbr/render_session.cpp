@@ -144,7 +144,7 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
 {
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
-    _exposurePass.FreeTransferResources ( renderer, pool );
+    _exposurePass.FreeTransferResources ( renderer.GetDevice (), pool );
 }
 
 UIPass &RenderSession::GetUIPass () noexcept

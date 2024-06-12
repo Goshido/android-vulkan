@@ -1,6 +1,6 @@
 # _RenderDoc_ integration
 
-The project supports integration with [_RenderDoc v1.32_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
+The project supports integration with [_RenderDoc v1.33_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
 
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
 - `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT`
@@ -36,3 +36,9 @@ target_compile_definitions ( android-vulkan
 **Note:** The application will crash without _RenderDoc_ after using `ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`. It's expected. The reason for this is that application will try to find and call _Vulkan_ debug marker and debug group functions. Most likely they will not be available on device.
 
 That's it.
+
+## Reported issues
+
+Name | Link | Status
+--- | --- | ---
+spirv-cross.exe error when editing shaders | [#3353](https://github.com/baldurk/renderdoc/issues/3353) | ⚠️ Submitted

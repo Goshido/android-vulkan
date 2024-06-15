@@ -39,7 +39,7 @@ Useful documentation is located [here](docs/documentation.md).
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
 * [_stb_image 2.30_](https://github.com/nothings/stb) `013ac3beddff3dbffafd5177e7972067cd2b5083`
-* [_Vulkan Validation Layers 1.3.287_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `15ba84ba94ff2ed473474deba2b4f2af4705b1fb`
+* [_Vulkan Validation Layers 1.3.288_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `6eaf97e9366755822923147c94e0ee1760a393d5`
 * [_Lua 5.5.0_](https://github.com/lua/lua) `bdc85357aa41a9610498232c2cffe7aa191e5cf6`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support

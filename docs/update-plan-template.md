@@ -96,7 +96,7 @@ Project:
 - DirectX Shader Compiler has been updated to 1.8.2405.10047, 80f6e46bf8cd0e193f90040168e4e48f4e0576aa
 - SPIR-V shader blobs have been recompiled
 - FreeType 2.13.2 has been updated to d41a855aab6d8ce131c465ce01f0f536e0fb2269
-- VVL has been updated to 1.3.287, `15ba84ba94ff2ed473474deba2b4f2af4705b1fb
+- VVL has been updated to 1.3.288, 6eaf97e9366755822923147c94e0ee1760a393d5
 - Lua 5.5.0 has been updated to bdc85357aa41a9610498232c2cffe7aa191e5cf6
 - stb_image has been updated to 2.30, 013ac3beddff3dbffafd5177e7972067cd2b5083
 

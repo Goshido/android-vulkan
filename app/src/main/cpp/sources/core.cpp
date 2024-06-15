@@ -50,10 +50,11 @@ enum class eGame : uint16_t
     World1x1
 };
 
+Core* g_Core = nullptr;
+
 } // end of anonymous namespace
 
 AAssetManager* g_AssetManager = nullptr;
-static Core* g_Core = nullptr;
 
 //----------------------------------------------------------------------------------------------------------------------
 

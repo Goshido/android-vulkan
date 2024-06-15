@@ -378,12 +378,7 @@ std::unordered_set<uint32_t> g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x675DC32EU,
-
-    // vkGetSwapchainImagesKHR():  called with non-NULL pSwapchainImageCount; but no prior positive value has been seen
-    // for pSwapchainImages.
-    // [2024/06/12] Issue ticket https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8138
-    0xEE8A3A07U
+    0x675DC32EU
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =

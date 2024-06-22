@@ -22,12 +22,12 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Jellyfish | 2023.3.1 Patch 2_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.4.2_
+* [_Android Studio Koala | 2024.1.1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.5.0_
 * _Android NDK 26.3.11579264 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 13 (API level 34)_
-* _Android SDK Build-Tools 34.0.0_
+* _Android SDK Build-Tools 35.0.0_
 * _Android SDK Platform-Tools 35.0.1_
 * _Kotlin 2.0.0_
 * _Kotlin Gradle plugin 2.0.0_

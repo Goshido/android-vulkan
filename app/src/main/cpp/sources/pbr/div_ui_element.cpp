@@ -153,6 +153,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         ._canvasSize = _canvasSize,
         ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
+        ._hasChanges = false,
         ._lineHeights = &_lineHeights,
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = info._renderer,

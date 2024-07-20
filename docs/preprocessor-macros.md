@@ -71,7 +71,7 @@ where `<your native orientation>` can be
 For more information please refer to the following guidelines:
 
 * [_Vulkan_ Mobile Best Practice - Appropriate Use of Surface Rotation](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation)
-* [Appropriate use of surface rotation](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md)
+* [Appropriate use of surface rotation](https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/surface_rotation)
 
 ## <a id="macro-android-vulkan-debug">`ANDROID_VULKAN_DEBUG`</a>
 

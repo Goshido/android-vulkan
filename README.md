@@ -22,9 +22,9 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Koala | 2024.1.1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.5.0_
-* _Android NDK 26.3.11579264 (side by side)_
+* [_Android Studio Koala | 2024.1.1 Patch 1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.5.1_
+* _Android NDK 27.0.12077973 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 13 (API level 34)_
 * _Android SDK Build-Tools 35.0.0_
@@ -32,15 +32,15 @@ Useful documentation is located [here](docs/documentation.md).
 * _Kotlin 2.0.0_
 * _Kotlin Gradle plugin 2.0.0_
 * _CMake 3.22.1_
-* [_Gradle 8.8-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.8.2405.10047_](https://github.com/microsoft/DirectXShaderCompiler) `80f6e46bf8cd0e193f90040168e4e48f4e0576aa`
-* [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `d41a855aab6d8ce131c465ce01f0f536e0fb2269`
-* [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `db5c7a49ce7ebda47b15b78471e78fb7f2483e22`
-* [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
-* [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `84c023699cdf023a32fa4ded32019f194afcdad0`
-* [_stb_image 2.30_](https://github.com/nothings/stb) `013ac3beddff3dbffafd5177e7972067cd2b5083`
-* [_Vulkan Validation Layers 1.3.288_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `6eaf97e9366755822923147c94e0ee1760a393d5`
-* [_Lua 5.5.0_](https://github.com/lua/lua) `bdc85357aa41a9610498232c2cffe7aa191e5cf6`
+* [_Gradle 8.9-bin_](https://services.gradle.org/distributions/)
+* [_DirectX Shader Compiler 1.8.2407.10013_](https://github.com/microsoft/DirectXShaderCompiler) `a2a220bc616ca28848ec0af77ad33a09f92fa43a`
+* [_libfreetype 2.13.2_](https://gitlab.freedesktop.org/freetype/freetype) `37cefe33b284d0bad4ec52bcccc1a8c2d8704340`
+* [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `7cf42ea17aef7bc1b7b21af70724840a96c2e7d0`
+* [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
+* [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `f7f20f39fe4f206c6f19e26ebfef7b261ee59ee4`
+* [_Vulkan Validation Layers 1.3.290_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `58428b0c0e9cb818ee240857c5b4725df8c5183e`
+* [_Lua 5.5.0_](https://github.com/lua/lua) `c1dc08e8e8e22af9902a6341b4a9a9a7811954cc`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

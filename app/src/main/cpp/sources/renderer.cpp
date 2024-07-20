@@ -1806,8 +1806,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
         // There is no much to say but you have to consider image rotation after projection transform in your code.
         // That's a cost for memory bandwidth saving in the mobile device world.
-        // See https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
-        // See https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        // See docs/preprocessor-macros.md#macro-android-native-mode
         .preTransform = _surfaceTransform,
 
         .compositeAlpha = compositeAlpha,

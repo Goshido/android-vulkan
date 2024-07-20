@@ -387,7 +387,8 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doDestroy ( JNIEnv* en
     LogInfo ( "Core has been destroyed." );
 }
 
-JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/, jint keyCode )
+JNIEXPORT jboolean Java_com_goshidoInc_androidVulkan_Activity_doKeyDown ( JNIEnv* /*env*/, jobject /*obj*/,
+    jint keyCode )
 {
     if ( !g_Core ) [[unlikely]]
         return JNI_FALSE;

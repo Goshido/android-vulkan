@@ -287,7 +287,7 @@ void ScriptableGamepad::OnKey ( void* context ) noexcept
     ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
-    gamepad._writeQueue.emplace_back (
+    gamepad._writeQueue.push_back (
         Action
         {
             ._type = ctx._type,
@@ -295,6 +295,7 @@ void ScriptableGamepad::OnKey ( void* context ) noexcept
             ._key
             {
                 ._key = ctx._key,
+                ._state = ctx._state
             }
         }
     );
@@ -307,7 +308,7 @@ void ScriptableGamepad::OnStick ( void* context, float x, float y ) noexcept
     ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
-    gamepad._writeQueue.emplace_back (
+    gamepad._writeQueue.push_back (
         Action
         {
             ._type = ctx._type,
@@ -328,7 +329,7 @@ void ScriptableGamepad::OnTrigger ( void* context, float value ) noexcept
     ScriptableGamepad &gamepad = *ctx._instance;
     std::unique_lock<std::mutex> const lock ( gamepad._mutex );
 
-    gamepad._writeQueue.emplace_back (
+    gamepad._writeQueue.push_back (
         Action
         {
             ._type = ctx._type,

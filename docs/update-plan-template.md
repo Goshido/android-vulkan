@@ -73,6 +73,7 @@
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
 - ❌ Set starting project as PBR
+- ❌ Remove old binaries
 - ❌ Create archive tag with direct link to issue
 
 ## Commit messages
@@ -86,19 +87,22 @@ Documentation:
 - build requirements have been updated
 
 Project:
-- Android Studio Jellyfish | 2023.3.1 Patch 2 support
-- Android Studio Gradle Plugin has been updated to 8.4.2
-- Android NDK has been updated to 26.3.11579264
+- Android Studio Koala | 2024.1.1 Patch 1 support
+- Android Studio Gradle Plugin has been updated to 8.5.1
+- Android NDK has been updated to 27.0.12077973
 - Android SDK Platform-Tools updated to 35.0.1
 - Kotlin has been updated to 2.0.0
 - Kotlin Gradle plugin has been updated to 2.0.0
-- Gradle has been updated to 8.8-bin
-- DirectX Shader Compiler has been updated to 1.8.2405.10047, 80f6e46bf8cd0e193f90040168e4e48f4e0576aa
-- SPIR-V shader blobs have been recompiled
-- FreeType 2.13.2 has been updated to d41a855aab6d8ce131c465ce01f0f536e0fb2269
-- VVL has been updated to 1.3.288, 6eaf97e9366755822923147c94e0ee1760a393d5
-- Lua 5.5.0 has been updated to bdc85357aa41a9610498232c2cffe7aa191e5cf6
-- stb_image has been updated to 2.30, 013ac3beddff3dbffafd5177e7972067cd2b5083
+- Gradle has been updated to 8.9-bin
+- DirectX Shader Compiler has been updated to 1.8.2407.10013, a2a220bc616ca28848ec0af77ad33a09f92fa43a
+- SPIR-V shader blobs have been recompiled (no changes)
+- FreeType 2.13.2 has been updated to 37cefe33b284d0bad4ec52bcccc1a8c2d8704340
+- VVL has been updated to 1.3.290, 58428b0c0e9cb818ee240857c5b4725df8c5183e
+- Ogg 1.3.5 has been updated to 7cf42ea17aef7bc1b7b21af70724840a96c2e7d0
+- Vorbis 1.3.7 has been updated to bb4047de4c05712bf1fd49b9584c360b8e4e0adf
+- Vorbisfile 1.3.7 has been updated to bb4047de4c05712bf1fd49b9584c360b8e4e0adf
+- Lua 5.5.0 has been updated to c1dc08e8e8e22af9902a6341b4a9a9a7811954cc
+- stb_image has been updated to 2.30, f7f20f39fe4f206c6f19e26ebfef7b261ee59ee4
 
 3rd-party:
 - FreeType headers have been updated
@@ -113,13 +117,13 @@ Project:
 - libvorbis and libvorbisfile header files have been updated
 
 HTML validator:
-- HTML validator has been updated to 1.0.1.9
+- HTML validator has been updated to 1.0.1.10
 - Windows 11 support
-- Visual Studio 2022 Community 17.10.2 support
+- Visual Studio 2022 Community 17.10.4 support
 - Windows 11 SDK has been changed to 10.0.26100
 
 3ds Max exporter:
-- 3ds Max exporter has been updated to 1.0.1.5
+- 3ds Max exporter has been updated to 1.0.1.6
 - Windows 11 support
-- Visual Studio 2022 Community 17.10.2 support
+- Visual Studio 2022 Community 17.10.4 support
 - Windows 11 SDK has been changed to 10.0.26100

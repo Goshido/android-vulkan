@@ -36,7 +36,7 @@ Take a note that exporter will calculate approximate bounds if the artist will i
 **Requirements**
 
 - [_3ds Max 2023 SDK_](https://aps.autodesk.com/developer/overview/3ds-max#3dsmax-sdk)
-- _Visual Studio 2022 Community 17.10.2_
+- _Visual Studio 2022 Community 17.10.4_
   - Workloads: Desktop development with C++
   - Individual components
     - MSBuild

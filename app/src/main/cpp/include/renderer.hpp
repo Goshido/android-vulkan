@@ -133,8 +133,7 @@ class Renderer final
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the
         // mobile device. For more information please reference by links:
-        // https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation
-        // https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/surface_rotation/surface_rotation_tutorial.md
+        // See docs/preprocessor-macros.md#macro-android-native-mode
         [[nodiscard]] GXMat4 const &GetPresentationEngineTransform () const noexcept;
 
         [[nodiscard]] VkQueue GetQueue () const noexcept;

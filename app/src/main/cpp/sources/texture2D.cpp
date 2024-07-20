@@ -3,6 +3,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <array>
+#include <bit>
 #include <regex>
 #include <set>
 #include <thread>
@@ -311,11 +312,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
 uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
 {
-    // Note Android NDK 25.2.9519653 does not have std::bit_width implementation yet. So it is used the alternative.
-    // See https://en.cppreference.com/w/cpp/numeric/bit_width
-    return static_cast<uint8_t> (
-        std::numeric_limits<uint32_t>::digits - std::countl_zero ( std::max ( resolution.width, resolution.height ) )
-    );
+    return static_cast<uint8_t> ( std::bit_width ( std::max ( resolution.width, resolution.height ) ) );
 }
 
 bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,

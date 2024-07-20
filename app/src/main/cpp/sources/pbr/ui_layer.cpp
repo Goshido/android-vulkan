@@ -174,6 +174,7 @@ bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport
     {
         ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
+        ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
@@ -186,7 +187,7 @@ bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport
 void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept
 {
     // See full explanation in documentation: UI system, CSS Units and hardware DPI.
-    // <repo>/docs/ui-system.md#css-units-and-dpi
+    // docs/ui-system.md#css-units-and-dpi
 
     constexpr float dpiSpec = 96.0F;
     constexpr float distanceSpec = 28.0F;

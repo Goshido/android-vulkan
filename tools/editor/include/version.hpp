@@ -1,0 +1,11 @@
+#ifndef EDITOR_VERSION_HPP
+#define EDITOR_VERSION_HPP
+
+
+#define EDITOR_VERSION_MAJOR        1
+#define EDITOR_VERSION_MINOR        0
+#define EDITOR_VERSION_RELEASE      1
+#define EDITOR_VERSION_BUILD        0
+
+
+#endif // EDITOR_VERSION_HPP

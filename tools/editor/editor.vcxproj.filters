@@ -36,6 +36,9 @@
     <ClCompile Include="src\crash_dump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\trace.cpp">
+      <Filter>Source Files\core\platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -46,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="include\crash_dump.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

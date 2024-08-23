@@ -48,7 +48,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
-    app/src/main/cpp/sources/trace.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/velocity_solver.cpp
     app/src/main/cpp/sources/vulkan_loader.cpp
@@ -229,6 +228,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
+    app/src/main/cpp/sources/platform/android/trace.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

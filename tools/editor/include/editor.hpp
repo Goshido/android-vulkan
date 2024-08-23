@@ -26,6 +26,10 @@ class Editor final
         ~Editor () = default;
 
         [[nodiscard]] bool Run () noexcept;
+
+    private:
+        void PumpEvents () noexcept;
+        void ExecuteEvents () noexcept;
 };
 
 } // namespace editor

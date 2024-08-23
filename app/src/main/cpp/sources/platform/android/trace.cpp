@@ -1,5 +1,6 @@
 #ifdef ANDROID_ENABLE_TRACE
 
+
 #include <trace.hpp>
 #include <GXCommon/GXWarning.hpp>
 
@@ -23,5 +24,6 @@ Trace::~Trace () noexcept
 }
 
 } // namespace android_vulkan
+
 
 #endif // ANDROID_ENABLE_TRACE

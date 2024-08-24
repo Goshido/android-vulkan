@@ -39,6 +39,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\trace.cpp">
       <Filter>Source Files\core\platform</Filter>
     </ClCompile>
+    <ClCompile Include="src\save_state.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\save_state.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,7 @@
 
 
 #include "command_line.hpp"
+#include "main_window.hpp"
 
 
 namespace editor {
@@ -10,7 +11,8 @@ namespace editor {
 class Editor final
 {
     private:
-        bool    _run = true;
+        MainWindow      _mainWindow {};
+        bool            _run = true;
 
     public:
         Editor () = delete;
@@ -26,10 +28,6 @@ class Editor final
         ~Editor () = default;
 
         [[nodiscard]] bool Run () noexcept;
-
-    private:
-        void PumpEvents () noexcept;
-        void ExecuteEvents () noexcept;
 };
 
 } // namespace editor

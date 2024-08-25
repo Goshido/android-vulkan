@@ -42,6 +42,9 @@
     <ClCompile Include="src\save_state.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\main_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -57,6 +60,9 @@
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\save_state.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\main_window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -178,6 +178,7 @@
     <ClCompile Include="src\crash_dump.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\save_state.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +186,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\save_state.hpp" />
   </ItemGroup>
   <ItemGroup>

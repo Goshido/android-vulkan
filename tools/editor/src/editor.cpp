@@ -1,14 +1,6 @@
 #include <crash_dump.hpp>
 #include <editor.hpp>
-#include <logger.hpp>
 #include <trace.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <chrono>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
@@ -27,32 +19,20 @@ bool Editor::Run () noexcept
 
     {
         AV_TRACE ( "Initialization modules" )
-        std::this_thread::sleep_for ( std::chrono::milliseconds ( 7U ) );
+
+        if ( !_mainWindow.MakeWindow () ) [[unlikely]]
+        {
+            return false;
+        }
     }
 
     while ( _run )
     {
         AV_TRACE ( "Event loop" )
-        PumpEvents ();
-        ExecuteEvents ();
-
-        std::this_thread::sleep_for ( std::chrono::milliseconds ( 15U ) );
-        // FUCK
+        _mainWindow.Execute ();
     }
 
     return true;
-}
-
-void Editor::PumpEvents () noexcept
-{
-    AV_TRACE ( "Pump events" )
-    std::this_thread::sleep_for ( std::chrono::milliseconds ( 10U ) );
-}
-
-void Editor::ExecuteEvents () noexcept
-{
-    AV_TRACE ( "Execute events" )
-    std::this_thread::sleep_for ( std::chrono::milliseconds ( 42U ) );
 }
 
 } // namespace editor

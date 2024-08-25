@@ -5,6 +5,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <string>
 #include <Windows.h>
 #include <WinPixEventRuntime/pix3.h>
 
@@ -21,6 +22,28 @@ Trace::Trace ( char const* name ) noexcept
 Trace::~Trace () noexcept
 {
     PIXEndEvent ();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+void SetThreadName ( char const* name ) noexcept
+{
+    wchar_t ssoBuffer[ 256U ];
+    constexpr auto ssoLen = static_cast<int> ( std::size ( ssoBuffer ) );
+    int const needed = MultiByteToWideChar ( 0U, 0U, name, -1, ssoBuffer, ssoLen );
+
+    if ( needed <= ssoLen ) [[likely]]
+    {
+        SetThreadDescription ( GetCurrentThread (), ssoBuffer );
+        return;
+    }
+
+    std::wstring wName{};
+    wName.resize ( static_cast<size_t> ( needed ) );
+    wchar_t* dst = wName.data ();
+    MultiByteToWideChar ( 0U, 0U, name, -1, dst, needed );
+
+    SetThreadDescription ( GetCurrentThread (), dst );
 }
 
 } // namespace android_vulkan

@@ -5,10 +5,9 @@
 #ifndef ANDROID_ENABLE_TRACE
 
 #define AV_TRACE(name)
+#define AV_THREAD_NAME(name)
 
 #else
-
-#define AV_TRACE(name) android_vulkan::Trace const _FuCk_TrAcE_ ( name );
 
 namespace android_vulkan {
 
@@ -28,7 +27,12 @@ class Trace final
         ~Trace () noexcept;
 };
 
+void SetThreadName ( char const* name ) noexcept;
+
 } // namespace android_vulkan
+
+#define AV_TRACE(name) android_vulkan::Trace const _FuCk_TrAcE_ ( name );
+#define AV_THREAD_NAME(name) android_vulkan::SetThreadName ( name );
 
 #endif // ANDROID_ENABLE_TRACE
 

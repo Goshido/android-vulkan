@@ -187,18 +187,13 @@ class SaveState final
 
         ~SaveState () = default;
 
-        [[nodiscard]] bool Load ( std::string_view const &file ) noexcept;
+        [[nodiscard]] bool Load ( std::string_view const &file, bool silent ) noexcept;
         [[nodiscard]] bool Save ( std::string_view const &file ) noexcept;
 
         [[nodiscard]] Container &GetContainer () noexcept;
         [[nodiscard]] Container const &GetContainer () const noexcept;
 
     private:
-        static void SaveContainer ( Binary &aData,
-            Binary &bData,
-            Container const &container
-        ) noexcept;
-
         static void EncodeArray ( Binary &aData, Binary &bData, Container const &container ) noexcept;
 
         static void EncodeContainer ( Binary &aData,
@@ -221,6 +216,23 @@ class SaveState final
         static void EncodeBool ( Binary &aData, Container const &container, bool writeType ) noexcept;
         [[nodiscard]] static size_t EncodeType ( Binary &aData, size_t offset, Container::eType type ) noexcept;
         static void EncodeKey ( Binary &aData, Binary &bData, std::string const &key ) noexcept;
+
+        static void DecodeArray ( Container &root, uint8_t const* &aData, uint8_t const* bData ) noexcept;
+        static void DecodeContainer ( Container &root, uint8_t const* &aData, uint8_t const* bData ) noexcept;
+        [[nodiscard]] static int8_t DecodeInt8 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static uint8_t DecodeUInt8 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static int16_t DecodeInt16 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static uint16_t  DecodeUInt16 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static int32_t DecodeInt32 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static uint32_t  DecodeUInt32 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static int64_t DecodeInt64 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static uint64_t  DecodeUInt64 ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static std::string_view DecodeString ( uint8_t const* &aData, uint8_t const* bData ) noexcept;
+        [[nodiscard]] static float DecodeFloat ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static double DecodeDouble ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static bool DecodeBool ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static Container::eType DecodeType ( uint8_t const* &aData ) noexcept;
+        [[nodiscard]] static std::string_view DecodeKey ( uint8_t const* &aData, uint8_t const* bData ) noexcept;
 
         [[nodiscard]] static std::filesystem::path ResolvePath ( std::string_view const &file ) noexcept;
 };

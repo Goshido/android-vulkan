@@ -542,8 +542,6 @@ SaveState::Container const &SaveState::Container::ReadArray ( std::string_view c
 {
     if ( _type != eType::Container ) [[unlikely]]
     {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing null container..." );
         static Container const null {};
         return null;
     }
@@ -559,16 +557,12 @@ SaveState::Container const &SaveState::Container::ReadContainer () const noexcep
 {
     if ( _type != eType::Array ) [[unlikely]]
     {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Expected array. Returing null container..." );
         static Container const null {};
         return null;
     }
 
-    if ( _arrayData.size () > _idx ) [[unlikely]]
+    if ( _arrayData.size () <= _idx ) [[unlikely]]
     {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Array consumed. Returing null container..." );
         static Container const null {};
         return null;
     }
@@ -576,8 +570,6 @@ SaveState::Container const &SaveState::Container::ReadContainer () const noexcep
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Container ) [[likely]]
         return c;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing null container..." );
     static Container const null {};
     return null;
 }
@@ -586,8 +578,6 @@ SaveState::Container const &SaveState::Container::ReadContainer ( std::string_vi
 {
     if ( _type != eType::Container ) [[unlikely]]
     {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing null container..." );
         static Container const null {};
         return null;
     }
@@ -601,323 +591,277 @@ SaveState::Container const &SaveState::Container::ReadContainer ( std::string_vi
 
 int8_t SaveState::Container::Read ( int8_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int8 ) [[likely]]
         return c._data._i8;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 uint8_t SaveState::Container::Read ( uint8_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt8 ) [[likely]]
         return c._data._ui8;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 int16_t SaveState::Container::Read ( int16_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int16 ) [[likely]]
         return c._data._i16;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 uint16_t SaveState::Container::Read ( uint16_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt16 ) [[likely]]
         return c._data._ui16;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 int32_t SaveState::Container::Read ( int32_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int32 ) [[likely]]
         return c._data._i32;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 uint32_t SaveState::Container::Read ( uint32_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt32 ) [[likely]]
         return c._data._ui32;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 int64_t SaveState::Container::Read ( int64_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int64 ) [[likely]]
         return c._data._i64;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 uint64_t SaveState::Container::Read ( uint64_t defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt64 ) [[likely]]
         return c._data._ui64;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 float SaveState::Container::Read ( float defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Float ) [[likely]]
         return c._data._float;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 double SaveState::Container::Read ( double defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Double ) [[likely]]
         return c._data._double;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 bool SaveState::Container::Read ( bool defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Bool ) [[likely]]
         return c._data._bool;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 std::string_view SaveState::Container::Read ( std::string_view const &defaultValue ) const noexcept
 {
-    if ( _type != eType::Array || _arrayData.size () > _idx ) [[unlikely]]
+    if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::String ) [[likely]]
         return c._string;
 
-    AV_ASSERT ( false )
-    android_vulkan::LogWarning ( "SaveState: Expected to another type. Returing default value..." );
     return defaultValue;
 }
 
 int8_t SaveState::Container::Read ( std::string_view const &key, int8_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Int8 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._i8;
 }
 
 uint8_t SaveState::Container::Read ( std::string_view const &key, uint8_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt8 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._ui8;
 }
 
 int16_t SaveState::Container::Read ( std::string_view const &key, int16_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Int16 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._i16;
 }
 
 uint16_t SaveState::Container::Read ( std::string_view const &key, uint16_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt16 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._ui16;
 }
 
 int32_t SaveState::Container::Read ( std::string_view const &key, int32_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Int32 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._i32;
 }
 
 uint32_t SaveState::Container::Read ( std::string_view const &key, uint32_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt32 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._ui32;
 }
 
 int64_t SaveState::Container::Read ( std::string_view const &key, int64_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Int64 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._i64;
 }
 
 uint64_t SaveState::Container::Read ( std::string_view const &key, uint64_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt64 ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._ui64;
 }
 
 float SaveState::Container::Read ( std::string_view const &key, float defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
-}
-
-bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue ) const noexcept
-{
-    if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Float ) [[unlikely]]
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
-
-    return defaultValue;
+    return findResult->second._data._float;
 }
 
 double SaveState::Container::Read ( std::string_view const &key, double defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Double ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._double;
+}
+
+bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue ) const noexcept
+{
+    if ( _type != eType::Container ) [[unlikely]]
+        return defaultValue;
+
+    auto const findResult = _containerData.find ( std::string ( key ) );
+
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::Bool ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._data._bool;
 }
 
 std::string_view SaveState::Container::Read ( std::string_view const &key,
@@ -925,16 +869,14 @@ std::string_view SaveState::Container::Read ( std::string_view const &key,
 ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Looking up value from non container. Returing default value..." );
         return defaultValue;
-    }
 
-    if ( auto const findResult = _containerData.find ( std::string ( key ) ); findResult != _containerData.cend () )
-        return findResult->second.Read ( defaultValue );
+    auto const findResult = _containerData.find ( std::string ( key ) );
 
-    return defaultValue;
+    if ( findResult == _containerData.cend () || findResult->second._type != eType::String ) [[unlikely]]
+        return defaultValue;
+
+    return findResult->second._string;
 }
 
 SaveState::Container::Container ( eType type ) noexcept:
@@ -1084,9 +1026,35 @@ SaveState::Container::Container ( std::string_view const &value ) noexcept:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool SaveState::Load ( std::string_view const &/*file*/ ) noexcept
+bool SaveState::Load ( std::string_view const &file, bool silent ) noexcept
 {
-    // FUCK
+    AV_TRACE ( "Loading state" )
+
+    std::ifstream stream ( ResolvePath ( file ), std::ios::binary | std::ios::ate | std::ios::in );
+
+    if ( !stream.is_open () ) [[unlikely]]
+    {
+        if ( silent ) [[likely]]
+            return true;
+
+        android_vulkan::LogError ( "SaveState: Can't open file %s", file.data () );
+        return false;
+    }
+
+    auto const size = stream.tellg ();
+    stream.seekg ( 0, std::ios::beg );
+
+    Binary content {};
+    content.resize ( static_cast<size_t> ( size ) );
+    uint8_t* dst = content.data ();
+    stream.read ( reinterpret_cast<char*> ( dst ), size );
+
+    uint8_t const* aData = dst;
+    auto const& saveStatInfo = *reinterpret_cast<SaveStateInfo const*> ( aData );
+    uint8_t const* bData = aData + saveStatInfo._bDataOffset;
+    aData += sizeof ( SaveStateInfo ) + sizeof ( Container::eType );
+
+    DecodeContainer ( _container, aData, bData );
     return true;
 }
 
@@ -1095,17 +1063,17 @@ bool SaveState::Save ( std::string_view const &file ) noexcept
     AV_TRACE ( "Saving state" )
 
     Binary aData {};
+    Binary bData {};
 
     constexpr size_t initialSize = 32U * 1024U * 1024U;
     aData.reserve ( initialSize );
 
-    Binary bData {};
     bData.reserve ( initialSize );
     aData.resize ( sizeof ( SaveStateInfo ) );
 
     EncodeContainer ( aData, bData, _container, true );
 
-    auto &saveStateInfo = *reinterpret_cast<SaveStateInfo*> ( aData.data () );
+    auto& saveStateInfo = *reinterpret_cast<SaveStateInfo*> ( aData.data () );
     saveStateInfo._bDataOffset = static_cast<android_vulkan::UTF8Offset> ( aData.size () );
 
     std::filesystem::path const path = ResolvePath ( file );
@@ -1113,7 +1081,7 @@ bool SaveState::Save ( std::string_view const &file ) noexcept
 
     std::ofstream stream ( path, std::ios::binary | std::ios::trunc | std::ios::out );
 
-    if ( !stream.is_open () )
+    if ( !stream.is_open () ) [[unlikely]]
     {
         android_vulkan::LogError ( "SaveState: Can't write file %s", path.c_str () );
         return false;
@@ -1525,8 +1493,300 @@ void SaveState::EncodeKey ( Binary &aData, Binary &bData, std::string const &key
     std::memcpy ( bData.data () + bOffset, key.c_str (), len );
 }
 
+void SaveState::DecodeArray ( Container &root, uint8_t const* &aData, uint8_t const* bData ) noexcept
+{
+    auto const &info = *reinterpret_cast<ArrayInfo const*> ( aData );
+    aData += sizeof ( ArrayInfo );
+    uint64_t const count = info._size;
+
+    switch ( info._type )
+    {
+        case Container::eType::Container:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                DecodeContainer ( root.WriteContainer (), aData, bData );
+            }
+        break;
+
+        case Container::eType::Int8:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeInt8 ( aData ) );
+            }
+        break;
+
+        case Container::eType::UInt8:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeUInt8 ( aData ) );
+            }
+        break;
+
+        case Container::eType::Int16:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeInt16 ( aData ) );
+            }
+        break;
+
+        case Container::eType::UInt16:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeUInt16 ( aData ) );
+            }
+        break;
+
+        case Container::eType::Int32:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeInt32 ( aData ) );
+            }
+        break;
+
+        case Container::eType::UInt32:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeUInt32 ( aData ) );
+            }
+        break;
+
+        case Container::eType::Int64:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeInt64 ( aData ) );
+            }
+        break;
+
+        case Container::eType::UInt64:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeUInt64 ( aData ) );
+            }
+        break;
+
+        case Container::eType::String:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeString ( aData, bData ) );
+            }
+        break;
+
+        case Container::eType::Float:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeFloat ( aData ) );
+            }
+        break;
+
+        case Container::eType::Double:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeDouble ( aData ) );
+            }
+        break;
+
+        case Container::eType::Bool:
+            for ( uint64_t i = 0U; i < count; ++i )
+            {
+                root.Write ( DecodeBool ( aData ) );
+            }
+        break;
+
+        case Container::eType::Array:
+            [[fallthrough]];
+
+        case Container::eType::Null:
+            [[fallthrough]];
+
+        default:
+            AV_ASSERT ( false )
+        break;
+    }
+}
+
+void SaveState::DecodeContainer ( Container &root, uint8_t const* &aData, uint8_t const* bData ) noexcept
+{
+    auto const &info = *reinterpret_cast<ContainerInfo const*> ( aData );
+    aData += sizeof ( ContainerInfo );
+    uint64_t const count = info._fields;
+
+    for ( uint64_t i = 0U; i < count; ++i )
+    {
+        std::string_view const key = DecodeKey ( aData, bData );
+
+        switch ( DecodeType ( aData ) )
+        {
+            case Container::eType::Array:
+                DecodeArray ( root.WriteArray ( key ), aData, bData );
+            break;
+
+            case Container::eType::Container:
+                DecodeContainer ( root.WriteContainer ( key ), aData, bData );
+            break;
+
+            case Container::eType::Int8:
+                root.Write ( key, DecodeInt8 ( aData ) );
+            break;
+
+            case Container::eType::UInt8:
+                root.Write ( key, DecodeUInt8 ( aData ) );
+            break;
+
+            case Container::eType::Int16:
+                root.Write ( key, DecodeInt16 ( aData ) );
+            break;
+
+            case Container::eType::UInt16:
+                root.Write ( key, DecodeUInt16 ( aData ) );
+            break;
+
+            case Container::eType::Int32:
+                root.Write ( key, DecodeInt32 ( aData ) );
+            break;
+
+            case Container::eType::UInt32:
+                root.Write ( key, DecodeUInt32 ( aData ) );
+            break;
+
+            case Container::eType::Int64:
+                root.Write ( key, DecodeInt64 ( aData ) );
+            break;
+
+            case Container::eType::UInt64:
+                root.Write ( key, DecodeUInt64 ( aData ) );
+            break;
+
+            case Container::eType::String:
+                root.Write ( key, DecodeString ( aData, bData ) );
+            break;
+
+            case Container::eType::Float:
+                root.Write ( key, DecodeFloat ( aData ) );
+            break;
+
+            case Container::eType::Double:
+                root.Write ( key, DecodeDouble ( aData ) );
+            break;
+
+            case Container::eType::Bool:
+                root.Write ( key, DecodeBool ( aData ) );
+            break;
+
+            case Container::eType::Null:
+                [[fallthrough]];
+
+            default:
+                AV_ASSERT ( false )
+            break;
+        }
+    }
+}
+
+int8_t SaveState::DecodeInt8 ( uint8_t const* &aData ) noexcept
+{
+    int8_t const result = reinterpret_cast<Int8Info const*> ( aData )->_data;
+    aData += sizeof ( Int8Info );
+    return result;
+}
+
+uint8_t SaveState::DecodeUInt8 ( uint8_t const* &aData ) noexcept
+{
+    uint8_t const result = reinterpret_cast<UInt8Info const*> ( aData )->_data;
+    aData += sizeof ( UInt8Info );
+    return result;
+}
+
+int16_t SaveState::DecodeInt16 ( uint8_t const* &aData ) noexcept
+{
+    int16_t const result = reinterpret_cast<Int16Info const*> ( aData )->_data;
+    aData += sizeof ( Int16Info );
+    return result;
+}
+
+uint16_t SaveState::DecodeUInt16 ( uint8_t const* &aData ) noexcept
+{
+    uint16_t const result = reinterpret_cast<UInt16Info const*> ( aData )->_data;
+    aData += sizeof ( UInt16Info );
+    return result;
+}
+
+int32_t SaveState::DecodeInt32 ( uint8_t const* &aData ) noexcept
+{
+    int32_t const result = reinterpret_cast<Int32Info const*> ( aData )->_data;
+    aData += sizeof ( Int32Info );
+    return result;
+}
+
+uint32_t SaveState::DecodeUInt32 ( uint8_t const* &aData ) noexcept
+{
+    uint32_t const result = reinterpret_cast<UInt32Info const*> ( aData )->_data;
+    aData += sizeof ( UInt32Info );
+    return result;
+}
+
+int64_t SaveState::DecodeInt64 ( uint8_t const* &aData ) noexcept
+{
+    int64_t const result = reinterpret_cast<Int64Info const*> ( aData )->_data;
+    aData += sizeof ( Int64Info );
+    return result;
+}
+
+uint64_t SaveState::DecodeUInt64 ( uint8_t const* &aData ) noexcept
+{
+    uint64_t const result = reinterpret_cast<UInt64Info const*> ( aData )->_data;
+    aData += sizeof ( UInt64Info );
+    return result;
+}
+
+std::string_view SaveState::DecodeString ( uint8_t const* &aData, uint8_t const* bData ) noexcept
+{
+    std::string_view result =
+        reinterpret_cast<char const*> ( bData + reinterpret_cast<StringInfo const*> ( aData )->_data );
+
+    aData += sizeof ( StringInfo );
+    return result;
+}
+
+float SaveState::DecodeFloat ( uint8_t const* &aData ) noexcept
+{
+    float const result = reinterpret_cast<FloatInfo const*> ( aData )->_data;
+    aData += sizeof ( FloatInfo );
+    return result;
+}
+
+double SaveState::DecodeDouble ( uint8_t const* &aData ) noexcept
+{
+    double const result = reinterpret_cast<DoubleInfo const*> ( aData )->_data;
+    aData += sizeof ( DoubleInfo );
+    return result;
+}
+
+bool SaveState::DecodeBool ( uint8_t const* &aData ) noexcept
+{
+    bool const result = reinterpret_cast<BoolInfo const*> ( aData )->_data == android_vulkan::AV_TRUE;
+    aData += sizeof ( BoolInfo );
+    return result;
+}
+
+SaveState::Container::eType SaveState::DecodeType ( uint8_t const* &aData ) noexcept
+{
+    auto const result = *reinterpret_cast<Container::eType const*> ( aData );
+    aData += sizeof ( Container::eType );
+    return result;
+}
+
+std::string_view SaveState::DecodeKey ( uint8_t const* &aData, uint8_t const* bData ) noexcept
+{
+    std::string_view result =
+        reinterpret_cast<char const*> ( bData + reinterpret_cast<StringInfo const*> ( aData )->_data );
+
+    aData += sizeof ( StringInfo );
+    return result;
+}
+
 std::filesystem::path SaveState::ResolvePath ( std::string_view const &file ) noexcept
 {
+    AV_TRACE ( "Resolving path" )
     char const* f = file.data ();
     DWORD const len = ExpandEnvironmentStringsA ( f, nullptr, 0U );
     std::string path {};

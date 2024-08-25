@@ -23,6 +23,13 @@ Trace::~Trace () noexcept
     ATrace_endSection ();
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+void SetThreadName ( char const* /*name*/ ) noexcept
+{
+    // TODO
+}
+
 } // namespace android_vulkan
 
 

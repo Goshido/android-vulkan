@@ -228,7 +228,9 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
+    app/src/main/cpp/sources/platform/android/renderer.cpp
     app/src/main/cpp/sources/platform/android/trace.cpp
+    app/src/main/cpp/sources/platform/android/vulkan_loader.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp

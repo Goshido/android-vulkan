@@ -3,6 +3,7 @@
 #include <pbr/scriptable_gxmat4.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

@@ -6,6 +6,7 @@
 #include <pbr/static_mesh_component.hpp>
 #include <gamepad.hpp>
 #include <global_force_gravity.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <shape_sphere.hpp>
 

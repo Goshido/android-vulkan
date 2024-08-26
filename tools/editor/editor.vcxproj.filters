@@ -22,13 +22,34 @@
     <Filter Include="Header Files\core">
       <UniqueIdentifier>{596024c8-c096-4c81-8bb6-d7edf967bf31}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core\platform">
+      <UniqueIdentifier>{d34e1a60-7ecd-4e66-966e-5e9a16783712}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform\window">
+      <UniqueIdentifier>{78d1ff1c-5ecc-41ed-9f1f-82bebf3c4e67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\platform\windows">
+      <UniqueIdentifier>{2a01d8cd-9213-472b-a031-255d136b04d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon">
+      <UniqueIdentifier>{18d410c8-232e-49d5-89b0-e89dee8a972d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon\Vulkan">
+      <UniqueIdentifier>{cfafd2a6-508d-41f8-9f2e-c51902794d49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon\Intrinsics">
+      <UniqueIdentifier>{c7c2dfe5-beff-450f-b37a-b5ca198b53ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\GXCommon">
+      <UniqueIdentifier>{9483467c-614c-489a-a476-9e48e3dd061d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\GXCommon\Windows">
+      <UniqueIdentifier>{279ab7ed-1fc4-41e5-b2eb-ace2675c91e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\logger.cpp">
-      <Filter>Source Files\core\platform</Filter>
     </ClCompile>
     <ClCompile Include="src\editor.cpp">
       <Filter>Source Files</Filter>
@@ -36,14 +57,50 @@
     <ClCompile Include="src\crash_dump.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\trace.cpp">
-      <Filter>Source Files\core\platform</Filter>
-    </ClCompile>
     <ClCompile Include="src\save_state.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\main_window.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\vulkan_loader.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\vulkan_utils.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\memory_allocator.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\logger.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\trace.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\vulkan_loader.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\renderer.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\file.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\renderer.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
+      <Filter>Source Files\core\GXCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Vulkan\GXMathBackend.cpp">
+      <Filter>Source Files\core\GXCommon\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
+      <Filter>Source Files\core\GXCommon\Intrinsics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +122,39 @@
     <ClInclude Include="include\main_window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\memory_allocator.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\os_utils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXTypes.hpp">
+      <Filter>Header Files\core\GXCommon\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp">
+      <Filter>Header Files\core\GXCommon\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -78,5 +168,19 @@
     <Image Include="src\icon.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_device.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_instance.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in">
+      <Filter>Header Files\core\platform\window</Filter>
+    </None>
   </ItemGroup>
 </Project>

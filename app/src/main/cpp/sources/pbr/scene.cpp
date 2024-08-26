@@ -1,6 +1,7 @@
 #include <av_assert.hpp>
 #include <core.hpp>
 #include <file.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <trace.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>

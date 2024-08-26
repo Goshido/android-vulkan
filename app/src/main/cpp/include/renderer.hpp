@@ -3,7 +3,6 @@
 
 
 #include <GXCommon/GXMath.hpp>
-#include "logger.hpp"
 #include "memory_allocator.hpp"
 #include "vulkan_api.hpp"
 #include "vulkan_loader.hpp"
@@ -12,13 +11,15 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <map>
 #include <set>
+#include <span>
 #include <vector>
-#include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
+
+VK_DEFINE_HANDLE ( WindowHandle )
 
 struct VulkanPhysicalDeviceInfo final
 {
@@ -147,7 +148,7 @@ class Renderer final
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const &GetViewportResolution () const noexcept;
 
-        [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
+        [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
 
         [[nodiscard]] bool OnCreateDevice ( float dpi ) noexcept;
@@ -206,7 +207,8 @@ class Renderer final
         [[nodiscard]] bool DeployInstance () noexcept;
         void DestroyInstance () noexcept;
 
-        [[nodiscard]] bool DeploySurface ( ANativeWindow &nativeWindow ) noexcept;
+        [[nodiscard]] bool DeploySurface ( WindowHandle nativeWindow ) noexcept;
+        [[nodiscard]] bool DeployNativeSurface ( WindowHandle nativeWindow ) noexcept;
         void DestroySurface () noexcept;
 
         [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
@@ -238,6 +240,8 @@ class Renderer final
         [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
             char const* extension
         ) noexcept;
+
+        [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 

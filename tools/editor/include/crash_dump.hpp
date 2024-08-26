@@ -30,7 +30,6 @@ class CrashDump final
 
     private:
         [[nodiscard]] static LONG CALLBACK CrashHandler ( EXCEPTION_POINTERS* exceptionPointers );
-        [[nodiscard]] static bool CreateDumpDirectory () noexcept;
 };
 
 } // namespace editor

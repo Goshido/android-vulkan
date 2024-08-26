@@ -5,6 +5,7 @@
 #include <pbr/reflection_probe_local.hpp>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 

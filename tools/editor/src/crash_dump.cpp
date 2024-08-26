@@ -1,11 +1,11 @@
 #include <crash_dump.hpp>
 #include <logger.hpp>
+#include <os_utils.hpp>
 #include <version.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <DbgHelp.h>
-#include <filesystem>
 
 GX_RESTORE_WARNING_STATE
 
@@ -21,9 +21,7 @@ char CRASH_DIRECTORY[ 256U ];
 
 bool CrashDump::Install () noexcept
 {
-    if ( !CreateDumpDirectory () ) [[unlikely]]
-        return false;
-
+    std::filesystem::create_directories ( OSUtils::ResolvePath ( CRASH_DIRECTORY ) );
     SetUnhandledExceptionFilter ( &CrashDump::CrashHandler );
     return true;
 }
@@ -116,21 +114,6 @@ LONG CALLBACK CrashDump::CrashHandler ( EXCEPTION_POINTERS* exceptionPointers )
     CloseHandle ( dumpFile );
     FreeLibrary ( dbghelp );
     return EXCEPTION_CONTINUE_SEARCH;
-}
-
-bool CrashDump::CreateDumpDirectory () noexcept
-{
-    constexpr auto limit = static_cast<DWORD> ( std::size ( CRASH_DIRECTORY ) );
-
-    if ( DWORD const len = ExpandEnvironmentStringsA ( CRASH_DIRECTORY_TARGET, CRASH_DIRECTORY, limit ); len > limit )
-    {
-        [[unlikely]]
-        android_vulkan::LogError ( "Can't resolve crash directory." );
-        return false;
-    }
-
-    std::filesystem::create_directories ( CRASH_DIRECTORY );
-    return true;
 }
 
 } // namespace editor

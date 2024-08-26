@@ -1,13 +1,13 @@
 #include <av_assert.hpp>
-#include <save_state.hpp>
+#include <os_utils.hpp>
 #include <logger.hpp>
+#include <save_state.hpp>
 #include <trace.hpp>
 #include <android_vulkan_sdk/primitive_types.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <fstream>
-#include <Windows.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -1029,8 +1029,7 @@ SaveState::Container::Container ( std::string_view const &value ) noexcept:
 bool SaveState::Load ( std::string_view const &file, bool silent ) noexcept
 {
     AV_TRACE ( "Loading state" )
-
-    std::ifstream stream ( ResolvePath ( file ), std::ios::binary | std::ios::ate | std::ios::in );
+    std::ifstream stream ( OSUtils::ResolvePath ( file ), std::ios::binary | std::ios::ate | std::ios::in );
 
     if ( !stream.is_open () ) [[unlikely]]
     {
@@ -1061,7 +1060,6 @@ bool SaveState::Load ( std::string_view const &file, bool silent ) noexcept
 bool SaveState::Save ( std::string_view const &file ) noexcept
 {
     AV_TRACE ( "Saving state" )
-
     Binary aData {};
     Binary bData {};
 
@@ -1076,7 +1074,7 @@ bool SaveState::Save ( std::string_view const &file ) noexcept
     auto& saveStateInfo = *reinterpret_cast<SaveStateInfo*> ( aData.data () );
     saveStateInfo._bDataOffset = static_cast<android_vulkan::UTF8Offset> ( aData.size () );
 
-    std::filesystem::path const path = ResolvePath ( file );
+    std::filesystem::path const path = OSUtils::ResolvePath ( file );
     std::filesystem::create_directories ( path.parent_path () );
 
     std::ofstream stream ( path, std::ios::binary | std::ios::trunc | std::ios::out );
@@ -1782,17 +1780,6 @@ std::string_view SaveState::DecodeKey ( uint8_t const* &aData, uint8_t const* bD
 
     aData += sizeof ( StringInfo );
     return result;
-}
-
-std::filesystem::path SaveState::ResolvePath ( std::string_view const &file ) noexcept
-{
-    AV_TRACE ( "Resolving path" )
-    char const* f = file.data ();
-    DWORD const len = ExpandEnvironmentStringsA ( f, nullptr, 0U );
-    std::string path {};
-    path.resize ( static_cast<size_t> ( len ) );
-    ExpandEnvironmentStringsA ( f, path.data (), len );
-    return std::filesystem::path ( std::move ( path ) );
 }
 
 } // namespace editor

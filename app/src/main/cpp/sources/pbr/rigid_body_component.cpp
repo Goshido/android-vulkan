@@ -7,6 +7,7 @@
 #include <guid_generator.hpp>
 #include <physics.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <shape_sphere.hpp>
 

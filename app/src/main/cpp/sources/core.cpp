@@ -307,7 +307,7 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, VSYNC ) ) [[unlikely]]
+    if ( !_renderer.OnCreateSwapchain ( reinterpret_cast<WindowHandle> ( _nativeWindow ), VSYNC ) ) [[unlikely]]
     {
         _renderer.OnDestroySwapchain ();
         return false;

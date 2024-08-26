@@ -6,7 +6,6 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <filesystem>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -233,8 +232,6 @@ class SaveState final
         [[nodiscard]] static bool DecodeBool ( uint8_t const* &aData ) noexcept;
         [[nodiscard]] static Container::eType DecodeType ( uint8_t const* &aData ) noexcept;
         [[nodiscard]] static std::string_view DecodeKey ( uint8_t const* &aData, uint8_t const* bData ) noexcept;
-
-        [[nodiscard]] static std::filesystem::path ResolvePath ( std::string_view const &file ) noexcept;
 };
 
 } // namespace editor

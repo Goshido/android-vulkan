@@ -7,6 +7,7 @@
 #include <pbr/skin.inc>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

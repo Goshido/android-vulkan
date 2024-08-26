@@ -115,7 +115,7 @@ class MemoryAllocator final
         void Init ( VkPhysicalDeviceMemoryProperties const &properties ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
-        void MakeSnapshot () noexcept;
+        void MakeSnapshot ( char const* directory ) noexcept;
 
         [[nodiscard]] bool MapMemory ( void* &ptr,
             VkDevice device,

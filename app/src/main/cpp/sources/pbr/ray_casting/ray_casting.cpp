@@ -3,6 +3,7 @@
 #include <pbr/mesh_manager.hpp>
 #include <pbr/opaque_material.hpp>
 #include <pbr/static_mesh_component.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <vertex_info.hpp>
 

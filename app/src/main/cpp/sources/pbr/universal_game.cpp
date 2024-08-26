@@ -4,6 +4,7 @@
 #include <pbr/universal_game.hpp>
 #include <gamepad.hpp>
 #include <global_force_gravity.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {

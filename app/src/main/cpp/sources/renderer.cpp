@@ -1544,7 +1544,7 @@ bool Renderer::DeployInstance () noexcept
         VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
     };
 
-    constexpr VkValidationFeaturesEXT validationInfo
+    constexpr static VkValidationFeaturesEXT validationInfo
     {
         .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
         .pNext = nullptr,

@@ -4,6 +4,7 @@
 
 #include "command_line.hpp"
 #include "main_window.hpp"
+#include <renderer.hpp>
 
 
 namespace editor {
@@ -11,8 +12,12 @@ namespace editor {
 class Editor final
 {
     private:
-        MainWindow      _mainWindow {};
-        bool            _run = true;
+        MainWindow                  _mainWindow {};
+        android_vulkan::Renderer    _renderer {};
+        bool                        _run = true;
+
+        float                       _dpi = 96.0F;
+        std::string                 _gpu {};
 
     public:
         Editor () = delete;
@@ -28,6 +33,10 @@ class Editor final
         ~Editor () = default;
 
         [[nodiscard]] bool Run () noexcept;
+
+    private:
+        void LoadConfig () noexcept;
+        void SaveConfig () noexcept;
 };
 
 } // namespace editor

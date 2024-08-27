@@ -21,7 +21,7 @@ char CRASH_DIRECTORY[ 256U ];
 
 bool CrashDump::Install () noexcept
 {
-    std::filesystem::create_directories ( OSUtils::ResolvePath ( CRASH_DIRECTORY ) );
+    std::filesystem::create_directories ( OSUtils::ResolvePath ( CRASH_DIRECTORY_TARGET ) );
     SetUnhandledExceptionFilter ( &CrashDump::CrashHandler );
     return true;
 }

@@ -151,7 +151,7 @@ class Renderer final
         [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
 
-        [[nodiscard]] bool OnCreateDevice ( float dpi ) noexcept;
+        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept;
         void OnDestroyDevice () noexcept;
 
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
@@ -188,8 +188,7 @@ class Renderer final
 
         // "features" is an array of offsets inside VkPhysicalDeviceFeatures structure.
         [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
-            size_t const* features,
-            size_t count
+            std::span<size_t const> const &features
         ) noexcept;
 
         [[nodiscard]] bool CheckRequiredFormats () noexcept;
@@ -201,7 +200,7 @@ class Renderer final
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] bool DeployDevice () noexcept;
+        [[nodiscard]] bool DeployDevice ( std::string_view const &userGPU ) noexcept;
         void DestroyDevice () noexcept;
 
         [[nodiscard]] bool DeployInstance () noexcept;
@@ -225,7 +224,8 @@ class Renderer final
             VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
         ) const noexcept;
 
-        [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
+        [[nodiscard]] bool SelectTargetHardware ( std::string_view const &userGPU,
+            VkPhysicalDevice &targetPhysicalDevice,
             uint32_t &targetQueueFamilyIndex
         ) const noexcept;
 
@@ -242,6 +242,8 @@ class Renderer final
         ) noexcept;
 
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
+        [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
+        [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -262,7 +264,7 @@ class Renderer final
         static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) noexcept;
 
         static void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
-                VkPhysicalDeviceGroupProperties const &props
+            VkPhysicalDeviceGroupProperties const &props
         ) noexcept;
 
         [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) noexcept;

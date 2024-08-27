@@ -957,7 +957,7 @@ void Renderer::OnDestroySwapchain () noexcept
     DestroySurface ();
 }
 
-bool Renderer::OnCreateDevice ( float dpi ) noexcept
+bool Renderer::OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept
 {
     if ( !_vulkanLoader.AcquireBootstrapFunctions () ) [[unlikely]]
         return false;
@@ -1033,7 +1033,7 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( !DeployDevice () ) [[unlikely]]
+    if ( !DeployDevice ( userGPU ) ) [[unlikely]]
         return false;
 
     _dpi = dpi;
@@ -1234,20 +1234,24 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &d
     return _isDeviceExtensionSupported;
 }
 
-bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t const* features, size_t count ) noexcept
+bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, std::span<size_t const> const &features ) noexcept
 {
     auto const &featureInfo = _physicalDeviceInfo[ physicalDevice ];
 
     LogInfo ( "Renderer::CheckRequiredFeatures - Checking required features..." );
 
+    if ( features.empty () ) [[unlikely]]
+    {
+        LogInfo ( "%sOK: No extra features are required", INDENT_1 );
+        return true;
+    }
+
     // std::set is for alphabetical ordering.
     std::set<std::string_view> supportedFeatures;
     std::set<std::string_view> unsupportedFeatures;
 
-    for ( size_t i = 0U; i < count; ++i )
+    for ( size_t offset : features )
     {
-        size_t const offset = features[ i ];
-
         auto const enable = *reinterpret_cast<VkBool32 const*> (
             reinterpret_cast<uint8_t const*> ( &featureInfo._features ) + offset
         );
@@ -1275,16 +1279,17 @@ bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t c
 bool Renderer::CheckRequiredFormats () noexcept
 {
     LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
-    std::vector<char const*> unsupportedFormats;
+    std::vector<char const*> unsupportedFormats {};
 
-    auto probe = [&] ( VkFormat format, char const* name ) {
+    for ( auto const &[format, name] : GetRequiredFormats () )
+    {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties ( _physicalDevice, format, &props );
 
-        if ( !props.linearTilingFeatures && !props.optimalTilingFeatures && !props.bufferFeatures )
+        if ( !props.linearTilingFeatures & !props.optimalTilingFeatures & !props.bufferFeatures ) [[unlikely]]
         {
             unsupportedFormats.push_back ( name );
-            return;
+            continue;
         }
 
         LogInfo ( "%sOK: %s", INDENT_1, name );
@@ -1311,23 +1316,7 @@ bool Renderer::CheckRequiredFormats () noexcept
         );
 
         std::this_thread::sleep_for ( ANTISPAM_DELAY );
-    };
-
-    probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
-    probe ( VK_FORMAT_ASTC_6x6_SRGB_BLOCK, "VK_FORMAT_ASTC_6x6_SRGB_BLOCK" );
-    probe ( VK_FORMAT_ASTC_6x6_UNORM_BLOCK, "VK_FORMAT_ASTC_6x6_UNORM_BLOCK" );
-    probe ( VK_FORMAT_D16_UNORM, "VK_FORMAT_D16_UNORM" );
-    probe ( VK_FORMAT_D24_UNORM_S8_UINT, "VK_FORMAT_D24_UNORM_S8_UINT" );
-    probe ( VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT" );
-    probe ( VK_FORMAT_R16G16B16A16_SFLOAT, "VK_FORMAT_R16G16B16A16_SFLOAT" );
-    probe ( VK_FORMAT_R8G8B8A8_SRGB, "VK_FORMAT_R8G8B8A8_SRGB" );
-    probe ( VK_FORMAT_R8G8B8A8_UNORM, "VK_FORMAT_R8G8B8A8_UNORM" );
-    probe ( VK_FORMAT_R8G8_SRGB, "VK_FORMAT_R8G8_SRGB" );
-    probe ( VK_FORMAT_R8_SRGB, "VK_FORMAT_R8_SRGB" );
-    probe ( VK_FORMAT_R8_UNORM, "VK_FORMAT_R8_UNORM" );
-    probe ( VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT" );
-    probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
-    probe ( VK_FORMAT_R16_SFLOAT, "VK_FORMAT_R16_SFLOAT" );
+    }
 
     if ( unsupportedFormats.empty () ) [[likely]]
         return true;
@@ -1343,13 +1332,13 @@ bool Renderer::CheckRequiredFormats () noexcept
 bool Renderer::DeployDebugFeatures () noexcept
 {
     vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" ) )
     );
 
     AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
 
     vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" ) )
     );
 
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
@@ -1372,7 +1361,7 @@ void Renderer::DestroyDebugFeatures () noexcept
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-bool Renderer::DeployDevice () noexcept
+bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
 {
     constexpr float priorities = 1.0F;
 
@@ -1383,7 +1372,7 @@ bool Renderer::DeployDevice () noexcept
     deviceQueueCreateInfo.queueCount = 1U;
     deviceQueueCreateInfo.pQueuePriorities = &priorities;
 
-    if ( !SelectTargetHardware ( _physicalDevice, _queueFamilyIndex ) ) [[unlikely]]
+    if ( !SelectTargetHardware ( userGPU, _physicalDevice, _queueFamilyIndex ) ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceProperties props;
@@ -1403,12 +1392,7 @@ bool Renderer::DeployDevice () noexcept
     if ( !CheckRequiredDeviceExtensions ( caps._extensions ) ) [[unlikely]]
         return false;
 
-    constexpr size_t const features[] =
-    {
-        offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
-    };
-
-    if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) ) [[unlikely]]
+    if ( !CheckRequiredFeatures ( _physicalDevice, GetRequiredFeatures () ) ) [[unlikely]]
         return false;
 
     if ( !CheckRequiredFormats () ) [[unlikely]]
@@ -2347,39 +2331,6 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
     );
 
     return targetCompositeAlpha != VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR;
-}
-
-bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
-    uint32_t &targetQueueFamilyIndex
-) const noexcept
-{
-    // Find physical device with graphic and compute queues.
-
-    constexpr auto target = static_cast<VkFlags> (
-        AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
-    );
-
-    for ( auto const &device : _physicalDeviceInfo )
-    {
-        auto const &queueFamilyInfo = device.second._queueFamilyInfo;
-        size_t const count = queueFamilyInfo.size ();
-
-        for ( size_t i = 0U; i < count; ++i )
-        {
-            VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
-
-            if ( ( queueFamilyFlags & target ) != target )
-                continue;
-
-            targetPhysicalDevice = device.first;
-            targetQueueFamilyIndex = static_cast<uint32_t> ( i );
-
-            return true;
-        }
-    }
-
-    LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
-    return false;
 }
 
 bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept

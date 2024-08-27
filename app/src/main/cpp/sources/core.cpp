@@ -115,7 +115,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
                 return;
             }
 
-            if ( !_renderer.OnCreateDevice ( dpi ) ) [[unlikely]]
+            if ( !_renderer.OnCreateDevice ( {}, dpi ) ) [[unlikely]]
             {
                 _renderer.OnDestroyDevice ();
                 _game->OnDestroySoundSystem ();

@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `58428b0c0e9cb818ee240857c5b4725df8c5183e` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `b93cd0c87caa1d69346e9a1adb7b3e1c68b72423` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -111,3 +111,4 @@ Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-Validation
 Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636) | ✔️ Fixed
 First `vkGetSwapchainImagesKHR` false positive | [#8138](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8138) | ✔️ Fixed
 No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ⚠️ Submitted
+`VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | ⚠️ Submitted

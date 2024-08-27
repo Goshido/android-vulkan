@@ -74,7 +74,6 @@ class Renderer final
         PFN_vkDestroyDebugUtilsMessengerEXT                                 vkDestroyDebugUtilsMessengerEXT;
 
         VkDebugUtilsMessengerEXT                                            _debugUtilsMessenger;
-        VkDebugUtilsMessengerCreateInfoEXT                                  _debugUtilsMessengerCreateInfo;
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -181,6 +180,17 @@ class Renderer final
         [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format ) noexcept;
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+            VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+            void* pUserData
+        );
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     private:
         [[nodiscard]] bool CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
@@ -244,17 +254,6 @@ class Renderer final
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
         [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-            VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
-            void* pUserData
-        );
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;

@@ -405,6 +405,23 @@ constexpr size_t g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems = std::size (
     g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
 );
 
+constexpr VkDebugUtilsMessengerCreateInfoEXT g_debugUtilsMessengerCreateInfo
+{
+    .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+    .pNext = nullptr,
+    .flags = 0U,
+
+    .messageSeverity = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ),
+
+    .messageType = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ),
+
+    .pfnUserCallback = &Renderer::OnVulkanDebugUtils,
+    .pUserData = nullptr
+};
+
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 } // end of anonymous namespace
@@ -797,7 +814,6 @@ Renderer::Renderer () noexcept:
     vkCreateDebugUtilsMessengerEXT ( nullptr ),
     vkDestroyDebugUtilsMessengerEXT ( nullptr ),
     _debugUtilsMessenger ( VK_NULL_HANDLE ),
-    _debugUtilsMessengerCreateInfo {},
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -1149,6 +1165,110 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
     return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+    VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+    void* /*pUserData*/
+)
+{
+    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
+        return VK_FALSE;
+
+    auto const encodeObjects = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsObjectNameInfoEXT const* objects
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
+
+        dst += objects->pObjectName ? objects->pObjectName : "[nullptr]";
+
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsObjectNameInfoEXT const &object = objects[ i ];
+            dst += ", ";
+            dst += object.pObjectName ? object.pObjectName : "[nullptr]";
+        }
+
+        return dst.c_str ();
+    };
+
+    auto const encodeLabel = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsLabelEXT const* labels
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
+
+        dst += labels->pLabelName ? labels->pLabelName : "[nullptr]";
+
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsLabelEXT const &label = labels[ i ];
+            dst += ", ";
+            dst += label.pLabelName ? label.pLabelName : "[nullptr]";
+        }
+
+        return dst.c_str ();
+    };
+
+    constexpr char const format[] =
+        R"(Renderer::OnVulkanDebugReport:
+severity: %s
+type: %s
+message ID name: %s
+message ID: 0x%08X
+queues: %s
+command buffers: %s
+objects: %s
+message: %s
+)";
+
+    std::string queues {};
+    std::string commandBuffers {};
+    std::string objects {};
+
+    std::string const severity = StringifyVkFlags ( messageSeverity,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
+    );
+
+    std::string const type = StringifyVkFlags ( messageTypes,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
+    );
+
+    auto const prettyMessage = [] ( char const* message ) noexcept -> char const* {
+        char const* cases[] = { message, "N/A" };
+        return cases[ static_cast<size_t> ( message == nullptr ) ];
+    };
+
+    constexpr size_t removeFirstSpace = 1U;
+
+    LogError ( format,
+        severity.c_str () + removeFirstSpace,
+        type.c_str () + removeFirstSpace,
+        prettyMessage ( pCallbackData->pMessageIdName ),
+        pCallbackData->messageIdNumber,
+        encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
+        encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
+        encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
+        pCallbackData->pMessage
+    );
+
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+    AV_ASSERT ( false )
+
+#endif // ANDROID_VULKAN_STRICT_MODE
+
+    return VK_FALSE;
+}
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
 bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
 {
     if ( !CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
@@ -1344,7 +1464,12 @@ bool Renderer::DeployDebugFeatures () noexcept
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
     return CheckVkResult (
-        vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
+        vkCreateDebugUtilsMessengerEXT ( _instance,
+            &g_debugUtilsMessengerCreateInfo,
+            nullptr,
+            &_debugUtilsMessenger
+        ),
+
         "DeployDebugFeatures",
         "Can't Vulkan debug callback"
     );
@@ -1544,31 +1669,14 @@ bool Renderer::DeployInstance () noexcept
         VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
     };
 
-    constexpr static VkValidationFeaturesEXT validationInfo
+    constexpr VkValidationFeaturesEXT validationInfo
     {
         .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-        .pNext = nullptr,
+        .pNext = &g_debugUtilsMessengerCreateInfo,
         .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
         .pEnabledValidationFeatures = validationFeatures,
         .disabledValidationFeatureCount = 0U,
         .pDisabledValidationFeatures = nullptr
-    };
-
-    _debugUtilsMessengerCreateInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-        .pNext = &validationInfo,
-        .flags = 0U,
-
-        .messageSeverity = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ),
-
-        .messageType = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ),
-
-        .pfnUserCallback = &Renderer::OnVulkanDebugUtils,
-        .pUserData = nullptr
     };
 
     constexpr static char const* const layers[] =
@@ -1576,7 +1684,7 @@ bool Renderer::DeployInstance () noexcept
         "VK_LAYER_KHRONOS_validation"
     };
 
-    instanceCreateInfo.pNext = &_debugUtilsMessengerCreateInfo;
+    instanceCreateInfo.pNext = &validationInfo;
     instanceCreateInfo.enabledLayerCount = static_cast<uint32_t> ( std::size ( layers ) );
     instanceCreateInfo.ppEnabledLayerNames = layers;
 
@@ -2498,110 +2606,6 @@ bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions
     LogInfo ( "%sOK: presented", INDENT_2 );
     return true;
 }
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-    VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
-    void* /*pUserData*/
-)
-{
-    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
-        return VK_FALSE;
-
-    auto const encodeObjects = [] ( std::string &dst,
-        uint32_t count,
-        VkDebugUtilsObjectNameInfoEXT const* objects
-    ) noexcept -> char const* {
-        if ( !count )
-            return "N/A";
-
-        dst += objects->pObjectName ? objects->pObjectName : "[nullptr]";
-
-        for ( uint32_t i = 1U; i < count; ++i )
-        {
-            VkDebugUtilsObjectNameInfoEXT const &object = objects[ i ];
-            dst += ", ";
-            dst += object.pObjectName ? object.pObjectName : "[nullptr]";
-        }
-
-        return dst.c_str ();
-    };
-
-    auto const encodeLabel = [] ( std::string &dst,
-        uint32_t count,
-        VkDebugUtilsLabelEXT const* labels
-    ) noexcept -> char const* {
-        if ( !count )
-            return "N/A";
-
-        dst += labels->pLabelName ? labels->pLabelName : "[nullptr]";
-
-        for ( uint32_t i = 1U; i < count; ++i )
-        {
-            VkDebugUtilsLabelEXT const &label = labels[ i ];
-            dst += ", ";
-            dst += label.pLabelName ? label.pLabelName : "[nullptr]";
-        }
-
-        return dst.c_str ();
-    };
-
-    constexpr char const format[] =
-R"(Renderer::OnVulkanDebugReport:
-severity: %s
-type: %s
-message ID name: %s
-message ID: 0x%08X
-queues: %s
-command buffers: %s
-objects: %s
-message: %s
-)";
-
-    std::string queues {};
-    std::string commandBuffers {};
-    std::string objects {};
-
-    std::string const severity = StringifyVkFlags ( messageSeverity,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
-    );
-
-    std::string const type = StringifyVkFlags ( messageTypes,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
-    );
-
-    auto const prettyMessage = [] ( char const* message ) noexcept -> char const* {
-        char const* cases[] = { message, "N/A" };
-        return cases[ static_cast<size_t> ( message == nullptr ) ];
-    };
-
-    constexpr size_t removeFirstSpace = 1U;
-
-    LogError ( format,
-        severity.c_str () + removeFirstSpace,
-        type.c_str () + removeFirstSpace,
-        prettyMessage ( pCallbackData->pMessageIdName ),
-        pCallbackData->messageIdNumber,
-        encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
-        encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
-        encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
-        pCallbackData->pMessage
-    );
-
-#ifdef ANDROID_VULKAN_STRICT_MODE
-
-    AV_ASSERT ( false )
-
-#endif // ANDROID_VULKAN_STRICT_MODE
-
-    return VK_FALSE;
-}
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::PrintCoreExtensions () noexcept
 {

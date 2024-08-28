@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `b93cd0c87caa1d69346e9a1adb7b3e1c68b72423` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `c6dbf2c4d429151224dc6836db76c24309bc99a8` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -38,59 +38,70 @@ mklink python3.exe python.exe
 Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process is significantly simplified:
 
 ```PowerShell
+
+>>> common.ps1
+
+$global:VVL_DIR = "D:/Development/Vulkan-ValidationLayers"
+
+>>> Main script
+
 Clear-Host
 
 # Preparing sources...
 
-$ndk = "D:/Programs/Android/Sdk/ndk/27.0.12077973"
+.\common.ps1
 
-$androidVulkanDir = "D:/Development/android-vulkan"
-$vvlDir = "D:/Development/Vulkan-ValidationLayers"
+$NDK = "D:/Programs/Android/Sdk/ndk/27.0.12077973"
 
-$abi = "arm64-v8a"
-$androidAPI = 30
-$buildThreads = 16
+$ANDROID_VULKAN_DIR = "D:/Development/android-vulkan"
 
-$buildDir = "${vvlDir}/build-android/obj/${abi}"
-$libDir = "third-party/jniLibs/${abi}"
+$ABI = "arm64-v8a"
+$ANDROID_API = 30
+$BUILD_THREADS = 16
+
+$BUILD_DIR = "${VVL_DIR}/build-android/obj/${ABI}"
+$LIB_DIR = "third-party/jniLibs/${ABI}"
 
 # Cleaning repo...
 
-Set-Location "${vvlDir}"
-git clean -d -fx -f
+Set-Location "${VVL_DIR}"
+
+git                                                                         `
+    clean                                                                   `
+    -d                                                                      `
+    -fx                                                                     `
+    -f
 
 # Making project files...
 
-$api = "android-${androidAPI}"
-
 cmake                                                                       `
     -S .                                                                    `
-    -B "${buildDir}"                                                        `
+    -B "${BUILD_DIR}"                                                       `
     -G Ninja                                                                `
-    -D ANDROID_PLATFORM=$api                                                `
+    -D ANDROID_PLATFORM="android-${ANDROID_API}"                            `
     -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                 `
-    -D CMAKE_ANDROID_ARCH_ABI=${abi}                                        `
+    -D BUILD_TESTS=OFF                                                      `
+    -D BUILD_WERROR=ON                                                      `
+    -D CMAKE_ANDROID_ARCH_ABI=${ABI}                                        `
     -D CMAKE_ANDROID_STL_TYPE=c++_static                                    `
-    -D CMAKE_INSTALL_LIBDIR="${libDir}"                                     `
-    -D CMAKE_TOOLCHAIN_FILE="${ndk}/build/cmake/android.toolchain.cmake"    `
+    -D CMAKE_INSTALL_LIBDIR="${LIB_DIR}"                                    `
+    -D CMAKE_TOOLCHAIN_FILE="${NDK}/build/cmake/android.toolchain.cmake"    `
     -D CMAKE_BUILD_TYPE=Release                                             `
     -D UPDATE_DEPS=ON                                                       `
-    -D UPDATE_DEPS_DIR="${buildDir}"
+    -D UPDATE_DEPS_DIR="${BUILD_DIR}"
 
 # Building projects...
 
-$threads = "-j${buidThreads}"
-
 cmake                                                                       `
-    --build "${buildDir}"                                                   `
-    $threads
+    --build "${BUILD_DIR}"                                                  `
+    "-j${BUID_THREADS}"
 
 # Stripping binaries and copying them into android-vulkan project...
 
 cmake                                                                       `
-    --install "${buildDir}"                                                 `
+    --install "${BUILD_DIR}"                                                `
     --strip                                                                 `
-    --prefix "${androidVulkanDir}"
+    --prefix "${ANDROID_VULKAN_DIR}"
 
 Write-Host "Done"
 

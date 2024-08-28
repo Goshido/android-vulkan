@@ -6,7 +6,7 @@ namespace android_vulkan {
 
 std::optional<SoundStorage::SoundFile> SoundStorage::GetFile ( std::string &&file ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( auto findResult = _storage.find ( file ); findResult != _storage.cend () )
         return findResult->second;
@@ -25,7 +25,7 @@ std::optional<SoundStorage::SoundFile> SoundStorage::GetFile ( std::string &&fil
 
 void SoundStorage::Trim () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     for ( auto i = _storage.cbegin (); i != _storage.cend (); )
     {

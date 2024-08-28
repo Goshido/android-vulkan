@@ -8,7 +8,7 @@ std::mutex MeshManager::_mutex;
 
 void MeshManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _toFreeTransferResource.empty () )
         return;
@@ -32,7 +32,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( !fileName )
         return mesh;
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     auto findResult = _meshStorage.find ( fileName );
 
     if ( findResult != _meshStorage.cend () )
@@ -54,7 +54,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
 
 MeshManager &MeshManager::GetInstance () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         _instance = new MeshManager ();
@@ -64,7 +64,7 @@ MeshManager &MeshManager::GetInstance () noexcept
 
 void MeshManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         return;

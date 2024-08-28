@@ -432,7 +432,7 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     VkDeviceSize offset
 ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -486,7 +486,7 @@ void MemoryAllocator::MakeSnapshot ( char const* directory ) noexcept
     // See chrome://tracing JSON format here:
     // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _chunkMap.empty () )
         return;
@@ -569,7 +569,7 @@ bool MemoryAllocator::MapMemory ( void* &ptr,
     char const* message
 ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -596,7 +596,7 @@ bool MemoryAllocator::MapMemory ( void* &ptr,
 
 void MemoryAllocator::UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -635,7 +635,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     if ( memoryTypeIndex > VK_MAX_MEMORY_TYPES ) [[unlikely]]
         return false;
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     bool const isStaging = ( properties & STAGING_MEMORY_MASK ) == STAGING_MEMORY_MASK;
     auto &chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];

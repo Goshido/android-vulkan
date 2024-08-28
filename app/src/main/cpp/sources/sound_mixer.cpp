@@ -210,7 +210,7 @@ bool SoundMixer::Init () noexcept
                 // To not consume too much CPU time.
                 std::this_thread::sleep_for ( WORKER_TIMEOUT );
 
-                std::unique_lock<std::mutex> const lock ( _mutex );
+                std::lock_guard const lock ( _mutex );
 
                 for ( auto* streamer : _decompressors )
                     streamer->OnDecompress ();
@@ -277,7 +277,7 @@ void SoundMixer::Destroy () noexcept
         _workerThread.join ();
     }
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     for ( auto &si : _streamInfo )
     {
@@ -373,7 +373,7 @@ bool SoundMixer::IsOffline () const noexcept
 
 void SoundMixer::Pause () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( IsOffline () ) [[unlikely]]
         return;
@@ -401,7 +401,7 @@ void SoundMixer::Pause () noexcept
 
 void SoundMixer::Resume () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( IsOffline () ) [[unlikely]]
         return;
@@ -422,7 +422,7 @@ void SoundMixer::Resume () noexcept
 
 bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( IsOffline () ) [[unlikely]]
         return true;
@@ -455,7 +455,7 @@ bool SoundMixer::RequestPause ( SoundEmitter &emitter ) noexcept
 
 bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( IsOffline () ) [[unlikely]]
         return true;
@@ -488,7 +488,7 @@ bool SoundMixer::RequestPlay ( SoundEmitter &emitter ) noexcept
 
 bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( IsOffline () ) [[unlikely]]
         return true;
@@ -527,7 +527,7 @@ bool SoundMixer::RequestStop ( SoundEmitter &emitter ) noexcept
 
 void SoundMixer::RegisterDecompressor ( PCMStreamer &streamer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _decompressors.contains ( &streamer ) ) [[unlikely]]
     {
@@ -541,7 +541,7 @@ void SoundMixer::RegisterDecompressor ( PCMStreamer &streamer ) noexcept
 
 void SoundMixer::UnregisterDecompressor ( PCMStreamer &streamer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _decompressors.erase ( &streamer ) > 0U ) [[likely]]
         return;
@@ -624,7 +624,7 @@ void SoundMixer::RecreateSoundStream ( AAudioStream &stream ) noexcept
 {
     std::thread thread (
         [ this, &stream ] () noexcept {
-            std::unique_lock<std::mutex> const lock ( _mutex );
+            std::lock_guard const lock ( _mutex );
 
             StreamCloser const closer ( stream );
             StreamInfo* targetStreamInfo = nullptr;

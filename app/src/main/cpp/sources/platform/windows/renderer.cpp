@@ -38,33 +38,105 @@ bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
     );
 }
 
-bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/,
-    VkPhysicalDevice &targetPhysicalDevice,
-    uint32_t &targetQueueFamilyIndex
-) const noexcept
+bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
 {
-    // FUCK: Find userGPU in priority, Then fallback to first descrete GPU. Otherwise fallback to available GPU.
-    // Find physical device with graphic and compute queues.
+    // Find physical device with graphic and compute queues. Priority:
+    // 1. user specified GPU
+    // 2. first discrete GPU
+    // 3. first integrated GPU
+
+    struct Candidate final
+    {
+        VkPhysicalDevice                    _device = VK_NULL_HANDLE;
+        VulkanPhysicalDeviceInfo const*     _info = nullptr;
+    };
+
+    std::optional<Candidate> user {};
+    std::optional<Candidate> discrete {};
+    std::optional<Candidate> integrated {};
+
+    for ( auto const &device : _physicalDeviceInfo )
+    {
+        VulkanPhysicalDeviceInfo const &info = device.second;
+
+        if ( info._deviceName == userGPU )
+        {
+            user = std::optional<Candidate> (
+                Candidate
+                {
+                    ._device = device.first,
+                    ._info = &info
+                }
+            );
+
+            break;
+        }
+
+        if ( !discrete && info._deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU )
+        {
+            discrete = std::optional<Candidate> (
+                Candidate
+                {
+                    ._device = device.first,
+                    ._info = &info
+                }
+            );
+        }
+
+        if ( integrated || info._deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU )
+            continue;
+
+        integrated = std::optional<Candidate> (
+            Candidate
+            {
+                ._device = device.first,
+                ._info = &info
+            }
+        );
+    }
+
+    using QueueFamilyInfo = std::vector<std::pair<VkFlags, uint32_t>>;
+    QueueFamilyInfo const* queueFamilyInfo;
+
+    auto const grab = [ this ] ( std::optional<Candidate> const &candidate ) noexcept -> QueueFamilyInfo const*
+    {
+        Candidate const &c = *candidate;
+        _physicalDevice = c._device;
+        VulkanPhysicalDeviceInfo const &info = *c._info;
+        _deviceName = info._deviceName;
+        return &info._queueFamilyInfo;
+    };
+
+    if ( user )
+    {
+        queueFamilyInfo = grab ( user );
+    }
+    else if ( discrete )
+    {
+        queueFamilyInfo = grab ( discrete );
+    }
+    else if ( integrated )
+    {
+        queueFamilyInfo = grab ( discrete );
+    }
+    else
+    {
+        LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
+        return false;
+    }
 
     constexpr auto target = static_cast<VkFlags> (
         AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
     );
 
-    for ( auto const &device : _physicalDeviceInfo )
+    std::vector<std::pair<VkFlags, uint32_t>> const &info = *queueFamilyInfo;
+    size_t const count = info.size ();
+
+    for ( size_t i = 0U; i < count; ++i )
     {
-        auto const &queueFamilyInfo = device.second._queueFamilyInfo;
-        size_t const count = queueFamilyInfo.size ();
-
-        for ( size_t i = 0U; i < count; ++i )
+        if ( ( info[ i ].first & target ) == target )
         {
-            VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
-
-            if ( ( queueFamilyFlags & target ) != target )
-                continue;
-
-            targetPhysicalDevice = device.first;
-            targetQueueFamilyIndex = static_cast<uint32_t> ( i );
-
+            _queueFamilyIndex = static_cast<uint32_t> ( i );
             return true;
         }
     }

@@ -29,7 +29,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::AddGlobalForce ( GlobalForceRef const &globalForce ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     auto const result = _globalForces.insert ( globalForce );
 
     if ( result.second )
@@ -41,7 +41,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::RemoveGlobalForce ( GlobalForceRef const &globalForce ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     auto const result = _globalForces.erase ( globalForce );
 
     if ( result > 0U )
@@ -53,7 +53,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::AddRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     RigidBody &body = *rigidBody.get ();
 
     if ( !body.HasShape() )
@@ -77,7 +77,7 @@ Physics::Physics () noexcept:
 
 [[maybe_unused]] bool Physics::RemoveRigidBody ( RigidBodyRef const &rigidBody ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     RigidBody &body = *rigidBody.get ();
     auto const result = body.IsKinematic () ? _kinematics.erase ( rigidBody ) : _dynamics.erase ( rigidBody );
@@ -117,7 +117,7 @@ bool Physics::IsPaused () const noexcept
 
 void Physics::OnIntegrationTypeChanged ( RigidBody &rigidBody ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     ResolveIntegrationType ( rigidBody );
 }
 
@@ -202,7 +202,7 @@ bool Physics::Raycast ( RaycastResult &result, GXVec3 const &from, GXVec3 const 
 
 void Physics::Reset () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     _contactManager.Reset ();
     _dynamics.clear ();
@@ -234,7 +234,7 @@ void Physics::Simulate ( float deltaTime ) noexcept
         return;
     }
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _accumulator += deltaTime * _timeSpeed;
 
     while ( _accumulator >= _fixedTimeStep )

@@ -144,7 +144,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _writeQueue.push_back ( eCommand::Quit );
     }
 
@@ -195,14 +195,14 @@ void Core::OnRightTrigger ( float value ) const noexcept
 void Core::OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept
 {
     _nativeWindow = ANativeWindow_fromSurface ( env, surface );
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _writeQueue.push_back ( eCommand::SwapchainCreated );
 }
 
 void Core::OnSurfaceDestroyed () noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _writeQueue.push_back ( eCommand::SwapchainDestroyed );
     }
 
@@ -225,14 +225,14 @@ void Core::Quit () noexcept
     if ( !g_Core ) [[unlikely]]
         return;
 
-    std::unique_lock<std::mutex> const lock ( g_Core->_mutex );
+    std::lock_guard const lock ( g_Core->_mutex );
     g_Core->_writeQueue.push_back ( eCommand::QuitRequest );
 }
 
 bool Core::ExecuteMessageQueue () noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _readQueue.swap ( _writeQueue );
     }
 

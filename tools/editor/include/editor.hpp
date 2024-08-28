@@ -12,12 +12,20 @@ namespace editor {
 class Editor final
 {
     private:
-        MainWindow                  _mainWindow {};
-        android_vulkan::Renderer    _renderer {};
-        bool                        _run = true;
+        constexpr static float                  DEFAULT_DPI = 96.0F;
+        constexpr static std::string_view       DEFAULT_GPU = "";
 
-        float                       _dpi = 96.0F;
-        std::string                 _gpu {};
+        struct Config final
+        {
+            float                               _dpi = DEFAULT_DPI;
+            std::string                         _gpu = std::string ( DEFAULT_GPU );
+        };
+
+    private:
+        CommandLine                             _commandLine {};
+        MainWindow                              _mainWindow {};
+        android_vulkan::Renderer                _renderer {};
+        bool                                    _run = true;
 
     public:
         Editor () = delete;
@@ -28,15 +36,20 @@ class Editor final
         Editor ( Editor && ) = delete;
         Editor &operator = ( Editor && ) = delete;
 
-        explicit Editor ( CommandLine &&args ) noexcept;
+        explicit Editor ( CommandLine &&commandLine ) noexcept;
 
         ~Editor () = default;
 
         [[nodiscard]] bool Run () noexcept;
 
     private:
-        void LoadConfig () noexcept;
-        void SaveConfig () noexcept;
+        [[nodiscard]] bool InitModules () noexcept;
+        void DestroyModules () noexcept;
+
+        void EventLoop () noexcept;
+
+        [[nodiscard]] std::string_view GetUserGPU () const noexcept;
+        [[nodiscard]] Config LoadConfig () noexcept;
 };
 
 } // namespace editor

@@ -174,7 +174,7 @@ void RigidBody::AddForce ( GXVec3 const &force, GXVec3 const &point, bool forceA
 
 void RigidBody::DisableKinematic ( bool forceAwake ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     _isKinematic = false;
     _forceAwake |= forceAwake;
@@ -187,7 +187,7 @@ void RigidBody::DisableKinematic ( bool forceAwake ) noexcept
 
 void RigidBody::EnableKinematic () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _isKinematic = true;
 
     if ( _physics )
@@ -433,13 +433,13 @@ void RigidBody::SetAwake () noexcept
 
 void RigidBody::OnRegister ( Physics &physics ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _physics = &physics;
 }
 
 void RigidBody::OnUnregister () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _physics = nullptr;
 }
 

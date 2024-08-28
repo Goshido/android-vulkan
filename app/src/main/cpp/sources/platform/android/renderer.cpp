@@ -29,10 +29,7 @@ bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
     );
 }
 
-bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/,
-    VkPhysicalDevice &targetPhysicalDevice,
-    uint32_t &targetQueueFamilyIndex
-) const noexcept
+bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/ ) noexcept
 {
     // Find physical device with graphic and compute queues.
 
@@ -52,9 +49,8 @@ bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/,
             if ( ( queueFamilyFlags & target ) != target )
                 continue;
 
-            targetPhysicalDevice = device.first;
-            targetQueueFamilyIndex = static_cast<uint32_t> ( i );
-
+            _physicalDevice = device.first;
+            _queueFamilyIndex = static_cast<uint32_t> ( i );
             return true;
         }
     }

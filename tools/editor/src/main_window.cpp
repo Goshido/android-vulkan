@@ -1,19 +1,22 @@
 #include <logger.hpp>
 #include <main_window.hpp>
+#include <os_utils.hpp>
 #include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <tchar.h>
+#include <strsafe.h>
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
 
-bool MainWindow::MakeWindow () noexcept
+bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Making OS window" )
+    _messageQueue = &messageQueue;
     HMODULE const module = GetModuleHandleA ( nullptr );
 
     WNDCLASSA const wndClass
@@ -76,7 +79,7 @@ bool MainWindow::Destroy () noexcept
 
         if ( result == 0 ) [[unlikely]]
         {
-            android_vulkan::LogError ( "MainWindow: Can't close native window." );
+            OSUtils::PrintLastError ( "MainWindow" );
             return false;
         }
 
@@ -125,9 +128,15 @@ void MainWindow::Connect ( HWND nativeWindow ) noexcept
     DestroyWindow ( nativeWindow );
 }
 
-void MainWindow::FUCKCheck () noexcept
+void MainWindow::OnClose () noexcept
 {
-    android_vulkan::LogDebug ( "Resize event %p (HWND %p)", this, _nativeWindow );
+    _messageQueue->Enqueue (
+        Message
+        {
+            ._type = eMessageType::CloseEditor,
+            ._params = nullptr
+        }
+    );
 }
 
 LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
@@ -144,9 +153,9 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
             return DefWindowProcA ( hwnd, msg, wParam, lParam );
         }
 
-        case WM_SIZE:
-            mainWindow.FUCKCheck ();
-        return DefWindowProcA ( hwnd, msg, wParam, lParam );
+        case WM_CLOSE:
+            mainWindow.OnClose ();
+        return 0;
 
         default:
         return DefWindowProcA ( hwnd, msg, wParam, lParam );

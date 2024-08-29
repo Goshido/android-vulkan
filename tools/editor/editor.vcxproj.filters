@@ -102,6 +102,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
       <Filter>Source Files\core\GXCommon\Intrinsics</Filter>
     </ClCompile>
+    <ClCompile Include="src\message_queue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -154,6 +157,12 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp">
       <Filter>Header Files\core\GXCommon\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="include\message_queue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\message.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

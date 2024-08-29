@@ -2,7 +2,7 @@
 #define EDITOR_MAIN_WINDOW_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "message_queue.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -16,8 +16,9 @@ namespace editor {
 class MainWindow final
 {
     private:
-        HWND    _nativeWindow = nullptr;
-        ATOM    _classID = 0;
+        HWND                _nativeWindow = nullptr;
+        ATOM                _classID = 0;
+        MessageQueue*       _messageQueue = nullptr;
 
     public:
         MainWindow () = default;
@@ -30,7 +31,7 @@ class MainWindow final
 
         ~MainWindow () = default;
 
-        [[nodiscard]] bool MakeWindow () noexcept;
+        [[nodiscard]] bool MakeWindow ( MessageQueue &messageQueue ) noexcept;
         [[nodiscard]] bool MakeSwapchain () noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
@@ -38,7 +39,7 @@ class MainWindow final
 
     private:
         void Connect ( HWND nativeWindow ) noexcept;
-        void FUCKCheck () noexcept;
+        void OnClose () noexcept;
 
         static LRESULT CALLBACK WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 };

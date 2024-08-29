@@ -26,6 +26,7 @@ class OSUtils final
 
         ~OSUtils () = delete;
 
+        static void PrintLastError ( char const* prefix ) noexcept;
         [[nodiscard]] static std::filesystem::path ResolvePath ( std::string_view const &file ) noexcept;
         [[nodiscard]] static std::string ToString ( std::filesystem::path const &path ) noexcept;
 };

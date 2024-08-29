@@ -39,15 +39,19 @@ bool Editor::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
 
-    if ( !_mainWindow.MakeWindow () ) [[unlikely]]
+    if ( !_mainWindow.MakeWindow ( _messageQueue ) ) [[unlikely]]
         return false;
 
     Config const config = LoadConfig ();
     return _renderer.OnCreateDevice ( config._gpu, config._dpi );
 }
+
 void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
+
+    if ( !_mainWindow.Destroy () )
+        android_vulkan::LogError ( "Editor: Can't destroy main window" );
 
     SaveState config {};
     SaveState::Container &root = config.GetContainer ();
@@ -64,11 +68,33 @@ void Editor::DestroyModules () noexcept
 
 void Editor::EventLoop () noexcept
 {
-    while ( _run )
+    ScheduleEventLoop ();
+
+    for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
+        Message message = _messageQueue.Dequeue ();
+
+        if ( message._type == eMessageType::CloseEditor )
+            return;
+
+        if ( message._type != eMessageType::RunEventLoop )
+            _messageQueue.Enqueue ( std::move ( message ) );
+
         _mainWindow.Execute ();
+        ScheduleEventLoop ();
     }
+}
+
+void Editor::ScheduleEventLoop () noexcept
+{
+    _messageQueue.Enqueue (
+        Message
+        {
+            ._type = eMessageType::RunEventLoop,
+            ._params = nullptr
+        }
+    );
 }
 
 std::string_view Editor::GetUserGPU () const noexcept

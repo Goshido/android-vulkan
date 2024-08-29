@@ -906,8 +906,14 @@ VkExtent2D const &Renderer::GetViewportResolution () const noexcept
     return _viewportResolution;
 }
 
+bool Renderer::GetVSync () const noexcept
+{
+    return _vSync;
+}
+
 bool Renderer::OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept
 {
+    AV_TRACE ( "Creating swapchain" )
     return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
 }
 
@@ -1805,7 +1811,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkColorSpaceKHR colorSpace;
 
-    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthImageFormat, _depthStencilImageFormat ) )
+    if ( !SelectTargetSurfaceFormat ( colorSpace ) )
     {
         [[unlikely]]
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
@@ -1920,6 +1926,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         return false;
     }
 
+    _vSync = vSync;
     return true;
 }
 
@@ -2435,17 +2442,11 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
     return true;
 }
 
-bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
-    VkColorSpaceKHR &targetColorSpace,
-    VkFormat &targetDepthFormat,
-    VkFormat &targetDepthStencilFormat
-) const noexcept
+bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept
 {
-    // Find RGBA8_UNORM format.
-
-    if ( _surfaceFormats.size () == 1U && _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
+    if ( _surfaceFormats.size () == 1U && _surfaceFormats.front ().format == VK_FORMAT_UNDEFINED )
     {
-        targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        _surfaceFormat = VK_FORMAT_R8G8B8A8_UNORM;
         targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
     }
     else
@@ -2454,13 +2455,14 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
         for ( auto const &item : _surfaceFormats )
         {
-            if ( item.format != VK_FORMAT_R8G8B8A8_UNORM )
+            VkFormat const format = item.format;
+
+            if ( ( format != VK_FORMAT_R8G8B8A8_UNORM ) & ( format != VK_FORMAT_B8G8R8A8_UNORM ) )
                 continue;
 
-            targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+            _surfaceFormat = format;
             targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
             isFound = true;
-
             break;
         }
 
@@ -2507,10 +2509,10 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VK_FORMAT_D16_UNORM
     };
 
-    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) ) [[unlikely]]
+    if ( !check ( _depthImageFormat, depthOptions, std::size ( depthOptions ), "depth" ) ) [[unlikely]]
         return false;
 
-    if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
+    if ( !check ( _depthStencilImageFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
     {
         [[unlikely]]
         return false;
@@ -2525,13 +2527,13 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
     LogInfo ( format,
         INDENT_1,
-        ResolveVkFormat ( targetColorFormat ),
+        ResolveVkFormat ( _surfaceFormat ),
         INDENT_1,
         ResolveVkColorSpaceKHR ( targetColorSpace ),
         INDENT_1,
-        ResolveVkFormat ( targetDepthFormat ),
+        ResolveVkFormat ( _depthImageFormat ),
         INDENT_1,
-        ResolveVkFormat ( targetDepthStencilFormat )
+        ResolveVkFormat ( _depthStencilImageFormat )
     );
 
     return true;

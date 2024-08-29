@@ -41,8 +41,7 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         return false;
     }
 
-    // Note: HWND handle will be assigned later in the WM_CREATE handler.
-    HWND const handle = CreateWindowEx ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
+    _nativeWindow = CreateWindowEx ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
         MAKEINTATOM ( _classID ),
         _T ( "Editor" ),
         WS_VISIBLE | WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
@@ -56,17 +55,11 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         this
     );
 
-    if ( handle ) [[likely]]
+    if ( _nativeWindow ) [[likely]]
         return true;
 
     android_vulkan::LogError ( "MainWindow: Can't create native window." );
     return false;
-}
-
-bool MainWindow::MakeSwapchain () noexcept
-{
-    // FUCK
-    return true;
 }
 
 bool MainWindow::Destroy () noexcept
@@ -111,21 +104,23 @@ void MainWindow::Execute () noexcept
     }
 }
 
-void MainWindow::Connect ( HWND nativeWindow ) noexcept
+HWND MainWindow::GetNativeWindow () const noexcept
 {
-    _nativeWindow = nativeWindow;
+    return _nativeWindow;
+}
 
+void MainWindow::OnCreate ( HWND hwnd ) noexcept
+{
     // To destinguish error it's needed to preset 0 as last error. Trick is described on MSDN:
     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra#return-value
     SetLastError ( 0U );
+    LONG_PTR const result = SetWindowLongPtrA ( hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
 
-    LONG_PTR const result = SetWindowLongPtrA ( nativeWindow, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
-
-    if ( ( result == 0 ) & ( GetLastError () == 0U ) ) [[likely]]
+    if ( ( result == 0 ) && ( GetLastError () == 0U ) ) [[likely]]
         return;
 
     android_vulkan::LogError ( "MainWindow: Can't connect MainWindow onject to HWND handle." );
-    DestroyWindow ( nativeWindow );
+    DestroyWindow ( hwnd );
 }
 
 void MainWindow::OnClose () noexcept
@@ -149,7 +144,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_CREATE:
         {
             auto const &createInfo = *reinterpret_cast<LPCREATESTRUCT> ( lParam );
-            reinterpret_cast<MainWindow*> ( createInfo.lpCreateParams )->Connect ( hwnd );
+            reinterpret_cast<MainWindow*> ( createInfo.lpCreateParams )->OnCreate ( hwnd );
             return DefWindowProcA ( hwnd, msg, wParam, lParam );
         }
 

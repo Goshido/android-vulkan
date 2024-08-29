@@ -32,13 +32,22 @@ class MainWindow final
         ~MainWindow () = default;
 
         [[nodiscard]] bool MakeWindow ( MessageQueue &messageQueue ) noexcept;
-        [[nodiscard]] bool MakeSwapchain () noexcept;
         [[nodiscard]] bool Destroy () noexcept;
 
         void Execute () noexcept;
+        [[nodiscard]] HWND GetNativeWindow () const noexcept;
 
     private:
-        void Connect ( HWND nativeWindow ) noexcept;
+        // Note we can't use '_nativeWindow' at this point because CreateWindowEx did not finish yet.
+        // This 'hwnd' should be used from WM_CREATE message. In reality 'hwnd' will be exactly the same as
+        // result of CreateWindowEx. Once again the call sequence is the following:
+        // MakeWindow
+        //      CreateWindowEx
+        //          WM_CREATE
+        //              OnCreate: -> HWND is connected to MainWindow object
+        // control returns to caller code
+        void OnCreate ( HWND hwnd ) noexcept;
+
         void OnClose () noexcept;
 
         static LRESULT CALLBACK WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );

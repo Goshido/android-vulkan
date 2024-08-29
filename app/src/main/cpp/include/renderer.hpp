@@ -112,6 +112,7 @@ class Renderer final
         std::vector<VkImageView>                        _swapchainImageViews {};
 
         GXMat4                                          _presentationEngineTransform {};
+        bool                                            _vSync = true;
         VulkanLoader                                    _vulkanLoader {};
 
     public:
@@ -162,6 +163,8 @@ class Renderer final
         // current device orientation. The actual presentation image resolution can be acquired
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const &GetViewportResolution () const noexcept;
+
+        [[nodiscard]] bool GetVSync () const noexcept;
 
         [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain () noexcept;
@@ -252,12 +255,7 @@ class Renderer final
 
         [[nodiscard]] bool SelectTargetHardware ( std::string_view const &userGPU ) noexcept;
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
-
-        [[nodiscard]] bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
-            VkColorSpaceKHR &targetColorSpace,
-            VkFormat &targetDepthFormat,
-            VkFormat &targetDepthStencilFormat
-        ) const noexcept;
+        [[nodiscard]] bool SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept;
 
         [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
             char const* extension

@@ -15,11 +15,13 @@ class Editor final
     private:
         constexpr static float                  DEFAULT_DPI = 96.0F;
         constexpr static std::string_view       DEFAULT_GPU = "";
+        constexpr static bool                   DEFAULT_VSYNC = true;
 
         struct Config final
         {
             float                               _dpi = DEFAULT_DPI;
             std::string                         _gpu = std::string ( DEFAULT_GPU );
+            bool                                _vSync = DEFAULT_VSYNC;
         };
 
     private:

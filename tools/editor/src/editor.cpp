@@ -12,6 +12,7 @@ constexpr std::string_view CONFIG_PATH = R"__(%APPDATA%\Goshido Inc\Editor\edito
 
 constexpr std::string_view CONFIG_KEY_GPU = "user GPU";
 constexpr std::string_view CONFIG_KEY_DPI = "DPI";
+constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
 
@@ -43,7 +44,14 @@ bool Editor::InitModules () noexcept
         return false;
 
     Config const config = LoadConfig ();
-    return _renderer.OnCreateDevice ( config._gpu, config._dpi );
+
+    if ( !_renderer.OnCreateDevice ( config._gpu, config._dpi ) )
+        return false;
+
+    return _renderer.OnCreateSwapchain (
+        reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+        config._vSync
+    );
 }
 
 void Editor::DestroyModules () noexcept
@@ -57,7 +65,9 @@ void Editor::DestroyModules () noexcept
     SaveState::Container &root = config.GetContainer ();
     root.Write ( CONFIG_KEY_GPU, _renderer.GetDeviceName () );
     root.Write ( CONFIG_KEY_DPI, _renderer.GetDPI () );
+    root.Write ( CONFIG_KEY_VSYNC, _renderer.GetVSync () );
 
+    _renderer.OnDestroySwapchain ();
     _renderer.OnDestroyDevice ();
 
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
@@ -132,6 +142,7 @@ Editor::Config Editor::LoadConfig () noexcept
         result._gpu = root.Read ( CONFIG_KEY_GPU, DEFAULT_GPU );
 
     result._dpi = root.Read ( CONFIG_KEY_DPI, DEFAULT_DPI );
+    result._vSync = root.Read ( CONFIG_KEY_VSYNC, DEFAULT_VSYNC );
     return result;
 }
 

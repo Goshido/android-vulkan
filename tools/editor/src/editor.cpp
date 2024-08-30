@@ -124,7 +124,7 @@ std::string_view Editor::GetUserGPU () const noexcept
 
 Editor::Config Editor::LoadConfig () noexcept
 {
-    AV_TRACE ( "Editor config load" )
+    AV_TRACE ( "Editor: load config" )
     SaveState config {};
 
     if ( !config.Load ( CONFIG_PATH, true ) ) [[unlikely]]

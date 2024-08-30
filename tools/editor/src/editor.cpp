@@ -45,7 +45,7 @@ bool Editor::InitModules () noexcept
 
     Config const config = LoadConfig ();
 
-    if ( !_renderer.OnCreateDevice ( config._gpu, config._dpi ) )
+    if ( !_renderer.OnCreateDevice ( config._gpu, config._dpi ) ) [[unlikely]]
         return false;
 
     return _renderer.OnCreateSwapchain (
@@ -58,7 +58,7 @@ void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
 
-    if ( !_mainWindow.Destroy () )
+    if ( !_mainWindow.Destroy () ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't destroy main window" );
 
     SaveState config {};
@@ -85,7 +85,7 @@ void Editor::EventLoop () noexcept
         AV_TRACE ( "Event loop" )
         Message message = _messageQueue.Dequeue ();
 
-        if ( message._type == eMessageType::CloseEditor )
+        if ( message._type == eMessageType::CloseEditor ) [[unlikely]]
             return;
 
         if ( message._type != eMessageType::RunEventLoop )

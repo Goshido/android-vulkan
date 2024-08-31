@@ -16,19 +16,37 @@ namespace editor {
 
 namespace {
 
+enum class eWindowState : uint8_t
+{
+    Normal = 0U,
+    Minimized = 1U,
+    Maximized = 2U
+};
+
 constexpr std::string_view CONFIG_PATH = R"__(%APPDATA%\Goshido Inc\Editor\window.cfg)__";
 
 constexpr std::string_view CONFIG_KEY_STATE = "state";
+constexpr eWindowState DEFAULT_STATE = eWindowState::Normal;
+
 constexpr std::string_view CONFIG_KEY_POSITION = "position";
+constexpr int32_t DEFAULT_X = 100;
+constexpr int32_t DEFAULT_Y = 100;
+
 constexpr std::string_view CONFIG_KEY_SIZE = "size";
+constexpr uint16_t DEFAULT_WIDTH = 640U;
+constexpr uint16_t DEFAULT_HEIGHT = 480U;
 
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Making OS window" )
+
     _messageQueue = &messageQueue;
     HMODULE const module = GetModuleHandleA ( nullptr );
+    constexpr int exeIconResourceID = 1;
 
     WNDCLASSA const wndClass
     {
@@ -37,7 +55,7 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = module,
-        .hIcon = LoadIconA ( module, MAKEINTRESOURCEA ( 1 ) ),
+        .hIcon = LoadIconA ( module, MAKEINTRESOURCEA ( exeIconResourceID ) ),
         .hCursor = nullptr,
         .hbrBackground = CreateSolidBrush ( RGB ( 115, 185, 0 ) ),
         .lpszMenuName = nullptr,
@@ -159,86 +177,73 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
     DestroyWindow ( hwnd );
 }
 
-void MainWindow::OnMove ( LPARAM lParam ) noexcept
-{
-    AV_TRACE ( "Main window: move" )
-
-    if ( _state != eState::Normal )
-        return;
-
-    _x = static_cast<int32_t> ( static_cast<int16_t> ( ( LOWORD ( lParam ) ) ) );
-    _y = static_cast<int32_t> ( static_cast<int16_t> ( ( HIWORD ( lParam ) ) ) );
-}
-
-void MainWindow::OnSize ( WPARAM wParam, LPARAM lParam ) noexcept
-{
-    AV_TRACE ( "Main window: size" )
-
-    switch ( wParam )
-    {
-        case SIZE_MAXIMIZED:
-            _state = eState::Maximized;
-        break;
-
-        case SIZE_MINIMIZED:
-            _state = eState::Minimized;
-        break;
-
-        case SIZE_RESTORED:
-            if ( _state == eState::Minimized )
-            {
-                // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112] Moving to minimized state sends WM_MESSAGE with 
-                // X = -32000, Y = -32000. But moving from minimized state normal state does not sends anything. So it's
-                // needed to explicitly request window position back.
-                RECT rect;
-                GetWindowRect ( _hwnd, &rect );
-                _x = static_cast<int32_t> ( rect.left );
-                _y = static_cast<int32_t> ( rect.top );
-            }
-
-            _state = eState::Normal;
-            _width = static_cast<uint16_t> ( LOWORD ( lParam ) );
-            _height = static_cast<uint16_t> ( HIWORD ( lParam ) );
-        break;
-
-        default:
-            // NOTHING
-        return;
-    }
-}
-
 void MainWindow::Save () noexcept
 {
     AV_TRACE ( "Main window: Save state" )
 
-    SaveState config {};
-    SaveState::Container &root = config.GetContainer ();
-    root.Write ( CONFIG_KEY_STATE, static_cast<uint8_t> ( _state == eState::Minimized ? eState::Normal : _state ) );
-
-    SaveState::Container &size = root.WriteArray ( CONFIG_KEY_SIZE );
-    size.Write ( _width );
-    size.Write ( _height );
-
-    if ( _state == eState::Maximized )
+    WINDOWPLACEMENT placement
     {
-        // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112] If window is maximized than '_x' and '_y' coordinates are
-        // incorrect. It's because Windows sends WM_MOVE with X = 2, Y = 25 and only than it sends WM_SIZE.
-        // In order to have correct normal windows coordinates we need to translate window back to normal state
-        // and receive new '_x' and '_y' coordinates. We can't use GetWindowPlacement because it returns coordinates
-        // in workspace coordinates and we need screen coordinates. Ignoring coordinate conventions will fuck up 
-        // users who places taskbar in top or left side of the screen. I also did not find WinAPI function to convert 
-        // workspace coordinates to screen coordinates.
-        ShowWindow ( _hwnd, SW_NORMAL );
+        .length = static_cast<UINT> ( sizeof ( WINDOWPLACEMENT ) ),
+        .showCmd = SW_HIDE,
+        .ptMinPosition {},
+        .ptMaxPosition {},
+        .rcNormalPosition {}
+    };
 
-        RECT rect;
-        GetWindowRect ( _hwnd, &rect );
-        _x = static_cast<int32_t> ( rect.left );
-        _y = static_cast<int32_t> ( rect.top );
+    GetWindowPlacement ( _hwnd, &placement );
+    eWindowState state;
+
+    switch ( placement.showCmd )
+    {
+        case SW_SHOWMINIMIZED:
+            state = eWindowState::Minimized;
+        break;
+
+        case SW_SHOWMAXIMIZED:
+            state = eWindowState::Maximized;
+        break;
+
+        case SW_SHOWNORMAL:
+            [[fallthrough]];
+
+        default:
+            state = eWindowState::Normal;
+        break;
     }
 
+    SaveState config {};
+    SaveState::Container &root = config.GetContainer ();
+
+    // Having main window in minimized state after starting editor is weird. If window is in minimized state right now
+    // than we move it into normal state.
+    root.Write ( CONFIG_KEY_STATE,
+        static_cast<uint8_t> ( state == eWindowState::Minimized ? eWindowState::Normal : state )
+    );
+
+    // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112]
+    // Issue with maximize. If window is maximized than x and y coordinates are incorrect. It's because
+    // OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
+    // windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
+    // We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
+    // screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
+    // left side of the screen.
+    //
+    // Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.
+    // But moving from minimized state to normal state does not sends anything. So it's needed to explicitly request
+    // window position back.
+    if ( state != eWindowState::Normal )
+        ShowWindow ( _hwnd, SW_NORMAL );
+
+    RECT rect;
+    GetWindowRect ( _hwnd, &rect );
+
     SaveState::Container &position = root.WriteArray ( CONFIG_KEY_POSITION );
-    position.Write ( _x );
-    position.Write ( _y );
+    position.Write ( static_cast<int32_t> ( rect.left ) );
+    position.Write ( static_cast<int32_t> ( rect.top ) );
+
+    SaveState::Container &size = root.WriteArray ( CONFIG_KEY_SIZE );
+    size.Write ( static_cast<uint16_t> ( rect.right - rect.left ) );
+    size.Write ( static_cast<uint16_t> ( rect.bottom - rect.top ) );
 
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
     {
@@ -260,32 +265,26 @@ void MainWindow::Load () noexcept
     SaveState::Container const &root = config.GetContainer ();
 
     SaveState::Container const &position = root.ReadArray ( CONFIG_KEY_POSITION );
-    _x = position.Read ( DEFAULT_X );
-    _y = position.Read ( DEFAULT_Y );
+    auto const x = static_cast<int> ( position.Read ( DEFAULT_X ) );
+    auto const y = static_cast<int> ( position.Read ( DEFAULT_Y ) );
 
     SaveState::Container const &size = root.ReadArray ( CONFIG_KEY_SIZE );
-    _width = size.Read ( DEFAULT_WIDTH );
-    _height = size.Read ( DEFAULT_HEIGHT );
+    auto const w = static_cast<int> ( size.Read ( DEFAULT_WIDTH ) );
+    auto const h = static_cast<int> ( size.Read ( DEFAULT_HEIGHT ) );
 
-    MoveWindow ( _hwnd,
-        static_cast<int> ( _x ),
-        static_cast<int> ( _y ),
-        static_cast<int> ( _width ),
-        static_cast<int> ( _height ),
-        FALSE
-    );
+    MoveWindow ( _hwnd, x, y, w, h, FALSE );
 
-    switch ( static_cast<eState> ( root.Read ( CONFIG_KEY_STATE, static_cast<uint8_t> ( DEFAULT_STATE ) ) ) )
+    switch ( static_cast<eWindowState> ( root.Read ( CONFIG_KEY_STATE, static_cast<uint8_t> ( DEFAULT_STATE ) ) ) )
     {
-        case editor::MainWindow::eState::Minimized:
+        case eWindowState::Minimized:
             ShowWindow ( _hwnd, SW_MINIMIZE );
         break;
 
-        case editor::MainWindow::eState::Maximized:
+        case eWindowState::Maximized:
             ShowWindow ( _hwnd, SW_MAXIMIZE );
         break;
 
-        case editor::MainWindow::eState::Normal:
+        case eWindowState::Normal:
             [[fallthrough]];
 
         default:
@@ -311,14 +310,6 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_CLOSE:
             mainWindow.OnClose ();
         return 0;
-
-        case WM_MOVE:
-            mainWindow.OnMove ( lParam );
-        break;
-
-        case WM_SIZE:
-            mainWindow.OnSize ( wParam, lParam );
-        break;
 
         default:
             // NOTHING

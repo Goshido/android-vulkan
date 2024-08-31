@@ -52,10 +52,10 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         return false;
     }
 
-    // Note '_nativeWindow' will be assigned in OnCreate method:
+    // Note '_hwnd' will be assigned in OnCreate method:
     // CreateWindowEx
     //     WM_CREATE
-    //         OnCreate: -> HWND is assigned to '_nativeWindow'
+    //         OnCreate: -> HWND is assigned to '_hwnd'
     // control returns to caller code
     HWND const result = CreateWindowEx ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
         MAKEINTATOM ( _classID ),
@@ -84,11 +84,11 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 bool MainWindow::Destroy () noexcept
 {
     AV_TRACE ( "Destroying main window" )
-    Save ();
 
-    if ( _nativeWindow ) [[likely]]
+    if ( _hwnd ) [[likely]]
     {
-        BOOL const result = DestroyWindow ( _nativeWindow );
+        Save ();
+        BOOL const result = DestroyWindow ( _hwnd );
 
         if ( result == 0 ) [[unlikely]]
         {
@@ -97,7 +97,7 @@ bool MainWindow::Destroy () noexcept
         }
 
         Execute ();
-        _nativeWindow = nullptr;
+        _hwnd = nullptr;
     }
 
     if ( _classID == 0 ) [[unlikely]]
@@ -118,7 +118,7 @@ void MainWindow::Execute () noexcept
     AV_TRACE ( "Executing OS messages" )
     MSG msg {};
 
-    while ( PeekMessageA ( &msg, _nativeWindow, 0U, 0U, PM_REMOVE ) )
+    while ( PeekMessageA ( &msg, _hwnd, 0U, 0U, PM_REMOVE ) )
     {
         DispatchMessageA ( &msg );
     }
@@ -126,7 +126,7 @@ void MainWindow::Execute () noexcept
 
 HWND MainWindow::GetNativeWindow () const noexcept
 {
-    return _nativeWindow;
+    return _hwnd;
 }
 
 void MainWindow::OnClose () noexcept
@@ -145,7 +145,7 @@ void MainWindow::OnClose () noexcept
 void MainWindow::OnCreate ( HWND hwnd ) noexcept
 {
     AV_TRACE ( "Main window: create" )
-    _nativeWindow = hwnd;
+    _hwnd = hwnd;
 
     // To destinguish error it's needed to preset 0 as last error. Trick is described on MSDN:
     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra#return-value
@@ -166,8 +166,8 @@ void MainWindow::OnMove ( LPARAM lParam ) noexcept
     if ( _state != eState::Normal )
         return;
 
-    _x = static_cast<int32_t> ( LOWORD ( lParam ) );
-    _y = static_cast<int32_t> ( HIWORD ( lParam ) );
+    _x = static_cast<int32_t> ( static_cast<int16_t> ( ( LOWORD ( lParam ) ) ) );
+    _y = static_cast<int32_t> ( static_cast<int16_t> ( ( HIWORD ( lParam ) ) ) );
 }
 
 void MainWindow::OnSize ( WPARAM wParam, LPARAM lParam ) noexcept
@@ -181,10 +181,21 @@ void MainWindow::OnSize ( WPARAM wParam, LPARAM lParam ) noexcept
         break;
 
         case SIZE_MINIMIZED:
-            _state = eState::Maximized;
+            _state = eState::Minimized;
         break;
 
         case SIZE_RESTORED:
+            if ( _state == eState::Minimized )
+            {
+                // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112] Moving to minimized state sends WM_MESSAGE with 
+                // X = -32000, Y = -32000. But moving from minimized state normal state does not sends anything. So it's
+                // needed to explicitly request window position back.
+                RECT rect;
+                GetWindowRect ( _hwnd, &rect );
+                _x = static_cast<int32_t> ( rect.left );
+                _y = static_cast<int32_t> ( rect.top );
+            }
+
             _state = eState::Normal;
             _width = static_cast<uint16_t> ( LOWORD ( lParam ) );
             _height = static_cast<uint16_t> ( HIWORD ( lParam ) );
@@ -204,13 +215,30 @@ void MainWindow::Save () noexcept
     SaveState::Container &root = config.GetContainer ();
     root.Write ( CONFIG_KEY_STATE, static_cast<uint8_t> ( _state == eState::Minimized ? eState::Normal : _state ) );
 
-    SaveState::Container &position = root.WriteArray ( CONFIG_KEY_POSITION );
-    position.Write ( _x );
-    position.Write ( _y );
-
     SaveState::Container &size = root.WriteArray ( CONFIG_KEY_SIZE );
     size.Write ( _width );
     size.Write ( _height );
+
+    if ( _state == eState::Maximized )
+    {
+        // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112] If window is maximized than '_x' and '_y' coordinates are
+        // incorrect. It's because Windows sends WM_MOVE with X = 2, Y = 25 and only than it sends WM_SIZE.
+        // In order to have correct normal windows coordinates we need to translate window back to normal state
+        // and receive new '_x' and '_y' coordinates. We can't use GetWindowPlacement because it returns coordinates
+        // in workspace coordinates and we need screen coordinates. Ignoring coordinate conventions will fuck up 
+        // users who places taskbar in top or left side of the screen. I also did not find WinAPI function to convert 
+        // workspace coordinates to screen coordinates.
+        ShowWindow ( _hwnd, SW_NORMAL );
+
+        RECT rect;
+        GetWindowRect ( _hwnd, &rect );
+        _x = static_cast<int32_t> ( rect.left );
+        _y = static_cast<int32_t> ( rect.top );
+    }
+
+    SaveState::Container &position = root.WriteArray ( CONFIG_KEY_POSITION );
+    position.Write ( _x );
+    position.Write ( _y );
 
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
     {
@@ -239,7 +267,7 @@ void MainWindow::Load () noexcept
     _width = size.Read ( DEFAULT_WIDTH );
     _height = size.Read ( DEFAULT_HEIGHT );
 
-    MoveWindow ( _nativeWindow,
+    MoveWindow ( _hwnd,
         static_cast<int> ( _x ),
         static_cast<int> ( _y ),
         static_cast<int> ( _width ),
@@ -250,11 +278,11 @@ void MainWindow::Load () noexcept
     switch ( static_cast<eState> ( root.Read ( CONFIG_KEY_STATE, static_cast<uint8_t> ( DEFAULT_STATE ) ) ) )
     {
         case editor::MainWindow::eState::Minimized:
-            ShowWindow ( _nativeWindow, SW_MINIMIZE );
+            ShowWindow ( _hwnd, SW_MINIMIZE );
         break;
 
         case editor::MainWindow::eState::Maximized:
-            ShowWindow ( _nativeWindow, SW_MAXIMIZE );
+            ShowWindow ( _hwnd, SW_MAXIMIZE );
         break;
 
         case editor::MainWindow::eState::Normal:

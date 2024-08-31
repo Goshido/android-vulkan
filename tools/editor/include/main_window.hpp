@@ -32,7 +32,7 @@ class MainWindow final
     private:
         ATOM                _classID = 0;
         MessageQueue*       _messageQueue = nullptr;
-        HWND                _nativeWindow = nullptr;
+        HWND                _hwnd = nullptr;
 
         int32_t             _x = DEFAULT_X;
         int32_t             _y = DEFAULT_Y;
@@ -60,13 +60,13 @@ class MainWindow final
     private:
         void OnClose () noexcept;
 
-        // Note we can't use '_nativeWindow' at this point because CreateWindowEx did not finish yet.
+        // Note we can't use '_hwnd' at this point because CreateWindowEx did not finish yet.
         // 'hwnd' should be used from WM_CREATE message. In reality 'hwnd' will be exactly the same as
         // result of CreateWindowEx. Once again the call sequence is the following:
         // MakeWindow
         //      CreateWindowEx
         //          WM_CREATE
-        //              OnCreate: -> HWND is connected to MainWindow object and assigned to '_nativeWindow'
+        //              OnCreate: -> HWND is connected to MainWindow object and assigned to '_hwnd'
         // control returns to caller code
         void OnCreate ( HWND hwnd ) noexcept;
 

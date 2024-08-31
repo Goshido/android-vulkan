@@ -882,7 +882,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._acquire ),
-        "Game::CreateCommandPool",
+        "pbr::RenderSession::AllocateCommandInfo",
         "Can't create render target acquired semaphore"
     );
 

@@ -50,6 +50,8 @@ class MainWindow final
         // control returns to caller code
         void OnCreate ( HWND hwnd ) noexcept;
 
+        void OnSize ( WPARAM wParam ) noexcept;
+
         void Save () noexcept;
         void Load () noexcept;
 

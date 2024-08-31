@@ -306,6 +306,13 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\memory_allocator.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\memory_allocator.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\present_render_pass.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\present_render_pass.o</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\present_render_pass.o</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\present_render_pass.o</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\present_render_pass.o</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\present_render_pass.o</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\file.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\file.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\file.obj</ObjectFileName>
@@ -373,6 +380,7 @@
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
+    <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -383,6 +391,8 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\memory_allocator.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
@@ -394,6 +404,7 @@
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\save_state.hpp" />
   </ItemGroup>
   <ItemGroup>

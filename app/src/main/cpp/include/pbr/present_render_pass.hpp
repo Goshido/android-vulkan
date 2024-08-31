@@ -2,7 +2,7 @@
 #define PBR_PRESENT_RENDER_PASS_HPP
 
 
-#include "sampler_manager.hpp"
+#include <renderer.hpp>
 
 
 namespace pbr {

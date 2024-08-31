@@ -4,7 +4,15 @@
 
 namespace editor {
 
-void MessageQueue::Enqueue ( Message &&message ) noexcept
+void MessageQueue::EnqueueFront ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Enqueue message" )
+    std::lock_guard const lock ( _mutex );
+    _queue.push_front ( std::move ( message ) );
+    _isQueueNotEmpty.notify_all ();
+}
+
+void MessageQueue::EnqueueBack ( Message &&message ) noexcept
 {
     AV_TRACE ( "Enqueue message" )
     std::lock_guard const lock ( _mutex );

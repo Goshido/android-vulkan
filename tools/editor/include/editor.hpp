@@ -4,7 +4,7 @@
 
 #include "command_line.hpp"
 #include "main_window.hpp"
-#include "message_queue.hpp"
+#include <render_session.hpp>
 #include <renderer.hpp>
 
 
@@ -28,7 +28,9 @@ class Editor final
         CommandLine                             _commandLine {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
+        RenderSession                           _renderSession {};
         android_vulkan::Renderer                _renderer {};
+        bool                                    _stopRendering = false;
 
     public:
         Editor () = delete;
@@ -50,7 +52,10 @@ class Editor final
         void DestroyModules () noexcept;
 
         void EventLoop () noexcept;
+        void OnRunEvent () noexcept;
+        void OnWindowVisibilityChanged ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;
+        void Shutdown () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;
         [[nodiscard]] Config LoadConfig () noexcept;

@@ -1,5 +1,5 @@
-#ifndef EDITOR_MESSAG_QUEUE_HPP
-#define EDITOR_MESSAG_QUEUE_HPP
+#ifndef EDITOR_MESSAGE_QUEUE_HPP
+#define EDITOR_MESSAGE_QUEUE_HPP
 
 
 #include "message.hpp"
@@ -17,7 +17,6 @@ namespace editor {
 class MessageQueue final
 {
     private:
-
         std::mutex                  _mutex {};
         std::deque<Message>         _queue {};
         std::condition_variable     _isQueueNotEmpty {};
@@ -33,11 +32,12 @@ class MessageQueue final
 
         ~MessageQueue () = default;
 
-        void Enqueue ( Message &&message ) noexcept;
+        void EnqueueFront ( Message &&message ) noexcept;
+        void EnqueueBack ( Message &&message ) noexcept;
         [[nodiscard]] Message Dequeue () noexcept;
 };
 
 } // namespace editor
 
 
-#endif // EDITOR_MESSAG_QUEUE_HPP
+#endif // EDITOR_MESSAGE_QUEUE_HPP

@@ -46,6 +46,12 @@
     <Filter Include="Header Files\core\GXCommon\Windows">
       <UniqueIdentifier>{279ab7ed-1fc4-41e5-b2eb-ace2675c91e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\pbr">
+      <UniqueIdentifier>{17203ff6-cbc0-45f1-b3f6-dbd149566fb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\pbr">
+      <UniqueIdentifier>{e4a601be-7003-40bd-bc08-9a4fc45a71b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -105,6 +111,12 @@
     <ClCompile Include="src\message_queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\render_session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\present_render_pass.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -163,6 +175,15 @@
     </ClInclude>
     <ClInclude Include="include\message.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\render_session.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp">
+      <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

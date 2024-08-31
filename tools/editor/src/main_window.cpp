@@ -118,6 +118,8 @@ bool MainWindow::Destroy () noexcept
         _hwnd = nullptr;
     }
 
+    _messageQueue = nullptr;
+
     if ( _classID == 0 ) [[unlikely]]
         return true;
 
@@ -151,7 +153,7 @@ void MainWindow::OnClose () noexcept
 {
     AV_TRACE ( "Main window: close" )
 
-    _messageQueue->Enqueue (
+    _messageQueue->EnqueueBack (
         Message
         {
             ._type = eMessageType::CloseEditor,
@@ -177,9 +179,22 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
     DestroyWindow ( hwnd );
 }
 
+void MainWindow::OnSize ( WPARAM wParam ) noexcept
+{
+    AV_TRACE ( "Main window: size" )
+
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::WindowVisibilityChanged,
+            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) )
+        }
+    );
+}
+
 void MainWindow::Save () noexcept
 {
-    AV_TRACE ( "Main window: Save state" )
+    AV_TRACE ( "Main window: save state" )
 
     WINDOWPLACEMENT placement
     {
@@ -192,6 +207,8 @@ void MainWindow::Save () noexcept
 
     GetWindowPlacement ( _hwnd, &placement );
     eWindowState state;
+
+    GX_DISABLE_WARNING ( 4061 )
 
     switch ( placement.showCmd )
     {
@@ -210,6 +227,8 @@ void MainWindow::Save () noexcept
             state = eWindowState::Normal;
         break;
     }
+
+    GX_ENABLE_WARNING ( 4061 )
 
     SaveState config {};
     SaveState::Container &root = config.GetContainer ();
@@ -253,7 +272,7 @@ void MainWindow::Save () noexcept
 
 void MainWindow::Load () noexcept
 {
-    AV_TRACE ( "Main window: Load state" )
+    AV_TRACE ( "Main window: load state" )
     SaveState config {};
 
     if ( !config.Load ( CONFIG_PATH, true ) ) [[unlikely]]
@@ -310,6 +329,10 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_CLOSE:
             mainWindow.OnClose ();
         return 0;
+
+        case WM_SIZE:
+            mainWindow.OnSize ( wParam );
+        break;
 
         default:
             // NOTHING

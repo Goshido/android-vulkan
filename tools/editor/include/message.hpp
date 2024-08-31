@@ -10,12 +10,16 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
+
 namespace editor {
 
-enum eMessageType : uint32_t
+enum class eMessageType : uint32_t
 {
     CloseEditor,
     RunEventLoop,
+    RenderFrame,
+    Shutdown,
+    WindowVisibilityChanged,
     Unknown
 };
 

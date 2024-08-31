@@ -18,6 +18,8 @@ constexpr std::string_view CLI_USER_GPU = "--gpu";
 
 } // end of anonumous namespace
 
+//----------------------------------------------------------------------------------------------------------------------
+
 Editor::Editor ( CommandLine &&commandLine ) noexcept:
     _commandLine ( std::move ( commandLine ) )
 {
@@ -45,13 +47,13 @@ bool Editor::InitModules () noexcept
 
     Config const config = LoadConfig ();
 
-    if ( !_renderer.OnCreateDevice ( config._gpu, config._dpi ) ) [[unlikely]]
-        return false;
+    return _renderer.OnCreateDevice ( config._gpu, config._dpi ) &&
 
-    return _renderer.OnCreateSwapchain (
-        reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
-        config._vSync
-    );
+        _renderer.OnCreateSwapchain ( reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+            config._vSync
+        ) &&
+
+        _renderSession.Init ( _messageQueue, _renderer );
 }
 
 void Editor::DestroyModules () noexcept
@@ -67,13 +69,12 @@ void Editor::DestroyModules () noexcept
     root.Write ( CONFIG_KEY_DPI, _renderer.GetDPI () );
     root.Write ( CONFIG_KEY_VSYNC, _renderer.GetVSync () );
 
+    if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
+        android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
+
+    _renderSession.Destroy ();
     _renderer.OnDestroySwapchain ();
     _renderer.OnDestroyDevice ();
-
-    if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
-    }
 }
 
 void Editor::EventLoop () noexcept
@@ -82,29 +83,92 @@ void Editor::EventLoop () noexcept
 
     for ( ; ; )
     {
-        AV_TRACE ( "Event loop" )
+        AV_TRACE ( "Editor: event loop" )
         Message message = _messageQueue.Dequeue ();
 
-        if ( message._type == eMessageType::CloseEditor ) [[unlikely]]
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::CloseEditor:
+                Shutdown ();
             return;
 
-        if ( message._type != eMessageType::RunEventLoop )
-            _messageQueue.Enqueue ( std::move ( message ) );
+            case eMessageType::RunEventLoop:
+                OnRunEvent ();
+            break;
 
-        _mainWindow.Execute ();
-        ScheduleEventLoop ();
+            case eMessageType::WindowVisibilityChanged:
+                OnWindowVisibilityChanged ( std::move ( message ) );
+            break;
+
+            default:
+                _messageQueue.EnqueueFront ( std::move ( message ) );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void Editor::OnRunEvent () noexcept
+{
+    _mainWindow.Execute ();
+
+    if ( !_stopRendering ) [[likely]]
+    {
+        // FUCK
+        _messageQueue.EnqueueBack (
+            Message
+            {
+                ._type = eMessageType::RenderFrame,
+                ._params = nullptr
+            }
+        );
+    }
+
+    ScheduleEventLoop ();
+}
+
+void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
+{
+    _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
 }
 
 void Editor::ScheduleEventLoop () noexcept
 {
-    _messageQueue.Enqueue (
+    _messageQueue.EnqueueBack (
         Message
         {
             ._type = eMessageType::RunEventLoop,
             ._params = nullptr
         }
     );
+}
+
+void Editor::Shutdown () noexcept
+{
+    AV_TRACE ( "Editor: shutdown" )
+
+    _messageQueue.EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::Shutdown,
+            ._params = nullptr
+        }
+    );
+
+    // At this point only last eMessageType::RunEventLoop left in message queue. Need to dequeue it.
+    for ( ; ; )
+    {
+        if ( Message message = _messageQueue.Dequeue (); message._type != eMessageType::RunEventLoop )
+        {
+            _messageQueue.EnqueueFront ( std::move ( message ) );
+            continue;
+        }
+
+        return;
+    }
 }
 
 std::string_view Editor::GetUserGPU () const noexcept

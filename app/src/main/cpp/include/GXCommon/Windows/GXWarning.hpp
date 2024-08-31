@@ -1,4 +1,4 @@
-// version 1.5
+// version 1.6
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -7,6 +7,7 @@
 #define GX_RESTORE_WARNING_STATE __pragma ( warning ( pop ) )
 
 #define GX_DISABLE_WARNING(w) __pragma ( warning ( disable : w ) )
+#define GX_ENABLE_WARNING(w) __pragma ( warning ( default : w ) )
 
 #define GX_DISABLE_COMMON_WARNINGS \
     GX_SAVE_WARNING_STATE \

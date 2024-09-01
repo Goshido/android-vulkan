@@ -17,8 +17,8 @@ class MainWindow final
 {
     private:
         ATOM                _classID = 0;
-        MessageQueue*       _messageQueue = nullptr;
         HWND                _hwnd = nullptr;
+        MessageQueue*       _messageQueue = nullptr;
 
     public:
         MainWindow () = default;

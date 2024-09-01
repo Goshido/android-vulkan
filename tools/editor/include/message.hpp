@@ -20,6 +20,7 @@ enum class eMessageType : uint32_t
     RenderFrame,
     Shutdown,
     WindowVisibilityChanged,
+    VulkanInitReport,
     Unknown
 };
 

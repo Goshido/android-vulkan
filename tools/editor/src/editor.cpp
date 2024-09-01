@@ -41,15 +41,62 @@ bool Editor::Run () noexcept
 bool Editor::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
-
-    if ( !_mainWindow.MakeWindow ( _messageQueue ) ) [[unlikely]]
-        return false;
-
     Config const config = LoadConfig ();
 
-    return _renderer.OnCreateDevice ( config._gpu, config._dpi ) &&
+    std::thread (
+        [ this, &config ] () noexcept
+        {
+            AV_THREAD_NAME ( "Init Vulkan" )
 
-        _renderer.OnCreateSwapchain ( reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+            _messageQueue.EnqueueBack (
+                Message
+                {
+                    ._type = eMessageType::VulkanInitReport,
+
+                    ._params = reinterpret_cast<void*> (
+                        static_cast<uintptr_t> ( _renderer.OnCreateDevice ( config._gpu, config._dpi ) )
+                    )
+                }
+            );
+        }
+    ).detach ();
+
+    bool isOk = _mainWindow.MakeWindow ( _messageQueue );
+
+    for ( bool waiting = true; waiting; )
+    {
+        AV_TRACE ( "Editor: async init loop" )
+        Message message = _messageQueue.Dequeue ();
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::VulkanInitReport:
+                isOk &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+                waiting = false;
+            break;
+
+            case eMessageType::WindowVisibilityChanged:
+                OnWindowVisibilityChanged ( std::move ( message ) );
+            break;
+
+            default:
+                _messageQueue.EnqueueFront ( std::move ( message ) );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+
+    if ( !isOk ) [[unlikely]]
+    {
+        DestroyModules ();
+        return false;
+    }
+
+    return _renderer.OnCreateSwapchain (
+            reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
             config._vSync
         ) &&
 

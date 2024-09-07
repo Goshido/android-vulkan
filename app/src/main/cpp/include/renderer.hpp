@@ -86,6 +86,7 @@ class Renderer final
 
         VkSurfaceTransformFlagBitsKHR                   _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
         VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
+        VkSwapchainKHR                                  _oldSwapchain = VK_NULL_HANDLE;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
@@ -167,7 +168,7 @@ class Renderer final
         [[nodiscard]] bool GetVSync () const noexcept;
 
         [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
-        void OnDestroySwapchain () noexcept;
+        void OnDestroySwapchain ( bool preserveSurface ) noexcept;
 
         [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept;
         void OnDestroyDevice () noexcept;
@@ -240,7 +241,7 @@ class Renderer final
         void DestroySurface () noexcept;
 
         [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
-        void DestroySwapchain () noexcept;
+        void DestroySwapchain ( bool preserveSurface ) noexcept;
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
         void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
@@ -261,6 +262,7 @@ class Renderer final
             char const* extension
         ) noexcept;
 
+        [[nodiscard]] static std::span<char const* const> GetDeviceExtensions () noexcept;
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
         [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;

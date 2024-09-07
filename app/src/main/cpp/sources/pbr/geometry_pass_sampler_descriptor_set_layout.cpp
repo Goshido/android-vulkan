@@ -1,4 +1,4 @@
-#include <pbr/geometry_pass_bindings.inc> 
+#include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_sampler_descriptor_set_layout.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -108,7 +108,7 @@ bool GeometryPassSamplerDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassSamplerDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &GeometryPassSamplerDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

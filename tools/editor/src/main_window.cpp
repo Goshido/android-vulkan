@@ -36,6 +36,12 @@ constexpr std::string_view CONFIG_KEY_SIZE = "size";
 constexpr uint16_t DEFAULT_WIDTH = 640U;
 constexpr uint16_t DEFAULT_HEIGHT = 480U;
 
+constexpr POINT MINIMUM_WINDOW_SIZE
+{
+    .x = 242,
+    .y = 175
+};
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -177,6 +183,11 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
 
     android_vulkan::LogError ( "MainWindow: Can't connect MainWindow onject to HWND handle." );
     DestroyWindow ( hwnd );
+}
+
+void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
+{
+    reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
 void MainWindow::OnSize ( WPARAM wParam ) noexcept
@@ -328,6 +339,10 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
 
         case WM_CLOSE:
             mainWindow.OnClose ();
+        return 0;
+
+        case WM_GETMINMAXINFO:
+            mainWindow.OnGetMinMaxInfo ( lParam );
         return 0;
 
         case WM_SIZE:

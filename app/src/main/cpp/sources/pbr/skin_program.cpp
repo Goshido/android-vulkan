@@ -97,8 +97,6 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
-
     constexpr VkPushConstantRange pushConstantRange
     {
         .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
@@ -112,7 +110,7 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
         .pNext = nullptr,
         .flags = 0U,
         .setLayoutCount = 1U,
-        .pSetLayouts = &dsLayout,
+        .pSetLayouts = &_layout.GetLayout (),
         .pushConstantRangeCount = 1U,
         .pPushConstantRanges = &pushConstantRange
     };

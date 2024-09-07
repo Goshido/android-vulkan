@@ -26,95 +26,6 @@ ReflectionLocalProgram::ReflectionLocalProgram () noexcept:
     // NOTHING
 }
 
-bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass,
-    SpecializationData /*specializationData*/,
-    VkExtent2D const &viewport
-) noexcept
-{
-    VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
-    VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
-    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription;
-    VkPipelineColorBlendStateCreateInfo blendInfo;
-    VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-    VkPipelineMultisampleStateCreateInfo multisampleInfo;
-    VkPipelineRasterizationStateCreateInfo rasterizationInfo;
-    VkRect2D scissorDescription;
-    VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-    VkViewport viewportDescription;
-    VkPipelineViewportStateCreateInfo viewportInfo;
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = std::size ( stageInfo );
-
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        &bindingDescription
-    );
-
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::ReflectionLocalProgram::Init",
-        "Can't create pipeline"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Reflection local" )
-    DestroyShaderModules ( device );
-    return true;
-}
-
-void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _reflectionLayout.Destroy ( device );
-    _lightVolumeLayout.Destroy ( device );
-    _commonLayout.Destroy ( device );
-
-    DestroyShaderModules ( device );
-}
-
 GraphicsProgram::DescriptorSetInfo const &ReflectionLocalProgram::GetResourceInfo () const noexcept
 {
     static DescriptorSetInfo const info
@@ -156,6 +67,100 @@ GraphicsProgram::DescriptorSetInfo const &ReflectionLocalProgram::GetResourceInf
     };
 
     return info;
+}
+
+void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
+{
+    if ( _pipeline != VK_NULL_HANDLE )
+    {
+        vkDestroyPipeline ( device, _pipeline, nullptr );
+        _pipeline = VK_NULL_HANDLE;
+    }
+
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    _reflectionLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
+
+    DestroyShaderModules ( device );
+}
+
+bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
+    VkRenderPass renderPass,
+    uint32_t subpass,
+    VkExtent2D const &viewport
+) noexcept
+{
+    VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
+    VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
+    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
+    VkVertexInputBindingDescription bindingDescription;
+    VkPipelineColorBlendStateCreateInfo blendInfo;
+    VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+    VkPipelineMultisampleStateCreateInfo multisampleInfo;
+    VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+    VkRect2D scissorDescription;
+    VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+    VkViewport viewportDescription;
+    VkPipelineViewportStateCreateInfo viewportInfo;
+
+    VkGraphicsPipelineCreateInfo pipelineInfo;
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.pNext = nullptr;
+    pipelineInfo.flags = 0U;
+    pipelineInfo.stageCount = std::size ( stageInfo );
+
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
+        return false;
+
+    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
+        attributeDescriptions,
+        &bindingDescription
+    );
+
+    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
+    pipelineInfo.pTessellationState = nullptr;
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
+    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
+    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
+    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
+    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
+
+    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
+        return false;
+
+    pipelineInfo.renderPass = renderPass;
+    pipelineInfo.subpass = subpass;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+    pipelineInfo.basePipelineIndex = -1;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::ReflectionLocalProgram::Init",
+        "Can't create pipeline"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Reflection local" )
+    DestroyShaderModules ( device );
+    return true;
 }
 
 void ReflectionLocalProgram::SetLightData ( VkCommandBuffer commandBuffer,
@@ -253,6 +258,13 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionLocalProgram::InitDepthSt
     };
 
     return &info;
+}
+
+VkPipelineDynamicStateCreateInfo const* ReflectionLocalProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
 }
 
 VkPipelineInputAssemblyStateCreateInfo const* ReflectionLocalProgram::InitInputAssemblyInfo (
@@ -425,22 +437,22 @@ void ReflectionLocalProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
 VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset =
         {
@@ -448,7 +460,7 @@ VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInf
             .y = 0,
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -457,9 +469,9 @@ VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInf
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;

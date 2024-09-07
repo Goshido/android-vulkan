@@ -177,7 +177,7 @@ void ScriptEngine::InitLibraries () const noexcept
 
     constexpr luaL_Reg const libs[] =
     {
-        { 
+        {
             .name = LUA_GNAME,
             .func = &luaopen_base
         },

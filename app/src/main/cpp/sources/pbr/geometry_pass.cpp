@@ -43,7 +43,6 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Geometry pass" )
-    VkDescriptorSetLayout layout = _descriptorSetLayout.GetLayout ();
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
     {
@@ -51,7 +50,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
         .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
+        .pSetLayouts = &_descriptorSetLayout.GetLayout ()
     };
 
     result = android_vulkan::Renderer::CheckVkResult (

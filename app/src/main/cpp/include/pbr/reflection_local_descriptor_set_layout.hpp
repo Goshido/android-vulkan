@@ -22,7 +22,7 @@ class ReflectionLocalDescriptorSetLayout final : public DescriptorSetLayout
 
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept override;
-        [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
+        [[nodiscard]] VkDescriptorSetLayout &GetLayout () const noexcept override;
 };
 
 } // namespace pbr

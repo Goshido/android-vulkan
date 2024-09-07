@@ -1,7 +1,14 @@
+#include <av_assert.hpp>
 #include <editor.hpp>
 #include <logger.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <filesystem>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
@@ -29,6 +36,7 @@ Editor::Editor ( CommandLine &&commandLine ) noexcept:
 bool Editor::Run () noexcept
 {
     AV_THREAD_NAME ( "Main" )
+    std::filesystem::current_path ( "../../assets" );
 
     if ( !InitModules () ) [[unlikely]]
         return false;
@@ -61,7 +69,7 @@ bool Editor::InitModules () noexcept
         }
     ).detach ();
 
-    bool isOk = _mainWindow.MakeWindow ( _messageQueue );
+    bool result = _mainWindow.MakeWindow ( _messageQueue );
 
     for ( bool waiting = true; waiting; )
     {
@@ -73,7 +81,7 @@ bool Editor::InitModules () noexcept
         switch ( message._type )
         {
             case eMessageType::VulkanInitReport:
-                isOk &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+                result &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
                 waiting = false;
             break;
 
@@ -89,23 +97,51 @@ bool Editor::InitModules () noexcept
         GX_ENABLE_WARNING ( 4061 )
     }
 
-    if ( !isOk ) [[unlikely]]
+    if ( !result ) [[unlikely]]
     {
         DestroyModules ();
         return false;
     }
 
-    return _renderer.OnCreateSwapchain (
-            reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
-            config._vSync
-        ) &&
+    result = _renderer.OnCreateSwapchain (
+        reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+        config._vSync
+    );
 
-        _renderSession.Init ( _messageQueue, _renderer );
+    if ( !result || !_renderSession.Init ( _messageQueue, _renderer ) ) [[unlikely]]
+        return false;
+
+    _runningModules = 1U;
+    return true;
 }
 
 void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
+
+    while ( _runningModules )
+    {
+        Message message = _messageQueue.Dequeue ();
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::FrameComplete:
+                // NOTHING
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
+            break;
+
+            default:
+                _messageQueue.EnqueueFront ( std::move ( message ) );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
 
     if ( !_mainWindow.Destroy () ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't destroy main window" );
@@ -120,7 +156,7 @@ void Editor::DestroyModules () noexcept
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
 
     _renderSession.Destroy ();
-    _renderer.OnDestroySwapchain ();
+    _renderer.OnDestroySwapchain ( false );
     _renderer.OnDestroyDevice ();
 }
 
@@ -141,6 +177,18 @@ void Editor::EventLoop () noexcept
                 Shutdown ();
             return;
 
+            case eMessageType::FrameComplete:
+                OnFrameComplete ();
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
+            break;
+
+            case eMessageType::RecreateSwapchain:
+                OnRecreateSwapchain ();
+            break;
+
             case eMessageType::RunEventLoop:
                 OnRunEvent ();
             break;
@@ -158,13 +206,59 @@ void Editor::EventLoop () noexcept
     }
 }
 
+void Editor::OnFrameComplete () noexcept
+{
+    _frameComplete = true;
+}
+
+void Editor::OnModuleStopped () noexcept
+{
+    --_runningModules;
+}
+
+void Editor::OnRecreateSwapchain () noexcept
+{
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+        "editor::Editor::OnRecreateSwapchain",
+        "Can't wait queue idle"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _renderer.OnDestroySwapchain ( true );
+
+    result = _renderer.OnCreateSwapchain (
+        reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+        _renderer.GetVSync ()
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _messageQueue.EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::SwapchainCreated,
+            ._params = nullptr
+        }
+    );
+}
+
 void Editor::OnRunEvent () noexcept
 {
     _mainWindow.Execute ();
 
-    if ( !_stopRendering ) [[likely]]
+    if ( !_stopRendering & _frameComplete ) [[likely]]
     {
-        // FUCK
         _messageQueue.EnqueueBack (
             Message
             {
@@ -172,6 +266,8 @@ void Editor::OnRunEvent () noexcept
                 ._params = nullptr
             }
         );
+
+        _frameComplete = false;
     }
 
     ScheduleEventLoop ();

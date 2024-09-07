@@ -82,7 +82,7 @@ std::optional<TagParser::Result> TagParser::Parse ( char const* html, Stream str
 {
     if ( !stream.ExpectNotEmpty ( html, "pbr::TagParser::Parse" ) )
         return std::nullopt;
-    
+
     size_t const line = stream._line;
     auto probe = UTF8Parser::Parse ( html, stream );
 

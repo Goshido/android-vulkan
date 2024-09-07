@@ -304,15 +304,13 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layout = _layout.GetLayout ();
-
     VkDescriptorSetAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = descriptorPool,
         .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
+        .pSetLayouts = &_layout.GetLayout ()
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (

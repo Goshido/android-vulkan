@@ -138,7 +138,7 @@ bool GeometryPassTextureDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

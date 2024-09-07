@@ -108,7 +108,7 @@ bool ReflectionGlobalDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ReflectionGlobalDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ReflectionGlobalDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

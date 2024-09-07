@@ -26,11 +26,13 @@ class Editor final
 
     private:
         CommandLine                             _commandLine {};
+        bool                                    _frameComplete = true;
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
         RenderSession                           _renderSession {};
         android_vulkan::Renderer                _renderer {};
         bool                                    _stopRendering = false;
+        uint16_t                                _runningModules = 0U;
 
     public:
         Editor () = delete;
@@ -52,6 +54,9 @@ class Editor final
         void DestroyModules () noexcept;
 
         void EventLoop () noexcept;
+        void OnFrameComplete () noexcept;
+        void OnModuleStopped () noexcept;
+        void OnRecreateSwapchain () noexcept;
         void OnRunEvent () noexcept;
         void OnWindowVisibilityChanged ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;

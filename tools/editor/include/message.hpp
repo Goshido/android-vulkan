@@ -16,11 +16,15 @@ namespace editor {
 enum class eMessageType : uint32_t
 {
     CloseEditor,
-    RunEventLoop,
+    FrameComplete,
+    ModuleStopped,
+    RecreateSwapchain,
     RenderFrame,
+    RunEventLoop,
     Shutdown,
-    WindowVisibilityChanged,
+    SwapchainCreated,
     VulkanInitReport,
+    WindowVisibilityChanged,
     Unknown
 };
 

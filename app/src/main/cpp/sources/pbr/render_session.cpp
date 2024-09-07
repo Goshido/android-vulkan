@@ -46,7 +46,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result ) [[unlikely]]
         return false;
 
-    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ) ) [[unlikely]]
+    result = android_vulkan::Renderer::CheckVkResult (
+        _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
+        "pbr::RenderSession::End",
+        "Can't acquire present image"
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
@@ -127,8 +133,22 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     _toneMapperPass.Execute ( commandBuffer );
 
-    result = _uiPass.Execute ( commandBuffer, commandBufferIndex ) &&
-        _presentRenderPass.End ( renderer, commandBuffer, commandInfo._acquire, fence );
+    if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        return false;
+
+    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+        commandBuffer,
+        commandInfo._acquire,
+        fence
+    );
+
+    if ( !presentResult ) [[unlikely]]
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( *presentResult,
+        "pbr::RenderSession::End",
+        "Can't present frame"
+    );
 
     if ( !result ) [[unlikely]]
         return false;

@@ -309,14 +309,14 @@ bool Core::OnSwapchainCreated () noexcept
 {
     if ( !_renderer.OnCreateSwapchain ( reinterpret_cast<WindowHandle> ( _nativeWindow ), VSYNC ) ) [[unlikely]]
     {
-        _renderer.OnDestroySwapchain ();
+        _renderer.OnDestroySwapchain ( false );
         return false;
     }
 
     if ( !_game->OnSwapchainCreated ( _renderer ) ) [[unlikely]]
     {
         _game->OnSwapchainDestroyed ( _renderer );
-        _renderer.OnDestroySwapchain ();
+        _renderer.OnDestroySwapchain ( false );
         return false;
     }
 
@@ -335,7 +335,7 @@ bool Core::OnSwapchainDestroyed () noexcept
         return false;
 
     _game->OnSwapchainDestroyed ( _renderer );
-    _renderer.OnDestroySwapchain ();
+    _renderer.OnDestroySwapchain ( false );
 
     return true;
 }

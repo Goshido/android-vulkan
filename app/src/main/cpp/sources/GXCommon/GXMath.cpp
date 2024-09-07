@@ -1,4 +1,4 @@
-// version 1.83
+// version 1.84
 
 #include <GXCommon/GXMath.hpp>
 
@@ -1489,7 +1489,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetOrigin ( GXVec3 const &origin ) noexcept
-{ 
+{
     SetW ( origin );
 }
 

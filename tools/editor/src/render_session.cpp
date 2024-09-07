@@ -1,3 +1,5 @@
+#include <av_assert.hpp>
+#include <blit_program.inc>
 #include <render_session.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
@@ -5,6 +7,14 @@
 
 
 namespace editor {
+
+namespace {
+
+constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 bool RenderSession::Init ( MessageQueue &messageQueue, android_vulkan::Renderer &renderer ) noexcept
 {
@@ -34,7 +44,7 @@ void RenderSession::Destroy () noexcept
     _renderer = nullptr;
 }
 
-bool RenderSession::AllocateCommandBuffers () noexcept
+bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
 {
     constexpr VkFenceCreateInfo fenceInfo
     {
@@ -66,8 +76,6 @@ bool RenderSession::AllocateCommandBuffers () noexcept
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
         .commandBufferCount = 1U
     };
-
-    VkDevice device = _renderer->GetDevice ();
 
     for ( size_t i = 0U; i < pbr::DUAL_COMMAND_BUFFER; ++i )
     {
@@ -161,6 +169,299 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
     }
 }
 
+bool RenderSession::CreateFramebuffer ( VkDevice device, VkExtent2D const &resolution ) noexcept
+{
+    VkFramebufferCreateInfo const info
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _renderPassInfo.renderPass,
+        .attachmentCount = 1U,
+        .pAttachments = &_renderTarget.GetImageView (),
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFramebuffer ( device, &info, nullptr, &_renderPassInfo.framebuffer ),
+        "editor::RenderSession::CreateFramebuffer",
+        "Can't create framebuffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Render session" )
+    return true;
+}
+
+bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
+{
+    VkAttachmentDescription const attachment
+    {
+        .flags = 0U,
+        .format = RENDER_TARGET_FORMAT,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    constexpr static VkAttachmentReference colorReference
+    {
+        .attachment = 0U,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    };
+
+    constexpr VkSubpassDescription subpass
+    {
+        .flags = 0U,
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .inputAttachmentCount = 0U,
+        .pInputAttachments = nullptr,
+        .colorAttachmentCount = 1U,
+        .pColorAttachments = &colorReference,
+        .pResolveAttachments = nullptr,
+        .pDepthStencilAttachment = nullptr,
+        .preserveAttachmentCount = 0U,
+        .pPreserveAttachments = nullptr
+    };
+
+    constexpr VkSubpassDependency const dependencies[] =
+    {
+        {
+            .srcSubpass = VK_SUBPASS_EXTERNAL,
+            .dstSubpass = 0U,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        },
+        {
+            .srcSubpass = 0U,
+            .dstSubpass = VK_SUBPASS_EXTERNAL,
+            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
+        }
+    };
+
+    VkRenderPassCreateInfo const renderPassInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .attachmentCount = 1U,
+        .pAttachments = &attachment,
+        .subpassCount = 1U,
+        .pSubpasses = &subpass,
+        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
+        .pDependencies = dependencies
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_renderPassInfo.renderPass ),
+        "editor::RenderSession::CreateRenderPass",
+        "Can't create render pass"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Render session" )
+
+    constexpr static VkClearValue clearValue
+    {
+        .color
+        {
+            .float32 = { 0.0F, 0.0F, 0.0F, 1.0F }
+        }
+    };
+
+    _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    _renderPassInfo.pNext = nullptr;
+    _renderPassInfo.clearValueCount = 1U;
+    _renderPassInfo.pClearValues = &clearValue;
+
+    _renderPassInfo.renderArea.offset =
+    {
+        .x = 0,
+        .y = 0
+    };
+
+    return true;
+}
+
+bool RenderSession::CreateRenderTarget () noexcept
+{
+    VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
+    resolution = _renderer->GetSurfaceSize ();
+    VkDevice device = _renderer->GetDevice ();
+
+    if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
+        return false;
+
+    _viewport =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( resolution.width ),
+        .height = static_cast<float> ( resolution.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    constexpr static VkDescriptorPoolSize const poolSizes[] =
+    {
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U
+        },
+        {
+            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U
+        }
+    };
+
+    constexpr VkDescriptorPoolCreateInfo poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .maxSets = 1U,
+        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
+        .pPoolSizes = poolSizes
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+        "editor::RenderSession::CreateRenderTarget",
+        "Can't create descriptor pool"
+    );
+
+    if ( !result || !_blitLayout.Init ( device ) ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Render session" )
+
+    VkDescriptorSetAllocateInfo const descriptorSetAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .descriptorPool = _descriptorPool,
+        .descriptorSetCount = 1U,
+        .pSetLayouts = &_blitLayout.GetLayout ()
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateDescriptorSets ( device, &descriptorSetAllocateInfo, &_descriptorSet ),
+        "editor::RenderSession::CreateRenderTarget",
+        "Can't allocate descriptor set"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Render session" )
+
+    constexpr VkSamplerCreateInfo samplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    if ( !_sampler.Init ( device, samplerInfo, "Point sampler" ) ) [[unlikely]]
+        return false;
+
+    VkDescriptorImageInfo const imageInfo
+    {
+        .sampler = _sampler.GetSampler (),
+        .imageView = _renderTarget.GetImageView (),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet const writes[] =
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_IMAGE,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &imageInfo,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_SAMPLER,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &imageInfo,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        }
+    };
+
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
+    return true;
+}
+
+bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept
+{
+    bool const result = _renderTarget.CreateRenderTarget ( resolution,
+        RENDER_TARGET_FORMAT,
+        AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
+        *_renderer
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( _renderer->GetDevice (),
+        _renderTarget.GetImage (),
+        VK_OBJECT_TYPE_IMAGE,
+        "Render target"
+    )
+
+    AV_SET_VULKAN_OBJECT_NAME ( _renderer->GetDevice (),
+        _renderTarget.GetImageView (),
+        VK_OBJECT_TYPE_IMAGE_VIEW,
+        "Render target"
+    )
+
+    return true;
+}
+
 void RenderSession::EventLoop () noexcept
 {
     AV_THREAD_NAME ( "Render session" )
@@ -169,6 +470,17 @@ void RenderSession::EventLoop () noexcept
         _broken = true;
 
     MessageQueue &messageQueue = *_messageQueue;
+
+    if ( _broken )
+    {
+        messageQueue.EnqueueBack (
+            Message
+            {
+                ._type = eMessageType::CloseEditor,
+                ._params = nullptr
+            }
+        );
+    }
 
     for ( ; ; )
     {
@@ -179,12 +491,16 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::RenderFrame:
+                OnRenderFrame ();
+            break;
+
             case eMessageType::Shutdown:
-                Shutdown ();
+                OnShutdown ();
             return;
 
-            case eMessageType::RenderFrame:
-                RenderFrame ();
+            case eMessageType::SwapchainCreated:
+                OnSwapchainCreated ();
             break;
 
             default:
@@ -199,44 +515,298 @@ void RenderSession::EventLoop () noexcept
 bool RenderSession::InitiModules () noexcept
 {
     AV_TRACE ( "RenderSession: init modules" )
+    VkDevice device = _renderer->GetDevice ();
 
-    bool const result = AllocateCommandBuffers () &&
+    return AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
-        _presentRenderPass.OnSwapchainCreated ( *_renderer );
-
-    if ( result ) [[unlikely]]
-        return true;
-
-    _messageQueue->EnqueueBack (
-        Message
-        {
-            ._type = eMessageType::CloseEditor,
-            ._params = nullptr
-        }
-    );
-
-    return false;
+        _presentRenderPass.OnSwapchainCreated ( *_renderer ) &&
+        _blitProgram.Init ( *_renderer, _presentRenderPass.GetRenderPass (), _presentRenderPass.GetSubpass () ) &&
+        CreateRenderPass ( device ) &&
+        CreateRenderTarget ();
 }
 
-void RenderSession::RenderFrame () noexcept
+void RenderSession::OnRenderFrame () noexcept
 {
     AV_TRACE ( "RenderSession: frame" )
 
     if ( _broken ) [[unlikely]]
         return;
 
-    static size_t i = 0U;
-    android_vulkan::LogDebug ( "RenderFrame #%zu", i++ );
+    CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
+    _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
+
+    VkFence &fence = commandInfo._fence;
+    android_vulkan::Renderer& renderer = *_renderer;
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "editor::RenderSession::OnRenderFrame",
+        "Can't wait fence"
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    VkResult const acquireResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
+
+    if ( acquireResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
+    {
+        NotifyRecreateSwapchain ();
+        return;
+    }
+
+    if ( ( acquireResult != VK_SUCCESS ) & ( acquireResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
+    {
+        result = android_vulkan::Renderer::CheckVkResult ( acquireResult,
+            "editor::RenderSession::OnRenderFrame",
+            "Can't acquire present image"
+        );
+
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
+        "editor::RenderSession::OnRenderFrame",
+        "Can't reset fence"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkResetCommandPool ( device, commandInfo._pool, 0U ),
+        "editor::RenderSession::OnRenderFrame",
+        "Can't reset command pool"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    VkCommandBuffer commandBuffer = commandInfo._buffer;
+
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+        "editor::RenderSession::OnRenderFrame",
+        "Can't begin main render pass"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    vkCmdEndRenderPass ( commandBuffer );
+
+    _presentRenderPass.Begin ( commandBuffer );
+
+    _blitProgram.Bind ( commandBuffer );
+    _blitProgram.SetDescriptorSet ( commandBuffer, _descriptorSet );
+
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
+
+    vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
+
+    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+        commandBuffer,
+        commandInfo._acquire,
+        fence
+    );
+
+    if ( !presentResult ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    GX_DISABLE_WARNING ( 4061 )
+
+    switch ( VkResult const r = *presentResult; r )
+    {
+        case VK_SUCCESS:
+            // NOTHING
+        break;
+
+        case VK_SUBOPTIMAL_KHR:
+            [[fallthrough]];
+
+        case VK_ERROR_OUT_OF_DATE_KHR:
+            NotifyRecreateSwapchain ();
+        return;
+
+        default:
+            result = android_vulkan::Renderer::CheckVkResult ( r,
+                "editor::RenderSession::OnRenderFrame",
+                "Can't present frame"
+            );
+
+            // FUCK
+            AV_ASSERT ( false )
+        return;
+    }
+
+    GX_ENABLE_WARNING ( 4061 )
+
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::FrameComplete,
+            ._params = nullptr
+        }
+    );
 }
 
-void RenderSession::Shutdown () noexcept
+void RenderSession::OnShutdown () noexcept
 {
     AV_TRACE ( "RenderSession: shutdown" )
 
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
+        "editor::RenderSession::OnShutdown",
+        "Can't wait queue idle"
+    );
+
+    if ( !result ) [[unlikely]]
+        android_vulkan::LogError ( "Render session error. Can't stop." );
+
     VkDevice device = _renderer->GetDevice ();
     FreeCommandBuffers ( device );
+
+    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE )
+    {
+        vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
+        _renderPassInfo.framebuffer = VK_NULL_HANDLE;
+    }
+
+    if ( _descriptorPool != VK_NULL_HANDLE )
+    {
+        vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
+        _descriptorPool = VK_NULL_HANDLE;
+    }
+
+    _sampler.Destroy ( device );
+    _blitLayout.Destroy ( device );
+    _blitProgram.Destroy ( device );
+
+    _renderTarget.FreeResources ( *_renderer );
+
+    if ( _renderPassInfo.renderPass != VK_NULL_HANDLE )
+    {
+        vkDestroyRenderPass ( device, _renderPassInfo.renderPass, VK_NULL_HANDLE );
+        _renderPassInfo.renderPass = VK_NULL_HANDLE;
+    }
+
     _presentRenderPass.OnSwapchainDestroyed ( device );
     _presentRenderPass.OnDestroyDevice ( device );
+
+    _messageQueue->EnqueueFront (
+        Message
+        {
+            ._type = eMessageType::ModuleStopped,
+            ._params = nullptr
+        }
+    );
+}
+
+void RenderSession::OnSwapchainCreated () noexcept
+{
+    android_vulkan::Renderer &renderer = *_renderer;
+    VkDevice device = renderer.GetDevice ();
+    _presentRenderPass.OnSwapchainDestroyed ( device );
+
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+    }
+
+    VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
+    resolution = renderer.GetSurfaceSize ();
+
+    _viewport =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( resolution.width ),
+        .height = static_cast<float> ( resolution.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
+    _renderPassInfo.framebuffer = VK_NULL_HANDLE;
+
+    _renderTarget.FreeResources ( renderer );
+
+    if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    VkDescriptorImageInfo const imageInfo
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = _renderTarget.GetImageView (),
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkWriteDescriptorSet const write
+    {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .pNext = nullptr,
+        .dstSet = _descriptorSet,
+        .dstBinding = BIND_IMAGE,
+        .dstArrayElement = 0U,
+        .descriptorCount = 1U,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        .pImageInfo = &imageInfo,
+        .pBufferInfo = nullptr,
+        .pTexelBufferView = nullptr
+    };
+
+    vkUpdateDescriptorSets ( device, 1U, &write, 0U, nullptr );
+}
+
+void RenderSession::NotifyRecreateSwapchain () const noexcept
+{
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::FrameComplete,
+            ._params = nullptr
+        }
+    );
+
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::RecreateSwapchain,
+            ._params = nullptr
+        }
+    );
 }
 
 } // namespace editor

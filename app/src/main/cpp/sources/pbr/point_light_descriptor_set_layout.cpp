@@ -124,7 +124,7 @@ bool PointLightDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout PointLightDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &PointLightDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

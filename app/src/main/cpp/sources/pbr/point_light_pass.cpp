@@ -60,7 +60,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     };
 
     return CreateShadowmapRenderPass ( renderer.GetDevice () ) &&
-        _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) &&
+        _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) &&
 
         _shadowmapBufferPool.Init ( renderer,
             PointLightShadowmapGeneratorDescriptorSetLayout {},

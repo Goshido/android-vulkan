@@ -9,6 +9,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cinttypes>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -917,10 +918,14 @@ bool Renderer::OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexc
     return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
 }
 
-void Renderer::OnDestroySwapchain () noexcept
+void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
 {
-    DestroySwapchain ();
-    DestroySurface ();
+    DestroySwapchain ( preserveSurface );
+
+    if ( !preserveSurface ) [[unlikely]]
+    {
+        DestroySurface ();
+    }
 }
 
 bool Renderer::OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept
@@ -1286,22 +1291,6 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
     return false;
 }
 
-bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept
-{
-    std::set<std::string> allExtensions;
-    allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
-
-    LogInfo ( ">>> Checking required device extensions..." );
-
-    // Note bitwise '&' is intentional. All checks must be done to view whole picture.
-
-    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
-}
-
 bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
     std::span<size_t const> const &features
 ) noexcept
@@ -1504,14 +1493,7 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .scalarBlockLayout = VK_TRUE
     };
 
-    constexpr char const* const extensions[] =
-    {
-        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
-        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
-        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
-        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    std::span<char const* const> const extensions = GetDeviceExtensions ();
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
@@ -1522,8 +1504,8 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .pQueueCreateInfos = &deviceQueueCreateInfo,
         .enabledLayerCount = 0U,
         .ppEnabledLayerNames = nullptr,
-        .enabledExtensionCount = static_cast<uint32_t> ( std::size ( extensions ) ),
-        .ppEnabledExtensionNames = extensions,
+        .enabledExtensionCount = static_cast<uint32_t> ( extensions.size () ),
+        .ppEnabledExtensionNames = extensions.data (),
         .pEnabledFeatures = &caps._features
     };
 
@@ -1690,25 +1672,47 @@ void Renderer::DestroyInstance () noexcept
 
 bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 {
+    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const *>
+    {
+        VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+
+        bool const result = CheckVkResult (
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+            "Renderer::DeploySurface",
+            "Can't get Vulkan surface capabilities"
+        );
+
+        if ( !result ) [[unlikely]]
+            return std::nullopt;
+
+        return std::optional<VkSurfaceCapabilitiesKHR const*> ( &caps );
+    };
+
+    if ( _surface != VK_NULL_HANDLE ) [[likely]]
+    {
+        std::optional<VkSurfaceCapabilitiesKHR const *> const caps = getCaps ();
+
+        if ( !caps )
+            return false;
+
+        _surfaceSize = caps.value ()->currentExtent;
+        return true;
+    }
+
     if ( !DeployNativeSurface ( nativeWindow ) ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
-    VkSurfaceCapabilitiesKHR &surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+    std::optional<VkSurfaceCapabilitiesKHR const *> const capsResult = getCaps ();
 
-    bool result = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &surfaceCapabilitiesKHR ),
-        "Renderer::DeploySurface",
-        "Can't get Vulkan surface capabilities"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !capsResult ) [[unlikely]]
         return false;
 
-    PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
-    _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
-    _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
+    VkSurfaceCapabilitiesKHR const &caps = *capsResult.value ();
+    PrintVkSurfaceCapabilities ( caps );
+    _surfaceSize = caps.currentExtent;
+    _surfaceTransform = caps.currentTransform;
 
     if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ) [[unlikely]]
     {
@@ -1738,7 +1742,7 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 
     VkBool32 isSupported = VK_FALSE;
 
-    result = CheckVkResult (
+    bool result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceSupportKHR ( _physicalDevice, _queueFamilyIndex, _surface, &isSupported ),
         "Renderer::DeploySurface",
         "Can't check Vulkan surface support by physical device"
@@ -1842,13 +1846,19 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .compositeAlpha = compositeAlpha,
         .presentMode = presentMode,
         .clipped = VK_TRUE,
-        .oldSwapchain = VK_NULL_HANDLE
+        .oldSwapchain = _oldSwapchain
     };
 
     bool result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
+
+    if ( _oldSwapchain != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroySwapchainKHR ( _device, _oldSwapchain, nullptr );
+        _oldSwapchain = VK_NULL_HANDLE;
+    }
 
     if ( !result ) [[unlikely]]
         return false;
@@ -1930,7 +1940,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     return true;
 }
 
-void Renderer::DestroySwapchain () noexcept
+void Renderer::DestroySwapchain ( bool preserveSurface ) noexcept
 {
     size_t const count = _swapchainImageViews.size ();
 
@@ -1940,7 +1950,17 @@ void Renderer::DestroySwapchain () noexcept
     if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
+    if ( preserveSurface ) [[likely]]
+    {
+        _oldSwapchain = _swapchain;
+        AV_SET_VULKAN_OBJECT_NAME ( _device, _oldSwapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Old swapchain" )
+    }
+    else
+    {
+        vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
+        _oldSwapchain = VK_NULL_HANDLE;
+    }
+
     _swapchain = VK_NULL_HANDLE;
 }
 

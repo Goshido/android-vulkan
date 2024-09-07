@@ -6,6 +6,12 @@
 #include "ktx_header.hpp"
 #include "mip_info.hpp"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <memory>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace android_vulkan {
 

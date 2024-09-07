@@ -14,9 +14,9 @@ namespace pbr {
 class ReflectionGlobalProgram final : public LightLightupBaseProgram
 {
     private:
-        LightupCommonDescriptorSetLayout        _commonLayout;
-        StubDescriptorSetLayout                 _stubLayout;
-        ReflectionGlobalDescriptorSetLayout     _reflectionLayout;
+        LightupCommonDescriptorSetLayout        _commonLayout {};
+        StubDescriptorSetLayout                 _stubLayout {};
+        ReflectionGlobalDescriptorSetLayout     _reflectionLayout {};
 
     public:
         ReflectionGlobalProgram () noexcept;
@@ -29,17 +29,14 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 
         ~ReflectionGlobalProgram () override = default;
 
-        // Method return true is success. Otherwise method returns false.
-        // The method MUST invoke vkCreateGraphicsPipelines at the end.
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        void Destroy ( VkDevice device ) noexcept override;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            SpecializationData specializationData,
             VkExtent2D const &viewport
-        ) noexcept override;
-
-        void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        ) noexcept;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
@@ -51,6 +48,10 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
@@ -78,9 +79,9 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
-            VkRect2D &scissorInfo,
-            VkViewport &viewportInfo,
-            VkExtent2D const &viewport
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (

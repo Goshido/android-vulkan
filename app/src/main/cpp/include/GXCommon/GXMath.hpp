@@ -1,4 +1,4 @@
-// version 1.83
+// version 1.84
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -672,10 +672,10 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid SetY ( GXVec3 const &y ) noexcept;
     [[maybe_unused]] GXVoid GetY ( GXVec3 &y ) const noexcept;
-    
+
     [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z ) noexcept;
     [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const noexcept;
-    
+
     [[maybe_unused]] GXVoid SetW ( GXVec3 const &w ) noexcept;
     [[maybe_unused]] GXVoid GetW ( GXVec3 &w ) const noexcept;
 
@@ -805,7 +805,7 @@ struct [[maybe_unused]] GXPlane final
     [[maybe_unused]] ~GXPlane () = default;
 
     [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC ) noexcept;
-    
+
     [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart,
         GXVec3 const &lineEnd,
         GXVec3 const &point

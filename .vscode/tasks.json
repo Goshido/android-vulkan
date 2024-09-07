@@ -25,12 +25,12 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/make-all.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/make-all.ps1"
             }
         },
         {
@@ -39,12 +39,12 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/make-all.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/make-all.ps1"
             },
 
             "args": [
@@ -60,18 +60,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-vs.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "VS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "vs"
                 }
             ]
         },
@@ -81,18 +89,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-ps.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "PS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "ps"
                 }
             ]
         },
@@ -102,18 +118,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/validate-cs.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "CS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "cs"
                 }
             ]
         },
@@ -123,18 +147,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-vs.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/disassm.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "VS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "vs"
                 }
             ]
         },
@@ -144,18 +176,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-ps.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/disassm.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "PS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "ps"
                 }
             ]
         },
@@ -165,18 +205,26 @@
             "group": "build",
 
             "options": {
-                "cwd": "${workspaceFolder}/app/src/main/hlsl/build-system/windows"
+                "cwd": "${workspaceFolder}"
             },
 
             "command": {
                 "quoting": "weak",
-                "value" : "${workspaceFolder}/app/src/main/hlsl/build-system/windows/disassm-cs.ps1"
+                "value" : "${workspaceFolder}/scripts/windows/disassm.ps1"
             },
 
             "args": [
                 {
                     "quoting": "strong",
                     "value": "${file}"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "CS"
+                },
+                {
+                    "quoting": "weak",
+                    "value": "cs"
                 }
             ]
         }

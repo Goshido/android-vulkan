@@ -116,7 +116,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
 
     android_vulkan::Mesh2Header const header
     {
-        ._bounds = 
+        ._bounds =
         {
             ._min = { bMin[ 0U ], bMin[ 1U ], bMin[ 2U ] },
             ._max = { bMax[ 0U ], bMax[ 1U ], bMax[ 2U ] }

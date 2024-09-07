@@ -134,7 +134,7 @@ bool ExposureDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ExposureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ExposureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

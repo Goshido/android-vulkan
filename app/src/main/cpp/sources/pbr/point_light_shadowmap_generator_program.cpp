@@ -24,10 +24,43 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
     // NOTHING
 }
 
+GraphicsProgram::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
+{
+    static DescriptorSetInfo const info
+    {
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        }
+    };
+
+    return info;
+}
+
+void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
+{
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    _instanceLayout.Destroy ( device );
+
+    if ( _pipeline != VK_NULL_HANDLE )
+    {
+        vkDestroyPipeline ( device, _pipeline, nullptr );
+        _pipeline = VK_NULL_HANDLE;
+    }
+
+    DestroyShaderModules ( device );
+}
+
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -62,12 +95,18 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -89,40 +128,6 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &rende
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Point light shadowmap generator" )
     DestroyShaderModules ( device );
     return true;
-}
-
-void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _instanceLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
-}
-
-GraphicsProgram::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
-    return info;
 }
 
 void PointLightShadowmapGeneratorProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
@@ -204,6 +209,13 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightShadowmapGeneratorProgram
     return &info;
 }
 
+VkPipelineDynamicStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
+}
+
 VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
@@ -225,15 +237,13 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
     if ( !_instanceLayout.Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layouts = _instanceLayout.GetLayout ();
-
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
         .setLayoutCount = 1U,
-        .pSetLayouts = &layouts,
+        .pSetLayouts = &_instanceLayout.GetLayout (),
         .pushConstantRangeCount = 0U,
         .pPushConstantRanges = nullptr
     };
@@ -371,22 +381,22 @@ void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset
         {
@@ -394,7 +404,7 @@ VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::In
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -403,9 +413,9 @@ VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::In
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;

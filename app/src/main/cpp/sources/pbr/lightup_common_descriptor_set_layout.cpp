@@ -159,7 +159,7 @@ bool LightupCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &LightupCommonDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

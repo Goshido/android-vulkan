@@ -18,7 +18,7 @@ class CSSUIElement : public UIElement
 
         CSSUIElement ( CSSUIElement const & ) = delete;
         CSSUIElement &operator = ( CSSUIElement const & ) = delete;
-    
+
         CSSUIElement ( CSSUIElement && ) = delete;
         CSSUIElement &operator = ( CSSUIElement && ) = delete;
 

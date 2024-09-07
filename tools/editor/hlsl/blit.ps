@@ -1,0 +1,21 @@
+#include "blit_program.inc"
+
+
+[[vk::binding ( BIND_IMAGE, SET_BLIT )]]
+Texture2D<float32_t4>           g_image:        register ( t0 );
+
+[[vk::binding ( BIND_SAMPLER, SET_BLIT )]]
+SamplerState                    g_sampler:      register ( s0 );
+
+struct InputData
+{
+    [[vk::location ( ATT_SLOT_UV )]]
+    noperspective float32_t2    _uv:            UV;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float32_t4 PS ( in InputData inputData ): SV_Target0
+{
+    return float32_t4 ( g_image.SampleLevel ( g_sampler, inputData._uv, 0.0F ).xyz, 1.0F );
+}

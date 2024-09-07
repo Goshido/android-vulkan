@@ -107,7 +107,7 @@ bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

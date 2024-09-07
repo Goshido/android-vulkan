@@ -128,7 +128,7 @@ bool UIPassCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout UIPassCommonDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &UIPassCommonDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

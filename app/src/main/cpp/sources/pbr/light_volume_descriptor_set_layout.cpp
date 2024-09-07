@@ -109,7 +109,7 @@ bool LightVolumeDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout LightVolumeDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &LightVolumeDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

@@ -111,7 +111,7 @@ bool PointLightShadowmapGeneratorDescriptorSetLayout::Init ( VkDevice device ) n
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout PointLightShadowmapGeneratorDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &PointLightShadowmapGeneratorDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

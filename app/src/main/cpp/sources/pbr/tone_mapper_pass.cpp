@@ -50,15 +50,13 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layout = _resourceLayout.GetLayout ();
-
     VkDescriptorSetAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _resourceDescriptorPool,
         .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
+        .pSetLayouts = &_resourceLayout.GetLayout ()
     };
 
     result = android_vulkan::Renderer::CheckVkResult (

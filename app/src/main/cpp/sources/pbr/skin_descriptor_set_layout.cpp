@@ -17,15 +17,15 @@ class DescriptorSetLayout final
 
     public:
         DescriptorSetLayout () = default;
-    
+
         DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
         DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
-    
+
         DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
         DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
-    
+
         ~DescriptorSetLayout () = default;
-    
+
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
@@ -122,7 +122,7 @@ bool SkinDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout SkinDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &SkinDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

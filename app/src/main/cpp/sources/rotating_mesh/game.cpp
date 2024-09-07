@@ -431,8 +431,6 @@ bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, 
 
 bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
 {
-    VkResult presentResult;
-
     VkPresentInfoKHR const presentInfo
     {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -442,19 +440,14 @@ bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationI
         .swapchainCount = 1U,
         .pSwapchains = &renderer.GetSwapchain (),
         .pImageIndices = &presentationImageIndex,
-        .pResults = &presentResult
+        .pResults = nullptr
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    return android_vulkan::Renderer::CheckVkResult (
         vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
         "Game::EndFrame",
         "Can't present frame"
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult, "Game::EndFrame", "Present queue has been failed" );
 }
 
 bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept

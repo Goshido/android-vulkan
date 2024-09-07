@@ -357,7 +357,7 @@ void Utility::OnExportSkin () noexcept
 
     auto const extract = [ this ] ( float &v, int id ) noexcept -> bool {
         ICustEdit* control = GetICustEdit ( GetDlgItem ( _ui, id ) );
-        
+
         if ( control->GetTextLength () < 1 )
         {
             ReleaseICustEdit ( control );

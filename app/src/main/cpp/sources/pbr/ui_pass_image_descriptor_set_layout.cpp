@@ -112,7 +112,7 @@ bool UIPassImageDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout UIPassImageDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &UIPassImageDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

@@ -32,10 +32,10 @@ class ComputeProgram
 
     public:
         ComputeProgram () = delete;
-    
+
         ComputeProgram ( ComputeProgram const & ) = delete;
         ComputeProgram &operator = ( ComputeProgram const & ) = delete;
-    
+
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
 

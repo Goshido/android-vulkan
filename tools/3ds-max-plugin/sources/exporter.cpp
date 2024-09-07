@@ -111,7 +111,7 @@ bool Exporter::AutoReleaseIGameNode::Init ( HWND parent, IGameScene &scene, INod
     return CheckResult ( _object->InitializeData (), parent, "Can't init IGameObject.", MB_ICONWARNING ) &&
 
         CheckResult ( _object->GetIGameType () == IGameMesh::IGAME_MESH,
-            parent, 
+            parent,
             "Please select mesh to export.",
             MB_ICONINFORMATION
         );

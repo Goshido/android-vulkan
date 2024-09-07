@@ -104,7 +104,7 @@ bool FullScreenTriangleDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout FullScreenTriangleDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &FullScreenTriangleDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

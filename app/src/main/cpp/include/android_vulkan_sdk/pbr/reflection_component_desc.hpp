@@ -28,7 +28,7 @@ struct ReflectionComponentDesc final : public ComponentDesc
 #pragma pack ( pop )
 
 
-} // namespace pbr 
+} // namespace pbr
 
 
 #endif // PBR_REFLECTION_COMPONENT_DESC_HPP

@@ -1,3 +1,4 @@
+#include <bitwise.hpp>
 #include <os_utils.hpp>
 #include <logger.hpp>
 #include <renderer.hpp>
@@ -145,27 +146,42 @@ bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
     return false;
 }
 
+std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
+{
+    constexpr static char const* extensions[] =
+    {
+
+#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+        VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
+
+#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
+        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
+        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
+        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+    return { extensions, std::size ( extensions ) };
+}
+
 std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 {
+    constexpr static char const* extensions[] =
+    {
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-    constexpr static char const* extensions[] =
-    {
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-    };
-
-#else
-
-    constexpr static char const* const extensions[] =
-    {
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME
-    };
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+        VK_KHR_SURFACE_EXTENSION_NAME
+        
+    };
 
     return { extensions, std::size ( extensions ) };
 }
@@ -178,6 +194,29 @@ std::span<size_t const> Renderer::GetRequiredFeatures () noexcept
     };
 
     return { features, std::size ( features ) };
+}
+
+bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept
+{
+    std::set<std::string> allExtensions;
+    allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
+
+    LogInfo ( ">>> Checking required device extensions..." );
+
+    // Note bitwise '&' is intentional. All checks must be done to view whole picture.
+
+    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+
+#ifndef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME ) ) &
+
+#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept

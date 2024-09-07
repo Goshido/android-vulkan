@@ -117,6 +117,24 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\present_render_pass.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\texture2D.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\ktx_media_container.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\blit_descriptor_set_layout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\blit_program.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\graphics_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -183,6 +201,30 @@
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\ktx_header.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\ktx_media_container.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\blit_descriptor_set_layout.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\blit_program.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
   </ItemGroup>

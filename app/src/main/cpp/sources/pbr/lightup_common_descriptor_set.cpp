@@ -37,7 +37,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 {
     VkDevice device = renderer.GetDevice ();
 
-    constexpr VkDescriptorPoolSize const poolSizes[] =
+    constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -57,7 +57,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         }
     };
 
-    VkDescriptorPoolCreateInfo const poolInfo
+    constexpr VkDescriptorPoolCreateInfo poolInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,

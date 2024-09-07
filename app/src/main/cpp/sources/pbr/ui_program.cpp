@@ -25,6 +25,27 @@ UIProgram::UIProgram () noexcept:
     // NOTHING
 }
 
+void UIProgram::Destroy ( VkDevice device ) noexcept
+{
+    if ( _pipelineLayout != VK_NULL_HANDLE )
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    _imageLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
+    _transformLayout.Destroy ( device );
+
+    if ( _pipeline != VK_NULL_HANDLE )
+    {
+        vkDestroyPipeline ( device, _pipeline, nullptr );
+        _pipeline = VK_NULL_HANDLE;
+    }
+
+    DestroyShaderModules ( device );
+}
+
 bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
@@ -65,12 +86,18 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -92,27 +119,6 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "UI" )
     DestroyShaderModules ( device );
     return true;
-}
-
-void UIProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _imageLayout.Destroy ( device );
-    _commonLayout.Destroy ( device );
-    _transformLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 GraphicsProgram::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
@@ -242,6 +248,13 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
     };
 
     return &info;
+}
+
+VkPipelineDynamicStateCreateInfo const* UIProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
 }
 
 VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
@@ -429,22 +442,22 @@ void UIProgram::DestroyShaderModules ( VkDevice device ) noexcept
 
 VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset
         {
@@ -452,7 +465,7 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -461,9 +474,9 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;

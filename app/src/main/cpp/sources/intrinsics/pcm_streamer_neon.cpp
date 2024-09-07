@@ -133,7 +133,7 @@ void NeonConverter::Convert ( PCMStreamer::PCMType* target,
 
     int32x2_t const alpha = vmul_s32 ( vget_high_s32 ( diff ), vdup_n_s32 ( sampleFactor / sampleCount ) );
     int32x2_t const n = vadd_s32 ( vget_high_s32 ( before ), Divide ( alpha, correction ) );
-    
+
     vst1_s32 ( data, NeonConverter::Divide ( vmul_s32 ( s, n ), correction ) );
     target[ 0U ] = static_cast<PCMStreamer::PCMType> ( data[ 0U ] );
     target[ 1U ] = static_cast<PCMStreamer::PCMType> ( data[ 1U ] );

@@ -4,6 +4,12 @@
 
 #include <renderer.hpp>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <optional>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr {
 
@@ -33,7 +39,10 @@ class PresentRenderPass final
 
         ~PresentRenderPass () = default;
 
-        [[nodiscard]] bool AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept;
+        [[nodiscard]] VkResult AcquirePresentTarget ( android_vulkan::Renderer &renderer,
+            VkSemaphore acquire
+        ) noexcept;
+
         [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
 
         [[nodiscard]] bool OnInitDevice () noexcept;
@@ -44,7 +53,7 @@ class PresentRenderPass final
 
         void Begin ( VkCommandBuffer commandBuffer ) noexcept;
 
-        [[nodiscard]] bool End ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] std::optional<VkResult> End ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkSemaphore acquire,
             VkFence fence

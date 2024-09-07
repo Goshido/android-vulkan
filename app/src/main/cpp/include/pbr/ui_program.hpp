@@ -42,15 +42,15 @@ class UIProgram final : public SRGBProgram
 
         ~UIProgram () override = default;
 
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        void Destroy ( VkDevice device ) noexcept override;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             SpecializationData specializationData,
             VkExtent2D const &viewport
-        ) noexcept override;
-
-        void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        ) noexcept;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,
@@ -66,6 +66,10 @@ class UIProgram final : public SRGBProgram
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
@@ -93,9 +97,9 @@ class UIProgram final : public SRGBProgram
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
-            VkRect2D &scissorInfo,
-            VkViewport &viewportInfo,
-            VkExtent2D const &viewport
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (

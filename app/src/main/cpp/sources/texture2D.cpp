@@ -13,13 +13,19 @@ GX_DISABLE_COMMON_WARNINGS
 #define STBI_REALLOC(p, newsz) std::realloc(p, newsz)
 #define STBI_FREE(p) std::free(p)
 #define STBI_NO_FAILURE_STRINGS
-#define STBI_NEON
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #define STBI_ONLY_BMP
 #define STBI_ONLY_TGA
 #define STBI_ONLY_HDR
 #define STB_IMAGE_IMPLEMENTATION
+
+#ifdef __ARM_NEON
+
+#define STBI_NEON
+
+#endif // __ARM_NEON
+
 #include <stb/stb_image.h>
 
 GX_RESTORE_WARNING_STATE
@@ -106,12 +112,12 @@ VkFormat Texture2D::GetFormat () const noexcept
     return _format;
 }
 
-[[maybe_unused]] VkImage Texture2D::GetImage () const noexcept
+[[maybe_unused]] VkImage const &Texture2D::GetImage () const noexcept
 {
     return _image;
 }
 
-VkImageView Texture2D::GetImageView () const noexcept
+VkImageView const &Texture2D::GetImageView () const noexcept
 {
     return _imageView;
 }

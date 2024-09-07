@@ -104,7 +104,7 @@ The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag
 To compile all shaders to _SPIR-V_ representation you can invoke special `make-all.ps1` script which is located here:
 
 ```txt
-<android-vulkan directory>/app/src/main/hlsl/build-system/windows
+<android-vulkan directory>/scripts/windows
 ```
 
 But **before** that you have to specify root directory where _dxc.exe_ is located on you system via environment variable `ANDROID_VULKAN_DXC_ROOT`

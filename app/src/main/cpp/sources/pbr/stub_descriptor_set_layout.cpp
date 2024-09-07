@@ -98,7 +98,7 @@ bool StubDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout StubDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &StubDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

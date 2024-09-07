@@ -120,7 +120,7 @@ bool ToneMapperDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ToneMapperDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ToneMapperDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

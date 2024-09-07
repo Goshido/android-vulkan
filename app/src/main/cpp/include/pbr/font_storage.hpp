@@ -94,7 +94,7 @@ class FontStorage final
         {
             private:
                 ImageResource                   _dyingResources[ DUAL_COMMAND_BUFFER ];
-            
+
             public:
                 ImageResource                   _resource {};
 

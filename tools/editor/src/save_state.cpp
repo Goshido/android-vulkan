@@ -159,7 +159,7 @@ SaveState::Container &SaveState::Container::WriteContainer ( std::string_view co
         return null;
     }
 
-    auto const result = _containerData.insert ( 
+    auto const result = _containerData.insert (
         std::make_pair<std::string, Container> ( std::string ( key ), Container ( eType::Container ) )
     );
 

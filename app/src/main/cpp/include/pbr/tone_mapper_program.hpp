@@ -45,7 +45,7 @@ class ToneMapperProgram final : public SRGBProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            SpecializationData specializationData,
+            GammaInfo const &gammaInfo,
             VkExtent2D const &viewport
         ) noexcept;
 
@@ -85,8 +85,6 @@ class ToneMapperProgram final : public SRGBProgram
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
-
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,

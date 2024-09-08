@@ -135,6 +135,15 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\hello_triangle_program.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\srgb_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -227,6 +236,18 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="include\hello_triangle_vertex.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hello_triangle_program.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -253,6 +274,12 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in">
       <Filter>Header Files\core\platform\window</Filter>
+    </None>
+    <None Include="include\hello_triangle_program.inc">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="include\blit_program.inc">
+      <Filter>Header Files\core</Filter>
     </None>
   </ItemGroup>
 </Project>

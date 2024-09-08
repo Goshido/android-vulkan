@@ -383,6 +383,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         bounds,
         renderer,
         *cb,
+        false,
         VK_NULL_HANDLE
     );
 

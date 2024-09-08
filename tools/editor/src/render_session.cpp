@@ -1,5 +1,6 @@
 #include <av_assert.hpp>
 #include <blit_program.inc>
+#include <hello_triangle_vertex.hpp>
 #include <render_session.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
@@ -11,8 +12,268 @@ namespace editor {
 namespace {
 
 constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
+constexpr float DEFAULT_BRIGHTNESS_BALANCE = 0.0F;
 
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class HelloTriangleJob final
+{
+    public:
+        std::unique_ptr<android_vulkan::MeshGeometry>       _geometry {};
+        std::unique_ptr<HelloTriangleProgram>               _program {};
+
+    private:
+        VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
+        VkFence                                             _complete = VK_NULL_HANDLE;
+        android_vulkan::Renderer                            &_renderer;
+        VkRenderPass                                        _renderPass = VK_NULL_HANDLE;
+
+    public:
+        HelloTriangleJob () = delete;
+
+        HelloTriangleJob ( HelloTriangleJob const & ) = delete;
+        HelloTriangleJob &operator = ( HelloTriangleJob const & ) = delete;
+
+        HelloTriangleJob ( HelloTriangleJob && ) = delete;
+        HelloTriangleJob &operator = ( HelloTriangleJob && ) = delete;
+
+        explicit HelloTriangleJob ( MessageQueue &messageQueue,
+            android_vulkan::Renderer &renderer,
+            VkRenderPass renderPass
+        ) noexcept;
+
+        ~HelloTriangleJob ();
+
+    private:
+        void CreateMesh () noexcept;
+        void CreateProgram () noexcept;
+};
+
+HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
+    android_vulkan::Renderer &renderer,
+    VkRenderPass renderPass
+) noexcept:
+    _renderer ( renderer ),
+    _renderPass ( renderPass )
+{
+    std::thread (
+        [ this, &messageQueue ] () noexcept
+        {
+            AV_THREAD_NAME ( "Hello triangle job" )
+            CreateProgram ();
+            CreateMesh ();
+
+            messageQueue.EnqueueBack (
+                Message
+                {
+                    ._type = eMessageType::HelloTriangleReady,
+                    ._params = this
+                }
+            );
+        }
+    ).detach ();
+}
+
+HelloTriangleJob::~HelloTriangleJob ()
+{
+    VkDevice device = _renderer.GetDevice ();
+
+    if ( _commandPool != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyCommandPool ( device, _commandPool, nullptr );
+
+    if ( _complete != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyFence ( device, _complete, nullptr );
+    }
+}
+
+void HelloTriangleJob::CreateMesh () noexcept
+{
+    AV_TRACE ( "Mesh" )
+
+    VkCommandPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = _renderer.GetQueueFamilyIndex ()
+    };
+
+    VkDevice device = _renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't create lead command pool"
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Hello triangle" )
+
+    VkCommandBufferAllocateInfo bufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    VkCommandBuffer commandBuffer;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't allocate command buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Hello triangle" )
+
+    constexpr VkCommandBufferBeginInfo beginInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't begin command buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
+
+    constexpr HelloTriangleVertex const data[] =
+    {
+        {
+            ._vertex = GXVec2 ( -0.75F, 0.75F ),
+            ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
+        },
+
+        {
+            ._vertex = GXVec2 ( 0.0F, -0.75F ),
+            ._color = GXVec3 ( 1.0F, 0.0F, 0.0F )
+        },
+
+        {
+            ._vertex = GXVec2 ( 0.75F, 0.75F ),
+            ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
+        }
+    };
+
+    _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
+
+    result = _geometry->LoadMesh ( reinterpret_cast<uint8_t const*> ( data ),
+        sizeof ( data ),
+        static_cast<uint32_t> ( std::size ( data ) ),
+        _renderer,
+        commandBuffer,
+        true,
+        VK_NULL_HANDLE
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        _geometry->FreeResources ( _renderer );
+        _geometry.reset ();
+        return;
+    }
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't end command buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        _geometry->FreeResources ( _renderer );
+        _geometry.reset ();
+        return;
+    }
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateFence ( device, &fenceInfo, nullptr, &_complete ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't create fence"
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _complete, VK_OBJECT_TYPE_FENCE, "Hello triangle" )
+
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkQueueSubmit ( _renderer.GetQueue (), 1U, &submitInfo, _complete ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't submit command"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        _geometry->FreeResources ( _renderer );
+        _geometry.reset ();
+        return;
+    }
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_complete, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "editor::HelloTriangleJob::CreateMesh",
+        "Can't wait fence"
+    );
+
+    if ( result ) [[likely]]
+    {
+        _geometry->FreeTransferResources ( _renderer );
+        return;
+    }
+
+    _geometry->FreeResources ( _renderer );
+    _geometry.reset ();
+}
+
+void HelloTriangleJob::CreateProgram () noexcept
+{
+    AV_TRACE ( "Program" )
+
+    _program = std::make_unique<HelloTriangleProgram> ();
+
+    if ( _program->Init ( _renderer, _renderPass, 0U ) ) [[likely]]
+        return;
+
+    _program->Destroy ( _renderer.GetDevice () );
+    _program.reset ();
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -81,7 +342,8 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
     {
         CommandInfo &info = _commandInfo[ i ];
 
-        bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &info._fence ),
+        bool result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFence ( device, &fenceInfo, nullptr, &info._fence ),
             "editor::RenderSession::AllocateCommandBuffers",
             "Can't create fence"
         );
@@ -484,13 +746,17 @@ void RenderSession::EventLoop () noexcept
 
     for ( ; ; )
     {
-        AV_TRACE ( "Render session" )
+        AV_TRACE ( "Event loop" )
         Message message = messageQueue.Dequeue ();
 
         GX_DISABLE_WARNING ( 4061 )
 
         switch ( message._type )
         {
+            case eMessageType::HelloTriangleReady:
+                OnHelloTriangleReady ( message._params );
+            break;
+
             case eMessageType::RenderFrame:
                 OnRenderFrame ();
             break;
@@ -514,20 +780,38 @@ void RenderSession::EventLoop () noexcept
 
 bool RenderSession::InitiModules () noexcept
 {
-    AV_TRACE ( "RenderSession: init modules" )
+    AV_TRACE ( "Init modules" )
     VkDevice device = _renderer->GetDevice ();
+
+    if ( !CreateRenderPass ( device ) ) [[unlikely]]
+        return false;
+
+    new HelloTriangleJob ( *_messageQueue, *_renderer, _renderPassInfo.renderPass );
 
     return AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
         _presentRenderPass.OnSwapchainCreated ( *_renderer ) &&
-        _blitProgram.Init ( *_renderer, _presentRenderPass.GetRenderPass (), _presentRenderPass.GetSubpass () ) &&
-        CreateRenderPass ( device ) &&
+
+        _blitProgram.Init ( *_renderer,
+            _presentRenderPass.GetRenderPass (),
+            _presentRenderPass.GetSubpass (),
+            pbr::SRGBProgram::GetGammaInfo ( DEFAULT_BRIGHTNESS_BALANCE )
+        ) &&
+
         CreateRenderTarget ();
+}
+
+void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
+{
+    auto* job = static_cast<HelloTriangleJob*> ( params );
+    _helloTriangleProgram = std::move ( job->_program );
+    _helloTriangleGeometry = std::move ( job->_geometry );
+    delete job;
 }
 
 void RenderSession::OnRenderFrame () noexcept
 {
-    AV_TRACE ( "RenderSession: frame" )
+    AV_TRACE ( "Render frame" )
 
     if ( _broken ) [[unlikely]]
         return;
@@ -615,59 +899,75 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
-    vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
-    vkCmdEndRenderPass ( commandBuffer );
-
-    _presentRenderPass.Begin ( commandBuffer );
-
-    _blitProgram.Bind ( commandBuffer );
-    _blitProgram.SetDescriptorSet ( commandBuffer, _descriptorSet );
-
-    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
-    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
-
-    vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
-
-    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
-        commandBuffer,
-        commandInfo._acquire,
-        fence
-    );
-
-    if ( !presentResult ) [[unlikely]]
     {
-        // FUCK
-        AV_ASSERT ( false )
-        return;
+        AV_VULKAN_GROUP ( commandBuffer, "Scene" )
+        vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+        vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
+
+        if ( static_cast<bool> ( _helloTriangleGeometry ) & static_cast<bool> ( _helloTriangleGeometry ) ) [[likely]]
+        {
+            constexpr VkDeviceSize offsets = 0U;
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_helloTriangleGeometry->GetVertexBuffer (), &offsets );
+
+            _helloTriangleProgram->Bind ( commandBuffer );
+            vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
+        }
+
+        vkCmdEndRenderPass ( commandBuffer );
     }
 
-    GX_DISABLE_WARNING ( 4061 )
-
-    switch ( VkResult const r = *presentResult; r )
     {
-        case VK_SUCCESS:
-            // NOTHING
-        break;
+        AV_VULKAN_GROUP ( commandBuffer, "Present" )
+        _presentRenderPass.Begin ( commandBuffer );
 
-        case VK_SUBOPTIMAL_KHR:
-            [[fallthrough]];
+        _blitProgram.Bind ( commandBuffer );
+        _blitProgram.SetDescriptorSet ( commandBuffer, _descriptorSet );
 
-        case VK_ERROR_OUT_OF_DATE_KHR:
-            NotifyRecreateSwapchain ();
-        return;
+        vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 
-        default:
-            result = android_vulkan::Renderer::CheckVkResult ( r,
-                "editor::RenderSession::OnRenderFrame",
-                "Can't present frame"
-            );
+        std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+            commandBuffer,
+            commandInfo._acquire,
+            fence
+        );
 
+        if ( !presentResult ) [[unlikely]]
+        {
             // FUCK
             AV_ASSERT ( false )
-        return;
-    }
+            return;
+        }
 
-    GX_ENABLE_WARNING ( 4061 )
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( VkResult const r = *presentResult; r )
+        {
+            case VK_SUCCESS:
+                // NOTHING
+            break;
+
+            case VK_SUBOPTIMAL_KHR:
+                [[fallthrough]];
+
+            case VK_ERROR_OUT_OF_DATE_KHR:
+                NotifyRecreateSwapchain ();
+            return;
+
+            default:
+                result = android_vulkan::Renderer::CheckVkResult ( r,
+                    "editor::RenderSession::OnRenderFrame",
+                    "Can't present frame"
+                );
+
+                // FUCK
+                AV_ASSERT ( false )
+            return;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
 
     _messageQueue->EnqueueBack (
         Message
@@ -680,7 +980,7 @@ void RenderSession::OnRenderFrame () noexcept
 
 void RenderSession::OnShutdown () noexcept
 {
-    AV_TRACE ( "RenderSession: shutdown" )
+    AV_TRACE ( "Shutdown" )
 
     bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
         "editor::RenderSession::OnShutdown",
@@ -706,6 +1006,19 @@ void RenderSession::OnShutdown () noexcept
     }
 
     _sampler.Destroy ( device );
+
+    if ( _helloTriangleProgram )
+    {
+        _helloTriangleProgram->Destroy ( device );
+        _helloTriangleProgram.reset ();
+    }
+
+    if ( _helloTriangleGeometry )
+    {
+        _helloTriangleGeometry->FreeResources ( *_renderer );
+        _helloTriangleGeometry.reset ();
+    }
+
     _blitLayout.Destroy ( device );
     _blitProgram.Destroy ( device );
 

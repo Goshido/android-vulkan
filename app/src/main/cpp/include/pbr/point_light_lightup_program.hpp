@@ -55,7 +55,6 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            SpecializationData specializationData,
             VkExtent2D const &viewport
         ) noexcept;
 
@@ -100,8 +99,6 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
-
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,

@@ -28,29 +28,16 @@ PointLightLightupProgram::PointLightLightupProgram () noexcept:
 
 void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
+    GraphicsProgram::Destroy ( device );
 
     _pointLightLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
-
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -416,21 +403,6 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
 
     targetInfo = sourceInfo;
     return true;
-}
-
-void PointLightLightupProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportInfo (

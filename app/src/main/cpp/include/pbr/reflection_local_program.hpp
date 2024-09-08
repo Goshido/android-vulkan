@@ -94,8 +94,6 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,

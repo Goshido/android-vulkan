@@ -12,9 +12,9 @@ constexpr float GAMMA_RANGE = 1.4F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SRGBProgram::SpecializationInfo SRGBProgram::GetGammaInfo ( float brightnessBalance ) noexcept
+SRGBProgram::GammaInfo SRGBProgram::GetGammaInfo ( float brightnessBalance ) noexcept
 {
-    return SpecializationInfo
+    return GammaInfo
     {
         ._inverseGamma = 1.0F / ( GAMMA_MID_POINT + GAMMA_RANGE * GXClampf ( brightnessBalance, -1.0F, 1.0F ) )
     };

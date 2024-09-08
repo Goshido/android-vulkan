@@ -313,6 +313,13 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\memory_allocator.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\memory_allocator.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\mesh_geometry.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\mesh_geometry.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\mesh_geometry.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\mesh_geometry.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\mesh_geometry.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\graphics_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\graphics_program.obj</ObjectFileName>
@@ -333,6 +340,13 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\srgb_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\srgb_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\srgb_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\srgb_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\srgb_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\srgb_program.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\file.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\file.obj</ObjectFileName>
@@ -412,6 +426,7 @@
     </ClCompile>
     <ClCompile Include="src\crash_dump.cpp" />
     <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\hello_triangle_program.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
@@ -429,11 +444,13 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\ktx_media_container.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\memory_allocator.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp" />
@@ -444,6 +461,8 @@
     <ClInclude Include="include\blit_program.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\hello_triangle_program.hpp" />
+    <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
@@ -463,6 +482,20 @@
     <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in" />
     <None Include="..\..\app\src\main\cpp\include\vulkan_device.in" />
     <None Include="..\..\app\src\main\cpp\include\vulkan_instance.in" />
+    <None Include="include\blit_program.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="include\hello_triangle_program.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

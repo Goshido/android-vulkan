@@ -10,7 +10,7 @@ namespace pbr {
 class SRGBProgram : public GraphicsProgram
 {
     public:
-        struct SpecializationInfo final
+        struct GammaInfo final
         {
             [[maybe_unused]] float      _inverseGamma = 1.0F;
         };
@@ -25,7 +25,7 @@ class SRGBProgram : public GraphicsProgram
         SRGBProgram &operator = ( SRGBProgram && ) = delete;
 
         // Brightness balance should be in range [-1.0F, 1.0F].
-        [[nodiscard]] static SpecializationInfo GetGammaInfo ( float brightnessBalance ) noexcept;
+        [[nodiscard]] static GammaInfo GetGammaInfo ( float brightnessBalance ) noexcept;
 
     protected:
         explicit SRGBProgram ( std::string_view name ) noexcept;

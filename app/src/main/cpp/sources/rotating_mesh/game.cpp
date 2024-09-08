@@ -178,6 +178,7 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
         bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
             renderer,
             commandBuffers[ i ],
+            false,
             VK_NULL_HANDLE
         );
 

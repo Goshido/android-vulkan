@@ -54,20 +54,8 @@ bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
 
 void SkinProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
+    ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
-    DestroyShaderModule ( device );
-
-    if ( _pipeline == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyPipeline ( device, _pipeline, nullptr );
-    _pipeline = VK_NULL_HANDLE;
 }
 
 void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
@@ -81,15 +69,6 @@ void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptor
         0U,
         nullptr
     );
-}
-
-void SkinProgram::DestroyShaderModule ( VkDevice device ) noexcept
-{
-    if ( _computeShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _computeShader, nullptr );
-    _computeShader = VK_NULL_HANDLE;
 }
 
 bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept

@@ -55,20 +55,8 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
 
 void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
+    ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
-    DestroyShaderModule ( device );
-
-    if ( _pipeline == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyPipeline ( device, _pipeline, nullptr );
-    _pipeline = VK_NULL_HANDLE;
 }
 
 void ExposureProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
@@ -129,15 +117,6 @@ void ExposureProgram::GetMetaInfo ( VkExtent3D &dispatch,
     specializationInfo._mip5Resolution = r;
     specializationInfo._normalizeW = 1.0F / static_cast<float> ( r.width );
     specializationInfo._normalizeH = 1.0F / static_cast<float> ( r.height );
-}
-
-void ExposureProgram::DestroyShaderModule ( VkDevice device ) noexcept
-{
-    if ( _computeShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _computeShader, nullptr );
-    _computeShader = VK_NULL_HANDLE;
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept

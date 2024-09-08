@@ -54,7 +54,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _program.Init ( renderer, renderPass, subpass, nullptr, resolution ) &&
+    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
         _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
         AllocateDescriptorSets ( renderer );
 }

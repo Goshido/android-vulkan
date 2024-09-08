@@ -104,7 +104,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
-    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, *fences ) ) [[unlikely]]
+    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, false, *fences ) ) [[unlikely]]
         return;
 
     skinMesh->MakeUnique ();

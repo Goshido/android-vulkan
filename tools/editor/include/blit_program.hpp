@@ -2,13 +2,13 @@
 #define EDITOR_BLIT_PROGRAM_HPP
 
 
-#include <pbr/graphics_program.hpp>
+#include <pbr/srgb_program.hpp>
 #include "blit_descriptor_set_layout.hpp"
 
 
 namespace editor {
 
-class BlitProgram final : public pbr::GraphicsProgram
+class BlitProgram final : public pbr::SRGBProgram
 {
     private:
         BlitDescriptorSetLayout     _blitLayout {};
@@ -29,7 +29,8 @@ class BlitProgram final : public pbr::GraphicsProgram
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            uint32_t subpass
+            uint32_t subpass,
+            GammaInfo const &gammaInfo
         ) noexcept;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
@@ -68,8 +69,6 @@ class BlitProgram final : public pbr::GraphicsProgram
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
-
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,

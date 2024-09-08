@@ -1,62 +1,31 @@
-#ifndef PBR_UI_PROGRAM_HPP
-#define PBR_UI_PROGRAM_HPP
+#ifndef EDITOR_HELLO_TRIANGLE_PROGRAM_HPP
+#define EDITOR_HELLO_TRIANGLE_PROGRAM_HPP
 
 
-#include "srgb_program.hpp"
-#include "ui_pass_common_descriptor_set_layout.hpp"
-#include "ui_pass_image_descriptor_set_layout.hpp"
-#include "ui_pass_transform_descriptor_set_layout.hpp"
-#include <vulkan_utils.hpp>
+#include <pbr/graphics_program.hpp>
 
 
-namespace pbr {
+namespace editor {
 
-class UIProgram final : public SRGBProgram
+class HelloTriangleProgram final : public pbr::GraphicsProgram
 {
     public:
-        AV_DX_ALIGNMENT_BEGIN
+        explicit HelloTriangleProgram () noexcept;
 
-        struct Transform final
-        {
-            GXVec2                              _rotateScaleRow0;
-            GXVec2                              _padding0;
-            GXVec2                              _rotateScaleRow1;
-            GXVec2                              _offset;
-        };
+        HelloTriangleProgram ( HelloTriangleProgram const & ) = delete;
+        HelloTriangleProgram &operator = ( HelloTriangleProgram const & ) = delete;
 
-        AV_DX_ALIGNMENT_END
+        HelloTriangleProgram ( HelloTriangleProgram && ) = delete;
+        HelloTriangleProgram &operator = ( HelloTriangleProgram && ) = delete;
 
-    private:
-        UIPassCommonDescriptorSetLayout         _commonLayout {};
-        UIPassImageDescriptorSetLayout          _imageLayout {};
-        UIPassTransformDescriptorSetLayout      _transformLayout {};
-
-    public:
-        UIProgram () noexcept;
-
-        UIProgram ( UIProgram const & ) = delete;
-        UIProgram &operator = ( UIProgram const & ) = delete;
-
-        UIProgram ( UIProgram && ) = delete;
-        UIProgram &operator = ( UIProgram && ) = delete;
-
-        ~UIProgram () override = default;
+        ~HelloTriangleProgram () override = default;
 
         [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
-        void Destroy ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            uint32_t subpass,
-            GammaInfo const &gammaInfo,
-            VkExtent2D const &viewport
+            uint32_t subpass
         ) noexcept;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet const* sets,
-            uint32_t startIndex,
-            uint32_t count
-        ) const noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -107,7 +76,7 @@ class UIProgram final : public SRGBProgram
         ) const noexcept override;
 };
 
-} // namespace pbr
+} // namespace editor
 
 
-#endif // PBR_UI_PROGRAM_HPP
+#endif // EDITOR_HELLO_TRIANGLE_PROGRAM_HPP

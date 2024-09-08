@@ -113,9 +113,15 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     _program.Destroy ( renderer.GetDevice () );
-    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( brightnessBalance );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
+    bool const result = _program.Init ( renderer,
+        renderPass,
+        subpass,
+        SRGBProgram::GetGammaInfo ( brightnessBalance ),
+        renderer.GetSurfaceSize ()
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     _brightnessBalance = brightnessBalance;
@@ -133,9 +139,14 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
-    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+    bool const result = _program.Init ( renderer,
+        renderPass,
+        subpass,
+        SRGBProgram::GetGammaInfo ( _brightnessBalance ),
+        renderer.GetSurfaceSize ()
+    );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const imageInfo

@@ -3,7 +3,8 @@
 
 
 #include "blit_program.hpp"
-#include <main_window.hpp>
+#include "hello_triangle_program.hpp"
+#include <mesh_geometry.hpp>
 #include "message_queue.hpp"
 #include <pbr/command_buffer_count.hpp>
 #include <pbr/present_render_pass.hpp>
@@ -19,31 +20,34 @@ class RenderSession final
     private:
         struct CommandInfo final
         {
-            VkCommandBuffer             _buffer = VK_NULL_HANDLE;
-            VkFence                     _fence = VK_NULL_HANDLE;
-            VkSemaphore                 _acquire = VK_NULL_HANDLE;
-            VkCommandPool               _pool = VK_NULL_HANDLE;
+            VkCommandBuffer                                 _buffer = VK_NULL_HANDLE;
+            VkFence                                         _fence = VK_NULL_HANDLE;
+            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
+            VkCommandPool                                   _pool = VK_NULL_HANDLE;
         };
 
     private:
-        VkDescriptorPool                _descriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet                 _descriptorSet = VK_NULL_HANDLE;
+        BlitDescriptorSetLayout                             _blitLayout {};
+        BlitProgram                                         _blitProgram {};
+        bool                                                _broken = false;
 
-        BlitDescriptorSetLayout         _blitLayout {};
-        BlitProgram                     _blitProgram {};
-        bool                            _broken = false;
+        CommandInfo                                         _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
+        size_t                                              _writingCommandInfo = 0U;
 
-        CommandInfo                     _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
-        size_t                          _writingCommandInfo = 0U;
+        VkDescriptorPool                                    _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet                                     _descriptorSet = VK_NULL_HANDLE;
 
-        MessageQueue*                   _messageQueue = nullptr;
-        android_vulkan::Renderer*       _renderer = nullptr;
-        pbr::Sampler                    _sampler {};
-        std::thread                     _thread {};
-        pbr::PresentRenderPass          _presentRenderPass {};
-        VkRenderPassBeginInfo           _renderPassInfo {};
-        android_vulkan::Texture2D       _renderTarget {};
-        VkViewport                      _viewport {};
+        std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
+        std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
+
+        MessageQueue*                                       _messageQueue = nullptr;
+        android_vulkan::Renderer*                           _renderer = nullptr;
+        pbr::Sampler                                        _sampler {};
+        std::thread                                         _thread {};
+        pbr::PresentRenderPass                              _presentRenderPass {};
+        VkRenderPassBeginInfo                               _renderPassInfo {};
+        android_vulkan::Texture2D                           _renderTarget {};
+        VkViewport                                          _viewport {};
 
     public:
         explicit RenderSession () = default;
@@ -70,6 +74,7 @@ class RenderSession final
         void EventLoop () noexcept;
         [[nodiscard]] bool InitiModules () noexcept;
 
+        void OnHelloTriangleReady ( void* params ) noexcept;
         void OnRenderFrame () noexcept;
         void OnShutdown () noexcept;
         void OnSwapchainCreated () noexcept;

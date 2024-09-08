@@ -1685,7 +1685,7 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
         if ( !result ) [[unlikely]]
             return std::nullopt;
 
-        return std::optional<VkSurfaceCapabilitiesKHR const*> ( &caps );
+        return { &caps };
     };
 
     if ( _surface != VK_NULL_HANDLE ) [[likely]]

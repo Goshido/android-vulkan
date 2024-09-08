@@ -71,23 +71,11 @@ GraphicsProgram::DescriptorSetInfo const &ReflectionLocalProgram::GetResourceInf
 
 void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
+    GraphicsProgram::Destroy ( device );
 
     _reflectionLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
-
-    DestroyShaderModules ( device );
 }
 
 bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
@@ -418,21 +406,6 @@ bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer
 
     targetInfo = sourceInfo;
     return true;
-}
-
-void ReflectionLocalProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
 }
 
 VkPipelineViewportStateCreateInfo const* ReflectionLocalProgram::InitViewportInfo (

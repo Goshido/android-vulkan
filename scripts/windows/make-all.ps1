@@ -17,6 +17,12 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "VS"                                                                                                               `
     "vs"                                                                                                               `
+    "$EDITOR_HLSL_DIRECTORY\hello_triangle.vs"                                                                         `
+    "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "VS"                                                                                                               `
+    "vs"                                                                                                               `
     "$MOBILE_HLSL_DIRECTORY\common_opaque.vs"                                                                          `
     "$MOBILE_SHADER_DIRECTORY\common_opaque.vs.spv"
 
@@ -69,6 +75,12 @@ scripts\windows\make-spv.ps1                                                    
     "ps"                                                                                                               `
     "$EDITOR_HLSL_DIRECTORY\blit.ps"                                                                                   `
     "$EDITOR_SHADER_DIRECTORY\blit.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "PS"                                                                                                               `
+    "ps"                                                                                                               `
+    "$EDITOR_HLSL_DIRECTORY\hello_triangle.ps"                                                                         `
+    "$EDITOR_SHADER_DIRECTORY\hello_triangle.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `

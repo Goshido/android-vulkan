@@ -1,5 +1,6 @@
-#include <blit_program.hpp>
-#include <pbr/srgb_program.inc>
+#include <hello_triangle_program.hpp>
+#include <hello_triangle_program.inc>
+#include <hello_triangle_vertex.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -7,62 +8,44 @@ namespace editor {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "../editor-assets/shaders/blit.vs.spv";
-constexpr char const* FRAGMENT_SHADER = "../editor-assets/shaders/blit.ps.spv";
+constexpr char const VERTEX_SHADER[] = "../editor-assets/shaders/hello_triangle.vs.spv";
+constexpr char const FRAGMENT_SHADER[] = "../editor-assets/shaders/hello_triangle.ps.spv";
 
-constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 2U;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-BlitProgram::BlitProgram () noexcept:
-    pbr::SRGBProgram ( "editor::BlitProgram" )
+HelloTriangleProgram::HelloTriangleProgram () noexcept:
+    pbr::GraphicsProgram ( "editor::HelloTriangleProgram" )
 {
     // NOTHING
 }
 
-pbr::GraphicsProgram::DescriptorSetInfo const &BlitProgram::GetResourceInfo () const noexcept
+pbr::GraphicsProgram::DescriptorSetInfo const &HelloTriangleProgram::GetResourceInfo () const noexcept
 {
-    static DescriptorSetInfo const info
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 1U
-            },
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
+    static DescriptorSetInfo const info {};
     return info;
 }
 
-void BlitProgram::Destroy ( VkDevice device ) noexcept
-{
-    GraphicsProgram::Destroy ( device );
-    _blitLayout.Destroy ( device );
-}
-
-bool BlitProgram::Init ( android_vulkan::Renderer &renderer,
+bool HelloTriangleProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
-    GammaInfo const &gammaInfo
+    uint32_t subpass
 ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
+    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
+    VkVertexInputBindingDescription bindingDescription;
     VkPipelineColorBlendStateCreateInfo blendInfo;
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
     VkPipelineDynamicStateCreateInfo dynamicStateInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
     VkPipelineRasterizationStateCreateInfo rasterizationInfo;
     VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
-    VkSpecializationInfo specInfo {};
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkPipelineViewportStateCreateInfo viewportInfo;
 
@@ -74,10 +57,14 @@ bool BlitProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &gammaInfo, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
         return false;
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
+    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
+        attributeDescriptions,
+        &bindingDescription
+    );
+
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
     pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, nullptr, nullptr, nullptr );
@@ -97,32 +84,19 @@ bool BlitProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "editor::BlitProgram::Init",
+        "editor::HelloTriangleProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Blit" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Hello triangle" )
     DestroyShaderModules ( device );
     return true;
 }
 
-void BlitProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
-{
-    vkCmdBindDescriptorSets ( commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        _pipelineLayout,
-        0U,
-        1U,
-        &set,
-        0U,
-        nullptr
-    );
-}
-
-VkPipelineColorBlendStateCreateInfo const* BlitProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* HelloTriangleProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
@@ -158,7 +132,7 @@ VkPipelineColorBlendStateCreateInfo const* BlitProgram::InitColorBlendInfo (
     return &info;
 }
 
-VkPipelineDepthStencilStateCreateInfo const* BlitProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* HelloTriangleProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const noexcept
 {
@@ -202,7 +176,7 @@ VkPipelineDepthStencilStateCreateInfo const* BlitProgram::InitDepthStencilInfo (
     return &info;
 }
 
-VkPipelineDynamicStateCreateInfo const* BlitProgram::InitDynamicStateInfo (
+VkPipelineDynamicStateCreateInfo const* HelloTriangleProgram::InitDynamicStateInfo (
     VkPipelineDynamicStateCreateInfo* info
 ) const noexcept
 {
@@ -220,7 +194,7 @@ VkPipelineDynamicStateCreateInfo const* BlitProgram::InitDynamicStateInfo (
     return info;
 }
 
-VkPipelineInputAssemblyStateCreateInfo const* BlitProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* HelloTriangleProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
 {
@@ -236,37 +210,34 @@ VkPipelineInputAssemblyStateCreateInfo const* BlitProgram::InitInputAssemblyInfo
     return &info;
 }
 
-bool BlitProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+bool HelloTriangleProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_blitLayout.Init ( device ) ) [[unlikely]]
-        return false;
-
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_blitLayout.GetLayout (),
+        .setLayoutCount = 0U,
+        .pSetLayouts = nullptr,
         .pushConstantRangeCount = 0U,
         .pPushConstantRanges = nullptr
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "editor::BlitProgram::InitLayout",
+        "editor::HelloTriangleProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Blit" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Hello triangle" )
     layout = _pipelineLayout;
     return true;
 }
 
-VkPipelineMultisampleStateCreateInfo const* BlitProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* HelloTriangleProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
 {
@@ -286,7 +257,7 @@ VkPipelineMultisampleStateCreateInfo const* BlitProgram::InitMultisampleInfo (
     return &info;
 }
 
-VkPipelineRasterizationStateCreateInfo const* BlitProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* HelloTriangleProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const noexcept
 {
@@ -310,16 +281,16 @@ VkPipelineRasterizationStateCreateInfo const* BlitProgram::InitRasterizationInfo
     return &info;
 }
 
-bool BlitProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool HelloTriangleProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
-    SpecializationData specializationData,
-    VkSpecializationInfo* specializationInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) noexcept
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-        "Can't create vertex shader (editor::BlitProgram)"
+        "Can't create vertex shader (editor::HelloTriangleProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -329,7 +300,7 @@ bool BlitProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     result = renderer.CreateShader ( _fragmentShader,
         FRAGMENT_SHADER,
-        "Can't create fragment shader (editor::BlitProgram)"
+        "Can't create fragment shader (editor::HelloTriangleProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -348,21 +319,6 @@ bool BlitProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         .pSpecializationInfo = nullptr
     };
 
-    constexpr static VkSpecializationMapEntry entry
-    {
-        .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _inverseGamma ) ),
-        .size = sizeof ( GammaInfo::_inverseGamma )
-    };
-
-    *specializationInfo =
-    {
-        .mapEntryCount = 1U,
-        .pMapEntries = &entry,
-        .dataSize = sizeof ( GammaInfo ),
-        .pData = specializationData
-    };
-
     sourceInfo[ 1U ] =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -378,7 +334,7 @@ bool BlitProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-VkPipelineViewportStateCreateInfo const* BlitProgram::InitViewportInfo (
+VkPipelineViewportStateCreateInfo const* HelloTriangleProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D* /*scissorInfo*/,
     VkViewport* /*viewportInfo*/,
@@ -399,21 +355,44 @@ VkPipelineViewportStateCreateInfo const* BlitProgram::InitViewportInfo (
     return &info;
 }
 
-VkPipelineVertexInputStateCreateInfo const* BlitProgram::InitVertexInputInfo (
+VkPipelineVertexInputStateCreateInfo const* HelloTriangleProgram::InitVertexInputInfo (
     VkPipelineVertexInputStateCreateInfo &info,
-    VkVertexInputAttributeDescription* /*attributes*/,
-    VkVertexInputBindingDescription* /*binds*/
+    VkVertexInputAttributeDescription* attributes,
+    VkVertexInputBindingDescription* binds
 ) const noexcept
 {
+    *binds =
+    {
+        .binding = 0U,
+        .stride = static_cast<uint32_t> ( sizeof ( HelloTriangleVertex ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    attributes[ 0U ] =
+    {
+        .location = IN_SLOT_VERTEX,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( HelloTriangleVertex, _vertex ) )
+    };
+
+    attributes[ 1U ] =
+    {
+        .location = IN_SLOT_COLOR,
+        .binding = 0U,
+        .format = VK_FORMAT_R32G32B32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( HelloTriangleVertex, _color ) )
+    };
+
     info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .vertexBindingDescriptionCount = 0U,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0U,
-        .pVertexAttributeDescriptions = nullptr
+        .vertexBindingDescriptionCount = 1U,
+        .pVertexBindingDescriptions = binds,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
+        .pVertexAttributeDescriptions = attributes
     };
 
     return &info;

@@ -1,5 +1,13 @@
 #include "blit_program.inc"
+#include "color_space.ps"
+#include "srgb_program.inc"
 
+
+// 1.0H / 2.4H
+#define INVERSE_GAMMA           4.16667e-1F
+
+[[vk::constant_id ( CONST_INVERSE_GAMMA )]]
+float const                     g_inverseGamma = INVERSE_GAMMA;
 
 [[vk::binding ( BIND_IMAGE, SET_BLIT )]]
 Texture2D<float32_t4>           g_image:        register ( t0 );
@@ -17,5 +25,6 @@ struct InputData
 
 float32_t4 PS ( in InputData inputData ): SV_Target0
 {
-    return float32_t4 ( g_image.SampleLevel ( g_sampler, inputData._uv, 0.0F ).xyz, 1.0F );
+    float16_t3 const color = (float16_t3)g_image.SampleLevel ( g_sampler, inputData._uv, 0.0F ).xyz;
+    return float32_t4 ( LinearToSRGB ( color, (float16_t)g_inverseGamma ), 1.0F );
 }

@@ -17,6 +17,7 @@ enum class eMessageType : uint32_t
 {
     CloseEditor,
     FrameComplete,
+    HelloTriangleReady,
     ModuleStopped,
     RecreateSwapchain,
     RenderFrame,

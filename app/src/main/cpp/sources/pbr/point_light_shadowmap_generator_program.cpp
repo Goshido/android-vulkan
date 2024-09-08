@@ -41,21 +41,8 @@ GraphicsProgram::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::G
 
 void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
+    GraphicsProgram::Destroy ( device );
     _instanceLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
@@ -362,21 +349,6 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
 
     targetInfo = sourceInfo;
     return true;
-}
-
-void PointLightShadowmapGeneratorProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (

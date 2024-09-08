@@ -27,29 +27,17 @@ UIProgram::UIProgram () noexcept:
 
 void UIProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
+    GraphicsProgram::Destroy ( device );
 
     _imageLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
     _transformLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData specializationData,
+    GammaInfo const &gammaInfo,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -76,7 +64,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &gammaInfo, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -398,15 +386,15 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     constexpr static VkSpecializationMapEntry entry
     {
         .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _inverseGamma ) ),
-        .size = sizeof ( SpecializationInfo::_inverseGamma )
+        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _inverseGamma ) ),
+        .size = sizeof ( GammaInfo::_inverseGamma )
     };
 
     *specializationInfo =
     {
         .mapEntryCount = 1U,
         .pMapEntries = &entry,
-        .dataSize = sizeof ( SpecializationInfo ),
+        .dataSize = sizeof ( GammaInfo ),
         .pData = specializationData
     };
 
@@ -423,21 +411,6 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     targetInfo = sourceInfo;
     return true;
-}
-
-void UIProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
 }
 
 VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (

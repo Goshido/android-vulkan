@@ -20,10 +20,12 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 class GraphicsProgram
 {
+    protected:
+        using SpecializationData = void const*;
+
     public:
         using SetItem = std::vector<VkDescriptorPoolSize>;
         using DescriptorSetInfo = std::vector<SetItem>;
-        using SpecializationData = void const*;
 
     protected:
         VkShaderModule                              _fragmentShader = VK_NULL_HANDLE;
@@ -42,8 +44,10 @@ class GraphicsProgram
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
-        virtual void Destroy ( VkDevice device ) noexcept = 0;
         [[nodiscard]] virtual DescriptorSetInfo const &GetResourceInfo () const noexcept = 0;
+
+        // Successor classes MUST call this method.
+        virtual void Destroy ( VkDevice device ) noexcept;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
@@ -86,8 +90,6 @@ class GraphicsProgram
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept = 0;
 
-        virtual void DestroyShaderModules ( VkDevice device ) noexcept = 0;
-
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,
@@ -100,6 +102,8 @@ class GraphicsProgram
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds
         ) const noexcept = 0;
+
+        void DestroyShaderModules ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

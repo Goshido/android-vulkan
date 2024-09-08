@@ -67,6 +67,7 @@ class MeshGeometry final
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -75,6 +76,7 @@ class MeshGeometry final
             uint32_t vertexCount,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -86,6 +88,7 @@ class MeshGeometry final
             GXAABB const &bounds,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -95,12 +98,14 @@ class MeshGeometry final
         [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh2 ( std::string &&fileName,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -109,6 +114,7 @@ class MeshGeometry final
             uint32_t indexCount,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -120,6 +126,7 @@ class MeshGeometry final
             size_t dataSize,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -129,6 +136,7 @@ class MeshGeometry final
             VkBufferUsageFlags usage,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 };

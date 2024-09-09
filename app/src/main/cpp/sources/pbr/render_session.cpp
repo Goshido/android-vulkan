@@ -139,7 +139,8 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
         commandBuffer,
         commandInfo._acquire,
-        fence
+        fence,
+        nullptr
     );
 
     if ( !presentResult ) [[unlikely]]

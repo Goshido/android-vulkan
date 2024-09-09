@@ -75,7 +75,8 @@ void PresentRenderPass::Begin ( VkCommandBuffer commandBuffer ) noexcept
 std::optional<VkResult> PresentRenderPass::End ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkSemaphore acquire,
-    VkFence fence
+    VkFence fence,
+    std::mutex* submitMutex
 ) noexcept
 {
     vkCmdEndRenderPass ( commandBuffer );
@@ -92,11 +93,24 @@ std::optional<VkResult> PresentRenderPass::End ( android_vulkan::Renderer &rende
     _submitInfo.pCommandBuffers = &commandBuffer;
     _submitInfo.pSignalSemaphores = &_framebufferInfo[ _framebufferIndex ]._renderEnd;
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::PresentRenderPass::End",
-        "Can't submit command buffer"
-    );
+    auto const submit = [ & ]() noexcept -> bool
+    {
+        return android_vulkan::Renderer::CheckVkResult (
+            vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
+            "pbr::PresentRenderPass::End",
+            "Can't submit command buffer"
+        );
+    };
+
+    if ( !submitMutex )
+    {
+        result = submit ();
+    }
+    else
+    {
+        std::lock_guard const lock ( *submitMutex );
+        result = submit ();
+    }
 
     if ( !result ) [[unlikely]]
         return std::nullopt;

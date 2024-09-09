@@ -28,7 +28,6 @@ class HelloTriangleJob final
         VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
         VkFence                                             _complete = VK_NULL_HANDLE;
         android_vulkan::Renderer                            &_renderer;
-        VkRenderPass                                        _renderPass = VK_NULL_HANDLE;
 
     public:
         HelloTriangleJob () = delete;
@@ -41,29 +40,30 @@ class HelloTriangleJob final
 
         explicit HelloTriangleJob ( MessageQueue &messageQueue,
             android_vulkan::Renderer &renderer,
+            std::mutex &submitMutex,
             VkRenderPass renderPass
         ) noexcept;
 
         ~HelloTriangleJob ();
 
     private:
-        void CreateMesh () noexcept;
-        void CreateProgram () noexcept;
+        void CreateMesh ( std::mutex &submitMutex ) noexcept;
+        void CreateProgram ( VkRenderPass renderPass ) noexcept;
 };
 
 HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
     android_vulkan::Renderer &renderer,
+    std::mutex &submitMutex,
     VkRenderPass renderPass
 ) noexcept:
-    _renderer ( renderer ),
-    _renderPass ( renderPass )
+    _renderer ( renderer )
 {
     std::thread (
-        [ this, &messageQueue ] () noexcept
+        [ & ] () noexcept
         {
             AV_THREAD_NAME ( "Hello triangle job" )
-            CreateProgram ();
-            CreateMesh ();
+            CreateProgram ( renderPass );
+            CreateMesh ( submitMutex );
 
             messageQueue.EnqueueBack (
                 Message
@@ -89,7 +89,7 @@ HelloTriangleJob::~HelloTriangleJob ()
     }
 }
 
-void HelloTriangleJob::CreateMesh () noexcept
+void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
 {
     AV_TRACE ( "Mesh" )
 
@@ -233,11 +233,15 @@ void HelloTriangleJob::CreateMesh () noexcept
         .pSignalSemaphores = nullptr
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( _renderer.GetQueue (), 1U, &submitInfo, _complete ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't submit command"
-    );
+    {
+        std::lock_guard const lock ( submitMutex );
+
+        result = android_vulkan::Renderer::CheckVkResult (
+            vkQueueSubmit ( _renderer.GetQueue (), 1U, &submitInfo, _complete ),
+            "editor::HelloTriangleJob::CreateMesh",
+            "Can't submit command"
+        );
+    }
 
     if ( !result ) [[unlikely]]
     {
@@ -262,13 +266,13 @@ void HelloTriangleJob::CreateMesh () noexcept
     _geometry.reset ();
 }
 
-void HelloTriangleJob::CreateProgram () noexcept
+void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
 {
     AV_TRACE ( "Program" )
 
     _program = std::make_unique<HelloTriangleProgram> ();
 
-    if ( _program->Init ( _renderer, _renderPass, 0U ) ) [[likely]]
+    if ( _program->Init ( _renderer, renderPass, 0U ) ) [[likely]]
         return;
 
     _program->Destroy ( _renderer.GetDevice () );
@@ -786,7 +790,7 @@ bool RenderSession::InitiModules () noexcept
     if ( !CreateRenderPass ( device ) ) [[unlikely]]
         return false;
 
-    new HelloTriangleJob ( *_messageQueue, *_renderer, _renderPassInfo.renderPass );
+    new HelloTriangleJob ( *_messageQueue, *_renderer, _submitMutex, _renderPassInfo.renderPass );
 
     return AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
@@ -930,7 +934,8 @@ void RenderSession::OnRenderFrame () noexcept
         std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
             commandBuffer,
             commandInfo._acquire,
-            fence
+            fence,
+            &_submitMutex
         );
 
         if ( !presentResult ) [[unlikely]]

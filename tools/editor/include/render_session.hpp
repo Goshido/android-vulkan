@@ -47,6 +47,7 @@ class RenderSession final
         pbr::PresentRenderPass                              _presentRenderPass {};
         VkRenderPassBeginInfo                               _renderPassInfo {};
         android_vulkan::Texture2D                           _renderTarget {};
+        std::mutex                                          _submitMutex {};
         VkViewport                                          _viewport {};
 
     public:

@@ -56,7 +56,8 @@ class PresentRenderPass final
         [[nodiscard]] std::optional<VkResult> End ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             VkSemaphore acquire,
-            VkFence fence
+            VkFence fence,
+            std::mutex* submitMutex
         ) noexcept;
 
         [[nodiscard]] constexpr static uint32_t GetSubpass () noexcept

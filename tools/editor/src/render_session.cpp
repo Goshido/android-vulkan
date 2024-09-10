@@ -751,7 +751,7 @@ void RenderSession::EventLoop () noexcept
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = messageQueue.Dequeue ();
+        Message message = messageQueue.DequeueBegin ();
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -774,7 +774,7 @@ void RenderSession::EventLoop () noexcept
             break;
 
             default:
-                messageQueue.EnqueueFront ( std::move ( message ) );
+                messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
 
@@ -807,6 +807,7 @@ bool RenderSession::InitiModules () noexcept
 
 void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 {
+    _messageQueue->DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
     _helloTriangleProgram = std::move ( job->_program );
     _helloTriangleGeometry = std::move ( job->_geometry );
@@ -816,6 +817,7 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 void RenderSession::OnRenderFrame () noexcept
 {
     AV_TRACE ( "Render frame" )
+    _messageQueue->DequeueEnd ();
 
     if ( _broken ) [[unlikely]]
         return;
@@ -986,6 +988,7 @@ void RenderSession::OnRenderFrame () noexcept
 void RenderSession::OnShutdown () noexcept
 {
     AV_TRACE ( "Shutdown" )
+    _messageQueue->DequeueEnd ();
 
     bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
         "editor::RenderSession::OnShutdown",
@@ -1049,6 +1052,8 @@ void RenderSession::OnShutdown () noexcept
 
 void RenderSession::OnSwapchainCreated () noexcept
 {
+    _messageQueue->DequeueEnd ();
+
     android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();
     _presentRenderPass.OnSwapchainDestroyed ( device );

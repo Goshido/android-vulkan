@@ -74,13 +74,14 @@ bool Editor::InitModules () noexcept
     for ( bool waiting = true; waiting; )
     {
         AV_TRACE ( "Editor: async init loop" )
-        Message message = _messageQueue.Dequeue ();
+        Message message = _messageQueue.DequeueBegin ();
 
         GX_DISABLE_WARNING ( 4061 )
 
         switch ( message._type )
         {
             case eMessageType::VulkanInitReport:
+                _messageQueue.DequeueEnd ();
                 result &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
                 waiting = false;
             break;
@@ -90,7 +91,7 @@ bool Editor::InitModules () noexcept
             break;
 
             default:
-                _messageQueue.EnqueueFront ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
 
@@ -121,14 +122,14 @@ void Editor::DestroyModules () noexcept
 
     while ( _runningModules )
     {
-        Message message = _messageQueue.Dequeue ();
+        Message message = _messageQueue.DequeueBegin ();
 
         GX_DISABLE_WARNING ( 4061 )
 
         switch ( message._type )
         {
             case eMessageType::FrameComplete:
-                // NOTHING
+                _messageQueue.DequeueEnd ();
             break;
 
             case eMessageType::ModuleStopped:
@@ -136,7 +137,7 @@ void Editor::DestroyModules () noexcept
             break;
 
             default:
-                _messageQueue.EnqueueFront ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
 
@@ -166,15 +167,15 @@ void Editor::EventLoop () noexcept
 
     for ( ; ; )
     {
-        AV_TRACE ( "Editor: event loop" )
-        Message message = _messageQueue.Dequeue ();
+        AV_TRACE ( "Event loop" )
+        Message message = _messageQueue.DequeueBegin ();
 
         GX_DISABLE_WARNING ( 4061 )
 
         switch ( message._type )
         {
             case eMessageType::CloseEditor:
-                Shutdown ();
+                OnShutdown ();
             return;
 
             case eMessageType::FrameComplete:
@@ -198,7 +199,7 @@ void Editor::EventLoop () noexcept
             break;
 
             default:
-                _messageQueue.EnqueueFront ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
 
@@ -208,16 +209,21 @@ void Editor::EventLoop () noexcept
 
 void Editor::OnFrameComplete () noexcept
 {
+    _messageQueue.DequeueEnd ();
     _frameComplete = true;
 }
 
 void Editor::OnModuleStopped () noexcept
 {
+    _messageQueue.DequeueEnd ();
     --_runningModules;
 }
 
 void Editor::OnRecreateSwapchain () noexcept
 {
+    AV_TRACE ( "Recreate swapchain" )
+    _messageQueue.DequeueEnd ();
+
     bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
         "editor::Editor::OnRecreateSwapchain",
         "Can't wait queue idle"
@@ -255,6 +261,7 @@ void Editor::OnRecreateSwapchain () noexcept
 
 void Editor::OnRunEvent () noexcept
 {
+    _messageQueue.DequeueEnd ();
     _mainWindow.Execute ();
 
     if ( !_stopRendering & _frameComplete ) [[likely]]
@@ -273,25 +280,10 @@ void Editor::OnRunEvent () noexcept
     ScheduleEventLoop ();
 }
 
-void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
+void Editor::OnShutdown () noexcept
 {
-    _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
-}
-
-void Editor::ScheduleEventLoop () noexcept
-{
-    _messageQueue.EnqueueBack (
-        Message
-        {
-            ._type = eMessageType::RunEventLoop,
-            ._params = nullptr
-        }
-    );
-}
-
-void Editor::Shutdown () noexcept
-{
-    AV_TRACE ( "Editor: shutdown" )
+    AV_TRACE ( "Shutdown" )
+    _messageQueue.DequeueEnd ();
 
     _messageQueue.EnqueueBack (
         Message
@@ -304,14 +296,33 @@ void Editor::Shutdown () noexcept
     // At this point only last eMessageType::RunEventLoop left in message queue. Need to dequeue it.
     for ( ; ; )
     {
-        if ( Message message = _messageQueue.Dequeue (); message._type != eMessageType::RunEventLoop )
+        Message message = _messageQueue.DequeueBegin ();
+
+        if ( message._type == eMessageType::RunEventLoop )
         {
-            _messageQueue.EnqueueFront ( std::move ( message ) );
-            continue;
+            _messageQueue.DequeueEnd ();
+            return;
         }
 
-        return;
+        _messageQueue.DequeueEnd ( std::move ( message ) );
     }
+}
+
+void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
+{
+    _messageQueue.DequeueEnd ();
+    _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+}
+
+void Editor::ScheduleEventLoop () noexcept
+{
+    _messageQueue.EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::RunEventLoop,
+            ._params = nullptr
+        }
+    );
 }
 
 std::string_view Editor::GetUserGPU () const noexcept

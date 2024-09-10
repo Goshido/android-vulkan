@@ -34,7 +34,10 @@ class MessageQueue final
 
         void EnqueueFront ( Message &&message ) noexcept;
         void EnqueueBack ( Message &&message ) noexcept;
-        [[nodiscard]] Message Dequeue () noexcept;
+
+        [[nodiscard]] Message DequeueBegin () noexcept;
+        void DequeueEnd () noexcept;
+        void DequeueEnd ( Message &&refund ) noexcept;
 };
 
 } // namespace editor

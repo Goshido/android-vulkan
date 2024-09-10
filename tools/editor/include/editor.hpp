@@ -58,9 +58,9 @@ class Editor final
         void OnModuleStopped () noexcept;
         void OnRecreateSwapchain () noexcept;
         void OnRunEvent () noexcept;
+        void OnShutdown () noexcept;
         void OnWindowVisibilityChanged ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;
-        void Shutdown () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;
         [[nodiscard]] Config LoadConfig () noexcept;

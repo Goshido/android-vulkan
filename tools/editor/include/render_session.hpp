@@ -20,9 +20,10 @@ class RenderSession final
     private:
         struct CommandInfo final
         {
+            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
             VkCommandBuffer                                 _buffer = VK_NULL_HANDLE;
             VkFence                                         _fence = VK_NULL_HANDLE;
-            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
+            bool                                            _inUse = false;
             VkCommandPool                                   _pool = VK_NULL_HANDLE;
         };
 
@@ -81,6 +82,8 @@ class RenderSession final
         void OnSwapchainCreated () noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
+
+        [[nodiscard]] static bool PrepareFence ( VkDevice device, CommandInfo& info ) noexcept;
 };
 
 } // namespace editor

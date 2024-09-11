@@ -315,7 +315,7 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .pNext = nullptr,
-        .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        .flags = 0U
     };
 
     constexpr VkSemaphoreCreateInfo semaphoreInfo
@@ -345,6 +345,7 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
     for ( size_t i = 0U; i < pbr::DUAL_COMMAND_BUFFER; ++i )
     {
         CommandInfo &info = _commandInfo[ i ];
+        info._inUse = false;
 
         bool result = android_vulkan::Renderer::CheckVkResult (
             vkCreateFence ( device, &fenceInfo, nullptr, &info._fence ),
@@ -825,30 +826,27 @@ void RenderSession::OnRenderFrame () noexcept
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
 
-    VkFence &fence = commandInfo._fence;
-    android_vulkan::Renderer& renderer = *_renderer;
+    android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "editor::RenderSession::OnRenderFrame",
-        "Can't wait fence"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !PrepareFence ( device, commandInfo ) )
+    {
+        // FUCK
+        AV_ASSERT ( false )
         return;
+    }
 
-    VkResult const acquireResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
+    VkResult vulkanResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
 
-    if ( acquireResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
+    if ( vulkanResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
     {
         NotifyRecreateSwapchain ();
         return;
     }
 
-    if ( ( acquireResult != VK_SUCCESS ) & ( acquireResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
+    if ( ( vulkanResult != VK_SUCCESS ) & ( vulkanResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
     {
-        result = android_vulkan::Renderer::CheckVkResult ( acquireResult,
+        [[maybe_unused]] bool const result = android_vulkan::Renderer::CheckVkResult ( vulkanResult,
             "editor::RenderSession::OnRenderFrame",
             "Can't acquire present image"
         );
@@ -858,12 +856,12 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &commandInfo._fence ),
         "editor::RenderSession::OnRenderFrame",
         "Can't reset fence"
     );
 
-    if ( !result ) [[unlikely]]
+    if ( !result )
     {
         // FUCK
         AV_ASSERT ( false )
@@ -876,7 +874,7 @@ void RenderSession::OnRenderFrame () noexcept
         "Can't reset command pool"
     );
 
-    if ( !result ) [[unlikely]]
+    if ( !result )
     {
         // FUCK
         AV_ASSERT ( false )
@@ -936,7 +934,7 @@ void RenderSession::OnRenderFrame () noexcept
         std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
             commandBuffer,
             commandInfo._acquire,
-            fence,
+            commandInfo._fence,
             &_submitMutex
         );
 
@@ -949,7 +947,7 @@ void RenderSession::OnRenderFrame () noexcept
 
         GX_DISABLE_WARNING ( 4061 )
 
-        switch ( VkResult const r = *presentResult; r )
+        switch ( vulkanResult = *presentResult; vulkanResult )
         {
             case VK_SUCCESS:
                 // NOTHING
@@ -963,7 +961,7 @@ void RenderSession::OnRenderFrame () noexcept
             return;
 
             default:
-                result = android_vulkan::Renderer::CheckVkResult ( r,
+                result = android_vulkan::Renderer::CheckVkResult ( vulkanResult,
                     "editor::RenderSession::OnRenderFrame",
                     "Can't present frame"
                 );
@@ -975,6 +973,8 @@ void RenderSession::OnRenderFrame () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+
+    commandInfo._inUse = true;
 
     _messageQueue->EnqueueBack (
         Message
@@ -1113,12 +1113,34 @@ void RenderSession::OnSwapchainCreated () noexcept
     vkUpdateDescriptorSets ( device, 1U, &write, 0U, nullptr );
 }
 
+bool RenderSession::PrepareFence ( VkDevice device, CommandInfo &info ) noexcept
+{
+    if ( !info._inUse )
+        return true;
+
+    info._inUse = false;
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &info._fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "editor::RenderSession::PrepareFence",
+        "Can't wait fence"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &info._fence ),
+        "editor::RenderSession::PrepareFence",
+        "Can't reset fence"
+    );
+}
+
 void RenderSession::NotifyRecreateSwapchain () const noexcept
 {
     _messageQueue->EnqueueBack (
         Message
         {
-            ._type = eMessageType::FrameComplete,
+            ._type = eMessageType::RecreateSwapchain,
             ._params = nullptr
         }
     );
@@ -1126,7 +1148,7 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
     _messageQueue->EnqueueBack (
         Message
         {
-            ._type = eMessageType::RecreateSwapchain,
+            ._type = eMessageType::FrameComplete,
             ._params = nullptr
         }
     );

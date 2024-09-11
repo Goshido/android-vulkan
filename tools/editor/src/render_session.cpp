@@ -829,7 +829,7 @@ void RenderSession::OnRenderFrame () noexcept
     android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();
 
-    if ( !PrepareFence ( device, commandInfo ) )
+    if ( !PrepareCommandBuffer ( device, commandInfo ) ) [[unlikely]]
     {
         // FUCK
         AV_ASSERT ( false )
@@ -856,32 +856,8 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &commandInfo._fence ),
-        "editor::RenderSession::OnRenderFrame",
-        "Can't reset fence"
-    );
-
-    if ( !result )
-    {
-        // FUCK
-        AV_ASSERT ( false )
-        return;
-    }
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, commandInfo._pool, 0U ),
-        "editor::RenderSession::OnRenderFrame",
-        "Can't reset command pool"
-    );
-
-    if ( !result )
-    {
-        // FUCK
-        AV_ASSERT ( false )
-        return;
-    }
-
     VkCommandBuffer commandBuffer = commandInfo._buffer;
+    commandInfo._inUse = true;
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -891,7 +867,7 @@ void RenderSession::OnRenderFrame () noexcept
         .pInheritanceInfo = nullptr
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+    bool result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
         "editor::RenderSession::OnRenderFrame",
         "Can't begin main render pass"
     );
@@ -973,8 +949,6 @@ void RenderSession::OnRenderFrame () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
-
-    commandInfo._inUse = true;
 
     _messageQueue->EnqueueBack (
         Message
@@ -1113,26 +1087,29 @@ void RenderSession::OnSwapchainCreated () noexcept
     vkUpdateDescriptorSets ( device, 1U, &write, 0U, nullptr );
 }
 
-bool RenderSession::PrepareFence ( VkDevice device, CommandInfo &info ) noexcept
+bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept
 {
     if ( !info._inUse )
         return true;
 
     info._inUse = false;
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &info._fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "editor::RenderSession::PrepareFence",
-        "Can't wait fence"
-    );
+    return android_vulkan::Renderer::CheckVkResult (
+            vkWaitForFences ( device, 1U, &info._fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+            "editor::RenderSession::PrepareCommandBuffer",
+            "Can't wait fence"
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
+        android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &info._fence ),
+            "editor::RenderSession::PrepareCommandBuffer",
+            "Can't reset fence"
+        ) &&
 
-    return android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &info._fence ),
-        "editor::RenderSession::PrepareFence",
-        "Can't reset fence"
-    );
+        android_vulkan::Renderer::CheckVkResult (
+            vkResetCommandPool ( device, info._pool, 0U ),
+            "editor::RenderSession::PrepareCommandBuffer",
+            "Can't reset command pool"
+        );
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept

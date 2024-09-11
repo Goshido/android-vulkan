@@ -84,16 +84,16 @@ bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
             );
         }
 
-        if ( integrated || info._deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU )
-            continue;
-
-        integrated = std::optional<Candidate> (
-            Candidate
-            {
-                ._device = device.first,
-                ._info = &info
-            }
-        );
+        if ( !integrated && info._deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU )
+        {
+            integrated = std::optional<Candidate> (
+                Candidate
+                {
+                    ._device = device.first,
+                    ._info = &info
+                }
+            );
+        }
     }
 
     using QueueFamilyInfo = std::vector<std::pair<VkFlags, uint32_t>>;

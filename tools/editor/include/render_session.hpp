@@ -83,7 +83,7 @@ class RenderSession final
 
         void NotifyRecreateSwapchain () const noexcept;
 
-        [[nodiscard]] static bool PrepareFence ( VkDevice device, CommandInfo& info ) noexcept;
+        [[nodiscard]] static bool PrepareCommandBuffer ( VkDevice device, CommandInfo& info ) noexcept;
 };
 
 } // namespace editor

@@ -3,7 +3,7 @@ Clear-Host
 $invokeArgs = @(
     "-Command",
     "&",
-    "`"$PSScriptRoot\make-symlink.ps1`""
+    "$PSScriptRoot\make-symlinks.ps1"
 )
 
 Start-Process                       `

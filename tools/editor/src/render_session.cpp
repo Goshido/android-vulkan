@@ -451,7 +451,7 @@ bool RenderSession::CreateFramebuffer ( VkDevice device, VkExtent2D const &resol
         .layers = 1U
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateFramebuffer ( device, &info, nullptr, &_renderPassInfo.framebuffer ),
         "editor::RenderSession::CreateFramebuffer",
         "Can't create framebuffer"
@@ -975,13 +975,13 @@ void RenderSession::OnShutdown () noexcept
     VkDevice device = _renderer->GetDevice ();
     FreeCommandBuffers ( device );
 
-    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE )
+    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
         _renderPassInfo.framebuffer = VK_NULL_HANDLE;
     }
 
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
@@ -989,13 +989,13 @@ void RenderSession::OnShutdown () noexcept
 
     _sampler.Destroy ( device );
 
-    if ( _helloTriangleProgram )
+    if ( _helloTriangleProgram ) [[likely]]
     {
         _helloTriangleProgram->Destroy ( device );
         _helloTriangleProgram.reset ();
     }
 
-    if ( _helloTriangleGeometry )
+    if ( _helloTriangleGeometry ) [[likely]]
     {
         _helloTriangleGeometry->FreeResources ( *_renderer );
         _helloTriangleGeometry.reset ();
@@ -1006,7 +1006,7 @@ void RenderSession::OnShutdown () noexcept
 
     _renderTarget.FreeResources ( *_renderer );
 
-    if ( _renderPassInfo.renderPass != VK_NULL_HANDLE )
+    if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyRenderPass ( device, _renderPassInfo.renderPass, VK_NULL_HANDLE );
         _renderPassInfo.renderPass = VK_NULL_HANDLE;
@@ -1089,7 +1089,7 @@ void RenderSession::OnSwapchainCreated () noexcept
 
 bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept
 {
-    if ( !info._inUse )
+    if ( !info._inUse ) [[unlikely]]
         return true;
 
     info._inUse = false;

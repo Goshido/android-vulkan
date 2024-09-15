@@ -1,8 +1,8 @@
 /****************************************************************************
  *
- * ftconfig.h.in
+ * ftconfig.h
  *
- *   UNIX-specific configuration file (specification only).
+ *   ANSI-specific configuration file (specification only).
  *
  * Copyright (C) 1996-2024 by
  * David Turner, Robert Wilhelm, and Werner Lemberg.
@@ -30,6 +30,8 @@
    * system-specific files that are always included first when building the
    * library.
    *
+   * This ANSI version should stay in `include/config/`.
+   *
    */
 
 #ifndef FTCONFIG_H_
@@ -38,9 +40,6 @@
 #include <ft2build.h>
 #include FT_CONFIG_OPTIONS_H
 #include FT_CONFIG_STANDARD_LIBRARY_H
-
-#define HAVE_UNISTD_H 1
-#define HAVE_FCNTL_H 1
 
 #include <freetype/config/integer-types.h>
 #include <freetype/config/public-macros.h>

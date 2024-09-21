@@ -78,12 +78,12 @@ class RenderSession final
 
         void OnHelloTriangleReady ( void* params ) noexcept;
         void OnRenderFrame () noexcept;
-        void OnShutdown () noexcept;
+        void OnShutdown ( Message &&refund ) noexcept;
         void OnSwapchainCreated () noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
 
-        [[nodiscard]] static bool PrepareCommandBuffer ( VkDevice device, CommandInfo& info ) noexcept;
+        [[nodiscard]] static bool PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept;
 };
 
 } // namespace editor

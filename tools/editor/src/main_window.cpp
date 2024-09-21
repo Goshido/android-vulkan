@@ -150,6 +150,11 @@ void MainWindow::Execute () noexcept
     }
 }
 
+float MainWindow::GetDPI () const noexcept
+{
+    return static_cast<float> ( GetDpiForWindow ( _hwnd ) );
+}
+
 HWND MainWindow::GetNativeWindow () const noexcept
 {
     return _hwnd;
@@ -163,7 +168,8 @@ void MainWindow::OnClose () noexcept
         Message
         {
             ._type = eMessageType::CloseEditor,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }
@@ -185,6 +191,30 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
     DestroyWindow ( hwnd );
 }
 
+void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
+{
+    AV_TRACE ( "Main window: DPI changed" )
+
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::DPIChanged,
+            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) ),
+            ._serialNumber = 0U
+        }
+    );
+
+    RECT const &rect = *reinterpret_cast<RECT const*> ( lParam );
+
+    MoveWindow ( _hwnd,
+        static_cast<int> ( rect.left ),
+        static_cast<int> ( rect.right ),
+        static_cast<int> ( rect.right - rect.left ),
+        static_cast<int> ( rect.bottom - rect.top ),
+        TRUE
+    );
+}
+
 void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
 {
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
@@ -198,7 +228,8 @@ void MainWindow::OnSize ( WPARAM wParam ) noexcept
         Message
         {
             ._type = eMessageType::WindowVisibilityChanged,
-            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) )
+            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
+            ._serialNumber = 0U
         }
     );
 }
@@ -340,6 +371,10 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_CLOSE:
             mainWindow.OnClose ();
         return 0;
+
+        case WM_DPICHANGED:
+            mainWindow.OnDPIChanged ( wParam, lParam );
+        break;
 
         case WM_GETMINMAXINFO:
             mainWindow.OnGetMinMaxInfo ( lParam );

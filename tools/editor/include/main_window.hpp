@@ -35,6 +35,8 @@ class MainWindow final
         [[nodiscard]] bool Destroy () noexcept;
 
         void Execute () noexcept;
+
+        [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] HWND GetNativeWindow () const noexcept;
 
     private:
@@ -50,6 +52,7 @@ class MainWindow final
         // control returns to caller code
         void OnCreate ( HWND hwnd ) noexcept;
 
+        void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;
 

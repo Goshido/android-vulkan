@@ -18,10 +18,12 @@ namespace {
 constexpr std::string_view CONFIG_PATH = R"__(%APPDATA%\Goshido Inc\Editor\editor.cfg)__";
 
 constexpr std::string_view CONFIG_KEY_GPU = "user GPU";
-constexpr std::string_view CONFIG_KEY_DPI = "DPI";
+constexpr std::string_view CONFIG_KEY_UI_ZOOM = "UI zoom";
 constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
+
+constexpr std::chrono::microseconds IDLE ( 500U );
 
 } // end of anonumous namespace
 
@@ -50,6 +52,7 @@ bool Editor::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
     Config const config = LoadConfig ();
+    _uiZoom = config._uiZoom;
 
     std::thread (
         [ this, &config ] () noexcept
@@ -62,19 +65,24 @@ bool Editor::InitModules () noexcept
                     ._type = eMessageType::VulkanInitReport,
 
                     ._params = reinterpret_cast<void*> (
-                        static_cast<uintptr_t> ( _renderer.OnCreateDevice ( config._gpu, config._dpi ) )
-                    )
+                        static_cast<uintptr_t> (
+                            _renderer.OnCreateDevice ( config._gpu )
+                        )
+                    ),
+
+                    ._serialNumber = 0U
                 }
             );
         }
     ).detach ();
 
     bool result = _mainWindow.MakeWindow ( _messageQueue );
+    std::optional<uint32_t> knownSerialNumber {};
 
     for ( bool waiting = true; waiting; )
     {
         AV_TRACE ( "Editor: async init loop" )
-        Message message = _messageQueue.DequeueBegin ();
+        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -91,6 +99,7 @@ bool Editor::InitModules () noexcept
             break;
 
             default:
+                knownSerialNumber = message._serialNumber;
                 _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
@@ -104,25 +113,34 @@ bool Editor::InitModules () noexcept
         return false;
     }
 
+    _renderer.OnSetDPI ( _uiZoom * _mainWindow.GetDPI () );
+
     result = _renderer.OnCreateSwapchain (
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
         config._vSync
     );
 
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _uiManager.Init ( _messageQueue );
+    _runningModules = 1U;
+
     if ( !result || !_renderSession.Init ( _messageQueue, _renderer ) ) [[unlikely]]
         return false;
 
-    _runningModules = 1U;
+    ++_runningModules;
     return true;
 }
 
 void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
+    std::optional<uint32_t> knownSerialNumber {};
 
     while ( _runningModules )
     {
-        Message message = _messageQueue.DequeueBegin ();
+        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -137,6 +155,7 @@ void Editor::DestroyModules () noexcept
             break;
 
             default:
+                knownSerialNumber = message._serialNumber;
                 _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
@@ -150,13 +169,14 @@ void Editor::DestroyModules () noexcept
     SaveState config {};
     SaveState::Container &root = config.GetContainer ();
     root.Write ( CONFIG_KEY_GPU, _renderer.GetDeviceName () );
-    root.Write ( CONFIG_KEY_DPI, _renderer.GetDPI () );
+    root.Write ( CONFIG_KEY_UI_ZOOM, _uiZoom );
     root.Write ( CONFIG_KEY_VSYNC, _renderer.GetVSync () );
 
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
 
     _renderSession.Destroy ();
+    _uiManager.Destroy ();
     _renderer.OnDestroySwapchain ( false );
     _renderer.OnDestroyDevice ();
 }
@@ -164,11 +184,13 @@ void Editor::DestroyModules () noexcept
 void Editor::EventLoop () noexcept
 {
     ScheduleEventLoop ();
+    std::optional<uint32_t> knownSerialNumber {};
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = _messageQueue.DequeueBegin ();
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -177,6 +199,10 @@ void Editor::EventLoop () noexcept
             case eMessageType::CloseEditor:
                 OnShutdown ();
             return;
+
+            case eMessageType::DPIChanged:
+                OnDPIChanged ( std::move ( message ) );
+            break;
 
             case eMessageType::FrameComplete:
                 OnFrameComplete ();
@@ -199,12 +225,20 @@ void Editor::EventLoop () noexcept
             break;
 
             default:
+                knownSerialNumber = message._serialNumber;
                 _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void Editor::OnDPIChanged ( Message &&message ) noexcept
+{
+    _messageQueue.DequeueEnd ();
+    _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
+    // FUCK
 }
 
 void Editor::OnFrameComplete () noexcept
@@ -254,7 +288,8 @@ void Editor::OnRecreateSwapchain () noexcept
         Message
         {
             ._type = eMessageType::SwapchainCreated,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }
@@ -270,7 +305,8 @@ void Editor::OnRunEvent () noexcept
             Message
             {
                 ._type = eMessageType::RenderFrame,
-                ._params = nullptr
+                ._params = nullptr,
+                ._serialNumber = 0U
             }
         );
 
@@ -289,14 +325,17 @@ void Editor::OnShutdown () noexcept
         Message
         {
             ._type = eMessageType::Shutdown,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 
     // At this point only last eMessageType::RunEventLoop left in message queue. Need to dequeue it.
+    std::optional<uint32_t> knownSerialNumber {};
+
     for ( ; ; )
     {
-        Message message = _messageQueue.DequeueBegin ();
+        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
 
         if ( message._type == eMessageType::RunEventLoop )
         {
@@ -304,6 +343,7 @@ void Editor::OnShutdown () noexcept
             return;
         }
 
+        knownSerialNumber = message._serialNumber;
         _messageQueue.DequeueEnd ( std::move ( message ) );
     }
 }
@@ -320,7 +360,8 @@ void Editor::ScheduleEventLoop () noexcept
         Message
         {
             ._type = eMessageType::RunEventLoop,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }
@@ -359,8 +400,8 @@ Editor::Config Editor::LoadConfig () noexcept
     else
         result._gpu = root.Read ( CONFIG_KEY_GPU, DEFAULT_GPU );
 
-    result._dpi = root.Read ( CONFIG_KEY_DPI, DEFAULT_DPI );
     result._vSync = root.Read ( CONFIG_KEY_VSYNC, DEFAULT_VSYNC );
+    result._uiZoom = root.Read ( CONFIG_KEY_UI_ZOOM, DEFAULT_UI_ZOOM );
     return result;
 }
 

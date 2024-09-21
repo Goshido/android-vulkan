@@ -16,6 +16,7 @@ namespace editor {
 enum class eMessageType : uint32_t
 {
     CloseEditor,
+    DPIChanged,
     FrameComplete,
     HelloTriangleReady,
     ModuleStopped,
@@ -33,6 +34,7 @@ struct Message final
 {
     eMessageType    _type;
     void*           _params;
+    uint32_t        _serialNumber = 0U;
 };
 
 } // namespace editor

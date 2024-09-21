@@ -89,6 +89,8 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
+    <EmbedManifest>true</EmbedManifest>
+    <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -96,6 +98,8 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
+    <GenerateManifest>true</GenerateManifest>
+    <EmbedManifest>true</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -103,6 +107,8 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
+    <GenerateManifest>true</GenerateManifest>
+    <EmbedManifest>true</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -110,6 +116,8 @@
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
+    <GenerateManifest>true</GenerateManifest>
+    <EmbedManifest>true</EmbedManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
@@ -117,6 +125,8 @@
     <PreBuildEventUseInBuild>false</PreBuildEventUseInBuild>
     <PreLinkEventUseInBuild>false</PreLinkEventUseInBuild>
     <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
+    <GenerateManifest>true</GenerateManifest>
+    <EmbedManifest>true</EmbedManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,11 +152,23 @@
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <AdditionalLibraryDirectories>$(SolutionDir)libs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ManifestFile>
+      </ManifestFile>
     </Link>
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>$(SolutionDir)src\editor.exe.manifest</AdditionalManifestFiles>
+      <OutputManifestFile>
+      </OutputManifestFile>
+      <EnableDpiAwareness>
+      </EnableDpiAwareness>
+    </Manifest>
+    <ManifestResourceCompile>
+      <ResourceOutputFileName />
+    </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">
     <ClCompile>
@@ -172,11 +194,23 @@
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <AdditionalLibraryDirectories>$(SolutionDir)libs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ManifestFile>
+      </ManifestFile>
     </Link>
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <OutputManifestFile>
+      </OutputManifestFile>
+      <AdditionalManifestFiles>$(SolutionDir)src\editor.exe.manifest</AdditionalManifestFiles>
+      <EnableDpiAwareness>
+      </EnableDpiAwareness>
+    </Manifest>
+    <ManifestResourceCompile>
+      <ResourceOutputFileName />
+    </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">
     <ClCompile>
@@ -202,11 +236,23 @@
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <AdditionalLibraryDirectories>$(SolutionDir)libs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ManifestFile>
+      </ManifestFile>
     </Link>
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <OutputManifestFile>
+      </OutputManifestFile>
+      <AdditionalManifestFiles>$(SolutionDir)src\editor.exe.manifest</AdditionalManifestFiles>
+      <EnableDpiAwareness>
+      </EnableDpiAwareness>
+    </Manifest>
+    <ManifestResourceCompile>
+      <ResourceOutputFileName />
+    </ManifestResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -235,11 +281,20 @@
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <AdditionalLibraryDirectories>$(SolutionDir)libs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ManifestFile>
+      </ManifestFile>
     </Link>
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <OutputManifestFile>
+      </OutputManifestFile>
+      <AdditionalManifestFiles>$(SolutionDir)src\editor.exe.manifest</AdditionalManifestFiles>
+      <EnableDpiAwareness>
+      </EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <ClCompile>
@@ -268,11 +323,20 @@
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <AdditionalLibraryDirectories>$(SolutionDir)libs\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>WinPixEventRuntime.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ManifestFile>
+      </ManifestFile>
     </Link>
     <PostBuildEvent>
       <Command>
       </Command>
     </PostBuildEvent>
+    <Manifest>
+      <OutputManifestFile>
+      </OutputManifestFile>
+      <AdditionalManifestFiles>$(SolutionDir)src\editor.exe.manifest</AdditionalManifestFiles>
+      <EnableDpiAwareness>
+      </EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
@@ -433,8 +497,12 @@
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
+    <ClCompile Include="src\rect.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
+    <ClCompile Include="src\ui_dialog_box.cpp" />
+    <ClCompile Include="src\ui_manager.cpp" />
+    <ClCompile Include="src\widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
@@ -469,8 +537,12 @@
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\rect.hpp" />
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\save_state.hpp" />
+    <ClInclude Include="include\ui_dialog_box.hpp" />
+    <ClInclude Include="include\ui_manager.hpp" />
+    <ClInclude Include="include\widget.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\main.rc" />

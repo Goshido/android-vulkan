@@ -928,7 +928,7 @@ void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
     }
 }
 
-bool Renderer::OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept
+bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
 {
     AV_TRACE ( "Creating Vulkan device" )
 
@@ -1006,11 +1006,7 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU, float dpi ) noe
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( !DeployDevice ( userGPU ) ) [[unlikely]]
-        return false;
-
-    _dpi = dpi;
-    return true;
+    return DeployDevice ( userGPU );
 }
 
 void Renderer::OnDestroyDevice () noexcept
@@ -1043,6 +1039,11 @@ void Renderer::OnDestroyDevice () noexcept
     {
         LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
     }
+}
+
+void Renderer::OnSetDPI ( float dpi ) noexcept
+{
+    _dpi = dpi;
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,

@@ -170,8 +170,10 @@ class Renderer final
         [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
         void OnDestroySwapchain ( bool preserveSurface ) noexcept;
 
-        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU, float dpi ) noexcept;
+        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU ) noexcept;
         void OnDestroyDevice () noexcept;
+
+        void OnSetDPI ( float dpi ) noexcept;
 
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,

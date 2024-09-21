@@ -69,7 +69,8 @@ HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
                 Message
                 {
                     ._type = eMessageType::HelloTriangleReady,
-                    ._params = this
+                    ._params = this,
+                    ._serialNumber = 0U
                 }
             );
         }
@@ -291,6 +292,7 @@ bool RenderSession::Init ( MessageQueue &messageQueue, android_vulkan::Renderer 
     _thread = std::thread (
         [ this ]() noexcept
         {
+            AV_THREAD_NAME ( "Render session" )
             EventLoop ();
         }
     );
@@ -731,8 +733,6 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
 
 void RenderSession::EventLoop () noexcept
 {
-    AV_THREAD_NAME ( "Render session" )
-
     if ( !InitiModules () ) [[unlikely]]
         _broken = true;
 
@@ -744,15 +744,18 @@ void RenderSession::EventLoop () noexcept
             Message
             {
                 ._type = eMessageType::CloseEditor,
-                ._params = nullptr
+                ._params = nullptr,
+                ._serialNumber = 0U
             }
         );
     }
 
+    std::optional<uint32_t> knownSerialNumber {};
+
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = messageQueue.DequeueBegin ();
+        Message message = messageQueue.DequeueBegin ( knownSerialNumber );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -767,7 +770,7 @@ void RenderSession::EventLoop () noexcept
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ();
+                OnShutdown ( std::move ( message ) );
             return;
 
             case eMessageType::SwapchainCreated:
@@ -775,6 +778,7 @@ void RenderSession::EventLoop () noexcept
             break;
 
             default:
+                knownSerialNumber = message._serialNumber;
                 messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
@@ -954,15 +958,16 @@ void RenderSession::OnRenderFrame () noexcept
         Message
         {
             ._type = eMessageType::FrameComplete,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }
 
-void RenderSession::OnShutdown () noexcept
+void RenderSession::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue->DequeueEnd ( std::move ( refund ) );
 
     bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
         "editor::RenderSession::OnShutdown",
@@ -1019,7 +1024,8 @@ void RenderSession::OnShutdown () noexcept
         Message
         {
             ._type = eMessageType::ModuleStopped,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }
@@ -1118,7 +1124,8 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
         Message
         {
             ._type = eMessageType::RecreateSwapchain,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 
@@ -1126,7 +1133,8 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
         Message
         {
             ._type = eMessageType::FrameComplete,
-            ._params = nullptr
+            ._params = nullptr,
+            ._serialNumber = 0U
         }
     );
 }

@@ -8,6 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <deque>
 #include <mutex>
+#include <optional>
 
 GX_RESTORE_WARNING_STATE
 
@@ -18,8 +19,9 @@ class MessageQueue final
 {
     private:
         std::mutex                  _mutex {};
-        std::deque<Message>         _queue {};
         std::condition_variable     _isQueueNotEmpty {};
+        std::deque<Message>         _queue {};
+        uint32_t                    _serialNumber = 0U;
 
     public:
         explicit MessageQueue () = default;
@@ -35,7 +37,7 @@ class MessageQueue final
         void EnqueueFront ( Message &&message ) noexcept;
         void EnqueueBack ( Message &&message ) noexcept;
 
-        [[nodiscard]] Message DequeueBegin () noexcept;
+        [[nodiscard]] Message DequeueBegin ( std::optional<uint32_t> waitOnSerialNumber ) noexcept;
         void DequeueEnd () noexcept;
         void DequeueEnd ( Message &&refund ) noexcept;
 };

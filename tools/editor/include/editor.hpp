@@ -6,6 +6,7 @@
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
+#include "ui_manager.hpp"
 
 
 namespace editor {
@@ -13,14 +14,14 @@ namespace editor {
 class Editor final
 {
     private:
-        constexpr static float                  DEFAULT_DPI = 96.0F;
         constexpr static std::string_view       DEFAULT_GPU = "";
+        constexpr static float                  DEFAULT_UI_ZOOM = 1.0F;
         constexpr static bool                   DEFAULT_VSYNC = true;
 
         struct Config final
         {
-            float                               _dpi = DEFAULT_DPI;
             std::string                         _gpu = std::string ( DEFAULT_GPU );
+            float                               _uiZoom = DEFAULT_UI_ZOOM;
             bool                                _vSync = DEFAULT_VSYNC;
         };
 
@@ -33,6 +34,8 @@ class Editor final
         android_vulkan::Renderer                _renderer {};
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;
+        UIManager                               _uiManager {};
+        float                                   _uiZoom = DEFAULT_UI_ZOOM;
 
     public:
         Editor () = delete;
@@ -54,6 +57,7 @@ class Editor final
         void DestroyModules () noexcept;
 
         void EventLoop () noexcept;
+        void OnDPIChanged ( Message &&message ) noexcept;
         void OnFrameComplete () noexcept;
         void OnModuleStopped () noexcept;
         void OnRecreateSwapchain () noexcept;

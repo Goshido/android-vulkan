@@ -31,12 +31,12 @@ void UIManager::Destroy () noexcept
 void UIManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = *_messageQueue;
-    std::optional<uint32_t> knownSerialNumber {};
+    std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = messageQueue.DequeueBegin ( knownSerialNumber );
+        Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -47,7 +47,7 @@ void UIManager::EventLoop () noexcept
             return;
 
             default:
-                knownSerialNumber = message._serialNumber;
+                lastRefund = message._serialNumber;
                 messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }

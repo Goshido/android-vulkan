@@ -30,11 +30,15 @@ enum class eMessageType : uint32_t
     Unknown
 };
 
-struct Message final
+class Message final
 {
-    eMessageType    _type;
-    void*           _params;
-    uint32_t        _serialNumber = 0U;
+    public:
+        using SerialNumber = uint32_t;
+
+    public:
+        eMessageType    _type;
+        void*           _params;
+        SerialNumber    _serialNumber = 0U;
 };
 
 } // namespace editor

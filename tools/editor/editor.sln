@@ -10,6 +10,7 @@ Global
 		Debug - GPU select|x64 = Debug - GPU select|x64
 		Debug|x64 = Debug|x64
 		Profile|x64 = Profile|x64
+		Release + ASAN|x64 = Release + ASAN|x64
 		Release|x64 = Release|x64
 		RenderDoc|x64 = RenderDoc|x64
 	EndGlobalSection
@@ -20,6 +21,8 @@ Global
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Debug|x64.Build.0 = Debug|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Profile|x64.ActiveCfg = Profile|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Profile|x64.Build.0 = Profile|x64
+		{540B70E1-6E86-4394-A22E-501BF6548048}.Release + ASAN|x64.ActiveCfg = Release + ASAN|x64
+		{540B70E1-6E86-4394-A22E-501BF6548048}.Release + ASAN|x64.Build.0 = Release + ASAN|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Release|x64.ActiveCfg = Release|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Release|x64.Build.0 = Release|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.RenderDoc|x64.ActiveCfg = RenderDoc|x64

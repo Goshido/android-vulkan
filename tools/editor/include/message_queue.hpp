@@ -19,9 +19,9 @@ class MessageQueue final
 {
     private:
         std::mutex                  _mutex {};
-        std::condition_variable     _isQueueNotEmpty {};
+        std::condition_variable     _isQueueChanged {};
         std::deque<Message>         _queue {};
-        uint32_t                    _serialNumber = 0U;
+        Message::SerialNumber       _serialNumber = 0U;
 
     public:
         explicit MessageQueue () = default;
@@ -37,7 +37,7 @@ class MessageQueue final
         void EnqueueFront ( Message &&message ) noexcept;
         void EnqueueBack ( Message &&message ) noexcept;
 
-        [[nodiscard]] Message DequeueBegin ( std::optional<uint32_t> waitOnSerialNumber ) noexcept;
+        [[nodiscard]] Message DequeueBegin ( std::optional<Message::SerialNumber> waitOnSerialNumber ) noexcept;
         void DequeueEnd () noexcept;
         void DequeueEnd ( Message &&refund ) noexcept;
 };

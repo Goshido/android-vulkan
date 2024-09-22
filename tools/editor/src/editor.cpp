@@ -23,7 +23,9 @@ constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
 
-constexpr std::chrono::microseconds IDLE ( 500U );
+// It prevents buzy loop.
+// [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
+constexpr std::chrono::milliseconds IDLE ( 1U );
 
 } // end of anonumous namespace
 
@@ -184,13 +186,13 @@ void Editor::DestroyModules () noexcept
 void Editor::EventLoop () noexcept
 {
     ScheduleEventLoop ();
-    std::optional<uint32_t> knownSerialNumber {};
+    std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
         std::this_thread::sleep_for ( IDLE );
-        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -225,7 +227,7 @@ void Editor::EventLoop () noexcept
             break;
 
             default:
-                knownSerialNumber = message._serialNumber;
+                lastRefund = message._serialNumber;
                 _messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }
@@ -330,21 +332,32 @@ void Editor::OnShutdown () noexcept
         }
     );
 
-    // At this point only last eMessageType::RunEventLoop left in message queue. Need to dequeue it.
-    std::optional<uint32_t> knownSerialNumber {};
+    std::optional<Message::SerialNumber> lastRefund {};
 
-    for ( ; ; )
+    while ( _runningModules )
     {
-        Message message = _messageQueue.DequeueBegin ( knownSerialNumber );
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
 
-        if ( message._type == eMessageType::RunEventLoop )
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
         {
-            _messageQueue.DequeueEnd ();
-            return;
+            case eMessageType::FrameComplete:
+                OnFrameComplete ();
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ) );
+            break;
         }
 
-        knownSerialNumber = message._serialNumber;
-        _messageQueue.DequeueEnd ( std::move ( message ) );
+        GX_ENABLE_WARNING ( 4061 )
     }
 }
 

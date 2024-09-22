@@ -48,6 +48,7 @@ $configs = @(
     "Debug - GPU select",
     "Profile",
     "Release",
+    "Release + ASAN",
     "RenderDoc"
 )
 

@@ -14,8 +14,6 @@ namespace {
 constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
 constexpr float DEFAULT_BRIGHTNESS_BALANCE = 0.0F;
 
-} // end of anonymous namespace
-
 //----------------------------------------------------------------------------------------------------------------------
 
 class HelloTriangleJob final
@@ -59,7 +57,7 @@ HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
     _renderer ( renderer )
 {
     std::thread (
-        [ & ] () noexcept
+        [ this, &messageQueue, &submitMutex, renderPass ] () noexcept
         {
             AV_THREAD_NAME ( "Hello triangle job" )
             CreateProgram ( renderPass );
@@ -279,6 +277,8 @@ void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
     _program->Destroy ( _renderer.GetDevice () );
     _program.reset ();
 }
+
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -750,12 +750,12 @@ void RenderSession::EventLoop () noexcept
         );
     }
 
-    std::optional<uint32_t> knownSerialNumber {};
+    std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = messageQueue.DequeueBegin ( knownSerialNumber );
+        Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -778,7 +778,7 @@ void RenderSession::EventLoop () noexcept
             break;
 
             default:
-                knownSerialNumber = message._serialNumber;
+                lastRefund = message._serialNumber;
                 messageQueue.DequeueEnd ( std::move ( message ) );
             break;
         }

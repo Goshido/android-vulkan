@@ -25,22 +25,22 @@ void MessageQueue::EnqueueBack ( Message &&message ) noexcept
     if ( _queue.empty () || _queue.back ()._type != eMessageType::RunEventLoop )
     {
         _queue.push_back ( std::move ( message ) );
+        _isQueueChanged.notify_all ();
+        return;
     }
-    else
-    {
-        Message &back = _queue.back ();
-        Message::SerialNumber const serialNumber = back._serialNumber;
-        back = std::move ( message );
 
-        _queue.push_back (
-            Message
-            {
-                ._type = eMessageType::RunEventLoop,
-                ._params = nullptr,
-                ._serialNumber = serialNumber
-            }
-        );
-    }
+    Message &back = _queue.back ();
+    Message::SerialNumber const serialNumber = back._serialNumber;
+    back = std::move ( message );
+
+    _queue.push_back (
+        Message
+        {
+            ._type = eMessageType::RunEventLoop,
+            ._params = nullptr,
+            ._serialNumber = serialNumber
+        }
+    );
 
     _isQueueChanged.notify_all ();
 }

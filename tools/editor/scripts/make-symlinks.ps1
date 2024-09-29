@@ -43,7 +43,7 @@ AV-Create-Symlink                                       `
     -Path "$editorDir\assets"                           `
     -Target "$projectDir\app\src\main\assets"
 
-$configs = @(
+[string[]] $configs = @(
     "Debug",
     "Debug - GPU select",
     "Profile",
@@ -52,12 +52,12 @@ $configs = @(
     "RenderDoc"
 )
 
-$binDir = "$editorDir\bin"
-$libDir = "$editorDir\libs\Release"
+[string] $binDir = "$editorDir\bin"
+[string] $libDir = "$editorDir\libs\Release"
 
 foreach ( $config in $configs )
 {
-    $dstDir = "$binDir\$config"
+    [string] $dstDir = "$binDir\$config"
 
     AV-Create-Directory                                 `
         -Path $dstDir

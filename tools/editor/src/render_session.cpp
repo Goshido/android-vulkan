@@ -910,49 +910,49 @@ void RenderSession::OnRenderFrame () noexcept
         _blitProgram.SetDescriptorSet ( commandBuffer, _descriptorSet );
 
         vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
+    }
 
-        std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
-            commandBuffer,
-            commandInfo._acquire,
-            commandInfo._fence,
-            &_submitMutex
-        );
+    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+        commandBuffer,
+        commandInfo._acquire,
+        commandInfo._fence,
+        &_submitMutex
+    );
 
-        if ( !presentResult ) [[unlikely]]
-        {
+    if ( !presentResult ) [[unlikely]]
+    {
+        // FUCK
+        AV_ASSERT ( false )
+        return;
+    }
+
+    GX_DISABLE_WARNING ( 4061 )
+
+    switch ( vulkanResult = *presentResult; vulkanResult )
+    {
+        case VK_SUCCESS:
+            // NOTHING
+        break;
+
+        case VK_SUBOPTIMAL_KHR:
+            [[fallthrough]];
+
+        case VK_ERROR_OUT_OF_DATE_KHR:
+            NotifyRecreateSwapchain ();
+        return;
+
+        default:
+            result = android_vulkan::Renderer::CheckVkResult ( vulkanResult,
+                "editor::RenderSession::OnRenderFrame",
+                "Can't present frame"
+            );
+
             // FUCK
             AV_ASSERT ( false )
-            return;
-        }
-
-        GX_DISABLE_WARNING ( 4061 )
-
-        switch ( vulkanResult = *presentResult; vulkanResult )
-        {
-            case VK_SUCCESS:
-                // NOTHING
-            break;
-
-            case VK_SUBOPTIMAL_KHR:
-                [[fallthrough]];
-
-            case VK_ERROR_OUT_OF_DATE_KHR:
-                NotifyRecreateSwapchain ();
-            return;
-
-            default:
-                result = android_vulkan::Renderer::CheckVkResult ( vulkanResult,
-                    "editor::RenderSession::OnRenderFrame",
-                    "Can't present frame"
-                );
-
-                // FUCK
-                AV_ASSERT ( false )
-            return;
-        }
-
-        GX_ENABLE_WARNING ( 4061 )
+        return;
     }
+
+    GX_ENABLE_WARNING ( 4061 )
 
     _messageQueue->EnqueueBack (
         Message

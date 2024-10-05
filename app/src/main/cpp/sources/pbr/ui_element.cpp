@@ -85,14 +85,15 @@ UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
 
 float UIElement::ResolvePixelLength ( LengthValue const &length,
     float parentLength,
-    bool isHeight,
-    CSSUnitToDevicePixel const &units
+    bool isHeight
 ) const noexcept
 {
+    CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
+
     switch ( length.GetType () )
     {
         case LengthValue::eType::EM:
-        return static_cast<float> ( ResolveFontSize ( units, *this ) );
+        return static_cast<float> ( ResolveFontSize ( *this ) );
 
         case LengthValue::eType::MM:
         return units._fromMM * length.GetValue ();
@@ -132,9 +133,7 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
     }
 }
 
-float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
-    UIElement const &startTraverseElement
-) noexcept
+float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexcept
 {
     LengthValue const* target = nullptr;
     float relativeScale = 1.0F;
@@ -167,6 +166,8 @@ float UIElement::ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
     }
 
     AV_ASSERT ( target )
+
+    CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
 
     switch ( type )
     {

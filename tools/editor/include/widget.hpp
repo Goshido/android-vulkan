@@ -2,24 +2,34 @@
 #define EDITOR_WIDGET_HPP
 
 
+#include "mouse_move_event.hpp"
+#include "rect.hpp"
+
+
 namespace editor {
 
 class Widget
 {
-    public:
-        Widget ( Widget const & ) = default;
-        Widget &operator = ( Widget const & ) = default;
+    protected:
+        Rect    _rect {};
 
-        Widget ( Widget && ) = default;
-        Widget &operator = ( Widget && ) = default;
+    public:
+        Widget ( Widget const & ) = delete;
+        Widget &operator = ( Widget const & ) = delete;
+
+        Widget ( Widget && ) = delete;
+        Widget &operator = ( Widget && ) = delete;
+
+        virtual ~Widget () = default;
 
         virtual void OnButtonDown () noexcept;
         virtual void OnButtonUp () noexcept;
-        virtual void OnMouseMove () noexcept;
+        virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;
+
+        [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;
 
     protected:
         explicit Widget () = default;
-        virtual ~Widget () = default;
 };
 
 } // namespace editor

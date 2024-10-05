@@ -1,3 +1,5 @@
+#include <logger.hpp>
+#include <mouse_move_event.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
 
@@ -42,6 +44,10 @@ void UIManager::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::MouseMoved:
+                OnMouseMoved ( std::move ( message ) );
+            break;
+
             case eMessageType::Shutdown:
                 OnShutdown ( std::move ( message ) );
             return;
@@ -54,6 +60,29 @@ void UIManager::EventLoop () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void UIManager::OnMouseMoved ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Mouse moved" )
+    _messageQueue->DequeueEnd ();
+
+    auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
+    int32_t const x = event->_x;
+    int32_t const y = event->_y;
+
+    for ( auto& widget : _widgets )
+    {
+        Widget &w = *widget;
+
+        if ( w.IsOverlapped ( x, y ) )
+        {
+            w.OnMouseMove ( *event );
+            break;
+        }
+    }
+
+    delete event;
 }
 
 void UIManager::OnShutdown ( Message &&refund ) noexcept

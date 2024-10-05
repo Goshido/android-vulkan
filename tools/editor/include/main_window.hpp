@@ -54,6 +54,7 @@ class MainWindow final
 
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
+        void OnMouseMove ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;
 
         void Save () noexcept;

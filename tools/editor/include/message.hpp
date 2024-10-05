@@ -20,6 +20,7 @@ enum class eMessageType : uint32_t
     FrameComplete,
     HelloTriangleReady,
     ModuleStopped,
+    MouseMoved,
     RecreateSwapchain,
     RenderFrame,
     RunEventLoop,

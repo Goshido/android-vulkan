@@ -2,7 +2,7 @@
 #define EDITOR_RECT_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -41,8 +41,13 @@ class Rect final
 
         ~Rect () = default;
 
+        void From ( GXVec2 const &topLeft, GXVec2 const &bottomRight ) noexcept;
+
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;
         [[nodiscard]] Rect ApplyOffset ( int32_t x, int32_t y ) const noexcept;
+
+        [[nodiscard]] GXVec2 GetTopLeft () const noexcept;
+        [[nodiscard]] GXVec2 GetBottomRight () const noexcept;
 
         [[nodiscard]] int32_t GetWidth () const noexcept;
         [[nodiscard]] int32_t GetHeight () const noexcept;

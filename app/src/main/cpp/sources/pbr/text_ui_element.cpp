@@ -142,7 +142,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     FontStorage &fontStorage = *info._fontStorage;
 
     std::string const &fontAsset = *ResolveFont ();
-    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *info._cssUnits, *_parent ) );
+    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *_parent ) );
     auto font = fontStorage.GetFont ( fontAsset, size );
 
     if ( !font )

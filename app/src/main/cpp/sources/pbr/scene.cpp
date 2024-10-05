@@ -120,7 +120,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     _renderSession = &renderSession;
-    UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
+    CSSUnitToDevicePixel::Init ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );

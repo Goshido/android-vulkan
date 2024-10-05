@@ -132,22 +132,21 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     _parentSize = info._canvasSize;
     GXVec2 const &canvasSize = info._canvasSize;
-    CSSUnitToDevicePixel const &units = *info._cssUnits;
 
-    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
+    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true )
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
@@ -194,7 +193,7 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
     }
 
-    _borderSize = ResolveSize ( canvasSize, units );
+    _borderSize = ResolveSize ( canvasSize );
     GXVec2 beta {};
     beta.Sum ( _borderSize, _canvasTopLeftOffset );
 
@@ -339,36 +338,36 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize ) noexcept
 {
     if ( !_isAutoWidth & _isAutoHeight )
-        return ResolveSizeByWidth ( parentCanvasSize._data[ 0U ], units );
+        return ResolveSizeByWidth ( parentCanvasSize._data[ 0U ] );
 
     if ( _isAutoWidth & !_isAutoHeight )
-        return ResolveSizeByHeight ( parentCanvasSize._data[ 1U ], units );
+        return ResolveSizeByHeight ( parentCanvasSize._data[ 1U ] );
 
-    return GXVec2 ( ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._height, parentCanvasSize._data[ 1U ], true, units )
+    return GXVec2 ( ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._height, parentCanvasSize._data[ 1U ], true )
     );
 }
 
-GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth ) noexcept
 {
     VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
-    result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false, units );
+    result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false );
     result._data[ 1U ] = result._data[ 0U ] * static_cast<float> ( r.height ) / static_cast<float> ( r.width );
 
     return result;
 }
 
-GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight ) noexcept
 {
     VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
-    result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true, units );
+    result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true );
     result._data[ 0U ] = result._data[ 1U ] * static_cast<float> ( r.width ) / static_cast<float> ( r.height );
 
     return result;

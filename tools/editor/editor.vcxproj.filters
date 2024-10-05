@@ -156,6 +156,9 @@
     <ClCompile Include="src\ui_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\css_unit_to_device_pixel.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -271,6 +274,12 @@
     </ClInclude>
     <ClInclude Include="include\ui_manager.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_move_event.hpp">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

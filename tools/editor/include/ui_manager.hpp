@@ -3,6 +3,7 @@
 
 
 #include "message_queue.hpp"
+#include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -16,8 +17,9 @@ namespace editor {
 class UIManager final
 {
     private:
-        MessageQueue*       _messageQueue = nullptr;
-        std::thread         _thread {};
+        MessageQueue*                           _messageQueue = nullptr;
+        std::thread                             _thread {};
+        std::deque<std::unique_ptr<Widget>>     _widgets {};
 
     public:
         explicit UIManager () = default;
@@ -35,6 +37,7 @@ class UIManager final
 
     private:
         void EventLoop () noexcept;
+        void OnMouseMoved ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
 };
 

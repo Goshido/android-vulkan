@@ -26,7 +26,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-CSSUnitToDevicePixel UILayer::_cssUnitToDevicePixel {};
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
 UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
@@ -145,7 +144,6 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
-        ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
@@ -172,7 +170,6 @@ bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport
 {
     UIElement::UpdateInfo info
     {
-        ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
@@ -182,28 +179,6 @@ bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport
     };
 
     return _body->UpdateCache ( info );
-}
-
-void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept
-{
-    // See full explanation in documentation: UI system, CSS Units and hardware DPI.
-    // docs/ui-system.md#css-units-and-dpi
-
-    constexpr float dpiSpec = 96.0F;
-    constexpr float distanceSpec = 28.0F;
-    constexpr float meterToInch = 3.93701e+1F;
-    constexpr float dpiFactor = meterToInch / ( dpiSpec * distanceSpec );
-
-    _cssUnitToDevicePixel._fromPX = dpi * comfortableViewDistanceMeters * dpiFactor;
-
-    constexpr float inchToPX = 96.0F;
-    constexpr float inchToMM = 25.4F;
-    constexpr float pxToMM = inchToPX / inchToMM;
-    _cssUnitToDevicePixel._fromMM = pxToMM * _cssUnitToDevicePixel._fromPX;
-
-    constexpr float inchToPT = 72.0F;
-    constexpr float pxToPT = inchToPX / inchToPT;
-    _cssUnitToDevicePixel._fromPT = pxToPT * _cssUnitToDevicePixel._fromPX;
 }
 
 void UILayer::InitLuaFrontend ( lua_State &vm ) noexcept

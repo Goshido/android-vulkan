@@ -3,6 +3,7 @@
 #include <logger.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -26,6 +27,8 @@ constexpr std::string_view CLI_USER_GPU = "--gpu";
 // It prevents buzy loop.
 // [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
 constexpr std::chrono::milliseconds IDLE ( 1U );
+
+constexpr float COMFORTABLE_VIEW_DISTANCE_METERS = 8.0e-1F;
 
 } // end of anonumous namespace
 
@@ -115,7 +118,9 @@ bool Editor::InitModules () noexcept
         return false;
     }
 
-    _renderer.OnSetDPI ( _uiZoom * _mainWindow.GetDPI () );
+    float const dpi = _uiZoom * _mainWindow.GetDPI ();
+    _renderer.OnSetDPI ( dpi );
+    pbr::CSSUnitToDevicePixel::Init ( dpi, COMFORTABLE_VIEW_DISTANCE_METERS );
 
     result = _renderer.OnCreateSwapchain (
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),

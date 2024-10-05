@@ -406,6 +406,14 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\css_unit_to_device_pixel.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\css_unit_to_device_pixel.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\GXCommon\GXMath.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\GXCommon\GXMath.obj</ObjectFileName>
@@ -605,6 +613,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\memory_allocator.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp" />
@@ -625,6 +634,7 @@
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
+    <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
     <ClInclude Include="include\rect.hpp" />
     <ClInclude Include="include\render_session.hpp" />

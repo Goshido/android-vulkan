@@ -1,5 +1,6 @@
 #include <logger.hpp>
 #include <main_window.hpp>
+#include <mouse_move_event.hpp>
 #include <os_utils.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
@@ -8,6 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <tchar.h>
 #include <strsafe.h>
+#include <windowsx.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -220,6 +222,24 @@ void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
+void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        Message
+        {
+            ._type = eMessageType::MouseMoved,
+
+            ._params = new MouseMoveEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) )
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
 void MainWindow::OnSize ( WPARAM wParam ) noexcept
 {
     AV_TRACE ( "Main window: size" )
@@ -379,6 +399,10 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_GETMINMAXINFO:
             mainWindow.OnGetMinMaxInfo ( lParam );
         return 0;
+
+        case WM_MOUSEMOVE:
+            mainWindow.OnMouseMove ( lParam );
+        break;
 
         case WM_SIZE:
             mainWindow.OnSize ( wParam );

@@ -64,22 +64,21 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     size_t const oldVertices = info._vertices;
     GXVec2 const &canvasSize = info._canvasSize;
-    CSSUnitToDevicePixel const &units = *info._cssUnits;
 
-    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
+    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true )
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
@@ -129,12 +128,12 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     float const widthCases[] =
     {
-        ResolvePixelLength ( _css._width, parentWidth, false, units ),
+        ResolvePixelLength ( _css._width, parentWidth, false ),
         parentWidth - ( pen._data[ 0U ] + paddingRight + marginRight )
     };
 
     _canvasSize = GXVec2 ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
-        ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true, units )
+        ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true )
     );
 
     if ( _canvasSize._data[ 0U ] == 0.0F )
@@ -151,7 +150,6 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     ApplyInfo childInfo
     {
         ._canvasSize = _canvasSize,
-        ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
@@ -308,28 +306,26 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         pen = info._parentTopLeft;
 
         if ( _css._top.GetType () != LengthValue::eType::Auto )
-            pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true, *info._cssUnits );
+            pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true );
 
         if ( _css._bottom.GetType () != LengthValue::eType::Auto )
         {
             float const offset = ResolvePixelLength ( _css._bottom,
                 info._parentSize._data[ 1U ],
-                true,
-                *info._cssUnits
+                true
             );
 
             pen._data[ 1U ] += info._parentSize._data[ 1U ] - ( _blockSize._data[ 1U ] + offset );
         }
 
         if ( _css._left.GetType () != LengthValue::eType::Auto )
-            pen._data[ 0U ] += ResolvePixelLength ( _css._left, info._parentSize._data[ 0U ], false, *info._cssUnits );
+            pen._data[ 0U ] += ResolvePixelLength ( _css._left, info._parentSize._data[ 0U ], false );
 
         if ( _css._right.GetType () != LengthValue::eType::Auto )
         {
             float const offset = ResolvePixelLength ( _css._right,
                 info._parentSize._data[ 0U ],
-                false,
-                *info._cssUnits
+                false
             );
 
             pen._data[ 0U ] += info._parentSize._data[ 0U ] - ( _blockSize._data[ 0U ] + offset );
@@ -368,7 +364,6 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     UpdateInfo updateInfo
     {
-        ._cssUnits = info._cssUnits,
         ._fontStorage = info._fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),

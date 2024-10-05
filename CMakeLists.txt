@@ -16,6 +16,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
+    app/src/main/cpp/sources/css_unit_to_device_pixel.cpp
     app/src/main/cpp/sources/cyrus_beck.cpp
     app/src/main/cpp/sources/epa.cpp
     app/src/main/cpp/sources/game.cpp

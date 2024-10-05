@@ -4,11 +4,30 @@
 
 namespace pbr {
 
-struct CSSUnitToDevicePixel final
+class CSSUnitToDevicePixel final
 {
-    float       _fromMM = 3.7795F;
-    float       _fromPT = 1.333F;
-    float       _fromPX = 1.0F;
+    public:
+        float                           _fromMM = 3.7795F;
+        float                           _fromPT = 1.333F;
+        float                           _fromPX = 1.0F;
+
+    private:
+        static CSSUnitToDevicePixel     _instance;
+
+    public:
+        CSSUnitToDevicePixel ( CSSUnitToDevicePixel const & ) = delete;
+        CSSUnitToDevicePixel &operator = ( CSSUnitToDevicePixel const & ) = delete;
+
+        CSSUnitToDevicePixel ( CSSUnitToDevicePixel && ) = delete;
+        CSSUnitToDevicePixel &operator = ( CSSUnitToDevicePixel && ) = delete;
+
+        [[nodiscard]] static CSSUnitToDevicePixel const &GetInstance () noexcept;
+        static void Init ( float dpi, float comfortableViewDistanceMeters ) noexcept;
+
+    private:
+        explicit CSSUnitToDevicePixel () = default;
+        ~CSSUnitToDevicePixel () = default;
+
 };
 
 } // namespace pbr

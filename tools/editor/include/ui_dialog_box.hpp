@@ -2,7 +2,6 @@
 #define EDITOR_UI_DIALOG_BOX_HPP
 
 
-#include "rect.hpp"
 #include "widget.hpp"
 
 
@@ -11,8 +10,6 @@ namespace editor {
 class UIDialogBox final : public Widget
 {
     private:
-        Rect    _body {};
-
         Rect    _dragArea {};
         Rect    _resizeUp {};
         Rect    _resizeDown {};
@@ -24,23 +21,26 @@ class UIDialogBox final : public Widget
         Rect    _resizeBottomLeft {};
         Rect    _resizeBottomRight {};
 
+        bool    _isChanged = false;
+
     public:
         explicit UIDialogBox () = default;
 
-        UIDialogBox ( UIDialogBox const & ) = default;
-        UIDialogBox &operator = ( UIDialogBox const & ) = default;
+        UIDialogBox ( UIDialogBox const & ) = delete;
+        UIDialogBox &operator = ( UIDialogBox const & ) = delete;
 
-        UIDialogBox ( UIDialogBox && ) = default;
-        UIDialogBox &operator = ( UIDialogBox && ) = default;
+        UIDialogBox ( UIDialogBox && ) = delete;
+        UIDialogBox &operator = ( UIDialogBox && ) = delete;
 
         ~UIDialogBox () override = default;
+
+        void ApplyLayout () noexcept;
+        void SetRect ( Rect const& rect ) noexcept;
 
     private:
         void OnButtonDown () noexcept override;
         void OnButtonUp () noexcept override;
-        void OnMouseMove () noexcept override;
-
-        void ApplyLayout () noexcept;
+        void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 };
 
 } // namespace editor

@@ -30,7 +30,6 @@ class UILayer final
         CSSParser                               _css {};
         std::vector<float>                      _lineHeights { 1U, 0.0F };
 
-        static CSSUnitToDevicePixel             _cssUnitToDevicePixel;
         static std::unordered_set<UILayer*>     _uiLayers;
 
     public:
@@ -53,7 +52,6 @@ class UILayer final
         void Submit ( UIElement::SubmitInfo &info ) noexcept;
         [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
 
-        static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 

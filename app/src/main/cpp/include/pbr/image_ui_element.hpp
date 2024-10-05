@@ -75,9 +75,9 @@ class ImageUIElement final : public CSSUIElement
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const &parentCanvasSize, CSSUnitToDevicePixel const &units ) noexcept;
-        [[nodiscard]] GXVec2 ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept;
-        [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept;
+        [[nodiscard]] GXVec2 ResolveSize ( GXVec2 const &parentCanvasSize ) noexcept;
+        [[nodiscard]] GXVec2 ResolveSizeByWidth ( float parentWidth ) noexcept;
+        [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight ) noexcept;
 };
 
 } // namespace pbr

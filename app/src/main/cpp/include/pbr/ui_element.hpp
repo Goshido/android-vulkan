@@ -37,7 +37,6 @@ class UIElement
         struct ApplyInfo final
         {
             GXVec2 const                    _canvasSize;
-            CSSUnitToDevicePixel const*     _cssUnits;
             FontStorage*                    _fontStorage;
             bool                            _hasChanges;
             std::vector<float>*             _lineHeights;
@@ -54,7 +53,6 @@ class UIElement
 
         struct UpdateInfo final
         {
-            CSSUnitToDevicePixel const*     _cssUnits;
             FontStorage*                    _fontStorage;
             size_t                          _line;
             float const*                    _parentLineHeights;
@@ -113,14 +111,10 @@ class UIElement
 
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
             float parentLength,
-            bool isHeight,
-            CSSUnitToDevicePixel const &units
+            bool isHeight
         ) const noexcept;
 
-        [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
-            UIElement const &startTraverseElement
-        ) noexcept;
-
+        [[nodiscard]] static float ResolveFontSize ( UIElement const &startTraverseElement ) noexcept;
         [[nodiscard]] static AlignHander ResolveTextAlignment ( CSSUIElement const &parent ) noexcept;
         [[nodiscard]] static AlignHander ResolveVerticalAlignment ( CSSUIElement const &parent ) noexcept;
 

@@ -2,15 +2,13 @@
 #define EDITOR_RENDER_SESSION_HPP
 
 
-#include "blit_program.hpp"
 #include "hello_triangle_program.hpp"
-#include <mesh_geometry.hpp>
 #include "message_queue.hpp"
-#include <pbr/command_buffer_count.hpp>
+#include <pbr/default_texture_manager.hpp>
+#include <pbr/exposure_pass.hpp>
 #include <pbr/present_render_pass.hpp>
-#include <pbr/sampler.hpp>
-#include <renderer.hpp>
-#include <texture2D.hpp>
+#include <pbr/tone_mapper_pass.hpp>
+#include <pbr/ui_pass.hpp>
 
 
 namespace editor {
@@ -28,27 +26,27 @@ class RenderSession final
         };
 
     private:
-        BlitDescriptorSetLayout                             _blitLayout {};
-        BlitProgram                                         _blitProgram {};
         bool                                                _broken = false;
 
         CommandInfo                                         _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
         size_t                                              _writingCommandInfo = 0U;
 
-        VkDescriptorPool                                    _descriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet                                     _descriptorSet = VK_NULL_HANDLE;
+        pbr::DefaultTextureManager                          _defaultTextureManager {};
+        pbr::ExposurePass                                   _exposurePass {};
 
         std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
         std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
 
         MessageQueue*                                       _messageQueue = nullptr;
         android_vulkan::Renderer*                           _renderer = nullptr;
-        pbr::Sampler                                        _sampler {};
-        std::thread                                         _thread {};
         pbr::PresentRenderPass                              _presentRenderPass {};
         VkRenderPassBeginInfo                               _renderPassInfo {};
         android_vulkan::Texture2D                           _renderTarget {};
+        pbr::SamplerManager                                 _samplerManager {};
         std::mutex                                          _submitMutex {};
+        std::thread                                         _thread {};
+        pbr::ToneMapperPass                                 _toneMapper {};
+        pbr::UIPass                                         _uiPass {};
         VkViewport                                          _viewport {};
 
     public:

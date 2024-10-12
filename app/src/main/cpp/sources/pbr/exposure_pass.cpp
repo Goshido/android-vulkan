@@ -132,6 +132,7 @@ void ExposurePass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     _layout.Destroy ( device );
+    _program.Destroy ( device );
 }
 
 void ExposurePass::SetMaximumBrightness ( float exposureValue ) noexcept
@@ -162,15 +163,15 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulka
     ExposureProgram::SpecializationInfo specData {};
     ExposureProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
 
-    bool const status = UpdateMipCount ( renderer,
+    bool const result = UpdateSyncMip5 ( renderer, device, specData._mip5Resolution ) &&
+
+        UpdateMipCount ( renderer,
             device,
             static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( mipResolution ) ),
             specData
-        ) &&
+        );
 
-        CreateSyncMip5 ( renderer, device, specData._mip5Resolution );
-
-    if (!status) [[unlikely]]
+    if ( !result ) [[unlikely]]
         return false;
 
     BindTargetToDescriptorSet ( device, hdrImage );
@@ -528,110 +529,6 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer, VkD
     return true;
 }
 
-bool ExposurePass::CreateSyncMip5 ( android_vulkan::Renderer &renderer,
-    VkDevice device,
-    VkExtent2D resolution
-) noexcept
-{
-    VkImageCreateInfo const imageInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = VK_FORMAT_R16_SFLOAT,
-
-        .extent
-        {
-            .width = resolution.width,
-            .height = resolution.height,
-            .depth = 1U
-        },
-
-        .mipLevels = 1U,
-        .arrayLayers = 1U,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0U,
-        .pQueueFamilyIndices = nullptr,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
-    };
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImage ( device, &imageInfo, nullptr, &_syncMip5 ),
-        "pbr::ExposurePass::CreateSyncMip5",
-        "Can't create image"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5, VK_OBJECT_TYPE_IMAGE, "Exposure mip #5" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( device, _syncMip5, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _syncMip5Memory._memory,
-        _syncMip5Memory._offset,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate image memory (pbr::ExposurePass::CreateSyncMip5)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindImageMemory ( device, _syncMip5, _syncMip5Memory._memory, _syncMip5Memory._offset ),
-        "pbr::ExposurePass::CreateSyncMip5",
-        "Can't bind image memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    VkImageViewCreateInfo const viewInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .image = _syncMip5,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = imageInfo.format,
-
-        .components
-        {
-            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-            .a = VK_COMPONENT_SWIZZLE_IDENTITY
-        },
-
-        .subresourceRange
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = 1U,
-            .baseArrayLayer = 0U,
-            .layerCount = 1U
-        }
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5View ),
-        "pbr::ExposurePass::CreateMips",
-        "Can't create view"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5View, VK_OBJECT_TYPE_IMAGE_VIEW, "Exposure mip #5" )
-    _isNeedTransitLayout = true;
-    return true;
-}
-
 void ExposurePass::BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept
 {
     VkDescriptorImageInfo const hrdImageInfo
@@ -755,14 +652,12 @@ void ExposurePass::FreeTargetResources ( android_vulkan::Renderer &renderer, VkD
         _syncMip5 = VK_NULL_HANDLE;
     }
 
-    if ( _syncMip5Memory._memory != VK_NULL_HANDLE ) [[likely]]
-    {
-        renderer.FreeMemory ( _syncMip5Memory._memory, _syncMip5Memory._offset );
-        _syncMip5Memory._memory = VK_NULL_HANDLE;
-        _syncMip5Memory._offset = std::numeric_limits<VkDeviceSize>::max ();
-    }
+    if ( _syncMip5Memory._memory == VK_NULL_HANDLE ) [[unlikely]]
+        return;
 
-    _program.Destroy ( device );
+    renderer.FreeMemory ( _syncMip5Memory._memory, _syncMip5Memory._offset );
+    _syncMip5Memory._memory = VK_NULL_HANDLE;
+    _syncMip5Memory._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
 bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice device ) noexcept
@@ -916,12 +811,122 @@ bool ExposurePass::UpdateMipCount ( android_vulkan::Renderer &renderer,
     if ( mipCount == _mipCount )
         return true;
 
-    FreeTargetResources ( renderer, device );
+    _program.Destroy ( device );
 
     if ( !_program.Init ( renderer, &specInfo ) ) [[unlikely]]
         return false;
 
     _mipCount = mipCount;
+    return true;
+}
+
+bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
+    VkDevice device,
+    VkExtent2D const &resolution
+) noexcept
+{
+    if ( resolution.width == _mip5resolution.width && resolution.height == _mip5resolution.height ) [[unlikely]]
+        return true;
+
+    FreeTargetResources ( renderer, device );
+
+    VkImageCreateInfo const imageInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = VK_FORMAT_R16_SFLOAT,
+
+        .extent
+        {
+            .width = resolution.width,
+            .height = resolution.height,
+            .depth = 1U
+        },
+
+        .mipLevels = 1U,
+        .arrayLayers = 1U,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateImage ( device, &imageInfo, nullptr, &_syncMip5 ),
+        "pbr::ExposurePass::UpdateSyncMip5",
+        "Can't create image"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5, VK_OBJECT_TYPE_IMAGE, "Exposure mip #5" )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements ( device, _syncMip5, &memoryRequirements );
+
+    result = renderer.TryAllocateMemory ( _syncMip5Memory._memory,
+        _syncMip5Memory._offset,
+        memoryRequirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate image memory (pbr::ExposurePass::UpdateSyncMip5)"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkBindImageMemory ( device, _syncMip5, _syncMip5Memory._memory, _syncMip5Memory._offset ),
+        "pbr::ExposurePass::UpdateSyncMip5",
+        "Can't bind image memory"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    VkImageViewCreateInfo const viewInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .image = _syncMip5,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = imageInfo.format,
+
+        .components
+        {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY
+        },
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5View ),
+        "pbr::ExposurePass::UpdateSyncMip5",
+        "Can't create view"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5View, VK_OBJECT_TYPE_IMAGE_VIEW, "Exposure mip #5" )
+    _isNeedTransitLayout = true;
+    _mip5resolution = resolution;
     return true;
 }
 

@@ -296,7 +296,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) ) [[unlikely]]
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) ) [[unlikely]]
         return false;
 
     if ( !hasChanges ) [[likely]]

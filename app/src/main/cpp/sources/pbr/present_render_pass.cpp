@@ -118,7 +118,7 @@ std::optional<VkResult> PresentRenderPass::End ( android_vulkan::Renderer &rende
     _presentInfo.pSwapchains = &renderer.GetSwapchain ();
     _presentInfo.pImageIndices = &_framebufferIndex;
     _presentInfo.pWaitSemaphores = &_framebufferInfo[ _framebufferIndex ]._renderEnd;
-    return std::optional<VkResult> ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ) );
+    return { vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ) };
 }
 
 bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,

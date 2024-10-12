@@ -11,12 +11,6 @@ scripts\windows\make-env.ps1 $shaderSource
 scripts\windows\make-spv.ps1                                                                                           `
     "VS"                                                                                                               `
     "vs"                                                                                                               `
-    "$EDITOR_HLSL_DIRECTORY\blit.vs"                                                                                   `
-    "$EDITOR_SHADER_DIRECTORY\blit.vs.spv"
-
-scripts\windows\make-spv.ps1                                                                                           `
-    "VS"                                                                                                               `
-    "vs"                                                                                                               `
     "$EDITOR_HLSL_DIRECTORY\hello_triangle.vs"                                                                         `
     "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
 
@@ -68,14 +62,7 @@ scripts\windows\make-spv.ps1                                                    
     "$MOBILE_HLSL_DIRECTORY\ui.vs"                                                                                     `
     "$MOBILE_SHADER_DIRECTORY\ui.vs.spv"
 
-
 # pixel shaders
-scripts\windows\make-spv.ps1                                                                                           `
-    "PS"                                                                                                               `
-    "ps"                                                                                                               `
-    "$EDITOR_HLSL_DIRECTORY\blit.ps"                                                                                   `
-    "$EDITOR_SHADER_DIRECTORY\blit.ps.spv"
-
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `
     "ps"                                                                                                               `
@@ -153,7 +140,6 @@ scripts\windows\make-spv.ps1                                                    
     "ps"                                                                                                               `
     "$MOBILE_HLSL_DIRECTORY\ui.ps"                                                                                     `
     "$MOBILE_SHADER_DIRECTORY\ui.ps.spv"
-
 
 # compute shaders
 scripts\windows\make-spv.ps1                                                                                           `

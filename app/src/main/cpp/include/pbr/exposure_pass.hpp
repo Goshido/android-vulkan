@@ -46,6 +46,12 @@ class ExposurePass final
         ExposureDescriptorSetLayout         _layout {};
         ExposureProgram                     _program {};
 
+        VkExtent2D                          _mip5resolution
+        {
+            .width = 0U,
+            .height = 0U
+        };
+
     public:
         ExposurePass () = default;
 
@@ -83,11 +89,6 @@ class ExposurePass final
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
         [[nodiscard]] bool CreateLumaResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateSyncMip5 ( android_vulkan::Renderer &renderer,
-            VkDevice device,
-            VkExtent2D resolution
-        ) noexcept;
-
         void BindTargetToDescriptorSet ( VkDevice device, android_vulkan::Texture2D const &hdrImage ) noexcept;
         [[nodiscard]] float EyeAdaptationFactor ( float deltaTime ) const noexcept;
         void FreeTargetResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
@@ -101,6 +102,11 @@ class ExposurePass final
             VkDevice device,
             uint32_t mipCount,
             ExposureProgram::SpecializationInfo const &specInfo
+        ) noexcept;
+
+        [[nodiscard]] bool UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
+            VkDevice device,
+            VkExtent2D const &resolution
         ) noexcept;
 
         [[nodiscard]] static float ExposureValueToLuma ( float exposureValue ) noexcept;

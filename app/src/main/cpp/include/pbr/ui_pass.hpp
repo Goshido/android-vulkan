@@ -24,28 +24,40 @@ class UIPass final
         using UIBufferResponse = std::optional<UIVertexBuffer>;
 
     private:
-        struct CommonDescriptorSet final
+        class CommonDescriptorSet final
         {
-            VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
-            VkDescriptorImageInfo                   _imageInfo {};
-            UIPassCommonDescriptorSetLayout         _layout {};
-            VkWriteDescriptorSet                    _write {};
+            public:
+                VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
+                VkDescriptorImageInfo                   _imageInfo {};
+                UIPassCommonDescriptorSetLayout         _layout {};
+                VkWriteDescriptorSet                    _write {};
 
-            [[nodiscard]] bool Init ( VkDevice device,
-                VkDescriptorPool descriptorPool,
-                SamplerManager const &samplerManager
-            ) noexcept;
+            public:
+                CommonDescriptorSet () = default;
 
-            void Destroy ( VkDevice device ) noexcept;
-            void Update ( VkDevice device, VkImageView currentAtlas ) noexcept;
+                CommonDescriptorSet ( CommonDescriptorSet const & ) = delete;
+                CommonDescriptorSet &operator = ( CommonDescriptorSet const & ) = delete;
+
+                CommonDescriptorSet ( CommonDescriptorSet && ) = delete;
+                CommonDescriptorSet &operator = ( CommonDescriptorSet && ) = delete;
+
+                ~CommonDescriptorSet () = default;
+
+                [[nodiscard]] bool Init ( VkDevice device,
+                    VkDescriptorPool descriptorPool,
+                    SamplerManager const &samplerManager
+                ) noexcept;
+
+                void Destroy ( VkDevice device ) noexcept;
+                void Update ( VkDevice device, VkImageView currentAtlas ) noexcept;
         };
 
         struct Buffer final
         {
-            VkBuffer                                _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory                          _memory = VK_NULL_HANDLE;
-            char const*                             _name = nullptr;
-            VkDeviceSize                            _memoryOffset = 0U;
+            VkBuffer                                    _buffer = VK_NULL_HANDLE;
+            VkDeviceMemory                              _memory = VK_NULL_HANDLE;
+            char const*                                 _name = nullptr;
+            VkDeviceSize                                _memoryOffset = 0U;
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                 VkBufferUsageFlags usage,
@@ -56,38 +68,48 @@ class UIPass final
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
-        struct ImageDescriptorSets final
+        class ImageDescriptorSets final
         {
-            size_t                                  _commitIndex = 0U;
-            size_t                                  _startIndex = 0U;
-            size_t                                  _written = 0U;
+            public:
+                size_t                                  _commitIndex = 0U;
+                size_t                                  _startIndex = 0U;
+                size_t                                  _written = 0U;
 
-            std::vector<VkDescriptorSet>            _descriptorSets {};
-            UIPassImageDescriptorSetLayout          _layout {};
+                std::vector<VkDescriptorSet>            _descriptorSets {};
+                UIPassImageDescriptorSetLayout          _layout {};
 
-            std::vector<VkDescriptorImageInfo>      _imageInfo {};
-            std::vector<VkWriteDescriptorSet>       _writeSets {};
+                std::vector<VkDescriptorImageInfo>      _imageInfo {};
+                std::vector<VkWriteDescriptorSet>       _writeSets {};
 
-            VkDescriptorSet                         _scene = VK_NULL_HANDLE;
-            VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
+                VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
 
-            [[nodiscard]] bool Init ( VkDevice device,
-                VkDescriptorPool descriptorPool,
-                VkImageView transparent
-            ) noexcept;
+            public:
+                ImageDescriptorSets () = default;
 
-            void Destroy ( VkDevice device ) noexcept;
+                ImageDescriptorSets ( ImageDescriptorSets const & ) = delete;
+                ImageDescriptorSets &operator = ( ImageDescriptorSets const & ) = delete;
 
-            void Commit ( VkDevice device ) noexcept;
-            void Push ( VkImageView view ) noexcept;
-            void UpdateScene ( VkDevice device, VkImageView scene ) noexcept;
+                ImageDescriptorSets ( ImageDescriptorSets && ) = delete;
+                ImageDescriptorSets &operator = ( ImageDescriptorSets && ) = delete;
+
+                ~ImageDescriptorSets () = default;
+
+                [[nodiscard]] bool Init ( VkDevice device,
+                    VkDescriptorPool descriptorPool,
+                    VkImageView transparent
+                ) noexcept;
+
+                void Destroy ( VkDevice device ) noexcept;
+
+                void Commit ( VkDevice device ) noexcept;
+                void Push ( VkImageView view ) noexcept;
         };
 
         struct InUseImageTracker final
         {
             using Entry = std::unordered_map<Texture2DRef, size_t>;
 
-            Entry                                   _registry[ DUAL_COMMAND_BUFFER ];
+            Entry                                       _registry[ DUAL_COMMAND_BUFFER ];
 
             void Destroy () noexcept;
 
@@ -97,46 +119,46 @@ class UIPass final
 
         struct Job final
         {
-            Texture2DRef const*                     _texture = nullptr;
-            uint32_t                                _vertices {};
+            Texture2DRef const*                         _texture = nullptr;
+            uint32_t                                    _vertices {};
         };
 
     private:
-        GXVec2                                      _bottomRight {};
-        VkBufferMemoryBarrier                       _bufferBarrier {};
-        float                                       _brightnessBalance = 0.0F;
+        GXVec2                                          _bottomRight {};
+        VkBufferMemoryBarrier                           _bufferBarrier {};
+        float                                           _brightnessBalance = 0.0F;
 
-        VkExtent2D                                  _currentResolution
+        VkExtent2D                                      _currentResolution
         {
             .width = 0U,
             .height = 0U
         };
 
-        UIPassTransformDescriptorSetLayout          _transformLayout {};
+        UIPassTransformDescriptorSetLayout              _transformLayout {};
 
-        UIVertexInfo*                               _data = nullptr;
+        UIVertexInfo*                                   _data = nullptr;
 
-        CommonDescriptorSet                         _commonDescriptorSet {};
-        VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
-        ImageDescriptorSets                         _imageDescriptorSets {};
-        InUseImageTracker                           _inUseImageTracker {};
+        CommonDescriptorSet                             _commonDescriptorSet {};
+        VkDescriptorPool                                _descriptorPool = VK_NULL_HANDLE;
+        ImageDescriptorSets                             _imageDescriptorSets {};
+        InUseImageTracker                               _inUseImageTracker {};
 
-        size_t                                      _readVertexIndex = 0U;
-        size_t                                      _writeVertexIndex = 0U;
+        size_t                                          _readVertexIndex = 0U;
+        size_t                                          _writeVertexIndex = 0U;
 
-        FontStorage                                 _fontStorage {};
+        FontStorage                                     _fontStorage {};
 
-        bool                                        _hasChanges = false;
-        bool                                        _isTransformChanged = false;
-        std::vector<Job>                            _jobs {};
+        bool                                            _hasChanges = false;
+        bool                                            _isTransformChanged = false;
+        std::vector<Job>                                _jobs {};
 
-        UIProgram                                   _program {};
-        Buffer                                      _staging {};
-        Buffer                                      _vertex {};
+        UIProgram                                       _program {};
+        Buffer                                          _staging {};
+        Buffer                                          _vertex {};
 
-        VkDescriptorSet                             _transformDescriptorSet = VK_NULL_HANDLE;
+        VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
 
-        UniformBufferPoolManager                    _uniformPool
+        UniformBufferPoolManager                        _uniformPool
         {
             eUniformPoolSize::Nanoscopic_64KB,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
@@ -167,8 +189,7 @@ class UIPass final
 
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            uint32_t subpass,
-            VkImageView scene
+            uint32_t subpass
         ) noexcept;
 
         void OnSwapchainDestroyed () noexcept;

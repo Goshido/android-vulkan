@@ -23,7 +23,6 @@ constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 constexpr size_t BUFFER_BYTES = MAX_VERTICES * sizeof ( UIVertexInfo );
 
-constexpr size_t SCENE_DESCRIPTOR_SET_COUNT = 1U;
 constexpr size_t TRANSPARENT_DESCRIPTOR_SET_COUNT = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -484,7 +483,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
-    constexpr size_t count = MAX_IMAGES + SCENE_DESCRIPTOR_SET_COUNT + TRANSPARENT_DESCRIPTOR_SET_COUNT;
+    constexpr size_t count = MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
     _descriptorSets.resize ( count, VK_NULL_HANDLE );
 
     std::vector<VkDescriptorSetLayout> const layouts ( count, _layout.GetLayout () );
@@ -517,9 +516,6 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     _transparent = _descriptorSets.back ();
-    _descriptorSets.pop_back ();
-
-    _scene = _descriptorSets.back ();
     _descriptorSets.pop_back ();
 
     VkDescriptorImageInfo imageInfo
@@ -611,32 +607,6 @@ void UIPass::ImageDescriptorSets::Push ( VkImageView view ) noexcept
     ++_written;
 }
 
-void UIPass::ImageDescriptorSets::UpdateScene ( VkDevice device, VkImageView scene ) noexcept
-{
-    VkDescriptorImageInfo const imageInfo
-    {
-        .sampler = VK_NULL_HANDLE,
-        .imageView = scene,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    VkWriteDescriptorSet const writeSet
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = _scene,
-        .dstBinding = BIND_IMAGE_TEXTURE,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-        .pImageInfo = &imageInfo,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
-
-    vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
 void UIPass::InUseImageTracker::Destroy () noexcept
@@ -697,15 +667,15 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     if ( !ImageStorage::SyncGPU () ) [[unlikely]]
         return false;
 
+    if ( _jobs.empty () ) [[unlikely]]
+    {
+        _inUseImageTracker.CollectGarbage ( commandBufferIndex );
+        return true;
+    }
+
     _program.Bind ( commandBuffer );
 
-    VkDescriptorSet const sets[] =
-    {
-        _transformDescriptorSet,
-        _commonDescriptorSet._descriptorSet,
-        _imageDescriptorSets._scene
-    };
-
+    VkDescriptorSet const sets[] = { _transformDescriptorSet, _commonDescriptorSet._descriptorSet };
     _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
 
     constexpr VkDeviceSize offset = 0U;
@@ -801,9 +771,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     };
 
     constexpr size_t commonDescriptorSetCount = 1U;
-
-    constexpr size_t descriptorSetCount =
-        commonDescriptorSetCount + MAX_IMAGES + SCENE_DESCRIPTOR_SET_COUNT + TRANSPARENT_DESCRIPTOR_SET_COUNT;
+    constexpr size_t descriptorSetCount = commonDescriptorSetCount + MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
 
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
@@ -888,8 +856,7 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
 bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
-    VkImageView scene
+    uint32_t subpass
 ) noexcept
 {
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
@@ -908,11 +875,8 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
         return false;
 
     r = resolution;
-
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
     _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _imageDescriptorSets.UpdateScene ( device, scene );
-
     _isTransformChanged = true;
     return true;
 }
@@ -1117,7 +1081,7 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 
     if ( !last._texture )
     {
-        last._vertices += usedVertices;
+        last._vertices += static_cast<uint32_t> ( usedVertices );
         return;
     }
 

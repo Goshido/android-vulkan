@@ -3,7 +3,7 @@
 
 
 #include "command_buffer_count.hpp"
-#include "renderer.hpp"
+#include <renderer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,6 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include FT_FREETYPE_H
 
 #include <forward_list>
+#include <optional>
 
 GX_RESTORE_WARNING_STATE
 

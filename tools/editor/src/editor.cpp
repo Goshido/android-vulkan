@@ -133,7 +133,7 @@ bool Editor::InitModules () noexcept
     _uiManager.Init ( _messageQueue );
     _runningModules = 1U;
 
-    if ( !result || !_renderSession.Init ( _messageQueue, _renderer ) ) [[unlikely]]
+    if ( !result || !_renderSession.Init ( _messageQueue, _renderer, _uiManager ) ) [[unlikely]]
         return false;
 
     ++_runningModules;

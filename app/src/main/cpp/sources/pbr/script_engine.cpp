@@ -15,11 +15,11 @@
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_logger.hpp>
 #include <pbr/scriptable_material.hpp>
+#include <pbr/scriptable_text_ui_element.hpp>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <pbr/sound_emitter_global_component.hpp>
 #include <pbr/sound_emitter_spatial_component.hpp>
 #include <pbr/static_mesh_component.hpp>
-#include <pbr/text_ui_element.hpp>
 #include <pbr/transform_component.hpp>
 #include <pbr/ui_layer.hpp>
 #include <av_assert.hpp>
@@ -108,8 +108,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec4::Init ( vm );
 
     UILayer::InitLuaFrontend ( vm );
-    UIElement::InitCommon ( vm );
-    TextUIElement::Init ( vm );
+    ScriptableUIElement::InitCommon ( vm );
+    ScriptableTextUIElement::Init ( vm );
 
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
@@ -292,7 +292,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
-    UIElement::Destroy ();
+    ScriptableUIElement::Destroy ();
     UILayer::Destroy ();
 }
 

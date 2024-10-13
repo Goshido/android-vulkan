@@ -9,6 +9,7 @@
 #include <pbr/present_render_pass.hpp>
 #include <pbr/tone_mapper_pass.hpp>
 #include <pbr/ui_pass.hpp>
+#include "ui_manager.hpp"
 
 
 namespace editor {
@@ -24,6 +25,8 @@ class RenderSession final
             bool                                            _inUse = false;
             VkCommandPool                                   _pool = VK_NULL_HANDLE;
         };
+
+        using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
 
     private:
         bool                                                _broken = false;
@@ -45,8 +48,10 @@ class RenderSession final
         pbr::SamplerManager                                 _samplerManager {};
         std::mutex                                          _submitMutex {};
         std::thread                                         _thread {};
+        Timestamp                                           _timestamp {};
         pbr::ToneMapperPass                                 _toneMapper {};
         pbr::UIPass                                         _uiPass {};
+        UIManager*                                          _uiManager = nullptr;
         VkViewport                                          _viewport {};
 
     public:
@@ -60,7 +65,11 @@ class RenderSession final
 
         ~RenderSession () = default;
 
-        [[nodiscard]] bool Init ( MessageQueue &messageQueue, android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( MessageQueue &messageQueue,
+            android_vulkan::Renderer &renderer,
+            UIManager &uiManager
+        ) noexcept;
+
         void Destroy () noexcept;
 
     private:

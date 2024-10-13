@@ -30,6 +30,13 @@ void UIManager::Destroy () noexcept
     _messageQueue = nullptr;
 }
 
+void UIManager::RenderUI ( pbr::UIPass &/*pass*/ ) noexcept
+{
+    AV_TRACE ( "UI" )
+
+    // FUCK
+}
+
 void UIManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = *_messageQueue;

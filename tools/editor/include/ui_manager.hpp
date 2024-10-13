@@ -3,6 +3,7 @@
 
 
 #include "message_queue.hpp"
+#include <pbr/ui_pass.hpp>
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -34,6 +35,8 @@ class UIManager final
 
         void Init ( MessageQueue &messageQueue ) noexcept;
         void Destroy () noexcept;
+
+        void RenderUI ( pbr::UIPass &pass ) noexcept;
 
     private:
         void EventLoop () noexcept;

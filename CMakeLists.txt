@@ -78,7 +78,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/compute_program.cpp
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
-    app/src/main/cpp/sources/pbr/css_ui_element.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/pbr/display_property.cpp
@@ -168,17 +167,21 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scene.cpp
     app/src/main/cpp/sources/pbr/script_component.cpp
     app/src/main/cpp/sources/pbr/script_engine.cpp
+    app/src/main/cpp/sources/pbr/scriptable_div_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_gamepad.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxquat.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_image_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/scriptable_material.cpp
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
     app/src/main/cpp/sources/pbr/scriptable_raycast_result.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
+    app/src/main/cpp/sources/pbr/scriptable_text_ui_element.cpp
+    app/src/main/cpp/sources/pbr/scriptable_ui_element.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
     app/src/main/cpp/sources/pbr/skin_descriptor_set_layout.cpp

@@ -346,8 +346,8 @@ void Core::UpdateFPS ( Timestamp now )
 {
     ++_frameCount;
 
-    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
-    const double delta = seconds.count ();
+    std::chrono::duration<double> const seconds = now - _fpsTimestamp;
+    double const delta = seconds.count ();
 
     if ( delta < FPS_PERIOD ) [[likely]]
         return;

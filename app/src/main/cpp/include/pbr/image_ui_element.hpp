@@ -2,12 +2,12 @@
 #define PBR_IMAGE_UI_ELEMENT_HPP
 
 
-#include "css_ui_element.hpp"
+#include "ui_element.hpp"
 
 
 namespace pbr {
 
-class ImageUIElement final : public CSSUIElement
+class ImageUIElement final : public UIElement
 {
     private:
         struct ApplyLayoutCache final
@@ -57,13 +57,11 @@ class ImageUIElement final : public CSSUIElement
         ImageUIElement ( ImageUIElement const & ) = delete;
         ImageUIElement &operator = ( ImageUIElement const & ) = delete;
 
-        ImageUIElement ( ImageUIElement && ) = delete;
+        ImageUIElement ( ImageUIElement && ) = default;
         ImageUIElement &operator = ( ImageUIElement && ) = delete;
 
         explicit ImageUIElement ( bool &success,
             UIElement const* parent,
-            lua_State &vm,
-            int errorHandlerIdx,
             std::string &&asset,
             CSSComputedValues &&css
         ) noexcept;

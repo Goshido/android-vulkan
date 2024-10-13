@@ -1,28 +1,12 @@
-#include <pbr/div_ui_element.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
-#include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include <pbr/div_ui_element.hpp>
 
 
 namespace pbr {
 
-DIVUIElement::DIVUIElement ( bool &success,
-    UIElement const* parent,
-    lua_State &vm,
-    int errorHandlerIdx,
-    CSSComputedValues &&css
-) noexcept:
-    CSSUIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
+DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
+    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
     _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock ),
@@ -32,25 +16,6 @@ DIVUIElement::DIVUIElement ( bool &success,
     )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
-
-    if ( success = lua_checkstack ( &vm, 2 ); !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::DIVUIElement::DIVUIElement - Stack is too small." );
-        return;
-    }
-
-    if ( success = lua_getglobal ( &vm, "RegisterDIVUIElement" ) == LUA_TFUNCTION; !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::DIVUIElement::DIVUIElement - Can't find register function." );
-        return;
-    }
-
-    lua_pushlightuserdata ( &vm, this );
-
-    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success ) [[unlikely]]
-    {
-        android_vulkan::LogWarning ( "pbr::DIVUIElement::DIVUIElement - Can't append element inside Lua VM." );
-    }
 }
 
 void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
@@ -332,7 +297,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         }
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( static_cast<CSSUIElement const &> ( *this ) );
+    AlignHandler const verticalAlign = ResolveVerticalAlignment ( *this );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
     if ( _hasBackground )
@@ -379,30 +344,9 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return needRefill;
 }
 
-bool DIVUIElement::AppendChildElement ( lua_State &vm,
-    int errorHandlerIdx,
-    int appendChildElementIdx,
-    UIElement &element
-) noexcept
+void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
 {
-    if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::DIVUIElement::AppendChildElement - Stack is too small." );
-        return false;
-    }
-
-    lua_pushvalue ( &vm, appendChildElementIdx );
-    lua_pushvalue ( &vm, -3 );
-    lua_rotate ( &vm, -3, -1 );
-
-    if ( lua_pcall ( &vm, 2, 0, errorHandlerIdx ) == LUA_OK ) [[likely]]
-    {
-        _children.emplace_back ( &element );
-        return true;
-    }
-
-    android_vulkan::LogWarning ( "pbr::DIVUIElement::AppendChildElement - Can't append child element inside Lua VM." );
-    return false;
+    _children.emplace_back ( &element );
 }
 
 } // namespace pbr

@@ -1,18 +1,8 @@
+#include <av_assert.hpp>
+#include <logger.hpp>
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
 #include <pbr/utf8_parser.hpp>
-#include <av_assert.hpp>
-#include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -388,9 +378,7 @@ GXColorRGB const &TextUIElement::ResolveColor () const noexcept
 
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
-        // NOLINTNEXTLINE - downcast.
-        auto const &div = *static_cast<DIVUIElement const*> ( p );
-        ColorValue const &color = div.GetCSS ()._color;
+        ColorValue const &color = p->GetCSS ()._color;
 
         if ( !color.IsInherit () )
         {
@@ -409,9 +397,7 @@ std::string const* TextUIElement::ResolveFont () const noexcept
 {
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
-        // NOLINTNEXTLINE - downcast.
-        auto const &div = *static_cast<DIVUIElement const*> ( p );
-        std::string const &fontFile = div.GetCSS ()._fontFile;
+        std::string const &fontFile = p->GetCSS ()._fontFile;
 
         if ( !fontFile.empty () )
         {
@@ -438,14 +424,13 @@ int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int3
     return pen + parentSize - lineSize;
 }
 
-TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept
+TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment (
+    UIElement const* parent
+) noexcept
 {
     while ( parent )
     {
-        // NOLINTNEXTLINE - downcast
-        auto const &div = static_cast<DIVUIElement const &> ( *parent );
-
-        switch ( div.GetCSS ()._textAlign )
+        switch ( parent->GetCSS ()._textAlign )
         {
             case TextAlignProperty::eValue::Center:
             return &TextUIElement::AlignIntegerToCenter;
@@ -459,6 +444,10 @@ TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment ( 
             case TextAlignProperty::eValue::Inherit:
                 parent = parent->_parent;
             break;
+
+            default:
+                android_vulkan::LogError ( "pbr::TextUIElement::ResolveIntegerTextAlignment - Unknown alignment." );
+            break;
         }
     }
 
@@ -466,14 +455,13 @@ TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment ( 
     return &TextUIElement::AlignIntegerToStart;
 }
 
-TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept
+TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerVerticalAlignment (
+    UIElement const* parent
+) noexcept
 {
     while ( parent )
     {
-        // NOLINTNEXTLINE - downcast
-        auto const &div = static_cast<DIVUIElement const &> ( *parent );
-
-        switch ( div.GetCSS ()._verticalAlign )
+        switch ( parent->GetCSS ()._verticalAlign )
         {
             case VerticalAlignProperty::eValue::Bottom:
             return &TextUIElement::AlignIntegerToEnd;
@@ -486,6 +474,10 @@ TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerVerticalAlignmen
 
             case VerticalAlignProperty::eValue::Inherit:
                 parent = parent->_parent;
+            break;
+
+            default:
+                android_vulkan::LogError ( "pbr::TextUIElement::ResolveIntegerVerticalAlignment - Unknown alignment." );
             break;
         }
     }

@@ -1,29 +1,20 @@
-#include <pbr/css_ui_element.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include <pbr/css_unit_to_device_pixel.hpp>
+#include <pbr/ui_element.hpp>
 
 
 namespace pbr {
 
-std::unordered_map<UIElement const*, std::unique_ptr<UIElement>> UIElement::_uiElements {};
-
 void UIElement::Hide () noexcept
 {
+    _visibilityChanged = _visible;
     _visible = false;
 }
 
 void UIElement::Show () noexcept
 {
+    _visibilityChanged = !_visible;
     _visible = true;
 }
 
@@ -32,51 +23,20 @@ bool UIElement::IsVisible () const noexcept
     return _visible;
 }
 
-void UIElement::AppendElement ( UIElement &element ) noexcept
+CSSComputedValues const& UIElement::GetCSS () const noexcept
 {
-    _uiElements.emplace ( &element, std::unique_ptr<UIElement> ( &element ) );
-}
-
-void UIElement::InitCommon ( lua_State &vm ) noexcept
-{
-    constexpr luaL_Reg const extensions[] =
-    {
-        {
-            .name = "av_UIElementCollectGarbage",
-            .func = &UIElement::OnGarbageCollected
-        },
-        {
-            .name = "av_UIElementHide",
-            .func = &UIElement::OnHide
-        },
-        {
-            .name = "av_UIElementIsVisible",
-            .func = &UIElement::OnIsVisible
-        },
-        {
-            .name = "av_UIElementShow",
-            .func = &UIElement::OnShow
-        }
-    };
-
-    for ( auto const &extension : extensions )
-    {
-        lua_register ( &vm, extension.name, extension.func );
-    }
-}
-
-void UIElement::Destroy () noexcept
-{
-    if ( !_uiElements.empty () )
-    {
-        android_vulkan::LogWarning ( "pbr::UIElement::Destroy - Memory leak." );
-        AV_ASSERT ( false )
-    }
-
-    _uiElements.clear ();
+    return _css;
 }
 
 UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept:
+    _css ( std::move ( css ) ),
     _visible ( visible ),
     _parent ( parent )
 {
@@ -108,8 +68,7 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
         {
             if ( _parent )
             {
-                // NOLINTNEXTLINE - downcast.
-                auto const &div = *static_cast<CSSUIElement const*> ( _parent );
+                UIElement const &div = *_parent;
 
                 LengthValue const* cases[] = { &div._css._width, &div._css._height };
                 bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
@@ -137,12 +96,11 @@ float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexc
 {
     LengthValue const* target = nullptr;
     float relativeScale = 1.0F;
-    LengthValue::eType type;
+    LengthValue::eType type = LengthValue::eType::Auto;
 
     for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
     {
-        // NOLINTNEXTLINE - downcast.
-        auto const &div = *static_cast<CSSUIElement const*> ( p );
+        UIElement const &div = *p;
         LengthValue const &size = div._css._fontSize;
         type = size.GetType ();
 
@@ -181,8 +139,14 @@ float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexc
         return relativeScale * target->GetValue () * cssUnits._fromPX;
 
         case LengthValue::eType::Percent:
+            [[fallthrough]];
+
         case LengthValue::eType::EM:
+            [[fallthrough]];
+
         case LengthValue::eType::Auto:
+            [[fallthrough]];
+
         default:
             // IMPOSSIBLE
             AV_ASSERT ( false )
@@ -190,11 +154,9 @@ float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexc
     }
 }
 
-UIElement::AlignHander UIElement::ResolveTextAlignment ( CSSUIElement const &parent ) noexcept
+UIElement::AlignHandler UIElement::ResolveTextAlignment ( UIElement const &parent ) noexcept
 {
-    CSSUIElement const* p = &parent;
-
-    while ( p )
+    for ( UIElement const* p = &parent; p; )
     {
         switch ( p->_css._textAlign )
         {
@@ -208,8 +170,12 @@ UIElement::AlignHander UIElement::ResolveTextAlignment ( CSSUIElement const &par
             return &UIElement::AlignToEnd;
 
             case TextAlignProperty::eValue::Inherit:
-                // NOLINTNEXTLINE - downcast
-                p = static_cast<CSSUIElement const*> ( p->_parent );
+                p = p->_parent;
+            break;
+
+            default:
+                android_vulkan::LogError ( "pbr::UIElement::ResolveTextAlignment - Unknown alignment." );
+                AV_ASSERT ( false )
             break;
         }
     }
@@ -218,11 +184,9 @@ UIElement::AlignHander UIElement::ResolveTextAlignment ( CSSUIElement const &par
     return &UIElement::AlignToStart;
 }
 
-UIElement::AlignHander UIElement::ResolveVerticalAlignment ( CSSUIElement const &parent ) noexcept
+UIElement::AlignHandler UIElement::ResolveVerticalAlignment ( UIElement const &parent ) noexcept
 {
-    CSSUIElement const* p = &parent;
-
-    while ( p )
+    for ( UIElement const* p = &parent; p; )
     {
         switch ( p->_css._verticalAlign )
         {
@@ -236,8 +200,12 @@ UIElement::AlignHander UIElement::ResolveVerticalAlignment ( CSSUIElement const 
             return &UIElement::AlignToStart;
 
             case VerticalAlignProperty::eValue::Inherit:
-                // NOLINTNEXTLINE - downcast
-                p = static_cast<CSSUIElement const*> ( p->_parent );
+                p = p->_parent;
+            break;
+
+            default:
+                android_vulkan::LogError ( "pbr::UIElement::ResolveVerticalAlignment - Unknown alignment." );
+                AV_ASSERT ( false )
             break;
         }
     }
@@ -259,50 +227,6 @@ float UIElement::AlignToStart ( float pen, float /*parentSize*/, float /*lineSiz
 float UIElement::AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept
 {
     return pen + parentSize - lineSize;
-}
-
-int UIElement::OnGarbageCollected ( lua_State* state )
-{
-    auto const* element = static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
-
-    if ( auto const findResult = _uiElements.find ( element ); findResult != _uiElements.cend () )
-    {
-        _uiElements.erase ( findResult );
-        return 0;
-    }
-
-    android_vulkan::LogWarning ( "pbr::UIElement::OnGarbageCollected - Can't find element." );
-    AV_ASSERT ( false )
-    return 0;
-}
-
-int UIElement::OnHide ( lua_State* state )
-{
-    auto &item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
-    item._visible = false;
-    item._visibilityChanged = true;
-    return 0;
-}
-
-int UIElement::OnIsVisible ( lua_State* state )
-{
-    if ( !lua_checkstack ( state, 1 ) )
-    {
-        android_vulkan::LogWarning ( "pbr::UIElement::OnIsVisible - Stack is too small." );
-        return 0;
-    }
-
-    auto const &item = *static_cast<UIElement const*> ( lua_touserdata ( state, 1 ) );
-    lua_pushboolean ( state, item._visible );
-    return 1;
-}
-
-int UIElement::OnShow ( lua_State* state )
-{
-    auto &item = *static_cast<UIElement*> ( lua_touserdata ( state, 1 ) );
-    item._visible = true;
-    item._visibilityChanged = true;
-    return 0;
 }
 
 } // namespace pbr

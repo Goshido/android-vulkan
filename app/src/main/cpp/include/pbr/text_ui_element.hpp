@@ -3,14 +3,6 @@
 
 
 #include "ui_element.hpp"
-#include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <optional>
-#include <string>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -66,7 +58,7 @@ class TextUIElement final : public UIElement
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
         };
 
-        using AlignIntegerHander = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
+        using AlignIntegerHandler = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
 
     private:
         ApplyLayoutCache                    _applyLayoutCache {};
@@ -87,19 +79,15 @@ class TextUIElement final : public UIElement
         TextUIElement ( TextUIElement const & ) = delete;
         TextUIElement &operator = ( TextUIElement const & ) = delete;
 
-        TextUIElement ( TextUIElement && ) = delete;
+        TextUIElement ( TextUIElement && ) = default;
         TextUIElement &operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( bool &success,
-            UIElement const* parent,
-            lua_State &vm,
-            int errorHandlerIdx,
-            std::u32string &&text
-        ) noexcept;
+        explicit TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept;
 
         ~TextUIElement () override = default;
 
-        static void Init ( lua_State &vm ) noexcept;
+        void SetColor ( GXColorRGB const &color ) noexcept;
+        void SetText ( char const* text ) noexcept;
 
     private:
         void ApplyLayout ( ApplyInfo &info ) noexcept override;
@@ -117,12 +105,8 @@ class TextUIElement final : public UIElement
         [[nodiscard]] static int32_t AlignIntegerToStart ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
         [[nodiscard]] static int32_t AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
 
-        [[nodiscard]] static AlignIntegerHander ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept;
-        [[nodiscard]] static AlignIntegerHander ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept;
-
-        [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
-        [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
-        [[nodiscard]] static int OnSetText ( lua_State* state );
+        [[nodiscard]] static AlignIntegerHandler ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept;
+        [[nodiscard]] static AlignIntegerHandler ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept;
 };
 
 } // namespace pbr

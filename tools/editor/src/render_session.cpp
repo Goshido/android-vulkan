@@ -280,11 +280,15 @@ void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool RenderSession::Init ( MessageQueue &messageQueue, android_vulkan::Renderer &renderer ) noexcept
+bool RenderSession::Init ( MessageQueue &messageQueue,
+    android_vulkan::Renderer &renderer,
+    UIManager &uiManager
+) noexcept
 {
     AV_TRACE ( "RenderSession: init" )
 
     _messageQueue = &messageQueue;
+    _uiManager = &uiManager;
     _renderer = &renderer;
 
     _thread = std::thread (
@@ -732,6 +736,7 @@ bool RenderSession::InitiModules () noexcept
 
     _exposurePass.FreeTransferResources ( device, pool );
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
+    _timestamp = std::chrono::system_clock::now ();
     return true;
 }
 
@@ -752,9 +757,16 @@ void RenderSession::OnRenderFrame () noexcept
     if ( _broken ) [[unlikely]]
         return;
 
+    Timestamp const now = std::chrono::system_clock::now ();
+    std::chrono::duration<float> const seconds = now - _timestamp;
+    float const deltaTime = seconds.count ();
+    _timestamp = now;
+
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
+
+    _uiManager->RenderUI ( _uiPass );
 
     android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();
@@ -841,8 +853,7 @@ void RenderSession::OnRenderFrame () noexcept
         vkCmdEndRenderPass ( commandBuffer );
     }
 
-    // FUCK - deltatime
-    _exposurePass.Execute ( commandBuffer, 0.016F );
+    _exposurePass.Execute ( commandBuffer, deltaTime );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )

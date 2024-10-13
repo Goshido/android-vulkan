@@ -1,16 +1,6 @@
-#include <pbr/image_ui_element.hpp>
 #include <av_assert.hpp>
-#include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include <file.hpp>
+#include <pbr/image_ui_element.hpp>
 
 
 namespace pbr {
@@ -73,37 +63,15 @@ bool ImageUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> con
 
 ImageUIElement::ImageUIElement ( bool &success,
     UIElement const* parent,
-    lua_State &vm,
-    int errorHandlerIdx,
     std::string &&asset,
     CSSComputedValues &&css
 ) noexcept:
-    CSSUIElement ( true, parent, std::move ( css ) ),
-    _asset ( std::move ( asset ) ),
+    UIElement ( true, parent, std::move ( css ) ),
+    _asset ( std::move ( android_vulkan::File ( std::move ( asset ) ).GetPath () ) ),
     _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    if ( success = lua_checkstack ( &vm, 2 ); !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Stack is too small." );
-        return;
-    }
-
-    if ( success = lua_getglobal ( &vm, "RegisterImageUIElement" ) == LUA_TFUNCTION; !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Can't find register function." );
-        return;
-    }
-
-    lua_pushlightuserdata ( &vm, this );
-
-    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success ) [[unlikely]]
-    {
-        android_vulkan::LogWarning ( "pbr::ImageUIElement::ImageUIElement - Can't append element inside Lua VM." );
-        return;
-    }
-
     auto const texture = UIPass::RequestImage ( _asset );
 
     if ( success = texture.has_value (); success )
@@ -297,7 +265,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         pen._data[ 1U ] += info._parentLineHeights[ info._line ];
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( *this );
+    AlignHandler const verticalAlign = ResolveVerticalAlignment ( *this );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
     GXVec2 topLeft {};
@@ -309,7 +277,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     float const &blockWidth = _blockSize._data[ 0U ];
 
     // NOLINTNEXTLINE - downcast.
-    AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const  &> ( *_parent ) );
+    AlignHandler const handler = ResolveTextAlignment ( *_parent );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
 
     GXVec2 bottomRight {};

@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `c6dbf2c4d429151224dc6836db76c24309bc99a8` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `edb909e193061350f0274345463e7b9747e109ba` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -41,70 +41,75 @@ Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process 
 
 >>> common.ps1
 
-$global:VVL_DIR = "D:/Development/Vulkan-ValidationLayers"
+[string] $VVL_DIR = "D:\Development\Vulkan-ValidationLayers"
 
 >>> Main script
+
+[string] $ABI = "arm64-v8a"
+[string] $ANDROID_API = "30"
+[string] $ANDROID_SDK_DIR = "D:\Programs\Android\Sdk"
+[string] $ANDROID_VULKAN_DIR = "D:\Development\android-vulkan"
+[string] $BUILD_THREADS = "16"
+[string] $CMAKE = "3.30.5"
+[string] $NDK = "27.2.12479018"
+
+#-----------------------------------------------------------------------------------------------------------------------
 
 Clear-Host
 
 # Preparing sources...
 
-.\common.ps1
-
-$NDK = "D:/Programs/Android/Sdk/ndk/27.0.12077973"
-
-$ANDROID_VULKAN_DIR = "D:/Development/android-vulkan"
-
-$ABI = "arm64-v8a"
-$ANDROID_API = 30
-$BUILD_THREADS = 16
-
-$BUILD_DIR = "${VVL_DIR}/build-android/obj/${ABI}"
-$LIB_DIR = "third-party/jniLibs/${ABI}"
+. .\common.ps1
 
 # Cleaning repo...
 
-Set-Location "${VVL_DIR}"
+Push-Location $VVL_DIR
 
-git                                                                         `
-    clean                                                                   `
-    -d                                                                      `
-    -fx                                                                     `
+git                                                                                                 `
+    clean                                                                                           `
+    -d                                                                                              `
+    -fx                                                                                             `
     -f
+
+# Setting path to cmake and ninja...
+
+$Env:PATH = "$ANDROID_SDK_DIR\cmake\$CMAKE\bin;$Env:PATH"
 
 # Making project files...
 
-cmake                                                                       `
-    -S .                                                                    `
-    -B "${BUILD_DIR}"                                                       `
-    -G Ninja                                                                `
-    -D ANDROID_PLATFORM="android-${ANDROID_API}"                            `
-    -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                 `
-    -D BUILD_TESTS=OFF                                                      `
-    -D BUILD_WERROR=ON                                                      `
-    -D CMAKE_ANDROID_ARCH_ABI=${ABI}                                        `
-    -D CMAKE_ANDROID_STL_TYPE=c++_static                                    `
-    -D CMAKE_INSTALL_LIBDIR="${LIB_DIR}"                                    `
-    -D CMAKE_TOOLCHAIN_FILE="${NDK}/build/cmake/android.toolchain.cmake"    `
-    -D CMAKE_BUILD_TYPE=Release                                             `
-    -D UPDATE_DEPS=ON                                                       `
-    -D UPDATE_DEPS_DIR="${BUILD_DIR}"
+[string] $buildDir = "`"$VVL_DIR\build-android\obj\$ABI`""
+
+cmake                                                                                               `
+    -S .                                                                                            `
+    -B $buildDir                                                                                    `
+    -G Ninja                                                                                        `
+    -D ANDROID_PLATFORM="android-$ANDROID_API"                                                      `
+    -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                                         `
+    -D BUILD_TESTS=OFF                                                                              `
+    -D BUILD_WERROR=ON                                                                              `
+    -D CMAKE_ANDROID_ARCH_ABI=$ABI                                                                  `
+    -D CMAKE_ANDROID_STL_TYPE=c++_static                                                            `
+    -D CMAKE_INSTALL_LIBDIR="`"third-party\jniLibs\$ABI`""                                          `
+    -D CMAKE_TOOLCHAIN_FILE="`"$ANDROID_SDK_DIR\ndk\$NDK\build\cmake\android.toolchain.cmake`""     `
+    -D CMAKE_BUILD_TYPE=Release                                                                     `
+    -D UPDATE_DEPS=ON                                                                               `
+    -D UPDATE_DEPS_DIR=$buildDir
 
 # Building projects...
 
-cmake                                                                       `
-    --build "${BUILD_DIR}"                                                  `
-    "-j${BUID_THREADS}"
+cmake                                                                                               `
+    --build $buildDir                                                                               `
+    "-j$BUILD_THREADS"
 
 # Stripping binaries and copying them into android-vulkan project...
 
-cmake                                                                       `
-    --install "${BUILD_DIR}"                                                `
-    --strip                                                                 `
-    --prefix "${ANDROID_VULKAN_DIR}"
+cmake                                                                                               `
+    --install $buildDir                                                                             `
+    --strip                                                                                         `
+    --prefix "`"$ANDROID_VULKAN_DIR`""
 
+Pop-Location
 Write-Host "Done"
-
 ```
 
 That's all!

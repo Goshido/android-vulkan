@@ -461,6 +461,9 @@
     <ClInclude Include="include\theme.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_constants.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">

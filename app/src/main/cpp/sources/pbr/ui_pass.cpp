@@ -869,7 +869,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     _program.Destroy ( device );
 
     bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
-        _program.Init ( renderer, renderPass, subpass, SRGBProgram::GetGammaInfo ( _brightnessBalance ), resolution );
+        _program.Init ( renderer, renderPass, subpass, UIProgram::GetGammaInfo ( _brightnessBalance ), resolution );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -930,7 +930,7 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        SRGBProgram::GetGammaInfo ( brightnessBalance ),
+        UIProgram::GetGammaInfo ( brightnessBalance ),
         _currentResolution
     );
 

@@ -2,6 +2,8 @@
 #define UI_PROGRAM_INC
 
 
+#define CONST_GAMMA_FACTOR      0
+
 #define IN_SLOT_VERTEX          0
 #define IN_SLOT_COLOR           1
 #define IN_SLOT_ATLAS           2

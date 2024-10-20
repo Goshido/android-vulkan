@@ -2,7 +2,7 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "srgb_program.hpp"
+#include "graphics_program.hpp"
 #include "ui_pass_common_descriptor_set_layout.hpp"
 #include "ui_pass_image_descriptor_set_layout.hpp"
 #include "ui_pass_transform_descriptor_set_layout.hpp"
@@ -11,9 +11,14 @@
 
 namespace pbr {
 
-class UIProgram final : public SRGBProgram
+class UIProgram final : public GraphicsProgram
 {
     public:
+        struct GammaInfo final
+        {
+            [[maybe_unused]] float              _gammaFactor = 1.0F;
+        };
+
         AV_DX_ALIGNMENT_BEGIN
 
         struct Transform final
@@ -57,6 +62,9 @@ class UIProgram final : public SRGBProgram
             uint32_t startIndex,
             uint32_t count
         ) const noexcept;
+
+        // Brightness balance should be in range [-1.0F, 1.0F].
+        [[nodiscard]] static GammaInfo GetGammaInfo ( float brightnessBalance ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

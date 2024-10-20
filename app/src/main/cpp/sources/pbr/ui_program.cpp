@@ -1,4 +1,4 @@
-#include <pbr/srgb_program.inc>
+#include <pbr/srgb_constants.hpp>
 #include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.hpp>
@@ -20,7 +20,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    SRGBProgram ( "pbr::UIProgram" )
+    GraphicsProgram ( "pbr::UIProgram" )
 {
     // NOTHING
 }
@@ -155,6 +155,16 @@ void UIProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
         0U,
         nullptr
     );
+}
+
+UIProgram::GammaInfo UIProgram::GetGammaInfo ( float brightnessBalance ) noexcept
+{
+    float const newGamma = GAMMA_MID_POINT + GAMMA_RANGE * GXClampf ( brightnessBalance, -1.0F, 1.0F );
+
+    return
+    {
+        ._gammaFactor = GAMMA_MID_POINT / newGamma
+    };
 }
 
 VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
@@ -385,9 +395,9 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     constexpr static VkSpecializationMapEntry entry
     {
-        .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _inverseGamma ) ),
-        .size = sizeof ( GammaInfo::_inverseGamma )
+        .constantID = CONST_GAMMA_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _gammaFactor ) ),
+        .size = sizeof ( GammaInfo::_gammaFactor )
     };
 
     *specializationInfo =

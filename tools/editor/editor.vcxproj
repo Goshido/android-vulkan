@@ -865,6 +865,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler_manager.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_constants.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_ui_element.hpp" />
@@ -920,11 +921,17 @@
     <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\ui_program.inc" />
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in" />
-    <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in" />
-    <None Include="..\..\app\src\main\cpp\include\vulkan_device.in" />
-    <None Include="..\..\app\src\main\cpp\include\vulkan_instance.in" />
+    <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_device.in">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_instance.in">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </None>
     <None Include="include\blit_program.inc">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -932,7 +939,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="include\hello_triangle_program.inc">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

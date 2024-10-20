@@ -75,6 +75,7 @@ class UIElement
         void Show () noexcept;
         [[nodiscard]] bool IsVisible () const noexcept;
 
+        [[nodiscard]] CSSComputedValues &GetCSS () noexcept;
         [[nodiscard]] CSSComputedValues const &GetCSS () const noexcept;
 
     protected:
@@ -90,7 +91,6 @@ class UIElement
         [[nodiscard]] static AlignHandler ResolveTextAlignment ( UIElement const &parent ) noexcept;
         [[nodiscard]] static AlignHandler ResolveVerticalAlignment ( UIElement const &parent ) noexcept;
 
-    private:
         [[nodiscard]] static float AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToStart ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;

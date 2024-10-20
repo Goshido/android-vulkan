@@ -1,6 +1,7 @@
 #include <logger.hpp>
 #include <mouse_move_event.hpp>
 #include <trace.hpp>
+#include <ui_dialog_box.hpp>
 #include <ui_manager.hpp>
 
 
@@ -15,6 +16,7 @@ void UIManager::Init ( MessageQueue &messageQueue ) noexcept
         [ this ]() noexcept
         {
             AV_THREAD_NAME ( "UI" )
+            CreateWidgets ();
             EventLoop ();
         }
     );
@@ -30,11 +32,60 @@ void UIManager::Destroy () noexcept
     _messageQueue = nullptr;
 }
 
-void UIManager::RenderUI ( pbr::UIPass &/*pass*/ ) noexcept
+void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
     AV_TRACE ( "UI" )
 
-    // FUCK
+    pbr::FontStorage &fontStorage = pass.GetFontStorage ();
+    bool needRefill = false;
+    size_t neededUIVertices = 0U;
+
+    for ( auto &widget : _widgets )
+    {
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, fontStorage );
+        needRefill |= status._hasChanges;
+        neededUIVertices += status._neededUIVertices;
+    }
+
+    if ( neededUIVertices == 0U )
+    {
+        pass.RequestEmptyUI ();
+        return;
+    }
+
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
+
+    for ( auto &widget : _widgets )
+        needRefill |= widget->UpdateCache ( fontStorage, viewport );
+
+    if ( !needRefill )
+        return;
+
+    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
+
+    if ( !response )
+    {
+        pass.RequestEmptyUI ();
+        return;
+    }
+
+    pbr::UIElement::SubmitInfo info
+    {
+        ._uiPass = &pass,
+        ._vertexBuffer = *response
+    };
+
+    for ( auto &widget : _widgets )
+    {
+        widget->Submit ( info );
+    }
+}
+
+void UIManager::CreateWidgets () noexcept
+{
+    auto* dialogBox = new UIDialogBox ();
+    dialogBox->SetRect ( Rect ( 100, 500, 100, 300 ) );
+    _widgets.push_back ( std::unique_ptr<Widget> ( dialogBox ) );
 }
 
 void UIManager::EventLoop () noexcept

@@ -458,6 +458,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_ui_element.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="include\theme.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">

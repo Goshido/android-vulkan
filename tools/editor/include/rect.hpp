@@ -2,7 +2,7 @@
 #define EDITOR_RECT_HPP
 
 
-#include <GXCommon/GXMath.hpp>
+#include <pbr/css_computed_values.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -53,6 +53,7 @@ class Rect final
         [[nodiscard]] int32_t GetHeight () const noexcept;
 
         void Normalize () noexcept;
+        void ToCSSBounds ( pbr::CSSComputedValues &css ) noexcept;
 };
 
 } // namespace editor

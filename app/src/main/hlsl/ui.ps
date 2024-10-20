@@ -50,5 +50,5 @@ float32_t4 PS ( in InputData inputData ): SV_Target0
     float16_t4 const textPart = float16_t4 ( color.xyz, atlasSample * color.a );
 
     float16_t4 const result = lerp ( textPart, imagePart, (float16_t4)( atlasSample == 0.0F ) );
-    return float32_t4 ( LinearToSRGB ( result.xyz, (float16_t)g_inverseGamma ), result.w );
+    return float32_t4 ( LinearToSRGB ( SRGBToLinear ( result.xyz ), (float16_t)g_inverseGamma ), result.w );
 }

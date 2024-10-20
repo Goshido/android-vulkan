@@ -23,6 +23,11 @@ bool UIElement::IsVisible () const noexcept
     return _visible;
 }
 
+CSSComputedValues &UIElement::GetCSS () noexcept
+{
+    return _css;
+}
+
 CSSComputedValues const& UIElement::GetCSS () const noexcept
 {
     return _css;

@@ -10,11 +10,11 @@ namespace pbr {
 class ColorValue final
 {
     private:
-        bool            _inherit;
-        GXColorRGB      _value;
+        bool            _inherit = false;
+        GXColorRGB      _value {};
 
     public:
-        ColorValue () = default;
+        explicit ColorValue () = default;
 
         ColorValue ( ColorValue const & ) = default;
         ColorValue &operator = ( ColorValue const & ) = default;

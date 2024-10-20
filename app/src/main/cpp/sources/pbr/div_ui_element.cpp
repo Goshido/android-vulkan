@@ -251,10 +251,14 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         return needRefill;
 
     GXVec2 pen {};
+    AlignHandler verticalAlign = &UIElement::AlignToStart;
+    float parentHeight = 0.0F;
 
     if ( _css._position == PositionProperty::eValue::Static )
     {
         pen = info._pen;
+        verticalAlign = ResolveVerticalAlignment ( *this );
+        parentHeight = info._parentLineHeights[ _parentLine ];
 
         if ( info._line != _parentLine )
         {
@@ -297,8 +301,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         }
     }
 
-    AlignHandler const verticalAlign = ResolveVerticalAlignment ( *this );
-    pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
+    pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], parentHeight, _blockSize._data[ 1U ] );
 
     if ( _hasBackground )
     {

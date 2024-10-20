@@ -36,9 +36,10 @@ class UIManager final
         void Init ( MessageQueue &messageQueue ) noexcept;
         void Destroy () noexcept;
 
-        void RenderUI ( pbr::UIPass &pass ) noexcept;
+        void RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
 
     private:
+        void CreateWidgets () noexcept;
         void EventLoop () noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;

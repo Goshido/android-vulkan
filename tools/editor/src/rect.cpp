@@ -1,3 +1,4 @@
+#include <pbr/css_unit_to_device_pixel.hpp>
 #include <rect.hpp>
 
 
@@ -52,6 +53,15 @@ void Rect::Normalize () noexcept
     auto const y = static_cast<size_t> ( _top < _bottom );
     _top = casesY[ 1U - y ];
     _bottom = casesY[ y ];
+}
+
+void Rect::ToCSSBounds ( pbr::CSSComputedValues &css ) noexcept
+{
+    float const convert = pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX;
+    css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, convert * static_cast<float> ( _left ) );
+    css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, convert * static_cast<float> ( _top ) );
+    css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, convert * static_cast<float> ( _right - _left ) );
+    css._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, convert * static_cast<float> ( _bottom - _top ) );
 }
 
 } // namespace editor

@@ -21,6 +21,7 @@ void CSSUnitToDevicePixel::Init ( float dpi, float comfortableViewDistanceMeters
     constexpr float dpiFactor = meterToInch / ( dpiSpec * distanceSpec );
 
     _instance._fromPX = dpi * comfortableViewDistanceMeters * dpiFactor;
+    _instance._devicePXtoCSSPX = 1.0F / _instance._fromPX;
 
     constexpr float inchToPX = 96.0F;
     constexpr float inchToMM = 25.4F;

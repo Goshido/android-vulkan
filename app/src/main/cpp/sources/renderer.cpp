@@ -1697,6 +1697,22 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
             return false;
 
         _surfaceSize = caps.value ()->currentExtent;
+
+#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+
+        _viewportResolution.width = _surfaceSize.height;
+        _viewportResolution.height = _surfaceSize.width;
+
+#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+
+        _viewportResolution = _surfaceSize;
+
+#else
+
+#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif
+
         return true;
     }
 
@@ -1735,11 +1751,7 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     _presentationEngineTransform.Identity ();
     _viewportResolution = _surfaceSize;
 
-#else
-
-#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
-
-#endif
+#endif // ANDROID_NATIVE_MODE_PORTRAIT | ANDROID_NATIVE_MODE_LANDSCAPE
 
     VkBool32 isSupported = VK_FALSE;
 

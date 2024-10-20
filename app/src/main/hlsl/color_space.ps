@@ -2,13 +2,20 @@
 #define COLOR_SPACE_PS
 
 
-float32_t3 LinearToSRGB ( in float16_t3 ldr, in float16_t inverseGamma )
+float32_t3 LinearToSRGB ( in float16_t3 linearRGB, in float16_t inverseGamma )
 {
     // See https://entropymine.com/imageworsener/srgbformula/
-    float16_t3 const a = ldr * 12.92H;
-    float16_t3 const b = 1.055H * pow ( ldr, inverseGamma ) - 0.055H;
-    return (float32_t3)lerp ( a, b, (float16_t3)( ldr > 3.1308e-3H ) );
+    float16_t3 const a = linearRGB * 12.92H;
+    float16_t3 const b = mad ( (float16_t3)1.055H, pow ( linearRGB, inverseGamma ), (float16_t3)( -5.5e-2H ) );
+    return (float32_t3)lerp ( a, b, (float16_t3)( linearRGB > 3.1308e-3H ) );
 }
 
+float16_t3 SRGBToLinear ( in float16_t3 sRGB )
+{
+    // See https://entropymine.com/imageworsener/srgbformula/
+    float16_t3 const a = sRGB * 7.74e-2H;
+    float16_t3 const b = pow ( mad ( sRGB, (float16_t3)9.479e-1H, (float16_t3)5.213e-2H ), 2.4H );
+    return lerp ( a, b, (float16_t3)( sRGB > 4.045e-2H ) );
+}
 
 #endif // COLOR_SPACE_PS

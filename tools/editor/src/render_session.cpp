@@ -766,7 +766,7 @@ void RenderSession::OnRenderFrame () noexcept
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
 
-    _uiManager->RenderUI ( _uiPass );
+    _uiManager->RenderUI ( *_renderer, _uiPass );
 
     android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();

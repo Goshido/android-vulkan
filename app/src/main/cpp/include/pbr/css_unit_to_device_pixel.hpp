@@ -11,6 +11,8 @@ class CSSUnitToDevicePixel final
         float                           _fromPT = 1.333F;
         float                           _fromPX = 1.0F;
 
+        float                           _devicePXtoCSSPX = 1.0F;
+
     private:
         static CSSUnitToDevicePixel     _instance;
 

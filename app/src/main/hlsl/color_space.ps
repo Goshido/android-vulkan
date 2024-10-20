@@ -26,4 +26,5 @@ float32_t3 NewGammaForSRGB ( in float16_t3 sRGB, in float16_t newGammaFactor )
     return (float32_t3)lerp ( sRGB, ex, (float16_t3)( sRGB > 4.045e-2H ) );
 }
 
+
 #endif // COLOR_SPACE_PS

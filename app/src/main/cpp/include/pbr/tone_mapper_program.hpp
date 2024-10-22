@@ -2,15 +2,15 @@
 #define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
+#include "brightness_program.hpp"
 #include "full_screen_triangle_descriptor_set_layout.hpp"
-#include "srgb_program.hpp"
 #include "tone_mapper_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class ToneMapperProgram final : public SRGBProgram
+class ToneMapperProgram final : public BrightnessProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -45,7 +45,7 @@ class ToneMapperProgram final : public SRGBProgram
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            GammaInfo const &gammaInfo,
+            BrightnessInfo const &brightnessInfo,
             VkExtent2D const &viewport
         ) noexcept;
 

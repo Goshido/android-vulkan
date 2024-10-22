@@ -1,6 +1,5 @@
-#include <pbr/srgb_program.inc>
+#include <pbr/brightness_factor.inc>
 #include <pbr/tone_mapper_program.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -8,7 +7,8 @@ namespace pbr {
 namespace {
 
 constexpr char const* VERTEX_SHADER = "shaders/full_screen_triangle.vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/tone_mapper.ps.spv";
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/tone_mapper_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/tone_mapper_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -18,7 +18,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    SRGBProgram ( "pbr::ToneMapperProgram" )
+    BrightnessProgram ( "pbr::ToneMapperProgram" )
 {
     // NOTHING
 }
@@ -57,7 +57,7 @@ void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    GammaInfo const &gammaInfo,
+    BrightnessInfo const &brightnessInfo,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -82,7 +82,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &gammaInfo, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
@@ -337,15 +337,15 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::ToneMapperProgram)"
-    );
+    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
+    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
+    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::ToneMapperProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
 
     sourceInfo[ 0U ] =
     {
@@ -360,16 +360,16 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     constexpr static VkSpecializationMapEntry entry
     {
-        .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _inverseGamma ) ),
-        .size = sizeof ( GammaInfo::_inverseGamma )
+        .constantID = CONST_BRIGHTNESS_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
+        .size = sizeof ( BrightnessInfo::_brightnessFactor )
     };
 
     *specializationInfo =
     {
         .mapEntryCount = 1U,
         .pMapEntries = &entry,
-        .dataSize = sizeof ( GammaInfo ),
+        .dataSize = sizeof ( BrightnessInfo ),
         .pData = specializationData
     };
 

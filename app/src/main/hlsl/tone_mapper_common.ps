@@ -1,14 +1,11 @@
+#ifndef TONE_MAPPER_COMMON_PS
+#define TONE_MAPPER_COMMON_PS
+
+
 #include "color_space.ps"
 #include "full_screen_triangle.inc"
-#include "srgb_program.inc"
 #include "tone_mapper.inc"
 
-
-// 1.0H / 2.4H
-#define INVERSE_GAMMA           4.16667e-1F
-
-[[vk::constant_id ( CONST_INVERSE_GAMMA )]]
-float const                     g_inverseGamma = INVERSE_GAMMA;
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
 Texture2D<float32_t4>           g_hdrImage:                 register ( t0 );
@@ -41,9 +38,5 @@ float16_t3 ApplyACES ( in float32_t2 uv )
     return saturate ( ( raw * alpha ) / mad ( raw, beta, (float16_t3)0.14H ) );
 }
 
-//----------------------------------------------------------------------------------------------------------------------
 
-float32_t4 PS ( in InputData inputData ): SV_Target0
-{
-    return float32_t4 ( LinearToSRGB ( ApplyACES ( inputData._uv ), (float16_t)g_inverseGamma ), 1.0F );
-}
+#endif // TONE_MAPPER_COMMON_PS

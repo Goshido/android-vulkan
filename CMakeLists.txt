@@ -68,6 +68,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
     app/src/main/cpp/sources/pbr/bit_field.cpp
+    app/src/main/cpp/sources/pbr/brightness_program.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp
@@ -190,7 +191,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
-    app/src/main/cpp/sources/pbr/srgb_program.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp

@@ -132,8 +132,14 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `
     "ps"                                                                                                               `
-    "$MOBILE_HLSL_DIRECTORY\tone_mapper.ps"                                                                            `
-    "$MOBILE_SHADER_DIRECTORY\tone_mapper.ps.spv"
+    "$MOBILE_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps"                                                          `
+    "$MOBILE_SHADER_DIRECTORY\tone_mapper_custom_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "PS"                                                                                                               `
+    "ps"                                                                                                               `
+    "$MOBILE_HLSL_DIRECTORY\tone_mapper_default_brightness.ps"                                                         `
+    "$MOBILE_SHADER_DIRECTORY\tone_mapper_default_brightness.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `

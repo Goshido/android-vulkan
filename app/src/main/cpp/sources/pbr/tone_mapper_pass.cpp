@@ -1,3 +1,4 @@
+#include <pbr/brightness_factor.inc>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/tone_mapper.inc>
 #include <pbr/tone_mapper_pass.hpp>
@@ -117,7 +118,7 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        SRGBProgram::GetGammaInfo ( brightnessBalance ),
+        BrightnessProgram::GetBrightnessInfo ( brightnessBalance ),
         renderer.GetSurfaceSize ()
     );
 
@@ -142,7 +143,7 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        SRGBProgram::GetGammaInfo ( _brightnessBalance ),
+        BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
         renderer.GetSurfaceSize ()
     );
 

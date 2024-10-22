@@ -135,7 +135,7 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\srgb_program.cpp">
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_program.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
     <ClCompile Include="src\rect.cpp">
@@ -338,7 +338,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_program.hpp">
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_program.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="include\rect.hpp">
@@ -461,9 +461,6 @@
     <ClInclude Include="include\theme.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\srgb_constants.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -506,10 +503,10 @@
     <None Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
-    <None Include="..\..\app\src\main\cpp\include\pbr\srgb_program.inc">
+    <None Include="..\..\app\src\main\cpp\include\pbr\exposure.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
-    <None Include="..\..\app\src\main\cpp\include\pbr\exposure.inc">
+    <None Include="..\..\app\src\main\cpp\include\pbr\brightness_factor.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
   </ItemGroup>

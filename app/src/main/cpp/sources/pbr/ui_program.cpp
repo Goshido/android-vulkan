@@ -1,4 +1,4 @@
-#include <pbr/srgb_constants.hpp>
+#include <pbr/brightness_factor.inc>
 #include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.hpp>
@@ -9,22 +9,19 @@ namespace pbr {
 namespace {
 
 constexpr char const* VERTEX_SHADER = "shaders/ui.vs.spv";
-constexpr char const* CUSTOM_BRIGHNESS_FRAGMENT_SHADER = "shaders/ui_custom_brightness.ps.spv";
-constexpr char const* DEFAULT_BRIGHNESS_FRAGMENT_SHADER = "shaders/ui_default_brightness.ps.spv";
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
-
-constexpr float DEFAULT_GAMMA_FACTOR = 1.0F;
-constexpr float GAMMA_FACTOR_TOLERANCE = 5.0e-2F;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    GraphicsProgram ( "pbr::UIProgram" )
+    BrightnessProgram ( "pbr::UIProgram" )
 {
     // NOTHING
 }
@@ -41,7 +38,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
 bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    GammaInfo const &gammaInfo,
+    BrightnessInfo const &brightnessInfo,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -68,7 +65,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &gammaInfo, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
@@ -159,16 +156,6 @@ void UIProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
         0U,
         nullptr
     );
-}
-
-UIProgram::GammaInfo UIProgram::GetGammaInfo ( float brightnessBalance ) noexcept
-{
-    float const newGamma = GAMMA_MID_POINT + GAMMA_RANGE * GXClampf ( brightnessBalance, -1.0F, 1.0F );
-
-    return
-    {
-        ._gammaFactor = GAMMA_MID_POINT / newGamma
-    };
 }
 
 VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
@@ -376,10 +363,9 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
-    constexpr char const* const cases[] = { DEFAULT_BRIGHNESS_FRAGMENT_SHADER, CUSTOM_BRIGHNESS_FRAGMENT_SHADER };
-    auto const &gammaInfo = *static_cast<GammaInfo const*> ( specializationData );
-    bool const useCustomGamma = GAMMA_FACTOR_TOLERANCE < std::abs ( gammaInfo._gammaFactor - DEFAULT_GAMMA_FACTOR );
-    char const* const fs = cases[ static_cast<size_t> ( useCustomGamma ) ];
+    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
+    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
+    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
     result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
 
     if ( !result ) [[unlikely]]
@@ -400,16 +386,16 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     constexpr static VkSpecializationMapEntry entry
     {
-        .constantID = CONST_GAMMA_FACTOR,
-        .offset = static_cast<uint32_t> ( offsetof ( GammaInfo, _gammaFactor ) ),
-        .size = sizeof ( GammaInfo::_gammaFactor )
+        .constantID = CONST_BRIGHTNESS_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
+        .size = sizeof ( BrightnessInfo::_brightnessFactor )
     };
 
     *specializationInfo =
     {
         .mapEntryCount = 1U,
         .pMapEntries = &entry,
-        .dataSize = sizeof ( GammaInfo ),
+        .dataSize = sizeof ( BrightnessInfo ),
         .pData = specializationData
     };
 

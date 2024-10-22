@@ -138,8 +138,14 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `
     "ps"                                                                                                               `
-    "$MOBILE_HLSL_DIRECTORY\ui.ps"                                                                                     `
-    "$MOBILE_SHADER_DIRECTORY\ui.ps.spv"
+    "$MOBILE_HLSL_DIRECTORY\ui_custom_brightness.ps"                                                                   `
+    "$MOBILE_SHADER_DIRECTORY\ui_custom_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "PS"                                                                                                               `
+    "ps"                                                                                                               `
+    "$MOBILE_HLSL_DIRECTORY\ui_default_brightness.ps"                                                                  `
+    "$MOBILE_SHADER_DIRECTORY\ui_default_brightness.ps.spv"
 
 # compute shaders
 scripts\windows\make-spv.ps1                                                                                           `

@@ -9,11 +9,15 @@ namespace pbr {
 namespace {
 
 constexpr char const* VERTEX_SHADER = "shaders/ui.vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/ui.ps.spv";
+constexpr char const* CUSTOM_BRIGHNESS_FRAGMENT_SHADER = "shaders/ui_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHNESS_FRAGMENT_SHADER = "shaders/ui_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
+
+constexpr float DEFAULT_GAMMA_FACTOR = 1.0F;
+constexpr float GAMMA_FACTOR_TOLERANCE = 5.0e-2F;
 
 } // end of anonymous namespace
 
@@ -372,15 +376,16 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::UIProgram)"
-    );
+    constexpr char const* const cases[] = { DEFAULT_BRIGHNESS_FRAGMENT_SHADER, CUSTOM_BRIGHNESS_FRAGMENT_SHADER };
+    auto const &gammaInfo = *static_cast<GammaInfo const*> ( specializationData );
+    bool const useCustomGamma = GAMMA_FACTOR_TOLERANCE < std::abs ( gammaInfo._gammaFactor - DEFAULT_GAMMA_FACTOR );
+    char const* const fs = cases[ static_cast<size_t> ( useCustomGamma ) ];
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
 
     sourceInfo[ 0U ] =
     {

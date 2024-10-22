@@ -10,6 +10,7 @@ namespace editor {
 
 namespace {
 
+constexpr float DEFAULT_BRIGHTNESS_BALANCE = 0.0F;
 constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -724,7 +725,9 @@ bool RenderSession::InitiModules () noexcept
             _samplerManager.GetClampToEdgeSampler ()
         ) &&
 
+        _toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
+        _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
             "editor::RenderSession::InitiModules",

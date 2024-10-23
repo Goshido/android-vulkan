@@ -3,16 +3,51 @@
 
 namespace pbr {
 
-ColorValue::ColorValue ( bool inherit, GXColorRGB const &value ) noexcept:
+ColorValue &ColorValue::operator = ( ColorValue &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _srgb = other._srgb;
+    _inherit = other._inherit;
+
+    if ( _notifyChanged ) [[likely]]
+        _notifyChanged ( _context );
+
+    return *this;
+}
+
+ColorValue &ColorValue::operator = ( GXColorRGB const &srgb ) noexcept
+{
+    _srgb = srgb;
+
+    if ( _notifyChanged ) [[likely]]
+        _notifyChanged ( _context );
+
+    return *this;
+}
+
+ColorValue::ColorValue ( bool inherit, GXColorRGB const &srgb ) noexcept:
     _inherit ( inherit ),
-    _value ( value )
+    _srgb ( srgb )
 {
     // NOTHING
 }
 
-GXColorRGB const &ColorValue::GetValue () const noexcept
+void ColorValue::AttachNotifier ( Context context, NotifyChanged notifier ) noexcept
 {
-    return _value;
+    _context = context;
+    _notifyChanged = notifier;
+}
+
+GXColorRGB ColorValue::GetLinearColor () const noexcept
+{
+    return _srgb.ToLinearSpace ();
+}
+
+GXColorRGB const &ColorValue::GetSRGB () const noexcept
+{
+    return _srgb;
 }
 
 bool ColorValue::IsInherit () const noexcept

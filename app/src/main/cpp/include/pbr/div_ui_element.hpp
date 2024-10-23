@@ -16,6 +16,7 @@ namespace pbr {
 class DIVUIElement final : public UIElement
 {
     private:
+        GXColorRGB                  _backgroundColor {};
         GXVec2                      _blockSize {};
         GXVec2                      _borderSize {};
 
@@ -53,6 +54,9 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         void AppendChildElement ( UIElement &element ) noexcept;
+
+    private:
+        static void OnBackgroundColorChanged ( ColorValue::Context context ) noexcept;
 };
 
 } // namespace pbr

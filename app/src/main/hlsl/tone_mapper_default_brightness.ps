@@ -5,5 +5,5 @@
 
 float32_t4 PS ( in InputData inputData ): SV_Target0
 {
-    return float32_t4 ( LinearToSRGB ( ApplyACES ( inputData._uv ) ), 1.0F );
+    return float32_t4 ( ApplyACES ( inputData._uv ), 1.0F );
 }

@@ -381,7 +381,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXColorRGB const &TextUIElement::ResolveColor () const noexcept
+GXColorRGB TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
         return _color.value ();
@@ -394,7 +394,7 @@ GXColorRGB const &TextUIElement::ResolveColor () const noexcept
 
         if ( !color.IsInherit () )
         {
-            return color.GetValue ();
+            return color.GetLinearColor ();
         }
     }
 

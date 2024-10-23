@@ -1,4 +1,4 @@
-// version 1.84
+// version 1.85
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -368,6 +368,9 @@ struct [[maybe_unused]] GXColorRGB final
 
     [[maybe_unused]] GXVoid From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
     [[maybe_unused]] GXVoid From ( GXColorHSV const &color ) noexcept;
+
+    // It is assumed that current color space is sRGB.
+    [[maybe_unused]] GXColorRGB ToLinearSpace () const noexcept;
 
     [[maybe_unused]] GXVoid ConvertToUByte ( GXUByte &red,
         GXUByte &green,

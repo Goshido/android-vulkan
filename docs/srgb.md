@@ -64,9 +64,9 @@ The idea is to raise color in _Linear_ space in some power. Then move result int
 
 Note if original color is in _sRGB_ space it's needed to move it into _Linear_ space first. Such sitiation happens in _UI_ pass for example.
 
-It was decided to use power ($P$) which lies in range $[0.25$ $5]$.
+It was decided to use power ($P$) which lies in range $[0.2, 5]$.
 
-From user perspective it is contolled by brightness balance ($B$) which lies in range $[-1$ $1]$.
+From user perspective it is contolled by brightness balance ($B$) which lies in range $[-1, 1]$.
 
 Value | Meaning
 --- | ---
@@ -76,5 +76,7 @@ Value | Meaning
 This formula describes connection between power and brightness balance:
 
 $$P = 5^{-B}$$
+
+Take into account that swapchain image has _sRGB_ native format. That means it's expected output in _Linear_ space from pixel shaders. Conversion to _sRGB_ will be done in hardware.
 
 [↬ table of content ⇧](#table-of-content)

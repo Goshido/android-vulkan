@@ -113,7 +113,7 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
 
     bool const result = texture->UploadData ( *_renderer,
         asset,
-        android_vulkan::eFormat::Unorm,
+        android_vulkan::eFormat::sRGB,
         true,
         _commandBuffers[ _commandBufferIndex ],
         _fences[ _commandBufferIndex ]

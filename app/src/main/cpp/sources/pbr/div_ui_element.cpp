@@ -7,6 +7,7 @@ namespace pbr {
 
 DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
+    _backgroundColor ( css._backgroundColor.GetLinearColor () ),
     _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock ),
@@ -16,6 +17,10 @@ DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) 
     )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
+
+    ColorValue &background = _css._backgroundColor;
+    _backgroundColor = background.GetLinearColor ();
+    background.AttachNotifier ( this, &DIVUIElement::OnBackgroundColorChanged );
 }
 
 void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
@@ -158,7 +163,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     // Opaque background requires rectangle (two triangles).
     size_t const vertices[] = { childInfo._vertices, childInfo._vertices + UIPass::GetVerticesPerRectangle () };
-    bool const hasBackgroundColor = _css._backgroundColor.GetValue ()._data[ 3U ] != 0.0F;
+    bool const hasBackgroundColor = _css._backgroundColor.GetSRGB ()._data[ 3U ] != 0.0F;
     bool const hasBackgroundArea = sizeCheck ( _borderSize );
     _hasBackground = hasBackgroundColor & hasBackgroundArea;
     info._vertices += vertices[ static_cast<size_t> ( _hasBackground ) ];
@@ -305,7 +310,6 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        GXColorRGB const &color = _css._backgroundColor.GetValue ();
         constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
         GXVec2 topLeft {};
@@ -317,7 +321,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
         UIPass::AppendRectangle ( _vertices,
-            color,
+            _backgroundColor,
             topLeft,
             bottomRight,
             glyphInfo._topLeft,
@@ -350,6 +354,12 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
 {
     _children.emplace_back ( &element );
+}
+
+void DIVUIElement::OnBackgroundColorChanged ( ColorValue::Context context ) noexcept
+{
+    DIVUIElement &div = *static_cast<DIVUIElement*> ( context );
+    div._backgroundColor = div._css._backgroundColor.GetLinearColor ();
 }
 
 } // namespace pbr

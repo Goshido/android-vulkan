@@ -17,7 +17,7 @@ UIDialogBox::UIDialogBox () noexcept
 {
     pbr::CSSComputedValues &css = _div.GetCSS ();
     css._position = pbr::PositionProperty::eValue::Absolute;
-    css._backgroundColor = pbr::ColorValue ( false, theme::BACKGROUND_COLOR );
+    css._backgroundColor = theme::BACKGROUND_COLOR;
     css._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
 
     pbr::LengthValue const zero ( pbr::LengthValue::eType::PX, 0.0F );

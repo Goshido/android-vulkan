@@ -1,4 +1,4 @@
-// version 1.84
+// version 1.85
 
 #include <GXCommon/GXMath.hpp>
 
@@ -557,6 +557,33 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             // IMPOSSIBLE
         break;
     }
+}
+
+[[maybe_unused]] GXColorRGB GXColorRGB::ToLinearSpace () const noexcept
+{
+    // See <repo>/docs/srgb#srgb-to-linear
+    float const* c = _data;
+    GXVec3 const &srgb = *reinterpret_cast<GXVec3 const*> ( this );
+
+    GXVec3 lin {};
+    lin.Multiply ( srgb, 7.74e-2F );
+
+    constexpr float alpha = 5.213e-2F;
+    constexpr GXVec3 beta ( alpha, alpha, alpha );
+    GXVec3 omega {};
+    omega.Sum ( beta, 9.479e-1F, srgb );
+
+    float const r[] = { lin._data[ 0U ], std::pow ( omega._data[ 0U ], 2.4F ) };
+    float const g[] = { lin._data[ 1U ], std::pow ( omega._data[ 1U ], 2.4F ) };
+
+    constexpr float cutoff = 4.045e-2F;
+    GXColorRGB result ( r[ static_cast<size_t> ( c[ 0U ] > cutoff ) ], 0.0F, 0.0F, c[ 3U ] );
+
+    float const b[] = { lin._data[ 2U ], std::pow ( omega._data[ 2U ], 2.4F ) };
+    result._data[ 1U ] = g[ static_cast<size_t> ( c[ 1U ] > cutoff ) ];
+    result._data[ 2U ] = b[ static_cast<size_t> ( c[ 2U ] > cutoff ) ];
+
+    return result;
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red,

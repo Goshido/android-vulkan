@@ -2479,31 +2479,27 @@ bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) n
 {
     if ( _surfaceFormats.size () == 1U && _surfaceFormats.front ().format == VK_FORMAT_UNDEFINED )
     {
-        _surfaceFormat = VK_FORMAT_R8G8B8A8_UNORM;
-        targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
+        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select format." );
+        return false;
     }
-    else
+
+    bool isFound = false;
+
+    for ( auto const &item : _surfaceFormats )
     {
-        bool isFound = false;
+        VkFormat const format = item.format;
 
-        for ( auto const &item : _surfaceFormats )
-        {
-            VkFormat const format = item.format;
+        if ( ( format != VK_FORMAT_R8G8B8A8_SRGB ) & ( format != VK_FORMAT_B8G8R8A8_SRGB ) )
+            continue;
 
-            if ( ( format != VK_FORMAT_R8G8B8A8_UNORM ) & ( format != VK_FORMAT_B8G8R8A8_UNORM ) )
-                continue;
-
-            _surfaceFormat = format;
-            targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
-            isFound = true;
-            break;
-        }
-
-        if ( !isFound ) [[unlikely]]
-        {
-            return false;
-        }
+        _surfaceFormat = format;
+        targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
+        isFound = true;
+        break;
     }
+
+    if ( !isFound ) [[unlikely]]
+        return false;
 
     auto const check = [ & ] ( VkFormat &dst,
         VkFormat const* options,

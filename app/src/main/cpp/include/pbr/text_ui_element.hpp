@@ -94,7 +94,7 @@ class TextUIElement final : public UIElement
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXColorRGB const &ResolveColor () const noexcept;
+        [[nodiscard]] GXColorRGB ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,

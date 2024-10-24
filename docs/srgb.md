@@ -62,7 +62,7 @@ $$
 
 The idea is to raise color in _Linear_ space in some power. Then move result into _sRGB_ space.
 
-Note if original color is in _sRGB_ space it's needed to move it into _Linear_ space first. Such sitiation happens in _UI_ pass for example.
+Note if original color is in _sRGB_ space it's needed to move it into _Linear_ space first. Such situation happens in _UI_ pass for example.
 
 It was decided to use power ($P$) which lies in range $[0.2, 5]$.
 

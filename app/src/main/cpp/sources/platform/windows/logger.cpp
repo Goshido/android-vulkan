@@ -1,13 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
-
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cstdarg>
-#include <cstdio>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

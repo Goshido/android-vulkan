@@ -1,15 +1,10 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <os_utils.hpp>
 #include <logger.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
 #include <android_vulkan_sdk/primitive_types.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <fstream>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {

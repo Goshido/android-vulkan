@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/present_render_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <hello_triangle_vertex.hpp>
 #include <render_session.hpp>

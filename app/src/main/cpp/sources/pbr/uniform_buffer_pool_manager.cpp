@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/uniform_buffer_pool_manager.hpp>
 #include <vulkan_utils.hpp>
 

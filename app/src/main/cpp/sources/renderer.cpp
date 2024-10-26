@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <bitwise.hpp>
 #include <file.hpp>
@@ -5,18 +6,6 @@
 #include <renderer.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cinttypes>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <pbr/image_ui_element.hpp>

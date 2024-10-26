@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/tone_mapper.inc>

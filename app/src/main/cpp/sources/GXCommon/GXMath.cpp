@@ -1,15 +1,7 @@
-// version 1.85
+// version 1.86
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <cassert>
-#include <cstdlib>
-#include <ctime>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace {

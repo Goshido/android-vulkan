@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <vulkan_loader.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <Windows.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 extern PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;

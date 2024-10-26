@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <hello_triangle_program.hpp>
 #include <hello_triangle_program.inc>
 #include <hello_triangle_vertex.hpp>

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
 #include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <vulkan_loader.hpp>
 #include <vulkan_utils.hpp>

@@ -1,5 +1,6 @@
-// version 1.10
+// version 1.11
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS

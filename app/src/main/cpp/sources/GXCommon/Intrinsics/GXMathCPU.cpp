@@ -1,12 +1,7 @@
-// version 1.9
+// version 1.10
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 [[maybe_unused]] GXVoid GXVec2::Reverse () noexcept

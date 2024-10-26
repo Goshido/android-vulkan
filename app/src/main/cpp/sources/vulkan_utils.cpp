@@ -1,6 +1,7 @@
+#include <precompiled_headers.hpp>
+
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
     defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
-
 
 #include <av_assert.hpp>
 #include <renderer.hpp>

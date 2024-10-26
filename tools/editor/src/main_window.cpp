@@ -1,17 +1,10 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <main_window.hpp>
 #include <mouse_move_event.hpp>
 #include <os_utils.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <tchar.h>
-#include <strsafe.h>
-#include <windowsx.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {

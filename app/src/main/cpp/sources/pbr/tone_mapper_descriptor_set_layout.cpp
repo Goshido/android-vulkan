@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/tone_mapper.inc>
 #include <pbr/tone_mapper_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>

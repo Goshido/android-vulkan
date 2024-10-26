@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <pbr/ui_pass_common_descriptor_set_layout.hpp>
 #include <pbr/ui_program.inc>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

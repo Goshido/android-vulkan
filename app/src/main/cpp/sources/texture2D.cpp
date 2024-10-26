@@ -1,13 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <texture2D.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <bit>
-#include <regex>
-#include <set>
-#include <thread>
-#include <unordered_map>
 
 #define STBI_MALLOC(sz) std::malloc(sz)
 #define STBI_REALLOC(p, newsz) std::realloc(p, newsz)

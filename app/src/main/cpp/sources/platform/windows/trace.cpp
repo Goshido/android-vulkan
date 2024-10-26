@@ -1,15 +1,9 @@
+#include <precompiled_headers.hpp>
+
 #ifdef ANDROID_ENABLE_TRACE
 
 #include <trace.hpp>
 #include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string>
-#include <Windows.h>
-#include <WinPixEventRuntime/pix3.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

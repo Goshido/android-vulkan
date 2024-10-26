@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/font_storage.hpp>
 #include <file.hpp>
 #include <logger.hpp>

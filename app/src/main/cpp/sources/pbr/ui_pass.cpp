@@ -1,14 +1,9 @@
+#include <precompiled_headers.hpp>
 #include <pbr/ui_pass.hpp>
 #include <pbr/ui_program.inc>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <unordered_set>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

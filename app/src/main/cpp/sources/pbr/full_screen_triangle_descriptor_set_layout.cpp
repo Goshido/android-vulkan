@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>

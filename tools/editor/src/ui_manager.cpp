@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <mouse_move_event.hpp>
 #include <trace.hpp>

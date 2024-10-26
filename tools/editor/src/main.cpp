@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <crash_dump.hpp>
 #include <editor.hpp>
 

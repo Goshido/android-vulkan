@@ -1,13 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <os_utils.hpp>
 #include <trace.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <Windows.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {

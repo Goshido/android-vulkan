@@ -1,10 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <pbr/brightness_program.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <algorithm>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

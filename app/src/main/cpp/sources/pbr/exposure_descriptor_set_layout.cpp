@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/exposure.inc>
 #include <pbr/exposure_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>

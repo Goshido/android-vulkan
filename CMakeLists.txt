@@ -241,6 +241,11 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
 )
 
+# Precompiled headers
+target_precompile_headers ( android-vulkan PRIVATE
+    app/src/main/cpp/include/precompiled_headers.hpp
+)
+
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
 # See https://developer.android.com/ndk/guides/cpu-arm-neon#cmake_2
 target_include_directories ( android-vulkan PRIVATE

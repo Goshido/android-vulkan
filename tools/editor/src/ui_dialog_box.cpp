@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <theme.hpp>

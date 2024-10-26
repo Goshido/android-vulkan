@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/exposure.inc>
 #include <pbr/exposure_pass.hpp>
 #include <av_assert.hpp>

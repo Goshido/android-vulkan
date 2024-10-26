@@ -1,15 +1,10 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <editor.hpp>
 #include <logger.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <filesystem>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {

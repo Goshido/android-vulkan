@@ -243,6 +243,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_ui_element.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -460,6 +463,9 @@
     </ClInclude>
     <ClInclude Include="include\theme.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp">
+      <Filter>Header Files\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

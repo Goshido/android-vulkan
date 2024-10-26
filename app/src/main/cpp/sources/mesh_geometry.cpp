@@ -1,13 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <mesh_geometry.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <regex>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
-
 #include <file.hpp>
 #include <logger.hpp>
 #include <vertex_info.hpp>

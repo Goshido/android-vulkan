@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/compute_program.hpp>
 
 

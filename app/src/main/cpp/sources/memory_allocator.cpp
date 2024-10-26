@@ -1,15 +1,9 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <memory_allocator.hpp>
 #include <bitwise.hpp>
 #include <renderer.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <chrono>
-#include <fstream>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,12 +1,7 @@
-// version 1.7
+// version 1.8
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 [[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadians,

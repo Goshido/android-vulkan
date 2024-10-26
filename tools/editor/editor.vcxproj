@@ -170,6 +170,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -212,6 +214,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -254,6 +258,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -297,6 +303,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -339,6 +347,8 @@
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -381,6 +391,8 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -772,6 +784,26 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\vulkan_loader.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\vulkan_loader.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\precompiled_headers.obj</ObjectFileName>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">precompiled_headers.hpp</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\renderer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">false</ExcludedFromBuild>
@@ -882,6 +914,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool_manager.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture_cube.hpp" />

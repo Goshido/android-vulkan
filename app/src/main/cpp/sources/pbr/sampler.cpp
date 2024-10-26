@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sampler.hpp>
 #include <av_assert.hpp>
 #include <vulkan_utils.hpp>

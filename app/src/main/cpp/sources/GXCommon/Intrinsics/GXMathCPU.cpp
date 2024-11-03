@@ -1,4 +1,4 @@
-// version 1.10
+// version 1.11
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -200,7 +200,15 @@
     _data[ 0U ] = static_cast<GXFloat> ( red ) * GX_MATH_UNORM_FACTOR;
     _data[ 1U ] = static_cast<GXFloat> ( green ) * GX_MATH_UNORM_FACTOR;
     _data[ 2U ] = static_cast<GXFloat> ( blue ) * GX_MATH_UNORM_FACTOR;
-    _data[ 3U ] = alpha * GX_MATH_UNORM_FACTOR;
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept
+{
+    _data[ 0U ] = static_cast<GXFloat> ( red ) * GX_MATH_UNORM_FACTOR;
+    _data[ 1U ] = static_cast<GXFloat> ( green ) * GX_MATH_UNORM_FACTOR;
+    _data[ 2U ] = static_cast<GXFloat> ( blue ) * GX_MATH_UNORM_FACTOR;
+    _data[ 3U ] = alpha;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

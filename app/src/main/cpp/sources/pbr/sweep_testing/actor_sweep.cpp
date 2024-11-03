@@ -94,14 +94,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
 
-    mesh.SetEmission (
-        GXColorRGB (
-            static_cast<GXUByte> ( 29U ),
-            static_cast<GXUByte> ( 46U ),
-            static_cast<GXUByte> ( 0U ),
-            static_cast<GXUByte> ( 255U )
-        )
-    );
+    mesh.SetEmission ( GXColorRGB ( 29U, 46U, 0U, 1.0F ) );
 
     // NOLINTNEXTLINE - downcast.
     auto &material = static_cast<GeometryPassMaterial &> ( *mesh.GetMaterial () );

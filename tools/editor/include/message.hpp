@@ -15,31 +15,36 @@ namespace editor {
 
 enum class eMessageType : uint32_t
 {
+    CaptureMouse,
+    ChangeCursor,
     CloseEditor,
     DPIChanged,
     FrameComplete,
     HelloTriangleReady,
     ModuleStopped,
+    MouseKeyDown,
+    MouseKeyUp,
     MouseMoved,
     RecreateSwapchain,
+    ReleaseMouse,
     RenderFrame,
     RunEventLoop,
     Shutdown,
+    StartWidgetCaptureMouse,
+    StopWidgetCaptureMouse,
     SwapchainCreated,
     VulkanInitReport,
     WindowVisibilityChanged,
     Unknown
 };
 
-class Message final
+struct Message final
 {
-    public:
-        using SerialNumber = uint32_t;
+    using SerialNumber = uint32_t;
 
-    public:
-        eMessageType    _type;
-        void*           _params;
-        SerialNumber    _serialNumber = 0U;
+    eMessageType    _type;
+    void*           _params;
+    SerialNumber    _serialNumber = 0U;
 };
 
 } // namespace editor

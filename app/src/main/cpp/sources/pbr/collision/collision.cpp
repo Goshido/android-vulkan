@@ -258,13 +258,7 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "Cube #0",
         _cubes[ 1U ]._component,
         "pbr/assets/System/Default.mtl",
-
-        GXColorRGB ( static_cast<GXUByte> ( 99U ),
-            static_cast<GXUByte> ( 211U ),
-            static_cast<GXUByte> ( 222U ),
-            static_cast<GXUByte> ( 255U )
-        ),
-
+        GXColorRGB ( 99U, 211U, 222U, 1.0F ),
         _cubes[ 1U ]._body,
         0.0F,
         0.15F,

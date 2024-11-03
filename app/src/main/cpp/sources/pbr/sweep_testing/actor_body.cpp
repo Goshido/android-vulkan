@@ -12,12 +12,7 @@ constexpr float ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GXColorRGB const ActorBody::_overlayColor (
-    static_cast<GXUByte> ( 101U ),
-    static_cast<GXUByte> ( 49U ),
-    static_cast<GXUByte> ( 15U ),
-    static_cast<GXUByte> ( 255U )
-);
+GXColorRGB const ActorBody::_overlayColor ( 101U, 49U, 15U, 1.0F );
 
 void ActorBody::EnableOverlay () noexcept
 {

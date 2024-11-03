@@ -60,7 +60,6 @@ bool Editor::InitModules () noexcept
             AV_THREAD_NAME ( "Init Vulkan" )
 
             _messageQueue.EnqueueBack (
-                Message
                 {
                     ._type = eMessageType::VulkanInitReport,
 
@@ -198,6 +197,14 @@ void Editor::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::CaptureMouse:
+                OnCaptureMouse ();
+            break;
+
+            case eMessageType::ChangeCursor:
+                OnChangeCursor ( std::move ( message ) );
+            break;
+
             case eMessageType::CloseEditor:
                 OnShutdown ();
             return;
@@ -218,6 +225,10 @@ void Editor::EventLoop () noexcept
                 OnRecreateSwapchain ();
             break;
 
+            case eMessageType::ReleaseMouse:
+                OnReleaseMouse ();
+            break;
+
             case eMessageType::RunEventLoop:
                 OnRunEvent ();
             break;
@@ -234,6 +245,27 @@ void Editor::EventLoop () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void Editor::OnCaptureMouse () noexcept
+{
+    AV_TRACE ( "Capture mouse" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.CaptureMouse ();
+}
+
+void Editor::OnReleaseMouse () noexcept
+{
+    AV_TRACE ( "Release mouse" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ReleaseMouse ();
+}
+
+void Editor::OnChangeCursor ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Change cursor" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ChangeCursor ( static_cast<eCursor> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
 }
 
 void Editor::OnDPIChanged ( Message &&message ) noexcept
@@ -287,7 +319,6 @@ void Editor::OnRecreateSwapchain () noexcept
     }
 
     _messageQueue.EnqueueBack (
-        Message
         {
             ._type = eMessageType::SwapchainCreated,
             ._params = nullptr,
@@ -304,7 +335,6 @@ void Editor::OnRunEvent () noexcept
     if ( !_stopRendering & _frameComplete ) [[likely]]
     {
         _messageQueue.EnqueueBack (
-            Message
             {
                 ._type = eMessageType::RenderFrame,
                 ._params = nullptr,
@@ -324,7 +354,6 @@ void Editor::OnShutdown () noexcept
     _messageQueue.DequeueEnd ();
 
     _messageQueue.EnqueueBack (
-        Message
         {
             ._type = eMessageType::Shutdown,
             ._params = nullptr,
@@ -370,7 +399,6 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
 void Editor::ScheduleEventLoop () noexcept
 {
     _messageQueue.EnqueueBack (
-        Message
         {
             ._type = eMessageType::RunEventLoop,
             ._params = nullptr,

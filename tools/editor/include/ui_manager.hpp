@@ -18,7 +18,9 @@ namespace editor {
 class UIManager final
 {
     private:
+        size_t                                  _eventID = 0U;
         MessageQueue*                           _messageQueue = nullptr;
+        Widget*                                 _mouseCapture = nullptr;
         std::thread                             _thread {};
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
@@ -41,8 +43,12 @@ class UIManager final
     private:
         void CreateWidgets () noexcept;
         void EventLoop () noexcept;
+        void OnMouseKeyDown ( Message &&message ) noexcept;
+        void OnMouseKeyUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
+        void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
+        void OnStopWidgetCaptureMouse () noexcept;
 };
 
 } // namespace editor

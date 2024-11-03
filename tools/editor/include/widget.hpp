@@ -2,6 +2,7 @@
 #define EDITOR_WIDGET_HPP
 
 
+#include "mouse_key_event.hpp"
 #include "mouse_move_event.hpp"
 #include <pbr/font_storage.hpp>
 #include <pbr/ui_element.hpp>
@@ -31,8 +32,11 @@ class Widget
 
         virtual ~Widget () = default;
 
-        virtual void OnButtonDown () noexcept;
-        virtual void OnButtonUp () noexcept;
+        virtual void OnKeyDown ( eKey key ) noexcept;
+        virtual void OnKeyUp ( eKey key ) noexcept;
+
+        virtual void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept;
+        virtual void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
         virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;
 
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,

@@ -1,4 +1,4 @@
-// version 1.11
+// version 1.12
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -269,10 +269,25 @@ namespace {
         static_cast<float32_t> ( red ),
         static_cast<float32_t> ( green ),
         static_cast<float32_t> ( blue ),
-        alpha
+        0.0F
     };
 
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept
+{
+    float32_t const tmp[ 4U ] =
+    {
+        static_cast<float32_t> ( red ),
+        static_cast<float32_t> ( green ),
+        static_cast<float32_t> ( blue ),
+        0.0F
+    };
+
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+    _data[ 3U ] = alpha;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

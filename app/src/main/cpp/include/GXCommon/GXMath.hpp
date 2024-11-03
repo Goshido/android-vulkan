@@ -1,4 +1,4 @@
-// version 1.86
+// version 1.87
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -343,6 +343,18 @@ struct [[maybe_unused]] GXColorRGB final
         // NOTHING
     }
 
+    [[maybe_unused]] explicit constexpr GXColorRGB ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept:
+        _data
+        {
+            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( red ),
+            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( green ),
+            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( blue ),
+            alpha
+        }
+    {
+        // NOTHING
+    }
+
     [[maybe_unused]] explicit GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
     [[maybe_unused]] explicit GXColorRGB ( GXColorHSV const &color ) noexcept;
 
@@ -367,6 +379,7 @@ struct [[maybe_unused]] GXColorRGB final
     [[maybe_unused, nodiscard]] GXFloat GetAlpha () const noexcept;
 
     [[maybe_unused]] GXVoid From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
+    [[maybe_unused]] GXVoid From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept;
     [[maybe_unused]] GXVoid From ( GXColorHSV const &color ) noexcept;
 
     // It is assumed that current color space is sRGB.

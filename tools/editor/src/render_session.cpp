@@ -64,7 +64,6 @@ HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
             CreateMesh ( submitMutex );
 
             messageQueue.EnqueueBack (
-                Message
                 {
                     ._type = eMessageType::HelloTriangleReady,
                     ._params = this,
@@ -634,7 +633,6 @@ void RenderSession::EventLoop () noexcept
     if ( _broken )
     {
         messageQueue.EnqueueBack (
-            Message
             {
                 ._type = eMessageType::CloseEditor,
                 ._params = nullptr,
@@ -916,7 +914,6 @@ void RenderSession::OnRenderFrame () noexcept
     GX_ENABLE_WARNING ( 4061 )
 
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::FrameComplete,
             ._params = nullptr,
@@ -1080,7 +1077,6 @@ bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) 
 void RenderSession::NotifyRecreateSwapchain () const noexcept
 {
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::RecreateSwapchain,
             ._params = nullptr,
@@ -1089,7 +1085,6 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
     );
 
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::FrameComplete,
             ._params = nullptr,

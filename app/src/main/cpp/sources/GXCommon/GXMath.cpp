@@ -1,4 +1,4 @@
-// version 1.86
+// version 1.87
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -424,14 +424,14 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - does not initialize "_data"
 [[maybe_unused]] GXColorRGB::GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     From ( red, green, blue, alpha );
 }
 
-// NOLINTNEXTLINE
-[[maybe_unused]] GXColorRGB::GXColorRGB ( const GXColorHSV &color ) noexcept
+// NOLINTNEXTLINE - does not initialize "_data"
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorHSV const &color ) noexcept
 {
     From ( color );
 }

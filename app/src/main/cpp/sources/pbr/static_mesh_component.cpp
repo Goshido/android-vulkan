@@ -59,10 +59,30 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     VkFence const* fences
 ) noexcept:
     RenderableComponent ( ClassID::StaticMesh ),
-    _color0 ( desc._color0._red, desc._color0._green, desc._color0._blue, desc._color0._alpha ),
-    _color1 ( desc._color1._red, desc._color1._green, desc._color1._blue, desc._color1._alpha ),
-    _color2 ( desc._color2._red, desc._color2._green, desc._color2._blue, desc._color2._alpha ),
-    _emission ( desc._color3._red, desc._color3._green, desc._color3._blue, desc._color3._alpha )
+
+    _color0 ( desc._color0._red,
+        desc._color0._green,
+        desc._color0._blue,
+        static_cast<float> ( desc._color0._alpha ) * GX_MATH_UNORM_FACTOR
+    ),
+
+    _color1 ( desc._color1._red,
+        desc._color1._green,
+        desc._color1._blue,
+        static_cast<float> ( desc._color1._alpha ) * GX_MATH_UNORM_FACTOR
+    ),
+
+    _color2 ( desc._color2._red,
+        desc._color2._green,
+        desc._color2._blue,
+        static_cast<float> ( desc._color2._alpha ) * GX_MATH_UNORM_FACTOR
+    ),
+
+    _emission ( desc._color3._red,
+        desc._color3._green,
+        desc._color3._blue,
+        static_cast<float> ( desc._color3._alpha ) * GX_MATH_UNORM_FACTOR
+    )
 {
     // Sanity checks.
     static_assert ( sizeof ( StaticMeshComponent::_localMatrix ) == sizeof ( desc._localMatrix ) );

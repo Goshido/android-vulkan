@@ -923,12 +923,15 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
+    <ClInclude Include="include\cursor.hpp" />
     <ClInclude Include="include\editor.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
+    <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
+    <ClInclude Include="include\mouse_key_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
     <ClInclude Include="include\rect.hpp" />

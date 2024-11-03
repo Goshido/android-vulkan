@@ -359,9 +359,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="include\mouse_move_event.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
@@ -466,6 +463,18 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp">
       <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cursor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\keys.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_move_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_key_event.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

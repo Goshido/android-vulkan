@@ -21,14 +21,7 @@ class StippleTest final : public android_vulkan::Game
         RenderSession                           _renderSession {};
         std::unique_ptr<StaticMeshComponent>    _stipple {};
 
-        GXColorRGB                              _stippleColor
-        {
-            static_cast<GXUByte> ( 165U ),
-            static_cast<GXUByte> ( 236U ),
-            static_cast<GXUByte> ( 49U ),
-            static_cast<GXUByte> ( 255U )
-        };
-
+        GXColorRGB                              _stippleColor { 165U, 236U, 49U, 1.0F };
         float                                   _stippleAnimation = 0.0F;
 
     public:

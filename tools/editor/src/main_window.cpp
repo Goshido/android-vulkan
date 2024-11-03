@@ -1,10 +1,13 @@
 #include <precompiled_headers.hpp>
+#include <cursor.hpp>
 #include <logger.hpp>
 #include <main_window.hpp>
+#include <mouse_key_event.hpp>
 #include <mouse_move_event.hpp>
 #include <os_utils.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace editor {
@@ -48,6 +51,8 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
     _messageQueue = &messageQueue;
     HMODULE const module = GetModuleHandleA ( nullptr );
     constexpr int exeIconResourceID = 1;
+
+    CreateCursors ();
 
     WNDCLASSA const wndClass
     {
@@ -145,6 +150,21 @@ void MainWindow::Execute () noexcept
     }
 }
 
+void MainWindow::CaptureMouse () noexcept
+{
+    SetCapture ( _hwnd );
+}
+
+void MainWindow::ReleaseMouse () noexcept
+{
+    ReleaseCapture ();
+}
+
+void MainWindow::ChangeCursor ( eCursor cursor ) noexcept
+{
+    SetCursor ( _cursors.find ( cursor )->second );
+}
+
 float MainWindow::GetDPI () const noexcept
 {
     return static_cast<float> ( GetDpiForWindow ( _hwnd ) );
@@ -160,7 +180,6 @@ void MainWindow::OnClose () noexcept
     AV_TRACE ( "Main window: close" )
 
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::CloseEditor,
             ._params = nullptr,
@@ -191,7 +210,6 @@ void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
     AV_TRACE ( "Main window: DPI changed" )
 
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::DPIChanged,
             ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) ),
@@ -215,17 +233,125 @@ void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
+void MainWindow::OnLButtonDown ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyDown,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::LeftMouseButton
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void MainWindow::OnLButtonUp ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyUp,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::LeftMouseButton
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void MainWindow::OnMButtonDown ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyDown,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::MiddleMouseButton
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void MainWindow::OnMButtonUp ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyUp,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::MiddleMouseButton
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
 void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::MouseMoved,
 
             ._params = new MouseMoveEvent
             {
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) )
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._eventID = ++_mouseMoveEventID
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void MainWindow::OnRButtonDown ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyDown,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::RightMouseButton
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void MainWindow::OnRButtonUp ( LPARAM lParam ) noexcept
+{
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::MouseKeyUp,
+
+            ._params = new MouseKeyEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::RightMouseButton
             },
 
             ._serialNumber = 0U
@@ -238,12 +364,54 @@ void MainWindow::OnSize ( WPARAM wParam ) noexcept
     AV_TRACE ( "Main window: size" )
 
     _messageQueue->EnqueueBack (
-        Message
         {
             ._type = eMessageType::WindowVisibilityChanged,
             ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
             ._serialNumber = 0U
         }
+    );
+}
+
+void MainWindow::CreateCursors () noexcept
+{
+    AV_TRACE ( "Main window: create cursors" )
+
+    constexpr auto flags = static_cast<UINT> ( AV_VK_FLAG ( LR_SHARED ) | AV_VK_FLAG ( LR_DEFAULTSIZE ) );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::Arrow,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::NorthSouth,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZENS, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::WestEast,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZEWE, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::Cross,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZEALL, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::NorthWestSouthEast,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZENWSE, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::NorthEastSouthWest,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZENESW, IMAGE_CURSOR, 0, 0, flags ) )
+        )
     );
 }
 
@@ -393,9 +561,33 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
             mainWindow.OnGetMinMaxInfo ( lParam );
         return 0;
 
+        case WM_LBUTTONDOWN:
+            mainWindow.OnLButtonDown ( lParam );
+        return 0;
+
+        case WM_LBUTTONUP:
+            mainWindow.OnLButtonUp ( lParam );
+        return 0;
+
+        case WM_MBUTTONDOWN:
+            mainWindow.OnMButtonDown ( lParam );
+        return 0;
+
+        case WM_MBUTTONUP:
+            mainWindow.OnMButtonUp ( lParam );
+        return 0;
+
         case WM_MOUSEMOVE:
             mainWindow.OnMouseMove ( lParam );
         break;
+
+        case WM_RBUTTONDOWN:
+            mainWindow.OnRButtonDown ( lParam );
+        return 0;
+
+        case WM_RBUTTONUP:
+            mainWindow.OnRButtonUp ( lParam );
+        return 0;
 
         case WM_SIZE:
             mainWindow.OnSize ( wParam );

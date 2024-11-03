@@ -17,6 +17,7 @@ struct MouseMoveEvent final
 {
     int32_t     _x = 0;
     int32_t     _y = 0;
+    size_t      _eventID = 0U;
 };
 
 } // namespace editor

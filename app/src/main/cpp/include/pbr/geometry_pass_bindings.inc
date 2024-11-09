@@ -6,7 +6,6 @@
 #define IN_SLOT_UV                  1
 #define IN_SLOT_NORMAL              2
 #define IN_SLOT_TANGENT             3
-#define IN_SLOT_BITANGENT           4
 
 #define ATT_SLOT_UV                 0
 #define ATT_SLOT_NORMAL_VIEW        1

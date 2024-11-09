@@ -1,4 +1,4 @@
-// version 1.88
+// version 1.89
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -852,21 +852,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    GXFloat const solutionFactorAlpha = pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    auto const &m = pureRotationMatrix._m;
 
-    GXFloat const solutionFactorBetta = pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorGamma = -pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorYotta = -pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorGamma = -m[ 0U ][ 0U ] + m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorYotta = -m[ 0U ][ 0U ] - m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
 
     GXUByte solution;
 
@@ -899,47 +890,47 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         case SOLUTION_ALPHA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
             _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
         case SOLUTION_BETTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
             _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
         case SOLUTION_GAMMA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
             _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
         case SOLUTION_YOTTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
             _data[ 3U ] = phi;
         }
         break;
@@ -955,21 +946,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    GXFloat const solutionFactorAlpha = pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    auto const &m = pureRotationMatrix._m;
 
-    GXFloat const solutionFactorBetta = pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorGamma = -pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorYotta = -pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorGamma = -m[ 0U ][ 0U ] + m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorYotta = -m[ 0U ][ 0U ] - m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
 
     GXUByte solution;
 
@@ -1002,47 +984,47 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         case SOLUTION_ALPHA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
             _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
         case SOLUTION_BETTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
             _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
         case SOLUTION_GAMMA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
             _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
         case SOLUTION_YOTTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
             _data[ 3U ] = phi;
         }
         break;

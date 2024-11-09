@@ -64,7 +64,18 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ 0U ];
             GXMat4 const &local = geometryData._local;
 
-            objectData._localView.Multiply ( local, view );
+            GXMat4 localView {};
+            localView.Multiply ( local, view );
+            auto &x = *reinterpret_cast<GXVec3*> ( &localView );
+            auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+            x.Normalize ();
+
+            auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+            y.Normalize ();
+            z.Normalize ();
+
+            objectData._localViewQuat.FromFast ( localView );
+
             objectData._localViewProjection.Multiply ( local, viewProjection );
             objectData._color0 = geometryData._color0;
             objectData._color1 = geometryData._color1;
@@ -90,7 +101,18 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ instanceIndex++ ];
                 GXMat4 const &local = opaqueData._local;
 
-                objectData._localView.Multiply ( local, view );
+                GXMat4 localView {};
+                localView.Multiply ( local, view );
+                auto &x = *reinterpret_cast<GXVec3*> ( &localView );
+                auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+                x.Normalize ();
+
+                auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+                y.Normalize ();
+                z.Normalize ();
+
+                objectData._localViewQuat.FromFast ( localView );
+
                 objectData._localViewProjection.Multiply ( local, viewProjection );
                 objectData._color0 = opaqueData._color0;
                 objectData._color1 = opaqueData._color1;

@@ -11,7 +11,7 @@ constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 
 } // end of anonymous namespace
 
@@ -536,14 +536,6 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
-    };
-
-    attributes[ 4U ] =
-    {
-        .location = IN_SLOT_BITANGENT,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) )
     };
 
     info =

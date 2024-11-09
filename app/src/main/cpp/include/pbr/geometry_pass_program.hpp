@@ -19,7 +19,7 @@ class GeometryPassProgram : public GraphicsProgram
 
         struct ObjectData final
         {
-            GXMat4                                  _localView;
+            GXQuat                                  _localViewQuat;
             GXMat4                                  _localViewProjection;
             GXColorRGB                              _color0;
             GXColorRGB                              _color1;

@@ -68,7 +68,6 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
         for ( auto const &[mesh, geometryData] : geometryCall.GetUniqueList () )
         {
             GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ 0U ];
-            GXMat4 const &local = geometryData._local;
             auto &uniqueGeometryData = const_cast<GeometryData &> ( geometryData );
 
             if ( !frustum.IsVisible ( uniqueGeometryData._worldBounds ) )
@@ -78,7 +77,21 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             }
 
             uniqueGeometryData._isVisible = true;
-            objectData._localView.Multiply ( local, view );
+            GXMat4 const &local = geometryData._local;
+
+            GXMat4 localView {};
+            localView.Multiply ( local, view );
+
+            auto &x = *reinterpret_cast<GXVec3*> ( &localView );
+            auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+            x.Normalize ();
+
+            auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+            y.Normalize ();
+            z.Normalize ();
+
+            objectData._localViewQuat.FromFast ( localView );
+
             objectData._localViewProjection.Multiply ( local, viewProjection );
             objectData._color0 = geometryData._color0;
             objectData._color1 = geometryData._color1;
@@ -113,7 +126,18 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 GXMat4 const &local = opaqueData._local;
                 batchGeometryData._isVisible = true;
 
-                objectData._localView.Multiply ( local, view );
+                GXMat4 localView {};
+                localView.Multiply ( local, view );
+                auto &x = *reinterpret_cast<GXVec3*> ( &localView );
+                auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+                x.Normalize ();
+
+                auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+                y.Normalize ();
+                z.Normalize ();
+
+                objectData._localViewQuat.FromFast ( localView );
+
                 objectData._localViewProjection.Multiply ( local, viewProjection );
                 objectData._color0 = opaqueData._color0;
                 objectData._color1 = opaqueData._color1;

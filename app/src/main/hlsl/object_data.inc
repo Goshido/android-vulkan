@@ -8,7 +8,7 @@
 
 struct ObjectData
 {
-    float32_t4x4    _localView;
+    float32_t4      _localViewQuat;
     float32_t4x4    _localViewProjection;
     float32_t4      _color0;
     float32_t4      _color1;
@@ -19,9 +19,9 @@ struct ObjectData
 [[vk::binding ( BIND_INSTANCE_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceData:       register ( b0 )
 {
-    // sizeof ( ObjectData ) = 192 bytes
-    // sizeof ( InstanceData ) = 8064 bytes, less than minimum "Supported Limit"
-    // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
+    // sizeof ( ObjectData ) = 144 bytes
+    // sizeof ( InstanceData ) = 8064 bytes, less than minimum "Supported Limit" of maxUniformBufferRange
+    // see https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap47.html
     ObjectData      g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
 }
 

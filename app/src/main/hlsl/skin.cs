@@ -60,27 +60,32 @@ float32_t4x3 ExtractBoneTransform ( in uint32_t boneIdx )
 
     // Note 'T' is just notation for variable separation. Nothing more.
     float32_t4 const rXrTabc2 = rabc.x * float32_t4 ( rabc.x, abc2 );
-    float32_t3 const aXaTbc2 = rabc.y * float32_t3 ( rabc.y, abc2.yz );
+    float32_t4 const caaaXcaTbc2 = float32_t4 ( rabc.wyyy ) * float32_t4 ( rabc.wy, abc2.yz );
     float32_t2 const bXbTc2 = rabc.z * float32_t2 ( rabc.z, abc2.z );
-    float32_t const cXc = rabc.w * rabc.w;
+
+    float32_t4 const left0 = float32_t4 ( rXrTabc2.w, caaaXcaTbc2.w, caaaXcaTbc2.z, rXrTabc2.y );
+    float32_t4 const right0 = float32_t4 ( caaaXcaTbc2.z, -rXrTabc2.z, -rXrTabc2.w, bXbTc2.y );
+
+    float32_t2 const tmp1 = float32_t2 ( rXrTabc2.z, bXbTc2.y ) + float32_t2 ( caaaXcaTbc2.w, -rXrTabc2.y );
+    float32_t4 const tmp0 = left0 + right0;
 
     // Note quaternion unpacks to matrix with column-major like behaviour.
     return float32_t4x3
     (
         // First row.
-        rXrTabc2.x + aXaTbc2.x - bXbTc2.x - cXc,
-        rXrTabc2.w + aXaTbc2.y,
-        aXaTbc2.z - rXrTabc2.z,
+        rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x,
+        tmp0.x,
+        tmp0.y,
 
         // Second row.
-        aXaTbc2.y - rXrTabc2.w,
-        rXrTabc2.x - aXaTbc2.x + bXbTc2.x - cXc,
-        rXrTabc2.y + bXbTc2.y,
+        tmp0.z,
+        rXrTabc2.x - caaaXcaTbc2.y + bXbTc2.x - caaaXcaTbc2.x,
+        tmp0.w,
 
         // Third row.
-        rXrTabc2.z + aXaTbc2.z,
-        bXbTc2.y - rXrTabc2.y,
-        rXrTabc2.x - aXaTbc2.x - bXbTc2.x + cXc,
+        tmp1.x,
+        tmp1.y,
+        rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x,
 
         // Forth row.
         joint._location.x,
@@ -134,7 +139,6 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
     skin._vertex = mul ( float32_t4 ( reference._vertex, 1.0F ), skinTransform );
     skin._normal = mul ( reference._normal, orientation );
     skin._tangent = mul ( reference._tangent, orientation );
-    skin._bitangent = mul ( reference._bitangent, orientation );
 
     g_skinMesh[ idx ] = skin;
 }

@@ -1125,7 +1125,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
     if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
         return VK_FALSE;
 
-    auto const encodeObjects = [] ( std::string &dst,
+    constexpr auto encodeObjects = [] ( std::string &dst,
         uint32_t count,
         VkDebugUtilsObjectNameInfoEXT const* objects
     ) noexcept -> char const* {
@@ -1144,7 +1144,7 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
         return dst.c_str ();
     };
 
-    auto const encodeLabel = [] ( std::string &dst,
+    constexpr auto encodeLabel = [] ( std::string &dst,
         uint32_t count,
         VkDebugUtilsLabelEXT const* labels
     ) noexcept -> char const* {
@@ -1189,7 +1189,7 @@ message: %s
         g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
     );
 
-    auto const prettyMessage = [] ( char const* message ) noexcept -> char const* {
+    constexpr auto prettyMessage = [] ( char const* message ) noexcept -> char const* {
         char const* cases[] = { message, "N/A" };
         return cases[ static_cast<size_t> ( message == nullptr ) ];
     };

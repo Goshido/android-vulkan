@@ -402,7 +402,7 @@ int ScriptEngine::OnRequire ( lua_State* state )
 
     constexpr char separator = '>';
 
-    auto loader = [] ( lua_State* state ) -> int {
+    constexpr auto loader = [] ( lua_State* state ) -> int {
         if ( int const argc = lua_gettop ( state ); argc != 2 )
         {
             android_vulkan::LogError (

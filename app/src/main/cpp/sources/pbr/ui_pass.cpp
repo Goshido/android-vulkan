@@ -170,7 +170,7 @@ void ImageStorage::OnDestroyDevice () noexcept
         _commandPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &v ) noexcept {
+    constexpr auto clean = [] ( auto &v ) noexcept {
         v.clear ();
         v.shrink_to_fit ();
     };
@@ -563,7 +563,7 @@ void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
 {
     _layout.Destroy ( device );
 
-    auto const clear = [] ( auto &v ) noexcept {
+    constexpr auto clear = [] ( auto &v ) noexcept {
         v.clear ();
         v.shrink_to_fit ();
     };

@@ -815,7 +815,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
 
-    auto const isMipmapImpossible = [] ( uint32_t width, uint32_t height ) noexcept -> bool {
+    constexpr auto isMipmapImpossible = [] ( uint32_t width, uint32_t height ) noexcept -> bool {
         return width + height < 3U;
     };
 
@@ -1093,7 +1093,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     pixelData.resize ( size );
     uint8_t* dst = pixelData.data ();
 
-    auto expander = [] ( uint32_t* dst,
+    constexpr auto expander = [] ( uint32_t* dst,
         size_t dstRowSkipPixels,
         uint32_t const* nonDstMemory,
         uint8_t const* src,

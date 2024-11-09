@@ -65,7 +65,7 @@ void ScriptableGXVec4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXVec4::Destroy () noexcept
 {
-    auto free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

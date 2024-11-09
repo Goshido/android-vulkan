@@ -153,7 +153,7 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXMat4::Destroy () noexcept
 {
-    auto const free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

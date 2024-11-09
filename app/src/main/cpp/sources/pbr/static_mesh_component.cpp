@@ -427,7 +427,7 @@ void StaticMeshComponent::Destroy () noexcept
         _commandPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &v ) noexcept {
+    constexpr auto clean = [] ( auto &v ) noexcept {
         v.clear ();
         v.shrink_to_fit ();
     };

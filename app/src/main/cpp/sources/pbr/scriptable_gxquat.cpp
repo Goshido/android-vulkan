@@ -96,7 +96,7 @@ void ScriptableGXQuat::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXQuat::Destroy () noexcept
 {
-    auto free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

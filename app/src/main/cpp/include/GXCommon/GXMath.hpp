@@ -1,4 +1,4 @@
-// version 1.87
+// version 1.88
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP

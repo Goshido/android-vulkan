@@ -69,8 +69,7 @@ target_include_directories ( html-validator
     ../../app/src/main/cpp/include
 )
 
-target_compile_options ( html-validator
-    PRIVATE
+target_compile_options ( html-validator PRIVATE
     /Wall
     /WX
     /wd4820
@@ -81,9 +80,13 @@ target_compile_options ( html-validator
     /wd5045
 )
 
-target_compile_definitions ( html-validator
-    PRIVATE
+target_compile_definitions ( html-validator PRIVATE
     -DNOMINMAX
+)
+
+# Precompiled headers
+target_precompile_headers ( html-validator PRIVATE
+    ../../app/src/main/cpp/include/precompiled_headers.hpp
 )
 
 # See https://cmake.org/cmake/help/v3.22/prop_tgt/MSVC_RUNTIME_LIBRARY.html

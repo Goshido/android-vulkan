@@ -158,7 +158,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     _borderSize.Sum ( _canvasSize, padding );
 
-    auto const sizeCheck = [] ( GXVec2 const &size ) noexcept -> bool {
+    constexpr auto sizeCheck = [] ( GXVec2 const &size ) noexcept -> bool {
         return ( size._data[ 0U ] > 0.0F ) & ( size._data[ 1U ] > 0.0F );
     };
 

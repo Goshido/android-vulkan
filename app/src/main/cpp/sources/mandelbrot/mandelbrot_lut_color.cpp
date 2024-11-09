@@ -742,7 +742,7 @@ void MandelbrotLUTColor::InitLUTSamples ( uint8_t* samples ) noexcept
         constexpr float hueOffsetBlue = 4.18879F;
         constexpr float sampleToAngle = twoPi / static_cast<float> ( LUT_SAMPLE_COUNT );
 
-        auto evaluator = [] ( float angle ) -> uint8_t {
+        constexpr auto evaluator = [] ( float angle ) -> uint8_t {
             float const n = std::sin ( angle ) * 0.5F + 0.5F;
             return static_cast<uint8_t> ( std::lround ( n * 255.0F ) );
         };

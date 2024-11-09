@@ -1,4 +1,4 @@
-// version 1.0
+// version 1.1
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarnings.h instead.
 
@@ -14,3 +14,6 @@
 #define GX_DISABLE_COMMON_WARNINGS \
     GX_SAVE_WARNING_STATE \
     GX_DISABLE_WARNING ( -Wshadow )
+
+#define GX_UNUSED_BEGIN
+#define GX_UNUSED_END

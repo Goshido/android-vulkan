@@ -54,7 +54,7 @@ R"__(pbr::RenderSessionStats::PrintStats:
     char reflectionLocalCull[ capacity ];
     char reflectionGlobalCull[ capacity ];
 
-    auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
+    constexpr auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
         if ( !submitCount )
         {
             constexpr char const notApplicable[] = "   N/A";

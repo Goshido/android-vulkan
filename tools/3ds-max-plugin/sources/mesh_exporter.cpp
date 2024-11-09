@@ -1,16 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <mesh_exporter.hpp>
 #include <result_checker.hpp>
 #include <android_vulkan_sdk/mesh2.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <maxapi.h>
-#include <unordered_map>
-#include <vector>
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {
@@ -54,7 +46,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
     std::vector<android_vulkan::Mesh2Vertex> vertices ( indexCount );
     android_vulkan::Mesh2Vertex* v = vertices.data ();
 
-    auto const uvToVec2 = [] ( Point3 p3, android_vulkan::Vec2 &v2 ) noexcept {
+    constexpr auto uvToVec2 = [] ( Point3 p3, android_vulkan::Vec2 &v2 ) noexcept {
         v2[ 0U ] = p3.x;
 
         // [2023/09/16] For some reason 3ds Max 2023 SDK completely ignores 'V' direction in UserCoord.
@@ -62,7 +54,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
         v2[ 1U ] = 1.0F - p3.y;
     };
 
-    auto const p3ToVec3 = [] ( Point3 p3, android_vulkan::Vec3 &v3 ) noexcept {
+    constexpr auto p3ToVec3 = [] ( Point3 p3, android_vulkan::Vec3 &v3 ) noexcept {
         v3[ 0U ] = p3.x;
         v3[ 1U ] = p3.y;
         v3[ 2U ] = p3.z;

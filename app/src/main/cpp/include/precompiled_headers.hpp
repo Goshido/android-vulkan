@@ -11,8 +11,10 @@ GX_DISABLE_COMMON_WARNINGS
 #include <atomic>
 #include <bit>
 #include <cassert>
+#include <cfloat>
 #include <chrono>
 #include <cinttypes>
+#include <climits>
 #include <cmath>
 #include <cstdarg>
 #include <cstddef>
@@ -22,10 +24,8 @@ GX_DISABLE_COMMON_WARNINGS
 #include <ctime>
 #include <deque>
 #include <filesystem>
-#include <float.h>
 #include <forward_list>
 #include <fstream>
-#include <limits.h>
 #include <list>
 #include <map>
 #include <memory>
@@ -34,25 +34,49 @@ GX_DISABLE_COMMON_WARNINGS
 #include <regex>
 #include <set>
 #include <span>
-#include <stdint.h>
 #include <string_view>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#ifdef VK_NO_PROTOTYPES
+
 #include <vulkan/vulkan.h>
+
+#endif // VK_NO_PROTOTYPES
+
+#ifdef AV_3DS_MAX
+
+#include <IGame/IGame.h>
+#include <IGame/IGameModifier.h>
+#include <IGame/IGameObject.h>
+#include <iparamb2.h>
+#include <maxapi.h>
+#include <plugapi.h>
+#include <plugin.h>
+#include <utilapi.h>
+
+#endif // AV_3DS_MAX
 
 #ifdef _WIN64
 
 #include <Windows.h>
 #include <windowsx.h>
 #include <DbgHelp.h>
-#include <WinPixEventRuntime/pix3.h>
+#include <Shobjidl.h>
+#include <shtypes.h>
 #include <strsafe.h>
 #include <tchar.h>
 
 #endif // _WIN64
+
+#ifdef AV_PIX
+
+#include <WinPixEventRuntime/pix3.h>
+
+#endif // AV_PIX
 
 GX_RESTORE_WARNING_STATE
 

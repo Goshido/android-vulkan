@@ -148,7 +148,7 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
 {
     GXVec3 move = _moveSpeed;
 
-    auto deadZoneHandler = [] ( float value ) -> float {
+    constexpr auto deadZoneHandler = [] ( float value ) -> float {
         if ( std::abs ( value ) < STICK_DEAD_ZONE )
             return 0.0F;
 

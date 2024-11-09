@@ -28,6 +28,12 @@
     <Filter Include="Header Files\android_vulkan_sdk">
       <UniqueIdentifier>{4112004a-e10a-4415-8054-521bedc7401b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{ab755df2-7ca1-4819-8d68-4cc7fdddadbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{cee983a9-887b-4435-b162-8b16fec4c2f0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\plugin.hpp">
@@ -87,6 +93,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp">
       <Filter>Header Files\android_vulkan_sdk</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\class_desc.cpp">
@@ -127,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="sources\bone_data_exporter.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

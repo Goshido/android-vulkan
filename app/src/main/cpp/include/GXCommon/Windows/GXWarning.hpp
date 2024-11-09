@@ -1,4 +1,4 @@
-// version 1.6
+// version 1.7
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -40,3 +40,6 @@
     GX_DISABLE_WARNING ( 5264 )     /* 'variable-name': 'const' variable is not used */ \
     GX_DISABLE_WARNING ( 5266 )     /* 'const' qualifier on return type has no effect */ \
     GX_DISABLE_WARNING ( 5267 )     /* definition of implicit copy constructor for 'type' is deprecated because it has a user-provided assignment operator */
+
+#define GX_UNUSED_BEGIN GX_DISABLE_WARNING ( 5264 )
+#define GX_UNUSED_END GX_ENABLE_WARNING ( 5264 )

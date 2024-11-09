@@ -84,7 +84,7 @@ bool GeometryPassMaterial::operator < ( GeometryPassMaterial const &other ) cons
     constexpr int8_t less = -1;
     constexpr int8_t equal = 0;
 
-    auto compare = [] ( Texture2DRef const &a, Texture2DRef const &b ) noexcept -> int8_t {
+    constexpr auto compare = [] ( Texture2DRef const &a, Texture2DRef const &b ) noexcept -> int8_t {
         constexpr int8_t stringCompare = std::numeric_limits<int8_t>::max ();
         constexpr int8_t greater = 1;
         constexpr int8_t lookupTable[ 4U ] = { stringCompare, less, greater, equal };

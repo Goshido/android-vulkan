@@ -369,7 +369,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
     auto segment = value.substr ( 0U, hslPrefixSize );
     size_t prefixSize = hslPrefixSize;
 
-    auto const compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
+    constexpr auto compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
         return right == static_cast<char32_t> ( std::tolower ( static_cast<int> ( left ) ) );
     };
 
@@ -516,7 +516,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
     auto segment = value.substr ( 0U, rgbPrefixSize );
     size_t prefixSize = rgbPrefixSize;
 
-    auto const compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
+    constexpr auto compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
         return right == static_cast<char32_t> ( std::tolower ( static_cast<int> ( left ) ) );
     };
 
@@ -785,7 +785,7 @@ ColorPropertyChecker::ParseResult ColorPropertyChecker::ParseParameter ( size_t 
 
 float ColorPropertyChecker::ToComponent ( char32_t c ) noexcept
 {
-    auto const conv = [] ( uint8_t v ) noexcept -> float {
+    constexpr auto conv = [] ( uint8_t v ) noexcept -> float {
         constexpr float const lut[] =
         {
             0.0F,

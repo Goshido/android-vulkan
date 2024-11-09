@@ -181,7 +181,7 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulka
 
 VkExtent2D ExposurePass::AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept
 {
-    auto const adjust = [] ( uint32_t size ) constexpr -> uint32_t {
+    constexpr auto adjust = [] ( uint32_t size ) constexpr -> uint32_t {
         constexpr uint32_t blockSize64Shift = 6U;
         constexpr uint32_t roundUP = ( 1U << blockSize64Shift ) - 1U;
 

@@ -105,7 +105,7 @@ void Camera::Update ( float deltaTime ) noexcept
     GXVec2 angular = _angularSpeed;
     GXVec3 move = _moveSpeed;
 
-    auto deadZoneHandler = [] ( float value ) -> float {
+    constexpr auto deadZoneHandler = [] ( float value ) -> float {
         if ( std::abs ( value ) < STICK_DEAD_ZONE )
             return 0.0F;
 

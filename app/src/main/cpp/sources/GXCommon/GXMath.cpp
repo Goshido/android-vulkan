@@ -1,4 +1,4 @@
-// version 1.87
+// version 1.88
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -2106,7 +2106,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._max._data[ 1U ], bounds._max._data[ 2U ] );
     flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._min._data[ 1U ], bounds._max._data[ 2U ] );
 
-    return flags == 0;
+    return flags == 0U;
 }
 
 [[maybe_unused]] GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept

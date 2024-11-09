@@ -581,7 +581,7 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
     android_vulkan::Shape &shapeA = *_shapeBoxes[ 0U ];
     android_vulkan::Shape &shapeB = *_shapeBoxes[ 1U ];
 
-    auto const setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
+    constexpr auto setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
         // NOLINTNEXTLINE - downcast.
         auto &boxShape = static_cast<android_vulkan::ShapeBox &> ( shape );
 

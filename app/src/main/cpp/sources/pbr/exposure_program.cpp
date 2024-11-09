@@ -99,7 +99,7 @@ void ExposureProgram::GetMetaInfo ( VkExtent3D &dispatch,
 
     mipChainResolution = r;
 
-    auto const reduce = [] ( uint32_t v ) noexcept -> uint32_t {
+    constexpr auto reduce = [] ( uint32_t v ) noexcept -> uint32_t {
         return std::max ( 1U, v >> 1U );
     };
 

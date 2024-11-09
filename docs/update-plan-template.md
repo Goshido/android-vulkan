@@ -75,6 +75,7 @@
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
 - ❌ Set starting project as PBR
+- ❌ Set VSYNC on
 - ❌ Remove old binaries
 - ❌ Create archive tag with direct link to issue
 

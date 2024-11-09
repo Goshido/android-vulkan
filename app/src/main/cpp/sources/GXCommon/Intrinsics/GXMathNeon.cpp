@@ -1,4 +1,4 @@
-// version 1.12
+// version 1.13
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -368,6 +368,100 @@ namespace {
     }
 
     vst1q_f32 ( _data, vfmaq_n_f32 ( vmulq_n_f32 ( s, scale[ 0U ] ), temp, scale[ 1U ] ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
+{
+    float32x4_t const rabc = vld1q_f32 ( _data );
+    float32x4_t const rabc2 = vaddq_f32 ( rabc, rabc );
+
+    // Note 'T' is just notation for variable separation. Nothing more.
+    float32x2_t const ra = vget_low_f32 ( rabc );
+    float32x2_t const ar = vext_f32 ( ra, ra, 1 );
+    float32x2_t const bc = vget_high_f32 ( rabc );
+    float32x2_t const rr = vzip1_f32 ( ra, ra );
+    float32x2_t const ca = vext_f32 ( bc, ar, 1 );
+    float32x2_t const cb = vext_f32 ( bc, bc, 1 );
+    float32x2_t const bc2 = vget_high_f32 ( rabc2 );
+
+    float32_t rXabc2Tr[ 4U ];
+    vst1q_f32 ( rXabc2Tr, vmulq_f32 ( vextq_f32 ( rabc2, rabc, 1 ), vcombine_f32 ( rr, rr ) ) );
+
+    float32_t aacaXbc2Tca[ 4U ];
+    vst1q_f32 ( aacaXbc2Tca, vmulq_f32 ( vcombine_f32 ( vzip1_f32 ( ar, ar ), ca ), vcombine_f32 ( bc2, ca ) ) );
+
+    float32_t bXbTc2[ 2U ];
+    vst1_f32 ( bXbTc2, vmul_f32 ( vzip1_f32 ( bc, bc ), vzip2_f32 ( cb, bc2 ) ) );
+
+    float32_t const tmp0[ 4U ] =
+    {
+        rXabc2Tr[ 2U ],
+        aacaXbc2Tca[ 1U ],
+        aacaXbc2Tca[ 0U ],
+        rXabc2Tr[ 0U ]
+    };
+
+    float32_t const tmp1[ 4U ] =
+    {
+        aacaXbc2Tca[ 0U ],
+        -rXabc2Tr[ 1U ],
+        -rXabc2Tr[ 2U ],
+        bXbTc2[ 1U ],
+    };
+
+    float32x4_t const factor0 = vaddq_f32 ( vld1q_f32 ( tmp0 ), vld1q_f32 ( tmp1 ) );
+
+    float32_t const tmp2[ 2U ] =
+    {
+        rXabc2Tr[ 1U ],
+        bXbTc2[ 1U ],
+    };
+
+    float32_t const tmp3[ 2U ] =
+    {
+        aacaXbc2Tca[ 1U ],
+        -rXabc2Tr[ 0U ],
+    };
+
+    float32x2_t const factor1 = vadd_f32 ( vld1_f32 ( tmp2 ), vld1_f32 ( tmp3 ) );
+    constexpr float32_t whatever = 0.0F;
+
+    float32_t const row0[ 2U ] =
+    {
+        whatever,
+        rXabc2Tr[ 3U ] + aacaXbc2Tca[ 3U ] - bXbTc2[ 0U ] - aacaXbc2Tca[ 2U ]
+    };
+
+    float32_t const *vec = v._data;
+
+    float32_t const row1[ 4U ] =
+    {
+        rXabc2Tr[ 3U ] - aacaXbc2Tca[ 3U ] + bXbTc2[ 0U ] - aacaXbc2Tca[ 2U ],
+        whatever,
+        whatever,
+        whatever
+    };
+
+    float32_t *result = out._data;
+    float32x4_t const rawRow0 = vcombine_f32 ( vld1_f32 ( row0 ), vget_low_f32 ( factor0 ) );
+    float32x4_t const alpha0 = vmulq_n_f32 ( vextq_f32 ( rawRow0, rawRow0, 1 ), vec[ 0U ] );
+
+    float32_t const row2[ 2U ] =
+    {
+        rXabc2Tr[ 3U ] - aacaXbc2Tca[ 3U ] - bXbTc2[ 0U ] + aacaXbc2Tca[ 2U ],
+        whatever
+    };
+
+    float32x2_t const sum = vget_high_f32 ( factor0 );
+    float32x4_t const alpha1 = vmulq_n_f32 ( vzip1q_f32 ( vcombine_f32 ( sum, sum ), vld1q_f32 ( row1 ) ), vec[ 1U ] );
+
+    float32x4_t const alpha2 = vmulq_n_f32 ( vcombine_f32 ( factor1, vld1_f32 ( row2 ) ), vec[ 2U ] );
+
+    float32x4_t const beta = vaddq_f32 ( alpha0, alpha1 );
+    float32x4_t const yotta = vaddq_f32 ( beta, alpha2 );
+
+    vst1_f32 ( result, vget_low_f32 ( yotta ) );
+    vst1_lane_s32 ( result + 2U, vget_high_f32 ( yotta ), 0 );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

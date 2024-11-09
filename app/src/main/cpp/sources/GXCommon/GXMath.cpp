@@ -1125,35 +1125,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         ( v._data[ 0U ] * ( ac2 - rb2 ) + v._data[ 1U ] * ( ra2 + bc2 ) + v._data[ 2U ] * ( rr - aa - bb + cc ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
-{
-    GXFloat const rr = _data[ 0U ] * _data[ 0U ];
-    GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
-    GXFloat const rb2 = _data[ 0U ] * _data[ 2U ] * 2.0F;
-    GXFloat const rc2 = _data[ 0U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const aa = _data[ 1U ] * _data[ 1U ];
-    GXFloat const ab2 = _data[ 1U ] * _data[ 2U ] * 2.0F;
-    GXFloat const ac2 = _data[ 1U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const bb = _data[ 2U ] * _data[ 2U ];
-    GXFloat const bc2 = _data[ 2U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const cc = _data[ 3U ] * _data[ 3U ];
-
-    out._data[ 0U ] = v._data[ 0U ] * ( rr + aa - bb - cc ) +
-        v._data[ 1U ] * ( ab2 - rc2 ) +
-        v._data[ 2U ] * ( rb2 + ac2 );
-
-    out._data[ 1U ] = v._data[ 0U ] * ( rc2 + ab2 ) +
-        v._data[ 1U ] * ( rr - aa + bb - cc ) +
-        v._data[ 2U ] * ( bc2 - ra2 );
-
-    out._data[ 2U ] = v._data[ 0U ] * ( ac2 - rb2 ) +
-        v._data[ 1U ] * ( ra2 + bc2 ) +
-        v._data[ 2U ] * ( rr - aa - bb + cc );
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
 // NOLINTNEXTLINE

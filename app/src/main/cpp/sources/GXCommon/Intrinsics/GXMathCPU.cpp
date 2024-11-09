@@ -1,4 +1,4 @@
-// version 1.11
+// version 1.12
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -310,6 +310,35 @@
     _data[ 1U ] = start._data[ 1U ] * scale0 + temp._data[ 1U ] * scale1;
     _data[ 2U ] = start._data[ 2U ] * scale0 + temp._data[ 2U ] * scale1;
     _data[ 3U ] = start._data[ 3U ] * scale0 + temp._data[ 3U ] * scale1;
+}
+
+[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
+{
+    GXFloat const rr = _data[ 0U ] * _data[ 0U ];
+    GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
+    GXFloat const rb2 = _data[ 0U ] * _data[ 2U ] * 2.0F;
+    GXFloat const rc2 = _data[ 0U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const aa = _data[ 1U ] * _data[ 1U ];
+    GXFloat const ab2 = _data[ 1U ] * _data[ 2U ] * 2.0F;
+    GXFloat const ac2 = _data[ 1U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const bb = _data[ 2U ] * _data[ 2U ];
+    GXFloat const bc2 = _data[ 2U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const cc = _data[ 3U ] * _data[ 3U ];
+
+    out._data[ 0U ] = v._data[ 0U ] * ( rr + aa - bb - cc ) +
+        v._data[ 1U ] * ( ab2 - rc2 ) +
+        v._data[ 2U ] * ( rb2 + ac2 );
+
+    out._data[ 1U ] = v._data[ 0U ] * ( rc2 + ab2 ) +
+        v._data[ 1U ] * ( rr - aa + bb - cc ) +
+        v._data[ 2U ] * ( bc2 - ra2 );
+
+    out._data[ 2U ] = v._data[ 0U ] * ( ac2 - rb2 ) +
+        v._data[ 1U ] * ( ra2 + bc2 ) +
+        v._data[ 2U ] * ( rr - aa - bb + cc );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

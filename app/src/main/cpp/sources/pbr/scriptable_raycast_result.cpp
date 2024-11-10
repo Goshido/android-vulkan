@@ -1,8 +1,9 @@
+#include <precompiled_headers.hpp>
+#include <logger.hpp>
 #include <pbr/rigid_body_component.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_raycast_result.hpp>
-#include <logger.hpp>
 
 
 namespace pbr {

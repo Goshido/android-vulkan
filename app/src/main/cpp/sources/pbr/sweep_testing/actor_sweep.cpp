@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sweep_testing/actor_sweep.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/static_mesh_component.hpp>

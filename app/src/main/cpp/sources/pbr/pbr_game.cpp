@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <android_vulkan_sdk/pbr/actor_desc.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <pbr/pbr_game.hpp>

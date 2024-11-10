@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <logger.hpp>
 #include <pbr/href_attribute_checker.hpp>

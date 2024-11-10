@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pcm_streamer_wav.hpp>
 

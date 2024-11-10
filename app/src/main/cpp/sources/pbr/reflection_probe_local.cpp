@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/reflection_probe_local.hpp>
 
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/opaque_subpass.hpp>
 
 
@@ -22,8 +23,8 @@ void OpaqueSubpass::Destroy ( VkDevice device ) noexcept
 }
 
 void OpaqueSubpass::Execute ( VkCommandBuffer commandBuffer,
+    GeometryPool &geometryPool,
     MaterialPool &materialPool,
-    UniformBufferPoolManager &uniformPool,
     RenderSessionStats &renderSessionStats,
     VkDescriptorSet samplerDescriptorSet,
     bool &isSamplerUsed
@@ -40,12 +41,12 @@ void OpaqueSubpass::Execute ( VkCommandBuffer commandBuffer,
         isSamplerUsed = true;
     }
 
-    AppendDrawcalls ( commandBuffer, _program, materialPool, uniformPool, renderSessionStats );
+    AppendDrawcalls ( commandBuffer, _program, geometryPool, materialPool, renderSessionStats );
 }
 
 void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
+    GeometryPool &geometryPool,
     MaterialPool &materialPool,
-    UniformBufferPoolManager &uniformPool,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection
@@ -59,7 +60,9 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     for ( auto const &[material, call] : _sceneData )
         materialPool.Push ( const_cast<GeometryPassMaterial &> ( material ) );
 
-    GeometryPassProgram::InstanceData instanceData {};
+    GeometryPassProgram::InstancePositionData positionData {};
+    GeometryPassProgram::InstanceNormalData normalData {};
+    GeometryPassProgram::InstanceColorData colorData {};
 
     for ( auto const &call : _sceneData )
     {
@@ -67,7 +70,6 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
 
         for ( auto const &[mesh, geometryData] : geometryCall.GetUniqueList () )
         {
-            GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ 0U ];
             auto &uniqueGeometryData = const_cast<GeometryData &> ( geometryData );
 
             if ( !frustum.IsVisible ( uniqueGeometryData._worldBounds ) )
@@ -78,6 +80,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
 
             uniqueGeometryData._isVisible = true;
             GXMat4 const &local = geometryData._local;
+            positionData._localViewProj[ 0U ].Multiply ( local, viewProjection );
 
             GXMat4 localView {};
             localView.Multiply ( local, view );
@@ -90,15 +93,17 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             y.Normalize ();
             z.Normalize ();
 
-            objectData._localViewQuat.FromFast ( localView );
+            normalData._localView[ 0U ].FromFast ( localView );
 
-            objectData._localViewProjection.Multiply ( local, viewProjection );
-            objectData._color0 = geometryData._color0;
-            objectData._color1 = geometryData._color1;
-            objectData._color2 = geometryData._color2;
-            objectData._emission = geometryData._emission;
+            colorData._colorData[ 0U ] =
+            {
+                ._color0 = geometryData._color0,
+                ._color1 = geometryData._color1,
+                ._color2 = geometryData._color2,
+                ._emission = geometryData._emission
+            };
 
-            uniformPool.Push ( commandBuffer, instanceData._instanceData, sizeof ( GeometryPassProgram::ObjectData ) );
+            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, 1U );
         }
 
         for ( auto const &item : geometryCall.GetBatchList () )
@@ -110,7 +115,13 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             {
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
-                    uniformPool.Push ( commandBuffer, instanceData._instanceData, sizeof ( instanceData ) );
+                    geometryPool.Push ( commandBuffer,
+                        positionData,
+                        normalData,
+                        colorData,
+                        PBR_OPAQUE_MAX_INSTANCE_COUNT
+                    );
+
                     instanceIndex = 0U;
                 }
 
@@ -122,8 +133,8 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                     continue;
                 }
 
-                GeometryPassProgram::ObjectData &objectData = instanceData._instanceData[ instanceIndex++ ];
                 GXMat4 const &local = opaqueData._local;
+                positionData._localViewProj[ instanceIndex ].Multiply ( local, viewProjection );
                 batchGeometryData._isVisible = true;
 
                 GXMat4 localView {};
@@ -136,22 +147,21 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 y.Normalize ();
                 z.Normalize ();
 
-                objectData._localViewQuat.FromFast ( localView );
+                normalData._localView[ instanceIndex ].FromFast ( localView );
 
-                objectData._localViewProjection.Multiply ( local, viewProjection );
-                objectData._color0 = opaqueData._color0;
-                objectData._color1 = opaqueData._color1;
-                objectData._color2 = opaqueData._color2;
-                objectData._emission = opaqueData._emission;
+                colorData._colorData[ instanceIndex++ ] =
+                {
+                    ._color0 = opaqueData._color0,
+                    ._color1 = opaqueData._color1,
+                    ._color2 = opaqueData._color2,
+                    ._emission = opaqueData._emission
+                };
             }
 
-            if ( !instanceIndex )
+            if ( !instanceIndex ) [[likely]]
                 continue;
 
-            uniformPool.Push ( commandBuffer,
-                instanceData._instanceData,
-                instanceIndex * sizeof ( GeometryPassProgram::ObjectData )
-            );
+            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, instanceIndex );
         }
     }
 }

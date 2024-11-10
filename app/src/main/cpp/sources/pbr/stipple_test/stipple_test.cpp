@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/stipple_test/stipple_test.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/material_manager.hpp>

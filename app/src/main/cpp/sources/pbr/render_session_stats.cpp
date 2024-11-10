@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/render_session_stats.hpp>
 #include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cstdio>
-#include <memory>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

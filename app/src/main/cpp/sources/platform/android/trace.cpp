@@ -1,14 +1,9 @@
-#ifdef ANDROID_ENABLE_TRACE
+#include <precompiled_headers.hpp>
 
+#ifdef ANDROID_ENABLE_TRACE
 
 #include <trace.hpp>
 #include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <android/trace.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,12 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <file.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <filesystem>
-#include <android/asset_manager.h>
-
-GX_RESTORE_WARNING_STATE
-
 #include <logger.hpp>
 
 

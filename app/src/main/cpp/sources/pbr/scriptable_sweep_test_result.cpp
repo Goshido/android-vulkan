@@ -1,6 +1,7 @@
+#include <precompiled_headers.hpp>
+#include <logger.hpp>
 #include <pbr/scriptable_sweep_test_result.hpp>
 #include <pbr/script_engine.hpp>
-#include <logger.hpp>
 
 
 namespace pbr {

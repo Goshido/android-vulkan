@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light.inc>
 #include <pbr/point_light_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <logger.hpp>
@@ -12,8 +13,6 @@
 #include <pbr/utf8_parser.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <filesystem>
 
 extern "C" {
 

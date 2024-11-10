@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_volume.inc>
 #include <pbr/reflection_local_program.hpp>
 

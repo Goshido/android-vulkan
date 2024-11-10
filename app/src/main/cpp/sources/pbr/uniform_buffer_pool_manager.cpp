@@ -14,25 +14,25 @@ UniformBufferPoolManager::UniformBufferPoolManager ( eUniformPoolSize size, VkPi
 
 VkDescriptorSet UniformBufferPoolManager::Acquire () noexcept
 {
-    VkDescriptorSet set = _descriptorSets[ _uniformReadIndex ];
-    _uniformReadIndex = ( _uniformReadIndex + 1U ) % _descriptorSets.size ();
+    VkDescriptorSet set = _descriptorSets[ _readIndex ];
+    _readIndex = ( _readIndex + 1U ) % _descriptorSets.size ();
     return set;
 }
 
 void UniformBufferPoolManager::Commit () noexcept
 {
-    _uniformBaseIndex = _uniformWriteIndex;
-    _uniformReadIndex = _uniformWriteIndex;
-    _uniformWritten = 0U;
+    _baseIndex = _writeIndex;
+    _readIndex = _writeIndex;
+    _written = 0U;
 }
 
 void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept
 {
     size_t const count = _descriptorSets.size ();
-    size_t const idx = _uniformBaseIndex + _uniformWritten;
+    size_t const idx = _baseIndex + _written;
     size_t const cases[] = { 0U, idx - count };
     size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
-    size_t const available = _uniformWritten - more;
+    size_t const available = _written - more;
 
     VkBufferMemoryBarrier const* barriers = _barriers.data ();
 
@@ -43,13 +43,13 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
         0U,
         nullptr,
         static_cast<uint32_t> ( available ),
-        barriers + _uniformBaseIndex,
+        barriers + _baseIndex,
         0U,
         nullptr
     );
 
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _uniformBaseIndex, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _baseIndex, 0U, nullptr );
 
     if ( more < 1U ) [[unlikely]]
         return;
@@ -73,15 +73,15 @@ void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const*
 {
     _uniformPool.Push ( commandBuffer, item, size );
 
-    VkBufferMemoryBarrier &barrier = _barriers[ _uniformWriteIndex ];
+    VkBufferMemoryBarrier &barrier = _barriers[ _writeIndex ];
     barrier.size = static_cast<VkDeviceSize> ( size );
 
-    _uniformWriteIndex = ( _uniformWriteIndex + 1U ) % _descriptorSets.size ();
+    _writeIndex = ( _writeIndex + 1U ) % _descriptorSets.size ();
 
-    if ( _uniformWriteIndex == 0U )
+    if ( _writeIndex == 0U )
         _uniformPool.Reset ();
 
-    ++_uniformWritten;
+    ++_written;
 }
 
 bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
@@ -125,7 +125,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "%s", name )
 
     _descriptorSets.resize ( setCount, VK_NULL_HANDLE );
-    VkDescriptorSet* descriptorSet = _descriptorSets.data ();
+    VkDescriptorSet* descriptorSets = _descriptorSets.data ();
     std::vector<VkDescriptorSetLayout> const layouts ( setCount, descriptorSetLayout.GetLayout () );
 
     VkDescriptorSetAllocateInfo const allocateInfo
@@ -138,7 +138,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSet ),
+        vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
         "pbr::UniformBufferPoolManager::Init",
         "Can't allocate descriptor sets"
     );
@@ -152,7 +152,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     for ( size_t i = 0U; i < setCount; ++i )
     {
         AV_SET_VULKAN_OBJECT_NAME ( device,
-            descriptorSet[ i ],
+            descriptorSets[ i ],
             VK_OBJECT_TYPE_DESCRIPTOR_SET,
             "%s #%zu",
             name,
@@ -164,32 +164,31 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     // Initialize all immutable constant fields.
 
-    VkDescriptorBufferInfo const uniform
+    constexpr VkDescriptorBufferInfo bufferTemplate
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
-        .range = static_cast<VkDeviceSize> ( itemSize )
+        .range = VK_WHOLE_SIZE
     };
 
-    _bufferInfo.resize ( setCount, uniform );
+    _bufferInfo.resize ( setCount, bufferTemplate );
 
-    VkWriteDescriptorSet const writeSet
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = VK_NULL_HANDLE,
-        .dstBinding = bind,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pImageInfo = nullptr,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
+    _writeSets.resize ( setCount,
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = VK_NULL_HANDLE,
+            .dstBinding = bind,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = nullptr,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        }
+    );
 
-    _writeSets.resize ( setCount, writeSet );
-
-    VkBufferMemoryBarrier const bufferBarrier
+    constexpr VkBufferMemoryBarrier bufferBarrierTemplate
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
@@ -199,10 +198,10 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
-        .size = static_cast<VkDeviceSize> ( itemSize )
+        .size = 0U
     };
 
-    _barriers.resize ( setCount, bufferBarrier );
+    _barriers.resize ( setCount, bufferBarrierTemplate );
 
     for ( size_t i = 0U; i < setCount; ++i )
     {
@@ -213,12 +212,12 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
         _barriers[ i ].buffer = buffer;
 
         VkWriteDescriptorSet &uniformWriteSet = _writeSets[ i ];
-        uniformWriteSet.dstSet = descriptorSet[ i ];
+        uniformWriteSet.dstSet = descriptorSets[ i ];
         uniformWriteSet.pBufferInfo = &bufferInfo;
     }
 
     // Now all what is needed to do is to init "_bufferInfo::buffer". Then to invoke vkUpdateDescriptorSets.
-    _uniformBaseIndex = 0U;
+    _baseIndex = 0U;
     return true;
 }
 

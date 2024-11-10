@@ -1,10 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <gamepad.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <android/keycodes.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,13 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <mandelbrot/mandelbrot_lut_color.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <cmath>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/rigid_body_component.hpp>
 #include <pbr/actor.hpp>
 #include <pbr/coordinate_system.hpp>

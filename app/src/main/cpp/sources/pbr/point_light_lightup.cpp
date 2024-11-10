@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_lightup.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/point_light_descriptor_set_layout.hpp>

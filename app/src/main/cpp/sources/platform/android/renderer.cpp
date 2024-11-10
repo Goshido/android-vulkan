@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <bitwise.hpp>
 #include <core.hpp>
 #include <logger.hpp>

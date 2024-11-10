@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_program.hpp>
 

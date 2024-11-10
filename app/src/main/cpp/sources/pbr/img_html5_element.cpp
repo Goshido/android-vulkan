@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/image_attribute_checker.hpp>
 #include <pbr/img_html5_element.hpp>
 #include <pbr/set_attribute_checker.hpp>

@@ -81,7 +81,7 @@ target_compile_options ( html-validator PRIVATE
 )
 
 target_compile_definitions ( html-validator PRIVATE
-    -DNOMINMAX
+    NOMINMAX
 )
 
 # Precompiled headers

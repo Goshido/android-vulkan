@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <av_assert.hpp>
 #include <core.hpp>

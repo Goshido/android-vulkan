@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/box_stack/box_stack.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/component.hpp>

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_logger.hpp>
 #include <logger.hpp>
 

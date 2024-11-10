@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/bit_field.hpp>
 #include <logger.hpp>
 

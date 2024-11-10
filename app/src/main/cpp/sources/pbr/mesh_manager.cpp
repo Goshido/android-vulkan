@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/mesh_manager.hpp>
 
 
@@ -38,7 +39,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( fileName, renderer, commandBuffer, false, fence ) ) [[unlikely]]
+    if ( !mesh->LoadMeshExt ( fileName, renderer, commandBuffer, false, fence ) ) [[unlikely]]
     {
         mesh = nullptr;
     }

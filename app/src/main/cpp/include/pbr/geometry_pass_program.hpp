@@ -17,19 +17,27 @@ class GeometryPassProgram : public GraphicsProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct ObjectData final
+        struct InstancePositionData final
         {
-            GXQuat                                  _localViewQuat;
-            GXMat4                                  _localViewProjection;
+            GXMat4                                  _localViewProj[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+        };
+
+        struct InstanceNormalData final
+        {
+            GXQuat                                  _localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+        };
+
+        struct ColorData final
+        {
             GXColorRGB                              _color0;
             GXColorRGB                              _color1;
             GXColorRGB                              _color2;
             GXColorRGB                              _emission;
         };
 
-        struct InstanceData final
+        struct InstanceColorData final
         {
-            ObjectData                              _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            ColorData                               _colorData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END

@@ -16,12 +16,12 @@ static float32_t4x4 const g_bayerMatrix =
 
 OutputData PS ( in InputData inputData )
 {
-    ObjectData const objectData = g_instanceData[ inputData._instanceIndex ];
+    ColorData const colorData = g_colorData[ inputData._instanceIndex ];
     float32_t4 const diffuseSample = g_diffuseTexture.Sample ( g_sampler, inputData._uv );
     uint32_t2 const bayerCoord = (uint32_t2)inputData._vertexH.xy % (uint32_t2)4U;
 
     // Applying stipple pattern...
-    clip ( mad ( diffuseSample.w, objectData._color0.w, g_bayerMatrix[ bayerCoord.x ][ bayerCoord.y ] ) );
+    clip ( mad ( diffuseSample.w, colorData._color0.w, g_bayerMatrix[ bayerCoord.x ][ bayerCoord.y ] ) );
 
-    return FillGBuffer ( inputData, objectData, diffuseSample.xyz );
+    return FillGBuffer ( inputData, colorData, diffuseSample.xyz );
 }

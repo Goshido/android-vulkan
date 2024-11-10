@@ -78,7 +78,7 @@ float32_t4 PackUnitVector ( in float32_t3 v )
     return float32_t4 ( mad ( v, 0.5F, 0.5F ), 0.5F );
 }
 
-OutputData FillGBuffer ( in InputData inputData, in ObjectData objectData, in float32_t3 diffuseSample )
+OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in float32_t3 diffuseSample )
 {
     float32_t3 maskSample = g_maskTexture.Sample ( g_sampler, inputData._uv ).xyz;
     float32_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
@@ -87,16 +87,16 @@ OutputData FillGBuffer ( in InputData inputData, in ObjectData objectData, in fl
         maskSample *= 1.0F / maskSum;
 
     float32_t3 albedoOverlay = (float32_t3)max ( 1.0F - maskSum, 0.0F );
-    albedoOverlay = mad ( objectData._color0.xyz, maskSample.x, albedoOverlay );
-    albedoOverlay = mad ( objectData._color1.xyz, maskSample.y, albedoOverlay );
-    albedoOverlay = mad ( objectData._color2.xyz, maskSample.z, albedoOverlay );
+    albedoOverlay = mad ( colorData._color0.xyz, maskSample.x, albedoOverlay );
+    albedoOverlay = mad ( colorData._color1.xyz, maskSample.y, albedoOverlay );
+    albedoOverlay = mad ( colorData._color2.xyz, maskSample.z, albedoOverlay );
 
     OutputData result;
 
     result._albedo = float32_t4 ( albedoOverlay * diffuseSample, 1.0F );
 
     result._emission = float32_t4 (
-        g_emissionTexture.Sample ( g_sampler, inputData._uv ).xyz * objectData._emission.xyz,
+        g_emissionTexture.Sample ( g_sampler, inputData._uv ).xyz * colorData._emission.xyz,
         1.0F
     );
 

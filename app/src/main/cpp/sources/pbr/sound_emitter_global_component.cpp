@@ -1,7 +1,8 @@
-#include <pbr/sound_emitter_global_component.hpp>
-#include <pbr/script_engine.hpp>
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
+#include <pbr/sound_emitter_global_component.hpp>
+#include <pbr/script_engine.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

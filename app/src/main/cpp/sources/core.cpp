@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <core.hpp>
 #include <bitwise.hpp>
@@ -14,14 +15,6 @@
 #include <rainbow/rainbow.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 #include <rotating_mesh/game_lut.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <locale>
-#include <android/asset_manager_jni.h>
-#include <android/native_window_jni.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

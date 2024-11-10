@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/command_buffer_count.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_pool.hpp>

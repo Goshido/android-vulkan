@@ -1,15 +1,9 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/tag_parser.hpp>
 #include <pbr/ascii_string.hpp>
 #include <pbr/utf8_parser.hpp>
 #include <pbr/whitespace.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cctype>
-#include <string>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

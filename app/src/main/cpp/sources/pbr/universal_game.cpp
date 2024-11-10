@@ -1,10 +1,11 @@
+#include <precompiled_headers.hpp>
+#include <gamepad.hpp>
+#include <global_force_gravity.hpp>
+#include <logger.hpp>
 #include <pbr/cube_map_manager.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/universal_game.hpp>
-#include <gamepad.hpp>
-#include <global_force_gravity.hpp>
-#include <logger.hpp>
 
 
 namespace pbr {

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_gamepad.hpp>
 #include <pbr/script_engine.hpp>
 #include <logger.hpp>

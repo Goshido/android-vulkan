@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_program.hpp>
 #include <vertex_info.hpp>
@@ -12,6 +13,7 @@ constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
+constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
 } // end of anonymous namespace
 
@@ -36,7 +38,7 @@ GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo (
         {
             {
                 .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
+                .descriptorCount = 3U
             }
         }
     };
@@ -62,7 +64,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription;
+    VkVertexInputBindingDescription bindingDescription[ VERTEX_INPUT_BINDING_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo;
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -86,7 +88,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
-        &bindingDescription
+        bindingDescription
     );
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
@@ -499,41 +501,48 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    *binds =
+    binds[ IN_BUFFER_POSITION ] =
     {
-        .binding = 0U,
+        .binding = IN_BUFFER_POSITION,
+        .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::PositionInfo ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    binds[ IN_BUFFER_REST ] =
+    {
+        .binding = IN_BUFFER_REST,
         .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    attributes[ 0U ] =
+    attributes[ IN_BUFFER_POSITION ] =
     {
-        .location = IN_SLOT_VERTEX,
-        .binding = 0U,
+        .location = IN_BUFFER_POSITION,
+        .binding = IN_SLOT_POSITION,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) )
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::PositionInfo, _position ) )
     };
 
-    attributes[ 1U ] =
+    attributes[ IN_SLOT_UV ] =
     {
         .location = IN_SLOT_UV,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
     };
 
-    attributes[ 2U ] =
+    attributes[ IN_SLOT_NORMAL ] =
     {
         .location = IN_SLOT_NORMAL,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
     };
 
-    attributes[ 3U ] =
+    attributes[ IN_SLOT_TANGENT ] =
     {
         .location = IN_SLOT_TANGENT,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
     };
@@ -543,7 +552,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .vertexBindingDescriptionCount = 1U,
+        .vertexBindingDescriptionCount = VERTEX_INPUT_BINDING_COUNT,
         .pVertexBindingDescriptions = binds,
         .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
         .pVertexAttributeDescriptions = attributes

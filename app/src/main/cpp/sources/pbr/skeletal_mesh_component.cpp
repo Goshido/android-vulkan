@@ -1,3 +1,6 @@
+#include <precompiled_headers.hpp>
+#include <av_assert.hpp>
+#include <logger.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/scriptable_gxmat4.hpp>
@@ -6,8 +9,6 @@
 #include <pbr/scriptable_material.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skeletal_mesh_component.hpp>
-#include <av_assert.hpp>
-#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -104,7 +105,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
 
     MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
-    if ( !skinMesh->LoadMesh ( mesh, *_renderer, *commandBuffers, false, *fences ) ) [[unlikely]]
+    if ( !skinMesh->LoadMeshExt ( mesh, *_renderer, *commandBuffers, false, *fences ) ) [[unlikely]]
         return;
 
     skinMesh->MakeUnique ();
@@ -210,7 +211,7 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t co
         _skinPool.Push ( mesh._animationGraph->GetPoseInfo (),
             usage._skinData.GetSkinInfo (),
             mesh._referenceMesh->GetVertexBufferInfo (),
-            usage._skinMesh->GetVertexBuffer ()
+            *usage._skinMesh->GetVertexBuffers ()
         );
     }
 

@@ -3,8 +3,8 @@
 
 struct InputData
 {
-    [[vk::location ( IN_SLOT_VERTEX )]]
-    float32_t3                      _vertex:            VERTEX;
+    [[vk::location ( IN_SLOT_POSITION )]]
+    float32_t3                      _postion:           POSITION;
 
     [[vk::location ( IN_SLOT_UV )]]
     float32_t2                      _uv:                UV;
@@ -86,12 +86,11 @@ OutputData VS ( in InputData inputData )
 
     OutputData result;
 
-    ObjectData const objectData = g_instanceData[ inputData._instanceIndex ];
-    result._vertexH = mul ( objectData._localViewProjection, float32_t4 ( inputData._vertex, 1.0F ) );
+    result._vertexH = mul ( g_localViewProj[ inputData._instanceIndex ], float32_t4 ( inputData._postion, 1.0F ) );
     result._uv = inputData._uv;
     result._instanceIndex = inputData._instanceIndex;
 
-    float16_t3x3 const normalMatrix = GetNormalMatrix ( objectData._localViewQuat );
+    float16_t3x3 const normalMatrix = GetNormalMatrix ( g_localView[ inputData._instanceIndex ] );
 
     // Note matrix multiplication order is in reverse order compare to the rest of engine code.
     // The reason is that quaternion unpacks to matrix with column-major behaviour.

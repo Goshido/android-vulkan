@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_subpass_base.hpp>
 
 
@@ -35,13 +36,14 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
 
 void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
     GeometryPassProgram &program,
+    GeometryPool &geometryPool,
     MaterialPool &materialPool,
-    UniformBufferPoolManager &uniformPool,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
     bool isProgramBind = false;
-    constexpr VkDeviceSize offset = 0U;
+    constexpr VkDeviceSize const offset[] = { 0U, 0U };
+    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     for ( auto const &call : _sceneData )
     {
@@ -56,15 +58,15 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
 
         bool isUniformBind = false;
 
-        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
+        auto const instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
             if ( isUniformBind )
             {
-                VkDescriptorSet ds = uniformPool.Acquire ();
+                VkDescriptorSet ds = geometryPool.Acquire ();
                 program.SetDescriptorSet ( commandBuffer, &ds, 2U, 1U );
             }
             else
             {
-                VkDescriptorSet sets[] = { textureSet, uniformPool.Acquire () };
+                VkDescriptorSet sets[] = { textureSet, geometryPool.Acquire () };
 
                 program.SetDescriptorSet ( commandBuffer,
                     sets,
@@ -75,7 +77,13 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 isUniformBind = true;
             }
 
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
+            vkCmdBindVertexBuffers ( commandBuffer,
+                0U,
+                android_vulkan::MeshGeometry::GetVertexBufferCount (),
+                mesh->GetVertexBuffers (),
+                offset
+            );
+
             vkCmdBindIndexBuffer ( commandBuffer, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
 
             vkCmdDrawIndexed ( commandBuffer,

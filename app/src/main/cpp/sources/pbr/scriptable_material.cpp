@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_material.hpp>
 #include <pbr/material_manager.hpp>
 #include <av_assert.hpp>

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_volume.inc>
 #include <pbr/point_light_lightup_program.hpp>
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/whitespace.hpp>
 #include <pbr/utf8_parser.hpp>
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/render_session.hpp>
 #include <pbr/point_light.hpp>

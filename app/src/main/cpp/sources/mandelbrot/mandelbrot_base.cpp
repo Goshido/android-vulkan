@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <mandelbrot/mandelbrot_base.hpp>
 #include <file.hpp>
 #include <vulkan_utils.hpp>

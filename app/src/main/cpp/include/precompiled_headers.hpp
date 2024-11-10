@@ -11,6 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <atomic>
 #include <bit>
 #include <cassert>
+#include <cctype>
 #include <cfloat>
 #include <chrono>
 #include <cinttypes>
@@ -21,16 +22,20 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <deque>
 #include <filesystem>
 #include <forward_list>
 #include <fstream>
 #include <list>
+#include <locale>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <optional>
+#include <random>
 #include <regex>
 #include <set>
 #include <span>
@@ -41,11 +46,30 @@ GX_DISABLE_COMMON_WARNINGS
 #include <unordered_set>
 #include <vector>
 
+#ifdef __ANDROID__
+
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+#include <android/keycodes.h>
+#include <android/log.h>
+#include <android/native_window_jni.h>
+#include <android/trace.h>
+#include <dlfcn.h>
+#include <unistd.h>
+
+#endif // __ANDROID__
+
 #ifdef VK_NO_PROTOTYPES
 
 #include <vulkan/vulkan.h>
 
 #endif // VK_NO_PROTOTYPES
+
+#ifdef AV_ARM_NEON
+
+#include <arm_neon.h>
+
+#endif // AV_ARM_NEON
 
 #ifdef AV_3DS_MAX
 

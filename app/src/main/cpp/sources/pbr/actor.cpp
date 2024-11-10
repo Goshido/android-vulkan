@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/actor.hpp>
 #include <pbr/camera_component.hpp>
 #include <pbr/point_light_component.hpp>

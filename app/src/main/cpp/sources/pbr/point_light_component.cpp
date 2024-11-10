@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_component.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>

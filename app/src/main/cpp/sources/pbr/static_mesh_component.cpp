@@ -1,4 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <android_vulkan_sdk/pbr/static_mesh_component_desc.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
+#include <logger.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/static_mesh_component.hpp>
@@ -7,9 +11,6 @@
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_material.hpp>
-#include <av_assert.hpp>
-#include <guid_generator.hpp>
-#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

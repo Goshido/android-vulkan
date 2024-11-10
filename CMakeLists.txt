@@ -103,6 +103,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/geometry_pass_program.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_sampler_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/geometry_pool.cpp
     app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
     app/src/main/cpp/sources/pbr/graphics_program.cpp
     app/src/main/cpp/sources/pbr/href_attribute_checker.cpp
@@ -271,14 +272,15 @@ target_compile_options ( android-vulkan PRIVATE
 
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan PRIVATE
-#    -DANDROID_ENABLE_TRACE
-    -DANDROID_NATIVE_MODE_PORTRAIT
-    -DANDROID_VULKAN_DEBUG
-#    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-    -DANDROID_VULKAN_STRICT_MODE
-    -DVK_NO_PROTOTYPES
-    -DVK_USE_PLATFORM_ANDROID_KHR
+#    ANDROID_ENABLE_TRACE
+    ANDROID_NATIVE_MODE_PORTRAIT
+    ANDROID_VULKAN_DEBUG
+#    ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+    ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+    ANDROID_VULKAN_STRICT_MODE
+    AV_ARM_NEON
+    VK_NO_PROTOTYPES
+    VK_USE_PLATFORM_ANDROID_KHR
 )
 
 target_link_libraries ( android-vulkan

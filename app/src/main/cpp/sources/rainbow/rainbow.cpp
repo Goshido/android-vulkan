@@ -1,11 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <rainbow/rainbow.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cmath>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 

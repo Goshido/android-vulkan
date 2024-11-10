@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <vulkan_utils.hpp>
 #include <pbr/lightup_common_descriptor_set.hpp>
 #include <pbr/light_lightup_base_program.hpp>

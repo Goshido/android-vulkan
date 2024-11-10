@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/scriptable_ui_element.hpp>

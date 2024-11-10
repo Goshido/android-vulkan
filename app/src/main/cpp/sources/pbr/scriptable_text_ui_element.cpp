@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/scriptable_text_ui_element.hpp>
 

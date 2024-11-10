@@ -15,15 +15,10 @@ class GeometryPass final
         VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
         GeometryPassSamplerDescriptorSetLayout      _descriptorSetLayout {};
 
+        GeometryPool                                _geometryPool {};
         MaterialPool                                _materialPool {};
         OpaqueSubpass                               _opaqueSubpass {};
         StippleSubpass                              _stippleSubpass {};
-
-        UniformBufferPoolManager                    _uniformPool
-        {
-            eUniformPoolSize::Huge_64M,
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT )
-        };
 
     public:
         GeometryPass () = default;

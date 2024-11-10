@@ -1,11 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pcm_streamer_wav.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <arm_neon.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

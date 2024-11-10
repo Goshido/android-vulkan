@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/ray_casting/ray_casting.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
@@ -298,62 +299,75 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _normalMaterial = std::make_shared<OpaqueMaterial> ();
 
     SwitchEmission ( _normalMaterial, _normalTexture );
+    // FUCK
 
-    constexpr android_vulkan::VertexInfo const vertices[]
+    constexpr android_vulkan::VertexInfo const vertices[] =
     {
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( 0.998F, 0.0F, 0.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( 0.998F, 0.0F, 0.0F ),/
+        {
             GXVec2 ( 0.0F, 1.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
+        },
+//        ),
 
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, 0.866F, 0.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( -0.502F, 0.866F, 0.0F ),
+        {
             GXVec2 ( 0.5F, 1.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
+        },
+        // ),
 
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, -0.866F, 0.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( -0.502F, -0.866F, 0.0F ),
+        {
             GXVec2 ( 1.0F, 1.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
+        },
+        // ),
 
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( 0.998F, 0.0F, 1.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( 0.998F, 0.0F, 1.0F ),
+        {
             GXVec2 ( 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
+        },
+        // ),
 
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, 0.866F, 1.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( -0.502F, 0.866F, 1.0F ),
+        {
             GXVec2 ( 0.5F, 0.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
+        },
+        // ),
 
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, -0.866F, 1.0F ),
+//        android_vulkan::VertexInfo
+//        (
+//            GXVec3 ( -0.502F, -0.866F, 1.0F ),
+        {
             GXVec2 ( 1.0F, 0.0F ),
             GXVec3 ( 0.0F, 0.0F, 1.0F ),
             GXVec3 ( 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 0.0F, 1.0F, 0.0F )
-        )
+        }
+        // )
     };
 
     constexpr uint32_t const indices[ 18U ] =

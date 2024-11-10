@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sweep_testing/actor_body.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/opaque_material.hpp>

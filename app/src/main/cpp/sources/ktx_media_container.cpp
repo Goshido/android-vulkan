@@ -1,7 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <ktx_media_container.hpp>
-#include "logger.hpp"
+#include <logger.hpp>
 
 
 namespace android_vulkan {

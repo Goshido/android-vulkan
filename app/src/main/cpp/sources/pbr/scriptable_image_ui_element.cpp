@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_image_ui_element.hpp>
 #include <logger.hpp>
 

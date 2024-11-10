@@ -1,14 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <sound_mixer.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cinttypes>
-#include <cstdio>
-#include <unordered_map>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,10 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <contact_manager.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <numeric>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

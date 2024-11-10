@@ -7,6 +7,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <span>
 #include <string>
 
 GX_RESTORE_WARNING_STATE
@@ -17,24 +18,39 @@ namespace android_vulkan {
 class MeshGeometry final
 {
     private:
-        GXAABB              _bounds {};
+        struct Allocation final
+        {
+            VkDeviceMemory          _memory = VK_NULL_HANDLE;
+            VkDeviceSize            _offset = std::numeric_limits<VkDeviceSize>::max ();
+            VkDeviceSize            _range = 0U;
+        };
 
-        VkBuffer            _indexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _indexBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _indexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+        struct UploadJob final
+        {
+            VkBufferCopy            _copyInfo {};
+            VkBuffer                _buffer = VK_NULL_HANDLE;
+            VkBufferUsageFlags      _usage = 0U;
+        };
 
-        VkBuffer            _vertexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _vertexBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-        VkDeviceSize        _vertexBufferRange = 0U;
+        using UploadJobs = std::span<UploadJob const>;
 
-        VkBuffer            _transferBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _transferBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+    private:
+        constexpr static size_t     VERTEX_BUFFER_COUNT = 2U;
 
-        uint32_t            _vertexCount = 0U;
-        uint32_t            _vertexBufferVertexCount = 0U;
-        std::string         _fileName {};
+        GXAABB                      _bounds {};
+
+        VkBuffer                    _indexBuffer = VK_NULL_HANDLE;
+        Allocation                  _indexAllocation {};
+
+        VkBuffer                    _vertexBuffers[ VERTEX_BUFFER_COUNT ] { VK_NULL_HANDLE, VK_NULL_HANDLE };
+        Allocation                  _vertexAllocations[ VERTEX_BUFFER_COUNT ] {};
+
+        VkBuffer                    _transferBuffer = VK_NULL_HANDLE;
+        Allocation                  _transferAllocation {};
+
+        uint32_t                    _vertexCount = 0U;
+        uint32_t                    _vertexBufferVertexCount = 0U;
+        std::string                 _fileName {};
 
     public:
         MeshGeometry () = default;
@@ -51,7 +67,10 @@ class MeshGeometry final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
-        [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
+
+        // Method returns two buffers: position buffer and "rest data" buffer.
+        [[nodiscard]] VkBuffer const *GetVertexBuffers () const noexcept;
+
         [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
         [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
@@ -65,6 +84,13 @@ class MeshGeometry final
         void MakeUnique () noexcept;
 
         [[nodiscard]] bool LoadMesh ( std::string &&fileName,
+            Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence
+        ) noexcept;
+
+        [[nodiscard]] bool LoadMeshExt ( std::string &&fileName,
             Renderer &renderer,
             VkCommandBuffer commandBuffer,
             bool externalCommandBuffer,
@@ -92,6 +118,11 @@ class MeshGeometry final
             VkFence fence
         ) noexcept;
 
+        [[nodiscard]] constexpr static uint32_t GetVertexBufferCount () noexcept
+        {
+            return static_cast<uint32_t> ( VERTEX_BUFFER_COUNT );
+        }
+
     private:
         void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
@@ -109,6 +140,13 @@ class MeshGeometry final
             VkFence fence
         ) noexcept;
 
+        [[nodiscard]] bool LoadFromMesh2Ext ( std::string &&fileName,
+            Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence
+        ) noexcept;
+
         [[nodiscard]] bool UploadComplex ( uint8_t const* data,
             size_t vertexDataSize,
             uint32_t indexCount,
@@ -118,10 +156,16 @@ class MeshGeometry final
             VkFence fence
         ) noexcept;
 
-        [[nodiscard]] bool UploadInternal ( size_t numUploads,
-            VkBufferCopy const* copyJobs,
-            VkBufferUsageFlags const* usages,
-            VkBuffer const* dstBuffers,
+        [[nodiscard]] bool UploadComplexExt ( uint8_t const* data,
+            uint32_t vertexCount,
+            uint32_t indexCount,
+            Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence
+        ) noexcept;
+
+        [[nodiscard]] bool UploadInternal ( UploadJobs jobs,
             uint8_t const* data,
             size_t dataSize,
             Renderer &renderer,

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>

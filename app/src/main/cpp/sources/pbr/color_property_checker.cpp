@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/color_property_checker.hpp>
 #include <pbr/whitespace.hpp>

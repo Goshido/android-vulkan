@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/text_html5_element.hpp>
 #include <pbr/utf8_parser.hpp>
 #include <pbr/whitespace.hpp>

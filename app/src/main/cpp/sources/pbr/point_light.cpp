@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <android_vulkan_sdk/pbr/point_light_component_desc.hpp>
 #include <pbr/point_light.hpp>
 

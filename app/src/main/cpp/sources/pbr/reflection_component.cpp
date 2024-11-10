@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/reflection_component.hpp>
 #include <pbr/cube_map_manager.hpp>
 #include <pbr/reflection_probe_global.hpp>

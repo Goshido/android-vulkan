@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <logger.hpp>
 
@@ -8,10 +9,6 @@ extern "C" {
 #include <lua/lauxlib.h>
 
 } // extern "C"
-
-#include <cstdio>
-#include <memory>
-#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 

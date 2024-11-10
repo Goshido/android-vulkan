@@ -1,14 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <rotating_mesh/game_lut.hpp>
 #include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <cmath>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
-
 #include <half_types.hpp>
 
 

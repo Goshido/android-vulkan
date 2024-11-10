@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <gjk_base.hpp>
 
 

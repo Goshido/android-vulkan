@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/doctype_parser.hpp>
 #include <pbr/ascii_string.hpp>

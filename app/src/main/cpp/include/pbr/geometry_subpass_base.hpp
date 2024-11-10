@@ -2,7 +2,7 @@
 #define PBR_GEOMETRY_SUBPASS_BASE_HPP
 
 
-#include "geometry_pass_program.hpp"
+#include "geometry_pool.hpp"
 #include "material_pool.hpp"
 #include "render_session_stats.hpp"
 #include "scene_data.hpp"
@@ -46,8 +46,8 @@ class GeometrySubpassBase
 
         void AppendDrawcalls ( VkCommandBuffer commandBuffer,
             GeometryPassProgram &program,
+            GeometryPool &geometryPool,
             MaterialPool &materialPool,
-            UniformBufferPoolManager &uniformPool,
             RenderSessionStats &renderSessionStats
         ) noexcept;
 };

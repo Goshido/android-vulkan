@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/div_html5_element.hpp>
 #include <pbr/img_html5_element.hpp>

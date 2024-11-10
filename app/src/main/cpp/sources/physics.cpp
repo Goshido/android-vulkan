@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <physics.hpp>
 #include <contact_detector.hpp>

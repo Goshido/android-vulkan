@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/animation_blend_node.hpp>
 #include <pbr/animation_graph.hpp>
@@ -27,8 +28,6 @@
 #include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <algorithm>
 
 extern "C" {
 

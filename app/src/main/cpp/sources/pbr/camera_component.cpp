@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/camera_component.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxmat4.hpp>

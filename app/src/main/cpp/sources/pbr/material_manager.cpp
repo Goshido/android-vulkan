@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/opaque_material.hpp>
 #include <pbr/stipple_material.hpp>

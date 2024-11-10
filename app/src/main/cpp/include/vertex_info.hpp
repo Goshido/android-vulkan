@@ -15,8 +15,14 @@ struct PositionInfo final
 
     PositionInfo () = default;
 
-    constexpr PositionInfo ( GXVec3 const &position ) noexcept:
-        _position ( position._data[ 0U ], position._data[ 1U ], position._data[ 2U ] )
+    constexpr PositionInfo ( float x, float y, float z ) noexcept:
+        _position ( x, y, z )
+    {
+        // NOTHING
+    }
+
+    constexpr explicit PositionInfo ( GXVec3 const &position ) noexcept:
+        _position ( position )
     {
         // NOTHING
     }

@@ -5,7 +5,7 @@ param
 )
 
 Clear-Host
-scripts\windows\make-env.ps1 $shaderSource
+. scripts\windows\make-env.ps1 $shaderSource
 
 # vertex shaders
 scripts\windows\make-spv.ps1                                                                                           `

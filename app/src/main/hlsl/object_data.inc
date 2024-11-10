@@ -2,8 +2,8 @@
 #define OBJECT_DATA_INC
 
 
-#include "geometry_pass_bindings.inc"
-#include "gpgpu_limits.inc"
+#include "pbr/geometry_pass_bindings.inc"
+#include "pbr/gpgpu_limits.inc"
 
 
 // In summary data per instance = 144 bytes

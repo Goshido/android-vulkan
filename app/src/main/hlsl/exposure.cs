@@ -1,7 +1,7 @@
 // See <repo>/docs/spd-algorithm.md
 // See <repo>/docs/auto-exposure.md
 
-#include "exposure.inc"
+#include "pbr/exposure.inc"
 
 
 #define THREAD_X            256

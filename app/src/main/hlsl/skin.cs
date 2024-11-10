@@ -1,4 +1,4 @@
-#include "skin.inc"
+#include "pbr/skin.inc"
 
 
 #define BONES_PER_VERTEX    4U

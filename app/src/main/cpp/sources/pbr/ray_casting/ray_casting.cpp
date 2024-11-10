@@ -299,78 +299,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _normalMaterial = std::make_shared<OpaqueMaterial> ();
 
     SwitchEmission ( _normalMaterial, _normalTexture );
-    // FUCK
 
-    constexpr android_vulkan::VertexInfo const vertices[] =
-    {
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( 0.998F, 0.0F, 0.0F ),/
-        {
-            GXVec2 ( 0.0F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        },
-//        ),
-
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( -0.502F, 0.866F, 0.0F ),
-        {
-            GXVec2 ( 0.5F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        },
-        // ),
-
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( -0.502F, -0.866F, 0.0F ),
-        {
-            GXVec2 ( 1.0F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        },
-        // ),
-
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( 0.998F, 0.0F, 1.0F ),
-        {
-            GXVec2 ( 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        },
-        // ),
-
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( -0.502F, 0.866F, 1.0F ),
-        {
-            GXVec2 ( 0.5F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        },
-        // ),
-
-//        android_vulkan::VertexInfo
-//        (
-//            GXVec3 ( -0.502F, -0.866F, 1.0F ),
-        {
-            GXVec2 ( 1.0F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        }
-        // )
-    };
-
-    constexpr uint32_t const indices[ 18U ] =
+    constexpr uint32_t const indices[]
     {
         0U, 1U, 4U,
         0U, 4U, 3U,
@@ -382,6 +312,56 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         2U, 3U, 5U
     };
 
+    constexpr android_vulkan::PositionInfo const positions[]
+    {
+        { 0.998F, 0.0F, 0.0F },
+        { -0.502F, 0.866F, 0.0F },
+        { -0.502F, -0.866F, 0.0F },
+        { 0.998F, 0.0F, 1.0F },
+        { -0.502F, 0.866F, 1.0F },
+        { -0.502F, -0.866F, 1.0F }
+    };
+
+    constexpr android_vulkan::VertexInfo const vertices[]
+    {
+        {
+            { 0.0F, 1.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        },
+        {
+            { 0.5F, 1.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        },
+        {
+            { 1.0F, 1.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        },
+        {
+            { 0.0F, 0.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        },
+        {
+            { 0.5F, 0.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        },
+        {
+            { 1.0F, 0.0F },
+            { 0.0F, 0.0F, 1.0F },
+            { 1.0F, 0.0F, 0.0F },
+            { 0.0F, 1.0F, 0.0F }
+        }
+    };
+
     GXAABB bounds {};
     bounds.AddVertex ( -0.502F, -0.866F, 0.0F );
     bounds.AddVertex ( 0.998F, 0.866F, 1.0F );
@@ -389,16 +369,14 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _lineMesh = std::make_shared<android_vulkan::MeshGeometry> ();
     android_vulkan::MeshGeometry &lineMesh = *_lineMesh.get ();
 
-    result = lineMesh.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
-        sizeof ( vertices ),
-        static_cast<uint32_t> ( std::size ( vertices ) ),
-        indices,
-        static_cast<uint32_t> ( std::size ( indices ) ),
-        bounds,
-        renderer,
+    result = lineMesh.LoadMesh ( renderer,
         *cb,
         false,
-        VK_NULL_HANDLE
+        VK_NULL_HANDLE,
+        { indices, std::size ( indices ) },
+        { positions, std::size ( positions ) },
+        { vertices, std::size ( vertices ) },
+        bounds
     );
 
     if ( !result ) [[unlikely]]

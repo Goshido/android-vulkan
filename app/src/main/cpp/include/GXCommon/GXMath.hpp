@@ -1,4 +1,4 @@
-// version 1.89
+// version 1.90
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -9,9 +9,9 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <cfloat>
+#include <climits>
 #include <cmath>
-#include <float.h>
-#include <limits.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -43,7 +43,7 @@ struct [[maybe_unused]] GXVec2 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXVec2 ( GXFloat x, GXFloat y ) noexcept:
+    [[maybe_unused]] constexpr GXVec2 ( GXFloat x, GXFloat y ) noexcept:
         _data { x, y }
     {
         // NOTHING
@@ -52,10 +52,10 @@ struct [[maybe_unused]] GXVec2 final
     [[maybe_unused]] ~GXVec2 () = default;
 
     [[maybe_unused]] GXVoid SetX ( GXFloat x ) noexcept;
-    [[maybe_unused]] GXFloat GetX () const noexcept;
+    [[maybe_unused, nodiscard]] GXFloat GetX () const noexcept;
 
     [[maybe_unused]] GXVoid SetY ( GXFloat y ) noexcept;
-    [[maybe_unused]] GXFloat GetY () const noexcept;
+    [[maybe_unused, nodiscard]] GXFloat GetY () const noexcept;
 
     [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y ) noexcept;
     [[maybe_unused]] GXVoid Normalize () noexcept;
@@ -113,7 +113,7 @@ struct [[maybe_unused]] GXVec3 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXVec3 ( GXFloat x, GXFloat y, GXFloat z ) noexcept:
+    [[maybe_unused]] constexpr GXVec3 ( GXFloat x, GXFloat y, GXFloat z ) noexcept:
         _data { x, y, z }
     {
         // NOTHING
@@ -198,7 +198,7 @@ struct [[maybe_unused]] GXEuler final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXEuler ( GXFloat pitchRadians,
+    [[maybe_unused]] constexpr GXEuler ( GXFloat pitchRadians,
         GXFloat yawRadians,
         GXFloat rollRadians
     ) noexcept:
@@ -228,11 +228,11 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVec4 ( GXVec4 && ) = default;
     [[maybe_unused]] GXVec4 &operator = ( GXVec4 && ) = default;
 
-    [[maybe_unused]] explicit GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept;
+    [[maybe_unused]] GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept;
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXVec4 ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept:
+    [[maybe_unused]] constexpr GXVec4 ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept:
         _data { x, y, z, w }
     {
         // NOTHING
@@ -280,7 +280,7 @@ struct [[maybe_unused]] GXVec6 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXVec6 ( GXFloat a1,
+    [[maybe_unused]] constexpr GXVec6 ( GXFloat a1,
         GXFloat a2,
         GXFloat a3,
         GXFloat a4,
@@ -294,7 +294,7 @@ struct [[maybe_unused]] GXVec6 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXVec6 ( GXVec3 const &part1, GXVec3 const &part2 ) noexcept:
+    [[maybe_unused]] constexpr GXVec6 ( GXVec3 const &part1, GXVec3 const &part2 ) noexcept:
         _data
         {
             part1._data[ 0U ],
@@ -337,13 +337,13 @@ struct [[maybe_unused]] GXColorRGB final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXColorRGB ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorRGB ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept:
         _data { red, green, blue, alpha }
     {
         // NOTHING
     }
 
-    [[maybe_unused]] explicit constexpr GXColorRGB ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorRGB ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept:
         _data
         {
             GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( red ),
@@ -355,7 +355,7 @@ struct [[maybe_unused]] GXColorRGB final
         // NOTHING
     }
 
-    [[maybe_unused]] explicit GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
+    [[maybe_unused]] GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
     [[maybe_unused]] explicit GXColorRGB ( GXColorHSV const &color ) noexcept;
 
     [[maybe_unused]] ~GXColorRGB () = default;
@@ -383,7 +383,7 @@ struct [[maybe_unused]] GXColorRGB final
     [[maybe_unused]] GXVoid From ( GXColorHSV const &color ) noexcept;
 
     // It is assumed that current color space is sRGB.
-    [[maybe_unused]] GXColorRGB ToLinearSpace () const noexcept;
+    [[maybe_unused, nodiscard]] GXColorRGB ToLinearSpace () const noexcept;
 
     [[maybe_unused]] GXVoid ConvertToUByte ( GXUByte &red,
         GXUByte &green,
@@ -409,7 +409,7 @@ struct [[maybe_unused]] GXColorHSV final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXColorHSV ( GXFloat hue,
+    [[maybe_unused]] constexpr GXColorHSV ( GXFloat hue,
         GXFloat saturation,
         GXFloat value,
         GXFloat alpha
@@ -451,13 +451,7 @@ struct [[maybe_unused]] GXPreciseComplex final
 
     [[maybe_unused]] GXPreciseComplex () = default;
 
-    [[maybe_unused]] constexpr GXPreciseComplex ( GXPreciseComplex const &other ) noexcept:
-        _r ( other._r ),
-        _i ( other._i )
-    {
-        // NOTHING
-    }
-
+    [[maybe_unused]] GXPreciseComplex ( GXPreciseComplex const &other ) = default;
     [[maybe_unused]] GXPreciseComplex &operator = ( GXPreciseComplex const &other ) = default;
 
     [[maybe_unused]] GXPreciseComplex ( GXPreciseComplex && ) = default;
@@ -465,7 +459,7 @@ struct [[maybe_unused]] GXPreciseComplex final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXPreciseComplex ( GXDouble real, GXDouble imaginary ) noexcept:
+    [[maybe_unused]] constexpr GXPreciseComplex ( GXDouble real, GXDouble imaginary ) noexcept:
         _r ( real ),
         _i ( imaginary )
     {
@@ -511,7 +505,7 @@ struct [[maybe_unused]] GXQuat final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr explicit GXQuat ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept:
+    [[maybe_unused]] constexpr GXQuat ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept:
         _data { r, a, b, c }
     {
         // NOTHING

@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
+#include <rotating_mesh/bindings.inc>
 #include <rotating_mesh/game_lut.hpp>
-#include <GXCommon/GXWarning.hpp>
 #include <half_types.hpp>
 
 
@@ -30,21 +30,21 @@ bool GameLUT::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &rend
 {
     constexpr VkDescriptorSetLayoutBinding const materialBindings[] = {
         {
-            .binding = 0U,
+            .binding = BIND_DIFFUSE_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 1U,
+            .binding = BIND_NORMAL_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 2U,
+            .binding = BIND_LUT_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -151,7 +151,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = _fixedDS,
-        .dstBinding = 0U,
+        .dstBinding = BIND_SAMPLER,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -219,7 +219,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
 
         VkWriteDescriptorSet &materialDiffuseWrite = writes[ idx ];
         materialDiffuseWrite.dstSet = ds;
-        materialDiffuseWrite.dstBinding = 0U;
+        materialDiffuseWrite.dstBinding = BIND_DIFFUSE_TEXTURE;
         materialDiffuseWrite.pImageInfo = &diffuseImage;
 
         VkDescriptorImageInfo &normalImage = imageInfo[ ++idx ];
@@ -227,7 +227,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
 
         VkWriteDescriptorSet &materialNormalWrite = writes[ idx ];
         materialNormalWrite.dstSet = ds;
-        materialNormalWrite.dstBinding = 1U;
+        materialNormalWrite.dstBinding = BIND_NORMAL_TEXTURE;
         materialNormalWrite.pImageInfo = &normalImage;
 
         VkDescriptorImageInfo &lutImage = imageInfo[ ++idx ];
@@ -235,7 +235,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
 
         VkWriteDescriptorSet &materialLutWrite = writes[ idx ];
         materialLutWrite.dstSet = ds;
-        materialLutWrite.dstBinding = 2U;
+        materialLutWrite.dstBinding = BIND_LUT_TEXTURE;
         materialLutWrite.pImageInfo = &lutImage;
     }
 

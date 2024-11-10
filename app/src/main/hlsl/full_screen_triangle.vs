@@ -1,4 +1,4 @@
-#include "full_screen_triangle.inc"
+#include "pbr/full_screen_triangle.inc"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_TRANSFORM )]]

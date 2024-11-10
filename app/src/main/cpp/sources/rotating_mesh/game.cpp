@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <rotating_mesh/bindings.inc>
 #include <rotating_mesh/game.hpp>
 #include <vertex_info.hpp>
 #include <vulkan_utils.hpp>
@@ -41,7 +42,7 @@ Game::Game ( char const* fragmentShader ) noexcept:
 
 bool Game::CreateSamplers ( VkDevice device ) noexcept
 {
-    VkSamplerCreateInfo samplerInfo
+    constexpr VkSamplerCreateInfo samplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -63,7 +64,7 @@ bool Game::CreateSamplers ( VkDevice device ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler ),
         "Game::CreateSamplers",
         "Can't create sampler"
@@ -167,11 +168,11 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
-            renderer,
+        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( renderer,
             commandBuffers[ i ],
             false,
-            VK_NULL_HANDLE
+            VK_NULL_HANDLE,
+            meshFiles[ i ]
         );
 
         if ( result ) [[likely]]
@@ -281,7 +282,8 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
     vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
     vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
-    constexpr VkDeviceSize offset = 0U;
+    constexpr VkDeviceSize const offset[] = { 0U, 0U };
+    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     VkDescriptorSet standardSets[] = { _fixedDS, onceDS };
 
@@ -303,7 +305,13 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
         android_vulkan::MeshGeometry &mesh = item._mesh;
 
-        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, mesh.GetVertexBuffers (), &offset );
+        vkCmdBindVertexBuffers ( commandBuffer,
+            0U,
+            android_vulkan::MeshGeometry::GetVertexBufferCount (),
+            mesh.GetVertexBuffers (),
+            offset
+        );
+
         vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );
     }
 
@@ -395,52 +403,6 @@ void Game::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
     DestroyPipeline ( device );
     DestroyFramebuffers ( renderer );
     DestroyRenderPass ( device );
-}
-
-bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, VkSemaphore acquire ) noexcept
-{
-    VkDevice device = renderer.GetDevice ();
-    uint32_t i = UINT32_MAX;
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( device,
-            renderer.GetSwapchain (),
-            UINT64_MAX,
-            acquire,
-            VK_NULL_HANDLE,
-            &i
-        ),
-
-        "Game::BeginFrame",
-        "Can't get presentation image index"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    imageIndex = static_cast<size_t> ( i );
-    return true;
-}
-
-bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
-{
-    VkPresentInfoKHR const presentInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_framebufferInfo[ presentationImageIndex ]._renderPassEnd,
-        .swapchainCount = 1U,
-        .pSwapchains = &renderer.GetSwapchain (),
-        .pImageIndices = &presentationImageIndex,
-        .pResults = nullptr
-    };
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
-        "Game::EndFrame",
-        "Can't present frame"
-    );
 }
 
 bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
@@ -560,7 +522,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
 {
     constexpr VkDescriptorSetLayoutBinding fixedBinding
     {
-        .binding = 0U,
+        .binding = SET_FIXED,
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
         .descriptorCount = 1U,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -590,7 +552,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
 
     constexpr VkDescriptorSetLayoutBinding onceBinding
     {
-        .binding = 0U,
+        .binding = BIND_TRANSFORM,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1U,
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
@@ -671,7 +633,8 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
     VkImageView attachments[ 2U ] = { VK_NULL_HANDLE, _depthStencilRenderTarget.GetImageView () };
 
-    VkFramebufferCreateInfo framebufferInfo {
+    VkFramebufferCreateInfo framebufferInfo
+    {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
@@ -681,6 +644,13 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
         .width = resolution.width,
         .height = resolution.height,
         .layers = 1U,
+    };
+
+    constexpr VkSemaphoreCreateInfo semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
     };
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
@@ -698,12 +668,7 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
         AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
 
-        constexpr VkSemaphoreCreateInfo semaphoreInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0U
-        };
+
 
         VkSemaphore semaphore;
 
@@ -823,50 +788,43 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
         .primitiveRestartEnable = VK_FALSE
     };
 
-    // FUCK
     constexpr static VkVertexInputAttributeDescription const attributeDescriptions[]
     {
         {
-            .location = 0U,
-            .binding = 0U,
+            .location = IN_SLOT_POSITION,
+            .binding = IN_BUFFER_POSITION,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::PositionInfo, _position ) )
         },
         {
-            .location = 1U,
-            .binding = 0U,
+            .location = IN_SLOT_UV,
+            .binding = IN_BUFFER_REST,
             .format = VK_FORMAT_R32G32_SFLOAT,
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
         },
         {
-            .location = 2U,
-            .binding = 0U,
+            .location = IN_SLOT_NORMAL,
+            .binding = IN_BUFFER_REST,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
         },
         {
-            .location = 3U,
-            .binding = 0U,
+            .location = IN_SLOT_TANGENT,
+            .binding = IN_BUFFER_REST,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
-        },
-        {
-            .location = 4U,
-            .binding = 0U,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) )
         }
     };
 
     constexpr static VkVertexInputBindingDescription const bindingDescriptions[]
     {
         {
-            .binding = 0U,
+            .binding = IN_BUFFER_POSITION,
             .stride = sizeof ( android_vulkan::PositionInfo ),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
         },
         {
-            .binding = 1U,
+            .binding = IN_BUFFER_REST,
             .stride = sizeof ( android_vulkan::VertexInfo ),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
         }
@@ -1272,7 +1230,7 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = ds,
-        .dstBinding = 0U,
+        .dstBinding = BIND_TRANSFORM,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -1307,6 +1265,52 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
         0U,
         nullptr
     );
+}
+
+bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
+{
+    VkPresentInfoKHR const presentInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1U,
+        .pWaitSemaphores = &_framebufferInfo[ presentationImageIndex ]._renderPassEnd,
+        .swapchainCount = 1U,
+        .pSwapchains = &renderer.GetSwapchain (),
+        .pImageIndices = &presentationImageIndex,
+        .pResults = nullptr
+    };
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
+        "Game::EndFrame",
+        "Can't present frame"
+    );
+}
+
+bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, VkSemaphore acquire ) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+    uint32_t idx;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAcquireNextImageKHR ( device,
+            renderer.GetSwapchain (),
+            UINT64_MAX,
+            acquire,
+            VK_NULL_HANDLE,
+            &idx
+        ),
+
+        "Game::BeginFrame",
+        "Can't get presentation image index"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    imageIndex = static_cast<size_t> ( idx );
+    return true;
 }
 
 } // namespace rotating_mesh

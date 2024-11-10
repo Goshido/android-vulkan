@@ -1,5 +1,5 @@
-#include "gpgpu_limits.inc"
-#include "point_light_shadowmap_generator.inc"
+#include "pbr/gpgpu_limits.inc"
+#include "pbr/point_light_shadowmap_generator.inc"
 
 
 struct ObjectData

@@ -172,13 +172,12 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
 
     _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
 
-    result = _geometry->LoadMesh ( reinterpret_cast<uint8_t const*> ( data ),
-        sizeof ( data ),
-        static_cast<uint32_t> ( std::size ( data ) ),
-        _renderer,
+    result = _geometry->LoadMesh ( _renderer,
         commandBuffer,
         true,
-        VK_NULL_HANDLE
+        VK_NULL_HANDLE,
+        { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
+        static_cast<uint32_t> ( std::size ( data ) )
     );
 
     if ( !result ) [[unlikely]]
@@ -845,8 +844,14 @@ void RenderSession::OnRenderFrame () noexcept
 
         if ( static_cast<bool> ( _helloTriangleGeometry ) & static_cast<bool> ( _helloTriangleGeometry ) ) [[likely]]
         {
-            constexpr VkDeviceSize offsets = 0U;
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &_helloTriangleGeometry->GetVertexBuffer (), &offsets );
+            constexpr VkDeviceSize const offsets = 0U;
+
+            vkCmdBindVertexBuffers ( commandBuffer,
+                0U,
+                1U,
+                _helloTriangleGeometry->GetVertexBuffers (),
+                &offsets
+            );
 
             _helloTriangleProgram->Bind ( commandBuffer );
             vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );

@@ -504,7 +504,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
     binds[ IN_BUFFER_POSITION ] =
     {
         .binding = IN_BUFFER_POSITION,
-        .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::PositionInfo ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
@@ -520,7 +520,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
         .location = IN_BUFFER_POSITION,
         .binding = IN_SLOT_POSITION,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::PositionInfo, _position ) )
+        .offset = 0U
     };
 
     attributes[ IN_SLOT_UV ] =

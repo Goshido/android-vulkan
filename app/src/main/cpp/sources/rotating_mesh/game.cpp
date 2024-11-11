@@ -794,7 +794,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
             .location = IN_SLOT_POSITION,
             .binding = IN_BUFFER_POSITION,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::PositionInfo, _position ) )
+            .offset = 0U
         },
         {
             .location = IN_SLOT_UV,
@@ -820,7 +820,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
     {
         {
             .binding = IN_BUFFER_POSITION,
-            .stride = sizeof ( android_vulkan::PositionInfo ),
+            .stride = sizeof ( GXVec3 ),
             .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
         },
         {

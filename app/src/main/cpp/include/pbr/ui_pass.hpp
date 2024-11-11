@@ -60,12 +60,60 @@ class UIPass final
             VkDeviceSize                                _memoryOffset = 0U;
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+                size_t size,
                 VkBufferUsageFlags usage,
                 VkMemoryPropertyFlags memoryProperties,
                 char const* name
             ) noexcept;
 
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        };
+
+        class BufferStream final
+        {
+            private:
+                VkBufferMemoryBarrier                   _barrier
+                {
+                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                    .pNext = nullptr,
+                    .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                    .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .buffer = VK_NULL_HANDLE,
+                    .offset = 0U,
+                    .size = 0U
+                };
+
+                uint8_t*                                _data = nullptr;
+                size_t const                            _elementSize = 0U;
+
+                Buffer                                  _staging {};
+                Buffer                                  _vertex {};
+
+            public:
+                BufferStream () = delete;
+
+                BufferStream ( BufferStream const & ) = delete;
+                BufferStream &operator = ( BufferStream const & ) = delete;
+
+                BufferStream ( BufferStream && ) = delete;
+                BufferStream &operator = ( BufferStream && ) = delete;
+
+                explicit BufferStream ( size_t elementSize ) noexcept;
+
+                ~BufferStream () = default;
+
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+                    char const *vertexName,
+                    char const *stagingName
+                ) noexcept;
+
+                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+
+                [[nodiscard]] VkBuffer GetBuffer () const noexcept;
+                [[nodiscard]] void *GetData ( size_t startIndex ) const noexcept;
+                void UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept;
         };
 
         class ImageDescriptorSets final
@@ -125,7 +173,6 @@ class UIPass final
 
     private:
         GXVec2                                          _bottomRight {};
-        VkBufferMemoryBarrier                           _bufferBarrier {};
         float                                           _brightnessBalance = 0.0F;
 
         VkExtent2D                                      _currentResolution
@@ -135,8 +182,6 @@ class UIPass final
         };
 
         UIPassTransformDescriptorSetLayout              _transformLayout {};
-
-        UIVertexInfo*                                   _data = nullptr;
 
         CommonDescriptorSet                             _commonDescriptorSet {};
         VkDescriptorPool                                _descriptorPool = VK_NULL_HANDLE;
@@ -152,9 +197,9 @@ class UIPass final
         bool                                            _isTransformChanged = false;
         std::vector<Job>                                _jobs {};
 
+        BufferStream                                    _positions { sizeof ( GXVec2 ) };
+        BufferStream                                    _rest { sizeof ( UIVertex ) };
         UIProgram                                       _program {};
-        Buffer                                          _staging {};
-        Buffer                                          _vertex {};
 
         VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
 
@@ -217,7 +262,8 @@ class UIPass final
             return 6U;
         }
 
-        static void AppendRectangle ( UIVertexInfo* target,
+        static void AppendRectangle ( GXVec2* targetPositions,
+            UIVertex* targetVertices,
             GXColorRGB const &color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,

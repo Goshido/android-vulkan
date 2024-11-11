@@ -233,11 +233,18 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( _hasBackground )
     {
         constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-        constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
+        constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
+        constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
         UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-        std::memcpy ( uiVertexBuffer.data (), _vertices, bytes );
-        uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+        std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
+        std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+        std::memcpy ( uiPositions.data (), _positions, positionBytes );
+        std::memcpy ( uiVertices.data (), _vertices, verticesBytes );
+
+        uiPositions = uiPositions.subspan ( vertices );
+        uiVertices = uiVertices.subspan ( vertices );
 
         info._uiPass->SubmitRectangle ();
     }
@@ -321,7 +328,8 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
         FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
-        UIPass::AppendRectangle ( _vertices,
+        UIPass::AppendRectangle ( _positions,
+            _vertices,
             _backgroundColor,
             topLeft,
             bottomRight,

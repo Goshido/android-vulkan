@@ -52,7 +52,10 @@ class TextUIElement final : public UIElement
             std::vector<float>              _parentLineHeights {};
             GXVec2                          _parenTopLeft {};
 
-            std::vector<UIVertexInfo>       _vertices {};
+            std::vector<GXVec2>             _positions {};
+            size_t                          _positionBufferBytes = 0U;
+
+            std::vector<UIVertex>           _vertices {};
             size_t                          _vertexBufferBytes = 0U;
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;

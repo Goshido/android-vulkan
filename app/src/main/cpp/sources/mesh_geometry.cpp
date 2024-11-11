@@ -44,8 +44,8 @@ struct BufferSyncItem final
 
 struct OldFormat final
 {
-    PositionInfo            _position {};
-    VertexInfo              _vertex {};
+    GXVec3          _position {};
+    VertexInfo      _vertex {};
 };
 
 #pragma pack ( pop )
@@ -205,14 +205,82 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
 {
     FreeResources ( renderer );
 
-    return UploadSimple ( renderer,
+    VkBufferCreateInfo const bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size =  static_cast<VkDeviceSize> ( data.size () ),
+        .usage = VERTEX_BUFFER_USAGE | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
+
+    VkDevice device = renderer.GetDevice ();
+    VkBuffer &buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
+    Allocation &allocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
+
+    bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
+        "MeshGeometry::LoadMesh",
+        "Can't create buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    allocation._range = bufferInfo.size;
+    AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "Mesh" )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements ( device, buffer, &memoryRequirements );
+
+    result = renderer.TryAllocateMemory ( allocation._memory,
+        allocation._offset,
+        memoryRequirements,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Can't allocate buffer memory (MeshGeometry::LoadMesh)"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    result = Renderer::CheckVkResult (
+        vkBindBufferMemory ( device, buffer, allocation._memory, allocation._offset ),
+        "MeshGeometry::LoadMesh",
+        "Can't bind buffer memory"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    UploadJob const job
+    {
+        ._copyInfo
+        {
+            .srcOffset = 0U,
+            .dstOffset = 0U,
+            .size = allocation._range
+        },
+
+        ._buffer = buffer,
+        ._usage = VERTEX_BUFFER_USAGE
+    };
+
+    result = UploadInternal ( renderer,
         commandBuffer,
         externalCommandBuffer,
         fence,
-        data,
-        vertexCount,
-        VERTEX_BUFFER_USAGE
+        { &job, 1U },
+        data
     );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _vertexCount = vertexCount;
+    _vertexBufferVertexCount = vertexCount;
+    return true;
 }
 
 bool MeshGeometry::LoadMesh ( Renderer &renderer,
@@ -229,7 +297,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     size_t const indexCount = indices.size ();
     size_t const positionOffset = indexCount * sizeof ( uint32_t );
     size_t const positionCount = positions.size ();
-    size_t const positionSize = positionCount * sizeof ( PositionInfo );
+    size_t const positionSize = positionCount * sizeof ( GXVec3 );
 
     size_t const size = positionOffset + positionSize;
     std::vector<uint8_t> storage ( size );
@@ -271,7 +339,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
 
     size_t const indexCount = indices.size ();
     size_t const positionOffset = indexCount * sizeof ( uint32_t );
-    size_t const positionSize = positions.size () * sizeof ( PositionInfo );
+    size_t const positionSize = positions.size () * sizeof ( GXVec3 );
     size_t const vertexOffset = positionOffset + positionSize;
     size_t const vertexCount = vertices.size ();
     size_t const vertexSize = vertexCount * sizeof ( VertexInfo );
@@ -546,7 +614,7 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
         AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
 
-    bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( PositionInfo ) );
+    bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( GXVec3 ) );
     bufferInfo.usage = vertexBufferUsageFlags;
     VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
     Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
@@ -674,13 +742,13 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
         auto const* src = reinterpret_cast<OldFormat const*> ( dataSrc + indexBufferSize );
 
         uint8_t *vertexData = repackPtr + indexBufferSize;
-        auto* positionDst = reinterpret_cast<PositionInfo*> ( vertexData );
+        auto* positionDst = reinterpret_cast<GXVec3*> ( vertexData );
         auto* restDst = reinterpret_cast<VertexInfo*> ( vertexData + positionAllocation._range );
 
         for ( size_t i = 0U; i < vertexCount; ++i )
         {
             OldFormat const &input = src[ i ];
-            positionDst[ i ]._position = input._position._position;
+            positionDst[ i ] = input._position;
             restDst[ i ] = input._vertex;
         }
 
@@ -926,7 +994,7 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size =  static_cast<size_t> ( vertexCount ) * sizeof ( PositionInfo ),
+        .size =  static_cast<VkDeviceSize> ( static_cast<size_t> ( vertexCount ) * sizeof ( GXVec3 ) ),
         .usage = usage | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -1013,13 +1081,13 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
 
     auto const* src = reinterpret_cast<OldFormat const*> ( data.data () );
 
-    auto* positionDst = reinterpret_cast<PositionInfo*> ( repackPtr );
+    auto* positionDst = reinterpret_cast<GXVec3*> ( repackPtr );
     auto* restDst = reinterpret_cast<VertexInfo*> ( repackPtr + positionAllocation._range );
 
     for ( size_t i = 0U; i < vertexCount; ++i )
     {
         OldFormat const &input = src[ i ];
-        positionDst[ i ]._position = input._position._position;
+        positionDst[ i ] = input._position;
         restDst[ i ] = input._vertex;
     }
 

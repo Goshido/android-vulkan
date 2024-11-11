@@ -283,10 +283,16 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    size_t const vertices = _submitCache._vertices.size ();
+    size_t const vertices = _submitCache._positions.size ();
     UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
-    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
+    std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
+
+    uiPositions = uiPositions.subspan ( vertices );
+    uiVertices = uiVertices.subspan ( vertices );
 
     info._uiPass->SubmitText ( vertices );
 }
@@ -303,14 +309,19 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._parenTopLeft = info._parentTopLeft;
     _submitCache._penIn = info._pen;
 
-    std::vector<UIVertexInfo> &vertexBuffer = _submitCache._vertices;
+    std::vector<GXVec2> &positionBuffer = _submitCache._positions;
+    positionBuffer.clear ();
+
+    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
+    positionBuffer.resize ( vertexCount );
     vertexBuffer.resize ( vertexCount );
-    UIVertexInfo* begin = vertexBuffer.data ();
-    UIVertexInfo* v = begin;
+
+    GXVec2* p = positionBuffer.data ();
+    UIVertex* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorRGB const &color = ResolveColor ();
@@ -353,7 +364,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = x + g._width;
 
-            UIPass::AppendRectangle ( v,
+            UIPass::AppendRectangle ( p,
+                v,
                 color,
                 GXVec2 ( static_cast<float> ( x ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
@@ -364,6 +376,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             );
 
             x += g._advance;
+
+            p += verticesPerGlyph;
             v += verticesPerGlyph;
         }
 
@@ -378,7 +392,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertexInfo );
+    _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
     return true;
 }
 

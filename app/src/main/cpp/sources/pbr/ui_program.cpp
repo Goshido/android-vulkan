@@ -16,6 +16,7 @@ constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_default_b
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
+constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
 } // end of anonymous namespace
 
@@ -46,7 +47,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription {};
+    VkVertexInputBindingDescription bindingDescription[ VERTEX_INPUT_BINDING_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo {};
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
     VkPipelineMultisampleStateCreateInfo multisampleInfo {};
@@ -71,7 +72,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
-        &bindingDescription
+        bindingDescription
     );
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
@@ -463,43 +464,50 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    *binds =
+    binds[ IN_BUFFER_POSITION ] =
     {
-        .binding = 0U,
-        .stride = static_cast<uint32_t> ( sizeof ( UIVertexInfo ) ),
+        .binding = IN_BUFFER_POSITION,
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec2 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    attributes[ IN_SLOT_VERTEX ] =
+    binds[ IN_BUFFER_REST ] =
     {
-        .location = IN_SLOT_VERTEX,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
+        .stride = static_cast<uint32_t> ( sizeof ( UIVertex ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    attributes[ IN_SLOT_POSITION ] =
+    {
+        .location = IN_SLOT_POSITION,
+        .binding = IN_BUFFER_POSITION,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _vertex ) )
+        .offset = 0U
     };
 
     attributes[ IN_SLOT_COLOR ] =
     {
         .location = IN_SLOT_COLOR,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _color ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _color ) )
     };
 
     attributes[ IN_SLOT_ATLAS ] =
     {
         .location = IN_SLOT_ATLAS,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _atlas ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas ) )
     };
 
     attributes[ IN_SLOT_IMAGE_UV ] =
     {
         .location = IN_SLOT_IMAGE_UV,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _imageUV ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _imageUV ) )
     };
 
     info =
@@ -507,7 +515,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .vertexBindingDescriptionCount = 1U,
+        .vertexBindingDescriptionCount = static_cast<uint32_t> ( VERTEX_INPUT_BINDING_COUNT ),
         .pVertexBindingDescriptions = binds,
         .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
         .pVertexAttributeDescriptions = attributes

@@ -21,7 +21,7 @@ class MeshGeometry final
     public:
         using AbstractData = std::span<uint8_t const>;
         using Indices = std::span<uint32_t const>;
-        using Positions = std::span<PositionInfo const>;
+        using Positions = std::span<GXVec3 const>;
         using Vertices = std::span<VertexInfo const>;
 
     private:

@@ -2,7 +2,10 @@
 #define UI_PROGRAM_INC
 
 
-#define IN_SLOT_VERTEX              0
+#define IN_BUFFER_POSITION          0
+#define IN_SLOT_POSITION            0
+
+#define IN_BUFFER_REST              1
 #define IN_SLOT_COLOR               1
 #define IN_SLOT_ATLAS               2
 #define IN_SLOT_IMAGE_UV            3

@@ -29,7 +29,8 @@ class ImageUIElement final : public UIElement
             GXVec2                  _parenTopLeft {};
             Texture2DRef            _texture {};
 
-            UIVertexInfo            _vertices[ UIPass::GetVerticesPerRectangle() ];
+            GXVec2                  _positions[ UIPass::GetVerticesPerRectangle() ] {};
+            UIVertex                _vertices[ UIPass::GetVerticesPerRectangle() ] {};
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };

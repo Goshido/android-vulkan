@@ -10,8 +10,8 @@ cbuffer Transform:                                  register ( b0 )
 
 struct InputData
 {
-    [[vk::location ( IN_SLOT_VERTEX )]]
-    float32_t2                      _vertex:        VERTEX;
+    [[vk::location ( IN_SLOT_POSITION )]]
+    float32_t2                      _position:      POSITION;
 
     [[vk::location ( IN_SLOT_COLOR )]]
     float32_t4                      _color:         COLOR;
@@ -46,7 +46,7 @@ OutputData VS ( in InputData inputData )
 {
     OutputData result;
 
-    result._vertexH = float32_t4 ( mul ( _rotateScale, inputData._vertex + _offset ), 0.5F, 1.0F );
+    result._vertexH = float32_t4 ( mul ( _rotateScale, inputData._position + _offset ), 0.5F, 1.0F );
     result._color = inputData._color;
     result._atlasUV = inputData._atlas.xy;
     result._atlasLayer = inputData._atlas.z;

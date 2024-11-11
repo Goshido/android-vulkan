@@ -15,9 +15,8 @@ namespace pbr {
 
 #pragma pack ( push, 1 )
 
-struct UIVertexInfo final
+struct UIVertex final
 {
-    GXVec2          _vertex;
     GXColorRGB      _color;
     GXVec3          _atlas;
     GXVec2          _imageUV;
@@ -25,7 +24,11 @@ struct UIVertexInfo final
 
 #pragma pack ( pop )
 
-using UIVertexBuffer = std::span<UIVertexInfo>;
+struct UIVertexBuffer final
+{
+    std::span<GXVec2>       _positions {};
+    std::span<UIVertex>     _vertices {};
+};
 
 } // namespace pbr
 

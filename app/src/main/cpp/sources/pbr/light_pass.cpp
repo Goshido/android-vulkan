@@ -203,7 +203,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
         4U, 0U, 1U
     };
 
-    constexpr android_vulkan::PositionInfo const positions[]
+    constexpr GXVec3 const positions[]
     {
         { -0.5F, -0.5F, -0.5F },
         { 0.5F, -0.5F, -0.5F },
@@ -216,8 +216,8 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
     };
 
     GXAABB bounds {};
-    bounds.AddVertex ( positions[ 0U ]._position );
-    bounds.AddVertex ( positions[ 7U ]._position );
+    bounds.AddVertex ( positions[ 0U ] );
+    bounds.AddVertex ( positions[ 7U ] );
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
     {

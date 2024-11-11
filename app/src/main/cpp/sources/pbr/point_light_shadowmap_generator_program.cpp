@@ -403,7 +403,7 @@ VkPipelineVertexInputStateCreateInfo const* PointLightShadowmapGeneratorProgram:
     binds[ 0U ] =
     {
         .binding = 0U,
-        .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::PositionInfo ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
@@ -412,7 +412,7 @@ VkPipelineVertexInputStateCreateInfo const* PointLightShadowmapGeneratorProgram:
         .location = IN_SLOT_VERTEX,
         .binding = 0U,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::PositionInfo, _position ) )
+        .offset = 0U
     };
 
     info =

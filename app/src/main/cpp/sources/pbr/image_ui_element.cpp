@@ -238,11 +238,18 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-    constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
+    constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
+    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
     UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices, bytes );
-    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
+    std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );
+
+    uiPositions = uiPositions.subspan ( vertices );
+    uiVertices = uiVertices.subspan ( vertices );
 
     info._uiPass->SubmitImage ( _submitCache._texture );
 }
@@ -290,7 +297,8 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     FontStorage::GlyphInfo const &g = info._fontStorage->GetTransparentGlyphInfo ();
 
-    UIPass::AppendRectangle ( _submitCache._vertices,
+    UIPass::AppendRectangle ( _submitCache._positions,
+        _submitCache._vertices,
         white,
         topLeft,
         bottomRight,
@@ -315,9 +323,11 @@ GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize ) noexcept
     if ( _isAutoWidth & !_isAutoHeight )
         return ResolveSizeByHeight ( parentCanvasSize._data[ 1U ] );
 
-    return GXVec2 ( ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false ),
+    return
+    {
+        ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false ),
         ResolvePixelLength ( _css._height, parentCanvasSize._data[ 1U ], true )
-    );
+    };
 }
 
 GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth ) noexcept

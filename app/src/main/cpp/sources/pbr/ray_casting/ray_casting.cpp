@@ -312,7 +312,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         2U, 3U, 5U
     };
 
-    constexpr android_vulkan::PositionInfo const positions[]
+    constexpr GXVec3 const positions[]
     {
         { 0.998F, 0.0F, 0.0F },
         { -0.502F, 0.866F, 0.0F },

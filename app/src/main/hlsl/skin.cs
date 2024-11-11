@@ -5,7 +5,6 @@
 
 struct Mesh2Vertex
 {
-    float32_t3                      _vertex;
     float32_t2                      _uv;
     float32_t3                      _normal;
     float32_t3                      _tangent;
@@ -38,16 +37,22 @@ struct PushConstants
 PushConstants                       g_vertexCount;
 
 [[vk::binding ( BIND_POSE, SET_RESOURCE )]]
-StructuredBuffer<Pose>              g_pose:             register ( t0 );
+StructuredBuffer<Pose>              g_pose:                 register ( t0 );
 
-[[vk::binding ( BIND_REFERENCE_MESH, SET_RESOURCE )]]
-StructuredBuffer<Mesh2Vertex>       g_referenceMesh:    register ( t1 );
+[[vk::binding ( BIND_REFERENCE_POSITIONS, SET_RESOURCE )]]
+StructuredBuffer<float32_t3>        g_referencePositons:    register ( t1 );
 
-[[vk::binding ( BIND_SKIN, SET_RESOURCE )]]
-StructuredBuffer<SkinVertex>        g_skin:             register ( t2 );
+[[vk::binding ( BIND_REFERENCE_REST, SET_RESOURCE )]]
+StructuredBuffer<Mesh2Vertex>       g_referenceRest:        register ( t2 );
 
-[[vk::binding ( BIND_SKIN_MESH, SET_RESOURCE )]]
-RWStructuredBuffer<Mesh2Vertex>     g_skinMesh:         register ( u0 );
+[[vk::binding ( BIND_SKIN_VERTICES, SET_RESOURCE )]]
+StructuredBuffer<SkinVertex>        g_skinVertices:         register ( t3 );
+
+[[vk::binding ( BIND_SKIN_POSITIONS, SET_RESOURCE )]]
+RWStructuredBuffer<float32_t3>      g_skinPositions:        register ( u0 );
+
+[[vk::binding ( BIND_SKIN_REST, SET_RESOURCE )]]
+RWStructuredBuffer<Mesh2Vertex>     g_skinRest:             register ( u1 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -96,7 +101,7 @@ float32_t4x3 ExtractBoneTransform ( in uint32_t boneIdx )
 
 float32_t4x3 ComputeSkinTransform ( in uint32_t vertexIndex )
 {
-    SkinVertex const skin = g_skin[ vertexIndex ];
+    SkinVertex const skin = g_skinVertices[ vertexIndex ];
 
     float32_t4x3 const t0 = ExtractBoneTransform ( skin._influences[ 0U ]._boneIndex );
     float32_t4x3 const t1 = ExtractBoneTransform ( skin._influences[ 1U ]._boneIndex );
@@ -126,19 +131,20 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
     if ( idx >= g_vertexCount._count )
         return;
 
-    Mesh2Vertex const reference = g_referenceMesh[ idx ];
+    Mesh2Vertex const referenceRest = g_referenceRest[ idx ];
     float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
     float32_t3x3 const orientation = (float32_t3x3)skinTransform;
 
-    Mesh2Vertex skin;
-    skin._uv = reference._uv;
+    g_skinPositions[ idx ] = mul ( float32_t4 ( g_referencePositons[ idx ], 1.0F ), skinTransform );
+
+    Mesh2Vertex skinRest;
+    skinRest._uv = referenceRest._uv;
 
     // Note matrix multiplication order is in reverse order compare to the rest of engine code.
     // The reason is that quaternion unpacks to matrix with column-major behaviour.
     // Same time the engine has row-major matrix convention.
-    skin._vertex = mul ( float32_t4 ( reference._vertex, 1.0F ), skinTransform );
-    skin._normal = mul ( reference._normal, orientation );
-    skin._tangent = mul ( reference._tangent, orientation );
+    skinRest._normal = mul ( referenceRest._normal, orientation );
+    skinRest._tangent = mul ( referenceRest._tangent, orientation );
 
-    g_skinMesh[ idx ] = skin;
+    g_skinRest[ idx ] = skinRest;
 }

@@ -3,7 +3,7 @@
 [string] $profilePrefix = $args[ 2 ]
 
 Clear-Host
-scripts\windows\make-env.ps1 $false
+. scripts\windows\make-env.ps1 $false
 
 $params =
     "-E", $entryPoint,

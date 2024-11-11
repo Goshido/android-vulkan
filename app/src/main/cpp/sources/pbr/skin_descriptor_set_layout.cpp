@@ -14,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -63,21 +63,35 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_REFERENCE_MESH,
+            .binding = BIND_REFERENCE_POSITIONS,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_SKIN,
+            .binding = BIND_REFERENCE_REST,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_SKIN_MESH,
+            .binding = BIND_SKIN_VERTICES,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_SKIN_POSITIONS,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_SKIN_REST,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,

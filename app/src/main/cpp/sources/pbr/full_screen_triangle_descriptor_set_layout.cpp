@@ -14,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;

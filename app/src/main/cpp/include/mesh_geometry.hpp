@@ -78,12 +78,12 @@ class MeshGeometry final
         // Method returns two buffers: position buffer and "rest data" buffer.
         [[nodiscard]] VkBuffer const *GetVertexBuffers () const noexcept;
 
-        [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
+        [[nodiscard]] BufferInfo GetBufferInfo () const noexcept;
+        [[nodiscard]] MeshBufferInfo GetMeshBufferInfo () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
         [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
-        [[maybe_unused, nodiscard]] bool IsIndexBufferPresent () const noexcept;
 
         // Mesh geometry is not unique if it was loaded from .mesh file.
         // Mesh geometry is unique if it was created from raw data.

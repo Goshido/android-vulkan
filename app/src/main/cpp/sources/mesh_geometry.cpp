@@ -17,9 +17,6 @@ constexpr size_t UV_THREADS = 4U;
 constexpr VkFlags VERTEX_BUFFER_USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
     AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT );
 
-constexpr size_t POSITION_BUFFER_INDEX = 0U;
-constexpr size_t REST_DATA_BUFFER_INDEX = 1U;
-
 //----------------------------------------------------------------------------------------------------------------------
 
 struct BufferSyncItem final
@@ -114,12 +111,30 @@ VkBuffer const *MeshGeometry::GetVertexBuffers () const noexcept
     return _vertexBuffers;
 }
 
-BufferInfo MeshGeometry::GetVertexBufferInfo () const noexcept
+BufferInfo MeshGeometry::GetBufferInfo () const noexcept
 {
     return
     {
-        ._buffer = _vertexBuffers[ POSITION_BUFFER_INDEX ],
-        ._range = _vertexAllocations[ POSITION_BUFFER_INDEX ]._range
+        ._buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ],
+        ._range = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]._range,
+    };
+}
+
+MeshBufferInfo MeshGeometry::GetMeshBufferInfo () const noexcept
+{
+    return
+    {
+        ._postions
+        {
+            ._buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ],
+            ._range = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]._range
+        },
+
+        ._rest
+        {
+            ._buffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ],
+            ._range = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ]._range
+        }
     };
 }
 
@@ -141,11 +156,6 @@ std::string const &MeshGeometry::GetName () const noexcept
 uint32_t MeshGeometry::GetVertexCount () const noexcept
 {
     return _vertexCount;
-}
-
-[[maybe_unused]] bool MeshGeometry::IsIndexBufferPresent () const noexcept
-{
-    return _indexBuffer != VK_NULL_HANDLE;
 }
 
 bool MeshGeometry::IsUnique () const noexcept
@@ -298,13 +308,13 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
     _vertexCount = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( VkBuffer &positionData = _vertexBuffers[ POSITION_BUFFER_INDEX ]; positionData != VK_NULL_HANDLE ) [[likely]]
+    if ( VkBuffer &positionData = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; positionData != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyBuffer ( device, positionData, nullptr );
         positionData = VK_NULL_HANDLE;
     }
 
-    if ( VkBuffer &restData = _vertexBuffers[ REST_DATA_BUFFER_INDEX ]; restData != VK_NULL_HANDLE )
+    if ( VkBuffer &restData = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ]; restData != VK_NULL_HANDLE )
     {
         vkDestroyBuffer ( device, restData, nullptr );
         restData = VK_NULL_HANDLE;
@@ -323,7 +333,7 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
         _indexAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
-    if ( Allocation &position = _vertexAllocations[ POSITION_BUFFER_INDEX ]; position._memory != VK_NULL_HANDLE )
+    if ( Allocation &position = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; position._memory != VK_NULL_HANDLE )
     {
         [[likely]]
         renderer.FreeMemory ( position._memory, position._offset );
@@ -331,7 +341,7 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
         position._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
-    Allocation &rest = _vertexAllocations[ REST_DATA_BUFFER_INDEX ];
+    Allocation &rest = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
 
     if ( rest._memory == VK_NULL_HANDLE )
         return;
@@ -538,8 +548,8 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
 
     bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( PositionInfo ) );
     bufferInfo.usage = vertexBufferUsageFlags;
-    VkBuffer &positionBuffer = _vertexBuffers[ POSITION_BUFFER_INDEX ];
-    Allocation &positionAllocation = _vertexAllocations[ POSITION_BUFFER_INDEX ];
+    VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
+    Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
 
     result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &positionBuffer ),
         "MeshGeometry::UploadComplex",
@@ -615,8 +625,8 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
 
     bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( VertexInfo ) );
     bufferInfo.usage = vertexBufferUsageFlags;
-    VkBuffer &restDataBuffer = _vertexBuffers[ REST_DATA_BUFFER_INDEX ];
-    Allocation &restDataAllocation = _vertexAllocations[ REST_DATA_BUFFER_INDEX ];
+    VkBuffer &restDataBuffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
+    Allocation &restDataAllocation = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
 
     result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &restDataBuffer ),
         "MeshGeometry::UploadComplex",
@@ -924,8 +934,8 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
     };
 
     VkDevice device = renderer.GetDevice ();
-    VkBuffer &positionBuffer = _vertexBuffers[ POSITION_BUFFER_INDEX ];
-    Allocation &positionAllocation = _vertexAllocations[ POSITION_BUFFER_INDEX ];
+    VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
+    Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
 
     bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &positionBuffer ),
         "MeshGeometry::UploadSimple",
@@ -961,8 +971,8 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
         return false;
 
     bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( VertexInfo ) );
-    VkBuffer &restDataBuffer = _vertexBuffers[ REST_DATA_BUFFER_INDEX ];
-    Allocation &restDataAllocation = _vertexAllocations[ REST_DATA_BUFFER_INDEX ];
+    VkBuffer &restDataBuffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
+    Allocation &restDataAllocation = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
 
     result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &restDataBuffer ),
         "MeshGeometry::UploadSimple",

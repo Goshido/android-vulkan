@@ -217,42 +217,14 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
         .pQueueFamilyIndices = nullptr
     };
 
-    VkDevice device = renderer.GetDevice ();
     VkBuffer &buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
     Allocation &allocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
 
-    bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-        "MeshGeometry::LoadMesh",
-        "Can't create buffer"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !CreateBuffer ( renderer, buffer, allocation, bufferInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, "Mesh" ) )
+    {
+        [[unlikely]]
         return false;
-
-    allocation._range = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "Mesh" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, buffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( allocation._memory,
-        allocation._offset,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate buffer memory (MeshGeometry::LoadMesh)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, buffer, allocation._memory, allocation._offset ),
-        "MeshGeometry::LoadMesh",
-        "Can't bind buffer memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
+    }
 
     UploadJob const job
     {
@@ -267,7 +239,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
         ._usage = VERTEX_BUFFER_USAGE
     };
 
-    result = UploadInternal ( renderer,
+    bool const result = UploadInternal ( renderer,
         commandBuffer,
         externalCommandBuffer,
         fence,
@@ -376,10 +348,11 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
     _vertexCount = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( VkBuffer &positionData = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; positionData != VK_NULL_HANDLE ) [[likely]]
+    if ( VkBuffer &positions = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; positions != VK_NULL_HANDLE )
     {
-        vkDestroyBuffer ( device, positionData, nullptr );
-        positionData = VK_NULL_HANDLE;
+        [[likely]]
+        vkDestroyBuffer ( device, positions, nullptr );
+        positions = VK_NULL_HANDLE;
     }
 
     if ( VkBuffer &restData = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ]; restData != VK_NULL_HANDLE )
@@ -401,12 +374,12 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
         _indexAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
-    if ( Allocation &position = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; position._memory != VK_NULL_HANDLE )
+    if ( Allocation &mem = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; mem._memory != VK_NULL_HANDLE )
     {
         [[likely]]
-        renderer.FreeMemory ( position._memory, position._offset );
-        position._memory = VK_NULL_HANDLE;
-        position._offset = std::numeric_limits<VkDeviceSize>::max ();
+        renderer.FreeMemory ( mem._memory, mem._offset );
+        mem._memory = VK_NULL_HANDLE;
+        mem._offset = std::numeric_limits<VkDeviceSize>::max ();
     }
 
     Allocation &rest = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
@@ -509,7 +482,7 @@ bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
     FreeResourceInternal ( renderer );
     File file ( fileName );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> const &content = file.GetContent ();
@@ -575,36 +548,12 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
         .pQueueFamilyIndices = nullptr
     };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_indexBuffer ),
-        "MeshGeometry::UploadComplex",
-        "Can't create index buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _indexBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh indices" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _indexBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _indexAllocation._memory,
-        _indexAllocation._offset,
-        memoryRequirements,
+    bool result = CreateBuffer ( renderer,
+        _indexBuffer,
+        _indexAllocation,
+        bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate index buffer memory (MeshGeometry::UploadComplex)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _indexBuffer, _indexAllocation._memory, _indexAllocation._offset ),
-        "MeshGeometry::UploadComplex",
-        "Can't bind index buffer memory"
+        "Mesh indices"
     );
 
     if ( !result ) [[unlikely]]
@@ -619,33 +568,12 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
     VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
     Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
 
-    result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &positionBuffer ),
-        "MeshGeometry::UploadComplex",
-        "Can't create position buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    positionAllocation._range = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, positionBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh positions" )
-
-    vkGetBufferMemoryRequirements ( device, positionBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( positionAllocation._memory,
-        positionAllocation._offset,
-        memoryRequirements,
+    result = CreateBuffer ( renderer,
+        positionBuffer,
+        positionAllocation,
+        bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate position buffer memory (MeshGeometry::UploadComplex)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, positionBuffer, positionAllocation._memory, positionAllocation._offset ),
-        "MeshGeometry::UploadComplex",
-        "Can't bind position buffer memory"
+        "Mesh positions"
     );
 
     if ( !result ) [[unlikely]]
@@ -696,33 +624,12 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
     VkBuffer &restDataBuffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
     Allocation &restDataAllocation = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
 
-    result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &restDataBuffer ),
-        "MeshGeometry::UploadComplex",
-        "Can't create 'rest data' buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    restDataAllocation._range = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, restDataBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh rest data" )
-
-    vkGetBufferMemoryRequirements ( device, restDataBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( restDataAllocation._memory,
-        restDataAllocation._offset,
-        memoryRequirements,
+    result = CreateBuffer ( renderer,
+        restDataBuffer,
+        restDataAllocation,
+        bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate 'rest data' buffer memory (MeshGeometry::UploadComplex)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, restDataBuffer, restDataAllocation._memory, restDataAllocation._offset ),
-        "MeshGeometry::UploadComplex",
-        "Can't bind 'rest data' buffer memory"
+        "Mesh rest data"
     );
 
     if ( !result ) [[unlikely]]
@@ -811,51 +718,26 @@ bool MeshGeometry::UploadInternal ( Renderer &renderer,
 {
     size_t const dataSize = data.size ();
 
-    VkBufferCreateInfo const bufferInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( dataSize ),
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0U,
-        .pQueueFamilyIndices = nullptr
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_transferBuffer ),
-        "MeshGeometry::UploadInternal",
-        "Can't create transfer buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transferBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh staging buffer" )
-
-    VkMemoryRequirements transferMemoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _transferBuffer, &transferMemoryRequirements );
-
     constexpr VkMemoryPropertyFlags flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
-    result = renderer.TryAllocateMemory ( _transferAllocation._memory,
-        _transferAllocation._offset,
-        transferMemoryRequirements,
+    bool result = CreateBuffer ( renderer,
+        _transferBuffer,
+        _transferAllocation,
+
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+            .size = static_cast<VkDeviceSize> ( dataSize ),
+            .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 0U,
+            .pQueueFamilyIndices = nullptr
+        },
+
         flags,
-        "Can't allocate transfer memory (MeshGeometry::UploadInternal)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _transferBuffer, _transferAllocation._memory, _transferAllocation._offset ),
-        "MeshGeometry::UploadInternal",
-        "Can't bind transfer memory"
+        "Mesh staging buffer"
     );
 
     if ( !result ) [[unlikely]]
@@ -1001,38 +883,15 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
         .pQueueFamilyIndices = nullptr
     };
 
-    VkDevice device = renderer.GetDevice ();
     VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
     Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
 
-    bool result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &positionBuffer ),
-        "MeshGeometry::UploadSimple",
-        "Can't create position buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    positionAllocation._range = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, positionBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh positions" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, positionBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( positionAllocation._memory,
-        positionAllocation._offset,
-        memoryRequirements,
+    bool result = CreateBuffer ( renderer,
+        positionBuffer,
+        positionAllocation,
+        bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate position buffer memory (MeshGeometry::UploadSimple)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, positionBuffer, positionAllocation._memory, positionAllocation._offset ),
-        "MeshGeometry::UploadSimple",
-        "Can't bind position buffer memory"
+        "Mesh positions"
     );
 
     if ( !result ) [[unlikely]]
@@ -1042,33 +901,12 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
     VkBuffer &restDataBuffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
     Allocation &restDataAllocation = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
 
-    result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &restDataBuffer ),
-        "MeshGeometry::UploadSimple",
-        "Can't create 'rest data' buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    restDataAllocation._range = bufferInfo.size;
-    AV_SET_VULKAN_OBJECT_NAME ( device, restDataBuffer, VK_OBJECT_TYPE_BUFFER, "Mesh rest data" )
-
-    vkGetBufferMemoryRequirements ( device, restDataBuffer, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( restDataAllocation._memory,
-        restDataAllocation._offset,
-        memoryRequirements,
+    result = CreateBuffer ( renderer,
+        restDataBuffer,
+        restDataAllocation,
+        bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate 'rest data' buffer memory (MeshGeometry::UploadSimple)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, restDataBuffer, restDataAllocation._memory, restDataAllocation._offset ),
-        "MeshGeometry::UploadSimple",
-        "Can't bind 'rest data' buffer memory"
+        "Mesh rest data"
     );
 
     if ( !result ) [[unlikely]]
@@ -1131,6 +969,45 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
     return true;
+}
+
+bool MeshGeometry::CreateBuffer ( Renderer &renderer,
+    VkBuffer &buffer,
+    Allocation &allocation,
+    VkBufferCreateInfo const &createInfo,
+    VkMemoryPropertyFlags memoryProperty,
+    [[maybe_unused]] char const *name
+) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &createInfo, nullptr, &buffer ),
+        "MeshGeometry::CreateBuffer",
+        "Can't create buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    allocation._range = createInfo.size;
+    AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "%s", name )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements ( device, buffer, &memoryRequirements );
+
+    return
+        renderer.TryAllocateMemory ( allocation._memory,
+            allocation._offset,
+            memoryRequirements,
+            memoryProperty,
+            "Can't allocate memory (MeshGeometry::CreateBuffer)"
+        ) &&
+
+        Renderer::CheckVkResult (
+            vkBindBufferMemory ( device, buffer, allocation._memory, allocation._offset ),
+            "MeshGeometry::CreateBuffer",
+            "Can't bind memory"
+        );
 }
 
 } // namespace android_vulkan

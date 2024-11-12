@@ -173,6 +173,14 @@ class MeshGeometry final
             uint32_t vertexCount,
             VkBufferUsageFlags usage
         ) noexcept;
+
+        [[nodiscard]] bool static CreateBuffer ( Renderer &renderer,
+            VkBuffer &buffer,
+            Allocation &allocation,
+            VkBufferCreateInfo const &createInfo,
+            VkMemoryPropertyFlags memoryProperty,
+            char const *name
+        ) noexcept;
 };
 
 } // namespace android_vulkan

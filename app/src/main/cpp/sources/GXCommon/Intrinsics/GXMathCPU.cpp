@@ -1,4 +1,4 @@
-// version 1.12
+// version 1.13
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -195,6 +195,18 @@
 
 //----------------------------------------------------------------------------------------------------------------------
 
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorUNORM color ) noexcept:
+    _data
+    {
+        static_cast<GXFloat> ( color._data[ 0U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 1U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 2U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 3U ] ) * GX_MATH_UNORM_FACTOR
+    }
+{
+    // NOTHING
+}
+
 [[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     _data[ 0U ] = static_cast<GXFloat> ( red ) * GX_MATH_UNORM_FACTOR;
@@ -209,6 +221,19 @@
     _data[ 1U ] = static_cast<GXFloat> ( green ) * GX_MATH_UNORM_FACTOR;
     _data[ 2U ] = static_cast<GXFloat> ( blue ) * GX_MATH_UNORM_FACTOR;
     _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXColorUNORM GXColorRGB::ToColorUNORM () const noexcept
+{
+    constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
+
+    return
+    {
+        static_cast<GXUByte> ( _data[ 0U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 1U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 2U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 3U ] * convertFactor )
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------

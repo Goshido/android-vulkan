@@ -291,7 +291,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 bottomRight {};
     bottomRight.Sum ( topLeft, _borderSize );
 
-    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
     constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
     constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 

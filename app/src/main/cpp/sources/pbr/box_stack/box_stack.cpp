@@ -60,7 +60,7 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
-    auto submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
+    auto const submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
         GXVec3 location {};
         location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );

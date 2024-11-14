@@ -7,7 +7,7 @@
 
 namespace editor::theme {
 
-constexpr GXColorRGB BACKGROUND_COLOR ( 30U, 30U, 30U, 0.85F );
+constexpr GXColorUNORM BACKGROUND_COLOR ( 30U, 30U, 30U, 217U );
 
 } // namespace editor::theme
 

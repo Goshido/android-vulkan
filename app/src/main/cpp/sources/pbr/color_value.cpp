@@ -19,7 +19,7 @@ ColorValue &ColorValue::operator = ( ColorValue &&other ) noexcept
     return *this;
 }
 
-ColorValue &ColorValue::operator = ( GXColorRGB const &srgb ) noexcept
+ColorValue &ColorValue::operator = ( GXColorUNORM srgb ) noexcept
 {
     _srgb = srgb;
 
@@ -29,7 +29,7 @@ ColorValue &ColorValue::operator = ( GXColorRGB const &srgb ) noexcept
     return *this;
 }
 
-ColorValue::ColorValue ( bool inherit, GXColorRGB const &srgb ) noexcept:
+ColorValue::ColorValue ( bool inherit, GXColorUNORM srgb ) noexcept:
     _inherit ( inherit ),
     _srgb ( srgb )
 {
@@ -42,12 +42,7 @@ void ColorValue::AttachNotifier ( Context context, NotifyChanged notifier ) noex
     _notifyChanged = notifier;
 }
 
-GXColorRGB ColorValue::GetLinearColor () const noexcept
-{
-    return _srgb.ToLinearSpace ();
-}
-
-GXColorRGB const &ColorValue::GetSRGB () const noexcept
+GXColorUNORM ColorValue::GetSRGB () const noexcept
 {
     return _srgb;
 }

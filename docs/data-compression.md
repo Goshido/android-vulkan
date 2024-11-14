@@ -21,11 +21,15 @@ TBD
 
 ## <a id="benchmark">Benchmark environment</a>
 
-Testing device was [_Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030). It was used 3 scenes:
+Testing device: [_Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030).
 
-**_PBR_**:
+Benchmark scenes:
+
+⁘ **_PBR_**
 
 <img src="./images/compression-pbr.png" width="800"/>
+
+Average _FPS_: 56
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -35,15 +39,15 @@ Stipple meshes | 2 | 1 | 50%
 Point lights | 1 | 1 |0%
 Local reflections | 0 | 0 | N/A
 Global reflections | 1 | 1 | 0%
-_UI_ vertices | 0 | 0 | 0%
-
-Average _FPS_: `56`
+_UI_ vertices | 0 | 0 | N/A
 
 ---
 
-**_Skeletal mesh_**:
+⁘ **_Skeletal mesh_**
 
 <img src="./images/compression-skeletal.png" width="800"/>
+
+Average _FPS_: 57.6
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -53,15 +57,15 @@ Stipple meshes | 0 | 0 | N/A
 Point lights | 2 | 2 | 0%
 Local reflections | 0 | 0 | N/A
 Global reflections | 0 | 0 | N/A
-_UI_ vertices | 0 | 0 | 0%
-
-Average _FPS_: `57.6`
+_UI_ vertices | 0 | 0 | N/A
 
 ---
 
-**_World 1x1_**:
+⁘ **_World 1-1_**
 
 <img src="./images/compression-world1x1.png" width="800"/>
+
+Average _FPS_: 105.5
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -73,8 +77,6 @@ Local reflections | 0 | 0 | N/A
 Global reflections | 0 | 0 | N/A
 _UI_ vertices | 288 | 288 | 0%
 
-Average _FPS_: `105.5`
-
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="optimization-1">Optimization 1 - _Quaternion_, float16, separate position data</a>
@@ -83,11 +85,11 @@ _FPS_ comparison with stock version:
 
 **Scene** | **_FPS_** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
-_PBR_ | 59.9 | 3.9⬆️ | 7.1%⬆️ | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 64.5 | 6.9⬆️ | 11.9%⬆️ | <img src="./images/compression-skeletal.png" width="100">
-_World 1x1_ | 105.4 | 0.1⬇️ | 0.09%⬇️ | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 59.9 | 3.9⏫ | 7.1%⏫ | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 64.5 | 6.9⏫ | 11.9%⏫ | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 105.4 | 0.1🔻 | 0.09%🔻 | <img src="./images/compression-world1x1.png" width="100">
 
-Quaternion could represent local-view rotation and composite orientation for influence bones for skinning. Computations are performed in `float16_t` for _TBN_ data. The bitangent is reconstructed using [_cross product_](https://en.wikipedia.org/wiki/Cross_product).
+Quaternion could represent local-view rotation and composite orientation for influence bones during skinning process. Computations are performed in `float16_t` for _TBN_ data. The bitangent is reconstructed using [_cross product_](https://en.wikipedia.org/wiki/Cross_product).
 
 Separate position data utilizes tile _GPU_ specifics: every vertex shader is implicily cut into two versions:
 
@@ -96,9 +98,9 @@ Separate position data utilizes tile _GPU_ specifics: every vertex shader is imp
 
 So having positions and matrices tightly packed together increases chances to get cache-hit.
 
-**_3D_ scene data**
+⁘ **_3D_ scene workflow**
 
-Vertex buffers:
+Vertex buffer layouts:
 
 ```cpp
 // Vertex buffer #0
@@ -116,7 +118,7 @@ struct VertexInfo final
 }                                           }
 ```
 
-Uniform buffers:
+Uniform buffer layouts:
 
 ```cpp
                                                             struct ColorData final
@@ -146,9 +148,11 @@ struct InstanceData final                                   struct InstanceNorma
                                                             };
 ```
 
-**_UI_ data**
+---
 
-Vertex buffers:
+⁘ **_UI_ workflow**
+
+Vertex buffer layouts:
 
 ```cpp
 // Vertex buffer #0

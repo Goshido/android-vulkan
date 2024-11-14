@@ -73,7 +73,7 @@ TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32st
     _glyphs.resize ( _text.size () );
 }
 
-void TextUIElement::SetColor ( GXColorRGB const &color ) noexcept
+void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
 {
     _color = color;
     _submitCache._isColorChanged = true;
@@ -324,7 +324,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     UIVertex* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
-    GXColorRGB const &color = ResolveColor ();
+    GXColorUNORM const color = ResolveColor ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     size_t limit = 0U;
@@ -397,7 +397,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXColorRGB TextUIElement::ResolveColor () const noexcept
+GXColorUNORM TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
         return _color.value ();
@@ -410,14 +410,14 @@ GXColorRGB TextUIElement::ResolveColor () const noexcept
 
         if ( !color.IsInherit () )
         {
-            return color.GetLinearColor ();
+            return color.GetSRGB ();
         }
     }
 
     android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
-    constexpr static GXColorRGB nullColor ( 0.0F, 0.0F, 0.0F, 1.0F );
+    constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
     return nullColor;
 }
 

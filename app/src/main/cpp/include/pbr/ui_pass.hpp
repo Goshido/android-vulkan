@@ -264,11 +264,11 @@ class UIPass final
 
         static void AppendRectangle ( GXVec2* targetPositions,
             UIVertex* targetVertices,
-            GXColorRGB const &color,
+            GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
-            GXVec3 const &glyphTopLeft,
-            GXVec3 const &glyphBottomRight,
+            UIAtlas const &glyphTopLeft,
+            UIAtlas const &glyphBottomRight,
             GXVec2 const &imageTopLeft,
             GXVec2 const &imageBottomRight
         ) noexcept;

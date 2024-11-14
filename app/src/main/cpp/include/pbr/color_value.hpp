@@ -15,7 +15,7 @@ class ColorValue final
 
     private:
         bool                _inherit = false;
-        GXColorRGB          _srgb {};
+        GXColorUNORM        _srgb {};
         Context             _context = nullptr;
         NotifyChanged       _notifyChanged = nullptr;
 
@@ -27,15 +27,14 @@ class ColorValue final
 
         ColorValue ( ColorValue && ) = default;
         ColorValue &operator = ( ColorValue &&other ) noexcept;
-        ColorValue &operator = ( GXColorRGB const &srgb ) noexcept;
+        ColorValue &operator = ( GXColorUNORM srgb ) noexcept;
 
-        explicit ColorValue ( bool inherit, GXColorRGB const &srgb ) noexcept;
+        explicit ColorValue ( bool inherit, GXColorUNORM srgb ) noexcept;
 
         ~ColorValue () = default;
 
         void AttachNotifier ( Context context, NotifyChanged notifier ) noexcept;
-        [[nodiscard]] GXColorRGB GetLinearColor () const noexcept;
-        [[nodiscard]] GXColorRGB const &GetSRGB () const noexcept;
+        [[nodiscard]] GXColorUNORM GetSRGB () const noexcept;
         [[nodiscard]] bool IsInherit () const noexcept;
 };
 

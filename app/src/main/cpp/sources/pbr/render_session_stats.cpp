@@ -34,7 +34,7 @@ R"__(pbr::RenderSessionStats::PrintStats:
           Point lights  %9zu    %9zu    %s
      Local reflections  %9zu    %9zu    %s
     Global reflections  %9zu    %9zu    %s
-           UI vertices  %9zu    %9zu        0%%)__";
+           UI vertices  %9zu    %9zu    %s)__";
 
     auto avgCounter = [ & ] ( size_t counter ) noexcept -> size_t {
         return counter / _frameCount;
@@ -47,6 +47,7 @@ R"__(pbr::RenderSessionStats::PrintStats:
     char pointLightCull[ capacity ];
     char reflectionLocalCull[ capacity ];
     char reflectionGlobalCull[ capacity ];
+    char uiCull[ capacity ];
 
     constexpr auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
         if ( !submitCount )
@@ -83,7 +84,8 @@ R"__(pbr::RenderSessionStats::PrintStats:
         g,
         avgPercent ( reflectionGlobalCull, g, g ),
         ui,
-        ui
+        ui,
+        avgPercent ( uiCull, ui, ui )
     );
 
     Reset ();

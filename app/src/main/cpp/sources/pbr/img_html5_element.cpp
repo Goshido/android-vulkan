@@ -19,7 +19,7 @@ IMGHTML5Element::IMGHTML5Element ( std::u32string &&id,
     _classes ( std::move ( classes ) ),
     _id ( std::move ( id ) )
 {
-    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorRGB ( 0.0F, 0.0F, 0.0F, 0.0F ) );
+    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
     _cssComputedValues._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F );
 
     _cssComputedValues._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F );
@@ -27,7 +27,7 @@ IMGHTML5Element::IMGHTML5Element ( std::u32string &&id,
     _cssComputedValues._right = LengthValue ( LengthValue::eType::Auto, 0.0F );
     _cssComputedValues._top = LengthValue ( LengthValue::eType::Auto, 0.0F );
 
-    _cssComputedValues._color = ColorValue ( true, GXColorRGB ( 0.0F, 0.0F, 0.0F, 0.0F ) );
+    _cssComputedValues._color = ColorValue ( true, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
     _cssComputedValues._display = DisplayProperty::eValue::InlineBlock;
 
     _cssComputedValues._fontFile.clear ();

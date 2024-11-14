@@ -1,4 +1,4 @@
-// version 1.90
+// version 1.91
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -727,39 +727,60 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator + ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r + other._r, _i + other._i );
+    return
+    {
+        _r + other._r,
+        _i + other._i
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator - ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r - other._r, _i - other._i );
+    return
+    {
+        _r - other._r,
+        _i - other._i
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r * other._r - _i * other._i, _r * other._i + _i * other._r );
+    return
+    {
+        _r * other._r - _i * other._i,
+        _r * other._i + _i * other._r
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXDouble a ) const noexcept
 {
-    return GXPreciseComplex ( _r * a, _i * a );
+    return
+    {
+        _r * a,
+        _i * a
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator / ( GXDouble a ) const noexcept
 {
     GXDouble const invA = 1.0 / a;
-    return GXPreciseComplex ( _r * invA, _i * invA );
+
+    return
+    {
+        _r * invA,
+        _i * invA
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
 }
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat4 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
@@ -2101,11 +2122,13 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {
+    // NOLINTNEXTLINE - do not use std::srand
     std::srand ( static_cast<GXUInt> ( time ( nullptr ) ) );
 }
 
 [[maybe_unused]] GXFloat GXCALL GXRandomNormalize () noexcept
 {
+    // NOLINTNEXTLINE - do not use std::rand
     return static_cast<GXFloat> ( std::rand () ) * INVERSE_RAND_MAX;
 }
 

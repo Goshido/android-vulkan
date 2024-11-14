@@ -1011,7 +1011,7 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     if ( !query )
         return false;
 
-    GXVec3 const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    UIAtlas const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
 
     _opaqueGlyph =
     {
@@ -1023,7 +1023,7 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
         ._offsetY = 0
     };
 
-    GXVec3 const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    UIAtlas const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
 
     _transparentGlyph =
     {
@@ -1045,13 +1045,15 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     return true;
 }
 
-GXVec3 FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
+UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
-    GXVec3 result {};
-    result._data[ 2U ] = layer;
+    UIAtlas result {};
+    result._layer = static_cast<uint8_t>(layer);
 
-    auto &uv = *reinterpret_cast<GXVec2*> ( &result );
-    uv.Sum ( _pointSamplerUVThreshold, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    result._uv.Sum ( _pointSamplerUVThreshold,
+        _pixToUV,
+        GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) )
+    );
 
     return result;
 }

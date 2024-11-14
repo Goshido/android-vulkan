@@ -1,15 +1,7 @@
-// version 1.13
+// version 1.14
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-#include <cstring>
-#include <arm_neon.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace {
@@ -262,6 +254,20 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorUNORM color ) noexcept
+{
+    float32_t const tmp[ 4U ]
+    {
+        static_cast<float32_t> ( color._data[ 0U ] ),
+        static_cast<float32_t> ( color._data[ 1U ] ),
+        static_cast<float32_t> ( color._data[ 2U ] ),
+        static_cast<float32_t> ( color._data[ 3U ] )
+    };
+
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+}
+
 [[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     float32_t const tmp[ 4U ] =
@@ -288,6 +294,22 @@ namespace {
 
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
     _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXColorUNORM GXColorRGB::ToColorUNORM () const noexcept
+{
+    constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
+
+    float32_t tmp[ 4U ];
+    vst1q_f32 ( tmp, vmulq_n_f32 ( vld1q_f32 ( _data ), convertFactor ) );
+
+    return
+    {
+        static_cast<GXUByte> ( tmp[ 0U ] ),
+        static_cast<GXUByte> ( tmp[ 1U ] ),
+        static_cast<GXUByte> ( tmp[ 2U ] ),
+        static_cast<GXUByte> ( tmp[ 3U ] )
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------

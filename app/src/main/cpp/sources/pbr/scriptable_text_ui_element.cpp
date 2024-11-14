@@ -90,19 +90,24 @@ int ScriptableTextUIElement::OnSetColorHSV ( lua_State* state )
     auto const a = static_cast<float> ( lua_tonumber ( state, 5 ) );
 
     auto &self = *static_cast<ScriptableTextUIElement*> ( lua_touserdata ( state, 1 ) );
-    self._text.SetColor ( GXColorRGB ( GXColorHSV ( h, s, v, a ) ) );
+    self._text.SetColor ( GXColorRGB ( GXColorHSV ( h, s, v, a ) ).ToColorUNORM () );
     return 0;
 }
 
 int ScriptableTextUIElement::OnSetColorRGB ( lua_State* state )
 {
-    auto const r = static_cast<GXUByte> ( lua_tonumber ( state, 2 ) );
-    auto const g = static_cast<GXUByte> ( lua_tonumber ( state, 3 ) );
-    auto const b = static_cast<GXUByte> ( lua_tonumber ( state, 4 ) );
-    auto const a = static_cast<GXUByte> ( lua_tonumber ( state, 5 ) );
-
+    constexpr auto converter = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
     auto &self = *static_cast<ScriptableTextUIElement*> ( lua_touserdata ( state, 1 ) );
-    self._text.SetColor ( GXColorRGB ( r, g, b, a ) );
+
+    self._text.SetColor (
+        GXColorUNORM (
+            static_cast<GXUByte> ( lua_tointeger ( state, 2 ) ),
+            static_cast<GXUByte> ( lua_tointeger ( state, 3 ) ),
+            static_cast<GXUByte> ( lua_tointeger ( state, 4 ) ),
+            static_cast<GXUByte> ( lua_tonumber ( state, 5 ) * converter )
+        )
+    );
+
     return 0;
 }
 

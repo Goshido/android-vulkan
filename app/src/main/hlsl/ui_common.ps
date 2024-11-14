@@ -19,8 +19,8 @@ Texture2D<float32_t4>               g_imageTexture:     register ( t1 );
 
 struct InputData
 {
-    [[vk::location ( ATT_SLOT_COLOR )]]
-    nointerpolation float32_t4      _color:             COLOR;
+    [[vk::location ( ATT_SLOT_IMAGE_UV )]]
+    noperspective float32_t2        _imageUV:           IMAGE_UV;
 
     [[vk::location ( ATT_SLOT_ATLAS_UV )]]
     noperspective float32_t2        _atlasUV:           ATLAS_UV;
@@ -28,8 +28,8 @@ struct InputData
     [[vk::location ( ATT_SLOT_ATLAS_LAYER )]]
     nointerpolation float32_t       _atlasLayer:        ATLAS_LAYER;
 
-    [[vk::location ( ATT_SLOT_IMAGE_UV )]]
-    noperspective float32_t2        _imageUV:           IMAGE;
+    [[vk::location ( ATT_SLOT_COLOR )]]
+    nointerpolation float32_t4      _color:             COLOR;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -1053,11 +1053,11 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 
 void UIPass::AppendRectangle ( GXVec2* targetPositions,
     UIVertex* targetVertices,
-    GXColorRGB const &color,
+    GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
-    GXVec3 const &glyphTopLeft,
-    GXVec3 const &glyphBottomRight,
+    UIAtlas const &glyphTopLeft,
+    UIAtlas const &glyphBottomRight,
     GXVec2 const &imageTopLeft,
     GXVec2 const &imageBottomRight
 ) noexcept
@@ -1066,54 +1066,68 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 
     targetVertices[ 0U ] =
     {
-        ._color = color,
+        ._image = imageTopLeft,
         ._atlas = glyphTopLeft,
-        ._imageUV = imageTopLeft
+        ._color = color
     };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
+    uint8_t const layer = glyphTopLeft._layer;
+
     targetVertices[ 1U ] =
     {
-        ._color = color,
-        ._atlas = GXVec3 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ], glyphTopLeft._data[ 2U ] ),
-        ._imageUV = GXVec2 ( imageBottomRight._data[ 0U ], imageTopLeft._data[ 1U ] )
+        ._image = GXVec2 ( imageBottomRight._data[ 0U ], imageTopLeft._data[ 1U ] ),
+
+        ._atlas
+        {
+            ._uv = GXVec2 ( glyphBottomRight._uv._data[ 0U ], glyphTopLeft._uv._data[ 1U ] ),
+            ._layer = layer,
+        },
+
+        ._color = color
     };
 
     targetPositions[ 2U ] = bottomRight;
 
     targetVertices[ 2U ] =
     {
-        ._color = color,
+        ._image = imageBottomRight,
         ._atlas = glyphBottomRight,
-        ._imageUV = imageBottomRight
+        ._color = color
     };
 
     targetPositions[ 3U ] = bottomRight;
 
     targetVertices[ 3U ] =
     {
-        ._color = color,
+        ._image = imageBottomRight,
         ._atlas = glyphBottomRight,
-        ._imageUV = imageBottomRight
+        ._color = color
     };
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
     targetVertices[ 4U ] =
     {
-        ._color = color,
-        ._atlas = GXVec3 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ], glyphTopLeft._data[ 2U ] ),
-        ._imageUV = GXVec2 ( imageTopLeft._data[ 0U ], imageBottomRight._data[ 1U ] )
+        ._image = GXVec2 ( imageTopLeft._data[ 0U ], imageBottomRight._data[ 1U ] ),
+
+        ._atlas
+        {
+            ._uv = GXVec2 ( glyphTopLeft._uv._data[ 0U ], glyphBottomRight._uv._data[ 1U ] ),
+            ._layer = layer
+        },
+
+        ._color = color
     };
 
     targetPositions[ 5U ] = topLeft;
 
     targetVertices[ 5U ] =
     {
-        ._color = color,
+        ._image = imageTopLeft,
         ._atlas = glyphTopLeft,
-        ._imageUV = imageTopLeft
+        ._color = color
     };
 }
 

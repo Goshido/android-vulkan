@@ -133,7 +133,7 @@ bool HTML5Parser::Parse ( char const* html, Stream stream, char const* assetRoot
 
 void HTML5Parser::ApplyDefaultCSS () noexcept
 {
-    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorRGB ( 0.0F, 0.0F, 0.0F, 0.0F ) );
+    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
     _cssComputedValues._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F );
 
     _cssComputedValues._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F );
@@ -141,7 +141,7 @@ void HTML5Parser::ApplyDefaultCSS () noexcept
     _cssComputedValues._right = LengthValue ( LengthValue::eType::Auto, 0.0F );
     _cssComputedValues._top = LengthValue ( LengthValue::eType::Auto, 0.0F );
 
-    _cssComputedValues._color = ColorValue ( false, GXColorRGB ( 0.0F, 0.0F, 0.0F, 1.0F ) );
+    _cssComputedValues._color = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0xFFU ) );
     _cssComputedValues._display = DisplayProperty::eValue::Block;
 
     _cssComputedValues._fontFile.clear ();

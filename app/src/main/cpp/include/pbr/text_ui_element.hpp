@@ -14,8 +14,8 @@ class TextUIElement final : public UIElement
         {
             int32_t                         _advance;
 
-            GXVec3                          _atlasTopLeft;
-            GXVec3                          _atlasBottomRight;
+            UIAtlas                         _atlasTopLeft;
+            UIAtlas                         _atlasBottomRight;
 
             int32_t                         _offsetY;
             size_t                          _parentLine;
@@ -68,7 +68,7 @@ class TextUIElement final : public UIElement
         SubmitCache                         _submitCache {};
 
         // Way the user could override color which arrived from CSS.
-        std::optional<GXColorRGB>           _color {};
+        std::optional<GXColorUNORM>         _color {};
 
         int32_t                             _fontSize = 0;
         std::vector<Glyph>                  _glyphs {};
@@ -89,7 +89,7 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () override = default;
 
-        void SetColor ( GXColorRGB const &color ) noexcept;
+        void SetColor ( GXColorUNORM color ) noexcept;
         void SetText ( char const* text ) noexcept;
 
     private:
@@ -97,7 +97,7 @@ class TextUIElement final : public UIElement
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXColorRGB ResolveColor () const noexcept;
+        [[nodiscard]] GXColorUNORM ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,

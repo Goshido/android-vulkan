@@ -1,4 +1,4 @@
-// version 1.90
+// version 1.91
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -321,6 +321,42 @@ struct [[maybe_unused]] GXVec6 final
 
 //----------------------------------------------------------------------------------------------------------------------
 
+struct [[maybe_unused]] GXColorUNORM final
+{
+    // Stores components in red, green, blue, alpha order.
+    GXUByte     _data[ 4U ];
+
+    [[maybe_unused]] GXColorUNORM () = default;
+
+    [[maybe_unused]] GXColorUNORM ( GXColorUNORM const & ) = default;
+    [[maybe_unused]] GXColorUNORM &operator = ( GXColorUNORM const & ) = default;
+
+    [[maybe_unused]] GXColorUNORM ( GXColorUNORM && ) = default;
+    [[maybe_unused]] GXColorUNORM &operator = ( GXColorUNORM && ) = default;
+
+    [[maybe_unused]] constexpr GXColorUNORM ( GXUInt red, GXUInt green, GXUInt blue, GXUInt alpha ) noexcept:
+        _data
+        {
+            static_cast<GXUByte> ( red ),
+            static_cast<GXUByte> ( green ),
+            static_cast<GXUByte> ( blue ),
+            static_cast<GXUByte> ( alpha )
+        }
+    {
+        // NOTHING
+    }
+
+    [[maybe_unused]] constexpr GXColorUNORM ( GXUByte red, GXUByte green, GXUByte blue, GXUByte alpha ) noexcept:
+        _data { red, green, blue, alpha }
+    {
+        // NOTHING
+    }
+
+    [[maybe_unused]] ~GXColorUNORM () = default;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
 struct GXColorHSV;
 struct [[maybe_unused]] GXColorRGB final
 {
@@ -357,6 +393,7 @@ struct [[maybe_unused]] GXColorRGB final
 
     [[maybe_unused]] GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
     [[maybe_unused]] explicit GXColorRGB ( GXColorHSV const &color ) noexcept;
+    [[maybe_unused]] explicit GXColorRGB ( GXColorUNORM color ) noexcept;
 
     [[maybe_unused]] ~GXColorRGB () = default;
 
@@ -384,6 +421,8 @@ struct [[maybe_unused]] GXColorRGB final
 
     // It is assumed that current color space is sRGB.
     [[maybe_unused, nodiscard]] GXColorRGB ToLinearSpace () const noexcept;
+
+    [[maybe_unused, nodiscard]] GXColorUNORM ToColorUNORM () const noexcept;
 
     [[maybe_unused]] GXVoid ConvertToUByte ( GXUByte &red,
         GXUByte &green,

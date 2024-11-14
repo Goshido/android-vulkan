@@ -7,13 +7,10 @@ namespace pbr {
 GeometryCall::GeometryCall ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
-    Append ( mesh, local, worldBounds, color0, color1, color2, emission );
+    Append ( mesh, local, worldBounds, colorData );
 }
 
 GeometryCall::BatchList const &GeometryCall::GetBatchList () const noexcept
@@ -29,28 +26,22 @@ GeometryCall::UniqueList const &GeometryCall::GetUniqueList () const noexcept
 void GeometryCall::Append ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     if ( mesh->IsUnique () )
     {
-        AddUnique ( mesh, local, worldBounds, color0, color1, color2, emission );
+        AddUnique ( mesh, local, worldBounds, colorData );
         return;
     }
 
-    AddBatch ( mesh, local, worldBounds, color0, color1, color2, emission );
+    AddBatch ( mesh, local, worldBounds, colorData );
 }
 
 void GeometryCall::AddBatch ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     std::string const &name = mesh->GetName ();
@@ -59,23 +50,19 @@ void GeometryCall::AddBatch ( MeshRef &mesh,
     if ( findResult == _batch.cend () )
     {
         _batch.insert (
-            std::make_pair (
-                std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, color0, color1, color2, emission )
-            )
+            std::make_pair ( std::string_view ( name ), MeshGroup ( mesh, local, worldBounds, colorData ) )
         );
 
         return;
     }
 
-    findResult->second._geometryData.emplace_back (
-        GeometryData {
+    findResult->second._geometryData.push_back (
+        GeometryData
+        {
             ._isVisible = true,
             ._local = local,
             ._worldBounds = worldBounds,
-            ._color0 = color0,
-            ._color1 = color1,
-            ._color2 = color2,
-            ._emission = emission
+            ._colorData = colorData
         }
     );
 }
@@ -83,22 +70,17 @@ void GeometryCall::AddBatch ( MeshRef &mesh,
 void GeometryCall::AddUnique ( MeshRef &mesh,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     _unique.emplace_back (
         std::make_pair ( mesh,
-            GeometryData {
+            GeometryData
+            {
                 ._isVisible = true,
                 ._local = local,
                 ._worldBounds = worldBounds,
-                ._color0 = color0,
-                ._color1 = color1,
-                ._color2 = color2,
-                ._emission = emission
+                ._colorData = colorData
             }
         )
     );

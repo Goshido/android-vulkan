@@ -27,12 +27,31 @@ class GeometryPassProgram : public GraphicsProgram
             GXQuat                                  _localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
-        struct ColorData final
+        class ColorData final
         {
-            GXColorRGB                              _color0;
-            GXColorRGB                              _color1;
-            GXColorRGB                              _color2;
-            GXColorRGB                              _emission;
+            private:
+                uint32_t                            _emiRcol0rgb = 0U;
+                uint32_t                            _emiGcol1rgb = 0U;
+                uint32_t                            _emiBcol2rgb = 0U;
+                uint32_t                            _col0aEmiIntens = 0U;
+
+            public:
+                ColorData () = default;
+
+                ColorData ( ColorData const & ) = default;
+                ColorData &operator = ( ColorData const & ) = default;
+
+                ColorData ( ColorData && ) = default;
+                ColorData &operator = ( ColorData && ) = default;
+
+                ColorData ( GXColorUNORM color0,
+                    GXColorUNORM color1,
+                    GXColorUNORM color2,
+                    GXColorUNORM emission,
+                    float emissionIntensity
+                ) noexcept;
+
+                ~ColorData () = default;
         };
 
         struct InstanceColorData final

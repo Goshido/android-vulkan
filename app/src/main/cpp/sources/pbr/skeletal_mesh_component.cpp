@@ -28,8 +28,8 @@ namespace {
 constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 
-constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
-constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
+constexpr GXColorUNORM DEFAULT_COLOR ( 255U, 255U, 255U, 255U );
+constexpr GXColorUNORM DEFAULT_EMISSION ( 255U, 255U, 255U, 255U );
 
 constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
 
@@ -414,15 +414,8 @@ void SkeletalMeshComponent::FreeTransferResources ( android_vulkan::Renderer &re
 
 void SkeletalMeshComponent::Submit ( RenderSession &renderSession ) noexcept
 {
-    renderSession.SubmitMesh ( _usage._skinMesh,
-        _material,
-        _localMatrix,
-        _worldBounds,
-        _color0,
-        _color1,
-        _color2,
-        _emission
-    );
+    UpdateColorData ();
+    renderSession.SubmitMesh ( _usage._skinMesh, _material, _localMatrix, _worldBounds, *_colorData );
 }
 
 void SkeletalMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
@@ -447,30 +440,43 @@ bool SkeletalMeshComponent::SetAnimationGraph ( AnimationGraph &animationGraph )
     return false;
 }
 
-void SkeletalMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
+void SkeletalMeshComponent::SetColor0 ( GXColorUNORM color ) noexcept
 {
     _color0 = color;
+    _colorData = std::nullopt;
 }
 
-void SkeletalMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
+void SkeletalMeshComponent::SetColor1 ( GXColorUNORM color ) noexcept
 {
     _color1 = color;
+    _colorData = std::nullopt;
 }
 
-void SkeletalMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
+void SkeletalMeshComponent::SetColor2 ( GXColorUNORM color ) noexcept
 {
     _color2 = color;
+    _colorData = std::nullopt;
 }
 
-void SkeletalMeshComponent::SetEmission ( GXColorRGB const &emission ) noexcept
+void SkeletalMeshComponent::SetEmission ( GXColorUNORM color, float intensity ) noexcept
 {
-    _emission = emission;
+    _emission = color;
+    _emissionIntensity = intensity;
+    _colorData = std::nullopt;
 }
 
 void SkeletalMeshComponent::SetTransform ( GXMat4 const &transform ) noexcept
 {
     _localMatrix = transform;
     _usage._skinMesh->GetBounds ().Transform ( _worldBounds, transform );
+}
+
+void SkeletalMeshComponent::UpdateColorData () noexcept
+{
+    if ( !_colorData ) [[unlikely]]
+    {
+        _colorData = GeometryPassProgram::ColorData ( _color0, _color1, _color2, _emission, _emissionIntensity );
+    }
 }
 
 bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
@@ -696,8 +702,8 @@ int SkeletalMeshComponent::OnSetAnimationGraph ( lua_State* state )
 int SkeletalMeshComponent::OnSetColor0 ( lua_State* state )
 {
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec4 const &color = ScriptableGXVec4::Extract ( state, 2 );
-    self.SetColor0 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] ) );
+    auto const &color = *reinterpret_cast<GXColorRGB const *> ( &ScriptableGXVec4::Extract ( state, 2 ) );
+    self.SetColor0 ( color.ToColorUNORM () );
     return 0;
 }
 
@@ -705,7 +711,7 @@ int SkeletalMeshComponent::OnSetColor1 ( lua_State* state )
 {
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ).ToColorUNORM () );
     return 0;
 }
 
@@ -713,15 +719,29 @@ int SkeletalMeshComponent::OnSetColor2 ( lua_State* state )
 {
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ).ToColorUNORM () );
     return 0;
 }
 
 int SkeletalMeshComponent::OnSetEmission ( lua_State* state )
 {
     auto &self = *static_cast<SkeletalMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const &emission = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
+    GXVec3 emission = ScriptableGXVec3::Extract ( state, 2 );
+    float const maxComp = std::max ( { emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ] } );
+
+    if ( maxComp == 0.0F )
+    {
+        self.SetEmission ( GXColorUNORM ( 0U, 0U, 0U, 0U ), 0.0F );
+        return 0;
+    }
+
+    emission.Multiply ( emission, 1.0F / maxComp );
+
+    self.SetEmission (
+        GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ).ToColorUNORM (),
+        maxComp
+    );
+
     return 0;
 }
 

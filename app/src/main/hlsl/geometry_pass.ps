@@ -5,6 +5,16 @@
 #include "object_data.inc"
 
 
+// 1.0 / 255.0
+#define UNORM_FACTOR        3.9216e-3H
+
+
+// Intensity should take range from 0 to 6000.0H
+// Intensity is packed as 24bit fixed point value.
+// 6000.0F / (float32_t)( 0x00FFFFFFU )
+#define INTENSITY_FACTOR    3.57628e-4F
+
+
 [[vk::binding ( BIND_SAMPLER, SET_SAMPLER )]]
 SamplerState                        g_sampler:              register ( s0 );
 
@@ -53,57 +63,81 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float32_t3 GetFinalNormalView ( in float32_t3 tangentView,
-    in float32_t3 bitangentView,
-    in float32_t3 normalView,
-    in float32_t2 uv
-)
+float16_t3 UnpackColor ( in uint32_t packedColor )
 {
-    float32_t2 const normalData = mad ( g_normalTexture.Sample ( g_sampler, uv ).xw,
-        (float32_t2)2.0F,
-        (float32_t2)( -1.0F )
+    uint32_t3 const color = uint32_t3 (
+        ( 0x0000FF00U & packedColor ) >> 8U,
+        ( 0x00FF0000U & packedColor ) >> 16U,
+        packedColor >> 24U
     );
 
-    float32_t3x3 const tbnView = float32_t3x3 ( tangentView, bitangentView, normalView );
+    return (float16_t3)color * UNORM_FACTOR;
+}
+
+float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_t3 diffuseSample )
+{
+    float16_t3 maskSample = (float16_t3)g_maskTexture.Sample ( g_sampler, uv ).xyz;
+    float16_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
+
+    if ( maskSum > 1.0H )
+        maskSample *= 1.0H / maskSum;
+
+    float16_t3 albedoOverlay = (float16_t3)max ( 1.0H - maskSum, 0.0H );
+    albedoOverlay = mad ( UnpackColor ( colorData._emiRcol0rgb ), maskSample.x, albedoOverlay );
+    albedoOverlay = mad ( UnpackColor ( colorData._emiGcol1rgb ), maskSample.y, albedoOverlay );
+    albedoOverlay = mad ( UnpackColor ( colorData._emiBcol2rgb ), maskSample.z, albedoOverlay );
+
+    return float32_t4 ( (float32_t3)( albedoOverlay * diffuseSample ), 1.0F );
+}
+
+float32_t4 ComputeEmission ( in float32_t2 uv, in ColorData colorData )
+{
+    float16_t3 const emissionSample = (float16_t3)g_emissionTexture.Sample ( g_sampler, uv ).xyz;
+
+    uint32_t3 const emission = uint32_t3 (
+        0x000000FFU & colorData._emiRcol0rgb,
+        0x000000FFU & colorData._emiGcol1rgb,
+        0x000000FFU & colorData._emiBcol2rgb
+    );
+
+    float16_t3 const alpha = (float16_t3)emission * UNORM_FACTOR;
+    float32_t const intensity = INTENSITY_FACTOR * (float32_t)( colorData._col0aEmiIntens >> 8U );
+    return float32_t4 ( (float32_t3)( emissionSample * alpha * (float16_t)intensity ), 1.0F );
+}
+
+float32_t4 ComputeNormalView ( in float32_t2 uv,
+    in float32_t3 tangentView,
+    in float32_t3 bitangentView,
+    in float32_t3 normalView
+)
+{
+    float16_t2 const normalData = mad ( (float16_t2)g_normalTexture.Sample ( g_sampler, uv ).xw, 2.0H, -1.0H );
+
+    float16_t3x3 const tbnView = float16_t3x3 (
+        (float16_t3)tangentView,
+        (float16_t3)bitangentView,
+        (float16_t3)normalView
+    );
 
     // DISCLAIMER: You might guess it's a good idea for optimization to not perform normalize operation here.
     // In reality it's bad idea. In fact you will see noticeable artifacts with specular on the light-up pass.
     // And you will NOT see any performance benefits in terms of FPS on real game scenes.
     // Trust me. I tried (2021-01-27)...
-    return normalize ( mul ( float32_t3 ( normalData.xy, 1.0F ), tbnView ) );
+    return float32_t4 ( mad ( normalize ( mul ( float16_t3 ( normalData.xy, 1.0H ), tbnView ) ), 0.5H, 0.5H ), 0.5F );
 }
 
-float32_t4 PackUnitVector ( in float32_t3 v )
+OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in float16_t3 diffuseSample )
 {
-    return float32_t4 ( mad ( v, 0.5F, 0.5F ), 0.5F );
-}
-
-OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in float32_t3 diffuseSample )
-{
-    float32_t3 maskSample = g_maskTexture.Sample ( g_sampler, inputData._uv ).xyz;
-    float32_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
-
-    if ( maskSum > 1.0F )
-        maskSample *= 1.0F / maskSum;
-
-    float32_t3 albedoOverlay = (float32_t3)max ( 1.0F - maskSum, 0.0F );
-    albedoOverlay = mad ( colorData._color0.xyz, maskSample.x, albedoOverlay );
-    albedoOverlay = mad ( colorData._color1.xyz, maskSample.y, albedoOverlay );
-    albedoOverlay = mad ( colorData._color2.xyz, maskSample.z, albedoOverlay );
-
     OutputData result;
 
-    result._albedo = float32_t4 ( albedoOverlay * diffuseSample, 1.0F );
-
-    result._emission = float32_t4 (
-        g_emissionTexture.Sample ( g_sampler, inputData._uv ).xyz * colorData._emission.xyz,
-        1.0F
-    );
-
+    result._albedo = ComputeAlbedo ( inputData._uv, colorData, diffuseSample );
+    result._emission = ComputeEmission ( inputData._uv, colorData );
     result._param = g_paramTexture.Sample ( g_sampler, inputData._uv );
 
-    result._normal = PackUnitVector (
-        GetFinalNormalView ( inputData._tangentView, inputData._bitangentView, inputData._normalView, inputData._uv )
+    result._normal = ComputeNormalView ( inputData._uv,
+        inputData._tangentView,
+        inputData._bitangentView,
+        inputData._normalView
     );
 
     return result;

@@ -86,7 +86,7 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
 
     // NOLINTNEXTLINE - downcast.
     auto &m = static_cast<StaticMeshComponent &> ( *_mesh );
-    m.SetColor0 ( GXColorRGB ( 1.0F, 1.0F, 1.0F, 0.5F ) );
+    m.SetColor0 ( GXColorUNORM ( 255U, 255U, 255U, 128U ) );
     return true;
 }
 
@@ -95,7 +95,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
 
-    mesh.SetEmission ( GXColorRGB ( 29U, 46U, 0U, 1.0F ) );
+    mesh.SetEmission ( GXColorUNORM ( 29U, 46U, 0U, 255U ), 1.0F );
 
     // NOLINTNEXTLINE - downcast.
     auto &material = static_cast<GeometryPassMaterial &> ( *mesh.GetMaterial () );

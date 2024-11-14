@@ -28,8 +28,8 @@ namespace pbr {
 namespace {
 
 [[maybe_unused]] constexpr uint32_t STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION = 2U;
-constexpr GXColorRGB DEFAULT_COLOR ( 1.0F, 1.0F, 1.0F, 1.0F );
-constexpr GXColorRGB DEFAULT_EMISSION ( 1.0F, 1.0F, 1.0F, 1.0F );
+constexpr GXColorUNORM DEFAULT_COLOR ( 255U, 255U, 255U, 255U );
+constexpr GXColorUNORM DEFAULT_EMISSION ( 255U, 255U, 255U, 255U );
 
 constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
@@ -64,25 +64,25 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _color0 ( desc._color0._red,
         desc._color0._green,
         desc._color0._blue,
-        static_cast<float> ( desc._color0._alpha ) * GX_MATH_UNORM_FACTOR
+        desc._color0._alpha
     ),
 
     _color1 ( desc._color1._red,
         desc._color1._green,
         desc._color1._blue,
-        static_cast<float> ( desc._color1._alpha ) * GX_MATH_UNORM_FACTOR
+        desc._color1._alpha
     ),
 
     _color2 ( desc._color2._red,
         desc._color2._green,
         desc._color2._blue,
-        static_cast<float> ( desc._color2._alpha ) * GX_MATH_UNORM_FACTOR
+        desc._color2._alpha
     ),
 
     _emission ( desc._color3._red,
         desc._color3._green,
         desc._color3._blue,
-        static_cast<float> ( desc._color3._alpha ) * GX_MATH_UNORM_FACTOR
+        desc._color3._alpha
     )
 {
     // Sanity checks.
@@ -235,52 +235,33 @@ void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &rend
 
 void StaticMeshComponent::Submit ( RenderSession &renderSession ) noexcept
 {
-    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, _color0, _color1, _color2, _emission );
+    UpdateColorData ();
+    renderSession.SubmitMesh ( _mesh, _material, _localMatrix, _worldBounds, *_colorData );
 }
 
-[[maybe_unused]] GXAABB const &StaticMeshComponent::GetBoundsWorld () const noexcept
-{
-    return _worldBounds;
-}
-
-[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor0 () const noexcept
-{
-    return _color0;
-}
-
-void StaticMeshComponent::SetColor0 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor0 ( GXColorUNORM color ) noexcept
 {
     _color0 = color;
+    _colorData = std::nullopt;
 }
 
-[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor1 () const noexcept
-{
-    return _color1;
-}
-
-void StaticMeshComponent::SetColor1 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor1 ( GXColorUNORM color ) noexcept
 {
     _color1 = color;
+    _colorData = std::nullopt;
 }
 
-[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetColor2 () const noexcept
-{
-    return _color2;
-}
-
-void StaticMeshComponent::SetColor2 ( GXColorRGB const &color ) noexcept
+void StaticMeshComponent::SetColor2 ( GXColorUNORM color ) noexcept
 {
     _color2 = color;
+    _colorData = std::nullopt;
 }
 
-[[maybe_unused]] GXColorRGB const &StaticMeshComponent::GetEmission () const noexcept
+void StaticMeshComponent::SetEmission ( GXColorUNORM color, float intensity ) noexcept
 {
-    return _emission;
-}
-
-void StaticMeshComponent::SetEmission ( GXColorRGB const &emission ) noexcept
-{
-    _emission = emission;
+    _emission = color;
+    _emissionIntensity = intensity;
+    _colorData = std::nullopt;
 }
 
 MaterialRef &StaticMeshComponent::GetMaterial () noexcept
@@ -288,12 +269,7 @@ MaterialRef &StaticMeshComponent::GetMaterial () noexcept
     return _material;
 }
 
-[[maybe_unused]] MaterialRef const &StaticMeshComponent::GetMaterial () const noexcept
-{
-    return _material;
-}
-
-[[maybe_unused]] GXMat4 const &StaticMeshComponent::GetTransform () const noexcept
+GXMat4 const &StaticMeshComponent::GetTransform () const noexcept
 {
     return _localMatrix;
 }
@@ -493,6 +469,14 @@ void StaticMeshComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
     SetTransform ( transformWorld );
 }
 
+void StaticMeshComponent::UpdateColorData () noexcept
+{
+    if ( !_colorData ) [[unlikely]]
+    {
+        _colorData = GeometryPassProgram::ColorData ( _color0, _color1, _color2, _emission, _emissionIntensity );
+    }
+}
+
 bool StaticMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
 {
     size_t const current = _commandBuffers.size ();
@@ -634,8 +618,8 @@ int StaticMeshComponent::OnGarbageCollected ( lua_State* state )
 int StaticMeshComponent::OnSetColor0 ( lua_State* state )
 {
     auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec4 const &color = ScriptableGXVec4::Extract ( state, 2 );
-    self.SetColor0 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] ) );
+    auto const &color = *reinterpret_cast<GXColorRGB const *> ( &ScriptableGXVec4::Extract ( state, 2 ) );
+    self.SetColor0 ( color.ToColorUNORM () );
     return 0;
 }
 
@@ -643,7 +627,7 @@ int StaticMeshComponent::OnSetColor1 ( lua_State* state )
 {
     auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    self.SetColor1 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ).ToColorUNORM () );
     return 0;
 }
 
@@ -651,15 +635,29 @@ int StaticMeshComponent::OnSetColor2 ( lua_State* state )
 {
     auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
     GXVec3 const &color = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+    self.SetColor2 ( GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ).ToColorUNORM () );
     return 0;
 }
 
 int StaticMeshComponent::OnSetEmission ( lua_State* state )
 {
     auto &self = *static_cast<StaticMeshComponent*> ( lua_touserdata ( state, 1 ) );
-    GXVec3 const &emission = ScriptableGXVec3::Extract ( state, 2 );
-    self.SetEmission ( GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ) );
+    GXVec3 emission = ScriptableGXVec3::Extract ( state, 2 );
+    float const maxComp = std::max ( { emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ] } );
+
+    if ( maxComp == 0.0F )
+    {
+        self.SetEmission ( GXColorUNORM ( 0U, 0U, 0U, 0U ), 0.0F );
+        return 0;
+    }
+
+    emission.Multiply ( emission, 1.0F / maxComp );
+
+    self.SetEmission (
+        GXColorRGB ( emission._data[ 0U ], emission._data[ 1U ], emission._data[ 2U ], 1.0F ).ToColorUNORM (),
+        maxComp
+    );
+
     return 0;
 }
 

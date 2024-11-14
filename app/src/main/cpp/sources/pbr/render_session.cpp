@@ -359,10 +359,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     auto const idx = static_cast<size_t> ( material->GetMaterialType () );
@@ -371,7 +368,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     MeshHandler const handler = _meshHandlers[ idx ];
 
     // Calling method by pointer C++ syntax.
-    ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    ( this->*handler ) ( mesh, material, local, worldBounds, colorData );
 }
 
 bool RenderSession::CreateFramebuffer ( VkDevice device ) noexcept
@@ -784,25 +781,19 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     ++_opaqueMeshCount;
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, colorData );
 }
 
 void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     _renderSessionStats.SubmitStipple ( mesh->GetVertexCount () );
@@ -810,7 +801,7 @@ void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     if ( !_frustum.IsVisible ( worldBounds ) )
         return;
 
-    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, colorData );
 }
 
 void RenderSession::SubmitPointLight ( LightRef &light ) noexcept

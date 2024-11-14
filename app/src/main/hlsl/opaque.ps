@@ -5,6 +5,6 @@ OutputData PS ( in InputData inputData )
 {
     return FillGBuffer ( inputData,
         g_colorData[ inputData._instanceIndex ],
-        g_diffuseTexture.Sample ( g_sampler, inputData._uv ).xyz
+        (float16_t3)g_diffuseTexture.Sample ( g_sampler, inputData._uv ).xyz
     );
 }

@@ -13,10 +13,7 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
@@ -25,13 +22,11 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
 
     if ( findResult != _sceneData.cend () )
     {
-        findResult->second.Append ( mesh, local, worldBounds, color0, color1, color2, emission );
+        findResult->second.Append ( mesh, local, worldBounds, colorData );
         return;
     }
 
-    _sceneData.emplace (
-        std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, color0, color1, color2, emission ) )
-    );
+    _sceneData.insert ( std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, colorData ) ) );
 }
 
 void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,

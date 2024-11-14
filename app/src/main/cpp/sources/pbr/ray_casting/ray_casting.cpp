@@ -439,19 +439,21 @@ void RayCasting::Raycast () noexcept
     GXAABB bounds {};
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    constexpr GXColorRGB color ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXColorUNORM color ( 255U, 255U, 255U, 255U );
     android_vulkan::RaycastResult result {};
     constexpr uint32_t groups = std::numeric_limits<uint32_t>::max ();
+
+    GeometryPassProgram::ColorData const colorData ( color, color, color, color, 1.0F );
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo, groups ) )
     {
         SwitchEmission ( _rayMaterial, _rayTextureNoHit );
-        _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
+        _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, colorData );
         return;
     }
 
     SwitchEmission ( _rayMaterial, _rayTextureHit );
-    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
+    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, colorData );
 
     basis.From ( result._normal );
 
@@ -475,7 +477,7 @@ void RayCasting::Raycast () noexcept
     transform.From ( basis, result._point );
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    _renderSession.SubmitMesh ( _lineMesh, _normalMaterial, transform, bounds, color, color, color, color );
+    _renderSession.SubmitMesh ( _lineMesh, _normalMaterial, transform, bounds, colorData );
 }
 
 bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,

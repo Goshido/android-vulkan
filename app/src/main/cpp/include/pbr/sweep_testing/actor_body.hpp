@@ -18,7 +18,7 @@ class ActorBody final
         android_vulkan::RigidBodyRef    _body {};
         ComponentRef                    _mesh {};
 
-        static GXColorRGB const         _overlayColor;
+        static GXColorUNORM const       _overlayColor;
 
     public:
         ActorBody () = default;

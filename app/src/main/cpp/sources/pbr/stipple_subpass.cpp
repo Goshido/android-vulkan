@@ -79,14 +79,7 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
 
             normalData._localView[ 0U ].FromFast ( localView );
 
-            colorData._colorData[ 0U ] =
-            {
-                ._color0 = geometryData._color0,
-                ._color1 = geometryData._color1,
-                ._color2 = geometryData._color2,
-                ._emission = geometryData._emission
-            };
-
+            colorData._colorData[ 0U ] = geometryData._colorData;
             geometryPool.Push ( commandBuffer, positionData, normalData, colorData, 1U );
         }
 
@@ -123,14 +116,7 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 z.Normalize ();
 
                 normalData._localView[ instanceIndex ].FromFast ( localView );
-
-                colorData._colorData[ instanceIndex++ ] =
-                {
-                    ._color0 = opaqueData._color0,
-                    ._color1 = opaqueData._color1,
-                    ._color2 = opaqueData._color2,
-                    ._emission = opaqueData._emission
-                };
+                colorData._colorData[ instanceIndex++ ] = opaqueData._colorData;
             }
 
             if ( !instanceIndex ) [[likely]]

@@ -6,7 +6,7 @@
 #include "pbr/gpgpu_limits.inc"
 
 
-// In summary data per instance = 144 bytes
+// In summary data per instance = 96 bytes
 // Total instance data = 8064 bytes, less than minimum "Supported Limit" of maxUniformBufferRange
 // see https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap47.html
 
@@ -25,10 +25,10 @@ cbuffer InstanceNormalData:         register ( b1 )
 
 struct ColorData
 {
-    float32_t4      _color0;
-    float32_t4      _color1;
-    float32_t4      _color2;
-    float32_t4      _emission;
+    uint32_t        _emiRcol0rgb;
+    uint32_t        _emiGcol1rgb;
+    uint32_t        _emiBcol2rgb;;
+    uint32_t        _col0aEmiIntens;
 };
 
 [[vk::binding ( BIND_INSTANCE_COLOR_DATA, SET_INSTANCE_DATA )]]

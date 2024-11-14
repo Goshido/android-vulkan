@@ -27,7 +27,7 @@ class GeometryPool final
 
         UniformBufferPool                           _positionPool { eUniformPoolSize::Big_32M };
         UniformBufferPool                           _normalPool { eUniformPoolSize::Small_8M };
-        UniformBufferPool                           _colorPool { eUniformPoolSize::Big_32M };
+        UniformBufferPool                           _colorPool { eUniformPoolSize::Small_8M };
         std::vector<VkWriteDescriptorSet>           _writeSets {};
 
     public:

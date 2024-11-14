@@ -60,7 +60,7 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
     constexpr GXVec3 sphereDims ( sphereSize * 0.5F, sphereSize * 0.5F, sphereSize * 0.5F );
     transform.Scale ( sphereSize, sphereSize, sphereSize );
 
-    auto const submit = [ & ] ( GXVec3 const &loc, GXColorRGB const &color ) noexcept {
+    auto const submit = [ & ] ( GXVec3 const &loc, GXColorUNORM color ) noexcept {
         GXVec3 location {};
         location.Multiply ( loc, UNITS_IN_METER );
         transform.SetW ( location );
@@ -77,10 +77,7 @@ bool BoxStack::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) 
             _sphereMaterial,
             transform,
             bounds,
-            color,
-            _defaultColor,
-            _defaultColor,
-            _defaultColor
+            GeometryPassProgram::ColorData ( color, _defaultColor, _defaultColor, _defaultColor, 1.0F )
         );
     };
 
@@ -214,7 +211,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     std::string &&tag,
     ComponentRef &visual,
     char const* material,
-    GXColorRGB const &color,
+    GXColorUNORM color,
     android_vulkan::RigidBodyRef &physical,
     float x,
     float y,
@@ -331,8 +328,6 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
     size_t consumed = 0U;
-    _defaultColor.From ( 255U, 255U, 255U, 255U );
-
     ComponentRef cuboid {};
     android_vulkan::RigidBodyRef body {};
 
@@ -450,25 +445,25 @@ void BoxStack::UpdatePhysicsActors () noexcept
 void BoxStack::InitColors () noexcept
 {
     // NVIDIA green
-    _colors[ 0U ].From ( 115U, 185U, 0U, 255U );
+    _colors[ 0U ] = GXColorUNORM ( 115U, 185U, 0U, 255U );
 
     // Yellow
-    _colors[ 1U ].From ( 223U, 202U, 79U, 255U );
+    _colors[ 1U ] = GXColorUNORM ( 223U, 202U, 79U, 255U );
 
     // Red
-    _colors[ 2U ].From ( 223U, 79U, 88U, 255U );
+    _colors[ 2U ] = GXColorUNORM ( 223U, 79U, 88U, 255U );
 
     // Purple
-    _colors[ 3U ].From ( 223U, 79U, 210U, 255U );
+    _colors[ 3U ] = GXColorUNORM ( 223U, 79U, 210U, 255U );
 
     // Blue
-    _colors[ 4U ].From ( 100U, 79U, 223U, 255U );
+    _colors[ 4U ] = GXColorUNORM ( 100U, 79U, 223U, 255U );
 
     // Cyan
-    _colors[ 5U ].From ( 79U, 212U, 223U, 255U );
+    _colors[ 5U ] = GXColorUNORM ( 79U, 212U, 223U, 255U );
 
     // Green
-    _colors[ 6U ].From ( 79U, 223U, 107U, 255U );
+    _colors[ 6U ] = GXColorUNORM ( 79U, 223U, 107U, 255U );
 }
 
 void BoxStack::OnLeftBumper ( void* context ) noexcept

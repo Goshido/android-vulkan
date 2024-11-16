@@ -9,11 +9,8 @@ struct InputData
     [[vk::location ( IN_SLOT_UV )]]
     float32_t2                      _uv:                UV;
 
-    [[vk::location ( IN_SLOT_NORMAL )]]
-    float32_t3                      _normal:            NORMAL;
-
-    [[vk::location ( IN_SLOT_TANGENT )]]
-    float32_t3                      _tangent:           TANGENT;
+    [[vk::location ( IN_SLOT_TBN )]]
+    float32_t4                      _tbn:               TBN;
 
     uint32_t                        _instanceIndex:     SV_InstanceID;
 };
@@ -25,14 +22,14 @@ struct OutputData
     [[vk::location ( ATT_SLOT_UV )]]
     linear float32_t2               _uv:                UV;
 
-    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
-    linear float32_t3               _normalView:        NORMAL;
-
     [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
     linear float32_t3               _tangentView:       TANGENT;
 
     [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
     linear float32_t3               _bitangentView:     BITANGENT;
+
+    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
+    linear float32_t3               _normalView:        NORMAL;
 
     [[vk::location ( ATT_SLOT_INSTANCE_INDEX )]]
     nointerpolation uint32_t        _instanceIndex:     INSTANCE_INDEX;
@@ -40,39 +37,39 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float16_t3x3 GetNormalMatrix ( in float32_t4 quaternion )
+void GetTangentBitangent ( out float16_t3 normalView, out float16_t3 tangentView, in float16_t4 tbn )
 {
-    float16_t4 const q = (float16_t4)quaternion;
-    float16_t3 const abc2 = q.yzw + q.yzw;
+    float16_t3 const abc2 = tbn.yzw + tbn.yzw;
 
     // Note 'T' is just notation for variable separation. Nothing more.
-    float16_t4 const rXrTabc2 = q.x * float16_t4 ( q.x, abc2 );
-    float16_t4 const caaaXcaTbc2 = float16_t4 ( q.wyyy ) * float16_t4 ( q.wy, abc2.yz );
-    float16_t2 const bXbTc2 = q.z * float16_t2 ( q.z, abc2.z );
+    float16_t4 const rXrTabc2 = tbn.x * float16_t4 ( tbn.x, abc2 );
+    float16_t4 const caaaXcaTbc2 = float16_t4 ( tbn.wyyy ) * float16_t4 ( tbn.wy, abc2.yz );
+    float16_t2 const bXbTc2 = tbn.z * float16_t2 ( tbn.z, abc2.z );
 
-    float16_t4 const left0 = float16_t4 ( rXrTabc2.w, caaaXcaTbc2.w, caaaXcaTbc2.z, rXrTabc2.y );
-    float16_t4 const right0 = float16_t4 ( caaaXcaTbc2.z, -rXrTabc2.z, -rXrTabc2.w, bXbTc2.y );
-
-    float16_t2 const tmp1 = float16_t2 ( rXrTabc2.z, bXbTc2.y ) + float16_t2 ( caaaXcaTbc2.w, -rXrTabc2.y );
-    float16_t4 const tmp0 = left0 + right0;
+    float16_t4 const left = float16_t4 ( rXrTabc2.w, caaaXcaTbc2.w, rXrTabc2.z, bXbTc2.y );
+    float16_t4 const right = float16_t4 ( caaaXcaTbc2.z, -rXrTabc2.z, caaaXcaTbc2.w, -rXrTabc2.y );
+    float16_t4 const tmp = left + right;
 
     // Note quaternion unpacks to matrix with column-major like behaviour.
-    return float16_t3x3
-    (
-        // First row.
-        rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x,
-        tmp0.x,
-        tmp0.y,
+    normalView = float16_t3 ( tmp.zw, rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x );
+    tangentView = float16_t3 ( rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x, tmp.xy );
+}
 
-        // Second row.
-        tmp0.z,
-        rXrTabc2.x - caaaXcaTbc2.y + bXbTc2.x - caaaXcaTbc2.x,
-        tmp0.w,
+float16_t4 RotateTBN ( in float16_t3 imaginaryTBN, in float32_t4 localView )
+{
+    // By convention xyz contains imaginary part of quaternion. The w component contains mirroring information.
+    // Real part of quaternion must be restored. By convention it's used unit quaternions to represent TBN.
+    // So the real component will be restored using this property.
+    float16_t4 const rotation = (float16_t4)localView;
 
-        // Third row.
-        tmp1.x,
-        tmp1.y,
-        rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x
+    // Note dot product could be a little bit bigger than 1.0H due to float16_t inaccurency. Fixing it with abs.
+    float16_t4 tbn = float16_t4 ( sqrt ( abs ( 1.0H - dot ( imaginaryTBN, imaginaryTBN ) ) ), imaginaryTBN );
+
+    return float16_t4 (
+        dot ( rotation, float16_t4 ( tbn.x, -tbn.yzw ) ),
+        dot ( rotation, float16_t4 ( tbn.yxw, -tbn.z ) ),
+        dot ( rotation, float16_t4 ( tbn.z, -tbn.w, tbn.xy ) ),
+        dot ( rotation, float16_t4 ( tbn.wz, -tbn.y, tbn.x ) )
     );
 }
 
@@ -90,17 +87,18 @@ OutputData VS ( in InputData inputData )
     result._uv = inputData._uv;
     result._instanceIndex = inputData._instanceIndex;
 
-    float16_t3x3 const normalMatrix = GetNormalMatrix ( g_localView[ inputData._instanceIndex ] );
+    float16_t4 const compressedTBN = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
+    float16_t3 normalView;
+    float16_t3 tangentView;
 
-    // Note matrix multiplication order is in reverse order compare to the rest of engine code.
-    // The reason is that quaternion unpacks to matrix with column-major behaviour.
-    // Same time the engine has row-major matrix convention.
-    float16_t3 const normalView = mul ( (float16_t3)inputData._normal, normalMatrix );
-    float16_t3 const tangentView = mul ( (float16_t3)inputData._tangent, normalMatrix );
+    GetTangentBitangent ( normalView,
+        tangentView,
+        RotateTBN ( compressedTBN.xyz, g_localView[ inputData._instanceIndex ] )
+    );
 
-    result._normalView = (float32_t3)normalView;
     result._tangentView = (float32_t3)tangentView;
-    result._bitangentView = (float32_t3)cross ( normalView, tangentView );
+    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );
+    result._normalView = (float32_t3)normalView;
 
     return result;
 }

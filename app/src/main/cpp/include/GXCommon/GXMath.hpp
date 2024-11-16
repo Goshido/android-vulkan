@@ -1,8 +1,7 @@
-// version 1.91
+// version 1.92
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
-
 
 #include "GXTypes.hpp"
 #include "GXWarning.hpp"
@@ -557,6 +556,15 @@ struct [[maybe_unused]] GXQuat final
     [[maybe_unused]] explicit GXQuat ( GXMat4 const &rotationMatrix ) noexcept;
 
     [[maybe_unused]] ~GXQuat () = default;
+
+    // Packing TBN basis into A2R10G10B10_UNORM format. "Real" component could be restored using unit quaternion
+    // property. It's guarantee to be positive real component eliminating quaternion duality flaw.
+    // 'w' component will contain information about bitangent reflection, the scalar: -1.0 or 1.0.
+    // bits 0-9: a component
+    // bits 10-19: b component
+    // bits 20-29: c component
+    // bits 30-31: bitangent reflection scalar
+    [[maybe_unused, nodiscard]] GXUByte Compress ( bool reflectBitangent ) const noexcept;
 
     [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept;
 

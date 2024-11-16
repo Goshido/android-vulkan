@@ -101,20 +101,29 @@ float32_t4x3 ExtractBoneTransform ( in uint32_t boneIdx )
 
 float32_t4x3 ComputeSkinTransform ( in uint32_t vertexIndex )
 {
+    // [2024/11/16] Note it could be assumed that it's correct that weighted sum trick could work for quaternions.
+    // Unfortunatelly it does not. The math breaks because of quaternion duality. Summing quaternions like that
+    // will produce incorrect result. That's why converting quaternions to 3x3 matrix is required to
+    // perform weighted sum later.
     SkinVertex const skin = g_skinVertices[ vertexIndex ];
 
-    float32_t4x3 const t0 = ExtractBoneTransform ( skin._influences[ 0U ]._boneIndex );
-    float32_t4x3 const t1 = ExtractBoneTransform ( skin._influences[ 1U ]._boneIndex );
+    SkinInfluence const influence0 = skin._influences[ 0U ];
+    SkinInfluence const influence1 = skin._influences[ 1U ];
+    SkinInfluence const influence2 = skin._influences[ 2U ];
+    SkinInfluence const influence3 = skin._influences[ 3U ];
 
-    float32_t4x3 const w0 = t0 * skin._influences[ 0U ]._boneWeight;
-    float32_t4x3 const t2 = ExtractBoneTransform ( skin._influences[ 2U ]._boneIndex );
+    float32_t4x3 const t0 = ExtractBoneTransform ( influence0._boneIndex );
+    float32_t4x3 const t1 = ExtractBoneTransform ( influence1._boneIndex );
 
-    float32_t4x3 const w1 = t1 * skin._influences[ 1U ]._boneWeight;
-    float32_t4x3 const t3 = ExtractBoneTransform ( skin._influences[ 3U ]._boneIndex );
+    float32_t4x3 const w0 = t0 * influence0._boneWeight;
+    float32_t4x3 const t2 = ExtractBoneTransform ( influence2._boneIndex );
+
+    float32_t4x3 const w1 = t1 * influence1._boneWeight;
+    float32_t4x3 const t3 = ExtractBoneTransform ( influence3._boneIndex );
 
     float32_t4x3 const w01 = w0 + w1;
-    float32_t4x3 const w2 = t2 * skin._influences[ 2U ]._boneWeight;
-    float32_t4x3 const w3 = t3 * skin._influences[ 3U ]._boneWeight;
+    float32_t4x3 const w2 = t2 * influence2._boneWeight;
+    float32_t4x3 const w3 = t3 * influence3._boneWeight;
     float32_t4x3 const w012 = w01 + w2;
 
     return w012 + w3;
@@ -132,10 +141,11 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
         return;
 
     Mesh2Vertex const referenceRest = g_referenceRest[ idx ];
-    float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
-    float32_t3x3 const orientation = (float32_t3x3)skinTransform;
 
+    float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
     g_skinPositions[ idx ] = mul ( float32_t4 ( g_referencePositons[ idx ], 1.0F ), skinTransform );
+
+    float32_t3x3 const orientation = (float32_t3x3)skinTransform;
 
     Mesh2Vertex skinRest;
     skinRest._uv = referenceRest._uv;

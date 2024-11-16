@@ -12,7 +12,7 @@ constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 3U;
 constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
 } // end of anonymous namespace
@@ -557,20 +557,12 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
     };
 
-    attributes[ IN_SLOT_NORMAL ] =
+    attributes[ IN_SLOT_TBN ] =
     {
-        .location = IN_SLOT_NORMAL,
+        .location = IN_SLOT_TBN,
         .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
-    };
-
-    attributes[ IN_SLOT_TANGENT ] =
-    {
-        .location = IN_SLOT_TANGENT,
-        .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
+        .format = VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tbn ) )
     };
 
     info =

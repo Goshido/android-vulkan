@@ -803,16 +803,10 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
         },
         {
-            .location = IN_SLOT_NORMAL,
+            .location = IN_SLOT_TBN,
             .binding = IN_BUFFER_REST,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
-        },
-        {
-            .location = IN_SLOT_TANGENT,
-            .binding = IN_BUFFER_REST,
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
+            .format = VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tbn ) )
         }
     };
 

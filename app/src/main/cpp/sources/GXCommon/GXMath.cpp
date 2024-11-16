@@ -1,4 +1,4 @@
-// version 1.91
+// version 1.92
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -786,6 +786,30 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     From ( rotationMatrix );
 }
 
+[[maybe_unused]] GXUByte GXQuat::Compress ( bool reflectBitangent ) const noexcept
+{
+    auto imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
+
+    // Shader code expects only positive real value for reconstruction.
+    // Using quaternion duality property to satisfy that convention.
+    if ( _data[ 0U ] < 0.0F )
+        imaginary.Reverse ();
+
+    constexpr uint32_t fixedPoint = 1U << 10U;
+    constexpr float snorm = 0.5F * static_cast<float> ( fixedPoint );
+    constexpr GXVec3 snormV3 ( snorm, snorm, snorm );
+    imaginary.Sum ( snormV3, snorm, imaginary );
+
+    auto const aUnorm = static_cast<uint32_t> ( imaginary._data[ 0U ] );
+    auto const bUnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );
+    auto const cUnorm = static_cast<uint32_t> ( imaginary._data[ 2U ] );
+
+    constexpr uint32_t const mirroring[] = { 0U, 0b11U << 30U };
+    uint32_t const mirror = mirroring[ static_cast<size_t> ( reflectBitangent ) ];
+
+    return mirror | ( aUnorm << 20U ) | ( bUnorm << 10U ) | cUnorm;
+}
+
 [[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept
 {
     _data[ 0U ] = r;
@@ -1054,29 +1078,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             // NOTHING
         break;
     }
-}
-
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ] -
-        a._data[ 1U ] * b._data[ 1U ] -
-        a._data[ 2U ] * b._data[ 2U ] -
-        a._data[ 3U ] * b._data[ 3U ];
-
-    _data[ 1U ] = a._data[ 0U ] * b._data[ 1U ] +
-        a._data[ 1U ] * b._data[ 0U ] +
-        a._data[ 2U ] * b._data[ 3U ] -
-        a._data[ 3U ] * b._data[ 2U ];
-
-    _data[ 2U ] = a._data[ 0U ] * b._data[ 2U ] -
-        a._data[ 1U ] * b._data[ 3U ] +
-        a._data[ 2U ] * b._data[ 0U ] +
-        a._data[ 3U ] * b._data[ 1U ];
-
-    _data[ 3U ] = a._data[ 0U ] * b._data[ 3U ] +
-        a._data[ 1U ] * b._data[ 2U ] -
-        a._data[ 2U ] * b._data[ 1U ] +
-        a._data[ 3U ] * b._data[ 0U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept

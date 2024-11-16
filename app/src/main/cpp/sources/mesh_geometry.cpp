@@ -40,16 +40,6 @@ struct BufferSyncItem final
     }
 };
 
-#pragma pack ( push, 1 )
-
-struct OldFormat final
-{
-    GXVec3          _position {};
-    VertexInfo      _vertex {};
-};
-
-#pragma pack ( pop )
-
 std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
 {
     {
@@ -71,6 +61,62 @@ std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
         )
     }
 };
+
+// FUCK remove that
+#pragma pack ( push, 1 )
+
+struct OldVertexInfo final
+{
+    GXVec2      _uv {};
+    GXVec3      _normal {};
+    GXVec3      _tangent {};
+    GXVec3      _bitangent {};
+};
+
+struct OldFormat final
+{
+    GXVec3              _position {};
+    OldVertexInfo       _vertex {};
+};
+
+#pragma pack ( pop )
+
+void Repack ( GXVec3* dstPositions, VertexInfo* dstRestData, std::span<OldFormat const> srcData ) noexcept
+{
+    size_t const vertexCount = srcData.size ();
+    OldFormat const* src = srcData.data ();
+    constexpr float repackThreshold = 1.0e-4F;
+
+    for ( size_t i = 0U; i < vertexCount; ++i )
+    {
+        OldFormat const &input = src[ i ];
+        VertexInfo &dst = dstRestData[ i ];
+        dstPositions[ i ] = input._position;
+
+        OldVertexInfo const &srcVI = input._vertex;
+        dst._uv = input._vertex._uv;
+
+        GXMat3 m {};
+        auto &tangent = *reinterpret_cast<GXVec3*> ( &m._m[ 0U ][ 0U ] );
+        auto &bitangent = *reinterpret_cast<GXVec3*> ( &m._m[ 1U ][ 0U ] );
+        auto &normal = *reinterpret_cast<GXVec3*> ( &m._m[ 2U ][ 0U ] );
+
+        tangent = srcVI._tangent;
+        tangent.Normalize ();
+
+        normal = srcVI._normal;
+        normal.Normalize ();
+
+        if ( float const ortho = std::abs ( tangent.DotProduct ( normal ) ); ortho > repackThreshold ) [[likely]]
+            bitangent.CrossProduct ( srcVI._normal, srcVI._tangent );
+        else
+            m.From ( srcVI._normal );
+
+        GXQuat tbn {};
+        tbn.FromFast ( m );
+        dst._tbn = tbn.Compress ( srcVI._bitangent.DotProduct ( bitangent ) > 0.0F ) );
+    }
+}
 
 } // end of anonymous namespace
 
@@ -646,18 +692,12 @@ bool MeshGeometry::UploadComplex ( Renderer &renderer,
         dataSrc = data.data ();
         std::memcpy ( repackPtr, dataSrc, indexBufferSize );
 
-        auto const* src = reinterpret_cast<OldFormat const*> ( dataSrc + indexBufferSize );
-
         uint8_t *vertexData = repackPtr + indexBufferSize;
-        auto* positionDst = reinterpret_cast<GXVec3*> ( vertexData );
-        auto* restDst = reinterpret_cast<VertexInfo*> ( vertexData + positionAllocation._range );
 
-        for ( size_t i = 0U; i < vertexCount; ++i )
-        {
-            OldFormat const &input = src[ i ];
-            positionDst[ i ] = input._position;
-            restDst[ i ] = input._vertex;
-        }
+        Repack ( reinterpret_cast<GXVec3*> ( vertexData ),
+            reinterpret_cast<VertexInfo*> ( vertexData + positionAllocation._range ),
+            { reinterpret_cast<OldFormat const*> ( dataSrc + indexBufferSize ), vertexCount }
+        );
 
         dataSrc = repackPtr;
     }
@@ -917,17 +957,10 @@ bool MeshGeometry::UploadSimple ( Renderer &renderer,
     repackData.resize ( totalSize );
     uint8_t *repackPtr = repackData.data ();
 
-    auto const* src = reinterpret_cast<OldFormat const*> ( data.data () );
-
-    auto* positionDst = reinterpret_cast<GXVec3*> ( repackPtr );
-    auto* restDst = reinterpret_cast<VertexInfo*> ( repackPtr + positionAllocation._range );
-
-    for ( size_t i = 0U; i < vertexCount; ++i )
-    {
-        OldFormat const &input = src[ i ];
-        positionDst[ i ] = input._position;
-        restDst[ i ] = input._vertex;
-    }
+    Repack ( reinterpret_cast<GXVec3*> ( repackPtr ),
+        reinterpret_cast<VertexInfo*> ( repackPtr + positionAllocation._range ),
+        { reinterpret_cast<OldFormat const*> ( data.data () ), vertexCount }
+    );
 
     UploadJob const jobs[]
     {

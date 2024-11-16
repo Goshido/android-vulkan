@@ -325,40 +325,28 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     constexpr android_vulkan::VertexInfo const vertices[]
     {
         {
-            { 0.0F, 1.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 0.0F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         },
         {
-            { 0.5F, 1.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 0.5F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         },
         {
-            { 1.0F, 1.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 1.0F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         },
         {
-            { 0.0F, 0.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 0.0F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         },
         {
-            { 0.5F, 0.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 0.5F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         },
         {
-            { 1.0F, 0.0F },
-            { 0.0F, 0.0F, 1.0F },
-            { 1.0F, 0.0F, 0.0F },
-            { 0.0F, 1.0F, 0.0F }
+            ._uv { 1.0F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
         }
     };
 

@@ -1,4 +1,4 @@
-// version 1.14
+// version 1.15
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -343,6 +343,64 @@ namespace {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( alpha ), std::sin ( halfAngle ) ) );
 
     _data[ 0U ] = std::cos ( halfAngle );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
+{
+    float const *bData = b._data;
+
+    float32_t const factorData0[ 4U ] =
+    {
+        bData[ 0U ],
+        -bData[ 1U ],
+        -bData[ 2U ],
+        -bData [ 3U ],
+    };
+
+    float32x4_t const vA = vld1q_f32 ( a._data );
+
+    float32_t const factorData1[ 4U ] =
+    {
+        bData[ 1U ],
+        bData[ 0U ],
+        bData[ 3U ],
+        -bData [ 2U ]
+    };
+
+    float32x4_t const factor0 = vld1q_f32 ( factorData0 );
+
+    float32_t const factorData2[ 4U ] =
+    {
+        bData[ 2U ],
+        -bData[ 3U ],
+        bData[ 0U ],
+        bData[ 1U ]
+    };
+
+    float32x4_t const tmp0 = vmulq_f32 ( vA, factor0 );
+    float32x4_t const factor1 = vld1q_f32 ( factorData1 );
+
+    float32_t const factorData3[ 4U ] =
+    {
+        bData[ 3U ],
+        bData[ 2U ],
+        -bData[ 1U ],
+        bData[ 0U ]
+    };
+
+    float32x4_t const factor2 = vld1q_f32 ( factorData2 );
+    _data[ 0U ] = vaddvq_f32 ( tmp0 );
+
+    float32x4_t const tmp1 = vmulq_f32 ( vA, factor1 );
+    _data[ 1U ] = vaddvq_f32 ( tmp1 );
+
+    float32x4_t const tmp2 = vmulq_f32 ( vA, factor2 );
+    float32x4_t const factor3 = vld1q_f32 ( factorData3 );
+
+    float32x4_t const tmp3 = vmulq_f32 ( vA, factor3 );
+    _data[ 2U ] = vaddvq_f32 ( tmp2 );
+
+    _data[ 3U ] = vaddvq_f32 ( tmp3 );
 }
 
 [[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale ) noexcept

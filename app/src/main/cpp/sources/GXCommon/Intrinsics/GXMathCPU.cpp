@@ -1,4 +1,4 @@
-// version 1.13
+// version 1.14
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -276,6 +276,29 @@
     _data[ 1U ] = x * sinom;
     _data[ 2U ] = y * sinom;
     _data[ 3U ] = z * sinom;
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
+{
+    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ] -
+        a._data[ 1U ] * b._data[ 1U ] -
+        a._data[ 2U ] * b._data[ 2U ] -
+        a._data[ 3U ] * b._data[ 3U ];
+
+    _data[ 1U ] = a._data[ 0U ] * b._data[ 1U ] +
+        a._data[ 1U ] * b._data[ 0U ] +
+        a._data[ 2U ] * b._data[ 3U ] -
+        a._data[ 3U ] * b._data[ 2U ];
+
+    _data[ 2U ] = a._data[ 0U ] * b._data[ 2U ] -
+        a._data[ 1U ] * b._data[ 3U ] +
+        a._data[ 2U ] * b._data[ 0U ] +
+        a._data[ 3U ] * b._data[ 1U ];
+
+    _data[ 3U ] = a._data[ 0U ] * b._data[ 3U ] +
+        a._data[ 1U ] * b._data[ 2U ] -
+        a._data[ 2U ] * b._data[ 1U ] +
+        a._data[ 3U ] * b._data[ 0U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale ) noexcept

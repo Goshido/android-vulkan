@@ -7,8 +7,7 @@
 
 #define IN_BUFFER_REST                  1
 #define IN_SLOT_UV                      1
-#define IN_SLOT_NORMAL                  2
-#define IN_SLOT_TANGENT                 3
+#define IN_SLOT_TBN                     2
 
 #define ATT_SLOT_FRAGMENT_VIEW          0
 #define ATT_SLOT_UV                     1

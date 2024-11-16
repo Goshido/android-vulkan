@@ -114,7 +114,7 @@ void Repack ( GXVec3* dstPositions, VertexInfo* dstRestData, std::span<OldFormat
 
         GXQuat tbn {};
         tbn.FromFast ( m );
-        dst._tbn = tbn.Compress ( srcVI._bitangent.DotProduct ( bitangent ) > 0.0F ) );
+        dst._tbn = tbn.Compress ( srcVI._bitangent.DotProduct ( bitangent ) < 0.0F );
     }
 }
 

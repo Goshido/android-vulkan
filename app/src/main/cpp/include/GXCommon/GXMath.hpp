@@ -564,7 +564,7 @@ struct [[maybe_unused]] GXQuat final
     // bits 10-19: b component
     // bits 20-29: c component
     // bits 30-31: bitangent reflection scalar
-    [[maybe_unused, nodiscard]] GXUByte Compress ( bool reflectBitangent ) const noexcept;
+    [[maybe_unused, nodiscard]] GXUInt Compress ( bool reflectBitangent ) const noexcept;
 
     [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept;
 

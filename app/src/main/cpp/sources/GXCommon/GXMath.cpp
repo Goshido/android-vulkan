@@ -786,7 +786,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXUByte GXQuat::Compress ( bool reflectBitangent ) const noexcept
+[[maybe_unused]] GXUInt GXQuat::Compress ( bool reflectBitangent ) const noexcept
 {
     auto imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 
@@ -804,7 +804,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     auto const bUnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );
     auto const cUnorm = static_cast<uint32_t> ( imaginary._data[ 2U ] );
 
-    constexpr uint32_t const mirroring[] = { 0U, 0b11U << 30U };
+    constexpr uint32_t const mirroring[] = { 0b11U << 30U, 0U };
     uint32_t const mirror = mirroring[ static_cast<size_t> ( reflectBitangent ) ];
 
     return mirror | ( aUnorm << 20U ) | ( bUnorm << 10U ) | cUnorm;

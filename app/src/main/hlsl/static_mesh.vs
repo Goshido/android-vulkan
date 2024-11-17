@@ -1,5 +1,5 @@
 #include "rotating_mesh/bindings.inc"
-#include "tbn.vs"
+#include "tbn.inc"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_ONCE )]]
@@ -57,7 +57,11 @@ OutputData VS ( in InputData inputData )
     float16_t4 const compressedTBN = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
     float16_t3 normalView;
     float16_t3 tangentView;
-    GetNormalAndTangent ( normalView, tangentView, RotateTBN ( compressedTBN.xyz, _localView ) );
+
+    GetNormalAndTangent ( normalView,
+        tangentView,
+        RotateTBN ( RecoverTBN ( compressedTBN.xyz ), (float16_t4)_localView )
+    );
 
     result._tangentView = (float32_t3)tangentView;
     result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );

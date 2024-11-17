@@ -1,4 +1,5 @@
 #include "pbr/skin.inc"
+#include "tbn.inc"
 
 
 #define BONES_PER_VERTEX    4U
@@ -6,9 +7,7 @@
 struct Mesh2Vertex
 {
     float32_t2                      _uv;
-    float32_t3                      _normal;
-    float32_t3                      _tangent;
-    float32_t3                      _bitangent;
+    uint32_t                        _tbn;
 };
 
 struct SkinInfluence
@@ -141,20 +140,14 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
         return;
 
     Mesh2Vertex const referenceRest = g_referenceRest[ idx ];
+    uint32_t const tbn = referenceRest._tbn;
 
     float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
     g_skinPositions[ idx ] = mul ( float32_t4 ( g_referencePositons[ idx ], 1.0F ), skinTransform );
 
-    float32_t3x3 const orientation = (float32_t3x3)skinTransform;
-
     Mesh2Vertex skinRest;
     skinRest._uv = referenceRest._uv;
-
-    // Note matrix multiplication order is in reverse order compare to the rest of engine code.
-    // The reason is that quaternion unpacks to matrix with column-major behaviour.
-    // Same time the engine has row-major matrix convention.
-    skinRest._normal = mul ( referenceRest._normal, orientation );
-    skinRest._tangent = mul ( referenceRest._tangent, orientation );
+    skinRest._tbn = CompressTBN ( RotateTBN ( DecompressTBN ( tbn ), ToTBN ( (float16_t3x3)skinTransform ) ), tbn );
 
     g_skinRest[ idx ] = skinRest;
 }

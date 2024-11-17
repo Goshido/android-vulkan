@@ -1,5 +1,5 @@
 #include "object_data.inc"
-#include "tbn.vs"
+#include "tbn.inc"
 
 
 struct InputData
@@ -56,7 +56,7 @@ OutputData VS ( in InputData inputData )
 
     GetNormalAndTangent ( normalView,
         tangentView,
-        RotateTBN ( compressedTBN.xyz, g_localView[ inputData._instanceIndex ] )
+        RotateTBN ( RecoverTBN ( compressedTBN.xyz ), (float16_t4)g_localView[ inputData._instanceIndex ] )
     );
 
     result._tangentView = (float32_t3)tangentView;

@@ -98,7 +98,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::CharacterSandbox )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

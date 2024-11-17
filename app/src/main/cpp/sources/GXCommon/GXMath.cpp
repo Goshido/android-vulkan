@@ -796,9 +796,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         imaginary.Reverse ();
 
     constexpr uint32_t fixedPoint = 1U << 10U;
-    constexpr float snorm = 0.5F * static_cast<float> ( fixedPoint );
-    constexpr GXVec3 snormV3 ( snorm, snorm, snorm );
-    imaginary.Sum ( snormV3, snorm, imaginary );
+    constexpr uint32_t halfFixedPoint = fixedPoint >> 1U;
+    constexpr auto snormScale = static_cast<float> ( halfFixedPoint - 1U );
+    constexpr auto snormOffset = static_cast<float> ( halfFixedPoint );
+    constexpr GXVec3 snormOffsetV3 ( snormOffset, snormOffset, snormOffset );
+    imaginary.Sum ( snormOffsetV3, snormScale, imaginary );
 
     auto const aUnorm = static_cast<uint32_t> ( imaginary._data[ 0U ] );
     auto const bUnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );

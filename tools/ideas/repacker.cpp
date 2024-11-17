@@ -6,12 +6,11 @@
 #include <android_vulkan_sdk/mesh2.hpp>
 #include <file.hpp>
 #include <logger.hpp>
-#include <GXCommon/GXNativeMesh.hpp>
 
 
 namespace {
 
-constexpr size_t DATA_PER_VERTEX = sizeof ( android_vulkan::Mesh2Position ) + sizeof ( android_vulkan::Mesh2VertexExt );
+constexpr size_t DATA_PER_VERTEX = sizeof ( android_vulkan::Mesh2Position ) + sizeof ( android_vulkan::Mesh2Vertex );
 constexpr float REPACK_THRESHOLD = 1.0e-4F;
 constexpr size_t IND16_VS_IND32 = 1U << 16U;
 
@@ -21,9 +20,38 @@ constexpr size_t const IND_CASES[] =
     sizeof ( android_vulkan::Mesh2Index32 )
 };
 
-constexpr size_t INDEX_DATA_OFFSET = sizeof ( android_vulkan::Mesh2HeaderExt );
+constexpr size_t INDEX_DATA_OFFSET = sizeof ( android_vulkan::Mesh2Header );
 
 #pragma pack ( push, 1 )
+
+struct GXNativeMeshHeader final
+{
+    GXUInt          totalVertices;
+    GXUBigInt       vboOffset;      // VBO element struct: position (GXVec3), uv (GXVec2), normal (GXVec3), tangent (GXVec3), bitangent (GXVec3).
+};
+
+struct Mesh2HeaderOLD final
+{
+    android_vulkan::AABB                            _bounds;
+
+    uint64_t                        _indexCount;
+    uint64_t                        _indexDataOffset;
+
+    uint32_t                        _vertexCount;
+    [[maybe_unused]] uint64_t       _vertexDataOffset;
+};
+
+struct Mesh2VertexOLD final
+{
+     [[maybe_unused]] android_vulkan::Vec3      _vertex;
+     [[maybe_unused]] android_vulkan::Vec2      _uv;
+     android_vulkan::Vec3                       _normal;
+     [[maybe_unused]] android_vulkan::Vec3      _tangent;
+     [[maybe_unused]] android_vulkan::Vec3      _bitangent;
+};
+
+using Mesh2IndexOLD [[maybe_unused]] = uint32_t;
+
 
 struct DstVertex final
 {
@@ -107,11 +135,11 @@ void RepackMesh ( std::string const &path ) noexcept
     auto const count = static_cast<size_t> ( srcHeader.totalVertices );
 
     size_t const indSize = count * IND_CASES[ static_cast<size_t> ( srcHeader.totalVertices >= IND16_VS_IND32 ) ];
-    size_t const dstFileSize = sizeof ( android_vulkan::Mesh2HeaderExt ) + indSize + count * DATA_PER_VERTEX;
+    size_t const dstFileSize = sizeof ( android_vulkan::Mesh2Header ) + indSize + count * DATA_PER_VERTEX;
 
     std::unique_ptr<uint8_t[]> dstContent ( new uint8_t[ dstFileSize ] );
     uint8_t* dstPtr = dstContent.get ();
-    auto &dstHeader = *reinterpret_cast<android_vulkan::Mesh2HeaderExt*> ( dstPtr );
+    auto &dstHeader = *reinterpret_cast<android_vulkan::Mesh2Header*> ( dstPtr );
 
     dstHeader._indexCount = static_cast<uint32_t> ( count );
     dstHeader._indexDataOffset = static_cast<uint64_t> ( INDEX_DATA_OFFSET );
@@ -157,16 +185,16 @@ void RepackMesh2 ( std::string const &path )
 
     std::vector<uint8_t> const &content = srcFile.GetContent ();
     uint8_t const *srcPtr = content.data ();
-    auto const &srcHeader = *reinterpret_cast<android_vulkan::Mesh2Header const*> ( srcPtr );
+    auto const &srcHeader = *reinterpret_cast<Mesh2HeaderOLD const*> ( srcPtr );
 
     auto const indCount = static_cast<size_t> ( srcHeader._indexCount );
     auto const vertexCount = static_cast<size_t> ( srcHeader._vertexCount );
     size_t const indSize = indCount * IND_CASES[ static_cast<size_t> ( vertexCount >= IND16_VS_IND32 ) ];
-    size_t const dstFileSize = sizeof ( android_vulkan::Mesh2HeaderExt ) + indSize + vertexCount * DATA_PER_VERTEX;
+    size_t const dstFileSize = sizeof ( android_vulkan::Mesh2Header ) + indSize + vertexCount * DATA_PER_VERTEX;
 
     std::unique_ptr<uint8_t[]> dstContent ( new uint8_t[ dstFileSize ] );
     uint8_t* dstPtr = dstContent.get ();
-    auto &dstHeader = *reinterpret_cast<android_vulkan::Mesh2HeaderExt*> ( dstPtr );
+    auto &dstHeader = *reinterpret_cast<android_vulkan::Mesh2Header*> ( dstPtr );
 
     dstHeader._indexCount = static_cast<uint32_t> ( indCount );
     dstHeader._indexDataOffset = static_cast<uint64_t> ( INDEX_DATA_OFFSET );
@@ -202,7 +230,7 @@ void RepackMesh2 ( std::string const &path )
     }
     else
     {
-        auto const* srcInd = reinterpret_cast<android_vulkan::Mesh2Index const*> (
+        auto const* srcInd = reinterpret_cast<Mesh2IndexOLD const*> (
             srcPtr + srcHeader._indexDataOffset
         );
 

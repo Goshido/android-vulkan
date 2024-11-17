@@ -23,6 +23,7 @@ class Game : public android_vulkan::Game
         {
             GXMat4                          _transform;
             GXMat4                          _normalTransform;
+            GXQuat                          _localView;
         };
 
         AV_DX_ALIGNMENT_END

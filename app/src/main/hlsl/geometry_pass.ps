@@ -65,13 +65,8 @@ struct OutputData
 
 float16_t3 UnpackColor ( in uint32_t packedColor )
 {
-    uint32_t3 const color = uint32_t3 (
-        ( 0x0000FF00U & packedColor ) >> 8U,
-        ( 0x00FF0000U & packedColor ) >> 16U,
-        packedColor >> 24U
-    );
-
-    return (float16_t3)color * UNORM_FACTOR;
+    uint32_t3 const segmented = ( ( (uint32_t3)packedColor ) & uint32_t3 ( 0x0000FF00U, 0x00FF0000U, 0xFF000000U ) );
+    return (float16_t3)( segmented >> uint32_t3 ( 8U, 16U, 24U ) ) * UNORM_FACTOR;
 }
 
 float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_t3 diffuseSample )
@@ -94,11 +89,8 @@ float32_t4 ComputeEmission ( in float32_t2 uv, in ColorData colorData )
 {
     float16_t3 const emissionSample = (float16_t3)g_emissionTexture.Sample ( g_sampler, uv ).xyz;
 
-    uint32_t3 const emission = uint32_t3 (
-        0x000000FFU & colorData._emiRcol0rgb,
-        0x000000FFU & colorData._emiGcol1rgb,
-        0x000000FFU & colorData._emiBcol2rgb
-    );
+    uint32_t3 const emission = uint32_t3 ( colorData._emiRcol0rgb, colorData._emiGcol1rgb, colorData._emiBcol2rgb ) &
+        0x000000FFU;
 
     float16_t3 const alpha = (float16_t3)emission * UNORM_FACTOR;
     float32_t const intensity = INTENSITY_FACTOR * (float32_t)( colorData._col0aEmiIntens >> 8U );

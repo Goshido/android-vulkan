@@ -1,4 +1,5 @@
 #include "rotating_mesh/bindings.inc"
+#include "tbn.vs"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_ONCE )]]
@@ -6,6 +7,7 @@ cbuffer Transform:                              register ( b0 )
 {
     float32_t4x4            _transform;
     float32_t4x4            _normalTransform;
+    float32_t4              _localView;
 };
 
 struct InputData
@@ -16,11 +18,8 @@ struct InputData
     [[vk::location ( IN_SLOT_UV )]]
     float32_t2              _uv:                UV;
 
-    [[vk::location ( IN_SLOT_NORMAL )]]
-    float32_t3              _normal:            NORMAL;
-
-    [[vk::location ( IN_SLOT_TANGENT )]]
-    float32_t3              _tangent:           TANGENT;
+    [[vk::location ( IN_SLOT_TBN )]]
+    float32_t4              _tbn:               TBN;
 };
 
 struct OutputData
@@ -50,18 +49,19 @@ OutputData VS ( in InputData inputData )
     float32_t4 const vertex = float32_t4 ( inputData._position, 1.0F );
 
     OutputData result;
-    result._vertexH = mul ( _transform, vertex );
 
-    float32_t3x3 const normalTransform = (float32_t3x3)_normalTransform;
+    result._vertexH = mul ( _transform, vertex );
     result._fragmentView = ( mul ( _normalTransform, vertex ) ).xyz;
     result._uv = inputData._uv;
 
-    float32_t3 const normalView = mul ( normalTransform, inputData._normal );
-    float32_t3 const tangentView = mul ( normalTransform, inputData._tangent );
+    float16_t4 const compressedTBN = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
+    float16_t3 normalView;
+    float16_t3 tangentView;
+    GetNormalAndTangent ( normalView, tangentView, RotateTBN ( compressedTBN.xyz, _localView ) );
 
-    result._normalView = normalView;
-    result._tangentView = tangentView;
-    result._bitangentView = cross ( normalView, tangentView );
+    result._tangentView = (float32_t3)tangentView;
+    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );
+    result._normalView = (float32_t3)normalView;
 
     return result;
 }

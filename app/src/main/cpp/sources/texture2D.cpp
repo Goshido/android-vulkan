@@ -326,23 +326,32 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     _format = format;
     _resolution = resolution;
 
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext = nullptr;
-    imageInfo.flags = 0U;
-    imageInfo.format = _format;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.usage = usage;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.extent.width = _resolution.width;
-    imageInfo.extent.height = _resolution.height;
-    imageInfo.extent.depth = 1U;
-    imageInfo.mipLevels = static_cast<uint32_t> ( mips );
-    imageInfo.arrayLayers = 1U;
-    imageInfo.queueFamilyIndexCount = 0U;
-    imageInfo.pQueueFamilyIndices = nullptr;
+    imageInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = _format,
+
+        .extent
+        {
+            .width = _resolution.width,
+            .height = _resolution.height,
+            .depth = 1U
+        },
+
+        .mipLevels = static_cast<uint32_t> ( mips ),
+        .arrayLayers = 1U,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
 
     VkDevice device = renderer.GetDevice ();
 

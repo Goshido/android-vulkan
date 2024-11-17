@@ -1212,6 +1212,8 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
     tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
     _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 
+    _transform._localView.FromFast ( _transform._normalTransform );
+
     VkDescriptorBufferInfo const bufferInfo
     {
         .buffer = _transformBuffer.Update ( commandBuffer, reinterpret_cast<uint8_t const*> ( &_transform ) ),

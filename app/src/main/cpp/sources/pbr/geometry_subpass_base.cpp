@@ -79,7 +79,8 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 offset
             );
 
-            vkCmdBindIndexBuffer ( commandBuffer, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = mesh->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, 0U, indexBuffer._type );
 
             vkCmdDrawIndexed ( commandBuffer,
                 mesh->GetVertexCount (),

@@ -52,6 +52,12 @@
     <Filter Include="Header Files\core\pbr">
       <UniqueIdentifier>{e4a601be-7003-40bd-bc08-9a4fc45a71b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\core\android_vulkan_sdk">
+      <UniqueIdentifier>{97b6495a-e00a-4c09-a345-1197edb796a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\android_vulkan_sdk\include">
+      <UniqueIdentifier>{95a78a49-7ee9-4d68-8fa5-9b6ac6f75d33}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -475,6 +481,69 @@
     </ClInclude>
     <ClInclude Include="include\mouse_key_event.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\bone_joint.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\mesh2.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\actor_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\camera_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_classes.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\material_info.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\point_light_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\reflection_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\rigid_body_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\scene_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\script_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_global_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_spatial_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\static_mesh_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\transform_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -26,7 +26,9 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
 
     _lightup.BindProgram ( commandBuffer );
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, unitCube.GetVertexBuffers (), &offset );
-    vkCmdBindIndexBuffer ( commandBuffer, unitCube.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+
+    android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = unitCube.GetIndexBuffer ();
+    vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, 0U, indexBuffer._type );
 
     size_t const limit = _interacts.size ();
 
@@ -363,11 +365,8 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
         {
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, unique->GetVertexBuffers (), &offset );
 
-            vkCmdBindIndexBuffer ( commandBuffer,
-                unique->GetIndexBuffer (),
-                offset,
-                VK_INDEX_TYPE_UINT32
-            );
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = unique->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, offset, indexBuffer._type );
 
             _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
             vkCmdDrawIndexed ( commandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
@@ -378,11 +377,8 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
             auto const &[mesh, transforms] = casterInfo.second;
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, mesh->GetVertexBuffers (), &offset );
 
-            vkCmdBindIndexBuffer ( commandBuffer,
-                mesh->GetIndexBuffer (),
-                offset,
-                VK_INDEX_TYPE_UINT32
-            );
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = mesh->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, offset, indexBuffer._type );
 
             size_t remain = transforms.size ();
             uint32_t const vertexCount = mesh->GetVertexCount ();

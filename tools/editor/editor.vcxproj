@@ -865,7 +865,28 @@
     <ClCompile Include="src\widget.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\bone_joint.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\mesh2.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\actor_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\camera_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_classes.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\material_info.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\point_light_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\reflection_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\rigid_body_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\scene_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\script_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_global_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_spatial_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\static_mesh_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\transform_component_desc.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXTypes.hpp" />

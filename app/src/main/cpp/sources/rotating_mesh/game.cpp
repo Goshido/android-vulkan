@@ -15,14 +15,14 @@ constexpr char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 constexpr std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
-constexpr char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
+constexpr char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh2";
 
 constexpr std::string_view MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
-constexpr char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
+constexpr char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh2";
 constexpr std::string_view MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
 constexpr std::string_view MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
-constexpr char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
+constexpr char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh2";
 constexpr std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
 constexpr float ROTATION_SPEED = GX_MATH_HALF_PI;

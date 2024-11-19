@@ -34,6 +34,12 @@
     <Filter Include="Header Files\core">
       <UniqueIdentifier>{cee983a9-887b-4435-b162-8b16fec4c2f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\mikkt">
+      <UniqueIdentifier>{d79d1613-9215-49fd-88a9-adaf34920bbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mikkt">
+      <UniqueIdentifier>{e542eff9-1554-49ee-8831-fc274b035877}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\plugin.hpp">
@@ -96,6 +102,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+    <ClInclude Include="include\mikkt\mikktspace.h">
+      <Filter>Header Files\mikkt</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\class_desc.cpp">
@@ -139,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\mikkt\mikktspace.c">
+      <Filter>Source Files\mikkt</Filter>
+    </ClCompile>
+    <ClCompile Include="sources\mikkt\wrapper_with_precompiled_headers.cpp">
+      <Filter>Source Files\mikkt</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

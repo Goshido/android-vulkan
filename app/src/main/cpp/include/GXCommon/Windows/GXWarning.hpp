@@ -1,4 +1,4 @@
-// version 1.7
+// version 1.8
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -13,10 +13,12 @@
     GX_SAVE_WARNING_STATE \
     GX_DISABLE_WARNING ( 4091 )     /* 'keyword' : ignored on left of 'type' when no variable is declared */ \
     GX_DISABLE_WARNING ( 4100 )     /* 'identifier' : unreferenced formal parameter */ \
+    GX_DISABLE_WARNING ( 4201 )     /* nonstandard extension used: nameless struct/union */ \
     GX_DISABLE_WARNING ( 4263 )     /* 'function' : member function does not override any base class virtual member function */ \
     GX_DISABLE_WARNING ( 4264 )     /* 'virtual_function' : no override available for virtual member function from base 'class'; function is hidden */ \
     GX_DISABLE_WARNING ( 4266 )     /* no override available for virtual member function from base 'BaseObject'; function is hidden */ \
     GX_DISABLE_WARNING ( 4365 )     /* 'action' : conversion from 'type_1' to 'type_2', signed/unsigned mismatch */ \
+    GX_DISABLE_WARNING ( 4456 )     /* declaration of '<identifier>' hides previous local declaration */ \
     GX_DISABLE_WARNING ( 4464 )     /* relative include path contains '..' */ \
     GX_DISABLE_WARNING ( 4471 )     /* 'enumeration': a forward declaration of an unscoped enumeration must have an underlying type (int assumed) */ \
     GX_DISABLE_WARNING ( 4505 )     /* unreferenced local function has been removed */ \

@@ -69,7 +69,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>$(SolutionDir)include\;$(SolutionDir)..\..\app\src\main\cpp\include\;$(SDK_3DS_MAX)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\;$(SolutionDir)include\mikkt\;$(SolutionDir)..\..\app\src\main\cpp\include\;$(SDK_3DS_MAX)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/wd4371 /wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
@@ -100,7 +100,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>$(SolutionDir)include\;$(SolutionDir)..\..\app\src\main\cpp\include\;$(SDK_3DS_MAX)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include\;$(SolutionDir)include\mikkt\;$(SolutionDir)..\..\app\src\main\cpp\include\;$(SDK_3DS_MAX)\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/wd4371 /wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -135,6 +135,7 @@
     <ClInclude Include="include\class_desc.hpp" />
     <ClInclude Include="include\exporter.hpp" />
     <ClInclude Include="include\mesh_exporter.hpp" />
+    <ClInclude Include="include\mikkt\mikktspace.h" />
     <ClInclude Include="include\plugin.hpp" />
     <ClInclude Include="include\resource.hpp" />
     <ClInclude Include="include\result_checker.hpp" />
@@ -156,6 +157,11 @@
     <ClCompile Include="sources\dll_main.cpp" />
     <ClCompile Include="sources\exporter.cpp" />
     <ClCompile Include="sources\mesh_exporter.cpp" />
+    <ClCompile Include="sources\mikkt\mikktspace.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="sources\mikkt\wrapper_with_precompiled_headers.cpp" />
     <ClCompile Include="sources\plugin.cpp" />
     <ClCompile Include="sources\result_checker.cpp" />
     <ClCompile Include="sources\skeleton_exporter.cpp" />

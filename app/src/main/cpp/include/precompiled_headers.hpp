@@ -8,6 +8,7 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <algorithm>
 #include <array>
+#include <assert.h>
 #include <atomic>
 #include <bit>
 #include <cassert>
@@ -26,11 +27,13 @@ GX_DISABLE_COMMON_WARNINGS
 #include <ctime>
 #include <deque>
 #include <filesystem>
+#include <float.h>
 #include <forward_list>
 #include <fstream>
 #include <list>
 #include <locale>
 #include <map>
+#include <math.h>
 #include <memory>
 #include <mutex>
 #include <numeric>
@@ -39,6 +42,9 @@ GX_DISABLE_COMMON_WARNINGS
 #include <regex>
 #include <set>
 #include <span>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string_view>
 #include <string>
 #include <thread>

@@ -2,16 +2,22 @@
 #include <crash_dump.hpp>
 #include <editor.hpp>
 
+
 // FUCK
 #include <android_vulkan_sdk/mesh2.hpp>
 #include <file.hpp>
 #include <logger.hpp>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <mikktspace.h>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace {
 
 constexpr size_t DATA_PER_VERTEX = sizeof ( android_vulkan::Mesh2Position ) + sizeof ( android_vulkan::Mesh2Vertex );
-constexpr float REPACK_THRESHOLD = 1.0e-4F;
 constexpr size_t IND16_VS_IND32 = 1U << 16U;
 
 constexpr size_t const IND_CASES[] =
@@ -70,11 +76,132 @@ struct Vertex final
 
 #pragma pack ( pop )
 
+class RawData final
+{
+    public:
+        android_vulkan::Mesh2Index32*                       _indices = nullptr;
+        GXVec3*                                             _positions = nullptr;
+        GXVec3*                                             _normals = nullptr;
+        android_vulkan::Mesh2Vertex*                        _vertices = nullptr;
+        size_t const                                        _faceCount = 0U;
+
+    private:
+        std::unique_ptr<android_vulkan::Mesh2Index32[]>     _indexData {};
+        std::unique_ptr<GXVec3[]>                           _vec3Data {};
+        std::unique_ptr<android_vulkan::Mesh2Vertex[]>      _vertexData {};
+
+    public:
+        RawData () = delete;
+
+        RawData ( RawData const & ) = delete;
+        RawData &operator = ( RawData const & ) = delete;
+
+        RawData ( RawData && ) = delete;
+        RawData &operator = ( RawData && ) = delete;
+
+        explicit RawData ( size_t faceCount, size_t indexCount) noexcept;
+
+        ~RawData () = default;
+};
+
+RawData::RawData ( size_t faceCount, size_t indexCount ) noexcept:
+    _faceCount ( faceCount ),
+    _indexData ( new android_vulkan::Mesh2Index32[ indexCount ] ),
+    _vec3Data ( new GXVec3[ indexCount * 2U ] ),
+    _vertexData ( new android_vulkan::Mesh2Vertex[ indexCount ] )
+{
+    _indices = _indexData.get ();
+    _positions = _vec3Data.get ();
+    _normals = _positions + indexCount;
+    _vertices = _vertexData.get ();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[nodiscard]] int MikktGetNumFaces ( SMikkTSpaceContext const* pContext )
+{
+    return static_cast<int> ( static_cast<RawData*> ( pContext->m_pUserData )->_faceCount );
+}
+
+[[nodiscard]] int MikktGetNumVerticesOfFace ( SMikkTSpaceContext const* /*pContext*/, int /*iFace*/ )
+{
+    return 3;
+}
+
+void MikktGetPosition ( SMikkTSpaceContext const* pContext, float fvPosOut[], int iFace, int iVert )
+{
+    auto const &rawData = *static_cast<RawData const*> ( pContext->m_pUserData );
+
+    android_vulkan::Mesh2Index32 const* faceIndices =
+        rawData._indices + static_cast<size_t> ( iFace * 3 );
+
+    std::memcpy ( fvPosOut,
+        rawData._positions + static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] ),
+        sizeof ( GXVec3 )
+    );
+}
+
+void MikktGetNormal ( SMikkTSpaceContext const* pContext, float fvNormOut[], int iFace, int iVert )
+{
+    auto const &rawData = *static_cast<RawData const*> ( pContext->m_pUserData );
+
+    android_vulkan::Mesh2Index32 const* faceIndices =
+        rawData._indices + static_cast<size_t> ( iFace * 3 );
+
+    std::memcpy ( fvNormOut,
+        rawData._normals + static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] ),
+        sizeof ( GXVec3 )
+    );
+}
+
+void MikktGetTexCoord ( SMikkTSpaceContext const* pContext, float fvTexcOut[], int iFace, int iVert )
+{
+    auto const &rawData = *static_cast<RawData const*> ( pContext->m_pUserData );
+
+    android_vulkan::Mesh2Index32 const* faceIndices =
+        rawData._indices + static_cast<size_t> ( iFace * 3 );
+
+    std::memcpy ( fvTexcOut,
+        &rawData._vertices[ static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] ) ]._uv,
+        sizeof ( GXVec2 )
+    );
+}
+
+void MikktSetTSpaceBasic ( SMikkTSpaceContext const* pContext,
+    float const fvTangent[],
+    float fSign,
+    int iFace,
+    int iVert
+)
+{
+    auto &rawData = *static_cast<RawData*> ( pContext->m_pUserData );
+
+    GXMat3 m {};
+    auto &tangent = *reinterpret_cast<GXVec3*> ( &m._m[ 0U ][ 0U ] );
+    auto &bitangent = *reinterpret_cast<GXVec3*> ( &m._m[ 1U ][ 0U ] );
+    auto &normal = *reinterpret_cast<GXVec3*> ( &m._m[ 2U ][ 0U ] );
+
+    std::memcpy ( &tangent, fvTangent, sizeof ( GXVec3 ) );
+
+    android_vulkan::Mesh2Index32 const* faceIndices =
+        rawData._indices + static_cast<size_t> ( iFace * 3 );
+
+    auto const index = static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] );
+    normal = rawData._normals[ index ];
+
+    bitangent.CrossProduct ( normal, tangent );
+
+    GXQuat tbn {};
+    tbn.FromFast ( m );
+    rawData._vertices[ index ]._tbn = tbn.Compress ( fSign < 0.0F );
+}
+
 void RepackVertices ( GXVec3* dstPositions,
     DstVertex* dstVertices,
     GXAABB &bounds,
     std::span<Vertex const> srcData,
-    bool uvInverseV
+    bool uvInverseV,
+    RawData &rawData
 ) noexcept
 {
     size_t const count = srcData.size ();
@@ -88,37 +215,49 @@ void RepackVertices ( GXVec3* dstPositions,
         bounds.AddVertex ( srcPosition );
         dstPositions[ i ] = srcPosition;
 
-        DstVertex &dstVertex = dstVertices[ i ];
-        float const* uvData = srcVertex._uv._data;
+        rawData._positions[ i ] = srcVertex._position;
+        rawData._normals[ i ] = srcVertex._normal;
 
-        float const cases[] = { uvData[ 1U ], 1.0F - uvData[ 1U ] };
-        dstVertex._uv = GXVec2 ( uvData[ 0U ], cases[ selector ]);
+        android_vulkan::Vec2 &dstUV = rawData._vertices[ i ]._uv;
+        GXVec2 const &srcUV = srcVertex._uv;
 
-        GXMat3 m {};
-        auto &tangent = *reinterpret_cast<GXVec3*> ( &m._m[ 0U ][ 0U ] );
-        auto &bitangent = *reinterpret_cast<GXVec3*> ( &m._m[ 1U ][ 0U ] );
-        auto &normal = *reinterpret_cast<GXVec3*> ( &m._m[ 2U ][ 0U ] );
+        float const v = srcUV._data[ 1U ];
+        float const cases[] = { v, 1.0F - v };
+        dstUV[ 0U ] = srcUV._data[ 0U ];
+        dstUV[ 1U ] = cases[ selector ];
+    }
 
-        tangent = srcVertex._tangent;
-        tangent.Normalize ();
+    SMikkTSpaceInterface mikktInterface
+    {
+        .m_getNumFaces = &MikktGetNumFaces,
+        .m_getNumVerticesOfFace = &MikktGetNumVerticesOfFace,
+        .m_getPosition = &MikktGetPosition,
+        .m_getNormal = &MikktGetNormal,
+        .m_getTexCoord = &MikktGetTexCoord,
+        .m_setTSpaceBasic = &MikktSetTSpaceBasic,
+        .m_setTSpace = nullptr
+    };
 
-        normal = srcVertex._normal;
-        normal.Normalize ();
+    SMikkTSpaceContext const mikktContext
+    {
+        .m_pInterface = &mikktInterface,
+        .m_pUserData = &rawData
+    };
 
-        if ( float const ortho = std::abs ( tangent.DotProduct ( normal ) ); ortho > REPACK_THRESHOLD ) [[likely]]
-        {
-            bitangent.CrossProduct ( normal, tangent );
-        }
-        else
-        {
-            GXVec3 n = normal;
-            n.Normalize ();
-            m.From ( n );
-        }
+    if ( genTangSpaceDefault ( &mikktContext ) == 0 )
+    {
+        printf ( "FUCK" );
+    }
 
-        GXQuat tbn {};
-        tbn.FromFast ( m );
-        dstVertex._tbn = tbn.Compress ( srcVertex._bitangent.DotProduct ( bitangent ) < 0.0F );
+    for ( size_t i = 0U; i < count; ++i )
+    {
+        dstPositions[ i ] = rawData._positions[ i ];
+
+        DstVertex &dst = dstVertices[ i ];
+        android_vulkan::Mesh2Vertex const &src = rawData._vertices[ i ];
+
+        std::memcpy ( &dst._uv, &src._uv, sizeof ( GXVec2 ) );
+        dst._tbn = src._tbn;
     }
 }
 
@@ -130,7 +269,7 @@ void RepackMesh ( std::string const &path ) noexcept
         return;
 
     std::vector<uint8_t> const &content = srcFile.GetContent ();
-    uint8_t const *srcPtr = content.data ();
+    uint8_t const* srcPtr = content.data ();
     auto const &srcHeader = *reinterpret_cast<GXNativeMeshHeader const*> ( srcPtr );
     auto const count = static_cast<size_t> ( srcHeader.totalVertices );
 
@@ -149,12 +288,15 @@ void RepackMesh ( std::string const &path ) noexcept
     dstHeader._vertexDataOffset = dstHeader._positionDataOffset + count * sizeof ( android_vulkan::Mesh2Position );
 
     GXAABB bounds {};
+    RawData rawData ( count / 3U, count );
+    std::iota ( rawData._indices, rawData._indices + count, 0U );
 
     RepackVertices ( reinterpret_cast<GXVec3*> ( dstPtr + dstHeader._positionDataOffset ),
         reinterpret_cast<DstVertex*> ( dstPtr + dstHeader._vertexDataOffset ),
         bounds,
         { reinterpret_cast<Vertex const*> ( srcPtr + static_cast<size_t> ( srcHeader.vboOffset ) ), count },
-        true
+        true,
+        rawData
     );
 
     if ( srcHeader.totalVertices >= IND16_VS_IND32 )
@@ -184,7 +326,7 @@ void RepackMesh2 ( std::string const &path )
         return;
 
     std::vector<uint8_t> const &content = srcFile.GetContent ();
-    uint8_t const *srcPtr = content.data ();
+    uint8_t const* srcPtr = content.data ();
     auto const &srcHeader = *reinterpret_cast<Mesh2HeaderOLD const*> ( srcPtr );
 
     auto const indCount = static_cast<size_t> ( srcHeader._indexCount );
@@ -208,6 +350,12 @@ void RepackMesh2 ( std::string const &path )
     dstHeader._bounds = srcHeader._bounds;
 
     GXAABB bounds {};
+    RawData rawData ( indCount / 3U, indCount );
+
+    std::memcpy ( rawData._indices,
+        srcPtr + srcHeader._indexDataOffset,
+        indCount * sizeof ( android_vulkan::Mesh2Index32 )
+    );
 
     RepackVertices ( reinterpret_cast<GXVec3*> ( dstPtr + dstHeader._positionDataOffset ),
         reinterpret_cast<DstVertex*> ( dstPtr + dstHeader._vertexDataOffset ),
@@ -218,14 +366,15 @@ void RepackMesh2 ( std::string const &path )
             vertexCount
         },
 
-        false
+        false,
+        rawData
     );
 
     if ( vertexCount >= IND16_VS_IND32 )
     {
         std::memcpy ( dstPtr + dstHeader._indexDataOffset,
             srcPtr + srcHeader._indexDataOffset,
-            indCount * sizeof ( android_vulkan::Mesh2Index16 )
+            indCount * sizeof ( android_vulkan::Mesh2Index32 )
         );
     }
     else

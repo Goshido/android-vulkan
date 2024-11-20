@@ -3,7 +3,7 @@
 
 ## Compile tool
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10091_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10115_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 

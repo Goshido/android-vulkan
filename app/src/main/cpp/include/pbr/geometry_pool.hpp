@@ -15,7 +15,6 @@ class GeometryPool final
         std::vector<VkBufferMemoryBarrier>          _vertexBarriers {};
         std::vector<VkBufferMemoryBarrier>          _fragmentBarriers {};
 
-        std::vector<VkDescriptorBufferInfo>         _bufferInfo {};
         VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
         GeometryPassInstanceDescriptorSetLayout     _descriptorSetLayout {};
         std::vector<VkDescriptorSet>                _descriptorSets {};
@@ -26,9 +25,8 @@ class GeometryPool final
         size_t                                      _written = 0U;
 
         UniformBufferPool                           _positionPool { eUniformPoolSize::Big_32M };
-        UniformBufferPool                           _normalPool { eUniformPoolSize::Small_8M };
+        UniformBufferPool                           _normalPool { eUniformPoolSize::Tiny_4M };
         UniformBufferPool                           _colorPool { eUniformPoolSize::Small_8M };
-        std::vector<VkWriteDescriptorSet>           _writeSets {};
 
     public:
         explicit GeometryPool () = default;
@@ -43,7 +41,7 @@ class GeometryPool final
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
-        void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
+        void IssueSync ( VkCommandBuffer commandBuffer ) const noexcept;
 
         void Push ( VkCommandBuffer commandBuffer,
             GeometryPassProgram::InstancePositionData const &positionData,

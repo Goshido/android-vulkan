@@ -1,4 +1,4 @@
-// version 1.92
+// version 1.93
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -786,7 +786,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXUInt GXQuat::Compress ( bool reflectBitangent ) const noexcept
+[[maybe_unused]] GXUInt GXQuat::Compress32 ( bool reflectBitangent ) const noexcept
 {
     auto imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 
@@ -802,14 +802,33 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     constexpr GXVec3 snormOffsetV3 ( snormOffset, snormOffset, snormOffset );
     imaginary.Sum ( snormOffsetV3, snormScale, imaginary );
 
-    auto const aUnorm = static_cast<uint32_t> ( imaginary._data[ 0U ] );
-    auto const bUnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );
-    auto const cUnorm = static_cast<uint32_t> ( imaginary._data[ 2U ] );
+    auto const aSnorm = static_cast<uint32_t> ( imaginary._data[ 0U ] );
+    auto const bSnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );
+    auto const cSnorm = static_cast<uint32_t> ( imaginary._data[ 2U ] );
 
     constexpr uint32_t const mirroring[] = { 0b11U << 30U, 0U };
     uint32_t const mirror = mirroring[ static_cast<size_t> ( reflectBitangent ) ];
 
-    return mirror | ( aUnorm << 20U ) | ( bUnorm << 10U ) | cUnorm;
+    return mirror | ( aSnorm << 20U ) | ( bSnorm << 10U ) | cSnorm;
+}
+
+[[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
+{
+    auto q = *reinterpret_cast<GXVec4 const*> ( this );
+
+    constexpr uint32_t fixedPoint = 1U << 16U;
+    constexpr uint32_t halfFixedPoint = fixedPoint >> 1U;
+    constexpr auto snormScale = static_cast<float> ( halfFixedPoint - 1U );
+    constexpr auto snormOffset = static_cast<float> ( halfFixedPoint );
+    constexpr GXVec4 snormOffsetV4 ( snormOffset, snormOffset, snormOffset, snormOffset );
+    q.Sum ( snormOffsetV4, snormScale, q );
+
+    auto const rSnorm = static_cast<uint64_t> ( q._data[ 0U ] );
+    auto const aSnorm = static_cast<uint64_t> ( q._data[ 1U ] );
+    auto const bSnorm = static_cast<uint64_t> ( q._data[ 2U ] );
+    auto const cSnorm = static_cast<uint64_t> ( q._data[ 3U ] );
+
+    return ( rSnorm << 48U ) | ( aSnorm << 32U ) | ( bSnorm << 16U ) | cSnorm;
 }
 
 [[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept

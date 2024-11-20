@@ -56,7 +56,11 @@ OutputData VS ( in InputData inputData )
 
     GetNormalAndTangent ( normalView,
         tangentView,
-        RotateTBN ( RecoverTBN ( compressedTBN.xyz ), (float16_t4)g_localView[ inputData._instanceIndex ] )
+
+        RotateTBN (
+            RecoverTBN ( compressedTBN.xyz ),
+            DecompressTBN64 ( g_localView[ inputData._instanceIndex >> 1U ], inputData._instanceIndex & 0x00000001U )
+        )
     );
 
     result._tangentView = (float32_t3)tangentView;

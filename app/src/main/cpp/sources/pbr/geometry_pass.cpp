@@ -179,7 +179,7 @@ void GeometryPass::UploadGPUData ( VkDevice device,
         viewProjection
     );
 
-    _geometryPool.IssueSync ( device, commandBuffer );
+    _geometryPool.IssueSync ( commandBuffer );
     _materialPool.IssueSync ( device );
 }
 

@@ -63,6 +63,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
     GeometryPassProgram::InstancePositionData positionData {};
     GeometryPassProgram::InstanceNormalData normalData {};
     GeometryPassProgram::InstanceColorData colorData {};
+    constexpr size_t normalIndexMask = ~( std::numeric_limits<size_t>::max () - 1U );
 
     for ( auto const &call : _sceneData )
     {
@@ -93,7 +94,9 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             y.Normalize ();
             z.Normalize ();
 
-            normalData._localView[ 0U ].FromFast ( localView );
+            GXQuat q {};
+            q.FromFast ( localView );
+            normalData._localView[ 0U ]._q0 = q.Compress64 ();
 
             colorData._colorData[ 0U ] = geometryData._colorData;
             geometryPool.Push ( commandBuffer, positionData, normalData, colorData, 1U );
@@ -140,7 +143,17 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 y.Normalize ();
                 z.Normalize ();
 
-                normalData._localView[ instanceIndex ].FromFast ( localView );
+                GXQuat q {};
+                q.FromFast ( localView );
+                uint64_t const tbn64 = q.Compress64 ();
+
+                GeometryPassProgram::TBN64 &dst = normalData._localView[ instanceIndex >> 1U ];
+                size_t const ind = instanceIndex & normalIndexMask;
+                uint64_t const casesQ0[] = { tbn64, dst._q0 };
+                uint64_t const casesQ1[] = { dst._q1, tbn64 };
+                dst._q0 = casesQ0[ ind ];
+                dst._q1 = casesQ1[ ind ];
+
                 colorData._colorData[ instanceIndex++ ] = opaqueData._colorData;
             }
 

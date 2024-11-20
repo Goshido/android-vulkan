@@ -23,7 +23,7 @@ namespace {
 
 constexpr double FPS_PERIOD = 3.0;
 constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
-constexpr bool VSYNC = false;
+constexpr bool VSYNC = true;
 
 enum class eGame : uint16_t
 {

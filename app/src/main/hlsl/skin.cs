@@ -147,7 +147,7 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
 
     Mesh2Vertex skinRest;
     skinRest._uv = referenceRest._uv;
-    skinRest._tbn = CompressTBN ( RotateTBN ( DecompressTBN ( tbn ), ToTBN ( (float16_t3x3)skinTransform ) ), tbn );
+    skinRest._tbn = CompressTBN32 ( RotateTBN ( DecompressTBN32 ( tbn ), ToTBN ( (float16_t3x3)skinTransform ) ), tbn );
 
     g_skinRest[ idx ] = skinRest;
 }

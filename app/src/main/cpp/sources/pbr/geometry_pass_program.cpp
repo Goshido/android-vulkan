@@ -15,6 +15,9 @@ constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 3U;
 constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
+// TBN64 format contains two quaternions
+static_assert ( PBR_OPAQUE_MAX_INSTANCE_COUNT % 2 == 0 );
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -4,10 +4,11 @@
 
 #include "pbr/geometry_pass_bindings.inc"
 #include "pbr/gpgpu_limits.inc"
+#include "tbn64.inc"
 
 
-// In summary data per instance = 96 bytes
-// Total instance data = 8064 bytes, less than minimum "Supported Limit" of maxUniformBufferRange
+// In summary data per instance = 88 bytes
+// Total instance data = 7392 bytes, less than minimum "Supported Limit" of maxUniformBufferRange
 // see https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap47.html
 
 
@@ -20,7 +21,7 @@ cbuffer InstancePositionData:       register ( b0 )
 [[vk::binding ( BIND_INSTANCE_NORMAL_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceNormalData:         register ( b1 )
 {
-    float32_t4      g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+    TBN64           g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
 }
 
 struct ColorData

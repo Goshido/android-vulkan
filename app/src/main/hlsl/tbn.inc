@@ -2,6 +2,9 @@
 #define TBN_INC
 
 
+#include "tbn64.inc"
+
+
 void GetNormalAndTangent ( out float16_t3 normalView, out float16_t3 tangentView, in float16_t4 tbn )
 {
     float16_t3 const abc2 = tbn.yzw + tbn.yzw;
@@ -29,7 +32,7 @@ float16_t4 RecoverTBN ( in float16_t3 imaginaryTBN )
     return float16_t4 ( sqrt ( abs ( 1.0H - dot ( imaginaryTBN, imaginaryTBN ) ) ), imaginaryTBN );
 }
 
-float16_t4 DecompressTBN ( in uint32_t compressedTBN )
+float16_t4 DecompressTBN32 ( in uint32_t compressedTBN )
 {
     uint32_t3 comp = (uint32_t3)compressedTBN & uint32_t3 ( 0x3FF00000U, 0x000FFC00U, 0x000003FFU );
     comp.xy >>= uint32_t2 ( 20U, 10U );
@@ -38,7 +41,20 @@ float16_t4 DecompressTBN ( in uint32_t compressedTBN )
     return RecoverTBN ( mad ( (float16_t3)comp, 1.955e-3H, -1.0H ) );
 }
 
-uint32_t CompressTBN ( in float16_t4 tbn, in uint32_t oldCompressedTBN )
+float16_t4 DecompressTBN64 ( in TBN64 tbn64, in uint32_t idx )
+{
+    uint32_t const highCases[ 2U ] = { tbn64.q0High, tbn64.q1High };
+    uint32_t const lowCases[ 2U ] = { tbn64.q0Low, tbn64.q1Low };
+
+    uint32_t2 const lowHigh = uint32_t2 ( lowCases[ idx ], highCases[ idx ] );
+    uint16_t2 const shifted = (uint16_t2)( lowHigh >> 16U );
+    uint16_t2 const masked = (uint16_t2)( lowHigh & 0x0000FFFFU );
+
+    // 2.0 / ( 2 ^ 16 - 1 ) = 3.0518043793392843518730449378195e-5
+    return (float16_t4)mad ( (float32_t4)uint16_t4 ( shifted.x, masked.x, shifted.y, masked.y ), 3.0518e-5F, -1.0F );
+}
+
+uint32_t CompressTBN32 ( in float16_t4 tbn, in uint32_t oldCompressedTBN )
 {
     if ( tbn.x < 0.0H )
         tbn.yzw = -tbn.yzw;
@@ -66,69 +82,37 @@ float16_t4 ToTBN ( in float16_t3x3 m )
     solutions += float16_t4 ( d.y, -d.y, d.y, -d.y );
     solutions += float16_t4 ( d.z, -d.z, -d.z, d.z ) + 1.0H;
 
-#define SOLUTION_X      0U
-#define SOLUTION_Y      1U
-#define SOLUTION_Z      2U
-#define SOLUTION_W      3U
+    float16_t const max0 = max ( solutions.x, solutions.y );
+    float16_t const max1 = max ( solutions.z, solutions.w );
+    float16_t const w = max ( max0, max1 );
 
-    uint16_t selector = SOLUTION_X;
-    float16_t solution = solutions.x;
-
-    if ( solution < solutions.y )
-    {
-        selector = SOLUTION_Y;
-        solution = solutions.y;
-    }
-
-    if ( solution < solutions.z )
-    {
-        selector = SOLUTION_Z;
-        solution = solutions.z;
-    }
-
-    if ( solution < solutions.w )
-    {
-        selector = SOLUTION_W;
-        solution = solutions.w;
-    }
-
-    float16_t const phi = 0.5H * sqrt ( solution );
+    float16_t const phi = 0.5H * sqrt ( w );
     float16_t const omega = 0.25H / phi;
 
-    switch ( selector )
+    if ( w == solutions.x )
     {
-        case SOLUTION_X:
-        {
-            float16_t3 const a = float16_t3 ( m[ 1U ][ 2U ], m[ 2U ][ 0U ], m[ 0U ][ 1U ] );
-            float16_t3 const b = a - float16_t3 ( m[ 2U ][ 1U ], m[ 0U ][ 2U ], m[ 1U ][ 0U ] );
-            return float16_t4 ( phi, b * omega );
-        }
-
-        case SOLUTION_Y:
-        {
-            float16_t3 const a = float16_t3 ( m[ 1U ][ 2U ], m[ 0U ][ 1U ], m[ 0U ][ 2U ] );
-            float16_t3 const b = ( a + float16_t3 ( -m[ 2U ][ 1U ], m[ 1U ][ 0U ], m[ 2U ][ 0U ] ) ) * omega;
-            return float16_t4 ( b.x, phi, b.yz );
-        }
-
-        case SOLUTION_Z:
-        {
-            float16_t3 const a = float16_t3 ( m[ 2U ][ 0U ], m[ 0U ][ 1U ], m[ 1U ][ 2U ] );
-            float16_t3 const b = ( a + float16_t3 ( -m[ 0U ][ 2U ], m[ 1U ][ 0U ], m[ 2U ][ 1U ] ) ) * omega;
-            return float16_t4 ( b.xy, phi, b.z );
-        }
+        float16_t3 const a = float16_t3 ( m[ 1U ][ 2U ], m[ 2U ][ 0U ], m[ 0U ][ 1U ] );
+        float16_t3 const b = a - float16_t3 ( m[ 2U ][ 1U ], m[ 0U ][ 2U ], m[ 1U ][ 0U ] );
+        return float16_t4 ( phi, b * omega );
     }
 
-    // SOLUTION_W:
+    if ( w == solutions.y )
+    {
+        float16_t3 const a = float16_t3 ( m[ 1U ][ 2U ], m[ 0U ][ 1U ], m[ 0U ][ 2U ] );
+        float16_t3 const b = ( a + float16_t3 ( -m[ 2U ][ 1U ], m[ 1U ][ 0U ], m[ 2U ][ 0U ] ) ) * omega;
+        return float16_t4 ( b.x, phi, b.yz );
+    }
+
+    if ( w == solutions.z )
+    {
+        float16_t3 const a = float16_t3 ( m[ 2U ][ 0U ], m[ 0U ][ 1U ], m[ 1U ][ 2U ] );
+        float16_t3 const b = ( a + float16_t3 ( -m[ 0U ][ 2U ], m[ 1U ][ 0U ], m[ 2U ][ 1U ] ) ) * omega;
+        return float16_t4 ( b.xy, phi, b.z );
+    }
+
     float16_t3 const a = float16_t3 ( m[ 0U ][ 1U ], m[ 0U ][ 2U ], m[ 1U ][ 2U ] );
     float16_t3 const b = a + float16_t3 ( -m[ 1U ][ 0U ], m[ 2U ][ 0U ], m[ 2U ][ 1U ] );
     return float16_t4 ( b * omega, phi );
-
-#undef SOLUTION_X
-#undef SOLUTION_Y
-#undef SOLUTION_Z
-#undef SOLUTION_W
-
 }
 
 

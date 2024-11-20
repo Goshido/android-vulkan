@@ -22,9 +22,15 @@ class GeometryPassProgram : public GraphicsProgram
             GXMat4                                  _localViewProj[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
+        struct TBN64 final
+        {
+            uint64_t                                _q0;
+            uint64_t                                _q1;
+        };
+
         struct InstanceNormalData final
         {
-            GXQuat                                  _localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            TBN64                                   _localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
         };
 
         class ColorData final

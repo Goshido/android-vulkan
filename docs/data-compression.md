@@ -116,7 +116,7 @@ _UI_ vertices | 288 | 288 | 0%
 
 ⁘ Frame time comparison with stock version:
 
-**Scene** | **_Frame time_** | **Absolute difference** | **Relative difference** | **Preview**
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
 _PBR_ | 16.669 ms | -1.177 ms⏬ | -6.6%⏬ | <img src="./images/compression-pbr.png" width="100">
 _Skeletal mesh_ | 15.496 ms | -1.847 ms⏬ | -10.7%⏬ | <img src="./images/compression-skeletal.png" width="100">
@@ -239,7 +239,7 @@ struct UIVertexInfo final
 
 ⁘ Frame time comparison with stock version:
 
-**Scene** | **_Frame time_** | **Absolute difference** | **Relative difference** | **Preview**
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
 _PBR_ | 16.667 ms | -1.178 ms⏬ | -6.6%⏬ | <img src="./images/compression-pbr.png" width="100">
 _Skeletal mesh_ | 15.136 ms | -2.207 ms⏬ | -12.7%⏬ | <img src="./images/compression-skeletal.png" width="100">
@@ -247,7 +247,7 @@ _World 1-1_ | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./images/compress
 
 ⁘ Frame time comparison with _Optimization #1_:
 
-**Scene** | **_Frame time_** | **Absolute difference** | **Relative difference** | **Preview**
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
 _PBR_ | 16.667 ms | -0.001 ms⏬ | -0.008%⏬ | <img src="./images/compression-pbr.png" width="100">
 _Skeletal mesh_ | 15.136 ms | -0.36 ms⏬ | -2.3%⏬ | <img src="./images/compression-skeletal.png" width="100">

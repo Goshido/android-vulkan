@@ -43,8 +43,8 @@ float16_t4 DecompressTBN32 ( in uint32_t compressedTBN )
 
 float16_t4 DecompressTBN64 ( in TBN64 tbn64, in uint32_t idx )
 {
-    uint32_t const highCases[ 2U ] = { tbn64.q0High, tbn64.q1High };
-    uint32_t const lowCases[ 2U ] = { tbn64.q0Low, tbn64.q1Low };
+    uint32_t const highCases[ 2U ] = { tbn64._q0High, tbn64._q1High };
+    uint32_t const lowCases[ 2U ] = { tbn64._q0Low, tbn64._q1Low };
 
     uint32_t2 const lowHigh = uint32_t2 ( lowCases[ idx ], highCases[ idx ] );
     uint16_t2 const shifted = (uint16_t2)( lowHigh >> 16U );

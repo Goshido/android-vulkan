@@ -28,7 +28,7 @@ struct ColorData
 {
     uint32_t        _emiRcol0rgb;
     uint32_t        _emiGcol1rgb;
-    uint32_t        _emiBcol2rgb;;
+    uint32_t        _emiBcol2rgb;
     uint32_t        _col0aEmiIntens;
 };
 

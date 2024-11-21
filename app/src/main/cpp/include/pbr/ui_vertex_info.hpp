@@ -20,9 +20,7 @@ struct UIAtlas final
     GXVec2      _uv;
     uint8_t     _layer;
 
-    // [2024/11/14] XIAOMI Redmi Note 8 Pro. Probably driver bug. Brief: having vertex element
-    // non multiple of 4 bytes causes runtime artefacts like missing barrier or so. VVL 1.3.299 does not detect any
-    // core or sync validation issues. Running same code on NVIDIA RTX 4080 does not have any artifacts.
+    // See <repo>/docs/data-compression.md#opt-2-further-compression
     uint8_t     _padding[ 3U ] {};
 };
 

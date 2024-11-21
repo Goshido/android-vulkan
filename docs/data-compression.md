@@ -169,12 +169,12 @@ Vertex buffer layout:
 
 ```cpp
 // Vertex buffer #0
-struct VertexInfo final
+struct VertexInfo
 {                                           // Vertex buffer #0
     float32_t3      _vertex;                float32_t3          _position;
 
                                             // Vertex buffer #1
-                                            struct VertexInfo final
+                                            struct VertexInfo
                             ----------->    {
     float32_t2      _uv;                        float32_t2      _uv;
     float32_t3      _normal;                    float32_t3      _normal;
@@ -186,28 +186,28 @@ struct VertexInfo final
 Uniform buffer layout:
 
 ```cpp
-                                                            struct ColorData final
+                                                            struct ColorData
             ----------------------------------->            {
                                                                 float32_t4      _color0;
                                                                 float32_t4      _color1;
-struct ObjectData final                                         float32_t4      _color2;
+struct ObjectData                                               float32_t4      _color2;
 {                                                               float32_t4      _emission;
     float32_t4x4    _localView;                             };
     float32_t4x4    _localViewProjection;
     float32_t4      _color0;                                // Uniform buffer #0 (vertex stage)
-    float32_t4      _color1;                                struct InstancePositionData final
+    float32_t4      _color1;                                struct InstancePositionData
     float32_t4      _color2;                                {
     float32_t4      _emission;                                  float32_t4x4    _localViewProj[ 56U ];
 };                                                          };
 
 // Uniform buffer #0 (vertex, fragment stages)              // Uniform buffer #1 (vertex stage)
-struct InstanceData final                                   struct InstanceNormalData final
+struct InstanceData                                         struct InstanceNormalData
 {                                                           {
     ObjectData      _instanceData[ 42U ];                       float32_t4      _localView[ 56U ];
 };                                                          };
 
                                                             // Uniform buffer #2 (frament stage)
-                                                            struct InstanceColorData final
+                                                            struct InstanceColorData
             ----------------------------------->            {
                                                                 ColorData       _colorData[ 56U ];
                                                             };
@@ -221,12 +221,12 @@ Vertex buffer layout:
 
 ```cpp
 // Vertex buffer #0
-struct UIVertexInfo final
+struct UIVertexInfo
 {                                           // Vertex buffer #0
     float32_t2      _vertex;                float32_t2          _position;
 
                                             // Vertex buffer #1
-                                ------->    struct UIVertex final
+                                ------->    struct UIVertex
                                             {
     float32_t4      _color;                     float32_t4      _color;
     float32_t3      _atlas;                     float32_t3      _atlas;
@@ -354,12 +354,12 @@ The storing color information in `float32_t4` is suboptimal. It's possible to st
 
 ```cpp
 // Vertex buffer #0
-struct VertexInfo final
+struct VertexInfo
 {                                           // Vertex buffer #0
     float32_t3      _vertex;                float32_t3          _position;
 
                                             // Vertex buffer #1
-                                            struct VertexInfo final
+                                            struct VertexInfo
                             ----------->    {
     float32_t2      _uv;                        float32_t2      _uv;
     float32_t3      _normal;                    uint32_t        _tbn;
@@ -379,28 +379,28 @@ Uniform buffer layout:
                                                                 uint32_t        _q1Low;
                                                             };
 
-                                                            struct ColorData final
+                                                            struct ColorData
             ----------------------------------->            {
                                                                 uint32_t        _emiRcol0rgb;
                                                                 uint32_t        _emiGcol1rgb;
-struct ObjectData final                                         uint32_t        _emiBcol2rgb;
+struct ObjectData                                               uint32_t        _emiBcol2rgb;
 {                                                               uint32_t        _col0aEmiIntens;
     float32_t4x4    _localView;                             };
     float32_t4x4    _localViewProjection;
     float32_t4      _color0;                                // Uniform buffer #0 (vertex stage)
-    float32_t4      _color1;                                struct InstancePositionData final
+    float32_t4      _color1;                                struct InstancePositionData
     float32_t4      _color2;                                {
     float32_t4      _emission;                                  float32_t4x4    _localViewProj[ 84U ];
 };                                                          };
 
 // Uniform buffer #0 (vertex, fragment stages)              // Uniform buffer #1 (vertex stage)
-struct InstanceData final                                   struct InstanceNormalData final
+struct InstanceData                                         struct InstanceNormalData
 {                                                           {
     ObjectData      _instanceData[ 42U ];                       TBN64           _localView[ 84U / 2U ];
 };                                                          };
 
                                                             // Uniform buffer #2 (frament stage)
-                                                            struct InstanceColorData final
+                                                            struct InstanceColorData
             ----------------------------------->            {
                                                                 ColorData       _colorData[ 84U ];
                                                             };
@@ -414,11 +414,11 @@ Vertex buffer layout:
 
 ```cpp
 // Vertex buffer #0
-struct UIVertexInfo final
+struct UIVertexInfo
 {                                           // Vertex buffer #0
     float32_t2      _vertex;                float32_t2          _position;
 
-                                            struct UIAtlas final
+                                            struct UIAtlas
                                             {
                                                 float32_t2      _uv;
                                                 uint8_t         _layer;
@@ -426,7 +426,7 @@ struct UIVertexInfo final
                                             };
 
                                             // Vertex buffer #1
-                                ------->    struct UIVertex final
+                                ------->    struct UIVertex
                                             {
     float32_t4      _color;                     float32_t2      _image;
     float32_t3      _atlas;                     UIAtlas         _atlas;

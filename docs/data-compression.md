@@ -261,7 +261,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 --- | --- | ---
 84 | +42⏫ | +100%⏫
 
-⁘ Maximum instances comparison with _Optimization #1_:
+⁘ Maximum instances comparison with _optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -275,7 +275,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 --- | --- | ---
 108 | -140⏬ | -56.5%⏬
 
-⁘ Bytes per scene vertex comparison with _Optimization #1_:
+⁘ Bytes per scene vertex comparison with _optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -283,7 +283,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 ---
 
-⁘ Bytes per _UI_ vertex comparison with stock/_optimization #1_ version:
+⁘ Bytes per _UI_ vertex comparison with stock/_optimizations #1_ version:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -305,7 +305,8 @@ But there is a catch. Fundamental flaw of quaternion: duality. That means that e
 
 $$
 q = r + ai + bj + ck
-\\
+$$
+$$
 -q = -r - ai - bj - ck
 $$
 

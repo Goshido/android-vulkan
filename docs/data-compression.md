@@ -28,8 +28,8 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.667 ms | -1.178 ms⏬ | -6.6%⏬ | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.136 ms | -2.207 ms⏬ | -12.7%⏬ | <img src="./images/compression-skeletal.png" width="100">
+_PBR_ | 17.846 ms | 16.667 ms | -1.178 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.136 ms | -2.207 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.477 ms | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
@@ -48,7 +48,7 @@ _World 1-1_ | 9.477 ms | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./imag
 
 **Stock** | **Optimized** | **Absolute difference** | **Relative difference**
 --- | --- | --- | ---
-50 | 24 | -26⏬ | -52%⏬
+50 | 24 | -26🟢 | -52%🟢
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -62,7 +62,7 @@ Benchmark scenes:
 
 <img src="./images/compression-pbr.png" width="800"/>
 
-Frame time: 17.846 ms, _vSync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
+Frame time: 17.846 ms, _vsync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -80,7 +80,7 @@ _UI_ vertices | 0 | 0 | N/A
 
 <img src="./images/compression-skeletal.png" width="800"/>
 
-Frame time: 17.344 ms, _vSync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
+Frame time: 17.344 ms, _vsync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -98,7 +98,7 @@ _UI_ vertices | 0 | 0 | N/A
 
 <img src="./images/compression-world1x1.png" width="800"/>
 
-Frame time: 9.477 ms, _vSync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
+Frame time: 9.477 ms, _vsync_ off - `VK_PRESENT_MODE_MAILBOX_KHR`
 
 **Metric** | **Submitted** | **Rendered** | **Culled**
 --- | --- | --- | ---
@@ -118,8 +118,8 @@ _UI_ vertices | 288 | 288 | 0%
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
-_PBR_ | 16.669 ms | -1.177 ms⏬ | -6.6%⏬ | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 15.496 ms | -1.847 ms⏬ | -10.7%⏬ | <img src="./images/compression-skeletal.png" width="100">
+_PBR_ | 16.669 ms | -1.177 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.496 ms | -1.847 ms🟢 | -10.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.485 ms | +0.008 ms🔺 | +0.1%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ---
@@ -128,7 +128,7 @@ _World 1-1_ | 9.485 ms | +0.008 ms🔺 | +0.1%🔺 | <img src="./images/compress
 
 **Optimizations #1** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-56 | +14⏫ | +33.3%⏫
+56 | +14🟢 | +33.3%🟢
 
 ---
 
@@ -136,7 +136,7 @@ _World 1-1_ | 9.485 ms | +0.008 ms🔺 | +0.1%🔺 | <img src="./images/compress
 
 **Optimizations #1** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-200 | -48⏬ | -19.4%⏬
+200 | -48🟢 | -19.4%🟢
 
 ---
 
@@ -241,16 +241,16 @@ struct UIVertexInfo
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
-_PBR_ | 16.667 ms | -1.178 ms⏬ | -6.6%⏬ | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 15.136 ms | -2.207 ms⏬ | -12.7%⏬ | <img src="./images/compression-skeletal.png" width="100">
+_PBR_ | 16.667 ms | -1.178 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.136 ms | -2.207 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Frame time comparison with _Optimization #1_:
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
-_PBR_ | 16.667 ms | -0.001 ms⏬ | -0.008%⏬ | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 15.136 ms | -0.36 ms⏬ | -2.3%⏬ | <img src="./images/compression-skeletal.png" width="100">
+_PBR_ | 16.667 ms | -0.001 ms🟢 | -0.008%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.136 ms | -0.36 ms🟢 | -2.3%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ---
@@ -259,13 +259,13 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-84 | +42⏫ | +100%⏫
+84 | +42🟢 | +100%🟢
 
 ⁘ Maximum instances comparison with _optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-84 | +28⏫ | +50%⏫
+84 | +28🟢 | +50%🟢
 
 ---
 
@@ -273,21 +273,21 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-108 | -140⏬ | -56.5%⏬
+108 | -140🟢 | -56.5%🟢
 
 ⁘ Bytes per scene vertex comparison with _optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-108 | -92⏬ | -46%⏬
+108 | -92🟢 | -46%🟢
 
 ---
 
-⁘ Bytes per _UI_ vertex comparison with stock/_optimizations #1_ version:
+⁘ Bytes per _UI_ vertex comparison with stock/_optimizations #1_ versions:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-24 | -26⏬ | -52%
+24 | -26🟢 | -52%🟢
 
 [↬ table of content ⇧](#table-of-content)
 

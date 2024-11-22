@@ -130,3 +130,6 @@ HTML validator:
 - Windows 11 support
 - Visual Studio 2022 Community 17.10.4 support
 - Windows 11 SDK has been changed to 10.0.26100
+
+<span style="color:green">10%▼▲</span>
+<span style="color:red">10%▼▲</span>

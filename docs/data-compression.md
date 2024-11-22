@@ -434,6 +434,6 @@ struct UIVertexInfo
 };                                          };
 ```
 
-**Note:** 2024 November 14<sup>th</sup>. _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non-multiple of 4 bytes causes runtime artefacts loking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
+**Note:** 2024 November 14<sup>th</sup>. _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non-multiple of 4 bytes causes runtime artefacts looking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
 
 [↬ table of content ⇧](#table-of-content)

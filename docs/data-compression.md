@@ -310,7 +310,7 @@ $$
 -q = -r - ai - bj - ck
 $$
 
-Taking square root from negative value will produce _NaN_ value on _GPU. To solve this issue the implementation will always select quaternion with nonnegative $r$ component. Good news this selection can be done offline at asset exporting stage.
+Taking square root from negative value will produce [_NaN_](https://en.wikipedia.org/wiki/NaN) on _GPU_. To solve this issue the implementation will always select quaternion with nonnegative $r$ component. Good news this selection can be done offline at asset exporting stage.
 
 Another issue comes from computations in `float16_t` precision. Sometimes square root will be negative due to rounding errors. To solve this issue the recovering process uses module:
 

@@ -36,13 +36,13 @@ _World 1-1_ | 9.477 ms | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./imag
 
 **Stock** | **Optimized** | **Absolute difference** | **Relative difference**
 --- | --- | --- | ---
-42 | 84 | +42⏫ | +100%⏫
+42 | 84 | +42🟢 | +100%🟢
 
 ⁘ Bytes per scene vertex:
 
 **Stock** | **Optimized** | **Absolute difference** | **Relative difference**
 --- | --- | --- | ---
-248 | 108 | -140⏬ | -56.5%⏬
+248 | 108 | -140🟢 | -56.5%🟢
 
 ⁘ Bytes per _UI_ vertex:
 

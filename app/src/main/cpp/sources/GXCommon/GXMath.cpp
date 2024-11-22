@@ -788,7 +788,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXUInt GXQuat::Compress32 ( bool reflectBitangent ) const noexcept
 {
-    auto imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
+    GXVec3 imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 
     // Shader code expects only positive real value for reconstruction.
     // Using quaternion duality property to satisfy that convention.
@@ -814,7 +814,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
 {
-    auto q = *reinterpret_cast<GXVec4 const*> ( this );
+    GXVec4 q = *reinterpret_cast<GXVec4 const*> ( this );
 
     constexpr uint32_t fixedPoint = 1U << 16U;
     constexpr uint32_t halfFixedPoint = fixedPoint >> 1U;

@@ -150,7 +150,7 @@ _World 1-1_ | 9.485 ms | +0.008 ms🔺 | +0.1%🔺 | <img src="./images/compress
 
 ### <a id="opt-1-quat-float16">_Quaternion_ and `float16_t`</a>
 
-Quaternion could represent local-view rotation and composite orientation for influence bones during skinning process. Computations are performed in `float16_t` for _TBN_ data. The bitangent is reconstructed using [_cross product_](https://en.wikipedia.org/wiki/Cross_product).
+Quaternion could represent local-view rotation and composite orientation for influence bones during skinning process. Computations are performed in `float16_t` for _TBN_ data. The _bitangent_ is reconstructed using [_cross product_](https://en.wikipedia.org/wiki/Cross_product).
 
 [↬ table of content ⇧](#table-of-content)
 

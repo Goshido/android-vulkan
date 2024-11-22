@@ -16,7 +16,7 @@
 
 ## <a id="brief">Brief</a>
 
-Page is written in 2024 November 12<sup>th</sup>. After almost 4 years from project start it was decided to review data structures for handling vertex data. The point of interest is to send data in more compact form to better utilize hardware caches and reduce overall bandwidth.
+Page was written in 2024 November 21<sup>th</sup>. After almost 4 years from project start it was decided to review data structures for handling vertex data. The point of interest is to send data in more compact form to better utilize hardware caches and reduce overall bandwidth.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -344,7 +344,7 @@ struct TBN64
 
 ### <a id="opt-2-using-uint16-indices">Using `uint16_t` index buffers</a>
 
-When the number of unique vertices of the mess is less that $2^{16} - 1$ or 65535 it's possible to use `uint16_t` type for index buffers.
+When the number of unique vertices of the mesh is less that $2^{16} - 1$ or 65535 it's possible to use `uint16_t` type for index buffers.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -434,6 +434,6 @@ struct UIVertexInfo
 };                                          };
 ```
 
-**Note:** [2024/11/14] _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non multiple of 4 bytes causes runtime artefacts loking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
+**Note:** 2024 November 14<sup>th</sup>. _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non multiple of 4 bytes causes runtime artefacts loking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
 
 [↬ table of content ⇧](#table-of-content)

@@ -295,7 +295,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 For othogonal _TBNs_ it's possible to represent it via unit-quaternion plus information about mirroring of the _bitangent_ vector.
 
-First step is to make sure that _TBN_ is othogonal. Unfortunately _3ds Max_ provides non orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
+First step is to make sure that _TBN_ is othogonal. Unfortunately _3ds Max_ provides non-orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
 
 Second step is further data compression. Quaternion is 4 numbers. Mirroring information is single number. So it's needed 5 numbers. Good news that rendering system is using unit quaternions. So it's possible to store 3 components and recover 4<sup>th</sup> component using formula:
 
@@ -310,7 +310,7 @@ $$
 -q = -r - ai - bj - ck
 $$
 
-To solve this issue the implementation will always select quaternion with positive $r$ component.
+Taking square root from negative value will produce _NaN_ value on _GPU. To solve this issue the implementation will always select quaternion with nonnegative $r$ component. Good news this selection can be done offline at asset exporting stage.
 
 Another issue comes from computations in `float16_t` precision. Sometimes square root will be negative due to rounding errors. To solve this issue the recovering process uses module:
 
@@ -434,6 +434,6 @@ struct UIVertexInfo
 };                                          };
 ```
 
-**Note:** 2024 November 14<sup>th</sup>. _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non multiple of 4 bytes causes runtime artefacts loking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
+**Note:** 2024 November 14<sup>th</sup>. _XIAOMI Redmi Note 8 Pro_. Probably driver bug. Brief: having vertex element non-multiple of 4 bytes causes runtime artefacts loking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on _NVIDIA RTX 4080_ does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
 
 [↬ table of content ⇧](#table-of-content)

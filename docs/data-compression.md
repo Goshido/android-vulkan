@@ -295,7 +295,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 For othogonal _TBNs_ it's possible to represent it via unit-quaternion plus information about mirroring of the _bitangent_ vector.
 
-First step is to make sure that _TBN_ is othogonal. Unfortunally _3ds Max_ provides non orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
+First step is to make sure that _TBN_ is othogonal. Unfortunately _3ds Max_ provides non orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
 
 Second step is further data compression. Quaternion is 4 numbers. Mirroring information is single number. So it's needed 5 numbers. Good news that rendering system is using unit quaternions. So it's possible to store 3 components and recover 4<sup>th</sup> component using formula:
 

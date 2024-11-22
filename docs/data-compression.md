@@ -344,7 +344,7 @@ struct TBN64
 
 ### <a id="opt-2-using-uint16-indices">Using `uint16_t` index buffers</a>
 
-When the number of unique vertices of the mesh is less that $2^{16} - 1$ or 65535 it's possible to use `uint16_t` type for index buffers.
+When the number of unique vertices of the mesh is less that $2^{16}$ or 65536 it's possible to use `uint16_t` type for index buffers.
 
 [↬ table of content ⇧](#table-of-content)
 

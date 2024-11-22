@@ -352,6 +352,10 @@ When the number of unique vertices of the mesh is less that $2^{16}$ or 65536 it
 
 The storing color information in `float32_t4` is suboptimal. It's possible to store it in `uint32_t` instead. The catch is emission which must use intensity scaler which allows to use values beyond [0.0, 1.0] range.
 
+⁘ **_3D_ scene workflow**
+
+Vertex buffer layout:
+
 ```cpp
 // Vertex buffer #0
 struct VertexInfo

@@ -27,9 +27,9 @@
     - Windows 11 SDK (10.0.26100.0)
     - Windows Universal C Runtime
 * [_PIX 2409.23 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
-* [_stb_image 2.30_](https://github.com/nothings/stb) `f7f20f39fe4f206c6f19e26ebfef7b261ee59ee4`
-* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `0ae7e607370cc66218ccfacf5de4db8a35424c2f`
-* [_Vulkan Validation Layers 1.3.299_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `edb909e193061350f0274345463e7b9747e109ba`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `5c205738c191bcb0abc65c4febfa9bd25ff35234`
+* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `3f3e3de34ee3613d621b643c58a40b93148e0932`
+* [_Vulkan Validation Layers 1.3.302_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `736e979cbb2579384ee420dc349de4611bdee3ee`
 
 [↬ table of content ⇧](#table-of-content)
 

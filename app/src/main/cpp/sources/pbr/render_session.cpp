@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/render_session.hpp>
 #include <pbr/point_light.hpp>
@@ -5,6 +6,7 @@
 #include <pbr/reflection_probe_local.hpp>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
@@ -45,7 +47,13 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     if ( !result ) [[unlikely]]
         return false;
 
-    if ( !_presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ) ) [[unlikely]]
+    result = android_vulkan::Renderer::CheckVkResult (
+        _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
+        "pbr::RenderSession::End",
+        "Can't acquire present image"
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
@@ -126,8 +134,23 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     _toneMapperPass.Execute ( commandBuffer );
 
-    result = _uiPass.Execute ( commandBuffer, commandBufferIndex ) &&
-        _presentRenderPass.End ( renderer, commandBuffer, commandInfo._acquire, fence );
+    if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        return false;
+
+    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+        commandBuffer,
+        commandInfo._acquire,
+        fence,
+        nullptr
+    );
+
+    if ( !presentResult ) [[unlikely]]
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( *presentResult,
+        "pbr::RenderSession::End",
+        "Can't present frame"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -274,7 +297,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
-    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass, hdrView ) ) [[unlikely]]
+    if ( !_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) ) [[unlikely]]
         return false;
 
     if ( !hasChanges ) [[likely]]
@@ -336,10 +359,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     auto const idx = static_cast<size_t> ( material->GetMaterialType () );
@@ -348,7 +368,7 @@ void RenderSession::SubmitMesh ( MeshRef &mesh,
     MeshHandler const handler = _meshHandlers[ idx ];
 
     // Calling method by pointer C++ syntax.
-    ( this->*handler ) ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    ( this->*handler ) ( mesh, material, local, worldBounds, colorData );
 }
 
 bool RenderSession::CreateFramebuffer ( VkDevice device ) noexcept
@@ -761,25 +781,19 @@ void RenderSession::SubmitOpaqueCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     ++_opaqueMeshCount;
     _renderSessionStats.SubmitOpaque ( mesh->GetVertexCount () );
-    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetOpaqueSubpass ().Submit ( mesh, material, local, worldBounds, colorData );
 }
 
 void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     _renderSessionStats.SubmitStipple ( mesh->GetVertexCount () );
@@ -787,7 +801,7 @@ void RenderSession::SubmitStippleCall ( MeshRef &mesh,
     if ( !_frustum.IsVisible ( worldBounds ) )
         return;
 
-    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, color0, color1, color2, emission );
+    _geometryPass.GetStippleSubpass ().Submit ( mesh, material, local, worldBounds, colorData );
 }
 
 void RenderSession::SubmitPointLight ( LightRef &light ) noexcept
@@ -881,7 +895,7 @@ bool RenderSession::AllocateCommandInfo ( CommandInfo &info,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._acquire ),
-        "Game::CreateCommandPool",
+        "pbr::RenderSession::AllocateCommandInfo",
         "Can't create render target acquired semaphore"
     );
 

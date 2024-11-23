@@ -1,0 +1,597 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{cfd67115-412c-4137-8cee-225285dacc5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\platform">
+      <UniqueIdentifier>{aa4d1785-86ad-492d-a986-551b45cb4790}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{596024c8-c096-4c81-8bb6-d7edf967bf31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform">
+      <UniqueIdentifier>{d34e1a60-7ecd-4e66-966e-5e9a16783712}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform\window">
+      <UniqueIdentifier>{78d1ff1c-5ecc-41ed-9f1f-82bebf3c4e67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\platform\windows">
+      <UniqueIdentifier>{2a01d8cd-9213-472b-a031-255d136b04d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon">
+      <UniqueIdentifier>{18d410c8-232e-49d5-89b0-e89dee8a972d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon\Vulkan">
+      <UniqueIdentifier>{cfafd2a6-508d-41f8-9f2e-c51902794d49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\GXCommon\Intrinsics">
+      <UniqueIdentifier>{c7c2dfe5-beff-450f-b37a-b5ca198b53ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\GXCommon">
+      <UniqueIdentifier>{9483467c-614c-489a-a476-9e48e3dd061d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\GXCommon\Windows">
+      <UniqueIdentifier>{279ab7ed-1fc4-41e5-b2eb-ace2675c91e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\pbr">
+      <UniqueIdentifier>{17203ff6-cbc0-45f1-b3f6-dbd149566fb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\pbr">
+      <UniqueIdentifier>{e4a601be-7003-40bd-bc08-9a4fc45a71b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\android_vulkan_sdk">
+      <UniqueIdentifier>{97b6495a-e00a-4c09-a345-1197edb796a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\android_vulkan_sdk\include">
+      <UniqueIdentifier>{95a78a49-7ee9-4d68-8fa5-9b6ac6f75d33}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\crash_dump.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\save_state.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\vulkan_loader.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\vulkan_utils.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\memory_allocator.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\logger.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\trace.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\vulkan_loader.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\renderer.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\file.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\renderer.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp">
+      <Filter>Source Files\core\GXCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Vulkan\GXMathBackend.cpp">
+      <Filter>Source Files\core\GXCommon\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp">
+      <Filter>Source Files\core\GXCommon\Intrinsics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\message_queue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_session.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\present_render_pass.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\texture2D.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\ktx_media_container.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\graphics_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hello_triangle_program.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_dialog_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\css_unit_to_device_pixel.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass_common_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler_manager.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass_image_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\light.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\texture_cube.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\material.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\font_storage.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass_transform_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_buffer_pool.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_buffer_pool_manager.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\default_texture_manager.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\half_types.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_pass.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\full_screen_triangle_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_pass.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\compute_program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_value.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\stream.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_element.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\div_ui_element.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\image_ui_element.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_ui_element.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\editor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\crash_dump.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\save_state.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\main_window.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\memory_allocator.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\os_utils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXTypes.hpp">
+      <Filter>Header Files\core\GXCommon\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp">
+      <Filter>Header Files\core\GXCommon\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="include\message_queue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\message.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\render_session.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\present_render_pass.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\command_buffer_count.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\ktx_header.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\ktx_media_container.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hello_triangle_vertex.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hello_triangle_program.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rect.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_dialog_box.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_manager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_common_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler_manager.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_image_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\types.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\texture_cube.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\material.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\light.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_transform_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool_manager.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\default_texture_manager.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\half_types.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_pass.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_pass.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\compute_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_computed_values.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\color_value.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_ui_element.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_ui_element.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\theme.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cursor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\keys.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_move_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mouse_key_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\bone_joint.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\mesh2.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\actor_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\camera_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_classes.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\material_info.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\point_light_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\reflection_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\rigid_body_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\scene_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\script_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_global_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\sound_emitter_spatial_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\static_mesh_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\pbr\transform_component_desc.hpp">
+      <Filter>Header Files\core\android_vulkan_sdk\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp">
+      <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\version.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="src\main.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_device.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\vulkan_instance.in">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in">
+      <Filter>Header Files\core\platform\window</Filter>
+    </None>
+    <None Include="include\hello_triangle_program.inc">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="include\blit_program.inc">
+      <Filter>Header Files\core</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\ui_program.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\exposure.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\brightness_factor.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,13 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <logger.hpp>
 #include <pbr/image_attribute_checker.hpp>
 #include <pbr/utf8_parser.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <regex>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

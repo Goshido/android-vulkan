@@ -23,7 +23,7 @@ class DefaultTextureManager final
         VkCommandBuffer     _commandBuffers[ BUFFER_COUNT ];
 
     public:
-        DefaultTextureManager () = default;
+        explicit DefaultTextureManager () = default;
 
         DefaultTextureManager ( DefaultTextureManager const & ) = delete;
         DefaultTextureManager &operator = ( DefaultTextureManager const & ) = delete;

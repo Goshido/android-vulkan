@@ -1,11 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <pbr/stub_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -98,7 +92,7 @@ bool StubDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout StubDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &StubDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

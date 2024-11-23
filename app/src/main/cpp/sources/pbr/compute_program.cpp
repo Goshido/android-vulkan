@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/compute_program.hpp>
 
 
@@ -24,6 +25,32 @@ ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize 
     _pushConstantSize ( static_cast<uint32_t> ( pushConstantSize ) )
 {
     // NOTHING
+}
+
+void ComputeProgram::Destroy ( VkDevice device ) noexcept
+{
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
+        _pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    if ( _pipeline != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyPipeline ( device, _pipeline, nullptr );
+        _pipeline = VK_NULL_HANDLE;
+    }
+
+    DestroyShaderModule ( device );
+}
+
+void ComputeProgram::DestroyShaderModule ( VkDevice device ) noexcept
+{
+    if ( _computeShader == VK_NULL_HANDLE ) [[unlikely]]
+        return;
+
+    vkDestroyShaderModule ( device, _computeShader, nullptr );
+    _computeShader = VK_NULL_HANDLE;
 }
 
 } // namespace pbr

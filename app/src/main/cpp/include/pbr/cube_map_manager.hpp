@@ -7,7 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <list>
-#include <shared_mutex>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -64,7 +64,7 @@ class CubeMapManager final
         std::list<std::string>                                              _stringStorage {};
 
         static CubeMapManager*                                              _instance;
-        static std::shared_timed_mutex                                      _mutex;
+        static std::mutex                                                   _mutex;
 
     public:
         CubeMapManager ( CubeMapManager const & ) = delete;

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_component.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
@@ -24,7 +25,7 @@ PointLightComponent::PointLightComponent ( PointLightComponentDesc const &desc, 
 
     android_vulkan::ColorUnorm const &hue = desc._hue;
 
-    GXColorRGB const unorm ( hue._red, hue._green, hue._blue, 255U );
+    GXColorRGB const unorm ( hue._red, hue._green, hue._blue, 1.0F );
     GXAABB bounds;
     android_vulkan::Vec3 const &low = desc._bounds._min;
     bounds.AddVertex ( low[ 0U ], low[ 1U ], low[ 2U ] );

@@ -2,27 +2,40 @@
 #define OBJECT_DATA_INC
 
 
-#include "geometry_pass_bindings.inc"
-#include "gpgpu_limits.inc"
+#include "pbr/geometry_pass_bindings.inc"
+#include "pbr/gpgpu_limits.inc"
+#include "tbn64.inc"
 
 
-struct ObjectData
+// In summary data per instance = 88 bytes
+// Total instance data = 7392 bytes, less than minimum "Supported Limit" of maxUniformBufferRange
+// see https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap47.html
+
+
+[[vk::binding ( BIND_INSTANCE_POSITON_DATA, SET_INSTANCE_DATA )]]
+cbuffer InstancePositionData:       register ( b0 )
 {
-    float32_t4x4    _localView;
-    float32_t4x4    _localViewProjection;
-    float32_t4      _color0;
-    float32_t4      _color1;
-    float32_t4      _color2;
-    float32_t4      _emission;
+    float32_t4x4    g_localViewProj[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+}
+
+[[vk::binding ( BIND_INSTANCE_NORMAL_DATA, SET_INSTANCE_DATA )]]
+cbuffer InstanceNormalData:         register ( b1 )
+{
+    TBN64           g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
+}
+
+struct ColorData
+{
+    uint32_t        _emiRcol0rgb;
+    uint32_t        _emiGcol1rgb;
+    uint32_t        _emiBcol2rgb;
+    uint32_t        _col0aEmiIntens;
 };
 
-[[vk::binding ( BIND_INSTANCE_DATA, SET_INSTANCE_DATA )]]
-cbuffer InstanceData:       register ( b0 )
+[[vk::binding ( BIND_INSTANCE_COLOR_DATA, SET_INSTANCE_DATA )]]
+cbuffer InstanceColorData:          register ( b2 )
 {
-    // sizeof ( ObjectData ) = 192 bytes
-    // sizeof ( InstanceData ) = 8064 bytes, less than minimum "Supported Limit"
-    // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap36.html#limits-minmax
-    ObjectData      g_instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+    ColorData       g_colorData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
 }
 
 

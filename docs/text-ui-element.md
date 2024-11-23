@@ -164,7 +164,7 @@ Method sets text color using [_RGB_ model](https://en.wikipedia.org/wiki/RGB_col
 - `r` [_required, readonly, number_]: red component in range `0 - 255`
 - `g` [_required, readonly, number_]: green component in range `0 - 255`
 - `b` [_required, readonly, number_]: blue component in range `0 - 255`
-- `a` [_required, readonly, number_]: alpha component in range `0 - 255`
+- `a` [_required, readonly, number_]: alpha component in range `0.0 - 1.0`
 
 **Return values:**
 
@@ -180,7 +180,7 @@ require "av://engine/ui_layer.lua"
 local uiLayer = UILayer ( "example/ui/index.html" )
 
 local text = uiLayer:Find ( "score" )
-text:SetColorRGB ( 115, 185, 0, 255 )
+text:SetColorRGB ( 115, 185, 0, 1.0 )
 ```
 
 [↬ table of content ⇧](#table-of-content)

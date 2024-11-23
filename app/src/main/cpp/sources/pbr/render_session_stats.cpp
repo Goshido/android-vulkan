@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/render_session_stats.hpp>
 #include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cstdio>
-#include <memory>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -40,7 +34,7 @@ R"__(pbr::RenderSessionStats::PrintStats:
           Point lights  %9zu    %9zu    %s
      Local reflections  %9zu    %9zu    %s
     Global reflections  %9zu    %9zu    %s
-           UI vertices  %9zu    %9zu        0%%)__";
+           UI vertices  %9zu    %9zu    %s)__";
 
     auto avgCounter = [ & ] ( size_t counter ) noexcept -> size_t {
         return counter / _frameCount;
@@ -53,8 +47,9 @@ R"__(pbr::RenderSessionStats::PrintStats:
     char pointLightCull[ capacity ];
     char reflectionLocalCull[ capacity ];
     char reflectionGlobalCull[ capacity ];
+    char uiCull[ capacity ];
 
-    auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
+    constexpr auto avgPercent = [] ( char* dst, size_t renderCount, size_t submitCount ) noexcept -> char const* {
         if ( !submitCount )
         {
             constexpr char const notApplicable[] = "   N/A";
@@ -89,7 +84,8 @@ R"__(pbr::RenderSessionStats::PrintStats:
         g,
         avgPercent ( reflectionGlobalCull, g, g ),
         ui,
-        ui
+        ui,
+        avgPercent ( uiCull, ui, ui )
     );
 
     Reset ();

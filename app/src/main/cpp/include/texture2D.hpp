@@ -69,8 +69,8 @@ class Texture2D final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] VkFormat GetFormat () const noexcept;
-        [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
-        [[nodiscard]] VkImageView GetImageView () const noexcept;
+        [[maybe_unused, nodiscard]] VkImage const &GetImage () const noexcept;
+        [[nodiscard]] VkImageView const &GetImageView () const noexcept;
         [[nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] VkExtent2D const &GetResolution () const noexcept;

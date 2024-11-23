@@ -1,6 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_material.hpp>
 #include <pbr/material_manager.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -94,7 +96,7 @@ void ScriptableMaterial::Destroy () noexcept
         _commandPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &v ) noexcept {
+    constexpr auto clean = [] ( auto &v ) noexcept {
         v.clear ();
         v.shrink_to_fit ();
     };

@@ -1,16 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <logger.hpp>
 #include <pbr/html5_parser.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <chrono>
-#include <filesystem>
-#include <locale>
-#include <stdlib.h>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
 
 
 //----------------------------------------------------------------------------------------------------------------------

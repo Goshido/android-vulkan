@@ -11,17 +11,17 @@ class PointLightShadowmapGeneratorDescriptorSetLayout final : public DescriptorS
 {
     public:
         PointLightShadowmapGeneratorDescriptorSetLayout () = default;
-    
+
         PointLightShadowmapGeneratorDescriptorSetLayout (
             PointLightShadowmapGeneratorDescriptorSetLayout const &
         ) = delete;
-    
+
         PointLightShadowmapGeneratorDescriptorSetLayout &operator = (
             PointLightShadowmapGeneratorDescriptorSetLayout const &
         ) = delete;
-    
+
         PointLightShadowmapGeneratorDescriptorSetLayout ( PointLightShadowmapGeneratorDescriptorSetLayout && ) = delete;
-    
+
         PointLightShadowmapGeneratorDescriptorSetLayout &operator = (
             PointLightShadowmapGeneratorDescriptorSetLayout &&
         ) = delete;
@@ -31,7 +31,7 @@ class PointLightShadowmapGeneratorDescriptorSetLayout final : public DescriptorS
         void Destroy ( VkDevice device ) noexcept override;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] VkDescriptorSetLayout GetLayout () const noexcept override;
+        [[nodiscard]] VkDescriptorSetLayout &GetLayout () const noexcept override;
 };
 
 } // namespace pbr

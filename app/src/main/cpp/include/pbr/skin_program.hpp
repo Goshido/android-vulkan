@@ -44,7 +44,6 @@ class SkinProgram : public ComputeProgram
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
     private:
-        void DestroyShaderModule ( VkDevice device ) noexcept override final;
         [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override final;
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,

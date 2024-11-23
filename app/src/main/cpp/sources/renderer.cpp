@@ -1,31 +1,22 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <renderer.hpp>
 #include <bitwise.hpp>
 #include <file.hpp>
+#include <logger.hpp>
+#include <renderer.hpp>
+#include <trace.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cinttypes>
-#include <string>
-#include <string_view>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
 
 namespace {
 
-constexpr char const* APPLICATION_NAME = "android vulkan";
-constexpr char const* ENGINE_NAME = "renderer";
-constexpr char const* INDENT_1 = "    ";
-constexpr char const* INDENT_2 = "        ";
-constexpr char const* INDENT_3 = "            ";
-constexpr size_t INITIAL_EXTENSION_STORAGE_SIZE = 64U;
+constexpr char const APPLICATION_NAME[] = "android vulkan";
+constexpr char const ENGINE_NAME[] = "renderer";
+constexpr char const INDENT_1[] = "    ";
+constexpr char const INDENT_2[] = "        ";
+constexpr char const INDENT_3[] = "            ";
 
 constexpr uint32_t MAJOR = 1U;
 constexpr uint32_t MINOR = 1U;
@@ -37,7 +28,7 @@ constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH
 
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
-constexpr auto LOGCAT_ANTISPAM_DELAY = std::chrono::milliseconds ( 1U );
+constexpr auto ANTISPAM_DELAY = std::chrono::milliseconds ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -404,11 +395,26 @@ constexpr size_t g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems = std::size (
     g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
 );
 
+constexpr VkDebugUtilsMessengerCreateInfoEXT g_debugUtilsMessengerCreateInfo
+{
+    .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+    .pNext = nullptr,
+    .flags = 0U,
+
+    .messageSeverity = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ),
+
+    .messageType = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ) |
+        AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ),
+
+    .pfnUserCallback = &Renderer::OnVulkanDebugUtils,
+    .pUserData = nullptr
+};
+
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-} // end of anonymous namespace
-
-std::map<VkColorSpaceKHR, char const*> const Renderer::_vulkanColorSpaceMap =
+std::map<VkColorSpaceKHR, char const*> const g_vkColorSpaceMap =
 {
     { VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT, "VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT" },
     { VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT, "VK_COLOR_SPACE_ADOBERGB_NONLINEAR_EXT" },
@@ -428,7 +434,7 @@ std::map<VkColorSpaceKHR, char const*> const Renderer::_vulkanColorSpaceMap =
     { VK_COLOR_SPACE_SRGB_NONLINEAR_KHR, "VK_COLOR_SPACE_SRGB_NONLINEAR_KHR" }
 };
 
-std::map<VkCompositeAlphaFlagBitsKHR, char const*> const Renderer::_vulkanCompositeAlphaMap =
+std::map<VkCompositeAlphaFlagBitsKHR, char const*> const g_vkCompositeAlphaMap =
 {
     { VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR" },
     { VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR" },
@@ -436,7 +442,7 @@ std::map<VkCompositeAlphaFlagBitsKHR, char const*> const Renderer::_vulkanCompos
     { VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR" }
 };
 
-std::map<VkFormat, char const*> const Renderer::_vulkanFormatMap =
+std::map<VkFormat, char const*> const g_vkFormatMap =
 {
     { VK_FORMAT_A1R5G5B5_UNORM_PACK16, "VK_FORMAT_A1R5G5B5_UNORM_PACK16" },
     { VK_FORMAT_A2B10G10R10_SINT_PACK32, "VK_FORMAT_A2B10G10R10_SINT_PACK32" },
@@ -681,7 +687,7 @@ std::map<VkFormat, char const*> const Renderer::_vulkanFormatMap =
     { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
 };
 
-std::map<VkPhysicalDeviceType, char const*> const Renderer::_vulkanPhysicalDeviceTypeMap =
+std::map<VkPhysicalDeviceType, char const*> const g_vkPhysicalDeviceTypeMap =
 {
     { VK_PHYSICAL_DEVICE_TYPE_CPU, "VK_PHYSICAL_DEVICE_TYPE_CPU" },
     { VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, "VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU" },
@@ -690,7 +696,7 @@ std::map<VkPhysicalDeviceType, char const*> const Renderer::_vulkanPhysicalDevic
     { VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU, "VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU" }
 };
 
-std::map<VkPresentModeKHR, char const*> const Renderer::_vulkanPresentModeMap =
+std::map<VkPresentModeKHR, char const*> const g_vkPresentModeMap =
 {
     { VK_PRESENT_MODE_FIFO_KHR, "VK_PRESENT_MODE_FIFO_KHR" },
     { VK_PRESENT_MODE_FIFO_RELAXED_KHR, "VK_PRESENT_MODE_FIFO_RELAXED_KHR" },
@@ -700,7 +706,7 @@ std::map<VkPresentModeKHR, char const*> const Renderer::_vulkanPresentModeMap =
     { VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR, "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR" }
 };
 
-std::map<VkResult, char const*> const Renderer::_vulkanResultMap =
+std::map<VkResult, char const*> const g_vkResultMap =
 {
     { VK_ERROR_DEVICE_LOST, "VK_ERROR_DEVICE_LOST" },
     { VK_ERROR_EXTENSION_NOT_PRESENT, "VK_ERROR_EXTENSION_NOT_PRESENT" },
@@ -723,7 +729,7 @@ std::map<VkResult, char const*> const Renderer::_vulkanResultMap =
     { VK_SUBOPTIMAL_KHR, "VK_SUBOPTIMAL_KHR" }
 };
 
-std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurfaceTransformMap =
+std::map<VkSurfaceTransformFlagsKHR, char const*> const g_vkSurfaceTransformMap =
 {
     { VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR, "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR" },
 
@@ -749,69 +755,9 @@ std::map<VkSurfaceTransformFlagsKHR, char const*> const Renderer::_vulkanSurface
     { VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR, "VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR" }
 };
 
-//----------------------------------------------------------------------------------------------------------------------
-
-VulkanPhysicalDeviceInfo::VulkanPhysicalDeviceInfo () noexcept:
-    _extensionStorage ( INITIAL_EXTENSION_STORAGE_SIZE ),
-    _extensions {},
-    _features {},
-    _queueFamilyInfo {},
-    _surfaceCapabilities {}
-{
-    // NOTHING
-}
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
-
-Renderer::Renderer () noexcept:
-    _depthImageFormat ( VK_FORMAT_UNDEFINED ),
-    _depthStencilImageFormat ( VK_FORMAT_UNDEFINED ),
-    _device ( VK_NULL_HANDLE ),
-    _dpi ( 96.0F ),
-    _instance ( VK_NULL_HANDLE ),
-    _isDeviceExtensionChecked ( false ),
-    _isDeviceExtensionSupported ( false ),
-
-    // Minimum supported value from Vulkan spec 1.3.227
-    _maxComputeDispatchSize
-    {
-        .width = 65535U,
-        .height = 65535U,
-        .depth = 65535U
-    },
-
-    _maxUniformBufferRange {},
-    _memoryAllocator {},
-    _physicalDevice ( VK_NULL_HANDLE ),
-    _queue ( VK_NULL_HANDLE ),
-    _queueFamilyIndex ( VK_QUEUE_FAMILY_IGNORED ),
-    _surface ( VK_NULL_HANDLE ),
-    _surfaceFormat ( VK_FORMAT_UNDEFINED ),
-    _surfaceSize { .width = 0U, .height = 0U },
-    _surfaceTransform ( VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ),
-    _swapchain ( VK_NULL_HANDLE ),
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-    vkCreateDebugUtilsMessengerEXT ( nullptr ),
-    vkDestroyDebugUtilsMessengerEXT ( nullptr ),
-    _debugUtilsMessenger ( VK_NULL_HANDLE ),
-    _debugUtilsMessengerCreateInfo {},
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-    _viewportResolution { .width = 0U, .height = 0U },
-    _physicalDeviceGroups {},
-    _physicalDeviceInfo {},
-    _physicalDeviceMemoryProperties {},
-    _surfaceFormats {},
-    _swapchainImages {},
-    _swapchainImageViews {},
-    _presentationEngineTransform {},
-    _vulkanLoader {}
-{
-    // NOTHING
-}
 
 bool Renderer::CheckSwapchainStatus () noexcept
 {
@@ -885,6 +831,11 @@ VkDevice Renderer::GetDevice () const noexcept
     return _device;
 }
 
+std::string_view Renderer::GetDeviceName () const noexcept
+{
+    return _deviceName;
+}
+
 float Renderer::GetDPI () const noexcept
 {
     return _dpi;
@@ -945,19 +896,31 @@ VkExtent2D const &Renderer::GetViewportResolution () const noexcept
     return _viewportResolution;
 }
 
-bool Renderer::OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept
+bool Renderer::GetVSync () const noexcept
 {
+    return _vSync;
+}
+
+bool Renderer::OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept
+{
+    AV_TRACE ( "Creating swapchain" )
     return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
 }
 
-void Renderer::OnDestroySwapchain () noexcept
+void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
 {
-    DestroySwapchain ();
-    DestroySurface ();
+    DestroySwapchain ( preserveSurface );
+
+    if ( !preserveSurface ) [[unlikely]]
+    {
+        DestroySurface ();
+    }
 }
 
-bool Renderer::OnCreateDevice ( float dpi ) noexcept
+bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
 {
+    AV_TRACE ( "Creating Vulkan device" )
+
     if ( !_vulkanLoader.AcquireBootstrapFunctions () ) [[unlikely]]
         return false;
 
@@ -1032,15 +995,13 @@ bool Renderer::OnCreateDevice ( float dpi ) noexcept
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
 
-    if ( !DeployDevice () ) [[unlikely]]
-        return false;
-
-    _dpi = dpi;
-    return true;
+    return DeployDevice ( userGPU );
 }
 
 void Renderer::OnDestroyDevice () noexcept
 {
+    AV_TRACE ( "Destroying Vulkan device" )
+
     if ( _device != VK_NULL_HANDLE) [[likely]]
     {
         if ( !CheckVkResult ( vkDeviceWaitIdle ( _device ), "Renderer::OnDestroyDevice", "Can't wait device idle" ) )
@@ -1067,6 +1028,11 @@ void Renderer::OnDestroyDevice () noexcept
     {
         LogError ( "Renderer::OnDestroyDevice - Can't unload Vulkan functions." );
     }
+}
+
+void Renderer::OnSetDPI ( float dpi ) noexcept
+{
+    _dpi = dpi;
 }
 
 bool Renderer::TryAllocateMemory ( VkDeviceMemory &memory,
@@ -1101,11 +1067,6 @@ bool Renderer::MapMemory ( void* &ptr,
 void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
 {
     _memoryAllocator.UnmapMemory ( _device, memory );
-}
-
-[[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
-{
-    _memoryAllocator.MakeSnapshot ();
 }
 
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
@@ -1149,9 +1110,113 @@ VkImageAspectFlags Renderer::ResolveImageViewAspect ( VkFormat format ) noexcept
 
 char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
 {
-    auto const findResult = _vulkanFormatMap.find ( format );
-    return findResult == _vulkanFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    auto const findResult = g_vkFormatMap.find ( format );
+    return findResult == g_vkFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
+
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+    VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+    void* /*pUserData*/
+)
+{
+    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
+        return VK_FALSE;
+
+    constexpr auto encodeObjects = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsObjectNameInfoEXT const* objects
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
+
+        dst += objects->pObjectName ? objects->pObjectName : "[nullptr]";
+
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsObjectNameInfoEXT const &object = objects[ i ];
+            dst += ", ";
+            dst += object.pObjectName ? object.pObjectName : "[nullptr]";
+        }
+
+        return dst.c_str ();
+    };
+
+    constexpr auto encodeLabel = [] ( std::string &dst,
+        uint32_t count,
+        VkDebugUtilsLabelEXT const* labels
+    ) noexcept -> char const* {
+        if ( !count )
+            return "N/A";
+
+        dst += labels->pLabelName ? labels->pLabelName : "[nullptr]";
+
+        for ( uint32_t i = 1U; i < count; ++i )
+        {
+            VkDebugUtilsLabelEXT const &label = labels[ i ];
+            dst += ", ";
+            dst += label.pLabelName ? label.pLabelName : "[nullptr]";
+        }
+
+        return dst.c_str ();
+    };
+
+    constexpr char const format[] =
+        R"(Renderer::OnVulkanDebugReport:
+severity: %s
+type: %s
+message ID name: %s
+message ID: 0x%08X
+queues: %s
+command buffers: %s
+objects: %s
+message: %s
+)";
+
+    std::string queues {};
+    std::string commandBuffers {};
+    std::string objects {};
+
+    std::string const severity = StringifyVkFlags ( messageSeverity,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
+    );
+
+    std::string const type = StringifyVkFlags ( messageTypes,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
+        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
+    );
+
+    constexpr auto prettyMessage = [] ( char const* message ) noexcept -> char const* {
+        char const* cases[] = { message, "N/A" };
+        return cases[ static_cast<size_t> ( message == nullptr ) ];
+    };
+
+    constexpr size_t removeFirstSpace = 1U;
+
+    LogError ( format,
+        severity.c_str () + removeFirstSpace,
+        type.c_str () + removeFirstSpace,
+        prettyMessage ( pCallbackData->pMessageIdName ),
+        pCallbackData->messageIdNumber,
+        encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
+        encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
+        encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
+        pCallbackData->pMessage
+    );
+
+#ifdef ANDROID_VULKAN_STRICT_MODE
+
+    AV_ASSERT ( false )
+
+#endif // ANDROID_VULKAN_STRICT_MODE
+
+    return VK_FALSE;
+}
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
 {
@@ -1216,42 +1281,26 @@ bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &al
     return false;
 }
 
-bool Renderer::CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept
-{
-    if ( _isDeviceExtensionChecked )
-        return _isDeviceExtensionSupported;
-
-    std::set<std::string> allExtensions;
-    allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
-
-    LogInfo ( ">>> Checking required device extensions..." );
-
-    // Note bitwise '&' is intentional. All checks must be done to view whole picture.
-
-    _isDeviceExtensionSupported = AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
-
-    _isDeviceExtensionChecked = true;
-    return _isDeviceExtensionSupported;
-}
-
-bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t const* features, size_t count ) noexcept
+bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
+    std::span<size_t const> const &features
+) noexcept
 {
     auto const &featureInfo = _physicalDeviceInfo[ physicalDevice ];
 
     LogInfo ( "Renderer::CheckRequiredFeatures - Checking required features..." );
 
+    if ( features.empty () ) [[unlikely]]
+    {
+        LogInfo ( "%sOK: No extra features are required", INDENT_1 );
+        return true;
+    }
+
     // std::set is for alphabetical ordering.
     std::set<std::string_view> supportedFeatures;
     std::set<std::string_view> unsupportedFeatures;
 
-    for ( size_t i = 0U; i < count; ++i )
+    for ( size_t offset : features )
     {
-        size_t const offset = features[ i ];
-
         auto const enable = *reinterpret_cast<VkBool32 const*> (
             reinterpret_cast<uint8_t const*> ( &featureInfo._features ) + offset
         );
@@ -1279,16 +1328,17 @@ bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice, size_t c
 bool Renderer::CheckRequiredFormats () noexcept
 {
     LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
-    std::vector<char const*> unsupportedFormats;
+    std::vector<char const*> unsupportedFormats {};
 
-    auto probe = [&] ( VkFormat format, char const* name ) {
+    for ( auto const &[format, name] : GetRequiredFormats () )
+    {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties ( _physicalDevice, format, &props );
 
-        if ( !props.linearTilingFeatures && !props.optimalTilingFeatures && !props.bufferFeatures )
+        if ( !props.linearTilingFeatures & !props.optimalTilingFeatures & !props.bufferFeatures ) [[unlikely]]
         {
             unsupportedFormats.push_back ( name );
-            return;
+            continue;
         }
 
         LogInfo ( "%sOK: %s", INDENT_1, name );
@@ -1314,24 +1364,8 @@ bool Renderer::CheckRequiredFormats () noexcept
             g_vkFormatFeatureFlagBitsMapper
         );
 
-        std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
-    };
-
-    probe ( VK_FORMAT_A2R10G10B10_UNORM_PACK32, "VK_FORMAT_A2R10G10B10_UNORM_PACK32" );
-    probe ( VK_FORMAT_ASTC_6x6_SRGB_BLOCK, "VK_FORMAT_ASTC_6x6_SRGB_BLOCK" );
-    probe ( VK_FORMAT_ASTC_6x6_UNORM_BLOCK, "VK_FORMAT_ASTC_6x6_UNORM_BLOCK" );
-    probe ( VK_FORMAT_D16_UNORM, "VK_FORMAT_D16_UNORM" );
-    probe ( VK_FORMAT_D24_UNORM_S8_UINT, "VK_FORMAT_D24_UNORM_S8_UINT" );
-    probe ( VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT" );
-    probe ( VK_FORMAT_R16G16B16A16_SFLOAT, "VK_FORMAT_R16G16B16A16_SFLOAT" );
-    probe ( VK_FORMAT_R8G8B8A8_SRGB, "VK_FORMAT_R8G8B8A8_SRGB" );
-    probe ( VK_FORMAT_R8G8B8A8_UNORM, "VK_FORMAT_R8G8B8A8_UNORM" );
-    probe ( VK_FORMAT_R8G8_SRGB, "VK_FORMAT_R8G8_SRGB" );
-    probe ( VK_FORMAT_R8_SRGB, "VK_FORMAT_R8_SRGB" );
-    probe ( VK_FORMAT_R8_UNORM, "VK_FORMAT_R8_UNORM" );
-    probe ( VK_FORMAT_S8_UINT, "VK_FORMAT_S8_UINT" );
-    probe ( VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" );
-    probe ( VK_FORMAT_R16_SFLOAT, "VK_FORMAT_R16_SFLOAT" );
+        std::this_thread::sleep_for ( ANTISPAM_DELAY );
+    }
 
     if ( unsupportedFormats.empty () ) [[likely]]
         return true;
@@ -1347,19 +1381,24 @@ bool Renderer::CheckRequiredFormats () noexcept
 bool Renderer::DeployDebugFeatures () noexcept
 {
     vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" ) )
     );
 
     AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
 
     vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
-        vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" ) )
     );
 
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
     return CheckVkResult (
-        vkCreateDebugUtilsMessengerEXT ( _instance, &_debugUtilsMessengerCreateInfo, nullptr, &_debugUtilsMessenger ),
+        vkCreateDebugUtilsMessengerEXT ( _instance,
+            &g_debugUtilsMessengerCreateInfo,
+            nullptr,
+            &_debugUtilsMessenger
+        ),
+
         "DeployDebugFeatures",
         "Can't Vulkan debug callback"
     );
@@ -1376,7 +1415,7 @@ void Renderer::DestroyDebugFeatures () noexcept
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-bool Renderer::DeployDevice () noexcept
+bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
 {
     constexpr float priorities = 1.0F;
 
@@ -1387,7 +1426,7 @@ bool Renderer::DeployDevice () noexcept
     deviceQueueCreateInfo.queueCount = 1U;
     deviceQueueCreateInfo.pQueuePriorities = &priorities;
 
-    if ( !SelectTargetHardware ( _physicalDevice, _queueFamilyIndex ) ) [[unlikely]]
+    if ( !SelectTargetHardware ( userGPU ) ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceProperties props;
@@ -1407,12 +1446,7 @@ bool Renderer::DeployDevice () noexcept
     if ( !CheckRequiredDeviceExtensions ( caps._extensions ) ) [[unlikely]]
         return false;
 
-    constexpr size_t const features[] =
-    {
-        offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
-    };
-
-    if ( !CheckRequiredFeatures ( _physicalDevice, features, std::size ( features ) ) ) [[unlikely]]
+    if ( !CheckRequiredFeatures ( _physicalDevice, GetRequiredFeatures () ) ) [[unlikely]]
         return false;
 
     if ( !CheckRequiredFormats () ) [[unlikely]]
@@ -1449,14 +1483,7 @@ bool Renderer::DeployDevice () noexcept
         .scalarBlockLayout = VK_TRUE
     };
 
-    constexpr char const* const extensions[] =
-    {
-        VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
-        VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
-        VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
-        VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    std::span<char const* const> const extensions = GetDeviceExtensions ();
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
@@ -1467,8 +1494,8 @@ bool Renderer::DeployDevice () noexcept
         .pQueueCreateInfos = &deviceQueueCreateInfo,
         .enabledLayerCount = 0U,
         .ppEnabledLayerNames = nullptr,
-        .enabledExtensionCount = static_cast<uint32_t> ( std::size ( extensions ) ),
-        .ppEnabledExtensionNames = extensions,
+        .enabledExtensionCount = static_cast<uint32_t> ( extensions.size () ),
+        .ppEnabledExtensionNames = extensions.data (),
         .pEnabledFeatures = &caps._features
     };
 
@@ -1556,6 +1583,29 @@ bool Renderer::DeployInstance () noexcept
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
+    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
+    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
+    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
+    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr static VkBool32 activate = VK_TRUE;
+
+    constexpr static VkLayerSettingEXT vvlSync
+    {
+        .pLayerName = vvlLayerName,
+        .pSettingName = "syncval_shader_accesses_heuristic",
+        .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+        .valueCount = 1U,
+        .pValues = &activate
+    };
+
+    constexpr static VkLayerSettingsCreateInfoEXT vvlSettings
+    {
+        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
+        .pNext = &g_debugUtilsMessengerCreateInfo,
+        .settingCount = 1U,
+        .pSettings = &vvlSync
+    };
+
     // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
     // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
     constexpr static VkValidationFeatureEnableEXT const validationFeatures[] =
@@ -1567,53 +1617,18 @@ bool Renderer::DeployInstance () noexcept
     constexpr VkValidationFeaturesEXT validationInfo
     {
         .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-        .pNext = nullptr,
+        .pNext = &vvlSettings,
         .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
         .pEnabledValidationFeatures = validationFeatures,
         .disabledValidationFeatureCount = 0U,
         .pDisabledValidationFeatures = nullptr
     };
 
-    _debugUtilsMessengerCreateInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-        .pNext = &validationInfo,
-        .flags = 0U,
-
-        .messageSeverity = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ),
-
-        .messageType = AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT ) |
-            AV_VK_FLAG ( VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT ),
-
-        .pfnUserCallback = &Renderer::OnVulkanDebugUtils,
-        .pUserData = nullptr
-    };
-
-    constexpr static char const* const layers[] =
-    {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    constexpr static char const* extensions[] =
-    {
-        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
-    };
-
-    instanceCreateInfo.pNext = &_debugUtilsMessengerCreateInfo;
-    instanceCreateInfo.enabledLayerCount = static_cast<uint32_t> ( std::size ( layers ) );
-    instanceCreateInfo.ppEnabledLayerNames = layers;
+    instanceCreateInfo.pNext = &validationInfo;
+    instanceCreateInfo.enabledLayerCount = 1U;
+    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
 
 #else
-
-    constexpr static char const* const extensions[] =
-    {
-        VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME
-    };
 
     instanceCreateInfo.pNext = nullptr;
     instanceCreateInfo.enabledLayerCount = 0U;
@@ -1621,8 +1636,9 @@ bool Renderer::DeployInstance () noexcept
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( std::size ( extensions ) );
-    instanceCreateInfo.ppEnabledExtensionNames = extensions;
+    std::span<char const* const> extensions = GetInstanceExtensions ();
+    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( extensions.size () );
+    instanceCreateInfo.ppEnabledExtensionNames = extensions.data ();
 
     result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
         "Renderer::DeployInstance",
@@ -1644,41 +1660,65 @@ void Renderer::DestroyInstance () noexcept
     _instance = VK_NULL_HANDLE;
 }
 
-bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
+bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 {
-    VkAndroidSurfaceCreateInfoKHR const androidSurfaceCreateInfoKHR
+    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const *>
     {
-        .sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR,
-        .pNext = nullptr,
-        .flags = 0U,
-        .window = &nativeWindow
+        VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+
+        bool const result = CheckVkResult (
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+            "Renderer::DeploySurface",
+            "Can't get Vulkan surface capabilities"
+        );
+
+        if ( !result ) [[unlikely]]
+            return std::nullopt;
+
+        return { &caps };
     };
 
-    bool result = CheckVkResult (
-        vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_surface ),
-        "Renderer::DeploySurface",
-        "Can't create Vulkan surface"
-    );
+    if ( _surface != VK_NULL_HANDLE ) [[likely]]
+    {
+        std::optional<VkSurfaceCapabilitiesKHR const *> const caps = getCaps ();
 
-    if ( !result ) [[unlikely]]
+        if ( !caps )
+            return false;
+
+        _surfaceSize = caps.value ()->currentExtent;
+
+#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+
+        _viewportResolution.width = _surfaceSize.height;
+        _viewportResolution.height = _surfaceSize.width;
+
+#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+
+        _viewportResolution = _surfaceSize;
+
+#else
+
+#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif
+
+        return true;
+    }
+
+    if ( !DeployNativeSurface ( nativeWindow ) ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
-    VkSurfaceCapabilitiesKHR &surfaceCapabilitiesKHR = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+    std::optional<VkSurfaceCapabilitiesKHR const *> const capsResult = getCaps ();
 
-    result = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &surfaceCapabilitiesKHR ),
-        "Renderer::DeploySurface",
-        "Can't get Vulkan surface capabilities"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !capsResult ) [[unlikely]]
         return false;
 
-    PrintVkSurfaceCapabilities ( surfaceCapabilitiesKHR );
-    _surfaceSize = surfaceCapabilitiesKHR.currentExtent;
-    _surfaceTransform = surfaceCapabilitiesKHR.currentTransform;
+    VkSurfaceCapabilitiesKHR const &caps = *capsResult.value ();
+    PrintVkSurfaceCapabilities ( caps );
+    _surfaceSize = caps.currentExtent;
+    _surfaceTransform = caps.currentTransform;
 
     if ( _surfaceTransform != VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR ) [[unlikely]]
     {
@@ -1700,15 +1740,11 @@ bool Renderer::DeploySurface ( ANativeWindow &nativeWindow ) noexcept
     _presentationEngineTransform.Identity ();
     _viewportResolution = _surfaceSize;
 
-#else
-
-#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
-
-#endif
+#endif // ANDROID_NATIVE_MODE_PORTRAIT | ANDROID_NATIVE_MODE_LANDSCAPE
 
     VkBool32 isSupported = VK_FALSE;
 
-    result = CheckVkResult (
+    bool result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceSupportKHR ( _physicalDevice, _queueFamilyIndex, _surface, &isSupported ),
         "Renderer::DeploySurface",
         "Can't check Vulkan surface support by physical device"
@@ -1781,7 +1817,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkColorSpaceKHR colorSpace;
 
-    if ( !SelectTargetSurfaceFormat ( _surfaceFormat, colorSpace, _depthImageFormat, _depthStencilImageFormat ) )
+    if ( !SelectTargetSurfaceFormat ( colorSpace ) )
     {
         [[unlikely]]
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
@@ -1812,13 +1848,19 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .compositeAlpha = compositeAlpha,
         .presentMode = presentMode,
         .clipped = VK_TRUE,
-        .oldSwapchain = VK_NULL_HANDLE
+        .oldSwapchain = _oldSwapchain
     };
 
     bool result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
+
+    if ( _oldSwapchain != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroySwapchainKHR ( _device, _oldSwapchain, nullptr );
+        _oldSwapchain = VK_NULL_HANDLE;
+    }
 
     if ( !result ) [[unlikely]]
         return false;
@@ -1896,10 +1938,11 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         return false;
     }
 
+    _vSync = vSync;
     return true;
 }
 
-void Renderer::DestroySwapchain () noexcept
+void Renderer::DestroySwapchain ( bool preserveSurface ) noexcept
 {
     size_t const count = _swapchainImageViews.size ();
 
@@ -1909,7 +1952,17 @@ void Renderer::DestroySwapchain () noexcept
     if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
+    if ( preserveSurface ) [[likely]]
+    {
+        _oldSwapchain = _swapchain;
+        AV_SET_VULKAN_OBJECT_NAME ( _device, _oldSwapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Old swapchain" )
+    }
+    else
+    {
+        vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
+        _oldSwapchain = VK_NULL_HANDLE;
+    }
+
     _swapchain = VK_NULL_HANDLE;
 }
 
@@ -1944,34 +1997,15 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
         return false;
 
     VulkanPhysicalDeviceInfo &capabilities = _physicalDeviceInfo[ physicalDevice ];
-    std::vector<char const*> &targetExtensions = capabilities._extensions;
-    std::vector<char> &targetExtensionStorage = capabilities._extensionStorage;
-
+    std::vector<std::string> &targetExtensions = capabilities._extensions;
     targetExtensions.reserve ( static_cast<size_t> ( extensionCount ) );
-    size_t offset = 0U;
 
     for ( uint32_t i = 0U; i < extensionCount; ++i )
     {
         VkExtensionProperties const &prop = extensionList[ i ];
         PrintVkExtensionProp ( i, "Physical device", prop );
-
-        size_t const size = strlen ( prop.extensionName ) + 1U;
-        size_t const neededSpace = offset + size;
-
-        while ( targetExtensionStorage.size () < neededSpace )
-            targetExtensionStorage.resize ( targetExtensionStorage.size () * 2U );
-
-        std::memcpy ( targetExtensionStorage.data () + offset, prop.extensionName, size );
-        targetExtensions.push_back ( reinterpret_cast<char const*> ( offset ) );
-
-        offset = neededSpace;
+        targetExtensions.emplace_back ( prop.extensionName );
     }
-
-    // Adjusting extension pointers.
-    offset = reinterpret_cast<size_t> ( targetExtensionStorage.data () );
-
-    for ( auto &pointer : targetExtensions )
-        pointer += offset;
 
     return true;
 }
@@ -2028,7 +2062,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
     _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
@@ -2043,7 +2077,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
     PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
     PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
@@ -2059,7 +2093,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
     PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
     PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
     PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
@@ -2094,7 +2128,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         limits.maxTessellationEvaluationOutputComponents
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
     PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
@@ -2106,7 +2140,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
     PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
     PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
     PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
@@ -2123,7 +2157,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
     PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
     PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "minTexelBufferOffsetAlignment",
@@ -2139,7 +2173,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minStorageBufferOffsetAlignment",
         static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
     );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
     PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
@@ -2151,7 +2185,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
     PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferColorSampleCounts",
@@ -2190,7 +2224,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageIntegerSampleCounts",
@@ -2220,7 +2254,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         g_vkSampleCountFlagMapper
     );
 
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
     PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
@@ -2235,7 +2269,7 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
     PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
     PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
-    std::this_thread::sleep_for ( LOGCAT_ANTISPAM_DELAY );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintSizeProp ( INDENT_1,
         "optimalBufferCopyOffsetAlignment",
@@ -2328,6 +2362,9 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
     vkGetPhysicalDeviceQueueFamilyProperties ( physicalDevice, &queueFamilyCount, queueFamilyPropList );
 
     auto &info = _physicalDeviceInfo[ physicalDevice ];
+    info._deviceName = props.deviceName;
+    info._deviceType = props.deviceType;
+
     auto &queueFamilies = info._queueFamilyInfo;
     queueFamilies.reserve ( static_cast<size_t> ( queueFamilyCount ) );
 
@@ -2379,39 +2416,6 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
     return targetCompositeAlpha != VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR;
 }
 
-bool Renderer::SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
-    uint32_t &targetQueueFamilyIndex
-) const noexcept
-{
-    // Find physical device with graphic and compute queues.
-
-    constexpr auto target = static_cast<VkFlags> (
-        AV_VK_FLAG ( VK_QUEUE_COMPUTE_BIT ) | AV_VK_FLAG ( VK_QUEUE_GRAPHICS_BIT )
-    );
-
-    for ( auto const &device : _physicalDeviceInfo )
-    {
-        auto const &queueFamilyInfo = device.second._queueFamilyInfo;
-        size_t const count = queueFamilyInfo.size ();
-
-        for ( size_t i = 0U; i < count; ++i )
-        {
-            VkFlags const queueFamilyFlags = queueFamilyInfo[ i ].first;
-
-            if ( ( queueFamilyFlags & target ) != target )
-                continue;
-
-            targetPhysicalDevice = device.first;
-            targetQueueFamilyIndex = static_cast<uint32_t> ( i );
-
-            return true;
-        }
-    }
-
-    LogError ( "Renderer::SelectTargetHardware - Can't find target hardware!" );
-    return false;
-}
-
 bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept
 {
     // Try to find VK_PRESENT_MODE_MAILBOX_KHR present mode.
@@ -2460,40 +2464,31 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
     return true;
 }
 
-bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
-    VkColorSpaceKHR &targetColorSpace,
-    VkFormat &targetDepthFormat,
-    VkFormat &targetDepthStencilFormat
-) const noexcept
+bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept
 {
-    // Find RGBA8_UNORM format.
-
-    if ( _surfaceFormats.size () == 1U && _surfaceFormats[ 0U ].format == VK_FORMAT_UNDEFINED )
+    if ( _surfaceFormats.size () == 1U && _surfaceFormats.front ().format == VK_FORMAT_UNDEFINED )
     {
-        targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+        LogError ( "Renderer::SelectTargetSurfaceFormat - Can't select format." );
+        return false;
+    }
+
+    bool isFound = false;
+
+    for ( auto const &item : _surfaceFormats )
+    {
+        VkFormat const format = item.format;
+
+        if ( ( format != VK_FORMAT_R8G8B8A8_SRGB ) & ( format != VK_FORMAT_B8G8R8A8_SRGB ) )
+            continue;
+
+        _surfaceFormat = format;
         targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
+        isFound = true;
+        break;
     }
-    else
-    {
-        bool isFound = false;
 
-        for ( auto const &item : _surfaceFormats )
-        {
-            if ( item.format != VK_FORMAT_R8G8B8A8_UNORM )
-                continue;
-
-            targetColorFormat = VK_FORMAT_R8G8B8A8_UNORM;
-            targetColorSpace = _surfaceFormats[ 0U ].colorSpace;
-            isFound = true;
-
-            break;
-        }
-
-        if ( !isFound ) [[unlikely]]
-        {
-            return false;
-        }
-    }
+    if ( !isFound ) [[unlikely]]
+        return false;
 
     auto const check = [ & ] ( VkFormat &dst,
         VkFormat const* options,
@@ -2532,10 +2527,10 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
         VK_FORMAT_D16_UNORM
     };
 
-    if ( !check ( targetDepthFormat, depthOptions, std::size ( depthOptions ), "depth" ) ) [[unlikely]]
+    if ( !check ( _depthImageFormat, depthOptions, std::size ( depthOptions ), "depth" ) ) [[unlikely]]
         return false;
 
-    if ( !check ( targetDepthStencilFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
+    if ( !check ( _depthStencilImageFormat, depthStencilOptions, std::size ( depthStencilOptions ), "depth|stencil" ) )
     {
         [[unlikely]]
         return false;
@@ -2550,13 +2545,13 @@ bool Renderer::SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
 
     LogInfo ( format,
         INDENT_1,
-        ResolveVkFormat ( targetColorFormat ),
+        ResolveVkFormat ( _surfaceFormat ),
         INDENT_1,
         ResolveVkColorSpaceKHR ( targetColorSpace ),
         INDENT_1,
-        ResolveVkFormat ( targetDepthFormat ),
+        ResolveVkFormat ( _depthImageFormat ),
         INDENT_1,
-        ResolveVkFormat ( targetDepthStencilFormat )
+        ResolveVkFormat ( _depthStencilImageFormat )
     );
 
     return true;
@@ -2577,110 +2572,6 @@ bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions
     LogInfo ( "%sOK: presented", INDENT_2 );
     return true;
 }
-
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-    VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
-    void* /*pUserData*/
-)
-{
-    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
-        return VK_FALSE;
-
-    auto const encodeObjects = [] ( std::string &dst,
-        uint32_t count,
-        VkDebugUtilsObjectNameInfoEXT const* objects
-    ) noexcept -> char const* {
-        if ( !count )
-            return "N/A";
-
-        dst += objects->pObjectName ? objects->pObjectName : "[nullptr]";
-
-        for ( uint32_t i = 1U; i < count; ++i )
-        {
-            VkDebugUtilsObjectNameInfoEXT const &object = objects[ i ];
-            dst += ", ";
-            dst += object.pObjectName ? object.pObjectName : "[nullptr]";
-        }
-
-        return dst.c_str ();
-    };
-
-    auto const encodeLabel = [] ( std::string &dst,
-        uint32_t count,
-        VkDebugUtilsLabelEXT const* labels
-    ) noexcept -> char const* {
-        if ( !count )
-            return "N/A";
-
-        dst += labels->pLabelName ? labels->pLabelName : "[nullptr]";
-
-        for ( uint32_t i = 1U; i < count; ++i )
-        {
-            VkDebugUtilsLabelEXT const &label = labels[ i ];
-            dst += ", ";
-            dst += label.pLabelName ? label.pLabelName : "[nullptr]";
-        }
-
-        return dst.c_str ();
-    };
-
-    constexpr char const format[] =
-R"(Renderer::OnVulkanDebugReport:
-severity: %s
-type: %s
-message ID name: %s
-message ID: 0x%08X
-queues: %s
-command buffers: %s
-objects: %s
-message: %s
-)";
-
-    std::string queues {};
-    std::string commandBuffers {};
-    std::string objects {};
-
-    std::string const severity = StringifyVkFlags ( messageSeverity,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
-    );
-
-    std::string const type = StringifyVkFlags ( messageTypes,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
-    );
-
-    auto const prettyMessage = [] ( char const* message ) noexcept -> char const* {
-        char const* cases[] = { message, "N/A" };
-        return cases[ static_cast<size_t> ( message == nullptr ) ];
-    };
-
-    constexpr size_t removeFirstSpace = 1U;
-
-    LogError ( format,
-        severity.c_str () + removeFirstSpace,
-        type.c_str () + removeFirstSpace,
-        prettyMessage ( pCallbackData->pMessageIdName ),
-        pCallbackData->messageIdNumber,
-        encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
-        encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
-        encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
-        pCallbackData->pMessage
-    );
-
-#ifdef ANDROID_VULKAN_STRICT_MODE
-
-    AV_ASSERT ( false )
-
-#endif // ANDROID_VULKAN_STRICT_MODE
-
-    return VK_FALSE;
-}
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
 bool Renderer::PrintCoreExtensions () noexcept
 {
@@ -3007,33 +2898,33 @@ void Renderer::PrintVkVersion ( char const* indent, char const* name, uint32_t v
 
 char const* Renderer::ResolvePhysicalDeviceType ( VkPhysicalDeviceType type ) noexcept
 {
-    auto const findResult = _vulkanPhysicalDeviceTypeMap.find ( type );
-    return findResult == _vulkanPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    auto const findResult = g_vkPhysicalDeviceTypeMap.find ( type );
+    return findResult == g_vkPhysicalDeviceTypeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 char const* Renderer::ResolveVkColorSpaceKHR ( VkColorSpaceKHR colorSpace ) noexcept
 {
-    auto const findResult = _vulkanColorSpaceMap.find ( colorSpace );
-    return findResult == _vulkanColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    auto const findResult = g_vkColorSpaceMap.find ( colorSpace );
+    return findResult == g_vkColorSpaceMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 char const* Renderer::ResolveVkCompositeAlpha ( VkCompositeAlphaFlagBitsKHR compositeAlpha ) noexcept
 {
-    auto const findResult = _vulkanCompositeAlphaMap.find ( compositeAlpha );
-    return findResult == _vulkanCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    auto const findResult = g_vkCompositeAlphaMap.find ( compositeAlpha );
+    return findResult == g_vkCompositeAlphaMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 char const* Renderer::ResolveVkPresentModeKHR ( VkPresentModeKHR mode ) noexcept
 {
-    auto const findResult = _vulkanPresentModeMap.find ( mode );
-    return findResult == _vulkanPresentModeMap.cend () ? UNKNOWN_RESULT : findResult->second;
+    auto const findResult = g_vkPresentModeMap.find ( mode );
+    return findResult == g_vkPresentModeMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
 char const* Renderer::ResolveVkResult ( VkResult result ) noexcept
 {
-    auto const findResult = _vulkanResultMap.find ( result );
+    auto const findResult = g_vkResultMap.find ( result );
 
-    if ( findResult != _vulkanResultMap.cend () )
+    if ( findResult != g_vkResultMap.cend () )
         return findResult->second;
 
     constexpr static char const* unknownResult = "UNKNOWN";
@@ -3042,9 +2933,9 @@ char const* Renderer::ResolveVkResult ( VkResult result ) noexcept
 
 char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept
 {
-    auto const findResult = _vulkanSurfaceTransformMap.find ( transform );
+    auto const findResult = g_vkSurfaceTransformMap.find ( transform );
 
-    if ( findResult != _vulkanSurfaceTransformMap.cend () )
+    if ( findResult != g_vkSurfaceTransformMap.cend () )
         return findResult->second;
 
     constexpr static char const* unknownResult = "UNKNOWN";

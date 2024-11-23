@@ -23,6 +23,7 @@ class Game : public android_vulkan::Game
         {
             GXMat4                          _transform;
             GXMat4                          _normalTransform;
+            GXQuat                          _localView;
         };
 
         AV_DX_ALIGNMENT_END
@@ -53,8 +54,8 @@ class Game : public android_vulkan::Game
         VkDescriptorSetLayout               _materialDSLayout = VK_NULL_HANDLE;
 
         VkDescriptorSet                     _fixedDS = VK_NULL_HANDLE;
-        VkDescriptorSet                     _materialDS[ MATERIAL_COUNT ];
-        VkDescriptorSet                     _onceDS[ DUAL_COMMAND_BUFFER ];
+        VkDescriptorSet                     _materialDS[ MATERIAL_COUNT ] {};
+        VkDescriptorSet                     _onceDS[ DUAL_COMMAND_BUFFER ] {};
 
         Drawcall                            _drawcalls[ MATERIAL_COUNT ] {};
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
@@ -122,13 +123,6 @@ class Game : public android_vulkan::Game
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept override;
         void OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept override;
 
-        [[nodiscard]] bool BeginFrame ( android_vulkan::Renderer &renderer,
-            size_t &imageIndex,
-            VkSemaphore acquire
-        ) noexcept;
-
-        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex ) noexcept;
-
         [[nodiscard]] bool CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept;
         void DestroyCommandPool ( VkDevice device ) noexcept;
 
@@ -161,6 +155,13 @@ class Game : public android_vulkan::Game
             VkCommandBuffer commandBuffer,
             VkDescriptorSet ds,
             double deltaTime
+        ) noexcept;
+
+        [[nodiscard]] bool EndFrame ( android_vulkan::Renderer &renderer, uint32_t imageIndex ) noexcept;
+
+        [[nodiscard]] static bool BeginFrame ( android_vulkan::Renderer &renderer,
+            size_t &imageIndex,
+            VkSemaphore acquire
         ) noexcept;
 };
 

@@ -18,6 +18,9 @@ namespace avp {
 
 class Exporter
 {
+    public:
+        constexpr static int FACE_CORNERS = 3;
+
     protected:
         struct Attributes final
         {
@@ -88,8 +91,6 @@ class Exporter
                 [[nodiscard]] IGameObject &GetGameObject () noexcept;
                 [[nodiscard]] bool Init ( HWND parent, IGameScene &scene, INode &node ) noexcept;
         };
-
-        constexpr static int FACE_CORNERS = 3;
 
     public:
         Exporter () = delete;

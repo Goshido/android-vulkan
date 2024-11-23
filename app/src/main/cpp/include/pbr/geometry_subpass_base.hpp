@@ -2,7 +2,7 @@
 #define PBR_GEOMETRY_SUBPASS_BASE_HPP
 
 
-#include "geometry_pass_program.hpp"
+#include "geometry_pool.hpp"
 #include "material_pool.hpp"
 #include "render_session_stats.hpp"
 #include "scene_data.hpp"
@@ -29,10 +29,7 @@ class GeometrySubpassBase
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &emission
+            GeometryPassProgram::ColorData const &colorData
         ) noexcept;
 
     protected:
@@ -46,8 +43,8 @@ class GeometrySubpassBase
 
         void AppendDrawcalls ( VkCommandBuffer commandBuffer,
             GeometryPassProgram &program,
+            GeometryPool &geometryPool,
             MaterialPool &materialPool,
-            UniformBufferPoolManager &uniformPool,
             RenderSessionStats &renderSessionStats
         ) noexcept;
 };

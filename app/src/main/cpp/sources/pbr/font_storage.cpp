@@ -1,3 +1,5 @@
+#include <precompiled_headers.hpp>
+#include <precompiled_headers.hpp>
 #include <pbr/font_storage.hpp>
 #include <file.hpp>
 #include <logger.hpp>
@@ -250,6 +252,7 @@ void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         FreeImageResource ( renderer, imageResource );
 
     FreeImageResource ( renderer, _resource );
+    _layers = 0U;
 }
 
 void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept
@@ -629,14 +632,14 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     if ( _fullStagingBuffers.empty () )
     {
         // It's needed to request one layer if atlas is empty.
-        newLayers += static_cast<size_t> ( _atlas._layers == 0U );
+        newLayers += static_cast<size_t> ( isEmptyAtlas );
     }
     else
     {
         // It's needed to add one more layer if full buffer in the front starts from top left corner.
         StagingBuffer const &sb = _fullStagingBuffers.front ();
         Line const &l = sb._startLine;
-        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( l._x == 0U & l._y == 0U );
+        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( ( l._x == 0U ) & ( l._y == 0U ) );
     }
 
     if ( newLayers )
@@ -837,7 +840,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return nullGlyph;
     }
 
-    uint32_t const toRight = width - 1U;
+    auto const toRight = static_cast<uint32_t> ( width - 1U );
     uint32_t const toBottom = rows - 1U;
 
     uint32_t lineHeight = stagingBuffer->_endLine._height;
@@ -1008,7 +1011,7 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     if ( !query )
         return false;
 
-    GXVec3 const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    UIAtlas const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
 
     _opaqueGlyph =
     {
@@ -1020,7 +1023,7 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
         ._offsetY = 0
     };
 
-    GXVec3 const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    UIAtlas const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
 
     _transparentGlyph =
     {
@@ -1042,13 +1045,15 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     return true;
 }
 
-GXVec3 FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
+UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
-    GXVec3 result {};
-    result._data[ 2U ] = layer;
+    UIAtlas result {};
+    result._layer = static_cast<uint8_t>(layer);
 
-    auto &uv = *reinterpret_cast<GXVec2*> ( &result );
-    uv.Sum ( _pointSamplerUVThreshold, _pixToUV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    result._uv.Sum ( _pointSamplerUVThreshold,
+        _pixToUV,
+        GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) )
+    );
 
     return result;
 }
@@ -1214,7 +1219,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             b._buffer,
             _atlas._resource._image,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            idx + 1U,
+            static_cast<uint32_t> ( idx + 1U ),
             bufferImageCopy
         );
     };

@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_volume.inc>
 #include <pbr/light_volume_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -109,7 +103,7 @@ bool LightVolumeDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout LightVolumeDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &LightVolumeDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

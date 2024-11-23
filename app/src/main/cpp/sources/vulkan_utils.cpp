@@ -1,6 +1,7 @@
+#include <precompiled_headers.hpp>
+
 #if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
     defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
-
 
 #include <av_assert.hpp>
 #include <renderer.hpp>
@@ -26,19 +27,19 @@ void InitVulkanDebugUtils ( VkInstance instance ) noexcept
     // It means without VVL presence. Trying to use VkDevice way to get functions will fail.
 
     vkCmdBeginDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdBeginDebugUtilsLabelEXT> (
-        vkGetInstanceProcAddr ( instance, "vkCmdBeginDebugUtilsLabelEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkCmdBeginDebugUtilsLabelEXT" ) )
     );
 
     AV_ASSERT ( vkCmdBeginDebugUtilsLabelEXT )
 
     vkCmdEndDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdEndDebugUtilsLabelEXT> (
-        vkGetInstanceProcAddr ( instance, "vkCmdEndDebugUtilsLabelEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkCmdEndDebugUtilsLabelEXT" ) )
     );
 
     AV_ASSERT ( vkCmdEndDebugUtilsLabelEXT )
 
     vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT> (
-        vkGetInstanceProcAddr ( instance, "vkSetDebugUtilsObjectNameEXT" )
+        reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkSetDebugUtilsObjectNameEXT" ) )
     );
 
     AV_ASSERT ( vkSetDebugUtilsObjectNameEXT )

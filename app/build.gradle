@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -8,26 +11,15 @@ android {
     // noinspection GrDeprecatedAPIUsage
     buildToolsVersion "35.0.0"
 
-    ndkVersion "27.0.12077973"
+    ndkVersion "27.2.12479018"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
-        compileSdk 34
+        compileSdk 35
         minSdkVersion 30
         versionCode 1
         versionName "1.0"
-    }
-
-    // [2023-04-25] This allows to use recent Kotlin toolchain. Without it you will get the following error:
-    // 'compileDebugJavaWithJavac' task (current target is 1.8) and 'compileDebugKotlin' task
-    // (current target is 17) jvm target compatibility should be set to the same Java version.
-    // Consider using JVM toolchain: https://kotl.in/gradle/jvm/toolchain
-    //
-    // See https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
     }
 
     // Release stuff and certificates. No hardcode. All settings are delegated to the user environment.
@@ -64,7 +56,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('../CMakeLists.txt')
-            version "3.22.1"
+            version "3.31.0"
         }
     }
 
@@ -82,6 +74,14 @@ android {
             java.srcDirs += "src/main/kotlin"
         }
     }
+}
+
+// [2024-11-23] This allows to use recent Kotlin toolchain. Without it you will get the following error:
+// Inconsistent JVM-target compatibility detected for tasks 'compileDebugJavaWithJavac' (1.8) and
+// 'compileDebugKotlin' (21).
+// See https://kotlinlang.org/docs/gradle-configure-project.html#-5yydp1_177
+tasks.withType(KotlinJvmCompile.class).configureEach {
+    jvmTargetValidationMode = JvmTargetValidationMode.IGNORE
 }
 
 dependencies {

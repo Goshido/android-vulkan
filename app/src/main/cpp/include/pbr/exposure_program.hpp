@@ -9,7 +9,7 @@
 
 namespace pbr {
 
-class ExposureProgram : public ComputeProgram
+class ExposureProgram final : public ComputeProgram
 {
     public:
         struct SpecializationInfo final
@@ -48,9 +48,9 @@ class ExposureProgram : public ComputeProgram
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData
-        ) noexcept override final;
+        ) noexcept override;
 
-        void Destroy ( VkDevice device ) noexcept override final;
+        void Destroy ( VkDevice device ) noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
@@ -61,14 +61,13 @@ class ExposureProgram : public ComputeProgram
         ) noexcept;
 
     private:
-        void DestroyShaderModule ( VkDevice device ) noexcept override final;
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override final;
+        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo
-        ) noexcept override final;
+        ) noexcept override;
 };
 
 } // namespace pbr

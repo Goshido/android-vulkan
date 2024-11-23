@@ -1,3 +1,5 @@
+#include <precompiled_headers.hpp>
+#include <precompiled_headers.hpp>
 #include <pbr/present_render_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -5,26 +7,17 @@
 
 namespace pbr {
 
-bool PresentRenderPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept
+VkResult PresentRenderPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept
 {
     AV_TRACE ( "Acquire swapchain image" )
 
-    _framebufferIndex = std::numeric_limits<uint32_t>::max ();
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( renderer.GetDevice (),
-            renderer.GetSwapchain (),
-            std::numeric_limits<uint64_t>::max (),
-            acquire,
-            VK_NULL_HANDLE,
-            &_framebufferIndex
-        ),
-
-        "pbr::PresentRenderPass::AcquirePresentTarget",
-        "Can't get presentation image index"
+    return vkAcquireNextImageKHR ( renderer.GetDevice (),
+        renderer.GetSwapchain (),
+        std::numeric_limits<uint64_t>::max (),
+        acquire,
+        VK_NULL_HANDLE,
+        &_framebufferIndex
     );
-
-    return result;
 }
 
 VkRenderPass PresentRenderPass::GetRenderPass () const noexcept
@@ -81,10 +74,11 @@ void PresentRenderPass::Begin ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdBeginRenderPass ( commandBuffer, &_renderInfo, VK_SUBPASS_CONTENTS_INLINE );
 }
 
-bool PresentRenderPass::End ( android_vulkan::Renderer &renderer,
+std::optional<VkResult> PresentRenderPass::End ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
     VkSemaphore acquire,
-    VkFence fence
+    VkFence fence,
+    std::mutex* submitMutex
 ) noexcept
 {
     vkCmdEndRenderPass ( commandBuffer );
@@ -95,40 +89,38 @@ bool PresentRenderPass::End ( android_vulkan::Renderer &renderer,
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return std::nullopt;
 
     _submitInfo.pWaitSemaphores = &acquire;
     _submitInfo.pCommandBuffers = &commandBuffer;
     _submitInfo.pSignalSemaphores = &_framebufferInfo[ _framebufferIndex ]._renderEnd;
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
-        "pbr::PresentRenderPass::End",
-        "Can't submit command buffer"
-    );
+    auto const submit = [ & ]() noexcept -> bool
+    {
+        return android_vulkan::Renderer::CheckVkResult (
+            vkQueueSubmit ( renderer.GetQueue (), 1U, &_submitInfo, fence ),
+            "pbr::PresentRenderPass::End",
+            "Can't submit command buffer"
+        );
+    };
+
+    if ( !submitMutex )
+    {
+        result = submit ();
+    }
+    else
+    {
+        std::lock_guard const lock ( *submitMutex );
+        result = submit ();
+    }
 
     if ( !result ) [[unlikely]]
-        return false;
+        return std::nullopt;
 
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
-    _presentInfo.pResults = &presentResult;
     _presentInfo.pSwapchains = &renderer.GetSwapchain ();
     _presentInfo.pImageIndices = &_framebufferIndex;
     _presentInfo.pWaitSemaphores = &_framebufferInfo[ _framebufferIndex ]._renderEnd;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ),
-        "pbr::PresentRenderPass::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "pbr::PresentRenderPass::EndFrame",
-        "Present queue has been failed"
-    );
+    return { vkQueuePresentKHR ( renderer.GetQueue (), &_presentInfo ) };
 }
 
 bool PresentRenderPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
@@ -216,6 +208,8 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
+     _renderInfo.renderArea.extent = resolution;
+
     if ( _renderInfo.renderPass != VK_NULL_HANDLE )
         return true;
 
@@ -286,8 +280,6 @@ bool PresentRenderPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _renderInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Present" )
-
-    _renderInfo.renderArea.extent = resolution;
     return true;
 }
 

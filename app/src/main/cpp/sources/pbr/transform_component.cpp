@@ -1,8 +1,10 @@
+#include <precompiled_headers.hpp>
 #include <pbr/transform_component.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxmat4.hpp>
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

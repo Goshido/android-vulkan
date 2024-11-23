@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/attribute_parser.hpp>
 #include <pbr/ascii_string.hpp>
@@ -132,15 +133,15 @@ std::optional<AttributeParser::Result> AttributeParser::Parse ( char const* html
 
     stream = probe->_newStream;
 
-    auto const checkApostrophe = [] ( char32_t c ) noexcept -> bool {
+    constexpr auto checkApostrophe = [] ( char32_t c ) noexcept -> bool {
         return c != APOSTROPHE;
     };
 
-    auto const checkQuotationMark = [] ( char32_t c ) noexcept -> bool {
+    constexpr auto checkQuotationMark = [] ( char32_t c ) noexcept -> bool {
         return c != QUOTATION_MARK;
     };
 
-    auto const checkUnquoted = [] ( char32_t c ) noexcept -> bool {
+    constexpr auto checkUnquoted = [] ( char32_t c ) noexcept -> bool {
         bool const c1 = !Whitespace::IsWhitespace ( c );
         auto const c2 = static_cast<bool> ( c != QUOTATION_MARK );
         auto const c3 = static_cast<bool> ( c != APOSTROPHE );

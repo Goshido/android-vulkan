@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/tone_mapper.inc>
 #include <pbr/tone_mapper_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
@@ -13,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -120,7 +121,7 @@ bool ToneMapperDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ToneMapperDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ToneMapperDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

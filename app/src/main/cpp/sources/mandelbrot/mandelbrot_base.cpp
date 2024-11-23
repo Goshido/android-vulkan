@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <mandelbrot/mandelbrot_base.hpp>
 #include <file.hpp>
 #include <vulkan_utils.hpp>
@@ -150,8 +151,6 @@ bool MandelbrotBase::BeginFrame ( android_vulkan::Renderer &renderer,
 
 bool MandelbrotBase::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
 {
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
     VkPresentInfoKHR const presentInfoKHR
     {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -161,21 +160,13 @@ bool MandelbrotBase::EndFrame ( android_vulkan::Renderer &renderer, uint32_t pre
         .swapchainCount = 1U,
         .pSwapchains = &renderer.GetSwapchain (),
         .pImageIndices = &presentationImageIndex,
-        .pResults = &presentResult
+        .pResults = nullptr
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    return android_vulkan::Renderer::CheckVkResult (
         vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
         "MandelbrotBase::EndFrame",
         "Can't present frame"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "MandelbrotBase::EndFrame",
-        "Present queue has been failed"
     );
 }
 

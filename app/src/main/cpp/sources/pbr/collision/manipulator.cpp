@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/collision/manipulator.hpp>
 #include <gamepad.hpp>
 #include <logger.hpp>

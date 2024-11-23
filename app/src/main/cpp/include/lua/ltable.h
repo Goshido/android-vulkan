@@ -20,7 +20,7 @@
 ** may have any of these metamethods. (First access that fails after the
 ** clearing will set the bit again.)
 */
-#define invalidateTMcache(t)	((t)->flags &= ~maskflags)
+#define invalidateTMcache(t)	((t)->flags &= cast_byte(~maskflags))
 
 
 /*
@@ -137,10 +137,10 @@
   (*tag = (val)->tt_, *getArrVal(h,(k)) = (val)->value_)
 
 
-LUAI_FUNC int luaH_get (Table *t, const TValue *key, TValue *res);
-LUAI_FUNC int luaH_getshortstr (Table *t, TString *key, TValue *res);
-LUAI_FUNC int luaH_getstr (Table *t, TString *key, TValue *res);
-LUAI_FUNC int luaH_getint (Table *t, lua_Integer key, TValue *res);
+LUAI_FUNC lu_byte luaH_get (Table *t, const TValue *key, TValue *res);
+LUAI_FUNC lu_byte luaH_getshortstr (Table *t, TString *key, TValue *res);
+LUAI_FUNC lu_byte luaH_getstr (Table *t, TString *key, TValue *res);
+LUAI_FUNC lu_byte luaH_getint (Table *t, lua_Integer key, TValue *res);
 
 /* Special get for metamethods */
 LUAI_FUNC const TValue *luaH_Hgetshortstr (Table *t, TString *key);
@@ -163,6 +163,7 @@ LUAI_FUNC Table *luaH_new (lua_State *L);
 LUAI_FUNC void luaH_resize (lua_State *L, Table *t, unsigned nasize,
                                                     unsigned nhsize);
 LUAI_FUNC void luaH_resizearray (lua_State *L, Table *t, unsigned nasize);
+LUAI_FUNC lu_mem luaH_size (Table *t);
 LUAI_FUNC void luaH_free (lua_State *L, Table *t);
 LUAI_FUNC int luaH_next (lua_State *L, Table *t, StkId key);
 LUAI_FUNC lua_Unsigned luaH_getn (Table *t);

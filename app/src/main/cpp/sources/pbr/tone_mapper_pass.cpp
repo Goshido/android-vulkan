@@ -1,3 +1,5 @@
+#include <precompiled_headers.hpp>
+#include <pbr/brightness_factor.inc>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/tone_mapper.inc>
 #include <pbr/tone_mapper_pass.hpp>
@@ -50,15 +52,13 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !_transformLayout.Init ( device ) || !_resourceLayout.Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layout = _resourceLayout.GetLayout ();
-
     VkDescriptorSetAllocateInfo const allocateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
         .descriptorPool = _resourceDescriptorPool,
         .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
+        .pSetLayouts = &_resourceLayout.GetLayout ()
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -115,9 +115,15 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     _program.Destroy ( renderer.GetDevice () );
-    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( brightnessBalance );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
+    bool const result = _program.Init ( renderer,
+        renderPass,
+        subpass,
+        BrightnessProgram::GetBrightnessInfo ( brightnessBalance ),
+        renderer.GetSurfaceSize ()
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     _brightnessBalance = brightnessBalance;
@@ -135,9 +141,14 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
-    SRGBProgram::SpecializationInfo const specData = SRGBProgram::GetGammaInfo ( _brightnessBalance );
+    bool const result = _program.Init ( renderer,
+        renderPass,
+        subpass,
+        BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
+        renderer.GetSurfaceSize ()
+    );
 
-    if ( !_program.Init ( renderer, renderPass, subpass, &specData, renderer.GetSurfaceSize () ) ) [[unlikely]]
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const imageInfo

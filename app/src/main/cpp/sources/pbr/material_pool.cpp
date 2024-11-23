@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/command_buffer_count.hpp>
 #include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
@@ -182,7 +183,7 @@ void MaterialPool::Destroy ( VkDevice device ) noexcept
         _descriptorPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &vector ) noexcept {
+    constexpr auto clean = [] ( auto &vector ) noexcept {
         vector.clear ();
         vector.shrink_to_fit ();
     };

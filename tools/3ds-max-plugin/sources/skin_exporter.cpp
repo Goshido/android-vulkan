@@ -1,15 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <skin_exporter.hpp>
 #include <result_checker.hpp>
 #include <android_vulkan_sdk/skin.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <unordered_map>
-#include <unordered_set>
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {
@@ -271,7 +264,7 @@ void SkinExporter::Run ( HWND parent, MSTR const &path, GXAABB bounds ) noexcept
 
     android_vulkan::SkinHeader const header
     {
-        ._bounds = 
+        ._bounds =
         {
             ._min = { bMin[ 0U ], bMin[ 1U ], bMin[ 2U ] },
             ._max = { bMax[ 0U ], bMax[ 1U ], bMax[ 2U ] }

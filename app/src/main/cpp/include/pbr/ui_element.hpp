@@ -2,77 +2,48 @@
 #define PBR_UI_ELEMENT_HPP
 
 
-#include "css_unit_to_device_pixel.hpp"
-#include "font_storage.hpp"
-#include "length_value.hpp"
+#include "css_computed_values.hpp"
 #include "ui_pass.hpp"
-#include "ui_vertex_info.hpp"
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <memory>
-#include <string>
-#include <unordered_map>
-
-extern "C" {
-
-#include <lua/lstate.h>
-
-} // extern "C"
-
-// This macro was defined by Lua headers and breaks 'std'.
-#undef ispow2
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
-
-// Forward declaration
-class CSSUIElement;
 
 class UIElement
 {
     public:
         struct ApplyInfo final
         {
-            GXVec2 const                    _canvasSize;
-            CSSUnitToDevicePixel const*     _cssUnits;
-            FontStorage*                    _fontStorage;
-            bool                            _hasChanges;
-            std::vector<float>*             _lineHeights;
-            GXVec2                          _pen;
-            android_vulkan::Renderer*       _renderer;
-            size_t                          _vertices;
+            GXVec2                          _canvasSize {};
+            FontStorage*                    _fontStorage = nullptr;
+            bool                            _hasChanges = false;
+            std::vector<float>*             _lineHeights = nullptr;
+            GXVec2                          _pen {};
+            android_vulkan::Renderer*       _renderer = nullptr;
+            size_t                          _vertices = 0U;
         };
 
         struct SubmitInfo final
         {
-            UIPass*                         _uiPass;
-            UIVertexBuffer                  _vertexBuffer;
+            UIPass*                         _uiPass = 0U;
+            UIVertexBuffer                  _vertexBuffer {};
         };
 
         struct UpdateInfo final
         {
-            CSSUnitToDevicePixel const*     _cssUnits;
-            FontStorage*                    _fontStorage;
-            size_t                          _line;
-            float const*                    _parentLineHeights;
-            GXVec2                          _parentSize;
-            GXVec2                          _parentTopLeft;
-            GXVec2                          _pen;
+            FontStorage*                    _fontStorage = nullptr;
+            size_t                          _line = 0U;
+            float const*                    _parentLineHeights = nullptr;
+            GXVec2                          _parentSize {};
+            GXVec2                          _parentTopLeft {};
+            GXVec2                          _pen {};
         };
 
-    private:
-        using Storage = std::unordered_map<UIElement const*, std::unique_ptr<UIElement>>;
+    protected:
+        using AlignHandler = float ( * ) ( float pen, float parentSize, float lineSize ) noexcept;
 
     protected:
-        using AlignHander = float ( * ) ( float pen, float parentSize, float lineSize ) noexcept;
+        CSSComputedValues                   _css {};
 
-    private:
-        static Storage                      _uiElements;
-
-    protected:
         bool                                _visible = false;
         bool                                _visibilityChanged = true;
 
@@ -85,7 +56,7 @@ class UIElement
         UIElement ( UIElement const & ) = delete;
         UIElement &operator = ( UIElement const & ) = delete;
 
-        UIElement ( UIElement && ) = delete;
+        UIElement ( UIElement && ) = default;
         UIElement &operator = ( UIElement && ) = delete;
 
         virtual ~UIElement () = default;
@@ -104,35 +75,25 @@ class UIElement
         void Show () noexcept;
         [[nodiscard]] bool IsVisible () const noexcept;
 
-        static void AppendElement ( UIElement &element ) noexcept;
-        static void InitCommon ( lua_State &vm ) noexcept;
-        static void Destroy () noexcept;
+        [[nodiscard]] CSSComputedValues &GetCSS () noexcept;
+        [[nodiscard]] CSSComputedValues const &GetCSS () const noexcept;
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
+        explicit UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept;
 
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
             float parentLength,
-            bool isHeight,
-            CSSUnitToDevicePixel const &units
+            bool isHeight
         ) const noexcept;
 
-        [[nodiscard]] static float ResolveFontSize ( CSSUnitToDevicePixel const &cssUnits,
-            UIElement const &startTraverseElement
-        ) noexcept;
+        [[nodiscard]] static float ResolveFontSize ( UIElement const &startTraverseElement ) noexcept;
+        [[nodiscard]] static AlignHandler ResolveTextAlignment ( UIElement const &parent ) noexcept;
+        [[nodiscard]] static AlignHandler ResolveVerticalAlignment ( UIElement const &parent ) noexcept;
 
-        [[nodiscard]] static AlignHander ResolveTextAlignment ( CSSUIElement const &parent ) noexcept;
-        [[nodiscard]] static AlignHander ResolveVerticalAlignment ( CSSUIElement const &parent ) noexcept;
-
-    private:
         [[nodiscard]] static float AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToStart ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;
-
-        [[nodiscard]] static int OnGarbageCollected ( lua_State* state );
-        [[nodiscard]] static int OnHide ( lua_State* state );
-        [[nodiscard]] static int OnIsVisible ( lua_State* state );
-        [[nodiscard]] static int OnShow ( lua_State* state );
 };
 
 } // namespace pbr

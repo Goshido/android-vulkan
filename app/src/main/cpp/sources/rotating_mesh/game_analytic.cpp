@@ -1,3 +1,5 @@
+#include <precompiled_headers.hpp>
+#include <rotating_mesh/bindings.inc>
 #include <rotating_mesh/game_analytic.hpp>
 
 
@@ -20,16 +22,17 @@ GameAnalytic::GameAnalytic () noexcept:
 
 bool GameAnalytic::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr VkDescriptorSetLayoutBinding const materialBindings[] = {
+    constexpr static VkDescriptorSetLayoutBinding const materialBindings[]
+    {
         {
-            .binding = 0U,
+            .binding = BIND_DIFFUSE_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = 1U,
+            .binding = BIND_NORMAL_TEXTURE,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -37,7 +40,8 @@ bool GameAnalytic::CreateMaterialDescriptorSetLayout ( android_vulkan::Renderer 
         }
     };
 
-    VkDescriptorSetLayoutCreateInfo dsInfo {
+    constexpr VkDescriptorSetLayoutCreateInfo dsInfo
+    {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
@@ -126,17 +130,19 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _fixedDS, VK_OBJECT_TYPE_DESCRIPTOR_SET, "Fixed" )
 
-    VkDescriptorImageInfo const samplerInfo {
+    VkDescriptorImageInfo const samplerInfo
+    {
         .sampler = _sampler,
         .imageView = VK_NULL_HANDLE,
         .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
 
-    VkWriteDescriptorSet const fixedWrite {
+    VkWriteDescriptorSet const fixedWrite
+    {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = _fixedDS,
-        .dstBinding = 0U,
+        .dstBinding = BIND_SAMPLER,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -168,7 +174,8 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 
-    constexpr VkDescriptorImageInfo templateImageInfo {
+    constexpr VkDescriptorImageInfo templateImageInfo
+    {
         .sampler = VK_NULL_HANDLE,
         .imageView = VK_NULL_HANDLE,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
@@ -176,7 +183,8 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     std::vector<VkDescriptorImageInfo> imageInfo ( materialEntries, templateImageInfo );
 
-    constexpr VkWriteDescriptorSet writeTemplate {
+    constexpr VkWriteDescriptorSet writeTemplate
+    {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = VK_NULL_HANDLE,
@@ -204,7 +212,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
         VkWriteDescriptorSet &materialDiffuseWrite = writes[ idx ];
         materialDiffuseWrite.dstSet = ds;
-        materialDiffuseWrite.dstBinding = 0U;
+        materialDiffuseWrite.dstBinding = BIND_DIFFUSE_TEXTURE;
         materialDiffuseWrite.pImageInfo = &diffuseImage;
 
         VkDescriptorImageInfo &normalImage = imageInfo[ ++idx ];
@@ -212,7 +220,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
         VkWriteDescriptorSet &materialNormalWrite = writes[ idx ];
         materialNormalWrite.dstSet = ds;
-        materialNormalWrite.dstBinding = 1U;
+        materialNormalWrite.dstBinding = BIND_NORMAL_TEXTURE;
         materialNormalWrite.pImageInfo = &normalImage;
     }
 

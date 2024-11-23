@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/exposure.inc>
 #include <pbr/exposure_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
@@ -13,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -134,7 +135,7 @@ bool ExposureDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ExposureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ExposureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

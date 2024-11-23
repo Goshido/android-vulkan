@@ -28,7 +28,7 @@ The snapshot is located in the app's cache directory and has name:
 
 `vulkan memory snapshot <date and time>.json`
 
-For example: `/data/data/com.goshidoInc.androidVulkan/cache/vulkan memory snapshot 2022-08-13 21-23-21 MSK.json`
+For example: `/data/data/com.goshidoInc.androidVulkan/cache/vulkan memory snapshot 2022-08-13 21-23-21.json`
 
 **Note:** cache directory only presents in **debug build**.
 

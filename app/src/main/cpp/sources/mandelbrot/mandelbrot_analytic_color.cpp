@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <mandelbrot/mandelbrot_analytic_color.hpp>
 #include <vulkan_utils.hpp>
 

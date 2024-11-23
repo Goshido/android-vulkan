@@ -1,10 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <simplex.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cstring>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/font_face_css_rule.hpp>
 #include <pbr/font_family_property_checker.hpp>

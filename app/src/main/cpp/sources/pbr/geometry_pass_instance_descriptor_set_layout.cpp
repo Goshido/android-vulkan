@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_instance_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -58,13 +53,29 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return true;
     }
 
-    constexpr static VkDescriptorSetLayoutBinding binding
+    constexpr static VkDescriptorSetLayoutBinding bindings[] =
     {
-        .binding = BIND_INSTANCE_DATA,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1U,
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-        .pImmutableSamplers = nullptr
+        {
+            .binding = BIND_INSTANCE_POSITON_DATA,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_INSTANCE_NORMAL_DATA,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_INSTANCE_COLOR_DATA,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        }
     };
 
     constexpr VkDescriptorSetLayoutCreateInfo info
@@ -72,8 +83,8 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .bindingCount = 1U,
-        .pBindings = &binding
+        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
+        .pBindings = bindings
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -107,7 +118,7 @@ bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &GeometryPassInstanceDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

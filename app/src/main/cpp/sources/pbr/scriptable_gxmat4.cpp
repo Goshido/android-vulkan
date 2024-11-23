@@ -1,4 +1,5 @@
-﻿#include <pbr/scriptable_gxmat4.hpp>
+﻿#include <precompiled_headers.hpp>
+#include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxquat.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
@@ -11,9 +12,6 @@ extern "C" {
 #include <lua/lauxlib.h>
 
 } // extern "C"
-
-#include <cstdio>
-#include <memory>
 
 GX_RESTORE_WARNING_STATE
 
@@ -153,7 +151,7 @@ void ScriptableGXMat4::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXMat4::Destroy () noexcept
 {
-    auto const free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

@@ -33,6 +33,10 @@ class VulkanLoader final
         [[nodiscard]] bool AcquireDeviceFunctions ( VkDevice device ) noexcept;
         [[nodiscard]] bool AcquireInstanceFunctions ( VkInstance instance ) noexcept;
         [[nodiscard]] bool Unload () noexcept;
+
+    private:
+        [[nodiscard]] bool OpenLibrary () noexcept;
+        [[nodiscard]] bool CloseLibrary () noexcept;
 };
 
 } // namespace android_vulkan

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/color_property.hpp>
 #include <pbr/color_property_checker.hpp>
 #include <pbr/common_css_rule.hpp>
@@ -41,7 +42,7 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
         stream = probe->_newStream;
     }
 
-    auto const resolveType = [] ( eType type ) noexcept -> char const* {
+    constexpr auto resolveType = [] ( eType type ) noexcept -> char const* {
         constexpr char const* cases[] = { "Class", "ID" };
         return cases[ static_cast<size_t> ( type == eType::ID ) ];
     };

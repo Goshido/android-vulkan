@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <skeleton_exporter.hpp>
 #include <result_checker.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <unordered_map>
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {

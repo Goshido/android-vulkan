@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/utf8_parser.hpp>
 
@@ -182,7 +183,7 @@ std::optional<std::string> UTF8Parser::ToUTF8 ( std::u32string_view string ) noe
         return get ( c, a, 0x0000'0FC0U, 6U );
     };
 
-    auto const get0 = [] ( char32_t c ) noexcept -> char {
+    constexpr auto get0 = [] ( char32_t c ) noexcept -> char {
         return static_cast<char> ( static_cast<uint32_t> ( a ) | ( c & 0x0000'003FU ) );
     };
 

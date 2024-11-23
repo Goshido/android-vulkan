@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/command_buffer_count.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_pool.hpp>
@@ -9,8 +10,10 @@ namespace pbr {
 
 namespace {
 
+constexpr size_t BARRIER_PER_SET = 2U;
+constexpr size_t BIND_PER_SET = 6U;
+
 constexpr size_t MAX_SKIN_MESHES_PER_FRAME = 8096U;
-constexpr size_t BIND_PER_SET = 4U;
 constexpr size_t SKIN_MESHES = DUAL_COMMAND_BUFFER * MAX_SKIN_MESHES_PER_FRAME;
 
 } // end of anonymous namespace
@@ -118,31 +121,27 @@ bool SkinPool::Init ( VkDevice device ) noexcept
 
     _writeSets.resize ( totalBuffers, writeSet );
     VkWriteDescriptorSet* writeSets = _writeSets.data ();
-    size_t idx = 0U;
+
+    const auto assign = [ &writeSets, &bufferInfo ] ( VkDescriptorSet set, size_t bind ) noexcept {
+        VkWriteDescriptorSet &pose = writeSets[ bind ];
+        pose.dstSet = set;
+        pose.dstBinding = bind;
+        pose.pBufferInfo = bufferInfo + bind;
+    };
 
     for ( size_t i = 0U; i < SKIN_MESHES; ++i )
     {
         VkDescriptorSet set = descriptorSets[ i ];
 
-        VkWriteDescriptorSet &pose = writeSets[ idx ];
-        pose.dstSet = set;
-        pose.dstBinding = static_cast<uint32_t> ( BIND_POSE );
-        pose.pBufferInfo = bufferInfo + idx++;
+        assign ( set, BIND_POSE );
+        assign ( set, BIND_REFERENCE_POSITIONS );
+        assign ( set, BIND_REFERENCE_REST );
+        assign ( set, BIND_SKIN_VERTICES );
+        assign ( set, BIND_SKIN_POSITIONS );
+        assign ( set, BIND_SKIN_REST );
 
-        VkWriteDescriptorSet &referenceMesh = writeSets[ idx ];
-        referenceMesh.dstSet = set;
-        referenceMesh.dstBinding = static_cast<uint32_t> ( BIND_REFERENCE_MESH );
-        referenceMesh.pBufferInfo = bufferInfo + idx++;
-
-        VkWriteDescriptorSet &skin = writeSets[ idx ];
-        skin.dstSet = set;
-        skin.dstBinding = static_cast<uint32_t> ( BIND_SKIN );
-        skin.pBufferInfo = bufferInfo + idx++;
-
-        VkWriteDescriptorSet &skinMesh = writeSets[ idx ];
-        skinMesh.dstSet = set;
-        skinMesh.dstBinding = static_cast<uint32_t> ( BIND_SKIN_MESH );
-        skinMesh.pBufferInfo = bufferInfo + idx++;
+        writeSets += BIND_PER_SET;
+        bufferInfo += BIND_PER_SET;
     }
 
     // Now all what is needed to do is to init "_bufferInfo::buffer" and "_bufferInfo::range".
@@ -161,7 +160,8 @@ bool SkinPool::Init ( VkDevice device ) noexcept
         .size = 0U
     };
 
-    _barriers.resize ( SKIN_MESHES, barrier );
+    constexpr size_t barrierCount = SKIN_MESHES * BARRIER_PER_SET;
+    _barriers.resize ( barrierCount, barrier );
 
     // Now all what is needed to do is to init "_barriers::buffer" and "_barriers::size".
     // Then to invoke vkCmdPipelineBarrier.
@@ -184,7 +184,7 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
         _descriptorPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &vector ) noexcept {
+    constexpr auto clean = [] ( auto &vector ) noexcept {
         vector.clear ();
         vector.shrink_to_fit ();
     };
@@ -197,32 +197,50 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
 
 void SkinPool::Push ( android_vulkan::BufferInfo pose,
     android_vulkan::BufferInfo skin,
-    android_vulkan::BufferInfo referenceMesh,
-    VkBuffer skinMesh
+    android_vulkan::MeshBufferInfo referenceMesh,
+    VkBuffer const* skinMeshBuffers
 ) noexcept
 {
     VkDescriptorBufferInfo* buffers = _bufferInfo.data ();
-    size_t const base = _itemWriteIndex * BIND_PER_SET;
+    size_t const baseBufferInfoIdx = _itemWriteIndex * BIND_PER_SET;
 
-    VkDescriptorBufferInfo &poseInfo = buffers[ base + BIND_POSE ];
+    VkDescriptorBufferInfo &poseInfo = buffers[ baseBufferInfoIdx + BIND_POSE ];
     poseInfo.buffer = pose._buffer;
     poseInfo.range = pose._range;
 
-    VkDescriptorBufferInfo &skinInfo = buffers[ base + BIND_SKIN ];
+    VkDescriptorBufferInfo &skinInfo = buffers[ baseBufferInfoIdx + BIND_SKIN_VERTICES ];
     skinInfo.buffer = skin._buffer;
     skinInfo.range = skin._range;
 
-    VkDescriptorBufferInfo &referenceMeshInfo = buffers[ base + BIND_REFERENCE_MESH ];
-    referenceMeshInfo.buffer = referenceMesh._buffer;
-    referenceMeshInfo.range = referenceMesh._range;
+    VkDeviceSize const positionRange = referenceMesh._postions._range;
+    VkDeviceSize const restRange = referenceMesh._rest._range;
 
-    VkDescriptorBufferInfo &skinMeshInfo = buffers[ base + BIND_SKIN_MESH ];
-    skinMeshInfo.buffer = skinMesh;
-    skinMeshInfo.range = referenceMesh._range;
+    VkDescriptorBufferInfo &referencePositions = buffers[ baseBufferInfoIdx + BIND_REFERENCE_POSITIONS ];
+    referencePositions.buffer = referenceMesh._postions._buffer;
+    referencePositions.range = positionRange;
 
-    VkBufferMemoryBarrier &barrier = _barriers[ _itemWriteIndex ];
-    barrier.buffer = skinMesh;
-    barrier.size = referenceMesh._range;
+    VkDescriptorBufferInfo &referenceRest = buffers[ baseBufferInfoIdx + BIND_REFERENCE_REST ];
+    referenceRest.buffer = referenceMesh._rest._buffer;
+    referenceRest.range = restRange;
+
+    VkBuffer skinPositionBuffer = skinMeshBuffers[ android_vulkan::MeshBufferInfo::POSITION_BUFFER_INDEX ];
+    VkDescriptorBufferInfo &skinPositions = buffers[ baseBufferInfoIdx + BIND_SKIN_POSITIONS ];
+    skinPositions.buffer = skinPositionBuffer;
+    skinPositions.range = positionRange;
+
+    VkBuffer skinRestBuffer = skinMeshBuffers[ android_vulkan::MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
+    VkDescriptorBufferInfo &skinRest = buffers[ baseBufferInfoIdx + BIND_SKIN_REST ];
+    skinRest.buffer = skinRestBuffer;
+    skinRest.range = restRange;
+
+    size_t baseBarrierIdx = _itemWriteIndex * BARRIER_PER_SET;
+    VkBufferMemoryBarrier &positionBarrier = _barriers[ baseBarrierIdx++ ];
+    positionBarrier.buffer = skinPositionBuffer;
+    positionBarrier.size = positionRange;
+
+    VkBufferMemoryBarrier &restBarrier = _barriers[ baseBarrierIdx ];
+    restBarrier.buffer = skinRestBuffer;
+    restBarrier.size = restRange;
 
     _itemWriteIndex = ( _itemWriteIndex + 1U ) % SKIN_MESHES;
     ++_itemWritten;
@@ -243,8 +261,8 @@ void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         0U,
         nullptr,
-        static_cast<uint32_t> ( available ),
-        barriers + _itemBaseIndex,
+        static_cast<uint32_t> ( available * BARRIER_PER_SET ),
+        barriers + _itemBaseIndex * BARRIER_PER_SET,
         0U,
         nullptr
     );
@@ -257,7 +275,7 @@ void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
             0U,
             0U,
             nullptr,
-            static_cast<uint32_t> ( more ),
+            static_cast<uint32_t> ( more * BARRIER_PER_SET ),
             barriers,
             0U,
             nullptr

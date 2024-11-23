@@ -1,5 +1,6 @@
-#include <pbr/uniform_buffer_pool.hpp>
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <pbr/uniform_buffer_pool.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -9,8 +10,14 @@ namespace {
 
 constexpr size_t KILOBYTES_TO_BYTES = 1024U;
 
+// [2024/11/09] CL compiler does not respect [[maybe_unused]].
+// See https://developercommunity.visualstudio.com/t/10711255
+GX_UNUSED_BEGIN
+
 // see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
 [[maybe_unused]] constexpr size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
+
+GX_UNUSED_END
 
 } // end of anonymous namespace
 

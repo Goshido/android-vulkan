@@ -1,11 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <plugin.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <plugin.h>
-#include <plugapi.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace {

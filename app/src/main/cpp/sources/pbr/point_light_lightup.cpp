@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_lightup.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/point_light_descriptor_set_layout.hpp>
@@ -54,7 +55,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _program.Init ( renderer, renderPass, subpass, nullptr, resolution ) &&
+    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
         _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
         AllocateDescriptorSets ( renderer );
 }
@@ -69,7 +70,7 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _descriptorPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &vector ) noexcept {
+    constexpr auto clean = [] ( auto &vector ) noexcept {
         vector.clear ();
         vector.shrink_to_fit ();
     };

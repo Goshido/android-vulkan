@@ -1,13 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <pbr/reflection_common.inc>
 #include <pbr/reflection_local.inc>
 #include <pbr/reflection_local_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -118,7 +112,7 @@ bool ReflectionLocalDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout ReflectionLocalDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ReflectionLocalDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

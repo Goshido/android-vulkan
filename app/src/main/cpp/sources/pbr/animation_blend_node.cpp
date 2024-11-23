@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/animation_blend_node.hpp>

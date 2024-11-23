@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/set_attribute_checker.hpp>
 
 

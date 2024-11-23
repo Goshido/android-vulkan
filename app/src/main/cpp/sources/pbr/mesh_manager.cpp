@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/mesh_manager.hpp>
 
 
@@ -8,7 +9,7 @@ std::mutex MeshManager::_mutex;
 
 void MeshManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _toFreeTransferResource.empty () )
         return;
@@ -32,13 +33,13 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( !fileName )
         return mesh;
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     auto findResult = _meshStorage.find ( fileName );
 
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( fileName, renderer, commandBuffer, fence ) ) [[unlikely]]
+    if ( !mesh->LoadMesh ( renderer, commandBuffer, false, fence, fileName ) ) [[unlikely]]
     {
         mesh = nullptr;
     }
@@ -54,7 +55,7 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
 
 MeshManager &MeshManager::GetInstance () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         _instance = new MeshManager ();
@@ -64,7 +65,7 @@ MeshManager &MeshManager::GetInstance () noexcept
 
 void MeshManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         return;

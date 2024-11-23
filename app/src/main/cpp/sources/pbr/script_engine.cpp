@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/animation_blend_node.hpp>
 #include <pbr/animation_graph.hpp>
@@ -15,11 +16,11 @@
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_logger.hpp>
 #include <pbr/scriptable_material.hpp>
+#include <pbr/scriptable_text_ui_element.hpp>
 #include <pbr/skeletal_mesh_component.hpp>
 #include <pbr/sound_emitter_global_component.hpp>
 #include <pbr/sound_emitter_spatial_component.hpp>
 #include <pbr/static_mesh_component.hpp>
-#include <pbr/text_ui_element.hpp>
 #include <pbr/transform_component.hpp>
 #include <pbr/ui_layer.hpp>
 #include <av_assert.hpp>
@@ -27,8 +28,6 @@
 #include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <algorithm>
 
 extern "C" {
 
@@ -108,8 +107,8 @@ bool ScriptEngine::ExtendFrontend ( android_vulkan::Renderer &renderer,
     ScriptableGXVec4::Init ( vm );
 
     UILayer::InitLuaFrontend ( vm );
-    UIElement::InitCommon ( vm );
-    TextUIElement::Init ( vm );
+    ScriptableUIElement::InitCommon ( vm );
+    ScriptableTextUIElement::Init ( vm );
 
     Component::Register ( vm );
     ScriptableLogger::Register ( vm );
@@ -177,7 +176,7 @@ void ScriptEngine::InitLibraries () const noexcept
 
     constexpr luaL_Reg const libs[] =
     {
-        { 
+        {
             .name = LUA_GNAME,
             .func = &luaopen_base
         },
@@ -292,7 +291,7 @@ void ScriptEngine::Free ( lua_State* state ) noexcept
     ScriptComponent::Destroy ();
     ScriptableMaterial::Destroy ();
     Actor::Destroy ();
-    UIElement::Destroy ();
+    ScriptableUIElement::Destroy ();
     UILayer::Destroy ();
 }
 
@@ -402,7 +401,7 @@ int ScriptEngine::OnRequire ( lua_State* state )
 
     constexpr char separator = '>';
 
-    auto loader = [] ( lua_State* state ) -> int {
+    constexpr auto loader = [] ( lua_State* state ) -> int {
         if ( int const argc = lua_gettop ( state ); argc != 2 )
         {
             android_vulkan::LogError (

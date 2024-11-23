@@ -17,19 +17,52 @@ class GeometryPassProgram : public GraphicsProgram
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct ObjectData final
+        struct InstancePositionData final
         {
-            GXMat4                                  _localView;
-            GXMat4                                  _localViewProjection;
-            GXColorRGB                              _color0;
-            GXColorRGB                              _color1;
-            GXColorRGB                              _color2;
-            GXColorRGB                              _emission;
+            GXMat4                                  _localViewProj[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
-        struct InstanceData final
+        struct TBN64 final
         {
-            ObjectData                              _instanceData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
+            uint64_t                                _q0;
+            uint64_t                                _q1;
+        };
+
+        struct InstanceNormalData final
+        {
+            TBN64                                   _localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
+        };
+
+        class ColorData final
+        {
+            private:
+                uint32_t                            _emiRcol0rgb = 0U;
+                uint32_t                            _emiGcol1rgb = 0U;
+                uint32_t                            _emiBcol2rgb = 0U;
+                uint32_t                            _col0aEmiIntens = 0U;
+
+            public:
+                ColorData () = default;
+
+                ColorData ( ColorData const & ) = default;
+                ColorData &operator = ( ColorData const & ) = default;
+
+                ColorData ( ColorData && ) = default;
+                ColorData &operator = ( ColorData && ) = default;
+
+                ColorData ( GXColorUNORM color0,
+                    GXColorUNORM color1,
+                    GXColorUNORM color2,
+                    GXColorUNORM emission,
+                    float emissionIntensity
+                ) noexcept;
+
+                ~ColorData () = default;
+        };
+
+        struct InstanceColorData final
+        {
+            ColorData                               _colorData[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
         };
 
         AV_DX_ALIGNMENT_END
@@ -51,15 +84,14 @@ class GeometryPassProgram : public GraphicsProgram
 
         ~GeometryPassProgram () override = default;
 
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        void Destroy ( VkDevice device ) noexcept override;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            SpecializationData specializationData,
             VkExtent2D const &viewport
-        ) noexcept override;
-
-        void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        ) noexcept;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,
@@ -78,6 +110,10 @@ class GeometryPassProgram : public GraphicsProgram
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
@@ -101,13 +137,11 @@ class GeometryPassProgram : public GraphicsProgram
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
-            VkRect2D &scissorInfo,
-            VkViewport &viewportInfo,
-            VkExtent2D const &viewport
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (

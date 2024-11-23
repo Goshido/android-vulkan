@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/text_align_property_checker.hpp>
 #include <pbr/utf8_parser.hpp>

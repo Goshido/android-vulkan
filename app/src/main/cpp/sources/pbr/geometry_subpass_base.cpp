@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_subpass_base.hpp>
 
 
@@ -12,10 +13,7 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
     MaterialRef const &material,
     GXMat4 const &local,
     GXAABB const &worldBounds,
-    GXColorRGB const &color0,
-    GXColorRGB const &color1,
-    GXColorRGB const &color2,
-    GXColorRGB const &emission
+    GeometryPassProgram::ColorData const &colorData
 ) noexcept
 {
     // NOLINTNEXTLINE - downcast.
@@ -24,24 +22,23 @@ void GeometrySubpassBase::Submit ( MeshRef &mesh,
 
     if ( findResult != _sceneData.cend () )
     {
-        findResult->second.Append ( mesh, local, worldBounds, color0, color1, color2, emission );
+        findResult->second.Append ( mesh, local, worldBounds, colorData );
         return;
     }
 
-    _sceneData.emplace (
-        std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, color0, color1, color2, emission ) )
-    );
+    _sceneData.insert ( std::make_pair ( m, GeometryCall ( mesh, local, worldBounds, colorData ) ) );
 }
 
 void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
     GeometryPassProgram &program,
+    GeometryPool &geometryPool,
     MaterialPool &materialPool,
-    UniformBufferPoolManager &uniformPool,
     RenderSessionStats &renderSessionStats
 ) noexcept
 {
     bool isProgramBind = false;
-    constexpr VkDeviceSize offset = 0U;
+    constexpr VkDeviceSize const offset[] = { 0U, 0U };
+    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     for ( auto const &call : _sceneData )
     {
@@ -56,15 +53,15 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
 
         bool isUniformBind = false;
 
-        auto instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
+        auto const instanceDrawer = [ & ] ( MeshRef const &mesh, uint32_t batches ) noexcept {
             if ( isUniformBind )
             {
-                VkDescriptorSet ds = uniformPool.Acquire ();
+                VkDescriptorSet ds = geometryPool.Acquire ();
                 program.SetDescriptorSet ( commandBuffer, &ds, 2U, 1U );
             }
             else
             {
-                VkDescriptorSet sets[] = { textureSet, uniformPool.Acquire () };
+                VkDescriptorSet sets[] = { textureSet, geometryPool.Acquire () };
 
                 program.SetDescriptorSet ( commandBuffer,
                     sets,
@@ -75,8 +72,15 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 isUniformBind = true;
             }
 
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
-            vkCmdBindIndexBuffer ( commandBuffer, mesh->GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+            vkCmdBindVertexBuffers ( commandBuffer,
+                0U,
+                android_vulkan::MeshGeometry::GetVertexBufferCount (),
+                mesh->GetVertexBuffers (),
+                offset
+            );
+
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = mesh->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, 0U, indexBuffer._type );
 
             vkCmdDrawIndexed ( commandBuffer,
                 mesh->GetVertexCount (),

@@ -9,27 +9,28 @@ namespace android_vulkan {
 
 #pragma pack ( push, 1 )
 
-struct Mesh2Header final
+using Mesh2Position [[maybe_unused]] = Vec3;
+
+struct [[maybe_unused]] Mesh2Header final
 {
-    AABB                            _bounds;
+    AABB            _bounds;
 
-    uint64_t                        _indexCount;
-    uint64_t                        _indexDataOffset;
+    uint32_t        _indexCount;
+    uint64_t        _indexDataOffset;
 
-    uint32_t                        _vertexCount;
-    [[maybe_unused]] uint64_t       _vertexDataOffset;
+    uint32_t        _vertexCount;
+    uint64_t        _positionDataOffset;
+    uint64_t        _vertexDataOffset;
 };
 
-struct Mesh2Vertex final
+struct [[maybe_unused]] Mesh2Vertex final
 {
-     [[maybe_unused]] Vec3      _vertex;
-     [[maybe_unused]] Vec2      _uv;
-     Vec3                       _normal;
-     [[maybe_unused]] Vec3      _tangent;
-     [[maybe_unused]] Vec3      _bitangent;
+     Vec2           _uv;
+     uint32_t       _tbn;
 };
 
-using Mesh2Index [[maybe_unused]] = uint32_t;
+using Mesh2Index16 [[maybe_unused]] = uint16_t;
+using Mesh2Index32 [[maybe_unused]] = uint32_t;
 
 #pragma pack ( pop )
 

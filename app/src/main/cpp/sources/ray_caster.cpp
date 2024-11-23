@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <ray_caster.hpp>
 #include <logger.hpp>
 #include <simplex.hpp>

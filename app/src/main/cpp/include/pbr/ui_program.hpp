@@ -2,7 +2,7 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "srgb_program.hpp"
+#include "brightness_program.hpp"
 #include "ui_pass_common_descriptor_set_layout.hpp"
 #include "ui_pass_image_descriptor_set_layout.hpp"
 #include "ui_pass_transform_descriptor_set_layout.hpp"
@@ -11,7 +11,7 @@
 
 namespace pbr {
 
-class UIProgram final : public SRGBProgram
+class UIProgram final : public BrightnessProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -42,15 +42,15 @@ class UIProgram final : public SRGBProgram
 
         ~UIProgram () override = default;
 
+        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        void Destroy ( VkDevice device ) noexcept override;
+
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
-            SpecializationData specializationData,
+            BrightnessInfo const &brightnessInfo,
             VkExtent2D const &viewport
-        ) noexcept override;
-
-        void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
+        ) noexcept;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer,
             VkDescriptorSet const* sets,
@@ -66,6 +66,10 @@ class UIProgram final : public SRGBProgram
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
@@ -89,13 +93,11 @@ class UIProgram final : public SRGBProgram
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept override;
 
-        void DestroyShaderModules ( VkDevice device ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
-            VkRect2D &scissorInfo,
-            VkViewport &viewportInfo,
-            VkExtent2D const &viewport
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (

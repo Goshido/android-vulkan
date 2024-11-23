@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <velocity_solver.hpp>
 #include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <algorithm>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

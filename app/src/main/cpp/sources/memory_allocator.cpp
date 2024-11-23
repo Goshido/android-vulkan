@@ -1,16 +1,9 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <memory_allocator.hpp>
 #include <bitwise.hpp>
-#include <core.hpp>
 #include <renderer.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <chrono>
-#include <fstream>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -56,7 +49,7 @@ void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
 
     if ( Block* before = block->_blockChainPrevious; before )
     {
-        if ( before->_freePrevious != nullptr | _freeBlocks._head == before )
+        if ( ( before->_freePrevious != nullptr ) | ( _freeBlocks._head == before ) )
         {
             mergeOffset = before->_offset;
             mergeSize += before->_size;
@@ -66,7 +59,7 @@ void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
 
     if ( Block* after = block->_blockChainNext; after )
     {
-        if ( after->_freePrevious != nullptr | _freeBlocks._head == after )
+        if ( ( after->_freePrevious != nullptr ) | ( _freeBlocks._head == after ) )
         {
             mergeSize += after->_size;
             RemoveFreeBlock ( *after );
@@ -159,15 +152,13 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
     constexpr Offset separator = 1U;
 
     constexpr char const* cases[] = { "Free", "Used" };
-    constexpr char const begin[] = R"__(,{"name":"%s","ph":"B","pid":%s,"tid":%s,"ts":%zu})__";
-    constexpr char const end[] = R"__(,{"name":"%s","ph":"E","pid":%s,"tid":%s,"ts":%zu})__";
 
     for ( Block const* block = _blockChain; block; block = block->_blockChainNext )
     {
         // By convention only used block has "_freePrevious" and "_freeNext" as nullptr.
         // Note "_freePrevious" and "_freeNext" could be nullptr if there is only one empty block in chunk.
         // So it's needed to check "_freeBlocks" link as well.
-        auto const idx = static_cast<size_t> ( block->_freePrevious == nullptr & _freeBlocks._head != block );
+        auto const idx = static_cast<size_t> ( ( block->_freePrevious == nullptr ) & ( _freeBlocks._head != block ) );
         char const* blockType = cases[ idx ];
 
         // Branchless optimization: Free block produces "idx" == 0U, used block produces "idx" == 1U.
@@ -177,7 +168,7 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
             static_cast<size_t> (
                 std::snprintf ( buffer,
                     std::size ( buffer ),
-                    begin,
+                    R"__(,{"name":"%s","ph":"B","pid":%s,"tid":%s,"ts":%zu})__",
                     blockType,
                     idChunksString,
                     idChunkString,
@@ -192,7 +183,7 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
             static_cast<size_t> (
                 std::snprintf ( buffer,
                     std::size ( buffer ),
-                    end,
+                    R"__(,{"name":"%s","ph":"E","pid":%s,"tid":%s,"ts":%zu})__",
                     blockType,
                     idChunksString,
                     idChunkString,
@@ -205,9 +196,6 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
     }
 
     constexpr double toPercent = 100.0 / static_cast<double> ( BYTES_PER_CHUNK );
-
-    constexpr char const meta[] =
-        R"__(,{"name":"thread_name","ph":"M","pid":%s,"tid":%s,"args":{"name":"Chunk #%s: %s, %.0f%%"}})__";
 
     char buffer2[ 32U ];
     constexpr double toKB = 1.0 / static_cast<double> ( BYTES_PER_KILOBYTE );
@@ -227,7 +215,7 @@ void MemoryAllocator::Chunk::MakeJSONChunk ( std::string &json, size_t idChunks,
         static_cast<size_t> (
             std::snprintf ( buffer,
                 std::size ( buffer ),
-                meta,
+                R"__(,{"name":"thread_name","ph":"M","pid":%s,"tid":%s,"args":{"name":"Chunk #%s: %s, %.0f%%"}})__",
                 idChunksString,
                 idChunkString,
                 idChunkString,
@@ -438,7 +426,7 @@ void MemoryAllocator::FreeMemory ( VkDevice device,
     VkDeviceSize offset
 ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -487,12 +475,12 @@ void MemoryAllocator::Destroy ( VkDevice device ) noexcept
     _chunkMap.clear ();
 }
 
-void MemoryAllocator::MakeSnapshot () noexcept
+void MemoryAllocator::MakeSnapshot ( char const* directory ) noexcept
 {
     // See chrome://tracing JSON format here:
     // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/edit
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _chunkMap.empty () )
         return;
@@ -553,15 +541,14 @@ void MemoryAllocator::MakeSnapshot () noexcept
 
     std::snprintf ( path,
         std::size ( path ),
-        R"__(%s/vulkan memory snapshot %d-%02d-%02d %02d-%02d-%02d %s.json)__",
-        Core::GetCacheDirectory ().c_str (),
+        R"__(%s/vulkan memory snapshot %d-%02d-%02d %02d-%02d-%02d.json)__",
+        directory,
         1900 + timeInfo.tm_year,
         timeInfo.tm_mon,
         timeInfo.tm_mday,
         timeInfo.tm_hour,
         timeInfo.tm_min,
-        timeInfo.tm_sec,
-        timeInfo.tm_zone
+        timeInfo.tm_sec
     );
 
     std::ofstream report ( path, std::ios::binary | std::ios::trunc | std::ios::out );
@@ -576,7 +563,7 @@ bool MemoryAllocator::MapMemory ( void* &ptr,
     char const* message
 ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -603,7 +590,7 @@ bool MemoryAllocator::MapMemory ( void* &ptr,
 
 void MemoryAllocator::UnmapMemory ( VkDevice device, VkDeviceMemory memory ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     auto findResult = _chunkMap.find ( memory );
     AV_ASSERT ( findResult != _chunkMap.end () )
@@ -642,7 +629,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
     if ( memoryTypeIndex > VK_MAX_MEMORY_TYPES ) [[unlikely]]
         return false;
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     bool const isStaging = ( properties & STAGING_MEMORY_MASK ) == STAGING_MEMORY_MASK;
     auto &chunks = isStaging ? _stagingMemory : _notStagedMemory[ memoryTypeIndex ];
@@ -683,13 +670,18 @@ void MemoryAllocator::MakeJSONChunks ( std::string &json,
     VkMemoryPropertyFlags props, char const* type
 ) noexcept
 {
-    constexpr char const begin[] =
-        R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu [%s]:)__";
-
     char buffer[ 256U ];
 
     json.append ( buffer,
-        static_cast<size_t> ( std::snprintf ( buffer, std::size ( buffer ), begin, idChunks, memoryIndex, type ) )
+        static_cast<size_t> (
+            std::snprintf ( buffer,
+                std::size ( buffer ),
+                R"__({"name":"process_name","ph":"M","pid":%zu,"args":{"name":"Memory index #%zu [%s]:)__",
+                idChunks,
+                memoryIndex,
+                type
+            )
+        )
     );
 
 #define AV_ENTRY(x) std::make_pair ( static_cast<uint32_t> ( x ), std::string_view ( " "#x ) )

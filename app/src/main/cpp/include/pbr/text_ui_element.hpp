@@ -3,14 +3,6 @@
 
 
 #include "ui_element.hpp"
-#include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <optional>
-#include <string>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -22,8 +14,8 @@ class TextUIElement final : public UIElement
         {
             int32_t                         _advance;
 
-            GXVec3                          _atlasTopLeft;
-            GXVec3                          _atlasBottomRight;
+            UIAtlas                         _atlasTopLeft;
+            UIAtlas                         _atlasBottomRight;
 
             int32_t                         _offsetY;
             size_t                          _parentLine;
@@ -60,20 +52,23 @@ class TextUIElement final : public UIElement
             std::vector<float>              _parentLineHeights {};
             GXVec2                          _parenTopLeft {};
 
-            std::vector<UIVertexInfo>       _vertices {};
+            std::vector<GXVec2>             _positions {};
+            size_t                          _positionBufferBytes = 0U;
+
+            std::vector<UIVertex>           _vertices {};
             size_t                          _vertexBufferBytes = 0U;
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept;
         };
 
-        using AlignIntegerHander = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
+        using AlignIntegerHandler = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
 
     private:
         ApplyLayoutCache                    _applyLayoutCache {};
         SubmitCache                         _submitCache {};
 
         // Way the user could override color which arrived from CSS.
-        std::optional<GXColorRGB>           _color {};
+        std::optional<GXColorUNORM>         _color {};
 
         int32_t                             _fontSize = 0;
         std::vector<Glyph>                  _glyphs {};
@@ -87,26 +82,22 @@ class TextUIElement final : public UIElement
         TextUIElement ( TextUIElement const & ) = delete;
         TextUIElement &operator = ( TextUIElement const & ) = delete;
 
-        TextUIElement ( TextUIElement && ) = delete;
+        TextUIElement ( TextUIElement && ) = default;
         TextUIElement &operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( bool &success,
-            UIElement const* parent,
-            lua_State &vm,
-            int errorHandlerIdx,
-            std::u32string &&text
-        ) noexcept;
+        explicit TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept;
 
         ~TextUIElement () override = default;
 
-        static void Init ( lua_State &vm ) noexcept;
+        void SetColor ( GXColorUNORM color ) noexcept;
+        void SetText ( char const* text ) noexcept;
 
     private:
         void ApplyLayout ( ApplyInfo &info ) noexcept override;
         void Submit ( SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
-        [[nodiscard]] GXColorRGB const &ResolveColor () const noexcept;
+        [[nodiscard]] GXColorUNORM ResolveColor () const noexcept;
         [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,
@@ -117,12 +108,8 @@ class TextUIElement final : public UIElement
         [[nodiscard]] static int32_t AlignIntegerToStart ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
         [[nodiscard]] static int32_t AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
 
-        [[nodiscard]] static AlignIntegerHander ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept;
-        [[nodiscard]] static AlignIntegerHander ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept;
-
-        [[nodiscard]] static int OnSetColorHSV ( lua_State* state );
-        [[nodiscard]] static int OnSetColorRGB ( lua_State* state );
-        [[nodiscard]] static int OnSetText ( lua_State* state );
+        [[nodiscard]] static AlignIntegerHandler ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept;
+        [[nodiscard]] static AlignIntegerHandler ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept;
 };
 
 } // namespace pbr

@@ -1,6 +1,6 @@
-#include <pbr/srgb_program.inc>
+#include <precompiled_headers.hpp>
+#include <pbr/brightness_factor.inc>
 #include <pbr/tone_mapper_program.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -8,7 +8,8 @@ namespace pbr {
 namespace {
 
 constexpr char const* VERTEX_SHADER = "shaders/full_screen_triangle.vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/tone_mapper.ps.spv";
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/tone_mapper_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/tone_mapper_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -18,15 +19,46 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    SRGBProgram ( "pbr::ToneMapperProgram" )
+    BrightnessProgram ( "pbr::ToneMapperProgram" )
 {
     // NOTHING
+}
+
+GraphicsProgram::DescriptorSetInfo const &ToneMapperProgram::GetResourceInfo () const noexcept
+{
+    static DescriptorSetInfo const info
+    {
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            },
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 1U
+            }
+        }
+    };
+
+    return info;
+}
+
+void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgram::Destroy ( device );
+
+    _fullScreenTriangleLayout.Destroy ( device );
+    _toneMapperLayout.Destroy ( device );
 }
 
 bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData specializationData,
+    BrightnessInfo const &brightnessInfo,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -51,18 +83,24 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -84,49 +122,6 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Tone mapper" )
     DestroyShaderModules ( device );
     return true;
-}
-
-void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _fullScreenTriangleLayout.Destroy ( device );
-    _toneMapperLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
-}
-
-GraphicsProgram::DescriptorSetInfo const &ToneMapperProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 1U
-            },
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 1U
-            },
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
-    return info;
 }
 
 void ToneMapperProgram::SetDescriptorSets ( VkCommandBuffer commandBuffer, VkDescriptorSet const* sets ) const noexcept
@@ -221,6 +216,13 @@ VkPipelineDepthStencilStateCreateInfo const* ToneMapperProgram::InitDepthStencil
     };
 
     return &info;
+}
+
+VkPipelineDynamicStateCreateInfo const* ToneMapperProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
 }
 
 VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemblyInfo (
@@ -336,15 +338,15 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::ToneMapperProgram)"
-    );
+    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
+    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
+    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::ToneMapperProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
 
     sourceInfo[ 0U ] =
     {
@@ -359,16 +361,16 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     constexpr static VkSpecializationMapEntry entry
     {
-        .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _inverseGamma ) ),
-        .size = sizeof ( SpecializationInfo::_inverseGamma )
+        .constantID = CONST_BRIGHTNESS_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
+        .size = sizeof ( BrightnessInfo::_brightnessFactor )
     };
 
     *specializationInfo =
     {
         .mapEntryCount = 1U,
         .pMapEntries = &entry,
-        .dataSize = sizeof ( SpecializationInfo ),
+        .dataSize = sizeof ( BrightnessInfo ),
         .pData = specializationData
     };
 
@@ -387,38 +389,23 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void ToneMapperProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-}
-
 VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset
         {
@@ -426,7 +413,7 @@ VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( V
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -435,9 +422,9 @@ VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( V
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;

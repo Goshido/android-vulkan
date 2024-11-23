@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/lightup_common.inc>
 #include <pbr/lightup_common_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -159,7 +153,7 @@ bool LightupCommonDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout LightupCommonDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &LightupCommonDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

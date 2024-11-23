@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <animation_track.hpp>
 #include <file.hpp>
 #include <android_vulkan_sdk/animation.hpp>

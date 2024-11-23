@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -186,19 +187,7 @@ void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const 
 
 bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr GXVec3 const vertices[] =
-    {
-        GXVec3 ( -0.5F, -0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, -0.5F ),
-        GXVec3 ( -0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, 0.5F, -0.5F ),
-        GXVec3 ( 0.5F, -0.5F, 0.5F ),
-        GXVec3 ( -0.5F, -0.5F, 0.5F ),
-        GXVec3 ( 0.5F, 0.5F, 0.5F ),
-        GXVec3 ( -0.5F, 0.5F, 0.5F )
-    };
-
-    constexpr uint32_t const indices[] =
+    constexpr uint32_t const indices[]
     {
         0U, 2U, 1U,
         1U, 2U, 3U,
@@ -214,9 +203,21 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
         4U, 0U, 1U
     };
 
-    GXAABB bounds;
-    bounds.AddVertex ( vertices[ 0U ] );
-    bounds.AddVertex ( vertices[ 7U ] );
+    constexpr GXVec3 const positions[]
+    {
+        { -0.5F, -0.5F, -0.5F },
+        { 0.5F, -0.5F, -0.5F },
+        { -0.5F, 0.5F, -0.5F },
+        { 0.5F, 0.5F, -0.5F },
+        { 0.5F, -0.5F, 0.5F },
+        { -0.5F, -0.5F, 0.5F },
+        { 0.5F, 0.5F, 0.5F },
+        { -0.5F, 0.5F, 0.5F }
+    };
+
+    GXAABB bounds {};
+    bounds.AddVertex ( positions[ 0U ] );
+    bounds.AddVertex ( positions[ 7U ] );
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
     {
@@ -244,15 +245,13 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
         "Light pass Unit cube"
     )
 
-    return _unitCube.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
-        sizeof ( vertices ),
-        static_cast<uint32_t> ( std::size ( vertices ) ),
-        indices,
-        static_cast<uint32_t> ( std::size ( indices ) ),
-        bounds,
-        renderer,
+    return _unitCube.LoadMesh ( renderer,
         commandBuffer,
-        VK_NULL_HANDLE
+        false,
+        VK_NULL_HANDLE,
+        { indices, std::size ( indices ) },
+        { positions, std::size ( positions ) },
+        bounds
     );
 }
 

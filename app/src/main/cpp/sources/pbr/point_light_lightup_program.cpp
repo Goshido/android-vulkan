@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_volume.inc>
 #include <pbr/point_light_lightup_program.hpp>
 
@@ -26,10 +27,18 @@ PointLightLightupProgram::PointLightLightupProgram () noexcept:
     // NOTHING
 }
 
+void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgram::Destroy ( device );
+
+    _pointLightLayout.Destroy ( device );
+    _lightVolumeLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
+}
+
 bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -65,12 +74,18 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -92,27 +107,6 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Point light lightup" )
     DestroyShaderModules ( device );
     return true;
-}
-
-void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    _pointLightLayout.Destroy ( device );
-    _lightVolumeLayout.Destroy ( device );
-    _commonLayout.Destroy ( device );
-
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 void PointLightLightupProgram::SetLightData ( VkCommandBuffer commandBuffer,
@@ -249,6 +243,13 @@ VkPipelineDepthStencilStateCreateInfo const* PointLightLightupProgram::InitDepth
     };
 
     return &info;
+}
+
+VkPipelineDynamicStateCreateInfo const* PointLightLightupProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
 }
 
 VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInputAssemblyInfo (
@@ -405,39 +406,24 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &render
     return true;
 }
 
-void PointLightLightupProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-}
-
 VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset =
         {
@@ -445,7 +431,7 @@ VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportI
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -454,9 +440,9 @@ VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportI
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;

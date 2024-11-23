@@ -1,19 +1,18 @@
-#include <pbr/div_html5_element.hpp>
-#include <pbr/html5_parser.hpp>
-#include <pbr/img_html5_element.hpp>
-#include <pbr/image_ui_element.hpp>
-#include <pbr/script_engine.hpp>
-#include <pbr/text_html5_element.hpp>
-#include <pbr/text_ui_element.hpp>
-#include <pbr/ui_layer.hpp>
-#include <pbr/utf8_parser.hpp>
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <logger.hpp>
+#include <pbr/div_html5_element.hpp>
+#include <pbr/html5_parser.hpp>
+#include <pbr/img_html5_element.hpp>
+#include <pbr/script_engine.hpp>
+#include <pbr/scriptable_image_ui_element.hpp>
+#include <pbr/scriptable_text_ui_element.hpp>
+#include <pbr/text_html5_element.hpp>
+#include <pbr/ui_layer.hpp>
+#include <pbr/utf8_parser.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <filesystem>
 
 extern "C" {
 
@@ -26,7 +25,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-CSSUnitToDevicePixel UILayer::_cssUnitToDevicePixel {};
 std::unordered_set<UILayer*> UILayer::_uiLayers {};
 
 UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
@@ -77,7 +75,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     int const errorHandlerIdx = ScriptEngine::PushErrorHandlerToStack ( vm );
 
     _css = std::move ( html.GetCSSParser () );
-    _body = new DIVUIElement ( success, nullptr, vm, errorHandlerIdx, std::move ( html.GetBodyCSS () ) );
+    _body = new ScriptableDIVUIElement ( success, nullptr, vm, errorHandlerIdx, std::move ( html.GetBodyCSS () ) );
 
     if ( !success )
     {
@@ -91,7 +89,7 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pushlstring ( &vm, bodyProp.data (), bodyProp.size () );
     lua_pushvalue ( &vm, -2 );
     lua_rawset ( &vm, uiLayerIdx );
-    UIElement::AppendElement ( *_body );
+    ScriptableUIElement::AppendElement ( *_body );
 
     success = RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, html.GetBodyID () );
 
@@ -145,7 +143,6 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
-        ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
@@ -154,7 +151,7 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
         ._vertices = 0U
     };
 
-    _body->ApplyLayout ( info );
+    _body->GetElement ().ApplyLayout ( info );
 
     return
     {
@@ -165,14 +162,13 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
 
 void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
 {
-    _body->Submit ( info );
+    _body->GetElement ().Submit ( info );
 }
 
 bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     UIElement::UpdateInfo info
     {
-        ._cssUnits = &_cssUnitToDevicePixel,
         ._fontStorage = &fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
@@ -181,29 +177,7 @@ bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport
         ._pen = GXVec2 ( 0.0F, 0.0F )
     };
 
-    return _body->UpdateCache ( info );
-}
-
-void UILayer::InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept
-{
-    // See full explanation in documentation: UI system, CSS Units and hardware DPI.
-    // docs/ui-system.md#css-units-and-dpi
-
-    constexpr float dpiSpec = 96.0F;
-    constexpr float distanceSpec = 28.0F;
-    constexpr float meterToInch = 3.93701e+1F;
-    constexpr float dpiFactor = meterToInch / ( dpiSpec * distanceSpec );
-
-    _cssUnitToDevicePixel._fromPX = dpi * comfortableViewDistanceMeters * dpiFactor;
-
-    constexpr float inchToPX = 96.0F;
-    constexpr float inchToMM = 25.4F;
-    constexpr float pxToMM = inchToPX / inchToMM;
-    _cssUnitToDevicePixel._fromMM = pxToMM * _cssUnitToDevicePixel._fromPX;
-
-    constexpr float inchToPT = 72.0F;
-    constexpr float pxToPT = inchToPX / inchToPT;
-    _cssUnitToDevicePixel._fromPT = pxToPT * _cssUnitToDevicePixel._fromPX;
+    return _body->GetElement ().UpdateCache ( info );
 }
 
 void UILayer::InitLuaFrontend ( lua_State &vm ) noexcept
@@ -255,7 +229,7 @@ bool UILayer::AppendChild ( lua_State &vm,
     int appendChildElementIdx,
     int uiLayerIdx,
     int registerNamedElementIdx,
-    DIVUIElement &parent,
+    ScriptableDIVUIElement &parent,
     HTML5Element &htmlChild
 ) noexcept
 {
@@ -267,7 +241,12 @@ bool UILayer::AppendChild ( lua_State &vm,
         // NOLINTNEXTLINE - downcast.
         auto &text = static_cast<TextHTML5Element &> ( htmlChild );
 
-        auto* t = new TextUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( text.GetText () ) );
+        auto* t = new ScriptableTextUIElement ( success,
+            &parent.GetElement (),
+            vm,
+            errorHandlerIdx,
+            std::move ( text.GetText () )
+        );
 
         if ( !success ) [[unlikely]]
         {
@@ -275,8 +254,8 @@ bool UILayer::AppendChild ( lua_State &vm,
             return false;
         }
 
-        UIElement::AppendElement ( *t );
-        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *t );
+        ScriptableUIElement::AppendElement ( *t );
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, t->GetElement () );
     }
 
     if ( tag == HTML5Tag::eTag::IMG )
@@ -284,8 +263,8 @@ bool UILayer::AppendChild ( lua_State &vm,
         // NOLINTNEXTLINE - downcast.
         auto &img = static_cast<IMGHTML5Element &> ( htmlChild );
 
-        auto* i = new ImageUIElement ( success,
-            &parent,
+        auto* i = new ScriptableImageUIElement ( success,
+            &parent.GetElement (),
             vm,
             errorHandlerIdx,
             std::move ( img.GetAssetPath () ),
@@ -298,7 +277,7 @@ bool UILayer::AppendChild ( lua_State &vm,
             return false;
         }
 
-        UIElement::AppendElement ( *i );
+        ScriptableUIElement::AppendElement ( *i );
 
         if ( !RegisterNamedElement ( vm, errorHandlerIdx, uiLayerIdx, registerNamedElementIdx, img.GetID () ) )
         {
@@ -307,7 +286,7 @@ bool UILayer::AppendChild ( lua_State &vm,
             return false;
         }
 
-        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *i );
+        return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, i->GetElement () );
     }
 
     if ( tag != HTML5Tag::eTag::DIV ) [[unlikely]]
@@ -319,7 +298,12 @@ bool UILayer::AppendChild ( lua_State &vm,
     // NOLINTNEXTLINE - downcast.
     auto &div = static_cast<DIVHTML5Element &> ( htmlChild );
 
-    auto* d = new DIVUIElement ( success, &parent, vm, errorHandlerIdx, std::move ( div._cssComputedValues ) );
+    auto* d = new ScriptableDIVUIElement ( success,
+        &parent.GetElement (),
+        vm,
+        errorHandlerIdx,
+        std::move ( div._cssComputedValues )
+    );
 
     if ( !success ) [[unlikely]]
     {
@@ -327,7 +311,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         return false;
     }
 
-    UIElement::AppendElement ( *d );
+    ScriptableUIElement::AppendElement ( *d );
 
     for ( HTML5Children &children = div.GetChildren (); auto &child : children )
     {
@@ -353,7 +337,7 @@ bool UILayer::AppendChild ( lua_State &vm,
         return false;
     }
 
-    return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, *d );
+    return parent.AppendChildElement ( vm, errorHandlerIdx, appendChildElementIdx, d->GetElement () );
 }
 
 bool UILayer::RegisterNamedElement ( lua_State &vm,
@@ -412,7 +396,7 @@ int UILayer::OnHide ( lua_State* state )
 
     if ( layer._body ) [[likely]]
     {
-        layer._body->Hide ();
+        layer._body->GetElement ().Hide ();
         return 0;
     }
 
@@ -430,7 +414,7 @@ int UILayer::OnIsVisible ( lua_State* state )
     }
 
     auto const &layer = *static_cast<UILayer const*> ( lua_touserdata ( state, 1 ) );
-    lua_pushboolean ( state, layer._body != nullptr && layer._body->IsVisible () );
+    lua_pushboolean ( state, layer._body != nullptr && layer._body->GetElement ().IsVisible () );
     return 1;
 }
 
@@ -440,7 +424,7 @@ int UILayer::OnShow ( lua_State* state )
 
     if ( layer._body ) [[likely]]
     {
-        layer._body->Show ();
+        layer._body->GetElement ().Show ();
         return 0;
     }
 

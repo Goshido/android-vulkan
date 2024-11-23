@@ -1,25 +1,25 @@
+#include <precompiled_headers.hpp>
 #include <texture2D.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <bit>
-#include <regex>
-#include <set>
-#include <thread>
-#include <unordered_map>
 
 #define STBI_MALLOC(sz) std::malloc(sz)
 #define STBI_REALLOC(p, newsz) std::realloc(p, newsz)
 #define STBI_FREE(p) std::free(p)
 #define STBI_NO_FAILURE_STRINGS
-#define STBI_NEON
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #define STBI_ONLY_BMP
 #define STBI_ONLY_TGA
 #define STBI_ONLY_HDR
 #define STB_IMAGE_IMPLEMENTATION
+
+#ifdef __ARM_NEON
+
+#define STBI_NEON
+
+#endif // __ARM_NEON
+
 #include <stb/stb_image.h>
 
 GX_RESTORE_WARNING_STATE
@@ -106,12 +106,12 @@ VkFormat Texture2D::GetFormat () const noexcept
     return _format;
 }
 
-[[maybe_unused]] VkImage Texture2D::GetImage () const noexcept
+[[maybe_unused]] VkImage const &Texture2D::GetImage () const noexcept
 {
     return _image;
 }
 
-VkImageView Texture2D::GetImageView () const noexcept
+VkImageView const &Texture2D::GetImageView () const noexcept
 {
     return _imageView;
 }
@@ -326,23 +326,32 @@ bool Texture2D::CreateCommonResources ( VkImageCreateInfo &imageInfo,
     _format = format;
     _resolution = resolution;
 
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.pNext = nullptr;
-    imageInfo.flags = 0U;
-    imageInfo.format = _format;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.usage = usage;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.extent.width = _resolution.width;
-    imageInfo.extent.height = _resolution.height;
-    imageInfo.extent.depth = 1U;
-    imageInfo.mipLevels = static_cast<uint32_t> ( mips );
-    imageInfo.arrayLayers = 1U;
-    imageInfo.queueFamilyIndexCount = 0U;
-    imageInfo.pQueueFamilyIndices = nullptr;
+    imageInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = _format,
+
+        .extent
+        {
+            .width = _resolution.width,
+            .height = _resolution.height,
+            .depth = 1U
+        },
+
+        .mipLevels = static_cast<uint32_t> ( mips ),
+        .arrayLayers = 1U,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+
 
     VkDevice device = renderer.GetDevice ();
 
@@ -815,7 +824,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
 
     vkCmdCopyBufferToImage ( commandBuffer, _transfer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &copyRegion );
 
-    auto const isMipmapImpossible = [] ( uint32_t width, uint32_t height ) noexcept -> bool {
+    constexpr auto isMipmapImpossible = [] ( uint32_t width, uint32_t height ) noexcept -> bool {
         return width + height < 3U;
     };
 
@@ -1093,7 +1102,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     pixelData.resize ( size );
     uint8_t* dst = pixelData.data ();
 
-    auto expander = [] ( uint32_t* dst,
+    constexpr auto expander = [] ( uint32_t* dst,
         size_t dstRowSkipPixels,
         uint32_t const* nonDstMemory,
         uint8_t const* src,

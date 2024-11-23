@@ -31,13 +31,13 @@ class AnimationBlendNode final : public JointProviderNode
 
     public:
         AnimationBlendNode () = default;
-    
+
         AnimationBlendNode ( AnimationBlendNode const& ) = delete;
         AnimationBlendNode& operator= ( AnimationBlendNode const& ) = delete;
-    
+
         AnimationBlendNode ( AnimationBlendNode&& ) = delete;
         AnimationBlendNode& operator= ( AnimationBlendNode&& ) = delete;
-    
+
         ~AnimationBlendNode () override = default;
 
         static void Init ( lua_State &vm ) noexcept;

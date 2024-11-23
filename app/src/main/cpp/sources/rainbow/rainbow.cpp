@@ -1,11 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <rainbow/rainbow.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cmath>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -288,8 +282,6 @@ bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer,
     VkSemaphore renderEnd
 ) noexcept
 {
-    VkResult presentResult = VK_ERROR_DEVICE_LOST;
-
     VkPresentInfoKHR const presentInfoKHR
     {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -299,21 +291,13 @@ bool Rainbow::EndFrame ( android_vulkan::Renderer &renderer,
         .swapchainCount = 1U,
         .pSwapchains = &renderer.GetSwapchain (),
         .pImageIndices = &swapchainImageIndex,
-        .pResults = &presentResult
+        .pResults = nullptr
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    return android_vulkan::Renderer::CheckVkResult (
         vkQueuePresentKHR ( renderer.GetQueue (), &presentInfoKHR ),
         "Rainbow::EndFrame",
         "Can't present frame"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult,
-        "Rainbow::EndFrame",
-        "Present queue has been failed"
     );
 }
 

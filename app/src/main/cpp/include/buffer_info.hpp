@@ -15,8 +15,17 @@ namespace android_vulkan {
 
 struct BufferInfo final
 {
-    VkBuffer        _buffer;
-    VkDeviceSize    _range;
+    VkBuffer        _buffer = VK_NULL_HANDLE;
+    VkDeviceSize    _range = 0U;
+};
+
+struct MeshBufferInfo final
+{
+    constexpr static size_t     POSITION_BUFFER_INDEX = 0U;
+    constexpr static size_t     REST_DATA_BUFFER_INDEX = 1U;
+
+    BufferInfo                  _postions {};
+    BufferInfo                  _rest {};
 };
 
 } // namespace android_vulkan

@@ -1,16 +1,7 @@
-#include <pbr/image_ui_element.hpp>
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include <file.hpp>
+#include <pbr/image_ui_element.hpp>
 
 
 namespace pbr {
@@ -73,37 +64,15 @@ bool ImageUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> con
 
 ImageUIElement::ImageUIElement ( bool &success,
     UIElement const* parent,
-    lua_State &vm,
-    int errorHandlerIdx,
     std::string &&asset,
     CSSComputedValues &&css
 ) noexcept:
-    CSSUIElement ( true, parent, std::move ( css ) ),
-    _asset ( std::move ( asset ) ),
+    UIElement ( true, parent, std::move ( css ) ),
+    _asset ( std::move ( android_vulkan::File ( std::move ( asset ) ).GetPath () ) ),
     _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    if ( success = lua_checkstack ( &vm, 2 ); !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Stack is too small." );
-        return;
-    }
-
-    if ( success = lua_getglobal ( &vm, "RegisterImageUIElement" ) == LUA_TFUNCTION; !success ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::ImageUIElement::ImageUIElement - Can't find register function." );
-        return;
-    }
-
-    lua_pushlightuserdata ( &vm, this );
-
-    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success ) [[unlikely]]
-    {
-        android_vulkan::LogWarning ( "pbr::ImageUIElement::ImageUIElement - Can't append element inside Lua VM." );
-        return;
-    }
-
     auto const texture = UIPass::RequestImage ( _asset );
 
     if ( success = texture.has_value (); success )
@@ -132,22 +101,21 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     _parentSize = info._canvasSize;
     GXVec2 const &canvasSize = info._canvasSize;
-    CSSUnitToDevicePixel const &units = *info._cssUnits;
 
-    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true, units )
+    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true, units )
+    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true )
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
@@ -194,7 +162,7 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
     }
 
-    _borderSize = ResolveSize ( canvasSize, units );
+    _borderSize = ResolveSize ( canvasSize );
     GXVec2 beta {};
     beta.Sum ( _borderSize, _canvasTopLeftOffset );
 
@@ -270,11 +238,18 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-    constexpr size_t bytes = vertices * sizeof ( UIVertexInfo );
+    constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
+    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
     UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices, bytes );
-    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
+    std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );
+
+    uiPositions = uiPositions.subspan ( vertices );
+    uiVertices = uiVertices.subspan ( vertices );
 
     info._uiPass->SubmitImage ( _submitCache._texture );
 }
@@ -298,7 +273,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         pen._data[ 1U ] += info._parentLineHeights[ info._line ];
     }
 
-    AlignHander const verticalAlign = ResolveVerticalAlignment ( *this );
+    AlignHandler const verticalAlign = ResolveVerticalAlignment ( *this );
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], info._parentLineHeights[ _parentLine ], _blockSize._data[ 1U ] );
 
     GXVec2 topLeft {};
@@ -310,19 +285,20 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     float const &blockWidth = _blockSize._data[ 0U ];
 
     // NOLINTNEXTLINE - downcast.
-    AlignHander const handler = ResolveTextAlignment ( static_cast<CSSUIElement const  &> ( *_parent ) );
+    AlignHandler const handler = ResolveTextAlignment ( *_parent );
     topLeft._data[ 0U ] = handler ( penX, parentLeft, blockWidth ) + borderOffsetX;
 
     GXVec2 bottomRight {};
     bottomRight.Sum ( topLeft, _borderSize );
 
-    constexpr GXColorRGB white ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
     constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
     constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
 
     FontStorage::GlyphInfo const &g = info._fontStorage->GetTransparentGlyphInfo ();
 
-    UIPass::AppendRectangle ( _submitCache._vertices,
+    UIPass::AppendRectangle ( _submitCache._positions,
+        _submitCache._vertices,
         white,
         topLeft,
         bottomRight,
@@ -339,36 +315,38 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
-GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize ) noexcept
 {
     if ( !_isAutoWidth & _isAutoHeight )
-        return ResolveSizeByWidth ( parentCanvasSize._data[ 0U ], units );
+        return ResolveSizeByWidth ( parentCanvasSize._data[ 0U ] );
 
     if ( _isAutoWidth & !_isAutoHeight )
-        return ResolveSizeByHeight ( parentCanvasSize._data[ 1U ], units );
+        return ResolveSizeByHeight ( parentCanvasSize._data[ 1U ] );
 
-    return GXVec2 ( ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false, units ),
-        ResolvePixelLength ( _css._height, parentCanvasSize._data[ 1U ], true, units )
-    );
+    return
+    {
+        ResolvePixelLength ( _css._width, parentCanvasSize._data[ 0U ], false ),
+        ResolvePixelLength ( _css._height, parentCanvasSize._data[ 1U ], true )
+    };
 }
 
-GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth ) noexcept
 {
     VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
-    result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false, units );
+    result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false );
     result._data[ 1U ] = result._data[ 0U ] * static_cast<float> ( r.height ) / static_cast<float> ( r.width );
 
     return result;
 }
 
-GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight, CSSUnitToDevicePixel const &units ) noexcept
+GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight ) noexcept
 {
     VkExtent2D const &r = _submitCache._texture->GetResolution ();
 
     GXVec2 result {};
-    result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true, units );
+    result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true );
     result._data[ 0U ] = result._data[ 1U ] * static_cast<float> ( r.width ) / static_cast<float> ( r.height );
 
     return result;

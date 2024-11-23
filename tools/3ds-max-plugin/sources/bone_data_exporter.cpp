@@ -1,11 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <bone_data_exporter.hpp>
 #include <result_checker.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <class_desc.hpp>
 
 

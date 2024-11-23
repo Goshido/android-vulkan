@@ -1,0 +1,11 @@
+#ifndef HELLO_TRIANGLE_PROGRAM_INC
+#define HELLO_TRIANGLE_PROGRAM_INC
+
+
+#define IN_SLOT_VERTEX      0
+#define IN_SLOT_COLOR       1
+
+#define ATT_SLOT_COLOR      0
+
+
+#endif // HELLO_TRIANGLE_PROGRAM_INC

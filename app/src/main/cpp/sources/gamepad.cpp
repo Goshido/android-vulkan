@@ -1,10 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <gamepad.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <android/keycodes.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -17,7 +12,7 @@ Gamepad &Gamepad::GetInstance () noexcept
 
 void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eButtonState state ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     switch ( state )
     {
@@ -45,7 +40,7 @@ void Gamepad::BindKey ( void* context, KeyHandler handler, eGamepadKey key, eBut
 
 void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     switch ( state )
     {
@@ -73,56 +68,56 @@ void Gamepad::UnbindKey ( eGamepadKey key, eButtonState state ) noexcept
 
 void Gamepad::BindLeftStick ( void* context, StickHandler handler ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _leftStick._context = context;
     _leftStick._handler = handler;
 }
 
 void Gamepad::UnbindLeftStick () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _leftStick._context = nullptr;
     _leftStick._handler = nullptr;
 }
 
 void Gamepad::BindRightStick ( void* context, StickHandler handler ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _rightStick._context = context;
     _rightStick._handler = handler;
 }
 
 void Gamepad::UnbindRightStick () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _rightStick._context = nullptr;
     _rightStick._handler = nullptr;
 }
 
 [[maybe_unused]] void Gamepad::BindLeftTrigger ( void* context, TriggerHandler handler ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _leftTrigger._context = context;
     _leftTrigger._handler = handler;
 }
 
 [[maybe_unused]] void Gamepad::UnbindLeftTrigger () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _leftTrigger._context = nullptr;
     _leftTrigger._handler = nullptr;
 }
 
 void Gamepad::BindRightTrigger ( void* context, TriggerHandler handler ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _rightTrigger._context = context;
     _rightTrigger._handler = handler;
 }
 
 void Gamepad::UnbindRightTrigger () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _rightTrigger._context = nullptr;
     _rightTrigger._handler = nullptr;
 }
@@ -133,7 +128,7 @@ bool Gamepad::OnKeyDown ( int32_t key ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         auto const findResult = _mapper.find ( key );
 
         if ( findResult == _mapper.cend () )
@@ -155,7 +150,7 @@ bool Gamepad::OnKeyUp ( int32_t key ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         auto const findResult = _mapper.find ( key );
 
         if ( findResult == _mapper.cend () )
@@ -177,7 +172,7 @@ void Gamepad::OnLeftStick ( float x, float y ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         stick = _leftStick;
     }
 
@@ -193,7 +188,7 @@ void Gamepad::OnRightStick ( float x, float y ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         stick = _rightStick;
     }
 
@@ -209,7 +204,7 @@ void Gamepad::OnLeftTrigger ( float value ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         trigger = _leftTrigger;
     }
 
@@ -225,7 +220,7 @@ void Gamepad::OnRightTrigger ( float value ) const noexcept
 
     {
         // Operator block is intentional because of unique lock.
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         trigger = _rightTrigger;
     }
 
@@ -237,7 +232,7 @@ void Gamepad::OnRightTrigger ( float value ) const noexcept
 
 Gamepad::Gamepad () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     _mapper.emplace ( AKEYCODE_BUTTON_A, static_cast<size_t> ( eGamepadKey::A ) );
     _mapper.emplace ( AKEYCODE_BUTTON_B, static_cast<size_t> ( eGamepadKey::B ) );

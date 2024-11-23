@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/common_css_rule.hpp>
 #include <pbr/css_parser.hpp>

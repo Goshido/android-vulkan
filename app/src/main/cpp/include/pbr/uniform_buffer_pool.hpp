@@ -48,7 +48,7 @@ class UniformBufferPool final
         [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
         [[nodiscard]] VkBuffer GetBuffer ( size_t bufferIndex ) const noexcept;
 
-        // The method return all items to the pool.
+        // The method returns all items to the pool.
         void Reset () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept;

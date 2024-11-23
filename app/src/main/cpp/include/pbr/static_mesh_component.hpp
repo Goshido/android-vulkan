@@ -14,10 +14,12 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
 {
     private:
         Actor*                                                          _actor = nullptr;
-        GXColorRGB                                                      _color0;
-        GXColorRGB                                                      _color1;
-        GXColorRGB                                                      _color2;
-        GXColorRGB                                                      _emission;
+        GXColorUNORM                                                    _color0;
+        GXColorUNORM                                                    _color1;
+        GXColorUNORM                                                    _color2;
+        std::optional<GeometryPassProgram::ColorData>                   _colorData = std::nullopt;
+        GXColorUNORM                                                    _emission { 0U, 0U, 0U, 0U };
+        float                                                           _emissionIntensity = 1.0F;
         GXMat4                                                          _localMatrix;
         MaterialRef                                                     _material;
         MeshRef                                                         _mesh;
@@ -76,22 +78,12 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept override;
         void Submit ( RenderSession &renderSession ) noexcept override;
 
-        [[maybe_unused, nodiscard]] GXAABB const &GetBoundsWorld () const noexcept;
-
-        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor0 () const noexcept;
-        void SetColor0 ( GXColorRGB const &color ) noexcept;
-
-        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor1 () const noexcept;
-        void SetColor1 ( GXColorRGB const &color ) noexcept;
-
-        [[maybe_unused, nodiscard]] GXColorRGB const &GetColor2 () const noexcept;
-        void SetColor2 ( GXColorRGB const &color ) noexcept;
-
-        [[maybe_unused, nodiscard]] GXColorRGB const &GetEmission () const noexcept;
-        void SetEmission ( GXColorRGB const &emission ) noexcept;
+        void SetColor0 ( GXColorUNORM color ) noexcept;
+        void SetColor1 ( GXColorUNORM color ) noexcept;
+        void SetColor2 ( GXColorUNORM color ) noexcept;
+        void SetEmission ( GXColorUNORM color, float intensity ) noexcept;
 
         [[nodiscard]] MaterialRef &GetMaterial () noexcept;
-        [[maybe_unused, nodiscard]] MaterialRef const &GetMaterial () const noexcept;
 
         [[nodiscard]] GXMat4 const &GetTransform () const noexcept;
         void SetTransform ( GXMat4 const &transform ) noexcept;
@@ -108,6 +100,8 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
     private:
         [[nodiscard]] ComponentRef &GetReference () noexcept override;
         void OnTransform ( GXMat4 const &transformWorld ) noexcept override;
+
+        void UpdateColorData () noexcept;
 
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
 

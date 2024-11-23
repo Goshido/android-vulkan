@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sweep_testing/actor_body.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/opaque_material.hpp>
@@ -12,18 +13,13 @@ constexpr float ROTATION_SPEED = 5.0e-2F * GX_MATH_DOUBLE_PI;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GXColorRGB const ActorBody::_overlayColor (
-    static_cast<GXUByte> ( 101U ),
-    static_cast<GXUByte> ( 49U ),
-    static_cast<GXUByte> ( 15U ),
-    static_cast<GXUByte> ( 255U )
-);
+GXColorUNORM const ActorBody::_overlayColor ( 101U, 49U, 15U, 255U );
 
 void ActorBody::EnableOverlay () noexcept
 {
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
-    mesh.SetEmission ( _overlayColor );
+    mesh.SetEmission ( _overlayColor, 1.0F );
 }
 
 void ActorBody::DisableOverlay () noexcept
@@ -31,8 +27,8 @@ void ActorBody::DisableOverlay () noexcept
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
 
-    constexpr GXColorRGB noOverlay ( 0.0F, 0.0F, 0.0F, 1.0F );
-    mesh.SetEmission ( noOverlay );
+    constexpr GXColorUNORM noOverlay ( 0U, 0U, 0U, 255U );
+    mesh.SetEmission ( noOverlay, 1.0F );
 }
 
 void ActorBody::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept

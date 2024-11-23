@@ -1,4 +1,5 @@
-#include <pbr/srgb_program.inc>
+#include <precompiled_headers.hpp>
+#include <pbr/brightness_factor.inc>
 #include <pbr/ui_program.hpp>
 #include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.hpp>
@@ -9,33 +10,44 @@ namespace pbr {
 namespace {
 
 constexpr char const* VERTEX_SHADER = "shaders/ui.vs.spv";
-constexpr char const* FRAGMENT_SHADER = "shaders/ui.ps.spv";
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    SRGBProgram ( "pbr::UIProgram" )
+    BrightnessProgram ( "pbr::UIProgram" )
 {
     // NOTHING
+}
+
+void UIProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgram::Destroy ( device );
+
+    _imageLayout.Destroy ( device );
+    _commonLayout.Destroy ( device );
+    _transformLayout.Destroy ( device );
 }
 
 bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData specializationData,
+    BrightnessInfo const &brightnessInfo,
     VkExtent2D const &viewport
 ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription {};
+    VkVertexInputBindingDescription bindingDescription[ VERTEX_INPUT_BINDING_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo {};
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
     VkPipelineMultisampleStateCreateInfo multisampleInfo {};
@@ -55,22 +67,28 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, specializationData, &specInfo, stageInfo ) ) [[unlikely]]
+    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
         return false;
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
-        &bindingDescription
+        bindingDescription
     );
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -92,27 +110,6 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "UI" )
     DestroyShaderModules ( device );
     return true;
-}
-
-void UIProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _imageLayout.Destroy ( device );
-    _commonLayout.Destroy ( device );
-    _transformLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
 }
 
 GraphicsProgram::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
@@ -244,6 +241,13 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
     return &info;
 }
 
+VkPipelineDynamicStateCreateInfo const* UIProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
+}
+
 VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
@@ -361,15 +365,15 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (pbr::UIProgram)"
-    );
+    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
+    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
+    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
 
     sourceInfo[ 0U ] =
     {
@@ -384,16 +388,16 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 
     constexpr static VkSpecializationMapEntry entry
     {
-        .constantID = CONST_INVERSE_GAMMA,
-        .offset = static_cast<uint32_t> ( offsetof ( SpecializationInfo, _inverseGamma ) ),
-        .size = sizeof ( SpecializationInfo::_inverseGamma )
+        .constantID = CONST_BRIGHTNESS_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
+        .size = sizeof ( BrightnessInfo::_brightnessFactor )
     };
 
     *specializationInfo =
     {
         .mapEntryCount = 1U,
         .pMapEntries = &entry,
-        .dataSize = sizeof ( SpecializationInfo ),
+        .dataSize = sizeof ( BrightnessInfo ),
         .pData = specializationData
     };
 
@@ -412,39 +416,24 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UIProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-}
-
 VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset
         {
@@ -452,7 +441,7 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -461,9 +450,9 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;
@@ -475,43 +464,58 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    *binds =
+    binds[ IN_BUFFER_POSITION ] =
     {
-        .binding = 0U,
-        .stride = static_cast<uint32_t> ( sizeof ( UIVertexInfo ) ),
+        .binding = IN_BUFFER_POSITION,
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec2 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    attributes[ IN_SLOT_VERTEX ] =
+    binds[ IN_BUFFER_REST ] =
     {
-        .location = IN_SLOT_VERTEX,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
+        .stride = static_cast<uint32_t> ( sizeof ( UIVertex ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    attributes[ IN_SLOT_POSITION ] =
+    {
+        .location = IN_SLOT_POSITION,
+        .binding = IN_BUFFER_POSITION,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _vertex ) )
-    };
-
-    attributes[ IN_SLOT_COLOR ] =
-    {
-        .location = IN_SLOT_COLOR,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _color ) )
-    };
-
-    attributes[ IN_SLOT_ATLAS ] =
-    {
-        .location = IN_SLOT_ATLAS,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _atlas ) )
+        .offset = 0U
     };
 
     attributes[ IN_SLOT_IMAGE_UV ] =
     {
         .location = IN_SLOT_IMAGE_UV,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertexInfo, _imageUV ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _image ) )
+    };
+
+    attributes[ IN_SLOT_ATLAS_UV ] =
+    {
+        .location = IN_SLOT_ATLAS_UV,
+        .binding = IN_BUFFER_REST,
+        .format = VK_FORMAT_R32G32_SFLOAT,
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._uv ) )
+    };
+
+    attributes[ IN_SLOT_ATLAS_LAYER ] =
+    {
+        .location = IN_SLOT_ATLAS_LAYER,
+        .binding = IN_BUFFER_REST,
+        .format = VK_FORMAT_R8_USCALED,
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._layer ) )
+    };
+
+    attributes[ IN_SLOT_COLOR ] =
+    {
+        .location = IN_SLOT_COLOR,
+        .binding = IN_BUFFER_REST,
+        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _color ) )
     };
 
     info =
@@ -519,7 +523,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .vertexBindingDescriptionCount = 1U,
+        .vertexBindingDescriptionCount = static_cast<uint32_t> ( VERTEX_INPUT_BINDING_COUNT ),
         .pVertexBindingDescriptions = binds,
         .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
         .pVertexAttributeDescriptions = attributes

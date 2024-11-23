@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <half_types.hpp>
 #include <pbr/default_texture_manager.hpp>
 #include <vulkan_utils.hpp>

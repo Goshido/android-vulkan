@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <contact_detector.hpp>
 #include <logger.hpp>
 

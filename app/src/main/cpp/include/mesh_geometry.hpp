@@ -4,9 +4,11 @@
 
 #include "buffer_info.hpp"
 #include "renderer.hpp"
+#include "vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <span>
 #include <string>
 
 GX_RESTORE_WARNING_STATE
@@ -16,25 +18,54 @@ namespace android_vulkan {
 
 class MeshGeometry final
 {
+    public:
+        using AbstractData = std::span<uint8_t const>;
+        using Indices16 = std::span<uint16_t const>;
+        using Indices32 = std::span<uint32_t const>;
+        using Positions = std::span<GXVec3 const>;
+        using Vertices = std::span<VertexInfo const>;
+
+        struct IndexBuffer final
+        {
+            VkBuffer                _buffer = VK_NULL_HANDLE;
+            VkIndexType             _type = VK_INDEX_TYPE_UINT16;
+        };
+
     private:
-        GXAABB              _bounds {};
+        struct Allocation final
+        {
+            VkDeviceMemory          _memory = VK_NULL_HANDLE;
+            VkDeviceSize            _offset = std::numeric_limits<VkDeviceSize>::max ();
+            VkDeviceSize            _range = 0U;
+        };
 
-        VkBuffer            _indexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _indexBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _indexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+        struct UploadJob final
+        {
+            VkBuffer                _buffer = VK_NULL_HANDLE;
+            void const*             _data = nullptr;
+            VkDeviceSize            _size = 0U;
+            VkBufferUsageFlags      _usage = 0U;
+        };
 
-        VkBuffer            _vertexBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _vertexBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _vertexBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
-        VkDeviceSize        _vertexBufferRange = 0U;
+        using UploadJobs = std::span<UploadJob const>;
 
-        VkBuffer            _transferBuffer = VK_NULL_HANDLE;
-        VkDeviceMemory      _transferBufferMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _transferBufferOffset = std::numeric_limits<VkDeviceSize>::max ();
+    private:
+        constexpr static size_t     VERTEX_BUFFER_COUNT = 2U;
 
-        uint32_t            _vertexCount = 0U;
-        uint32_t            _vertexBufferVertexCount = 0U;
-        std::string         _fileName {};
+        GXAABB                      _bounds {};
+
+        IndexBuffer                 _indexBuffer {};
+        Allocation                  _indexAllocation {};
+
+        VkBuffer                    _vertexBuffers[ VERTEX_BUFFER_COUNT ] { VK_NULL_HANDLE, VK_NULL_HANDLE };
+        Allocation                  _vertexAllocations[ VERTEX_BUFFER_COUNT ] {};
+
+        VkBuffer                    _transferBuffer = VK_NULL_HANDLE;
+        Allocation                  _transferAllocation {};
+
+        uint32_t                    _vertexCount = 0U;
+        uint32_t                    _vertexBufferVertexCount = 0U;
+        std::string                 _fileName {};
 
     public:
         MeshGeometry () = default;
@@ -51,85 +82,115 @@ class MeshGeometry final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
-        [[nodiscard]] VkBuffer const &GetVertexBuffer () const noexcept;
-        [[nodiscard]] BufferInfo GetVertexBufferInfo () const noexcept;
+
+        // Method returns two buffers: position buffer and "rest data" buffer.
+        [[nodiscard]] VkBuffer const *GetVertexBuffers () const noexcept;
+
+        [[nodiscard]] BufferInfo GetBufferInfo () const noexcept;
+        [[nodiscard]] MeshBufferInfo GetMeshBufferInfo () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
-        [[nodiscard]] VkBuffer const &GetIndexBuffer () const noexcept;
+        [[nodiscard]] IndexBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
-        [[maybe_unused, nodiscard]] bool IsIndexBufferPresent () const noexcept;
 
         // Mesh geometry is not unique if it was loaded from .mesh file.
         // Mesh geometry is unique if it was created from raw data.
         [[nodiscard]] bool IsUnique () const noexcept;
         void MakeUnique () noexcept;
 
-        [[nodiscard]] bool LoadMesh ( std::string &&fileName,
-            Renderer &renderer,
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            VkFence fence
+            bool externalCommandBuffer,
+            VkFence fence,
+            std::string &&fileName
         ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( uint8_t const* data,
-            size_t size,
-            uint32_t vertexCount,
-            Renderer &renderer,
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            VkFence fence
+            bool externalCommandBuffer,
+            VkFence fence,
+            AbstractData data,
+            uint32_t vertexCount
         ) noexcept;
 
-        [[nodiscard]] bool LoadMesh ( uint8_t const* vertexData,
-            size_t vertexDataSize,
-            uint32_t vertexCount,
-            uint32_t const* indices,
-            uint32_t indexCount,
-            GXAABB const &bounds,
-            Renderer &renderer,
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            VkFence fence
+            bool externalCommandBuffer,
+            VkFence fence,
+            Indices16 indices,
+            Positions positions,
+            GXAABB const &bounds
         ) noexcept;
+
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence,
+            Indices32 indices,
+            Positions positions,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence,
+            Indices16 indices,
+            Positions positions,
+            Vertices vertices,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence,
+            Indices32 indices,
+            Positions positions,
+            Vertices vertices,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[nodiscard]] constexpr static uint32_t GetVertexBufferCount () noexcept
+        {
+            return static_cast<uint32_t> ( VERTEX_BUFFER_COUNT );
+        }
 
     private:
+        [[nodiscard]] bool static CreateBuffer ( Renderer &renderer,
+            VkBuffer &buffer,
+            Allocation &allocation,
+            VkBufferCreateInfo const &createInfo,
+            VkMemoryPropertyFlags memoryProperty,
+            char const *name
+        ) noexcept;
+
         void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool LoadFromMesh ( std::string &&fileName,
-            Renderer &renderer,
+        [[nodiscard]] bool GPUTransfer ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            VkFence fence
+            bool externalCommandBuffer,
+            VkFence fence,
+            UploadJobs jobs
         ) noexcept;
 
-        [[nodiscard]] bool LoadFromMesh2 ( std::string &&fileName,
-            Renderer &renderer,
+        [[nodiscard]] bool LoadFromMesh2 ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            VkFence fence
+            bool externalCommandBuffer,
+            VkFence fence,
+            std::string &&fileName
         ) noexcept;
 
-        [[nodiscard]] bool UploadComplex ( uint8_t const* data,
-            size_t vertexDataSize,
+        [[nodiscard]] bool Upload ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence,
+            AbstractData indices,
             uint32_t indexCount,
-            Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
-        ) noexcept;
-
-        [[nodiscard]] bool UploadInternal ( size_t numUploads,
-            VkBufferCopy const* copyJobs,
-            VkBufferUsageFlags const* usages,
-            VkBuffer const* dstBuffers,
-            uint8_t const* data,
-            size_t dataSize,
-            Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
-        ) noexcept;
-
-        [[nodiscard]] bool UploadSimple ( uint8_t const* data,
-            size_t size,
-            uint32_t vertexCount,
-            VkBufferUsageFlags usage,
-            Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
+            VkIndexType indexType,
+            AbstractData vertexStream0,
+            Vertices vertexStream1,
+            uint32_t vertexCount
         ) noexcept;
 };
 

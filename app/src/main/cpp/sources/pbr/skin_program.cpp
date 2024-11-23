@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_program.hpp>
 
@@ -54,20 +55,8 @@ bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
 
 void SkinProgram::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
+    ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
-    DestroyShaderModule ( device );
-
-    if ( _pipeline == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyPipeline ( device, _pipeline, nullptr );
-    _pipeline = VK_NULL_HANDLE;
 }
 
 void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
@@ -83,21 +72,10 @@ void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptor
     );
 }
 
-void SkinProgram::DestroyShaderModule ( VkDevice device ) noexcept
-{
-    if ( _computeShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _computeShader, nullptr );
-    _computeShader = VK_NULL_HANDLE;
-}
-
 bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
-
-    VkDescriptorSetLayout dsLayout = _layout.GetLayout ();
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -112,7 +90,7 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
         .pNext = nullptr,
         .flags = 0U,
         .setLayoutCount = 1U,
-        .pSetLayouts = &dsLayout,
+        .pSetLayouts = &_layout.GetLayout (),
         .pushConstantRangeCount = 1U,
         .pPushConstantRanges = &pushConstantRange
     };

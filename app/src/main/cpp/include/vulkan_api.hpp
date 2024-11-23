@@ -15,7 +15,6 @@ GX_RESTORE_WARNING_STATE
 // https://en.wikipedia.org/wiki/X_Macro
 #define X(name) extern PFN_##name name;
 
-X ( vkGetInstanceProcAddr )
 #include <vulkan_bootstrap.in>
 #include <vulkan_device.in>
 #include <vulkan_instance.in>

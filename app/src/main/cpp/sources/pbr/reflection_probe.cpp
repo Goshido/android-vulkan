@@ -1,4 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/reflection_probe.hpp>
+
 
 namespace pbr {
 

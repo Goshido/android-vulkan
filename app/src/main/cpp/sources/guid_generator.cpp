@@ -1,13 +1,5 @@
+#include <precompiled_headers.hpp>
 #include <guid_generator.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cinttypes>
-#include <ctime>
-#include <random>
-#include <unistd.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {

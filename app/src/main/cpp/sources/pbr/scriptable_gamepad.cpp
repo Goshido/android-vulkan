@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_gamepad.hpp>
 #include <pbr/script_engine.hpp>
 #include <logger.hpp>
@@ -96,7 +97,7 @@ bool ScriptableGamepad::Execute ( lua_State &vm, int sceneHandleIndex, int onInp
     }
 
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _readQueue.swap ( _writeQueue );
     }
 
@@ -285,7 +286,7 @@ void ScriptableGamepad::OnKey ( void* context ) noexcept
     auto const &ctx = *static_cast<KeyContext const*> ( context );
 
     ScriptableGamepad &gamepad = *ctx._instance;
-    std::unique_lock<std::mutex> const lock ( gamepad._mutex );
+    std::lock_guard const lock ( gamepad._mutex );
 
     gamepad._writeQueue.push_back (
         Action
@@ -306,7 +307,7 @@ void ScriptableGamepad::OnStick ( void* context, float x, float y ) noexcept
     auto const &ctx = *static_cast<AnalogContext const*> ( context );
 
     ScriptableGamepad &gamepad = *ctx._instance;
-    std::unique_lock<std::mutex> const lock ( gamepad._mutex );
+    std::lock_guard const lock ( gamepad._mutex );
 
     gamepad._writeQueue.push_back (
         Action
@@ -327,7 +328,7 @@ void ScriptableGamepad::OnTrigger ( void* context, float value ) noexcept
     auto const &ctx = *static_cast<AnalogContext const*> ( context );
 
     ScriptableGamepad &gamepad = *ctx._instance;
-    std::unique_lock<std::mutex> const lock ( gamepad._mutex );
+    std::lock_guard const lock ( gamepad._mutex );
 
     gamepad._writeQueue.push_back (
         Action

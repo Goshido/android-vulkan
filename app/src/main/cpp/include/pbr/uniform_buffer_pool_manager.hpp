@@ -17,10 +17,10 @@ class UniformBufferPoolManager final
         std::vector<VkDescriptorSet>            _descriptorSets {};
         VkPipelineStageFlags const              _syncFlags;
 
-        size_t                                  _uniformBaseIndex = 0U;
-        size_t                                  _uniformReadIndex = 0U;
-        size_t                                  _uniformWriteIndex = 0U;
-        size_t                                  _uniformWritten = 0U;
+        size_t                                  _baseIndex = 0U;
+        size_t                                  _readIndex = 0U;
+        size_t                                  _writeIndex = 0U;
+        size_t                                  _written = 0U;
 
         UniformBufferPool                       _uniformPool;
         std::vector<VkWriteDescriptorSet>       _writeSets {};

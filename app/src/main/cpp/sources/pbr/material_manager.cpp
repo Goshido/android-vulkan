@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/opaque_material.hpp>
 #include <pbr/stipple_material.hpp>
@@ -43,7 +44,7 @@ std::mutex MaterialManager::_mutex;
 
 void MaterialManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( _toFreeTransferResource.empty () )
         return;
@@ -66,7 +67,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
     if ( !fileName )
         return std::make_shared<OpaqueMaterial> ();
 
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     android_vulkan::File file ( fileName );
 
     if ( !file.LoadContent () )
@@ -85,7 +86,7 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 
 MaterialManager &MaterialManager::GetInstance () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         _instance = new MaterialManager ();
@@ -95,7 +96,7 @@ MaterialManager &MaterialManager::GetInstance () noexcept
 
 void MaterialManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         return;

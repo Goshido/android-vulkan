@@ -183,8 +183,6 @@ typedef struct stringtable {
 ** yield (from the yield until the next resume);
 ** - field 'nres' is used only while closing tbc variables when
 ** returning from a function;
-** - field 'transferinfo' is used only during call/returnhooks,
-** before the function starts or after it ends.
 */
 struct CallInfo {
   StkIdRel func;  /* function index in the stack */
@@ -206,35 +204,56 @@ struct CallInfo {
     int funcidx;  /* called-function index */
     int nyield;  /* number of values yielded */
     int nres;  /* number of values returned */
-    struct {  /* info about transferred values (for call/return hooks) */
-      unsigned short ftransfer;  /* offset of first value transferred */
-      unsigned short ntransfer;  /* number of values transferred */
-    } transferinfo;
   } u2;
-  short nresults;  /* expected number of results from this function */
-  unsigned short callstatus;
+  l_uint32 callstatus;
 };
+
+
+/*
+** Maximum expected number of results from a function
+** (must fit in CIST_NRESULTS).
+*/
+#define MAXRESULTS	250
 
 
 /*
 ** Bits in CallInfo status
 */
-#define CIST_OAH	(1<<0)	/* original value of 'allowhook' */
-#define CIST_C		(1<<1)	/* call is running a C function */
-#define CIST_FRESH	(1<<2)	/* call is on a fresh "luaV_execute" frame */
-#define CIST_HOOKED	(1<<3)	/* call is running a debug hook */
-#define CIST_YPCALL	(1<<4)	/* doing a yieldable protected call */
-#define CIST_TAIL	(1<<5)	/* call was tail called */
-#define CIST_HOOKYIELD	(1<<6)	/* last hook called yielded */
-#define CIST_FIN	(1<<7)	/* function "called" a finalizer */
-#define CIST_TRAN	(1<<8)	/* 'ci' has transfer information */
-#define CIST_CLSRET	(1<<9)  /* function is closing tbc variables */
-/* Bits 10-12 are used for CIST_RECST (see below) */
-#define CIST_RECST	10
+/* bits 0-7 are the expected number of results from this function + 1 */
+#define CIST_NRESULTS	0xffu
+
+/* bits 8-11 count call metamethods (and their extra arguments) */
+#define CIST_CCMT	8  /* the offset, not the mask */
+#define MAX_CCMT	(0xfu << CIST_CCMT)
+
+/* Bits 12-14 are used for CIST_RECST (see below) */
+#define CIST_RECST	12  /* the offset, not the mask */
+
+/* call is running a C function (still in first 16 bits) */
+#define CIST_C		(1u << (CIST_RECST + 3))
+/* call is on a fresh "luaV_execute" frame */
+#define CIST_FRESH	cast(l_uint32, CIST_C << 1)
+/* function is closing tbc variables */
+#define CIST_CLSRET	(CIST_FRESH << 1)
+/* original value of 'allowhook' */
+#define CIST_OAH	(CIST_CLSRET << 1)
+/* call is running a debug hook */
+#define CIST_HOOKED	(CIST_OAH << 1)
+/* doing a yieldable protected call */
+#define CIST_YPCALL	(CIST_HOOKED << 1)
+/* call was tail called */
+#define CIST_TAIL	(CIST_YPCALL << 1)
+/* last hook called yielded */
+#define CIST_HOOKYIELD	(CIST_TAIL << 1)
+/* function "called" a finalizer */
+#define CIST_FIN	(CIST_HOOKYIELD << 1)
 #if defined(LUA_COMPAT_LT_LE)
-#define CIST_LEQ	(1<<13)  /* using __lt for __le */
+/* using __lt for __le */
+#define CIST_LEQ	(CIST_FIN << 1)
 #endif
 
+
+#define get_nresults(cs)  (cast_int((cs) & CIST_NRESULTS) - 1)
 
 /*
 ** Field CIST_RECST stores the "recover status", used to keep the error
@@ -245,8 +264,8 @@ struct CallInfo {
 #define getcistrecst(ci)     (((ci)->callstatus >> CIST_RECST) & 7)
 #define setcistrecst(ci,st)  \
   check_exp(((st) & 7) == (st),   /* status must fit in three bits */  \
-            ((ci)->callstatus = ((ci)->callstatus & ~(7 << CIST_RECST))  \
-                                                  | ((st) << CIST_RECST)))
+            ((ci)->callstatus = ((ci)->callstatus & ~(7u << CIST_RECST))  \
+                                | (cast(l_uint32, st) << CIST_RECST)))
 
 
 /* active function is a Lua function */
@@ -255,9 +274,11 @@ struct CallInfo {
 /* call is running Lua code (not a hook) */
 #define isLuacode(ci)	(!((ci)->callstatus & (CIST_C | CIST_HOOKED)))
 
-/* assume that CIST_OAH has offset 0 and that 'v' is strictly 0/1 */
-#define setoah(st,v)	((st) = ((st) & ~CIST_OAH) | (v))
-#define getoah(st)	((st) & CIST_OAH)
+
+#define setoah(ci,v)  \
+  ((ci)->callstatus = ((v) ? (ci)->callstatus | CIST_OAH  \
+                           : (ci)->callstatus & ~CIST_OAH))
+#define getoah(ci)  (((ci)->callstatus & CIST_OAH) ? 1 : 0)
 
 
 /*
@@ -266,11 +287,10 @@ struct CallInfo {
 typedef struct global_State {
   lua_Alloc frealloc;  /* function to reallocate memory */
   void *ud;         /* auxiliary data to 'frealloc' */
-  lu_mem totalbytes;  /* number of bytes currently allocated */
-  l_obj totalobjs;  /* total number of objects allocated + GCdebt */
-  l_obj GCdebt;  /* objects counted but not yet allocated */
-  l_obj marked;  /* number of objects marked in a GC cycle */
-  l_obj GCmajorminor;  /* auxiliary counter to control major-minor shifts */
+  l_mem GCtotalbytes;  /* number of bytes currently allocated + debt */
+  l_mem GCdebt;  /* bytes counted but not yet allocated */
+  l_mem GCmarked;  /* number of objects marked in a GC cycle */
+  l_mem GCmajorminor;  /* auxiliary counter to control major-minor shifts */
   stringtable strt;  /* hash table for strings */
   TValue l_registry;
   TValue nilvalue;  /* a nil value */
@@ -338,6 +358,10 @@ struct lua_State {
   int basehookcount;
   int hookcount;
   volatile l_signalT hookmask;
+  struct {  /* info about transferred values (for call/return hooks) */
+    int ftransfer;  /* offset of first value transferred */
+    int ntransfer;  /* number of values transferred */
+  } transferinfo;
 };
 
 
@@ -399,12 +423,13 @@ union GCUnion {
 #define obj2gco(v)	check_exp((v)->tt >= LUA_TSTRING, &(cast_u(v)->gc))
 
 
-/* actual number of total objects allocated */
-#define gettotalobjs(g)	((g)->totalobjs - (g)->GCdebt)
+/* actual number of total memory allocated */
+#define gettotalbytes(g)	((g)->GCtotalbytes - (g)->GCdebt)
 
 
-LUAI_FUNC void luaE_setdebt (global_State *g, l_obj debt);
+LUAI_FUNC void luaE_setdebt (global_State *g, l_mem debt);
 LUAI_FUNC void luaE_freethread (lua_State *L, lua_State *L1);
+LUAI_FUNC lu_mem luaE_threadsize (lua_State *L);
 LUAI_FUNC CallInfo *luaE_extendCI (lua_State *L);
 LUAI_FUNC void luaE_shrinkCI (lua_State *L);
 LUAI_FUNC void luaE_checkcstack (lua_State *L);

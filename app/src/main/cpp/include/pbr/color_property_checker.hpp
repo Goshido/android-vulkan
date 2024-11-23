@@ -15,17 +15,17 @@ class ColorPropertyChecker final : public PropertyChecker
         struct ParseInfo final
         {
             // Can't be empty.
-            std::u32string_view                                         _value;
+            std::u32string_view                                             _value;
 
             // Can't be empty.
-            std::u32string_view                                         _tail;
+            std::u32string_view                                             _tail;
         };
 
         using ParseResult = std::optional<ParseInfo>;
 
     private:
-        static std::unordered_map<std::u32string, GXColorRGB> const     _colorMap;
-        ColorValue                                                      &_target;
+        static std::unordered_map<std::u32string, GXColorUNORM> const       _colorMap;
+        ColorValue                                                          &_target;
 
     public:
         ColorPropertyChecker () = delete;
@@ -52,7 +52,7 @@ class ColorPropertyChecker final : public PropertyChecker
         [[nodiscard]] Result HandleHSLColor ( std::u32string_view value, size_t line ) noexcept;
         [[nodiscard]] Result HandleRGBColor ( std::u32string_view value, size_t line ) noexcept;
 
-        [[nodiscard]] bool Convert ( GXVec4 &color,
+        [[nodiscard]] bool Convert ( GXColorRGB &color,
             std::optional<NumberParser::Result> const &number,
             size_t line,
             size_t component,
@@ -65,8 +65,8 @@ class ColorPropertyChecker final : public PropertyChecker
         [[nodiscard]] static uint8_t FromHEX ( char32_t c ) noexcept;
         [[nodiscard]] static bool IsHEX ( char32_t c ) noexcept;
         [[nodiscard]] ParseResult ParseParameter ( size_t line, std::u32string_view value ) noexcept;
-        [[nodiscard]] static float ToComponent ( char32_t c ) noexcept;
-        [[nodiscard]] static float ToComponent ( char32_t high, char32_t low ) noexcept;
+        [[nodiscard]] static uint8_t ToComponent ( char32_t c ) noexcept;
+        [[nodiscard]] static uint8_t ToComponent ( char32_t high, char32_t low ) noexcept;
 };
 
 } // namespace pbr

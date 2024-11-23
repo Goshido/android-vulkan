@@ -1,6 +1,8 @@
+#include <precompiled_headers.hpp>
 #include <pbr/script_component.hpp>
 #include <pbr/script_engine.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

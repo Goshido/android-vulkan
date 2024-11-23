@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/cube_map_manager.hpp>
 
 
@@ -49,7 +50,7 @@ bool CubeMapID::operator == ( CubeMapID const &other ) const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 CubeMapManager* CubeMapManager::_instance = nullptr;
-std::shared_timed_mutex CubeMapManager::_mutex {};
+std::mutex CubeMapManager::_mutex {};
 
 TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
@@ -60,7 +61,7 @@ TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
     commandBufferConsumed = 0U;
     TextureCubeRef textureCube = std::make_shared<android_vulkan::TextureCube> ();
 
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     CubeMapID const id
     {
@@ -88,7 +89,7 @@ TextureCubeRef CubeMapManager::LoadCubeMap ( android_vulkan::Renderer &renderer,
 
 CubeMapManager &CubeMapManager::GetInstance () noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         _instance = new CubeMapManager ();
@@ -98,7 +99,7 @@ CubeMapManager &CubeMapManager::GetInstance () noexcept
 
 void CubeMapManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    std::unique_lock<std::shared_timed_mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !_instance )
         return;

@@ -1,13 +1,6 @@
+#include <precompiled_headers.hpp>
+#include <rotating_mesh/bindings.inc>
 #include <rotating_mesh/game.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <cmath>
-#include <thread>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vertex_info.hpp>
 #include <vulkan_utils.hpp>
 
@@ -22,14 +15,14 @@ constexpr char const* VERTEX_SHADER_ENTRY_POINT = "VS";
 constexpr char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 constexpr std::string_view MATERIAL_1_DIFFUSE = "textures/rotating_mesh/sonic-material-1-diffuse.ktx";
-constexpr char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh";
+constexpr char const* MATERIAL_1_MESH = "meshes/rotating_mesh/sonic-material-1.mesh2";
 
 constexpr std::string_view MATERIAL_2_DIFFUSE = "textures/rotating_mesh/sonic-material-2-diffuse.ktx";
-constexpr char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh";
+constexpr char const* MATERIAL_2_MESH = "meshes/rotating_mesh/sonic-material-2.mesh2";
 constexpr std::string_view MATERIAL_2_NORMAL = "textures/rotating_mesh/sonic-material-2-normal.png";
 
 constexpr std::string_view MATERIAL_3_DIFFUSE = "textures/rotating_mesh/sonic-material-3-diffuse.ktx";
-constexpr char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh";
+constexpr char const* MATERIAL_3_MESH = "meshes/rotating_mesh/sonic-material-3.mesh2";
 constexpr std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-material-3-normal.png";
 
 constexpr float ROTATION_SPEED = GX_MATH_HALF_PI;
@@ -49,7 +42,7 @@ Game::Game ( char const* fragmentShader ) noexcept:
 
 bool Game::CreateSamplers ( VkDevice device ) noexcept
 {
-    VkSamplerCreateInfo samplerInfo
+    constexpr VkSamplerCreateInfo samplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .pNext = nullptr,
@@ -71,7 +64,7 @@ bool Game::CreateSamplers ( VkDevice device ) noexcept
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    bool result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateSampler ( device, &samplerInfo, nullptr, &_sampler ),
         "Game::CreateSamplers",
         "Can't create sampler"
@@ -175,10 +168,11 @@ bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* c
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( meshFiles[ i ],
-            renderer,
+        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( renderer,
             commandBuffers[ i ],
-            VK_NULL_HANDLE
+            false,
+            VK_NULL_HANDLE,
+            meshFiles[ i ]
         );
 
         if ( result ) [[likely]]
@@ -288,7 +282,8 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
     vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
     vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
-    constexpr VkDeviceSize offset = 0U;
+    constexpr VkDeviceSize const offset[] = { 0U, 0U };
+    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     VkDescriptorSet standardSets[] = { _fixedDS, onceDS };
 
@@ -310,7 +305,13 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
         android_vulkan::MeshGeometry &mesh = item._mesh;
 
-        vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh.GetVertexBuffer (), &offset );
+        vkCmdBindVertexBuffers ( commandBuffer,
+            0U,
+            android_vulkan::MeshGeometry::GetVertexBufferCount (),
+            mesh.GetVertexBuffers (),
+            offset
+        );
+
         vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );
     }
 
@@ -402,59 +403,6 @@ void Game::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexcept
     DestroyPipeline ( device );
     DestroyFramebuffers ( renderer );
     DestroyRenderPass ( device );
-}
-
-bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, VkSemaphore acquire ) noexcept
-{
-    VkDevice device = renderer.GetDevice ();
-    uint32_t i = UINT32_MAX;
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAcquireNextImageKHR ( device,
-            renderer.GetSwapchain (),
-            UINT64_MAX,
-            acquire,
-            VK_NULL_HANDLE,
-            &i
-        ),
-
-        "Game::BeginFrame",
-        "Can't get presentation image index"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    imageIndex = static_cast<size_t> ( i );
-    return true;
-}
-
-bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
-{
-    VkResult presentResult;
-
-    VkPresentInfoKHR const presentInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = &_framebufferInfo[ presentationImageIndex ]._renderPassEnd,
-        .swapchainCount = 1U,
-        .pSwapchains = &renderer.GetSwapchain (),
-        .pImageIndices = &presentationImageIndex,
-        .pResults = &presentResult
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
-        "Game::EndFrame",
-        "Can't present frame"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    return android_vulkan::Renderer::CheckVkResult ( presentResult, "Game::EndFrame", "Present queue has been failed" );
 }
 
 bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
@@ -574,7 +522,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
 {
     constexpr VkDescriptorSetLayoutBinding fixedBinding
     {
-        .binding = 0U,
+        .binding = SET_FIXED,
         .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
         .descriptorCount = 1U,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -604,7 +552,7 @@ bool Game::CreateCommonDescriptorSetLayouts ( android_vulkan::Renderer &renderer
 
     constexpr VkDescriptorSetLayoutBinding onceBinding
     {
-        .binding = 0U,
+        .binding = BIND_TRANSFORM,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         .descriptorCount = 1U,
         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
@@ -685,7 +633,8 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
     VkImageView attachments[ 2U ] = { VK_NULL_HANDLE, _depthStencilRenderTarget.GetImageView () };
 
-    VkFramebufferCreateInfo framebufferInfo {
+    VkFramebufferCreateInfo framebufferInfo
+    {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
@@ -695,6 +644,13 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
         .width = resolution.width,
         .height = resolution.height,
         .layers = 1U,
+    };
+
+    constexpr VkSemaphoreCreateInfo semaphoreInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
     };
 
     for ( size_t i = 0U; i < framebufferCount; ++i )
@@ -712,12 +668,7 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
         AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
 
-        constexpr VkSemaphoreCreateInfo semaphoreInfo
-        {
-            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0U
-        };
+
 
         VkSemaphore semaphore;
 
@@ -806,171 +757,212 @@ bool Game::CreatePipelineLayout ( VkDevice device ) noexcept
 
 bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
 {
-    VkPipelineShaderStageCreateInfo stageInfo[ 2U ];
-    VkPipelineShaderStageCreateInfo &vertexStage = stageInfo[ 0U ];
-    vertexStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertexStage.pNext = nullptr;
-    vertexStage.flags = 0U;
-    vertexStage.pSpecializationInfo = nullptr;
-    vertexStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertexStage.module = _vertexShaderModule;
-    vertexStage.pName = VERTEX_SHADER_ENTRY_POINT;
+    VkPipelineShaderStageCreateInfo const stageInfo[]
+    {
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+            .stage = VK_SHADER_STAGE_VERTEX_BIT,
+            .module = _vertexShaderModule,
+            .pName = VERTEX_SHADER_ENTRY_POINT,
+            .pSpecializationInfo = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+            .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .module = _fragmentShaderModule,
+            .pName = FRAGMENT_SHADER_ENTRY_POINT,
+            .pSpecializationInfo = nullptr
+        }
+    };
 
-    VkPipelineShaderStageCreateInfo &fragmentStage = stageInfo[ 1U ];
-    fragmentStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragmentStage.pNext = nullptr;
-    fragmentStage.flags = 0U;
-    fragmentStage.pSpecializationInfo = nullptr;
-    fragmentStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragmentStage.module = _fragmentShaderModule;
-    fragmentStage.pName = FRAGMENT_SHADER_ENTRY_POINT;
+    constexpr VkPipelineInputAssemblyStateCreateInfo assemblyInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE
+    };
 
-    VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
-    assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    assemblyInfo.pNext = nullptr;
-    assemblyInfo.flags = 0U;
-    assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    assemblyInfo.primitiveRestartEnable = VK_FALSE;
+    constexpr static VkVertexInputAttributeDescription const attributeDescriptions[]
+    {
+        {
+            .location = IN_SLOT_POSITION,
+            .binding = IN_BUFFER_POSITION,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = 0U
+        },
+        {
+            .location = IN_SLOT_UV,
+            .binding = IN_BUFFER_REST,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
+        },
+        {
+            .location = IN_SLOT_TBN,
+            .binding = IN_BUFFER_REST,
+            .format = VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+            .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tbn ) )
+        }
+    };
 
-    VkVertexInputAttributeDescription attributeDescriptions[ 5U ];
-    VkVertexInputAttributeDescription &vertexDescription = attributeDescriptions[ 0U ];
-    vertexDescription.location = 0U;
-    vertexDescription.binding = 0U;
-    vertexDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) );
-    vertexDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+    constexpr static VkVertexInputBindingDescription const bindingDescriptions[]
+    {
+        {
+            .binding = IN_BUFFER_POSITION,
+            .stride = sizeof ( GXVec3 ),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+        },
+        {
+            .binding = IN_BUFFER_REST,
+            .stride = sizeof ( android_vulkan::VertexInfo ),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+        }
+    };
 
-    VkVertexInputAttributeDescription &uvDescription = attributeDescriptions[ 1U ];
-    uvDescription.location = 1U;
-    uvDescription.binding = 0U;
-    uvDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) );
-    uvDescription.format = VK_FORMAT_R32G32_SFLOAT;
+    constexpr VkPipelineVertexInputStateCreateInfo vertexInputInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .vertexBindingDescriptionCount = static_cast<uint32_t> ( std::size ( bindingDescriptions ) ),
+        .pVertexBindingDescriptions = bindingDescriptions,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t> ( std::size ( attributeDescriptions ) ),
+        .pVertexAttributeDescriptions = attributeDescriptions
+    };
 
-    VkVertexInputAttributeDescription &normalDescription = attributeDescriptions[ 2U ];
-    normalDescription.location = 2U;
-    normalDescription.binding = 0U;
-    normalDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) );
-    normalDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+    constexpr VkPipelineDepthStencilStateCreateInfo depthStencilInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_GREATER,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
 
-    VkVertexInputAttributeDescription &tangentDescription = attributeDescriptions[ 3U ];
-    tangentDescription.location = 3U;
-    tangentDescription.binding = 0U;
-    tangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) );
-    tangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+        .front
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = 0U,
+            .writeMask = UINT32_MAX,
+            .reference = UINT32_MAX
+        },
 
-    VkVertexInputAttributeDescription &bitangentDescription = attributeDescriptions[ 4U ];
-    bitangentDescription.location = 4U;
-    bitangentDescription.binding = 0U;
-    bitangentDescription.offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) );
-    bitangentDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+        .back
+        {
+            .failOp = VK_STENCIL_OP_KEEP,
+            .passOp = VK_STENCIL_OP_KEEP,
+            .depthFailOp = VK_STENCIL_OP_KEEP,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .compareMask = 0U,
+            .writeMask = UINT32_MAX,
+            .reference = UINT32_MAX
+        },
 
-    VkVertexInputBindingDescription bindingDescription;
-    bindingDescription.binding = 0U;
-    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-    bindingDescription.stride = sizeof ( android_vulkan::VertexInfo );
+        .minDepthBounds = 0.0F,
+        .maxDepthBounds = 1.0F,
+    };
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.pNext = nullptr;
-    vertexInputInfo.flags = 0U;
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t> ( std::size ( attributeDescriptions ) );
-    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
-    vertexInputInfo.vertexBindingDescriptionCount = 1U;
-    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    constexpr static VkPipelineColorBlendAttachmentState attachmentInfo
+    {
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
 
-    VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-    depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencilInfo.pNext = nullptr;
-    depthStencilInfo.flags = 0U;
-    depthStencilInfo.stencilTestEnable = VK_FALSE;
-    depthStencilInfo.depthTestEnable = VK_TRUE;
-    depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    depthStencilInfo.depthCompareOp = VK_COMPARE_OP_GREATER;
-    depthStencilInfo.depthWriteEnable = VK_TRUE;
-    depthStencilInfo.minDepthBounds = 0.0F;
-    depthStencilInfo.maxDepthBounds = 1.0F;
-    depthStencilInfo.front.compareOp = VK_COMPARE_OP_ALWAYS;
-    depthStencilInfo.front.compareMask = 0U;
-    depthStencilInfo.front.failOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.front.passOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.front.depthFailOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.front.reference = UINT32_MAX;
-    depthStencilInfo.front.writeMask = UINT32_MAX;
-    depthStencilInfo.back.compareOp = VK_COMPARE_OP_ALWAYS;
-    depthStencilInfo.back.compareMask = 0U;
-    depthStencilInfo.back.failOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.back.passOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.back.depthFailOp = VK_STENCIL_OP_KEEP;
-    depthStencilInfo.back.reference = UINT32_MAX;
-    depthStencilInfo.back.writeMask = UINT32_MAX;
+        .colorWriteMask = AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
+            AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
+    };
 
-    VkPipelineColorBlendAttachmentState attachmentInfo;
-    attachmentInfo.blendEnable = VK_FALSE;
+    constexpr VkPipelineColorBlendStateCreateInfo blendInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_NO_OP,
+        .attachmentCount = 1U,
+        .pAttachments = &attachmentInfo,
+        .blendConstants { 0.0F, 0.0F, 0.0F, 0.0F }
+    };
 
-    attachmentInfo.colorWriteMask =
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_R_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_G_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
-        AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT );
+    constexpr VkPipelineMultisampleStateCreateInfo multisampleInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 0.0F,
+        .pSampleMask = nullptr,
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE
+    };
 
-    attachmentInfo.alphaBlendOp = VK_BLEND_OP_ADD;
-    attachmentInfo.colorBlendOp = VK_BLEND_OP_ADD;
-    attachmentInfo.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    attachmentInfo.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    attachmentInfo.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    attachmentInfo.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-
-    VkPipelineColorBlendStateCreateInfo blendInfo;
-    blendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    blendInfo.pNext = nullptr;
-    blendInfo.flags = 0U;
-    blendInfo.attachmentCount = 1U;
-    blendInfo.pAttachments = &attachmentInfo;
-    blendInfo.logicOpEnable = VK_FALSE;
-    std::memset ( blendInfo.blendConstants, 0, sizeof ( blendInfo.blendConstants ) );
-
-    VkPipelineMultisampleStateCreateInfo multisampleInfo;
-    multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampleInfo.pNext = nullptr;
-    multisampleInfo.flags = 0U;
-    multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    multisampleInfo.alphaToCoverageEnable = VK_FALSE;
-    multisampleInfo.alphaToOneEnable = VK_FALSE;
-    multisampleInfo.sampleShadingEnable = VK_FALSE;
-    multisampleInfo.pSampleMask = nullptr;
-
-    VkPipelineRasterizationStateCreateInfo rasterizationInfo;
-    rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizationInfo.pNext = nullptr;
-    rasterizationInfo.flags = 0U;
-    rasterizationInfo.depthBiasEnable = VK_FALSE;
-    rasterizationInfo.depthClampEnable = VK_FALSE;
-    rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
-    rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizationInfo.lineWidth = 1.0F;
+    constexpr VkPipelineRasterizationStateCreateInfo rasterizationInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0.0F,
+        .depthBiasClamp = 0.0F,
+        .depthBiasSlopeFactor = 0.0F,
+        .lineWidth = 1.0F
+    };
 
     VkExtent2D const &surfaceSize = renderer.GetSurfaceSize ();
 
-    VkRect2D scissor;
-    scissor.extent = surfaceSize;
-    std::memset ( &scissor.offset, 0, sizeof ( scissor.offset ) );
+    VkViewport const viewport
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( surfaceSize.width ),
+        .height = static_cast<float> ( surfaceSize.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
 
-    VkViewport viewport;
-    viewport.x = viewport.y = 0.0F;
-    viewport.width = static_cast<float> ( surfaceSize.width );
-    viewport.height = static_cast<float> ( surfaceSize.height );
-    viewport.minDepth = 0.0F;
-    viewport.maxDepth = 1.0F;
+    VkRect2D const scissor
+    {
+        .offset =
+        {
+            .x = 0,
+            .y = 0
+        },
 
-    VkPipelineViewportStateCreateInfo viewportInfo;
-    viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportInfo.pNext = nullptr;
-    viewportInfo.flags = 0U;
-    viewportInfo.viewportCount = 1U;
-    viewportInfo.pViewports = &viewport;
-    viewportInfo.scissorCount = 1U;
-    viewportInfo.pScissors = &scissor;
+        .extent = surfaceSize
+    };
+
+    VkPipelineViewportStateCreateInfo const viewportInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = &viewport,
+        .scissorCount = 1U,
+        .pScissors = &scissor
+    };
 
     VkGraphicsPipelineCreateInfo const pipelineInfo
     {
@@ -1085,7 +1077,8 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         .pPreserveAttachments = nullptr
     };
 
-    constexpr VkSubpassDependency const dependencies[] = {
+    constexpr VkSubpassDependency const dependencies[]
+    {
         {
             .srcSubpass = VK_SUBPASS_EXTERNAL,
             .dstSubpass = 0U,
@@ -1219,17 +1212,21 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
     tmp.Multiply ( _transform._normalTransform, _projectionMatrix );
     _transform._transform.Multiply ( tmp, renderer.GetPresentationEngineTransform () );
 
-    VkDescriptorBufferInfo const bufferInfo {
+    _transform._localView.FromFast ( _transform._normalTransform );
+
+    VkDescriptorBufferInfo const bufferInfo
+    {
         .buffer = _transformBuffer.Update ( commandBuffer, reinterpret_cast<uint8_t const*> ( &_transform ) ),
         .offset = 0U,
         .range = VK_WHOLE_SIZE
     };
 
-    VkWriteDescriptorSet const write {
+    VkWriteDescriptorSet const write
+    {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = ds,
-        .dstBinding = 0U,
+        .dstBinding = BIND_TRANSFORM,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -1240,7 +1237,8 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
 
     vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &write, 0U, nullptr );
 
-    VkBufferMemoryBarrier const bufferBarrier {
+    VkBufferMemoryBarrier const bufferBarrier
+    {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
         .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -1263,6 +1261,52 @@ void Game::UpdateUniformBuffer ( android_vulkan::Renderer &renderer,
         0U,
         nullptr
     );
+}
+
+bool Game::EndFrame ( android_vulkan::Renderer &renderer, uint32_t presentationImageIndex ) noexcept
+{
+    VkPresentInfoKHR const presentInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 1U,
+        .pWaitSemaphores = &_framebufferInfo[ presentationImageIndex ]._renderPassEnd,
+        .swapchainCount = 1U,
+        .pSwapchains = &renderer.GetSwapchain (),
+        .pImageIndices = &presentationImageIndex,
+        .pResults = nullptr
+    };
+
+    return android_vulkan::Renderer::CheckVkResult (
+        vkQueuePresentKHR ( renderer.GetQueue (), &presentInfo ),
+        "Game::EndFrame",
+        "Can't present frame"
+    );
+}
+
+bool Game::BeginFrame ( android_vulkan::Renderer &renderer, size_t &imageIndex, VkSemaphore acquire ) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+    uint32_t idx;
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkAcquireNextImageKHR ( device,
+            renderer.GetSwapchain (),
+            UINT64_MAX,
+            acquire,
+            VK_NULL_HANDLE,
+            &idx
+        ),
+
+        "Game::BeginFrame",
+        "Can't get presentation image index"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    imageIndex = static_cast<size_t> ( idx );
+    return true;
 }
 
 } // namespace rotating_mesh

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/component.hpp>
 #include <pbr/camera_component.hpp>
 #include <pbr/point_light_component.hpp>
@@ -9,6 +10,7 @@
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/transform_component.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 
 
 namespace pbr {

@@ -12,9 +12,11 @@
 
 #define SET_RESOURCE                0
 #define BIND_POSE                   0
-#define BIND_REFERENCE_MESH         1
-#define BIND_SKIN                   2
-#define BIND_SKIN_MESH              3
+#define BIND_REFERENCE_POSITIONS    1
+#define BIND_REFERENCE_REST         2
+#define BIND_SKIN_VERTICES          3
+#define BIND_SKIN_POSITIONS         4
+#define BIND_SKIN_REST              5
 
 
 #endif // SKIN_INC

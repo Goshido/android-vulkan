@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <pbr/ui_pass_image_descriptor_set_layout.hpp>
 #include <pbr/ui_program.inc>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -112,7 +107,7 @@ bool UIPassImageDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout UIPassImageDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &UIPassImageDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

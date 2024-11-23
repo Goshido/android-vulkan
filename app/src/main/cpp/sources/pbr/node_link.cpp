@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/node_link.hpp>
 #include <logger.hpp>
 

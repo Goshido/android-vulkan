@@ -36,16 +36,16 @@ class OpaqueSubpass final : public GeometrySubpassBase
         void Destroy ( VkDevice device ) noexcept;
 
         void Execute ( VkCommandBuffer commandBuffer,
+            GeometryPool &geometryPool,
             MaterialPool &materialPool,
-            UniformBufferPoolManager &uniformPool,
             RenderSessionStats &renderSessionStats,
             VkDescriptorSet samplerDescriptorSet,
             bool &isSamplerUsed
         ) noexcept;
 
         void UpdateGPUData ( VkCommandBuffer commandBuffer,
+            GeometryPool &geometryPool,
             MaterialPool &materialPool,
-            UniformBufferPoolManager &uniformPool,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection

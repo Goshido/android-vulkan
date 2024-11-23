@@ -28,9 +28,9 @@ class BoxStack final : public android_vulkan::Game
         std::vector<ComponentRef>                       _cubes {};
         std::vector<android_vulkan::RigidBodyRef>       _cubeBodies {};
 
-        std::array<GXColorRGB, 7U>                      _colors {};
+        std::array<GXColorUNORM, 7U>                    _colors {};
 
-        GXColorRGB                                      _defaultColor {};
+        GXColorUNORM const                              _defaultColor { 255U, 255U, 255U, 255U };
         android_vulkan::Physics                         _physics {};
         MeshRef                                         _sphereMesh {};
         MaterialRef                                     _sphereMaterial {};
@@ -65,7 +65,7 @@ class BoxStack final : public android_vulkan::Game
             std::string &&tag,
             ComponentRef &visual,
             char const* material,
-            GXColorRGB const &color,
+            GXColorUNORM color,
             android_vulkan::RigidBodyRef &physical,
             float x,
             float y,

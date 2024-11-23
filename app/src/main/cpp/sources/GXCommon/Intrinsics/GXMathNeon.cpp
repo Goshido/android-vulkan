@@ -1,14 +1,7 @@
-// version 1.10
+// version 1.15
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-#include <cstring>
-#include <arm_neon.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace {
@@ -261,6 +254,20 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorUNORM color ) noexcept
+{
+    float32_t const tmp[ 4U ]
+    {
+        static_cast<float32_t> ( color._data[ 0U ] ),
+        static_cast<float32_t> ( color._data[ 1U ] ),
+        static_cast<float32_t> ( color._data[ 2U ] ),
+        static_cast<float32_t> ( color._data[ 3U ] )
+    };
+
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+}
+
 [[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     float32_t const tmp[ 4U ] =
@@ -268,10 +275,41 @@ namespace {
         static_cast<float32_t> ( red ),
         static_cast<float32_t> ( green ),
         static_cast<float32_t> ( blue ),
-        alpha
+        0.0F
     };
 
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept
+{
+    float32_t const tmp[ 4U ] =
+    {
+        static_cast<float32_t> ( red ),
+        static_cast<float32_t> ( green ),
+        static_cast<float32_t> ( blue ),
+        0.0F
+    };
+
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXColorUNORM GXColorRGB::ToColorUNORM () const noexcept
+{
+    constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
+
+    float32_t tmp[ 4U ];
+    vst1q_f32 ( tmp, vmulq_n_f32 ( vld1q_f32 ( _data ), convertFactor ) );
+
+    return
+    {
+        static_cast<GXUByte> ( tmp[ 0U ] ),
+        static_cast<GXUByte> ( tmp[ 1U ] ),
+        static_cast<GXUByte> ( tmp[ 2U ] ),
+        static_cast<GXUByte> ( tmp[ 3U ] )
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -305,6 +343,64 @@ namespace {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( alpha ), std::sin ( halfAngle ) ) );
 
     _data[ 0U ] = std::cos ( halfAngle );
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
+{
+    float const *bData = b._data;
+
+    float32_t const factorData0[ 4U ] =
+    {
+        bData[ 0U ],
+        -bData[ 1U ],
+        -bData[ 2U ],
+        -bData [ 3U ],
+    };
+
+    float32x4_t const vA = vld1q_f32 ( a._data );
+
+    float32_t const factorData1[ 4U ] =
+    {
+        bData[ 1U ],
+        bData[ 0U ],
+        bData[ 3U ],
+        -bData [ 2U ]
+    };
+
+    float32x4_t const factor0 = vld1q_f32 ( factorData0 );
+
+    float32_t const factorData2[ 4U ] =
+    {
+        bData[ 2U ],
+        -bData[ 3U ],
+        bData[ 0U ],
+        bData[ 1U ]
+    };
+
+    float32x4_t const tmp0 = vmulq_f32 ( vA, factor0 );
+    float32x4_t const factor1 = vld1q_f32 ( factorData1 );
+
+    float32_t const factorData3[ 4U ] =
+    {
+        bData[ 3U ],
+        bData[ 2U ],
+        -bData[ 1U ],
+        bData[ 0U ]
+    };
+
+    float32x4_t const factor2 = vld1q_f32 ( factorData2 );
+    _data[ 0U ] = vaddvq_f32 ( tmp0 );
+
+    float32x4_t const tmp1 = vmulq_f32 ( vA, factor1 );
+    _data[ 1U ] = vaddvq_f32 ( tmp1 );
+
+    float32x4_t const tmp2 = vmulq_f32 ( vA, factor2 );
+    float32x4_t const factor3 = vld1q_f32 ( factorData3 );
+
+    float32x4_t const tmp3 = vmulq_f32 ( vA, factor3 );
+    _data[ 2U ] = vaddvq_f32 ( tmp2 );
+
+    _data[ 3U ] = vaddvq_f32 ( tmp3 );
 }
 
 [[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale ) noexcept
@@ -352,6 +448,100 @@ namespace {
     }
 
     vst1q_f32 ( _data, vfmaq_n_f32 ( vmulq_n_f32 ( s, scale[ 0U ] ), temp, scale[ 1U ] ) );
+}
+
+[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
+{
+    float32x4_t const rabc = vld1q_f32 ( _data );
+    float32x4_t const rabc2 = vaddq_f32 ( rabc, rabc );
+
+    // Note 'T' is just notation for variable separation. Nothing more.
+    float32x2_t const ra = vget_low_f32 ( rabc );
+    float32x2_t const ar = vext_f32 ( ra, ra, 1 );
+    float32x2_t const bc = vget_high_f32 ( rabc );
+    float32x2_t const rr = vzip1_f32 ( ra, ra );
+    float32x2_t const ca = vext_f32 ( bc, ar, 1 );
+    float32x2_t const cb = vext_f32 ( bc, bc, 1 );
+    float32x2_t const bc2 = vget_high_f32 ( rabc2 );
+
+    float32_t rXabc2Tr[ 4U ];
+    vst1q_f32 ( rXabc2Tr, vmulq_f32 ( vextq_f32 ( rabc2, rabc, 1 ), vcombine_f32 ( rr, rr ) ) );
+
+    float32_t aacaXbc2Tca[ 4U ];
+    vst1q_f32 ( aacaXbc2Tca, vmulq_f32 ( vcombine_f32 ( vzip1_f32 ( ar, ar ), ca ), vcombine_f32 ( bc2, ca ) ) );
+
+    float32_t bXbTc2[ 2U ];
+    vst1_f32 ( bXbTc2, vmul_f32 ( vzip1_f32 ( bc, bc ), vzip2_f32 ( cb, bc2 ) ) );
+
+    float32_t const tmp0[ 4U ] =
+    {
+        rXabc2Tr[ 2U ],
+        aacaXbc2Tca[ 1U ],
+        aacaXbc2Tca[ 0U ],
+        rXabc2Tr[ 0U ]
+    };
+
+    float32_t const tmp1[ 4U ] =
+    {
+        aacaXbc2Tca[ 0U ],
+        -rXabc2Tr[ 1U ],
+        -rXabc2Tr[ 2U ],
+        bXbTc2[ 1U ],
+    };
+
+    float32x4_t const factor0 = vaddq_f32 ( vld1q_f32 ( tmp0 ), vld1q_f32 ( tmp1 ) );
+
+    float32_t const tmp2[ 2U ] =
+    {
+        rXabc2Tr[ 1U ],
+        bXbTc2[ 1U ],
+    };
+
+    float32_t const tmp3[ 2U ] =
+    {
+        aacaXbc2Tca[ 1U ],
+        -rXabc2Tr[ 0U ],
+    };
+
+    float32x2_t const factor1 = vadd_f32 ( vld1_f32 ( tmp2 ), vld1_f32 ( tmp3 ) );
+    constexpr float32_t whatever = 0.0F;
+
+    float32_t const row0[ 2U ] =
+    {
+        whatever,
+        rXabc2Tr[ 3U ] + aacaXbc2Tca[ 3U ] - bXbTc2[ 0U ] - aacaXbc2Tca[ 2U ]
+    };
+
+    float32_t const *vec = v._data;
+
+    float32_t const row1[ 4U ] =
+    {
+        rXabc2Tr[ 3U ] - aacaXbc2Tca[ 3U ] + bXbTc2[ 0U ] - aacaXbc2Tca[ 2U ],
+        whatever,
+        whatever,
+        whatever
+    };
+
+    float32_t *result = out._data;
+    float32x4_t const rawRow0 = vcombine_f32 ( vld1_f32 ( row0 ), vget_low_f32 ( factor0 ) );
+    float32x4_t const alpha0 = vmulq_n_f32 ( vextq_f32 ( rawRow0, rawRow0, 1 ), vec[ 0U ] );
+
+    float32_t const row2[ 2U ] =
+    {
+        rXabc2Tr[ 3U ] - aacaXbc2Tca[ 3U ] - bXbTc2[ 0U ] + aacaXbc2Tca[ 2U ],
+        whatever
+    };
+
+    float32x2_t const sum = vget_high_f32 ( factor0 );
+    float32x4_t const alpha1 = vmulq_n_f32 ( vzip1q_f32 ( vcombine_f32 ( sum, sum ), vld1q_f32 ( row1 ) ), vec[ 1U ] );
+
+    float32x4_t const alpha2 = vmulq_n_f32 ( vcombine_f32 ( factor1, vld1_f32 ( row2 ) ), vec[ 2U ] );
+
+    float32x4_t const beta = vaddq_f32 ( alpha0, alpha1 );
+    float32x4_t const yotta = vaddq_f32 ( beta, alpha2 );
+
+    vst1_f32 ( result, vget_low_f32 ( yotta ) );
+    vst1_lane_s32 ( result + 2U, vget_high_f32 ( yotta ), 0 );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

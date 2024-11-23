@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <core.hpp>
 #include <bitwise.hpp>
@@ -14,14 +15,6 @@
 #include <rainbow/rainbow.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 #include <rotating_mesh/game_lut.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <locale>
-#include <android/asset_manager_jni.h>
-#include <android/native_window_jni.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
@@ -115,12 +108,14 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
                 return;
             }
 
-            if ( !_renderer.OnCreateDevice ( dpi ) ) [[unlikely]]
+            if ( !_renderer.OnCreateDevice ( {} ) ) [[unlikely]]
             {
                 _renderer.OnDestroyDevice ();
                 _game->OnDestroySoundSystem ();
                 return;
             }
+
+            _renderer.OnSetDPI ( dpi );
 
             if ( !_game->OnInitDevice ( _renderer ) ) [[unlikely]]
             {
@@ -144,7 +139,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 void Core::OnAboutDestroy ( JNIEnv* env ) noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _writeQueue.push_back ( eCommand::Quit );
     }
 
@@ -195,14 +190,14 @@ void Core::OnRightTrigger ( float value ) const noexcept
 void Core::OnSurfaceCreated ( JNIEnv* env, jobject surface ) noexcept
 {
     _nativeWindow = ANativeWindow_fromSurface ( env, surface );
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
     _writeQueue.push_back ( eCommand::SwapchainCreated );
 }
 
 void Core::OnSurfaceDestroyed () noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _writeQueue.push_back ( eCommand::SwapchainDestroyed );
     }
 
@@ -225,14 +220,14 @@ void Core::Quit () noexcept
     if ( !g_Core ) [[unlikely]]
         return;
 
-    std::unique_lock<std::mutex> const lock ( g_Core->_mutex );
+    std::lock_guard const lock ( g_Core->_mutex );
     g_Core->_writeQueue.push_back ( eCommand::QuitRequest );
 }
 
 bool Core::ExecuteMessageQueue () noexcept
 {
     {
-        std::unique_lock<std::mutex> const lock ( _mutex );
+        std::lock_guard const lock ( _mutex );
         _readQueue.swap ( _writeQueue );
     }
 
@@ -307,16 +302,16 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( *_nativeWindow, VSYNC ) ) [[unlikely]]
+    if ( !_renderer.OnCreateSwapchain ( reinterpret_cast<WindowHandle> ( _nativeWindow ), VSYNC ) ) [[unlikely]]
     {
-        _renderer.OnDestroySwapchain ();
+        _renderer.OnDestroySwapchain ( false );
         return false;
     }
 
     if ( !_game->OnSwapchainCreated ( _renderer ) ) [[unlikely]]
     {
         _game->OnSwapchainDestroyed ( _renderer );
-        _renderer.OnDestroySwapchain ();
+        _renderer.OnDestroySwapchain ( false );
         return false;
     }
 
@@ -335,7 +330,7 @@ bool Core::OnSwapchainDestroyed () noexcept
         return false;
 
     _game->OnSwapchainDestroyed ( _renderer );
-    _renderer.OnDestroySwapchain ();
+    _renderer.OnDestroySwapchain ( false );
 
     return true;
 }
@@ -344,8 +339,8 @@ void Core::UpdateFPS ( Timestamp now )
 {
     ++_frameCount;
 
-    const std::chrono::duration<double> seconds = now - _fpsTimestamp;
-    const double delta = seconds.count ();
+    std::chrono::duration<double> const seconds = now - _fpsTimestamp;
+    double const delta = seconds.count ();
 
     if ( delta < FPS_PERIOD ) [[likely]]
         return;

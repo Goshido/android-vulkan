@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_shadowmap_generator.inc>
 #include <pbr/point_light_shadowmap_generator_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -111,7 +106,7 @@ bool PointLightShadowmapGeneratorDescriptorSetLayout::Init ( VkDevice device ) n
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout PointLightShadowmapGeneratorDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &PointLightShadowmapGeneratorDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

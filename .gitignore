@@ -14,10 +14,8 @@
 /app/build
 
 # HLSL SPIR-V
-/app/src/main/hlsl/disassm/blob.txt
-/app/src/main/hlsl/validation/cs.spv
-/app/src/main/hlsl/validation/ps.spv
-/app/src/main/hlsl/validation/vs.spv
+/app/src/main/hlsl/disassm/blob.spvasm
+/app/src/main/hlsl/validation/blob.spv
 
 # Tools
 /tools/html-validator/.vscode/
@@ -29,3 +27,9 @@
 
 /tools/3ds-max-plugin/3ds-max-plugin.vcxproj.user
 /tools/3ds-max-plugin/sources/resource.aps
+
+/tools/editor/.vs
+/tools/editor/assets
+/tools/editor/bin
+/tools/editor/build
+/tools/editor/editor.vcxproj.user

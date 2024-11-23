@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/bit_field.hpp>
 #include <logger.hpp>
 
@@ -95,7 +96,7 @@ void BitField::Init ( lua_State &vm ) noexcept
 
 void BitField::Destroy () noexcept
 {
-    auto const free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <animation_exporter.hpp>
 #include <mesh_exporter.hpp>
 #include <resource.hpp>
@@ -6,13 +7,6 @@
 #include <skin_exporter.hpp>
 #include <utility.hpp>
 #include <version.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <maxapi.h>
-#include <Shobjidl.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 #define AVP_STR( x )            L#x
@@ -357,7 +351,7 @@ void Utility::OnExportSkin () noexcept
 
     auto const extract = [ this ] ( float &v, int id ) noexcept -> bool {
         ICustEdit* control = GetICustEdit ( GetDlgItem ( _ui, id ) );
-        
+
         if ( control->GetTextLength () < 1 )
         {
             ReleaseICustEdit ( control );

@@ -1,15 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <ktx_media_container.hpp>
-#include "logger.hpp"
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <memory>
-#include <unordered_map>
-#include <GLES3/gl32.h>
-#include <GLES2/gl2ext.h>
-
-GX_RESTORE_WARNING_STATE
+#include <logger.hpp>
 
 
 namespace android_vulkan {
@@ -36,10 +28,14 @@ constexpr uint32_t TARGET_NUMBER_OF_ARRAY_ELEMENTS = 0U;
 constexpr uint32_t TARGET_NUMBER_OF_FACES = 1U;
 constexpr uint32_t TARGET_PIXEL_DEPTH = 0U;
 
+// Taken from GLES3/gl32.h and GLES2/gl2ext.h. Less dependencies. Useful for Windows OS especially.
+constexpr uint32_t AV_GL_COMPRESSED_RGBA_ASTC_6x6_KHR = 0x93B4U;
+constexpr uint32_t AV_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR = 0x93D4U;
+
 std::unordered_map<uint32_t, VkFormat> g_FormatMapper =
 {
-    { GL_COMPRESSED_RGBA_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
-    { GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
+    { AV_GL_COMPRESSED_RGBA_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
+    { AV_GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR, VK_FORMAT_ASTC_6x6_SRGB_BLOCK }
 };
 
 } // end of anonymous namespace

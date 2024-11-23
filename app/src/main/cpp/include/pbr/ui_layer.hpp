@@ -2,8 +2,8 @@
 #define PBR_UI_LAYER_HPP
 
 
-#include "div_ui_element.hpp"
 #include "html5_element.hpp"
+#include "scriptable_div_ui_element.hpp"
 #include "ui_pass.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -26,11 +26,10 @@ class UILayer final
         };
 
     private:
-        DIVUIElement*                           _body = nullptr;
+        ScriptableDIVUIElement*                 _body = nullptr;
         CSSParser                               _css {};
         std::vector<float>                      _lineHeights { 1U, 0.0F };
 
-        static CSSUnitToDevicePixel             _cssUnitToDevicePixel;
         static std::unordered_set<UILayer*>     _uiLayers;
 
     public:
@@ -53,7 +52,6 @@ class UILayer final
         void Submit ( UIElement::SubmitInfo &info ) noexcept;
         [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
 
-        static void InitCSSUnitConverter ( float dpi, float comfortableViewDistanceMeters ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 
@@ -63,7 +61,7 @@ class UILayer final
             int appendChildElementIdx,
             int uiLayerIdx,
             int registerNamedElementIdx,
-            DIVUIElement &parent,
+            ScriptableDIVUIElement &parent,
             HTML5Element &htmlChild
         ) noexcept;
 

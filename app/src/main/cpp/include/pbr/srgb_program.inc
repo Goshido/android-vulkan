@@ -1,8 +1,0 @@
-#ifndef SRGB_PROGRAM_INC
-#define SRGB_PROGRAM_INC
-
-
-#define CONST_INVERSE_GAMMA     0
-
-
-#endif // SRGB_PROGRAM_INC

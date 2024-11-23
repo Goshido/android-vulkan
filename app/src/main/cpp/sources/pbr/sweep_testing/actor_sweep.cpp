@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sweep_testing/actor_sweep.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/static_mesh_component.hpp>
@@ -85,7 +86,7 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
 
     // NOLINTNEXTLINE - downcast.
     auto &m = static_cast<StaticMeshComponent &> ( *_mesh );
-    m.SetColor0 ( GXColorRGB ( 1.0F, 1.0F, 1.0F, 0.5F ) );
+    m.SetColor0 ( GXColorUNORM ( 255U, 255U, 255U, 128U ) );
     return true;
 }
 
@@ -94,14 +95,7 @@ void ActorSweep::SetOverlay ( Texture2DRef const &overlay ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
 
-    mesh.SetEmission (
-        GXColorRGB (
-            static_cast<GXUByte> ( 29U ),
-            static_cast<GXUByte> ( 46U ),
-            static_cast<GXUByte> ( 0U ),
-            static_cast<GXUByte> ( 255U )
-        )
-    );
+    mesh.SetEmission ( GXColorUNORM ( 29U, 46U, 0U, 255U ), 1.0F );
 
     // NOLINTNEXTLINE - downcast.
     auto &material = static_cast<GeometryPassMaterial &> ( *mesh.GetMaterial () );
@@ -155,7 +149,7 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
 {
     GXVec3 move = _moveSpeed;
 
-    auto deadZoneHandler = [] ( float value ) -> float {
+    constexpr auto deadZoneHandler = [] ( float value ) -> float {
         if ( std::abs ( value ) < STICK_DEAD_ZONE )
             return 0.0F;
 

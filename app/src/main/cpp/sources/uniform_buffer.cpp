@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <uniform_buffer.hpp>
 #include <vulkan_utils.hpp>

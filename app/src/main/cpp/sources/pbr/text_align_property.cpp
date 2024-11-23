@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/text_align_property.hpp>
 
 

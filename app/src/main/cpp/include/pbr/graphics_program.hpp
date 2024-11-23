@@ -20,10 +20,12 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 class GraphicsProgram
 {
+    protected:
+        using SpecializationData = void const*;
+
     public:
         using SetItem = std::vector<VkDescriptorPoolSize>;
         using DescriptorSetInfo = std::vector<SetItem>;
-        using SpecializationData = void const*;
 
     protected:
         VkShaderModule                              _fragmentShader = VK_NULL_HANDLE;
@@ -42,17 +44,10 @@ class GraphicsProgram
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
-        // Method return true is success. Otherwise method returns false.
-        // The method MUST invoke vkCreateGraphicsPipelines at the end.
-        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
-            VkRenderPass renderPass,
-            uint32_t subpass,
-            SpecializationData specializationData,
-            VkExtent2D const &viewport
-        ) noexcept = 0;
-
-        virtual void Destroy ( VkDevice device ) noexcept = 0;
         [[nodiscard]] virtual DescriptorSetInfo const &GetResourceInfo () const noexcept = 0;
+
+        // Successor classes MUST call this method.
+        virtual void Destroy ( VkDevice device ) noexcept;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
@@ -68,6 +63,10 @@ class GraphicsProgram
 
         [[nodiscard]] virtual VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept = 0;
+
+        [[nodiscard]] virtual VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
         ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
@@ -91,13 +90,11 @@ class GraphicsProgram
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) noexcept = 0;
 
-        virtual void DestroyShaderModules ( VkDevice device ) noexcept = 0;
-
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
-            VkRect2D &scissorInfo,
-            VkViewport &viewportInfo,
-            VkExtent2D const &viewport
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
         ) const noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
@@ -105,6 +102,8 @@ class GraphicsProgram
             VkVertexInputAttributeDescription* attributes,
             VkVertexInputBindingDescription* binds
         ) const noexcept = 0;
+
+        void DestroyShaderModules ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

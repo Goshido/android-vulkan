@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
 #include <pbr/utf8_parser.hpp>
@@ -65,59 +66,30 @@ bool TextUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> cons
 
 //----------------------------------------------------------------------------------------------------------------------
 
-TextUIElement::TextUIElement ( bool &success,
-    UIElement const* parent,
-    lua_State &vm,
-    int errorHandlerIdx,
-    std::u32string &&text
-) noexcept:
-    UIElement ( true, parent ),
+TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept:
+    UIElement ( visible, parent ),
     _text ( std::move ( text ) )
 {
     _glyphs.resize ( _text.size () );
-
-    if ( success = lua_checkstack ( &vm, 2 ); !success )
-    {
-        android_vulkan::LogError ( "pbr::TextUIElement::TextUIElement - Stack is too small." );
-        return;
-    }
-
-    if ( success = lua_getglobal ( &vm, "RegisterTextUIElement" ) == LUA_TFUNCTION; !success )
-    {
-        android_vulkan::LogError ( "pbr::TextUIElement::TextUIElement - Can't find register function." );
-        return;
-    }
-
-    lua_pushlightuserdata ( &vm, this );
-
-    if ( success = lua_pcall ( &vm, 1, 1, errorHandlerIdx ) == LUA_OK; !success )
-    {
-        android_vulkan::LogWarning ( "pbr::TextUIElement::TextUIElement - Can't append element inside Lua VM." );
-    }
 }
 
-void TextUIElement::Init ( lua_State &vm ) noexcept
+void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
 {
-    constexpr luaL_Reg const extensions[] =
-    {
-        {
-            .name = "av_TextUIElementSetColorHSV",
-            .func = &TextUIElement::OnSetColorHSV
-        },
-        {
-            .name = "av_TextUIElementSetColorRGB",
-            .func = &TextUIElement::OnSetColorRGB
-        },
-        {
-            .name = "av_TextUIElementSetText",
-            .func = &TextUIElement::OnSetText
-        }
-    };
+    _color = color;
+    _submitCache._isColorChanged = true;
+}
 
-    for ( auto const &extension : extensions )
-    {
-        lua_register ( &vm, extension.name, extension.func );
-    }
+void TextUIElement::SetText ( char const* text ) noexcept
+{
+    auto str = UTF8Parser::ToU32String ( text );
+
+    if ( !str || str == _text )
+        return;
+
+    _text = std::move ( *str );
+    _glyphs.resize ( _text.size () );
+    _applyLayoutCache._isTextChanged = true;
+    _submitCache._isTextChanged = true;
 }
 
 void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
@@ -142,7 +114,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     FontStorage &fontStorage = *info._fontStorage;
 
     std::string const &fontAsset = *ResolveFont ();
-    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *info._cssUnits, *_parent ) );
+    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *_parent ) );
     auto font = fontStorage.GetFont ( fontAsset, size );
 
     if ( !font )
@@ -311,10 +283,16 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    size_t const vertices = _submitCache._vertices.size ();
+    size_t const vertices = _submitCache._positions.size ();
     UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::memcpy ( uiVertexBuffer.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
-    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
+    std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
+
+    uiPositions = uiPositions.subspan ( vertices );
+    uiVertices = uiVertices.subspan ( vertices );
 
     info._uiPass->SubmitText ( vertices );
 }
@@ -331,17 +309,22 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._parenTopLeft = info._parentTopLeft;
     _submitCache._penIn = info._pen;
 
-    std::vector<UIVertexInfo> &vertexBuffer = _submitCache._vertices;
+    std::vector<GXVec2> &positionBuffer = _submitCache._positions;
+    positionBuffer.clear ();
+
+    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
+    positionBuffer.resize ( vertexCount );
     vertexBuffer.resize ( vertexCount );
-    UIVertexInfo* begin = vertexBuffer.data ();
-    UIVertexInfo* v = begin;
+
+    GXVec2* p = positionBuffer.data ();
+    UIVertex* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
-    GXColorRGB const &color = ResolveColor ();
+    GXColorUNORM const color = ResolveColor ();
     constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     size_t limit = 0U;
@@ -358,8 +341,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         ++height;
     }
 
-    AlignIntegerHander const textAlignment = ResolveIntegerTextAlignment ( _parent );
-    AlignIntegerHander const verticalAlignment = ResolveIntegerVerticalAlignment ( _parent );
+    AlignIntegerHandler const textAlignment = ResolveIntegerTextAlignment ( _parent );
+    AlignIntegerHandler const verticalAlignment = ResolveIntegerVerticalAlignment ( _parent );
 
     auto x = static_cast<int32_t> ( pen._data[ 0U ] );
     auto y = static_cast<int32_t> ( pen._data[ 1U ] );
@@ -381,7 +364,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = x + g._width;
 
-            UIPass::AppendRectangle ( v,
+            UIPass::AppendRectangle ( p,
+                v,
                 color,
                 GXVec2 ( static_cast<float> ( x ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
@@ -392,6 +376,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             );
 
             x += g._advance;
+
+            p += verticesPerGlyph;
             v += verticesPerGlyph;
         }
 
@@ -406,11 +392,12 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertexInfo );
+    _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
     return true;
 }
 
-GXColorRGB const &TextUIElement::ResolveColor () const noexcept
+GXColorUNORM TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
         return _color.value ();
@@ -419,18 +406,18 @@ GXColorRGB const &TextUIElement::ResolveColor () const noexcept
     {
         // NOLINTNEXTLINE - downcast.
         auto const &div = *static_cast<DIVUIElement const*> ( p );
-        ColorValue const &color = div._css._color;
+        ColorValue const &color = div.GetCSS ()._color;
 
         if ( !color.IsInherit () )
         {
-            return color.GetValue ();
+            return color.GetSRGB ();
         }
     }
 
     android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
-    constexpr static GXColorRGB nullColor ( 0.0F, 0.0F, 0.0F, 1.0F );
+    constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
     return nullColor;
 }
 
@@ -440,7 +427,7 @@ std::string const* TextUIElement::ResolveFont () const noexcept
     {
         // NOLINTNEXTLINE - downcast.
         auto const &div = *static_cast<DIVUIElement const*> ( p );
-        std::string const &fontFile = div._css._fontFile;
+        std::string const &fontFile = div.GetCSS ()._fontFile;
 
         if ( !fontFile.empty () )
         {
@@ -467,14 +454,14 @@ int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int3
     return pen + parentSize - lineSize;
 }
 
-TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept
+TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept
 {
     while ( parent )
     {
         // NOLINTNEXTLINE - downcast
         auto const &div = static_cast<DIVUIElement const &> ( *parent );
 
-        switch ( div._css._textAlign )
+        switch ( div.GetCSS ()._textAlign )
         {
             case TextAlignProperty::eValue::Center:
             return &TextUIElement::AlignIntegerToCenter;
@@ -495,14 +482,14 @@ TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerTextAlignment ( U
     return &TextUIElement::AlignIntegerToStart;
 }
 
-TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept
+TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept
 {
     while ( parent )
     {
         // NOLINTNEXTLINE - downcast
         auto const &div = static_cast<DIVUIElement const &> ( *parent );
 
-        switch ( div._css._verticalAlign )
+        switch ( div.GetCSS ()._verticalAlign )
         {
             case VerticalAlignProperty::eValue::Bottom:
             return &TextUIElement::AlignIntegerToEnd;
@@ -521,47 +508,6 @@ TextUIElement::AlignIntegerHander TextUIElement::ResolveIntegerVerticalAlignment
 
     AV_ASSERT ( false )
     return &TextUIElement::AlignIntegerToStart;
-}
-
-int TextUIElement::OnSetColorHSV ( lua_State* state )
-{
-    auto const h = static_cast<float> ( lua_tonumber ( state, 2 ) );
-    auto const s = static_cast<float> ( lua_tonumber ( state, 3 ) );
-    auto const v = static_cast<float> ( lua_tonumber ( state, 4 ) );
-    auto const a = static_cast<float> ( lua_tonumber ( state, 5 ) );
-
-    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
-    self._color = GXColorRGB ( GXColorHSV ( h, s, v, a ) );
-    self._submitCache._isColorChanged = true;
-    return 0;
-}
-
-int TextUIElement::OnSetColorRGB ( lua_State* state )
-{
-    auto const r = static_cast<GXUByte> ( lua_tonumber ( state, 2 ) );
-    auto const g = static_cast<GXUByte> ( lua_tonumber ( state, 3 ) );
-    auto const b = static_cast<GXUByte> ( lua_tonumber ( state, 4 ) );
-    auto const a = static_cast<GXUByte> ( lua_tonumber ( state, 5 ) );
-
-    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
-    self._color = GXColorRGB ( r, g, b, a );
-    self._submitCache._isColorChanged = true;
-    return 0;
-}
-
-int TextUIElement::OnSetText ( lua_State* state )
-{
-    auto str = UTF8Parser::ToU32String ( lua_tostring ( state, 2 ) );
-    auto &self = *static_cast<TextUIElement*> ( lua_touserdata ( state, 1 ) );
-
-    if ( !str || str == self._text )
-        return 0;
-
-    self._text = std::move ( *str );
-    self._glyphs.resize ( self._text.size () );
-    self._applyLayoutCache._isTextChanged = true;
-    self._submitCache._isTextChanged = true;
-    return 0;
 }
 
 } // namespace pbr

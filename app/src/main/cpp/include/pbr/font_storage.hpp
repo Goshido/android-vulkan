@@ -3,7 +3,8 @@
 
 
 #include "command_buffer_count.hpp"
-#include "renderer.hpp"
+#include <renderer.hpp>
+#include "ui_vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -11,6 +12,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include FT_FREETYPE_H
 
 #include <forward_list>
+#include <optional>
 
 GX_RESTORE_WARNING_STATE
 
@@ -22,8 +24,19 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            GXVec3                              _topLeft = GXVec3 ( 0.0F, 0.0F, 0.0F );
-            GXVec3                              _bottomRight = GXVec3 ( 0.0F, 0.0F, 0.0F );
+            UIAtlas                             _topLeft
+            {
+                ._uv { 0.0F, 0.0F },
+                ._layer = 0U
+
+            };
+
+            UIAtlas                             _bottomRight
+            {
+                ._uv { 0.0F, 0.0F },
+                ._layer = 0U
+            };
+
             int32_t                             _width = 0;
             int32_t                             _height = 0;
             int32_t                             _advance = 0;
@@ -94,7 +107,7 @@ class FontStorage final
         {
             private:
                 ImageResource                   _dyingResources[ DUAL_COMMAND_BUFFER ];
-            
+
             public:
                 ImageResource                   _resource {};
 
@@ -196,7 +209,7 @@ class FontStorage final
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] GXVec3 PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept;
+        [[nodiscard]] UIAtlas PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept;
         void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;

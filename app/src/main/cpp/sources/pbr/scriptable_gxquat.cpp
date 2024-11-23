@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/scriptable_gxquat.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <logger.hpp>
@@ -9,9 +10,6 @@ extern "C" {
 #include <lua/lauxlib.h>
 
 } // extern "C"
-
-#include <cstdio>
-#include <memory>
 
 GX_RESTORE_WARNING_STATE
 
@@ -96,7 +94,7 @@ void ScriptableGXQuat::Init ( lua_State &vm ) noexcept
 
 void ScriptableGXQuat::Destroy () noexcept
 {
-    auto free = [] ( Item* &head ) noexcept {
+    constexpr auto free = [] ( Item* &head ) noexcept {
         Item* item = head;
 
         while ( item )

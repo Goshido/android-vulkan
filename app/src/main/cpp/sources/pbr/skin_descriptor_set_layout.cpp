@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
@@ -13,19 +14,19 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
-    
+
         DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
         DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
-    
+
         DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
         DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
-    
+
         ~DescriptorSetLayout () = default;
-    
+
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
 };
@@ -62,21 +63,35 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_REFERENCE_MESH,
+            .binding = BIND_REFERENCE_POSITIONS,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_SKIN,
+            .binding = BIND_REFERENCE_REST,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = BIND_SKIN_MESH,
+            .binding = BIND_SKIN_VERTICES,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_SKIN_POSITIONS,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_SKIN_REST,
             .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
@@ -122,7 +137,7 @@ bool SkinDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout SkinDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &SkinDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

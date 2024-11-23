@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/light_lightup_base_program.hpp>
 
 

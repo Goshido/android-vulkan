@@ -1,12 +1,7 @@
-// version 1.9
+// version 1.14
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <cassert>
-
-GX_RESTORE_WARNING_STATE
 
 
 [[maybe_unused]] GXVoid GXVec2::Reverse () noexcept
@@ -200,12 +195,45 @@ GX_RESTORE_WARNING_STATE
 
 //----------------------------------------------------------------------------------------------------------------------
 
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorUNORM color ) noexcept:
+    _data
+    {
+        static_cast<GXFloat> ( color._data[ 0U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 1U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 2U ] ) * GX_MATH_UNORM_FACTOR,
+        static_cast<GXFloat> ( color._data[ 3U ] ) * GX_MATH_UNORM_FACTOR
+    }
+{
+    // NOTHING
+}
+
 [[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     _data[ 0U ] = static_cast<GXFloat> ( red ) * GX_MATH_UNORM_FACTOR;
     _data[ 1U ] = static_cast<GXFloat> ( green ) * GX_MATH_UNORM_FACTOR;
     _data[ 2U ] = static_cast<GXFloat> ( blue ) * GX_MATH_UNORM_FACTOR;
-    _data[ 3U ] = alpha * GX_MATH_UNORM_FACTOR;
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXVoid GXColorRGB::From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept
+{
+    _data[ 0U ] = static_cast<GXFloat> ( red ) * GX_MATH_UNORM_FACTOR;
+    _data[ 1U ] = static_cast<GXFloat> ( green ) * GX_MATH_UNORM_FACTOR;
+    _data[ 2U ] = static_cast<GXFloat> ( blue ) * GX_MATH_UNORM_FACTOR;
+    _data[ 3U ] = alpha;
+}
+
+[[maybe_unused]] GXColorUNORM GXColorRGB::ToColorUNORM () const noexcept
+{
+    constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
+
+    return
+    {
+        static_cast<GXUByte> ( _data[ 0U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 1U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 2U ] * convertFactor ),
+        static_cast<GXUByte> ( _data[ 3U ] * convertFactor )
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -248,6 +276,29 @@ GX_RESTORE_WARNING_STATE
     _data[ 1U ] = x * sinom;
     _data[ 2U ] = y * sinom;
     _data[ 3U ] = z * sinom;
+}
+
+[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
+{
+    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ] -
+        a._data[ 1U ] * b._data[ 1U ] -
+        a._data[ 2U ] * b._data[ 2U ] -
+        a._data[ 3U ] * b._data[ 3U ];
+
+    _data[ 1U ] = a._data[ 0U ] * b._data[ 1U ] +
+        a._data[ 1U ] * b._data[ 0U ] +
+        a._data[ 2U ] * b._data[ 3U ] -
+        a._data[ 3U ] * b._data[ 2U ];
+
+    _data[ 2U ] = a._data[ 0U ] * b._data[ 2U ] -
+        a._data[ 1U ] * b._data[ 3U ] +
+        a._data[ 2U ] * b._data[ 0U ] +
+        a._data[ 3U ] * b._data[ 1U ];
+
+    _data[ 3U ] = a._data[ 0U ] * b._data[ 3U ] +
+        a._data[ 1U ] * b._data[ 2U ] -
+        a._data[ 2U ] * b._data[ 1U ] +
+        a._data[ 3U ] * b._data[ 0U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale ) noexcept
@@ -307,6 +358,35 @@ GX_RESTORE_WARNING_STATE
     _data[ 1U ] = start._data[ 1U ] * scale0 + temp._data[ 1U ] * scale1;
     _data[ 2U ] = start._data[ 2U ] * scale0 + temp._data[ 2U ] * scale1;
     _data[ 3U ] = start._data[ 3U ] * scale0 + temp._data[ 3U ] * scale1;
+}
+
+[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
+{
+    GXFloat const rr = _data[ 0U ] * _data[ 0U ];
+    GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
+    GXFloat const rb2 = _data[ 0U ] * _data[ 2U ] * 2.0F;
+    GXFloat const rc2 = _data[ 0U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const aa = _data[ 1U ] * _data[ 1U ];
+    GXFloat const ab2 = _data[ 1U ] * _data[ 2U ] * 2.0F;
+    GXFloat const ac2 = _data[ 1U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const bb = _data[ 2U ] * _data[ 2U ];
+    GXFloat const bc2 = _data[ 2U ] * _data[ 3U ] * 2.0F;
+
+    GXFloat const cc = _data[ 3U ] * _data[ 3U ];
+
+    out._data[ 0U ] = v._data[ 0U ] * ( rr + aa - bb - cc ) +
+        v._data[ 1U ] * ( ab2 - rc2 ) +
+        v._data[ 2U ] * ( rb2 + ac2 );
+
+    out._data[ 1U ] = v._data[ 0U ] * ( rc2 + ab2 ) +
+        v._data[ 1U ] * ( rr - aa + bb - cc ) +
+        v._data[ 2U ] * ( bc2 - ra2 );
+
+    out._data[ 2U ] = v._data[ 0U ] * ( ac2 - rb2 ) +
+        v._data[ 1U ] * ( ra2 + bc2 ) +
+        v._data[ 2U ] * ( rr - aa - bb + cc );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

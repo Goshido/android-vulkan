@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/rigid_body_component.hpp>
 #include <pbr/actor.hpp>
 #include <pbr/coordinate_system.hpp>
@@ -7,6 +8,7 @@
 #include <guid_generator.hpp>
 #include <physics.hpp>
 #include <av_assert.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <shape_sphere.hpp>
 

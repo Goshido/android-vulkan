@@ -25,7 +25,7 @@ class DescriptorSetLayout
         virtual void Destroy ( VkDevice device ) noexcept = 0;
         [[nodiscard]] virtual bool Init ( VkDevice device ) noexcept = 0;
 
-        [[nodiscard]] virtual VkDescriptorSetLayout GetLayout () const noexcept = 0;
+        [[nodiscard]] virtual VkDescriptorSetLayout &GetLayout () const noexcept = 0;
 };
 
 } // namespace pbr

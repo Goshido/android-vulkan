@@ -1,8 +1,10 @@
+#include <precompiled_headers.hpp>
 #include <pbr/ray_casting/ray_casting.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/opaque_material.hpp>
 #include <pbr/static_mesh_component.hpp>
+#include <logger.hpp>
 #include <shape_box.hpp>
 #include <vertex_info.hpp>
 
@@ -298,64 +300,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     SwitchEmission ( _normalMaterial, _normalTexture );
 
-    constexpr android_vulkan::VertexInfo const vertices[]
-    {
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( 0.998F, 0.0F, 0.0F ),
-            GXVec2 ( 0.0F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
-
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, 0.866F, 0.0F ),
-            GXVec2 ( 0.5F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
-
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, -0.866F, 0.0F ),
-            GXVec2 ( 1.0F, 1.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
-
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( 0.998F, 0.0F, 1.0F ),
-            GXVec2 ( 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
-
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, 0.866F, 1.0F ),
-            GXVec2 ( 0.5F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        ),
-
-        android_vulkan::VertexInfo
-        (
-            GXVec3 ( -0.502F, -0.866F, 1.0F ),
-            GXVec2 ( 1.0F, 0.0F ),
-            GXVec3 ( 0.0F, 0.0F, 1.0F ),
-            GXVec3 ( 1.0F, 0.0F, 0.0F ),
-            GXVec3 ( 0.0F, 1.0F, 0.0F )
-        )
-    };
-
-    constexpr uint32_t const indices[ 18U ] =
+    constexpr uint32_t const indices[]
     {
         0U, 1U, 4U,
         0U, 4U, 3U,
@@ -367,6 +312,44 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         2U, 3U, 5U
     };
 
+    constexpr GXVec3 const positions[]
+    {
+        { 0.998F, 0.0F, 0.0F },
+        { -0.502F, 0.866F, 0.0F },
+        { -0.502F, -0.866F, 0.0F },
+        { 0.998F, 0.0F, 1.0F },
+        { -0.502F, 0.866F, 1.0F },
+        { -0.502F, -0.866F, 1.0F }
+    };
+
+    constexpr android_vulkan::VertexInfo const vertices[]
+    {
+        {
+            ._uv { 0.0F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        },
+        {
+            ._uv { 0.5F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        },
+        {
+            ._uv { 1.0F, 1.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        },
+        {
+            ._uv { 0.0F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        },
+        {
+            ._uv { 0.5F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        },
+        {
+            ._uv { 1.0F, 0.0F },
+            ._tbn = android_vulkan::VertexInfo::IDENTITY_TBN
+        }
+    };
+
     GXAABB bounds {};
     bounds.AddVertex ( -0.502F, -0.866F, 0.0F );
     bounds.AddVertex ( 0.998F, 0.866F, 1.0F );
@@ -374,15 +357,14 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _lineMesh = std::make_shared<android_vulkan::MeshGeometry> ();
     android_vulkan::MeshGeometry &lineMesh = *_lineMesh.get ();
 
-    result = lineMesh.LoadMesh ( reinterpret_cast<uint8_t const*> ( vertices ),
-        sizeof ( vertices ),
-        static_cast<uint32_t> ( std::size ( vertices ) ),
-        indices,
-        static_cast<uint32_t> ( std::size ( indices ) ),
-        bounds,
-        renderer,
+    result = lineMesh.LoadMesh ( renderer,
         *cb,
-        VK_NULL_HANDLE
+        false,
+        VK_NULL_HANDLE,
+        { indices, std::size ( indices ) },
+        { positions, std::size ( positions ) },
+        { vertices, std::size ( vertices ) },
+        bounds
     );
 
     if ( !result ) [[unlikely]]
@@ -445,19 +427,21 @@ void RayCasting::Raycast () noexcept
     GXAABB bounds {};
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    constexpr GXColorRGB color ( 1.0F, 1.0F, 1.0F, 1.0F );
+    constexpr GXColorUNORM color ( 255U, 255U, 255U, 255U );
     android_vulkan::RaycastResult result {};
     constexpr uint32_t groups = std::numeric_limits<uint32_t>::max ();
+
+    GeometryPassProgram::ColorData const colorData ( color, color, color, color, 1.0F );
 
     if ( !_physics.Raycast ( result, rayFrom, rayTo, groups ) )
     {
         SwitchEmission ( _rayMaterial, _rayTextureNoHit );
-        _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
+        _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, colorData );
         return;
     }
 
     SwitchEmission ( _rayMaterial, _rayTextureHit );
-    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, color, color, color, color );
+    _renderSession.SubmitMesh ( _lineMesh, _rayMaterial, transform, bounds, colorData );
 
     basis.From ( result._normal );
 
@@ -481,7 +465,7 @@ void RayCasting::Raycast () noexcept
     transform.From ( basis, result._point );
     _lineMesh->GetBounds ().Transform ( bounds, transform );
 
-    _renderSession.SubmitMesh ( _lineMesh, _normalMaterial, transform, bounds, color, color, color, color );
+    _renderSession.SubmitMesh ( _lineMesh, _normalMaterial, transform, bounds, colorData );
 }
 
 bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,

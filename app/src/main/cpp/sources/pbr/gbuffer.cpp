@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/gbuffer.hpp>
 #include <vulkan_utils.hpp>
 

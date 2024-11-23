@@ -15,17 +15,29 @@ namespace pbr {
 
 #pragma pack ( push, 1 )
 
-struct UIVertexInfo final
+struct UIAtlas final
 {
-    GXVec2          _vertex;
-    GXColorRGB      _color;
-    GXVec3          _atlas;
-    GXVec2          _imageUV;
+    GXVec2      _uv;
+    uint8_t     _layer;
+
+    // See <repo>/docs/data-compression.md#opt-2-further-compression
+    uint8_t     _padding[ 3U ] {};
+};
+
+struct UIVertex final
+{
+    GXVec2          _image;
+    UIAtlas         _atlas;
+    GXColorUNORM    _color;
 };
 
 #pragma pack ( pop )
 
-using UIVertexBuffer = std::span<UIVertexInfo>;
+struct UIVertexBuffer final
+{
+    std::span<GXVec2>       _positions {};
+    std::span<UIVertex>     _vertices {};
+};
 
 } // namespace pbr
 

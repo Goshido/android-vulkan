@@ -1,5 +1,5 @@
+#include "rotating_mesh/bindings.inc"
 #include "blinn_phong_gamma.ps"
-#include "color_space.ps"
 
 
 // Main reference is Source Engine
@@ -10,33 +10,33 @@
 #define TARGET_SHININESS                128.0F
 #define TARGET_LIGHT_SOURCE_ORIGIN      float32_t3 ( 0.0F, 0.0F, 0.0F )
 
-[[vk::binding ( 0, 0 )]]
+[[vk::binding ( BIND_SAMPLER, SET_FIXED )]]
 SamplerState                g_sampler:              register ( s0 );
 
-[[vk::binding ( 0, 2 )]]
+[[vk::binding ( BIND_DIFFUSE_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>       g_diffuseTexture:       register ( t0 );
 
-[[vk::binding ( 1, 2 )]]
+[[vk::binding ( BIND_NORMAL_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>       g_normalTexture:        register ( t1 );
 
-[[vk::binding ( 2, 2 )]]
+[[vk::binding ( BIND_LUT_TEXTURE, SET_MATERIAL )]]
 Texture2D<float32_t4>       g_specLUTTexture:       register ( t2 );
 
 struct InputData
 {
-    [[vk::location ( 0 )]]
+    [[vk::location ( ATT_SLOT_FRAGMENT_VIEW )]]
     linear float32_t3       _fragmentView:          FRAGMENT;
 
-    [[vk::location ( 1 )]]
+    [[vk::location ( ATT_SLOT_UV )]]
     linear float32_t2       _uv:                    UV;
 
-    [[vk::location ( 2 )]]
+    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
     linear float32_t3       _normalView:            NORMAL;
 
-    [[vk::location ( 3 )]]
+    [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
     linear float32_t3       _tangentView:           TANGENT;
 
-    [[vk::location ( 4 )]]
+    [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
     linear float32_t3       _bitangentView:         BITANGENT;
 };
 
@@ -89,5 +89,5 @@ float32_t4 PS ( in InputData inputData ): SV_Target0
     float32_t3 const specularFactor = (float32_t3)GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
 
     float32_t3 const color = mad ( diffuseData, (float32_t3)lambertian, specularFactor );
-    return float32_t4 ( LinearToSRGB ( (float16_t3)color, INVERSE_GAMMA ), 1.0F );
+    return float32_t4 ( color, 1.0F );
 }

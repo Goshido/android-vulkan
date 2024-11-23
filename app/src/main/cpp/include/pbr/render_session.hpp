@@ -26,10 +26,7 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &emission
+            GeometryPassProgram::ColorData const &colorData
         ) noexcept;
 
         struct CommandInfo final
@@ -117,10 +114,7 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &emission
+            GeometryPassProgram::ColorData const &colorData
         ) noexcept;
 
     private:
@@ -137,20 +131,14 @@ class RenderSession final
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &emission
+            GeometryPassProgram::ColorData const &colorData
         ) noexcept;
 
         void SubmitStippleCall ( MeshRef &mesh,
             MaterialRef const &material,
             GXMat4 const &local,
             GXAABB const &worldBounds,
-            GXColorRGB const &color0,
-            GXColorRGB const &color1,
-            GXColorRGB const &color2,
-            GXColorRGB const &emission
+            GeometryPassProgram::ColorData const &colorData
         ) noexcept;
 
         void SubmitPointLight ( LightRef &light ) noexcept;

@@ -19,46 +19,48 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
     private:
         struct Usage final
         {
-            android_vulkan::SkinData        _skinData {};
-            MeshRef                         _skinMesh {};
+            android_vulkan::SkinData                        _skinData {};
+            MeshRef                                         _skinMesh {};
         };
 
         struct CommandBufferInfo final
         {
-            std::vector<VkCommandBuffer>    _buffers {};
-            VkCommandPool                   _commandPool = VK_NULL_HANDLE;
-            size_t                          _index = 0U;
-            std::vector<VkFence>            _fences {};
+            std::vector<VkCommandBuffer>                    _buffers {};
+            VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
+            size_t                                          _index = 0U;
+            std::vector<VkFence>                            _fences {};
         };
 
         using SkeletalMeshes = std::unordered_map<Component const*, ComponentRef>;
 
     private:
-        Actor*                              _actor = nullptr;
-        AnimationGraph*                     _animationGraph = nullptr;
+        Actor*                                              _actor = nullptr;
+        AnimationGraph*                                     _animationGraph = nullptr;
 
-        GXColorRGB                          _color0;
-        GXColorRGB                          _color1;
-        GXColorRGB                          _color2;
-        GXColorRGB                          _emission;
+        GXColorUNORM                                        _color0;
+        GXColorUNORM                                        _color1;
+        GXColorUNORM                                        _color2;
+        std::optional<GeometryPassProgram::ColorData>       _colorData = std::nullopt;
+        GXColorUNORM                                        _emission { 0U, 0U, 0U, 0U };
+        float                                               _emissionIntensity = 1.0F;
 
-        VkExtent3D                          _dispatch {};
+        VkExtent3D                                          _dispatch {};
 
-        MaterialRef                         _material;
-        GXMat4                              _localMatrix;
-        GXAABB                              _worldBounds;
+        MaterialRef                                         _material;
+        GXMat4                                              _localMatrix;
+        GXAABB                                              _worldBounds;
 
-        MeshRef                             _referenceMesh;
-        Usage                               _usage;
+        MeshRef                                             _referenceMesh;
+        Usage                                               _usage;
 
-        static CommandBufferInfo            _cbInfo;
-        static size_t                       _lastCommandBufferIndex;
-        static SkinProgram                  _program;
-        static android_vulkan::Renderer*    _renderer;
-        static SkeletalMeshes               _skeletalMeshes;
-        static SkinPool                     _skinPool;
-        static std::list<Usage>             _toDelete[ DUAL_COMMAND_BUFFER ];
-        static std::deque<Usage*>           _transferQueue;
+        static CommandBufferInfo                            _cbInfo;
+        static size_t                                       _lastCommandBufferIndex;
+        static SkinProgram                                  _program;
+        static android_vulkan::Renderer*                    _renderer;
+        static SkeletalMeshes                               _skeletalMeshes;
+        static SkinPool                                     _skinPool;
+        static std::list<Usage>                             _toDelete[ DUAL_COMMAND_BUFFER ];
+        static std::deque<Usage*>                           _transferQueue;
 
     public:
         SkeletalMeshComponent () = delete;
@@ -96,12 +98,13 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
 
         [[nodiscard]] bool SetAnimationGraph ( AnimationGraph &animationGraph ) noexcept;
 
-        void SetColor0 ( GXColorRGB const &color ) noexcept;
-        void SetColor1 ( GXColorRGB const &color ) noexcept;
-        void SetColor2 ( GXColorRGB const &color ) noexcept;
-        void SetEmission ( GXColorRGB const &emission ) noexcept;
+        void SetColor0 ( GXColorUNORM color ) noexcept;
+        void SetColor1 ( GXColorUNORM color ) noexcept;
+        void SetColor2 ( GXColorUNORM color ) noexcept;
+        void SetEmission ( GXColorUNORM color, float intensity ) noexcept;
 
         void SetTransform ( GXMat4 const &transform ) noexcept;
+        void UpdateColorData () noexcept;
 
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
         static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;

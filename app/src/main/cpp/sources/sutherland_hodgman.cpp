@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <sutherland_hodgman.hpp>
 #include <logger.hpp>
 

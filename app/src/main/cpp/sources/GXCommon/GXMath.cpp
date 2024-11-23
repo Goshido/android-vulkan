@@ -1,15 +1,7 @@
-// version 1.83
+// version 1.93
 
+#include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <array>
-#include <cassert>
-#include <cstdlib>
-#include <ctime>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace {
@@ -432,14 +424,14 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - does not initialize "_data"
 [[maybe_unused]] GXColorRGB::GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
 {
     From ( red, green, blue, alpha );
 }
 
-// NOLINTNEXTLINE
-[[maybe_unused]] GXColorRGB::GXColorRGB ( const GXColorHSV &color ) noexcept
+// NOLINTNEXTLINE - does not initialize "_data"
+[[maybe_unused]] GXColorRGB::GXColorRGB ( GXColorHSV const &color ) noexcept
 {
     From ( color );
 }
@@ -557,6 +549,33 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             // IMPOSSIBLE
         break;
     }
+}
+
+[[maybe_unused]] GXColorRGB GXColorRGB::ToLinearSpace () const noexcept
+{
+    // See <repo>/docs/srgb#srgb-to-linear
+    float const* c = _data;
+    GXVec3 const &srgb = *reinterpret_cast<GXVec3 const*> ( this );
+
+    GXVec3 lin {};
+    lin.Multiply ( srgb, 7.74e-2F );
+
+    constexpr float alpha = 5.213e-2F;
+    constexpr GXVec3 beta ( alpha, alpha, alpha );
+    GXVec3 omega {};
+    omega.Sum ( beta, 9.479e-1F, srgb );
+
+    float const r[] = { lin._data[ 0U ], std::pow ( omega._data[ 0U ], 2.4F ) };
+    float const g[] = { lin._data[ 1U ], std::pow ( omega._data[ 1U ], 2.4F ) };
+
+    constexpr float cutoff = 4.045e-2F;
+    GXColorRGB result ( r[ static_cast<size_t> ( c[ 0U ] > cutoff ) ], 0.0F, 0.0F, c[ 3U ] );
+
+    float const b[] = { lin._data[ 2U ], std::pow ( omega._data[ 2U ], 2.4F ) };
+    result._data[ 1U ] = g[ static_cast<size_t> ( c[ 1U ] > cutoff ) ];
+    result._data[ 2U ] = b[ static_cast<size_t> ( c[ 2U ] > cutoff ) ];
+
+    return result;
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red,
@@ -708,42 +727,108 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator + ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r + other._r, _i + other._i );
+    return
+    {
+        _r + other._r,
+        _i + other._i
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator - ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r - other._r, _i - other._i );
+    return
+    {
+        _r - other._r,
+        _i - other._i
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXPreciseComplex const &other ) const noexcept
 {
-    return GXPreciseComplex ( _r * other._r - _i * other._i, _r * other._i + _i * other._r );
+    return
+    {
+        _r * other._r - _i * other._i,
+        _r * other._i + _i * other._r
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator * ( GXDouble a ) const noexcept
 {
-    return GXPreciseComplex ( _r * a, _i * a );
+    return
+    {
+        _r * a,
+        _i * a
+    };
 }
 
 [[maybe_unused]] GXPreciseComplex GXPreciseComplex::operator / ( GXDouble a ) const noexcept
 {
     GXDouble const invA = 1.0 / a;
-    return GXPreciseComplex ( _r * invA, _i * invA );
+
+    return
+    {
+        _r * invA,
+        _i * invA
+    };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
 }
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat4 const &rotationMatrix ) noexcept
 {
     From ( rotationMatrix );
+}
+
+[[maybe_unused]] GXUInt GXQuat::Compress32 ( bool reflectBitangent ) const noexcept
+{
+    GXVec3 imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
+
+    // Shader code expects only positive real value for reconstruction.
+    // Using quaternion duality property to satisfy that convention.
+    if ( _data[ 0U ] < 0.0F )
+        imaginary.Reverse ();
+
+    constexpr uint32_t fixedPoint = 1U << 10U;
+    constexpr uint32_t halfFixedPoint = fixedPoint >> 1U;
+    constexpr auto snormScale = static_cast<float> ( halfFixedPoint - 1U );
+    constexpr auto snormOffset = static_cast<float> ( halfFixedPoint );
+    constexpr GXVec3 snormOffsetV3 ( snormOffset, snormOffset, snormOffset );
+    imaginary.Sum ( snormOffsetV3, snormScale, imaginary );
+
+    auto const aSnorm = static_cast<uint32_t> ( imaginary._data[ 0U ] );
+    auto const bSnorm = static_cast<uint32_t> ( imaginary._data[ 1U ] );
+    auto const cSnorm = static_cast<uint32_t> ( imaginary._data[ 2U ] );
+
+    constexpr uint32_t const mirroring[] = { 0b11U << 30U, 0U };
+    uint32_t const mirror = mirroring[ static_cast<size_t> ( reflectBitangent ) ];
+
+    return mirror | ( aSnorm << 20U ) | ( bSnorm << 10U ) | cSnorm;
+}
+
+[[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
+{
+    GXVec4 q = *reinterpret_cast<GXVec4 const*> ( this );
+
+    constexpr uint32_t fixedPoint = 1U << 16U;
+    constexpr uint32_t halfFixedPoint = fixedPoint >> 1U;
+    constexpr auto snormScale = static_cast<float> ( halfFixedPoint - 1U );
+    constexpr auto snormOffset = static_cast<float> ( halfFixedPoint );
+    constexpr GXVec4 snormOffsetV4 ( snormOffset, snormOffset, snormOffset, snormOffset );
+    q.Sum ( snormOffsetV4, snormScale, q );
+
+    auto const rSnorm = static_cast<uint64_t> ( q._data[ 0U ] );
+    auto const aSnorm = static_cast<uint64_t> ( q._data[ 1U ] );
+    auto const bSnorm = static_cast<uint64_t> ( q._data[ 2U ] );
+    auto const cSnorm = static_cast<uint64_t> ( q._data[ 3U ] );
+
+    return ( rSnorm << 48U ) | ( aSnorm << 32U ) | ( bSnorm << 16U ) | cSnorm;
 }
 
 [[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept
@@ -833,21 +918,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    GXFloat const solutionFactorAlpha = pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    auto const &m = pureRotationMatrix._m;
 
-    GXFloat const solutionFactorBetta = pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorGamma = -pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorYotta = -pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorGamma = -m[ 0U ][ 0U ] + m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorYotta = -m[ 0U ][ 0U ] - m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
 
     GXUByte solution;
 
@@ -880,47 +956,47 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         case SOLUTION_ALPHA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
             _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
         case SOLUTION_BETTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
             _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
         case SOLUTION_GAMMA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
             _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
         case SOLUTION_YOTTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
             _data[ 3U ] = phi;
         }
         break;
@@ -936,21 +1012,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    GXFloat const solutionFactorAlpha = pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    auto const &m = pureRotationMatrix._m;
 
-    GXFloat const solutionFactorBetta = pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorGamma = -pureRotationMatrix._m[ 0U ][ 0U ] +
-        pureRotationMatrix._m[ 1U ][ 1U ] -
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
-
-    GXFloat const solutionFactorYotta = -pureRotationMatrix._m[ 0U ][ 0U ] -
-        pureRotationMatrix._m[ 1U ][ 1U ] +
-        pureRotationMatrix._m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorGamma = -m[ 0U ][ 0U ] + m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
+    GXFloat const solutionFactorYotta = -m[ 0U ][ 0U ] - m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
 
     GXUByte solution;
 
@@ -983,47 +1050,47 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         case SOLUTION_ALPHA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
             _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
         case SOLUTION_BETTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] - pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
             _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
         case SOLUTION_GAMMA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 2U ][ 0U ] - pureRotationMatrix._m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] + pureRotationMatrix._m[ 1U ][ 0U ] );
+            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
             _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
         case SOLUTION_YOTTA:
         {
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
-            GXFloat const omega = 1.0F / ( 4.0F * phi );
+            GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( pureRotationMatrix._m[ 0U ][ 1U ] - pureRotationMatrix._m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( pureRotationMatrix._m[ 0U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( pureRotationMatrix._m[ 1U ][ 2U ] + pureRotationMatrix._m[ 2U ][ 1U ] );
+            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
             _data[ 3U ] = phi;
         }
         break;
@@ -1032,29 +1099,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             // NOTHING
         break;
     }
-}
-
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
-{
-    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ] -
-        a._data[ 1U ] * b._data[ 1U ] -
-        a._data[ 2U ] * b._data[ 2U ] -
-        a._data[ 3U ] * b._data[ 3U ];
-
-    _data[ 1U ] = a._data[ 0U ] * b._data[ 1U ] +
-        a._data[ 1U ] * b._data[ 0U ] +
-        a._data[ 2U ] * b._data[ 3U ] -
-        a._data[ 3U ] * b._data[ 2U ];
-
-    _data[ 2U ] = a._data[ 0U ] * b._data[ 2U ] -
-        a._data[ 1U ] * b._data[ 3U ] +
-        a._data[ 2U ] * b._data[ 0U ] +
-        a._data[ 3U ] * b._data[ 1U ];
-
-    _data[ 3U ] = a._data[ 0U ] * b._data[ 3U ] +
-        a._data[ 1U ] * b._data[ 2U ] -
-        a._data[ 2U ] * b._data[ 1U ] +
-        a._data[ 3U ] * b._data[ 0U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept
@@ -1104,35 +1148,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     out._data[ 2U ] = inverseSquaredLength *
         ( v._data[ 0U ] * ( ac2 - rb2 ) + v._data[ 1U ] * ( ra2 + bc2 ) + v._data[ 2U ] * ( rr - aa - bb + cc ) );
-}
-
-[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
-{
-    GXFloat const rr = _data[ 0U ] * _data[ 0U ];
-    GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
-    GXFloat const rb2 = _data[ 0U ] * _data[ 2U ] * 2.0F;
-    GXFloat const rc2 = _data[ 0U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const aa = _data[ 1U ] * _data[ 1U ];
-    GXFloat const ab2 = _data[ 1U ] * _data[ 2U ] * 2.0F;
-    GXFloat const ac2 = _data[ 1U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const bb = _data[ 2U ] * _data[ 2U ];
-    GXFloat const bc2 = _data[ 2U ] * _data[ 3U ] * 2.0F;
-
-    GXFloat const cc = _data[ 3U ] * _data[ 3U ];
-
-    out._data[ 0U ] = v._data[ 0U ] * ( rr + aa - bb - cc ) +
-        v._data[ 1U ] * ( ab2 - rc2 ) +
-        v._data[ 2U ] * ( rb2 + ac2 );
-
-    out._data[ 1U ] = v._data[ 0U ] * ( rc2 + ab2 ) +
-        v._data[ 1U ] * ( rr - aa + bb - cc ) +
-        v._data[ 2U ] * ( bc2 - ra2 );
-
-    out._data[ 2U ] = v._data[ 0U ] * ( ac2 - rb2 ) +
-        v._data[ 1U ] * ( ra2 + bc2 ) +
-        v._data[ 2U ] * ( rr - aa - bb + cc );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1489,7 +1504,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetOrigin ( GXVec3 const &origin ) noexcept
-{ 
+{
     SetW ( origin );
 }
 
@@ -2087,7 +2102,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._max._data[ 1U ], bounds._max._data[ 2U ] );
     flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._min._data[ 1U ], bounds._max._data[ 2U ] );
 
-    return flags == 0;
+    return flags == 0U;
 }
 
 [[maybe_unused]] GXUByte GXProjectionClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
@@ -2129,11 +2144,13 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {
+    // NOLINTNEXTLINE - do not use std::srand
     std::srand ( static_cast<GXUInt> ( time ( nullptr ) ) );
 }
 
 [[maybe_unused]] GXFloat GXCALL GXRandomNormalize () noexcept
 {
+    // NOLINTNEXTLINE - do not use std::rand
     return static_cast<GXFloat> ( std::rand () ) * INVERSE_RAND_MAX;
 }
 

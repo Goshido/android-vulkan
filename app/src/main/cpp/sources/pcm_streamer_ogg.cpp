@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pcm_streamer_ogg.hpp>
@@ -160,7 +161,7 @@ void PCMStreamerOGG::GetNextBuffer ( std::span<PCMType> buffer, Gain left, Gain 
 
 void PCMStreamerOGG::OnDecompress () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     // Expectation: this is thread shared code. This should work without race condition while decompressor has enough
     // time to fill next PCM buffer. Available time is the period when active PCM buffer is consuming by sound tract.
@@ -244,7 +245,7 @@ void PCMStreamerOGG::OnDecompress () noexcept
 
 bool PCMStreamerOGG::Reset () noexcept
 {
-    std::unique_lock<std::mutex> const lock ( _mutex );
+    std::lock_guard const lock ( _mutex );
 
     if ( !PCMStreamer::Reset () )
         return false;

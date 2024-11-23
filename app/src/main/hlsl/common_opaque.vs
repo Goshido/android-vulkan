@@ -1,22 +1,17 @@
 #include "object_data.inc"
+#include "tbn.inc"
 
 
 struct InputData
 {
-    [[vk::location ( IN_SLOT_VERTEX )]]
-    float32_t3                      _vertex:            VERTEX;
+    [[vk::location ( IN_SLOT_POSITION )]]
+    float32_t3                      _postion:           POSITION;
 
     [[vk::location ( IN_SLOT_UV )]]
     float32_t2                      _uv:                UV;
 
-    [[vk::location ( IN_SLOT_NORMAL )]]
-    float32_t3                      _normal:            NORMAL;
-
-    [[vk::location ( IN_SLOT_TANGENT )]]
-    float32_t3                      _tangent:           TANGENT;
-
-    [[vk::location ( IN_SLOT_BITANGENT )]]
-    float32_t3                      _bitangent:         BITANGENT;
+    [[vk::location ( IN_SLOT_TBN )]]
+    float32_t4                      _tbn:               TBN;
 
     uint32_t                        _instanceIndex:     SV_InstanceID;
 };
@@ -28,14 +23,14 @@ struct OutputData
     [[vk::location ( ATT_SLOT_UV )]]
     linear float32_t2               _uv:                UV;
 
-    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
-    linear float32_t3               _normalView:        NORMAL;
-
     [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
     linear float32_t3               _tangentView:       TANGENT;
 
     [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
     linear float32_t3               _bitangentView:     BITANGENT;
+
+    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
+    linear float32_t3               _normalView:        NORMAL;
 
     [[vk::location ( ATT_SLOT_INSTANCE_INDEX )]]
     nointerpolation uint32_t        _instanceIndex:     INSTANCE_INDEX;
@@ -51,16 +46,26 @@ OutputData VS ( in InputData inputData )
 
     OutputData result;
 
-    ObjectData const objectData = g_instanceData[ inputData._instanceIndex ];
-    result._vertexH = mul ( objectData._localViewProjection, float32_t4 ( inputData._vertex, 1.0F ) );
+    result._vertexH = mul ( g_localViewProj[ inputData._instanceIndex ], float32_t4 ( inputData._postion, 1.0F ) );
     result._uv = inputData._uv;
-
-    float32_t3x3 const orientation = (float32_t3x3)objectData._localView;
-    result._normalView = mul ( orientation, inputData._normal );
-    result._tangentView = mul ( orientation, inputData._tangent );
-    result._bitangentView = mul ( orientation, inputData._bitangent );
-
     result._instanceIndex = inputData._instanceIndex;
+
+    float16_t4 const compressedTBN = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
+    float16_t3 normalView;
+    float16_t3 tangentView;
+
+    GetNormalAndTangent ( normalView,
+        tangentView,
+
+        RotateTBN (
+            RecoverTBN ( compressedTBN.xyz ),
+            DecompressTBN64 ( g_localView[ inputData._instanceIndex >> 1U ], inputData._instanceIndex & 0x00000001U )
+        )
+    );
+
+    result._tangentView = (float32_t3)tangentView;
+    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );
+    result._normalView = (float32_t3)normalView;
 
     return result;
 }

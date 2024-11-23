@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.22.1 )
+cmake_minimum_required ( VERSION 3.31.0 )
 set ( CMAKE_CXX_STANDARD 20 )
 project ( android-vulkan )
 
@@ -16,6 +16,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
     app/src/main/cpp/sources/core.cpp
+    app/src/main/cpp/sources/css_unit_to_device_pixel.cpp
     app/src/main/cpp/sources/cyrus_beck.cpp
     app/src/main/cpp/sources/epa.cpp
     app/src/main/cpp/sources/game.cpp
@@ -48,7 +49,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/sutherland_hodgman.cpp
     app/src/main/cpp/sources/texture_cube.cpp
     app/src/main/cpp/sources/texture2D.cpp
-    app/src/main/cpp/sources/trace.cpp
     app/src/main/cpp/sources/uniform_buffer.cpp
     app/src/main/cpp/sources/velocity_solver.cpp
     app/src/main/cpp/sources/vulkan_loader.cpp
@@ -68,6 +68,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
     app/src/main/cpp/sources/pbr/bit_field.cpp
+    app/src/main/cpp/sources/pbr/brightness_program.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp
@@ -78,7 +79,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/compute_program.cpp
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
-    app/src/main/cpp/sources/pbr/css_ui_element.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
     app/src/main/cpp/sources/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/pbr/display_property.cpp
@@ -103,6 +103,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/geometry_pass_program.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_sampler_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/geometry_pool.cpp
     app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
     app/src/main/cpp/sources/pbr/graphics_program.cpp
     app/src/main/cpp/sources/pbr/href_attribute_checker.cpp
@@ -168,17 +169,21 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scene.cpp
     app/src/main/cpp/sources/pbr/script_component.cpp
     app/src/main/cpp/sources/pbr/script_engine.cpp
+    app/src/main/cpp/sources/pbr/scriptable_div_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_gamepad.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxquat.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
     app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
+    app/src/main/cpp/sources/pbr/scriptable_image_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/pbr/scriptable_material.cpp
     app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
     app/src/main/cpp/sources/pbr/scriptable_raycast_result.cpp
     app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
+    app/src/main/cpp/sources/pbr/scriptable_text_ui_element.cpp
+    app/src/main/cpp/sources/pbr/scriptable_ui_element.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
     app/src/main/cpp/sources/pbr/skin_descriptor_set_layout.cpp
@@ -187,7 +192,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sound_emitter_global_component.cpp
     app/src/main/cpp/sources/pbr/sound_emitter_spatial_component.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
-    app/src/main/cpp/sources/pbr/srgb_program.cpp
     app/src/main/cpp/sources/pbr/static_mesh_component.cpp
     app/src/main/cpp/sources/pbr/stipple_material.cpp
     app/src/main/cpp/sources/pbr/stipple_program.cpp
@@ -229,10 +233,18 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
+    app/src/main/cpp/sources/platform/android/renderer.cpp
+    app/src/main/cpp/sources/platform/android/trace.cpp
+    app/src/main/cpp/sources/platform/android/vulkan_loader.cpp
     app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
     app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
+)
+
+# Precompiled headers
+target_precompile_headers ( android-vulkan PRIVATE
+    app/src/main/cpp/include/precompiled_headers.hpp
 )
 
 # ARM Neon support: All ARMv8-based devices support Neon. So no any additional compile flags need to specify.
@@ -260,14 +272,15 @@ target_compile_options ( android-vulkan PRIVATE
 
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan PRIVATE
-#    -DANDROID_ENABLE_TRACE
-    -DANDROID_NATIVE_MODE_PORTRAIT
-    -DANDROID_VULKAN_DEBUG
-#    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-    -DANDROID_VULKAN_STRICT_MODE
-    -DVK_NO_PROTOTYPES
-    -DVK_USE_PLATFORM_ANDROID_KHR
+#    ANDROID_ENABLE_TRACE
+    ANDROID_NATIVE_MODE_PORTRAIT
+    ANDROID_VULKAN_DEBUG
+#    ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+    ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+    ANDROID_VULKAN_STRICT_MODE
+    AV_ARM_NEON
+    VK_NO_PROTOTYPES
+    VK_USE_PLATFORM_ANDROID_KHR
 )
 
 target_link_libraries ( android-vulkan

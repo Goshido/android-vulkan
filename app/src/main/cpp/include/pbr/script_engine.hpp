@@ -2,14 +2,13 @@
 #define PBR_SCRIPT_ENGINE_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include <renderer.hpp>
+#include <sound_mixer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
 // Note "lstate.h" defines 'ispow2' macro which breaks bit.h C++ include.
 #include <string_view>
-#include <renderer.hpp>
-#include <sound_mixer.hpp>
 
 extern "C" {
 

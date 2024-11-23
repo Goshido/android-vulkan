@@ -11,30 +11,11 @@ namespace android_vulkan {
 
 struct VertexInfo final
 {
-    GXVec3      _vertex;
-    GXVec2      _uv;
-    GXVec3      _normal;
-    GXVec3      _tangent;
-    GXVec3      _bitangent;
+    // Non-mirrored identity quaternion.
+    constexpr static uint32_t IDENTITY_TBN = 0xC000'0000U;
 
-    VertexInfo () = default;
-
-    constexpr VertexInfo ( GXVec3 const &vertex,
-        GXVec2 const &uv,
-        GXVec3 const &normal,
-        GXVec3 const &tangent,
-        GXVec3 const &bitangent
-    ) noexcept:
-        _vertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ] ),
-        _uv ( uv._data[ 0U ], uv._data[ 1U ] ),
-        _normal ( normal._data[ 0U ], normal._data[ 1U ], normal._data[ 2U ] ),
-        _tangent ( tangent._data[ 0U ], tangent._data[ 1U ], tangent._data[ 2U ] ),
-        _bitangent ( bitangent._data[ 0U ], bitangent._data[ 1U ], bitangent._data[ 2U ] )
-    {
-        // NOTHING
-    }
-
-    ~VertexInfo () = default;
+    GXVec2      _uv {};
+    uint32_t    _tbn = 0U;
 };
 
 #pragma pack ( pop )

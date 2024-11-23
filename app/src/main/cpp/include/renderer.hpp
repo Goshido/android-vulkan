@@ -3,7 +3,6 @@
 
 
 #include <GXCommon/GXMath.hpp>
-#include "logger.hpp"
 #include "memory_allocator.hpp"
 #include "vulkan_api.hpp"
 #include "vulkan_loader.hpp"
@@ -12,28 +11,34 @@ GX_DISABLE_COMMON_WARNINGS
 
 #include <map>
 #include <set>
+#include <span>
 #include <vector>
-#include <android/native_window.h>
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace android_vulkan {
 
+VK_DEFINE_HANDLE ( WindowHandle )
+
 struct VulkanPhysicalDeviceInfo final
 {
-    std::vector<char>                               _extensionStorage;
+    std::vector<std::string>                        _extensions {};
 
-    std::vector<char const*>                        _extensions;
-    VkPhysicalDeviceFeatures                        _features;
+    VkPhysicalDeviceFeatures                        _features {};
+    std::string                                     _deviceName {};
+    VkPhysicalDeviceType                            _deviceType = VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM;
 
-    std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo;
-    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities;
+    std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo {};
+    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities {};
 
-    VulkanPhysicalDeviceInfo () noexcept;
+    explicit VulkanPhysicalDeviceInfo () = default;
 
     VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
     VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
+
+    VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo && ) = delete;
+    VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo && ) = delete;
 
     ~VulkanPhysicalDeviceInfo () = default;
 };
@@ -43,64 +48,76 @@ struct VulkanPhysicalDeviceInfo final
 class Renderer final
 {
     private:
-        VkFormat                                                            _depthImageFormat;
-        VkFormat                                                            _depthStencilImageFormat;
-        VkDevice                                                            _device;
-        float                                                               _dpi;
-        VkInstance                                                          _instance;
+        using PhysicalDevices = std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>;
 
-        bool                                                                _isDeviceExtensionChecked;
-        bool                                                                _isDeviceExtensionSupported;
+    private:
+        VkFormat                                        _depthImageFormat = VK_FORMAT_UNDEFINED;
+        VkFormat                                        _depthStencilImageFormat = VK_FORMAT_UNDEFINED;
 
-        VkExtent3D                                                          _maxComputeDispatchSize;
-        size_t                                                              _maxUniformBufferRange;
-        MemoryAllocator                                                     _memoryAllocator;
+        VkDevice                                        _device = VK_NULL_HANDLE;
+        std::string_view                                _deviceName {};
+        float                                           _dpi = 96.0F;
+        VkInstance                                      _instance = VK_NULL_HANDLE;
 
-        VkPhysicalDevice                                                    _physicalDevice;
+        // Minimum supported value from Vulkan spec 1.3.227
+        VkExtent3D                                      _maxComputeDispatchSize
+        {
+            .width = 65535U,
+            .height = 65535U,
+            .depth = 65535U
+        };
 
-        VkQueue                                                             _queue;
-        uint32_t                                                            _queueFamilyIndex;
+        size_t                                          _maxUniformBufferRange {};
+        MemoryAllocator                                 _memoryAllocator {};
 
-        VkSurfaceKHR                                                        _surface;
-        VkFormat                                                            _surfaceFormat;
-        VkExtent2D                                                          _surfaceSize;
-        VkSurfaceTransformFlagBitsKHR                                       _surfaceTransform;
-        VkSwapchainKHR                                                      _swapchain;
+        VkPhysicalDevice                                _physicalDevice = VK_NULL_HANDLE;
+
+        VkQueue                                         _queue = VK_NULL_HANDLE;
+        uint32_t                                        _queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+        VkSurfaceKHR                                    _surface = VK_NULL_HANDLE;
+        VkFormat                                        _surfaceFormat = VK_FORMAT_UNDEFINED;
+
+        VkExtent2D                                      _surfaceSize
+        {
+            .width = 0U,
+            .height = 0U
+        };
+
+        VkSurfaceTransformFlagBitsKHR                   _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+        VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
+        VkSwapchainKHR                                  _oldSwapchain = VK_NULL_HANDLE;
 
 #ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        PFN_vkCreateDebugUtilsMessengerEXT                                  vkCreateDebugUtilsMessengerEXT;
-        PFN_vkDestroyDebugUtilsMessengerEXT                                 vkDestroyDebugUtilsMessengerEXT;
+        PFN_vkCreateDebugUtilsMessengerEXT              vkCreateDebugUtilsMessengerEXT = nullptr;
+        PFN_vkDestroyDebugUtilsMessengerEXT             vkDestroyDebugUtilsMessengerEXT = nullptr;
 
-        VkDebugUtilsMessengerEXT                                            _debugUtilsMessenger;
-        VkDebugUtilsMessengerCreateInfoEXT                                  _debugUtilsMessengerCreateInfo;
+        VkDebugUtilsMessengerEXT                        _debugUtilsMessenger = VK_NULL_HANDLE;
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        VkExtent2D                                                          _viewportResolution;
+        VkExtent2D                                      _viewportResolution
+        {
+            .width = 0U,
+            .height = 0U
+        };
 
-        std::vector<VkPhysicalDeviceGroupProperties>                        _physicalDeviceGroups;
-        std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>                _physicalDeviceInfo;
-        VkPhysicalDeviceMemoryProperties                                    _physicalDeviceMemoryProperties;
+        std::vector<VkPhysicalDeviceGroupProperties>    _physicalDeviceGroups {};
+        PhysicalDevices                                 _physicalDeviceInfo {};
+        VkPhysicalDeviceMemoryProperties                _physicalDeviceMemoryProperties {};
 
-        std::vector<VkSurfaceFormatKHR>                                     _surfaceFormats;
+        std::vector<VkSurfaceFormatKHR>                 _surfaceFormats {};
 
-        std::vector<VkImage>                                                _swapchainImages;
-        std::vector<VkImageView>                                            _swapchainImageViews;
+        std::vector<VkImage>                            _swapchainImages {};
+        std::vector<VkImageView>                        _swapchainImageViews {};
 
-        GXMat4                                                              _presentationEngineTransform;
-        VulkanLoader                                                        _vulkanLoader;
-
-        static std::map<VkColorSpaceKHR, char const*> const                 _vulkanColorSpaceMap;
-        static std::map<VkCompositeAlphaFlagBitsKHR, char const*> const     _vulkanCompositeAlphaMap;
-        static std::map<VkFormat, char const*> const                        _vulkanFormatMap;
-        static std::map<VkPhysicalDeviceType, char const*> const            _vulkanPhysicalDeviceTypeMap;
-        static std::map<VkPresentModeKHR, char const*> const                _vulkanPresentModeMap;
-        static std::map<VkResult, char const*> const                        _vulkanResultMap;
-        static std::map<VkSurfaceTransformFlagsKHR, char const*> const      _vulkanSurfaceTransformMap;
+        GXMat4                                          _presentationEngineTransform {};
+        bool                                            _vSync = true;
+        VulkanLoader                                    _vulkanLoader {};
 
     public:
-        Renderer () noexcept;
+        explicit Renderer () = default;
 
         Renderer ( Renderer const & ) = delete;
         Renderer &operator = ( Renderer const & ) = delete;
@@ -124,6 +141,7 @@ class Renderer final
         [[nodiscard]] VkFormat GetDefaultDepthFormat () const noexcept;
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
+        [[nodiscard]] std::string_view GetDeviceName () const noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
@@ -147,11 +165,15 @@ class Renderer final
         // by Renderer::GetSurfaceSize API.
         [[nodiscard]] VkExtent2D const &GetViewportResolution () const noexcept;
 
-        [[nodiscard]] bool OnCreateSwapchain ( ANativeWindow &nativeWindow, bool vSync ) noexcept;
-        void OnDestroySwapchain () noexcept;
+        [[nodiscard]] bool GetVSync () const noexcept;
 
-        [[nodiscard]] bool OnCreateDevice ( float dpi ) noexcept;
+        [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
+        void OnDestroySwapchain ( bool preserveSurface ) noexcept;
+
+        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU ) noexcept;
         void OnDestroyDevice () noexcept;
+
+        void OnSetDPI ( float dpi ) noexcept;
 
         [[nodiscard]] bool TryAllocateMemory ( VkDeviceMemory &memory,
             VkDeviceSize &offset,
@@ -180,15 +202,25 @@ class Renderer final
         [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format ) noexcept;
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
+#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
+        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+            VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
+            void* pUserData
+        );
+
+#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+
     private:
         [[nodiscard]] bool CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept;
         [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
-        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<char const*> const &deviceExtensions ) noexcept;
+        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept;
 
         // "features" is an array of offsets inside VkPhysicalDeviceFeatures structure.
         [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
-            size_t const* features,
-            size_t count
+            std::span<size_t const> const &features
         ) noexcept;
 
         [[nodiscard]] bool CheckRequiredFormats () noexcept;
@@ -200,17 +232,18 @@ class Renderer final
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
 
-        [[nodiscard]] bool DeployDevice () noexcept;
+        [[nodiscard]] bool DeployDevice ( std::string_view const &userGPU ) noexcept;
         void DestroyDevice () noexcept;
 
         [[nodiscard]] bool DeployInstance () noexcept;
         void DestroyInstance () noexcept;
 
-        [[nodiscard]] bool DeploySurface ( ANativeWindow &nativeWindow ) noexcept;
+        [[nodiscard]] bool DeploySurface ( WindowHandle nativeWindow ) noexcept;
+        [[nodiscard]] bool DeployNativeSurface ( WindowHandle nativeWindow ) noexcept;
         void DestroySurface () noexcept;
 
         [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
-        void DestroySwapchain () noexcept;
+        void DestroySwapchain ( bool preserveSurface ) noexcept;
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
         void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
@@ -223,32 +256,18 @@ class Renderer final
             VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
         ) const noexcept;
 
-        [[nodiscard]] bool SelectTargetHardware ( VkPhysicalDevice &targetPhysicalDevice,
-            uint32_t &targetQueueFamilyIndex
-        ) const noexcept;
-
+        [[nodiscard]] bool SelectTargetHardware ( std::string_view const &userGPU ) noexcept;
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
-
-        [[nodiscard]] bool SelectTargetSurfaceFormat ( VkFormat &targetColorFormat,
-            VkColorSpaceKHR &targetColorSpace,
-            VkFormat &targetDepthFormat,
-            VkFormat &targetDepthStencilFormat
-        ) const noexcept;
+        [[nodiscard]] bool SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept;
 
         [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
             char const* extension
         ) noexcept;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-
-        [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageTypes,
-            VkDebugUtilsMessengerCallbackDataEXT const* pCallbackData,
-            void* pUserData
-        );
-
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+        [[nodiscard]] static std::span<char const* const> GetDeviceExtensions () noexcept;
+        [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
+        [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
+        [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;
@@ -258,7 +277,7 @@ class Renderer final
         static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) noexcept;
 
         static void PrintPhysicalDeviceGroupInfo ( uint32_t groupIndex,
-                VkPhysicalDeviceGroupProperties const &props
+            VkPhysicalDeviceGroupProperties const &props
         ) noexcept;
 
         [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) noexcept;

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/point_light_pass.hpp>
 #include <av_assert.hpp>
 #include <trace.hpp>
@@ -24,8 +25,10 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
     constexpr VkDeviceSize offset = 0U;
 
     _lightup.BindProgram ( commandBuffer );
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &unitCube.GetVertexBuffer (), &offset );
-    vkCmdBindIndexBuffer ( commandBuffer, unitCube.GetIndexBuffer (), 0U, VK_INDEX_TYPE_UINT32 );
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, unitCube.GetVertexBuffers (), &offset );
+
+    android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = unitCube.GetIndexBuffer ();
+    vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, 0U, indexBuffer._type );
 
     size_t const limit = _interacts.size ();
 
@@ -60,7 +63,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
     };
 
     return CreateShadowmapRenderPass ( renderer.GetDevice () ) &&
-        _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, nullptr, shadowmapResolution ) &&
+        _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) &&
 
         _shadowmapBufferPool.Init ( renderer,
             PointLightShadowmapGeneratorDescriptorSetLayout {},
@@ -360,13 +363,10 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
 
         for ( auto const &unique : casters._uniques )
         {
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &unique->GetVertexBuffer (), &offset );
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, unique->GetVertexBuffers (), &offset );
 
-            vkCmdBindIndexBuffer ( commandBuffer,
-                unique->GetIndexBuffer (),
-                offset,
-                VK_INDEX_TYPE_UINT32
-            );
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = unique->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, offset, indexBuffer._type );
 
             _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
             vkCmdDrawIndexed ( commandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
@@ -375,13 +375,10 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
         for ( auto const &casterInfo : casters._batches )
         {
             auto const &[mesh, transforms] = casterInfo.second;
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &mesh->GetVertexBuffer (), &offset );
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, mesh->GetVertexBuffers (), &offset );
 
-            vkCmdBindIndexBuffer ( commandBuffer,
-                mesh->GetIndexBuffer (),
-                offset,
-                VK_INDEX_TYPE_UINT32
-            );
+            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = mesh->GetIndexBuffer ();
+            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, offset, indexBuffer._type );
 
             size_t remain = transforms.size ();
             uint32_t const vertexCount = mesh->GetVertexCount ();

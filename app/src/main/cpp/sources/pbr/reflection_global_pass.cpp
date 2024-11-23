@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/reflection_global_pass.hpp>
 #include <trace.hpp>
 
@@ -46,7 +47,7 @@ bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, nullptr, viewport ) &&
+    return _program.Init ( renderer, renderPass, subpass, viewport ) &&
         AllocateDescriptorSets ( renderer.GetDevice () );
 }
 
@@ -58,7 +59,7 @@ void ReflectionGlobalPass::Destroy ( VkDevice device ) noexcept
         _descriptorPool = VK_NULL_HANDLE;
     }
 
-    auto const clean = [] ( auto &vector ) noexcept {
+    constexpr auto clean = [] ( auto &vector ) noexcept {
         vector.clear ();
         vector.shrink_to_fit ();
     };

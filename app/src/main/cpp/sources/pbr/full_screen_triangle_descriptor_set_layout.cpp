@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
@@ -13,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -104,7 +105,7 @@ bool FullScreenTriangleDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout FullScreenTriangleDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &FullScreenTriangleDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

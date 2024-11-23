@@ -1,12 +1,7 @@
+#include <precompiled_headers.hpp>
 #include <animation_exporter.hpp>
 #include <result_checker.hpp>
 #include <android_vulkan_sdk/animation.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {

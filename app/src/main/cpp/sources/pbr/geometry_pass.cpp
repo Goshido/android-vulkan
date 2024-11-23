@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -43,7 +44,6 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "Geometry pass" )
-    VkDescriptorSetLayout layout = _descriptorSetLayout.GetLayout ();
 
     VkDescriptorSetAllocateInfo const setAllocateInfo
     {
@@ -51,7 +51,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .descriptorPool = _descriptorPool,
         .descriptorSetCount = 1U,
-        .pSetLayouts = &layout
+        .pSetLayouts = &_descriptorSetLayout.GetLayout ()
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
@@ -90,14 +90,7 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
 
     return _opaqueSubpass.Init ( renderer, resolution, renderPass ) &&
         _stippleSubpass.Init ( renderer, resolution, renderPass ) &&
-
-        _uniformPool.Init ( renderer,
-            GeometryPassInstanceDescriptorSetLayout (),
-            sizeof ( GeometryPassProgram::InstanceData ),
-            0U,
-            "Geometry pass uniform"
-        ) &&
-
+        _geometryPool.Init ( renderer ) &&
         _materialPool.Init ( device, defaultTextureManager );
 }
 
@@ -108,7 +101,7 @@ void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
-    _uniformPool.Destroy ( renderer );
+    _geometryPool.Destroy ( renderer );
     _materialPool.Destroy ( device );
 
     if ( _descriptorPool == VK_NULL_HANDLE )
@@ -126,22 +119,22 @@ void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &
     bool isSamplerUsed = false;
 
     _opaqueSubpass.Execute ( commandBuffer,
+        _geometryPool,
         _materialPool,
-        _uniformPool,
         renderSessionStats,
         _descriptorSet,
         isSamplerUsed
     );
 
     _stippleSubpass.Execute ( commandBuffer,
+        _geometryPool,
         _materialPool,
-        _uniformPool,
         renderSessionStats,
         _descriptorSet,
         isSamplerUsed
     );
 
-    _uniformPool.Commit ();
+    _geometryPool.Commit ();
     _materialPool.Commit ();
 }
 
@@ -172,21 +165,21 @@ void GeometryPass::UploadGPUData ( VkDevice device,
     AV_VULKAN_GROUP ( commandBuffer, "Upload geometry data" )
 
     _opaqueSubpass.UpdateGPUData ( commandBuffer,
+        _geometryPool,
         _materialPool,
-        _uniformPool,
         frustum,
         view,
         viewProjection
     );
 
     _stippleSubpass.UpdateGPUData ( commandBuffer,
+        _geometryPool,
         _materialPool,
-        _uniformPool,
         view,
         viewProjection
     );
 
-    _uniformPool.IssueSync ( device, commandBuffer );
+    _geometryPool.IssueSync ( commandBuffer );
     _materialPool.IssueSync ( device );
 }
 

@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <pbr/color_property_checker.hpp>
 #include <pbr/whitespace.hpp>
@@ -7,165 +8,162 @@ namespace pbr {
 
 namespace {
 
-[[nodiscard]] consteval GXUByte Conv ( uint32_t v ) noexcept
-{
-    return static_cast<GXUByte> ( v );
-}
+constexpr uint8_t OPAQUE_VALUE = 0xFFU;
 
 } // end of anonymous namespace
 
 // See https://developer.mozilla.org/en-US/docs/Web/CSS/named-color
-std::unordered_map<std::u32string, GXColorRGB> const ColorPropertyChecker::_colorMap =
+std::unordered_map<std::u32string, GXColorUNORM> const ColorPropertyChecker::_colorMap =
 {
-    { U"aliceblue", GXColorRGB ( Conv ( 0xF0U ), Conv ( 0xF8U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"antiquewhite", GXColorRGB ( Conv ( 0xFAU ), Conv ( 0xEBU ), Conv ( 0xD7U ), Conv ( 0xFFU ) ) },
-    { U"aqua", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"aquamarine", GXColorRGB ( Conv ( 0x7FU ), Conv ( 0xFFU ), Conv ( 0xD4U ), Conv ( 0xFFU ) ) },
-    { U"azure", GXColorRGB ( Conv ( 0xF0U ), Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"beige", GXColorRGB ( Conv ( 0xF5U ), Conv ( 0xF5U ), Conv ( 0xDCU ), Conv ( 0xFFU ) ) },
-    { U"bisque", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xE4U ), Conv ( 0xC4U ), Conv ( 0xFFU ) ) },
-    { U"black", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"blanchedalmond", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xEBU ), Conv ( 0xCDU ), Conv ( 0xFFU ) ) },
-    { U"blue", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"blueviolet", GXColorRGB ( Conv ( 0x8AU ), Conv ( 0x2BU ), Conv ( 0xE2U ), Conv ( 0xFFU ) ) },
-    { U"brown", GXColorRGB ( Conv ( 0xA5U ), Conv ( 0x2AU ), Conv ( 0x2AU ), Conv ( 0xFFU ) ) },
-    { U"burlywood", GXColorRGB ( Conv ( 0xDEU ), Conv ( 0xB8U ), Conv ( 0x87U ), Conv ( 0xFFU ) ) },
-    { U"cadetblue", GXColorRGB ( Conv ( 0x5FU ), Conv ( 0x9EU ), Conv ( 0xA0U ), Conv ( 0xFFU ) ) },
-    { U"chartreuse", GXColorRGB ( Conv ( 0x7FU ), Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"chocolate", GXColorRGB ( Conv ( 0xD2U ), Conv ( 0x69U ), Conv ( 0x1EU ), Conv ( 0xFFU ) ) },
-    { U"coral", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x7FU ), Conv ( 0x50U ), Conv ( 0xFFU ) ) },
-    { U"cornflowerblue", GXColorRGB ( Conv ( 0x64U ), Conv ( 0x95U ), Conv ( 0xEDU ), Conv ( 0xFFU ) ) },
-    { U"cornsilk", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xF8U ), Conv ( 0xDCU ), Conv ( 0xFFU ) ) },
-    { U"crimson", GXColorRGB ( Conv ( 0xDCU ), Conv ( 0x14U ), Conv ( 0x3CU ), Conv ( 0xFFU ) ) },
-    { U"cyan", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"darkblue", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0x8BU ), Conv ( 0xFFU ) ) },
-    { U"darkcyan", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x8BU ), Conv ( 0x8BU ), Conv ( 0xFFU ) ) },
-    { U"darkgoldenrod", GXColorRGB ( Conv ( 0xB8U ), Conv ( 0x86U ), Conv ( 0x0BU ), Conv ( 0xFFU ) ) },
-    { U"darkgray", GXColorRGB ( Conv ( 0xA9U ), Conv ( 0xA9U ), Conv ( 0xA9U ), Conv ( 0xFFU ) ) },
-    { U"darkgreen", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x64U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"darkgrey", GXColorRGB ( Conv ( 0xA9U ), Conv ( 0xA9U ), Conv ( 0xA9U ), Conv ( 0xFFU ) ) },
-    { U"darkkhaki", GXColorRGB ( Conv ( 0xBDU ), Conv ( 0xB7U ), Conv ( 0x6BU ), Conv ( 0xFFU ) ) },
-    { U"darkmagenta", GXColorRGB ( Conv ( 0x8BU ), Conv ( 0x00U ), Conv ( 0x8BU ), Conv ( 0xFFU ) ) },
-    { U"darkolivegreen", GXColorRGB ( Conv ( 0x55U ), Conv ( 0x6BU ), Conv ( 0x2FU ), Conv ( 0xFFU ) ) },
-    { U"darkorange", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x8CU ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"darkorchid", GXColorRGB ( Conv ( 0x99U ), Conv ( 0x32U ), Conv ( 0xCCU ), Conv ( 0xFFU ) ) },
-    { U"darkred", GXColorRGB ( Conv ( 0x8BU ), Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"darksalmon", GXColorRGB ( Conv ( 0xE9U ), Conv ( 0x96U ), Conv ( 0x7AU ), Conv ( 0xFFU ) ) },
-    { U"darkseagreen", GXColorRGB ( Conv ( 0x8FU ), Conv ( 0xBCU ), Conv ( 0x8FU ), Conv ( 0xFFU ) ) },
-    { U"darkslateblue", GXColorRGB ( Conv ( 0x48U ), Conv ( 0x3DU ), Conv ( 0x8BU ), Conv ( 0xFFU ) ) },
-    { U"darkslategray", GXColorRGB ( Conv ( 0x2FU ), Conv ( 0x4FU ), Conv ( 0x4FU ), Conv ( 0xFFU ) ) },
-    { U"darkslategrey", GXColorRGB ( Conv ( 0x2FU ), Conv ( 0x4FU ), Conv ( 0x4FU ), Conv ( 0xFFU ) ) },
-    { U"darkturquoise", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xCEU ), Conv ( 0xD1U ), Conv ( 0xFFU ) ) },
-    { U"darkviolet", GXColorRGB ( Conv ( 0x94U ), Conv ( 0x00U ), Conv ( 0xD3U ), Conv ( 0xFFU ) ) },
-    { U"deeppink", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x14U ), Conv ( 0x93U ), Conv ( 0xFFU ) ) },
-    { U"deepskyblue", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xBFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"dimgray", GXColorRGB ( Conv ( 0x69U ), Conv ( 0x69U ), Conv ( 0x69U ), Conv ( 0xFFU ) ) },
-    { U"dimgrey", GXColorRGB ( Conv ( 0x69U ), Conv ( 0x69U ), Conv ( 0x69U ), Conv ( 0xFFU ) ) },
-    { U"dodgerblue", GXColorRGB ( Conv ( 0x1EU ), Conv ( 0x90U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"firebrick", GXColorRGB ( Conv ( 0xB2U ), Conv ( 0x22U ), Conv ( 0x22U ), Conv ( 0xFFU ) ) },
-    { U"floralwhite", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFAU ), Conv ( 0xF0U ), Conv ( 0xFFU ) ) },
-    { U"forestgreen", GXColorRGB ( Conv ( 0x22U ), Conv ( 0x8BU ), Conv ( 0x22U ), Conv ( 0xFFU ) ) },
-    { U"fuchsia", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"gainsboro", GXColorRGB ( Conv ( 0xDCU ), Conv ( 0xDCU ), Conv ( 0xDCU ), Conv ( 0xFFU ) ) },
-    { U"ghostwhite", GXColorRGB ( Conv ( 0xF8U ), Conv ( 0xF8U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"gold", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xD7U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"goldenrod", GXColorRGB ( Conv ( 0xDAU ), Conv ( 0xA5U ), Conv ( 0x20U ), Conv ( 0xFFU ) ) },
-    { U"gray", GXColorRGB ( Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"green", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x80U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"greenyellow", GXColorRGB ( Conv ( 0xADU ), Conv ( 0xFFU ), Conv ( 0x2FU ), Conv ( 0xFFU ) ) },
-    { U"grey", GXColorRGB ( Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"honeydew", GXColorRGB ( Conv ( 0xF0U ), Conv ( 0xFFU ), Conv ( 0xF0U ), Conv ( 0xFFU ) ) },
-    { U"hotpink", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x69U ), Conv ( 0xB4U ), Conv ( 0xFFU ) ) },
-    { U"indianred", GXColorRGB ( Conv ( 0xCDU ), Conv ( 0x5CU ), Conv ( 0x5CU ), Conv ( 0xFFU ) ) },
-    { U"indigo", GXColorRGB ( Conv ( 0x4BU ), Conv ( 0x00U ), Conv ( 0x82U ), Conv ( 0xFFU ) ) },
-    { U"ivory", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xF0U ), Conv ( 0xFFU ) ) },
-    { U"khaki", GXColorRGB ( Conv ( 0xF0U ), Conv ( 0xE6U ), Conv ( 0x8CU ), Conv ( 0xFFU ) ) },
-    { U"lavender", GXColorRGB ( Conv ( 0xE6U ), Conv ( 0xE6U ), Conv ( 0xFAU ), Conv ( 0xFFU ) ) },
-    { U"lavenderblush", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xF0U ), Conv ( 0xF5U ), Conv ( 0xFFU ) ) },
-    { U"lawngreen", GXColorRGB ( Conv ( 0x7CU ), Conv ( 0xFCU ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"lemonchiffon", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFAU ), Conv ( 0xCDU ), Conv ( 0xFFU ) ) },
-    { U"lightblue", GXColorRGB ( Conv ( 0xADU ), Conv ( 0xD8U ), Conv ( 0xE6U ), Conv ( 0xFFU ) ) },
-    { U"lightcoral", GXColorRGB ( Conv ( 0xF0U ), Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"lightcyan", GXColorRGB ( Conv ( 0xE0U ), Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"lightgoldenrodyellow", GXColorRGB ( Conv ( 0xFAU ), Conv ( 0xFAU ), Conv ( 0xD2U ), Conv ( 0xFFU ) ) },
-    { U"lightgray", GXColorRGB ( Conv ( 0xD3U ), Conv ( 0xD3U ), Conv ( 0xD3U ), Conv ( 0xFFU ) ) },
-    { U"lightgreen", GXColorRGB ( Conv ( 0x90U ), Conv ( 0xEEU ), Conv ( 0x90U ), Conv ( 0xFFU ) ) },
-    { U"lightgrey", GXColorRGB ( Conv ( 0xD3U ), Conv ( 0xD3U ), Conv ( 0xD3U ), Conv ( 0xFFU ) ) },
-    { U"lightpink", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xB6U ), Conv ( 0xC1U ), Conv ( 0xFFU ) ) },
-    { U"lightsalmon", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xA0U ), Conv ( 0x7AU ), Conv ( 0xFFU ) ) },
-    { U"lightseagreen", GXColorRGB ( Conv ( 0x20U ), Conv ( 0xB2U ), Conv ( 0xAAU ), Conv ( 0xFFU ) ) },
-    { U"lightskyblue", GXColorRGB ( Conv ( 0x87U ), Conv ( 0xCEU ), Conv ( 0xFAU ), Conv ( 0xFFU ) ) },
-    { U"lightslategray", GXColorRGB ( Conv ( 0x77U ), Conv ( 0x88U ), Conv ( 0x99U ), Conv ( 0xFFU ) ) },
-    { U"lightslategrey", GXColorRGB ( Conv ( 0x77U ), Conv ( 0x88U ), Conv ( 0x99U ), Conv ( 0xFFU ) ) },
-    { U"lightsteelblue", GXColorRGB ( Conv ( 0xB0U ), Conv ( 0xC4U ), Conv ( 0xDEU ), Conv ( 0xFFU ) ) },
-    { U"lightyellow", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xE0U ), Conv ( 0xFFU ) ) },
-    { U"lime", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"limegreen", GXColorRGB ( Conv ( 0x32U ), Conv ( 0xCDU ), Conv ( 0x32U ), Conv ( 0xFFU ) ) },
-    { U"linen", GXColorRGB ( Conv ( 0xFAU ), Conv ( 0xF0U ), Conv ( 0xE6U ), Conv ( 0xFFU ) ) },
-    { U"magenta", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"maroon", GXColorRGB ( Conv ( 0x80U ), Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"mediumaquamarine", GXColorRGB ( Conv ( 0x66U ), Conv ( 0xCDU ), Conv ( 0xAAU ), Conv ( 0xFFU ) ) },
-    { U"mediumblue", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xCDU ), Conv ( 0xFFU ) ) },
-    { U"mediumorchid", GXColorRGB ( Conv ( 0xBAU ), Conv ( 0x55U ), Conv ( 0xD3U ), Conv ( 0xFFU ) ) },
-    { U"mediumpurple", GXColorRGB ( Conv ( 0x93U ), Conv ( 0x70U ), Conv ( 0xDBU ), Conv ( 0xFFU ) ) },
-    { U"mediumseagreen", GXColorRGB ( Conv ( 0x3CU ), Conv ( 0xB3U ), Conv ( 0x71U ), Conv ( 0xFFU ) ) },
-    { U"mediumslateblue", GXColorRGB ( Conv ( 0x7BU ), Conv ( 0x68U ), Conv ( 0xEEU ), Conv ( 0xFFU ) ) },
-    { U"mediumspringgreen", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xFAU ), Conv ( 0x9AU ), Conv ( 0xFFU ) ) },
-    { U"mediumturquoise", GXColorRGB ( Conv ( 0x48U ), Conv ( 0xD1U ), Conv ( 0xCCU ), Conv ( 0xFFU ) ) },
-    { U"mediumvioletred", GXColorRGB ( Conv ( 0xC7U ), Conv ( 0x15U ), Conv ( 0x85U ), Conv ( 0xFFU ) ) },
-    { U"midnightblue", GXColorRGB ( Conv ( 0x19U ), Conv ( 0x19U ), Conv ( 0x70U ), Conv ( 0xFFU ) ) },
-    { U"mintcream", GXColorRGB ( Conv ( 0xF5U ), Conv ( 0xFFU ), Conv ( 0xFAU ), Conv ( 0xFFU ) ) },
-    { U"mistyrose", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xE4U ), Conv ( 0xE1U ), Conv ( 0xFFU ) ) },
-    { U"moccasin", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xE4U ), Conv ( 0xB5U ), Conv ( 0xFFU ) ) },
-    { U"navajowhite", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xDEU ), Conv ( 0xADU ), Conv ( 0xFFU ) ) },
-    { U"navy", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"oldlace", GXColorRGB ( Conv ( 0xFDU ), Conv ( 0xF5U ), Conv ( 0xE6U ), Conv ( 0xFFU ) ) },
-    { U"olive", GXColorRGB ( Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"olivedrab", GXColorRGB ( Conv ( 0x6BU ), Conv ( 0x8EU ), Conv ( 0x23U ), Conv ( 0xFFU ) ) },
-    { U"orange", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xA5U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"orangered", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x45U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"orchid", GXColorRGB ( Conv ( 0xDAU ), Conv ( 0x70U ), Conv ( 0xD6U ), Conv ( 0xFFU ) ) },
-    { U"palegoldenrod", GXColorRGB ( Conv ( 0xEEU ), Conv ( 0xE8U ), Conv ( 0xAAU ), Conv ( 0xFFU ) ) },
-    { U"palegreen", GXColorRGB ( Conv ( 0x98U ), Conv ( 0xFBU ), Conv ( 0x98U ), Conv ( 0xFFU ) ) },
-    { U"paleturquoise", GXColorRGB ( Conv ( 0xAFU ), Conv ( 0xEEU ), Conv ( 0xEEU ), Conv ( 0xFFU ) ) },
-    { U"palevioletred", GXColorRGB ( Conv ( 0xDBU ), Conv ( 0x70U ), Conv ( 0x93U ), Conv ( 0xFFU ) ) },
-    { U"papayawhip", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xEFU ), Conv ( 0xD5U ), Conv ( 0xFFU ) ) },
-    { U"peachpuff", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xDAU ), Conv ( 0xB9U ), Conv ( 0xFFU ) ) },
-    { U"peru", GXColorRGB ( Conv ( 0xCDU ), Conv ( 0x85U ), Conv ( 0x3FU ), Conv ( 0xFFU ) ) },
-    { U"pink", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xC0U ), Conv ( 0xCBU ), Conv ( 0xFFU ) ) },
-    { U"plum", GXColorRGB ( Conv ( 0xDDU ), Conv ( 0xA0U ), Conv ( 0xDDU ), Conv ( 0xFFU ) ) },
-    { U"powderblue", GXColorRGB ( Conv ( 0xB0U ), Conv ( 0xE0U ), Conv ( 0xE6U ), Conv ( 0xFFU ) ) },
-    { U"purple", GXColorRGB ( Conv ( 0x80U ), Conv ( 0x00U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"rebeccapurple", GXColorRGB ( Conv ( 0x66U ), Conv ( 0x33U ), Conv ( 0x99U ), Conv ( 0xFFU ) ) },
-    { U"red", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"rosybrown", GXColorRGB ( Conv ( 0xBCU ), Conv ( 0x8FU ), Conv ( 0x8FU ), Conv ( 0xFFU ) ) },
-    { U"royalblue", GXColorRGB ( Conv ( 0x41U ), Conv ( 0x69U ), Conv ( 0xE1U ), Conv ( 0xFFU ) ) },
-    { U"saddlebrown", GXColorRGB ( Conv ( 0x8BU ), Conv ( 0x45U ), Conv ( 0x13U ), Conv ( 0xFFU ) ) },
-    { U"salmon", GXColorRGB ( Conv ( 0xFAU ), Conv ( 0x80U ), Conv ( 0x72U ), Conv ( 0xFFU ) ) },
-    { U"sandybrown", GXColorRGB ( Conv ( 0xF4U ), Conv ( 0xA4U ), Conv ( 0x60U ), Conv ( 0xFFU ) ) },
-    { U"seagreen", GXColorRGB ( Conv ( 0x2EU ), Conv ( 0x8BU ), Conv ( 0x57U ), Conv ( 0xFFU ) ) },
-    { U"seashell", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xF5U ), Conv ( 0xEEU ), Conv ( 0xFFU ) ) },
-    { U"sienna", GXColorRGB ( Conv ( 0xA0U ), Conv ( 0x52U ), Conv ( 0x2DU ), Conv ( 0xFFU ) ) },
-    { U"silver", GXColorRGB ( Conv ( 0xC0U ), Conv ( 0xC0U ), Conv ( 0xC0U ), Conv ( 0xFFU ) ) },
-    { U"skyblue", GXColorRGB ( Conv ( 0x87U ), Conv ( 0xCEU ), Conv ( 0xEBU ), Conv ( 0xFFU ) ) },
-    { U"slateblue", GXColorRGB ( Conv ( 0x6AU ), Conv ( 0x5AU ), Conv ( 0xCDU ), Conv ( 0xFFU ) ) },
-    { U"slategray", GXColorRGB ( Conv ( 0x70U ), Conv ( 0x80U ), Conv ( 0x90U ), Conv ( 0xFFU ) ) },
-    { U"slategrey", GXColorRGB ( Conv ( 0x70U ), Conv ( 0x80U ), Conv ( 0x90U ), Conv ( 0xFFU ) ) },
-    { U"snow", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFAU ), Conv ( 0xFAU ), Conv ( 0xFFU ) ) },
-    { U"springgreen", GXColorRGB ( Conv ( 0x00U ), Conv ( 0xFFU ), Conv ( 0x7FU ), Conv ( 0xFFU ) ) },
-    { U"steelblue", GXColorRGB ( Conv ( 0x46U ), Conv ( 0x82U ), Conv ( 0xB4U ), Conv ( 0xFFU ) ) },
-    { U"tan", GXColorRGB ( Conv ( 0xD2U ), Conv ( 0xB4U ), Conv ( 0x8CU ), Conv ( 0xFFU ) ) },
-    { U"teal", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x80U ), Conv ( 0x80U ), Conv ( 0xFFU ) ) },
-    { U"thistle", GXColorRGB ( Conv ( 0xD8U ), Conv ( 0xBFU ), Conv ( 0xD8U ), Conv ( 0xFFU ) ) },
-    { U"tomato", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0x63U ), Conv ( 0x47U ), Conv ( 0xFFU ) ) },
-    { U"transparent", GXColorRGB ( Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0x00U ), Conv ( 0x00U ) ) },
-    { U"turquoise", GXColorRGB ( Conv ( 0x40U ), Conv ( 0xE0U ), Conv ( 0xD0U ), Conv ( 0xFFU ) ) },
-    { U"violet", GXColorRGB ( Conv ( 0xEEU ), Conv ( 0x82U ), Conv ( 0xEEU ), Conv ( 0xFFU ) ) },
-    { U"wheat", GXColorRGB ( Conv ( 0xF5U ), Conv ( 0xDEU ), Conv ( 0xB3U ), Conv ( 0xFFU ) ) },
-    { U"white", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0xFFU ) ) },
-    { U"whitesmoke", GXColorRGB ( Conv ( 0xF5U ), Conv ( 0xF5U ), Conv ( 0xF5U ), Conv ( 0xFFU ) ) },
-    { U"yellow", GXColorRGB ( Conv ( 0xFFU ), Conv ( 0xFFU ), Conv ( 0x00U ), Conv ( 0xFFU ) ) },
-    { U"yellowgreen", GXColorRGB ( Conv ( 0x9AU ), Conv ( 0xCDU ), Conv ( 0x32U ), Conv ( 0xFFU ) ) }
+    { U"aliceblue", { 0xF0U, 0xF8U, 0xFFU, 0xFFU } },
+    { U"antiquewhite", { 0xFAU, 0xEBU, 0xD7U, 0xFFU } },
+    { U"aqua", { 0x00U, 0xFFU, 0xFFU, 0xFFU } },
+    { U"aquamarine", { 0x7FU, 0xFFU, 0xD4U, 0xFFU } },
+    { U"azure", { 0xF0U, 0xFFU, 0xFFU, 0xFFU } },
+    { U"beige", { 0xF5U, 0xF5U, 0xDCU, 0xFFU } },
+    { U"bisque", { 0xFFU, 0xE4U, 0xC4U, 0xFFU } },
+    { U"black", { 0x00U, 0x00U, 0x00U, 0xFFU } },
+    { U"blanchedalmond", { 0xFFU, 0xEBU, 0xCDU, 0xFFU } },
+    { U"blue", { 0x00U, 0x00U, 0xFFU, 0xFFU } },
+    { U"blueviolet", { 0x8AU, 0x2BU, 0xE2U, 0xFFU } },
+    { U"brown", { 0xA5U, 0x2AU, 0x2AU, 0xFFU } },
+    { U"burlywood", { 0xDEU, 0xB8U, 0x87U, 0xFFU } },
+    { U"cadetblue", { 0x5FU, 0x9EU, 0xA0U, 0xFFU } },
+    { U"chartreuse", { 0x7FU, 0xFFU, 0x00U, 0xFFU } },
+    { U"chocolate", { 0xD2U, 0x69U, 0x1EU, 0xFFU } },
+    { U"coral", { 0xFFU, 0x7FU, 0x50U, 0xFFU } },
+    { U"cornflowerblue", { 0x64U, 0x95U, 0xEDU, 0xFFU } },
+    { U"cornsilk", { 0xFFU, 0xF8U, 0xDCU, 0xFFU } },
+    { U"crimson", { 0xDCU, 0x14U, 0x3CU, 0xFFU } },
+    { U"cyan", { 0x00U, 0xFFU, 0xFFU, 0xFFU } },
+    { U"darkblue", { 0x00U, 0x00U, 0x8BU, 0xFFU } },
+    { U"darkcyan", { 0x00U, 0x8BU, 0x8BU, 0xFFU } },
+    { U"darkgoldenrod", { 0xB8U, 0x86U, 0x0BU, 0xFFU } },
+    { U"darkgray", { 0xA9U, 0xA9U, 0xA9U, 0xFFU } },
+    { U"darkgreen", { 0x00U, 0x64U, 0x00U, 0xFFU } },
+    { U"darkgrey", { 0xA9U, 0xA9U, 0xA9U, 0xFFU } },
+    { U"darkkhaki", { 0xBDU, 0xB7U, 0x6BU, 0xFFU } },
+    { U"darkmagenta", { 0x8BU, 0x00U, 0x8BU, 0xFFU } },
+    { U"darkolivegreen", { 0x55U, 0x6BU, 0x2FU, 0xFFU } },
+    { U"darkorange", { 0xFFU, 0x8CU, 0x00U, 0xFFU } },
+    { U"darkorchid", { 0x99U, 0x32U, 0xCCU, 0xFFU } },
+    { U"darkred", { 0x8BU, 0x00U, 0x00U, 0xFFU } },
+    { U"darksalmon", { 0xE9U, 0x96U, 0x7AU, 0xFFU } },
+    { U"darkseagreen", { 0x8FU, 0xBCU, 0x8FU, 0xFFU } },
+    { U"darkslateblue", { 0x48U, 0x3DU, 0x8BU, 0xFFU } },
+    { U"darkslategray", { 0x2FU, 0x4FU, 0x4FU, 0xFFU } },
+    { U"darkslategrey", { 0x2FU, 0x4FU, 0x4FU, 0xFFU } },
+    { U"darkturquoise", { 0x00U, 0xCEU, 0xD1U, 0xFFU } },
+    { U"darkviolet", { 0x94U, 0x00U, 0xD3U, 0xFFU } },
+    { U"deeppink", { 0xFFU, 0x14U, 0x93U, 0xFFU } },
+    { U"deepskyblue", { 0x00U, 0xBFU, 0xFFU, 0xFFU } },
+    { U"dimgray", { 0x69U, 0x69U, 0x69U, 0xFFU } },
+    { U"dimgrey", { 0x69U, 0x69U, 0x69U, 0xFFU } },
+    { U"dodgerblue", { 0x1EU, 0x90U, 0xFFU, 0xFFU } },
+    { U"firebrick", { 0xB2U, 0x22U, 0x22U, 0xFFU } },
+    { U"floralwhite", { 0xFFU, 0xFAU, 0xF0U, 0xFFU } },
+    { U"forestgreen", { 0x22U, 0x8BU, 0x22U, 0xFFU } },
+    { U"fuchsia", { 0xFFU, 0x00U, 0xFFU, 0xFFU } },
+    { U"gainsboro", { 0xDCU, 0xDCU, 0xDCU, 0xFFU } },
+    { U"ghostwhite", { 0xF8U, 0xF8U, 0xFFU, 0xFFU } },
+    { U"gold", { 0xFFU, 0xD7U, 0x00U, 0xFFU } },
+    { U"goldenrod", { 0xDAU, 0xA5U, 0x20U, 0xFFU } },
+    { U"gray", { 0x80U, 0x80U, 0x80U, 0xFFU } },
+    { U"green", { 0x00U, 0x80U, 0x00U, 0xFFU } },
+    { U"greenyellow", { 0xADU, 0xFFU, 0x2FU, 0xFFU } },
+    { U"grey", { 0x80U, 0x80U, 0x80U, 0xFFU } },
+    { U"honeydew", { 0xF0U, 0xFFU, 0xF0U, 0xFFU } },
+    { U"hotpink", { 0xFFU, 0x69U, 0xB4U, 0xFFU } },
+    { U"indianred", { 0xCDU, 0x5CU, 0x5CU, 0xFFU } },
+    { U"indigo", { 0x4BU, 0x00U, 0x82U, 0xFFU } },
+    { U"ivory", { 0xFFU, 0xFFU, 0xF0U, 0xFFU } },
+    { U"khaki", { 0xF0U, 0xE6U, 0x8CU, 0xFFU } },
+    { U"lavender", { 0xE6U, 0xE6U, 0xFAU, 0xFFU } },
+    { U"lavenderblush", { 0xFFU, 0xF0U, 0xF5U, 0xFFU } },
+    { U"lawngreen", { 0x7CU, 0xFCU, 0x00U, 0xFFU } },
+    { U"lemonchiffon", { 0xFFU, 0xFAU, 0xCDU, 0xFFU } },
+    { U"lightblue", { 0xADU, 0xD8U, 0xE6U, 0xFFU } },
+    { U"lightcoral", { 0xF0U, 0x80U, 0x80U, 0xFFU } },
+    { U"lightcyan", { 0xE0U, 0xFFU, 0xFFU, 0xFFU } },
+    { U"lightgoldenrodyellow", { 0xFAU, 0xFAU, 0xD2U, 0xFFU } },
+    { U"lightgray", { 0xD3U, 0xD3U, 0xD3U, 0xFFU } },
+    { U"lightgreen", { 0x90U, 0xEEU, 0x90U, 0xFFU } },
+    { U"lightgrey", { 0xD3U, 0xD3U, 0xD3U, 0xFFU } },
+    { U"lightpink", { 0xFFU, 0xB6U, 0xC1U, 0xFFU } },
+    { U"lightsalmon", { 0xFFU, 0xA0U, 0x7AU, 0xFFU } },
+    { U"lightseagreen", { 0x20U, 0xB2U, 0xAAU, 0xFFU } },
+    { U"lightskyblue", { 0x87U, 0xCEU, 0xFAU, 0xFFU } },
+    { U"lightslategray", { 0x77U, 0x88U, 0x99U, 0xFFU } },
+    { U"lightslategrey", { 0x77U, 0x88U, 0x99U, 0xFFU } },
+    { U"lightsteelblue", { 0xB0U, 0xC4U, 0xDEU, 0xFFU } },
+    { U"lightyellow", { 0xFFU, 0xFFU, 0xE0U, 0xFFU } },
+    { U"lime", { 0x00U, 0xFFU, 0x00U, 0xFFU } },
+    { U"limegreen", { 0x32U, 0xCDU, 0x32U, 0xFFU } },
+    { U"linen", { 0xFAU, 0xF0U, 0xE6U, 0xFFU } },
+    { U"magenta", { 0xFFU, 0x00U, 0xFFU, 0xFFU } },
+    { U"maroon", { 0x80U, 0x00U, 0x00U, 0xFFU } },
+    { U"mediumaquamarine", { 0x66U, 0xCDU, 0xAAU, 0xFFU } },
+    { U"mediumblue", { 0x00U, 0x00U, 0xCDU, 0xFFU } },
+    { U"mediumorchid", { 0xBAU, 0x55U, 0xD3U, 0xFFU } },
+    { U"mediumpurple", { 0x93U, 0x70U, 0xDBU, 0xFFU } },
+    { U"mediumseagreen", { 0x3CU, 0xB3U, 0x71U, 0xFFU } },
+    { U"mediumslateblue", { 0x7BU, 0x68U, 0xEEU, 0xFFU } },
+    { U"mediumspringgreen", { 0x00U, 0xFAU, 0x9AU, 0xFFU } },
+    { U"mediumturquoise", { 0x48U, 0xD1U, 0xCCU, 0xFFU } },
+    { U"mediumvioletred", { 0xC7U, 0x15U, 0x85U, 0xFFU } },
+    { U"midnightblue", { 0x19U, 0x19U, 0x70U, 0xFFU } },
+    { U"mintcream", { 0xF5U, 0xFFU, 0xFAU, 0xFFU } },
+    { U"mistyrose", { 0xFFU, 0xE4U, 0xE1U, 0xFFU } },
+    { U"moccasin", { 0xFFU, 0xE4U, 0xB5U, 0xFFU } },
+    { U"navajowhite", { 0xFFU, 0xDEU, 0xADU, 0xFFU } },
+    { U"navy", { 0x00U, 0x00U, 0x80U, 0xFFU } },
+    { U"oldlace", { 0xFDU, 0xF5U, 0xE6U, 0xFFU } },
+    { U"olive", { 0x80U, 0x80U, 0x00U, 0xFFU } },
+    { U"olivedrab", { 0x6BU, 0x8EU, 0x23U, 0xFFU } },
+    { U"orange", { 0xFFU, 0xA5U, 0x00U, 0xFFU } },
+    { U"orangered", { 0xFFU, 0x45U, 0x00U, 0xFFU } },
+    { U"orchid", { 0xDAU, 0x70U, 0xD6U, 0xFFU } },
+    { U"palegoldenrod", { 0xEEU, 0xE8U, 0xAAU, 0xFFU } },
+    { U"palegreen", { 0x98U, 0xFBU, 0x98U, 0xFFU } },
+    { U"paleturquoise", { 0xAFU, 0xEEU, 0xEEU, 0xFFU } },
+    { U"palevioletred", { 0xDBU, 0x70U, 0x93U, 0xFFU } },
+    { U"papayawhip", { 0xFFU, 0xEFU, 0xD5U, 0xFFU } },
+    { U"peachpuff", { 0xFFU, 0xDAU, 0xB9U, 0xFFU } },
+    { U"peru", { 0xCDU, 0x85U, 0x3FU, 0xFFU } },
+    { U"pink", { 0xFFU, 0xC0U, 0xCBU, 0xFFU } },
+    { U"plum", { 0xDDU, 0xA0U, 0xDDU, 0xFFU } },
+    { U"powderblue", { 0xB0U, 0xE0U, 0xE6U, 0xFFU } },
+    { U"purple", { 0x80U, 0x00U, 0x80U, 0xFFU } },
+    { U"rebeccapurple", { 0x66U, 0x33U, 0x99U, 0xFFU } },
+    { U"red", { 0xFFU, 0x00U, 0x00U, 0xFFU } },
+    { U"rosybrown", { 0xBCU, 0x8FU, 0x8FU, 0xFFU } },
+    { U"royalblue", { 0x41U, 0x69U, 0xE1U, 0xFFU } },
+    { U"saddlebrown", { 0x8BU, 0x45U, 0x13U, 0xFFU } },
+    { U"salmon", { 0xFAU, 0x80U, 0x72U, 0xFFU } },
+    { U"sandybrown", { 0xF4U, 0xA4U, 0x60U, 0xFFU } },
+    { U"seagreen", { 0x2EU, 0x8BU, 0x57U, 0xFFU } },
+    { U"seashell", { 0xFFU, 0xF5U, 0xEEU, 0xFFU } },
+    { U"sienna", { 0xA0U, 0x52U, 0x2DU, 0xFFU } },
+    { U"silver", { 0xC0U, 0xC0U, 0xC0U, 0xFFU } },
+    { U"skyblue", { 0x87U, 0xCEU, 0xEBU, 0xFFU } },
+    { U"slateblue", { 0x6AU, 0x5AU, 0xCDU, 0xFFU } },
+    { U"slategray", { 0x70U, 0x80U, 0x90U, 0xFFU } },
+    { U"slategrey", { 0x70U, 0x80U, 0x90U, 0xFFU } },
+    { U"snow", { 0xFFU, 0xFAU, 0xFAU, 0xFFU } },
+    { U"springgreen", { 0x00U, 0xFFU, 0x7FU, 0xFFU } },
+    { U"steelblue", { 0x46U, 0x82U, 0xB4U, 0xFFU } },
+    { U"tan", { 0xD2U, 0xB4U, 0x8CU, 0xFFU } },
+    { U"teal", { 0x00U, 0x80U, 0x80U, 0xFFU } },
+    { U"thistle", { 0xD8U, 0xBFU, 0xD8U, 0xFFU } },
+    { U"tomato", { 0xFFU, 0x63U, 0x47U, 0xFFU } },
+    { U"transparent", { 0x00U, 0x00U, 0x00U, 0xFFU } },
+    { U"turquoise", { 0x40U, 0xE0U, 0xD0U, 0xFFU } },
+    { U"violet", { 0xEEU, 0x82U, 0xEEU, 0xFFU } },
+    { U"wheat", { 0xF5U, 0xDEU, 0xB3U, 0xFFU } },
+    { U"white", { 0xFFU, 0xFFU, 0xFFU, 0xFFU } },
+    { U"whitesmoke", { 0xF5U, 0xF5U, 0xF5U, 0xFFU } },
+    { U"yellow", { 0xFFU, 0xFFU, 0x00U, 0xFFU } },
+    { U"yellowgreen", { 0x9AU, 0xCDU, 0x32U, 0xFFU } }
 };
 
 ColorPropertyChecker::ColorPropertyChecker ( char const* css, Property::eType property, ColorValue &target ) noexcept:
@@ -186,7 +184,7 @@ PropertyChecker::Result ColorPropertyChecker::Process ( PropertyParser::Result &
 
     if ( value == U"inherit" )
     {
-        _target = ColorValue ( true, GXColorRGB ( 0.0F, 0.0F, 0.0F, 0.0F ) );
+        _target = ColorValue ( true, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
         return true;
     }
 
@@ -252,7 +250,10 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor3 ( std::u32string_v
 
     if ( c0 & c1 & c2 )
     {
-        _target = ColorValue ( false, GXColorRGB ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), 1.0F ) );
+        _target = ColorValue ( false,
+            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), OPAQUE_VALUE )
+        );
+
         return true;
     }
 
@@ -280,7 +281,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor4 ( std::u32string_v
     if ( c0 & c1 & c2 & c3 )
     {
         _target = ColorValue ( false,
-            GXColorRGB ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), ToComponent ( a ) )
+            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), ToComponent ( a ) )
         );
 
         return true;
@@ -314,7 +315,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor6 ( std::u32string_v
     if ( c0H & c0L & c1H & c1L & c2H & c2L )
     {
         _target = ColorValue ( false,
-            GXColorRGB ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), 1.0F )
+            GXColorUNORM ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), OPAQUE_VALUE )
         );
 
         return true;
@@ -352,7 +353,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor8 ( std::u32string_v
     if ( c0H & c0L & c1H & c1L & c2H & c2L & c3H & c3L )
     {
         _target = ColorValue ( false,
-            GXColorRGB ( ToComponent ( rH, rL ),
+            GXColorUNORM ( ToComponent ( rH, rL ),
                 ToComponent ( gH, gL ),
                 ToComponent ( bH, bL ),
                 ToComponent ( aH, aL )
@@ -378,7 +379,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
     auto segment = value.substr ( 0U, hslPrefixSize );
     size_t prefixSize = hslPrefixSize;
 
-    auto const compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
+    constexpr auto compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
         return right == static_cast<char32_t> ( std::tolower ( static_cast<int> ( left ) ) );
     };
 
@@ -420,7 +421,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
         return std::nullopt;
     }
 
-    GXVec4 color {};
+    GXColorRGB color {};
     auto p = ParseParameter ( line, value );
 
     if ( !p )
@@ -480,7 +481,8 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false, GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+        color._data[ 3U ] = 1.0F;
+        _target = ColorValue ( false, color.ToColorUNORM () );
         return true;
     }
 
@@ -503,10 +505,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false,
-            GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] )
-        );
-
+        _target = ColorValue ( false, color.ToColorUNORM () );
         return true;
     }
 
@@ -525,7 +524,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
     auto segment = value.substr ( 0U, rgbPrefixSize );
     size_t prefixSize = rgbPrefixSize;
 
-    auto const compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
+    constexpr auto compare = [] ( char32_t left, char32_t right ) noexcept -> bool {
         return right == static_cast<char32_t> ( std::tolower ( static_cast<int> ( left ) ) );
     };
 
@@ -567,7 +566,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
         return std::nullopt;
     }
 
-    GXVec4 color {};
+    GXColorRGB color {};
     auto p = ParseParameter ( line, value );
 
     if ( !p )
@@ -612,7 +611,8 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false, GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], 1.0F ) );
+        color._data[ 3U ] = 1.0F;
+        _target = ColorValue ( false, color.ToColorUNORM () );
         return true;
     }
 
@@ -635,10 +635,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false,
-            GXColorRGB ( color._data[ 0U ], color._data[ 1U ], color._data[ 2U ], color._data[ 3U ] )
-        );
-
+        _target = ColorValue ( false, color.ToColorUNORM () );
         return true;
     }
 
@@ -650,7 +647,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
     return std::nullopt;
 }
 
-bool ColorPropertyChecker::Convert ( GXVec4 &color,
+bool ColorPropertyChecker::Convert ( GXColorRGB &color,
     std::optional<NumberParser::Result> const &number,
     size_t line,
     size_t component,
@@ -792,38 +789,34 @@ ColorPropertyChecker::ParseResult ColorPropertyChecker::ParseParameter ( size_t 
     return std::nullopt;
 }
 
-float ColorPropertyChecker::ToComponent ( char32_t c ) noexcept
+uint8_t ColorPropertyChecker::ToComponent ( char32_t c ) noexcept
 {
-    auto const conv = [] ( uint8_t v ) noexcept -> float {
-        constexpr float const lut[] =
-        {
-            0.0F,
-            0.066667F,
-            0.13333F,
-            0.2F,
-            0.26667F,
-            0.33333F,
-            0.4F,
-            0.46667F,
-            0.53333F,
-            0.6F,
-            0.66667F,
-            0.73333F,
-            0.8F,
-            0.86667F,
-            0.93333F,
-            1.0F
-        };
-
-        return lut[ static_cast<size_t> ( v ) ];
+    constexpr uint8_t const lut[] =
+    {
+        0U,
+        17U,
+        34U,
+        51U,
+        68U,
+        85U,
+        102U,
+        119U,
+        136U,
+        153U,
+        170U,
+        187U,
+        204U,
+        221U,
+        238U,
+        255U
     };
 
-    return conv ( FromHEX ( c ) );
+    return lut[ FromHEX ( c ) ];
 }
 
-float ColorPropertyChecker::ToComponent ( char32_t high, char32_t low ) noexcept
+uint8_t ColorPropertyChecker::ToComponent ( char32_t high, char32_t low ) noexcept
 {
-    return GX_MATH_UNORM_FACTOR * static_cast<float> ( FromHEX ( low ) | ( FromHEX ( high ) << UINT8_C ( 4 ) ) );
+    return static_cast<uint8_t> ( FromHEX ( low ) | ( FromHEX ( high ) << UINT8_C ( 4 ) ) );
 }
 
 } // namespace pbr

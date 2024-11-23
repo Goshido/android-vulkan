@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <atomic>
-
-GX_RESTORE_WARNING_STATE
-
 #include <vulkan_utils.hpp>
 
 
@@ -20,7 +14,7 @@ class DescriptorSetLayout final
         VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
 
     private:
-        std::atomic<size_t>         _references = 0U;
+        std::atomic_size_t          _references = 0U;
 
     public:
         DescriptorSetLayout () = default;
@@ -138,7 +132,7 @@ bool GeometryPassTextureDescriptorSetLayout::Init ( VkDevice device ) noexcept
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }

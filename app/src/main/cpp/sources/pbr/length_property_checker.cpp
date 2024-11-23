@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/length_property_checker.hpp>
 #include <pbr/length_value_parser.hpp>
 

@@ -32,18 +32,12 @@ class ComputeProgram
 
     public:
         ComputeProgram () = delete;
-    
+
         ComputeProgram ( ComputeProgram const & ) = delete;
         ComputeProgram &operator = ( ComputeProgram const & ) = delete;
-    
+
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
-
-        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
-            SpecializationData specializationData
-        ) noexcept = 0;
-
-        virtual void Destroy ( VkDevice device ) noexcept = 0;
 
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
@@ -54,7 +48,13 @@ class ComputeProgram
         explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         virtual ~ComputeProgram () = default;
 
-        virtual void DestroyShaderModule ( VkDevice device ) noexcept = 0;
+        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
+            SpecializationData specializationData
+        ) noexcept = 0;
+
+        // Successor classes MUST call this method.
+        virtual void Destroy ( VkDevice device ) noexcept;
+
         [[nodiscard]] virtual bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept = 0;
 
         [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
@@ -62,6 +62,8 @@ class ComputeProgram
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo
         ) noexcept = 0;
+
+        void DestroyShaderModule ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

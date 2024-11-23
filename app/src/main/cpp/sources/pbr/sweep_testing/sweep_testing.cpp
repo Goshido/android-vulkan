@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/sweep_testing/sweep_testing.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/material_manager.hpp>

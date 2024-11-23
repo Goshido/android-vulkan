@@ -1,3 +1,4 @@
+#include <precompiled_headers.hpp>
 #include <pbr/geometry_pass_bindings.inc>
 #include <pbr/geometry_pass_program.hpp>
 #include <vertex_info.hpp>
@@ -11,23 +12,88 @@ constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 3U;
+constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
+
+// TBN64 format contains two quaternions
+static_assert ( PBR_OPAQUE_MAX_INSTANCE_COUNT % 2 == 0 );
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
+GeometryPassProgram::ColorData::ColorData ( GXColorUNORM color0,
+    GXColorUNORM color1,
+    GXColorUNORM color2,
+    GXColorUNORM emission,
+    float emissionIntensity
+) noexcept
+{
+    _emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) |
+        ( *reinterpret_cast<uint32_t const*> ( &color0 ) << 8U );
+
+    _emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) |
+        ( *reinterpret_cast<uint32_t const*> ( &color1 ) << 8U );
+
+    _emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) |
+        ( *reinterpret_cast<uint32_t const*> ( &color2 ) << 8U );
+
+    // Emission intensity should take range from 0 to 6000.
+    // Emission intensity is packed as 24bit fixed point value.
+    constexpr double maxIntensity = 6.0e+3;
+    constexpr double convertFactor = static_cast<double> ( 0x00FFFFFFU ) / maxIntensity;
+    double const beta = convertFactor * std::clamp ( static_cast<double> ( emissionIntensity ), 0.0, maxIntensity );
+    _col0aEmiIntens = static_cast<uint32_t> ( color0._data[ 3U ] ) | ( static_cast<uint32_t> ( beta ) << 8U );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
+{
+    static DescriptorSetInfo const info =
+    {
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+                .descriptorCount = 1U
+            }
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+                .descriptorCount = 5U
+            },
+        },
+        {
+            {
+                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .descriptorCount = 3U
+            }
+        }
+    };
+
+    return info;
+}
+
+void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgram::Destroy ( device );
+
+    _samplerLayout.Destroy ( device );
+    _textureLayout.Destroy ( device );
+    _instanceLayout.Destroy ( device );
+}
+
 bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
-    SpecializationData /*specializationData*/,
     VkExtent2D const &viewport
 ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
     VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription;
+    VkVertexInputBindingDescription bindingDescription[ VERTEX_INPUT_BINDING_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo;
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -51,17 +117,23 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
         attributeDescriptions,
-        &bindingDescription
+        bindingDescription
     );
 
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, scissorDescription, viewportDescription, viewport );
+
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
+        &scissorDescription,
+        &viewportDescription,
+        &viewport
+    );
+
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -87,54 +159,6 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
 
     DestroyShaderModules ( device );
     return true;
-}
-
-void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
-{
-    if ( _pipelineLayout != VK_NULL_HANDLE )
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    _samplerLayout.Destroy ( device );
-    _textureLayout.Destroy ( device );
-    _instanceLayout.Destroy ( device );
-
-    if ( _pipeline != VK_NULL_HANDLE )
-    {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
-    }
-
-    DestroyShaderModules ( device );
-}
-
-GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info =
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 1U
-            }
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 5U
-            },
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
-    return info;
 }
 
 void GeometryPassProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
@@ -291,6 +315,13 @@ VkPipelineDepthStencilStateCreateInfo const* GeometryPassProgram::InitDepthStenc
     };
 
     return &info;
+}
+
+VkPipelineDynamicStateCreateInfo const* GeometryPassProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* /*info*/
+) const noexcept
+{
+    return nullptr;
 }
 
 VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAssemblyInfo (
@@ -451,39 +482,24 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void GeometryPassProgram::DestroyShaderModules ( VkDevice device ) noexcept
-{
-    if ( _fragmentShader != VK_NULL_HANDLE )
-    {
-        vkDestroyShaderModule ( device, _fragmentShader, nullptr );
-        _fragmentShader = VK_NULL_HANDLE;
-    }
-
-    if ( _vertexShader == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyShaderModule ( device, _vertexShader, nullptr );
-    _vertexShader = VK_NULL_HANDLE;
-}
-
 VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
-    VkRect2D &scissorInfo,
-    VkViewport &viewportInfo,
-    VkExtent2D const &viewport
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
 ) const noexcept
 {
-    viewportInfo =
+    *viewportInfo =
     {
         .x = 0.0F,
         .y = 0.0F,
-        .width = static_cast<float> ( viewport.width ),
-        .height = static_cast<float> ( viewport.height ),
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
 
-    scissorInfo =
+    *scissorInfo =
     {
         .offset =
         {
@@ -491,7 +507,7 @@ VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
             .y = 0
         },
 
-        .extent = viewport
+        .extent = *viewport
     };
 
     info =
@@ -500,9 +516,9 @@ VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = &viewportInfo,
+        .pViewports = viewportInfo,
         .scissorCount = 1U,
-        .pScissors = &scissorInfo
+        .pScissors = scissorInfo
     };
 
     return &info;
@@ -514,51 +530,42 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
     VkVertexInputBindingDescription* binds
 ) const noexcept
 {
-    *binds =
+    binds[ IN_BUFFER_POSITION ] =
     {
-        .binding = 0U,
+        .binding = IN_BUFFER_POSITION,
+        .stride = static_cast<uint32_t> ( sizeof ( GXVec3 ) ),
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+    };
+
+    binds[ IN_BUFFER_REST ] =
+    {
+        .binding = IN_BUFFER_REST,
         .stride = static_cast<uint32_t> ( sizeof ( android_vulkan::VertexInfo ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
-    attributes[ 0U ] =
+    attributes[ IN_BUFFER_POSITION ] =
     {
-        .location = IN_SLOT_VERTEX,
-        .binding = 0U,
+        .location = IN_BUFFER_POSITION,
+        .binding = IN_SLOT_POSITION,
         .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _vertex ) )
+        .offset = 0U
     };
 
-    attributes[ 1U ] =
+    attributes[ IN_SLOT_UV ] =
     {
         .location = IN_SLOT_UV,
-        .binding = 0U,
+        .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R32G32_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
     };
 
-    attributes[ 2U ] =
+    attributes[ IN_SLOT_TBN ] =
     {
-        .location = IN_SLOT_NORMAL,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _normal ) )
-    };
-
-    attributes[ 3U ] =
-    {
-        .location = IN_SLOT_TANGENT,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tangent ) )
-    };
-
-    attributes[ 4U ] =
-    {
-        .location = IN_SLOT_BITANGENT,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _bitangent ) )
+        .location = IN_SLOT_TBN,
+        .binding = IN_BUFFER_REST,
+        .format = VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _tbn ) )
     };
 
     info =
@@ -566,7 +573,7 @@ VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInput
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .vertexBindingDescriptionCount = 1U,
+        .vertexBindingDescriptionCount = VERTEX_INPUT_BINDING_COUNT,
         .pVertexBindingDescriptions = binds,
         .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
         .pVertexAttributeDescriptions = attributes

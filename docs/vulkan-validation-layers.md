@@ -6,7 +6,7 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## Compatible version
 
-The manual is based on `58428b0c0e9cb818ee240857c5b4725df8c5183e` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `736e979cbb2579384ee420dc349de4611bdee3ee` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 ## Requirements
 
@@ -38,62 +38,78 @@ mklink python3.exe python.exe
 Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process is significantly simplified:
 
 ```PowerShell
+
+>>> common.ps1
+
+[string] $VVL_DIR = "D:\Development\Vulkan-ValidationLayers"
+
+>>> Main script
+
+[string] $ABI = "arm64-v8a"
+[string] $ANDROID_API = "30"
+[string] $ANDROID_SDK_DIR = "D:\Programs\Android\Sdk"
+[string] $ANDROID_VULKAN_DIR = "D:\Development\android-vulkan"
+[string] $BUILD_THREADS = "16"
+[string] $CMAKE = "3.31.0"
+[string] $NDK = "27.2.12479018"
+
+#-----------------------------------------------------------------------------------------------------------------------
+
 Clear-Host
 
 # Preparing sources...
 
-$ndk = "D:/Programs/Android/Sdk/ndk/27.0.12077973"
-
-$androidVulkanDir = "D:/Development/android-vulkan"
-$vvlDir = "D:/Development/Vulkan-ValidationLayers"
-
-$abi = "arm64-v8a"
-$androidAPI = 30
-$buildThreads = 16
-
-$buildDir = "${vvlDir}/build-android/obj/${abi}"
-$libDir = "third-party/jniLibs/${abi}"
+. .\common.ps1
 
 # Cleaning repo...
 
-Set-Location "${vvlDir}"
-git clean -d -fx -f
+Push-Location $VVL_DIR
+
+git                                                                                                 `
+    clean                                                                                           `
+    -d                                                                                              `
+    -fx                                                                                             `
+    -f
+
+# Setting path to cmake and ninja...
+
+$Env:PATH = "$ANDROID_SDK_DIR\cmake\$CMAKE\bin;$Env:PATH"
 
 # Making project files...
 
-$api = "android-${androidAPI}"
+[string] $buildDir = "`"$VVL_DIR\build-android\obj\$ABI`""
 
-cmake                                                                       `
-    -S .                                                                    `
-    -B "${buildDir}"                                                        `
-    -G Ninja                                                                `
-    -D ANDROID_PLATFORM=$api                                                `
-    -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                 `
-    -D CMAKE_ANDROID_ARCH_ABI=${abi}                                        `
-    -D CMAKE_ANDROID_STL_TYPE=c++_static                                    `
-    -D CMAKE_INSTALL_LIBDIR="${libDir}"                                     `
-    -D CMAKE_TOOLCHAIN_FILE="${ndk}/build/cmake/android.toolchain.cmake"    `
-    -D CMAKE_BUILD_TYPE=Release                                             `
-    -D UPDATE_DEPS=ON                                                       `
-    -D UPDATE_DEPS_DIR="${buildDir}"
+cmake                                                                                               `
+    -S .                                                                                            `
+    -B $buildDir                                                                                    `
+    -G Ninja                                                                                        `
+    -D ANDROID_PLATFORM="android-$ANDROID_API"                                                      `
+    -D ANDROID_USE_LEGACY_TOOLCHAIN_FILE=NO                                                         `
+    -D BUILD_TESTS=OFF                                                                              `
+    -D BUILD_WERROR=ON                                                                              `
+    -D CMAKE_ANDROID_ARCH_ABI=$ABI                                                                  `
+    -D CMAKE_ANDROID_STL_TYPE=c++_static                                                            `
+    -D CMAKE_INSTALL_LIBDIR="`"third-party\jniLibs\$ABI`""                                          `
+    -D CMAKE_TOOLCHAIN_FILE="`"$ANDROID_SDK_DIR\ndk\$NDK\build\cmake\android.toolchain.cmake`""     `
+    -D CMAKE_BUILD_TYPE=Release                                                                     `
+    -D UPDATE_DEPS=ON                                                                               `
+    -D UPDATE_DEPS_DIR=$buildDir
 
 # Building projects...
 
-$threads = "-j${buidThreads}"
-
-cmake                                                                       `
-    --build "${buildDir}"                                                   `
-    $threads
+cmake                                                                                               `
+    --build $buildDir                                                                               `
+    "-j$BUILD_THREADS"
 
 # Stripping binaries and copying them into android-vulkan project...
 
-cmake                                                                       `
-    --install "${buildDir}"                                                 `
-    --strip                                                                 `
-    --prefix "${androidVulkanDir}"
+cmake                                                                                               `
+    --install $buildDir                                                                             `
+    --strip                                                                                         `
+    --prefix "`"$ANDROID_VULKAN_DIR`""
 
+Pop-Location
 Write-Host "Done"
-
 ```
 
 That's all!
@@ -110,4 +126,5 @@ Broken Android build | [#4947](https://github.com/KhronosGroup/Vulkan-Validation
 `vkCmdNextSubpass` validation issue | [#5853](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/5853) | 🛡️ Not an issue
 Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/7636) | ✔️ Fixed
 First `vkGetSwapchainImagesKHR` false positive | [#8138](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8138) | ✔️ Fixed
-No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ⚠️ Submitted
+No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ✔️ Fixed
+`VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | 🛡️ Not an issue

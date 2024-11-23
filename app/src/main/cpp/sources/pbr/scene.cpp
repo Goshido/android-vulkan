@@ -1,12 +1,13 @@
+#include <precompiled_headers.hpp>
+#include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <av_assert.hpp>
 #include <core.hpp>
 #include <file.hpp>
-#include <shape_box.hpp>
-#include <trace.hpp>
-#include <android_vulkan_sdk/pbr/scene_desc.hpp>
+#include <logger.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/bit_field.hpp>
 #include <pbr/coordinate_system.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/mesh_manager.hpp>
 #include <pbr/material_manager.hpp>
 #include <pbr/renderable_component.hpp>
@@ -18,6 +19,8 @@
 #include <pbr/scriptable_sweep_test_result.hpp>
 #include <pbr/static_mesh_component.hpp>
 #include <pbr/ui_layer.hpp>
+#include <shape_box.hpp>
+#include <trace.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -119,7 +122,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     _renderSession = &renderSession;
-    UILayer::InitCSSUnitConverter ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
+    CSSUnitToDevicePixel::Init ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
     _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
@@ -579,7 +582,7 @@ int Scene::DoOverlapTestBoxBox ( lua_State &vm,
     android_vulkan::Shape &shapeA = *_shapeBoxes[ 0U ];
     android_vulkan::Shape &shapeB = *_shapeBoxes[ 1U ];
 
-    auto const setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
+    constexpr auto setup = [] ( android_vulkan::Shape &shape, GXMat4 const &local, GXVec3 const &size ) noexcept {
         // NOLINTNEXTLINE - downcast.
         auto &boxShape = static_cast<android_vulkan::ShapeBox &> ( shape );
 

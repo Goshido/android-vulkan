@@ -1,9 +1,20 @@
 
 # Shader compilation
 
-## Compile tool
+## <a id="table-of-content">Table of content</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10013_**.
+- [_Compile tool_](#compile-tool)
+- [_Compile and deploy vertex shader module_](#compile-vs)
+- [_Compile and deploy fragment shader module_](#compile-fs)
+- [_Compile and deploy compute shader module_](#compile-cs)
+- [_SPIR-V disassembler via DXC_](#spirv-disassm)
+- [_SPIR-V with shader sources_](#spirv-sources)
+- [_Compilation automation \(Windows OS only\)_](#automation)
+- [_Reported issues_](#issues)
+
+## <a id="compile-tool">Compile tool</a>
+
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10117_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -31,7 +42,9 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 -fspv-target-env=vulkan1.1
 ```
 
-## Compile and deploy vertex shader module
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="compile-vs">Compile and deploy vertex shader module</a>
 
 ```txt
 dxc.exe                                                                                 ^
@@ -45,13 +58,17 @@ dxc.exe                                                                         
     -O3                                                                                 ^
     -T vs_6_8                                                                           ^
     -E VS                                                                               ^
+    -I <android-vulkan directory>\tools\editor\hlsl                                     ^
+    -I <android-vulkan directory>\tools\editor\include                                  ^
     -I <android-vulkan directory>\app\src\main\hlsl                                     ^
-    -I <android-vulkan directory>\app\src\main\cpp\include\pbr                          ^
+    -I <android-vulkan directory>\app\src\main\cpp\include                              ^
     -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.vs.spv       ^
     <file name>.vs
 ```
 
-## Compile and deploy fragment shader module
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="compile-fs">Compile and deploy fragment shader module</a>
 
 ```txt
 dxc.exe                                                                                 ^
@@ -65,13 +82,17 @@ dxc.exe                                                                         
     -O3                                                                                 ^
     -T ps_6_8                                                                           ^
     -E PS                                                                               ^
+    -I <android-vulkan directory>\tools\editor\hlsl                                     ^
+    -I <android-vulkan directory>\tools\editor\include                                  ^
     -I <android-vulkan directory>\app\src\main\hlsl                                     ^
-    -I <android-vulkan directory>\app\src\main\cpp\include\pbr                          ^
+    -I <android-vulkan directory>\app\src\main\cpp\include                              ^
     -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.ps.spv       ^
     <file name>.ps
 ```
 
-## Compile and deploy compute shader module
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="compile-cs">Compile and deploy compute shader module</a>
 
 ```txt
 dxc.exe                                                                                 ^
@@ -85,13 +106,17 @@ dxc.exe                                                                         
     -O3                                                                                 ^
     -T cs_6_8                                                                           ^
     -E CS                                                                               ^
+    -I <android-vulkan directory>\tools\editor\hlsl                                     ^
+    -I <android-vulkan directory>\tools\editor\include                                  ^
     -I <android-vulkan directory>\app\src\main\hlsl                                     ^
-    -I <android-vulkan directory>\app\src\main\cpp\include\pbr                          ^
+    -I <android-vulkan directory>\app\src\main\cpp\include                              ^
     -Fo <android-vulkan directory>\app\src\main\assets\shaders\<file name>.cs.spv       ^
     <file name>.cs
 ```
 
-## _SPIR-V_ disassembler via _DXC_
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="spirv-disassm">_SPIR-V_ disassembler via _DXC_</a>
 
 The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag to print out _SPIR-V_ disassembler code of the binary representation. Use the following command:
 
@@ -99,12 +124,25 @@ The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag
 -Fc <file name>
 ```
 
-## Compilation automation (_Windows OS only_)
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="spirv-sources">_SPIR-V_ with shader sources</a>
+
+The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flags to embed shader sources into _SPIR-V_. Use the following command:
+
+```txt
+-Od
+-fspv-debug=vulkan-with-source
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="automation">Compilation automation (_Windows OS only_)</a>
 
 To compile all shaders to _SPIR-V_ representation you can invoke special `make-all.ps1` script which is located here:
 
 ```txt
-<android-vulkan directory>/app/src/main/hlsl/build-system/windows
+<android-vulkan directory>/scripts/windows
 ```
 
 But **before** that you have to specify root directory where _dxc.exe_ is located on you system via environment variable `ANDROID_VULKAN_DXC_ROOT`
@@ -113,9 +151,11 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-07-18\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-11-23\bin`
 
-### Reported issues
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="issues">Reported issues</a>
 
 Name | Link | Status
 --- | --- | ---
@@ -123,3 +163,7 @@ SPIR-V degradation 1.7.2207.10069 compare to 1.7.2207.10036 | [#4714](https://gi
 SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://github.com/microsoft/DirectXShaderCompiler/issues/5342) | ✔️ Fixed
 `-fspv-debug=vulkan-with-source` crash issue | [#5441](https://github.com/microsoft/DirectXShaderCompiler/issues/5441) | ✔️ Fixed
 Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShaderCompiler/issues/5608) | ✔️ Fixed
+[SPIR-V] Define-only include files are missing in `-fspv-debug=vulkan-with-source` | [#6907](https://github.com/microsoft/DirectXShaderCompiler/issues/6907) | ✔️ Fixed
+[SPIR-V] Non semantic shader information issue (-fspv-debug=vulkan-with-source) | [#6939](https://github.com/microsoft/DirectXShaderCompiler/issues/6939) | ✔️ Fixed
+
+[↬ table of content ⇧](#table-of-content)

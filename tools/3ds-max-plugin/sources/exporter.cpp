@@ -1,12 +1,6 @@
+#include <precompiled_headers.hpp>
 #include <exporter.hpp>
 #include <result_checker.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <filesystem>
-#include <IGame/IGameModifier.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace avp {
@@ -111,7 +105,7 @@ bool Exporter::AutoReleaseIGameNode::Init ( HWND parent, IGameScene &scene, INod
     return CheckResult ( _object->InitializeData (), parent, "Can't init IGameObject.", MB_ICONWARNING ) &&
 
         CheckResult ( _object->GetIGameType () == IGameMesh::IGAME_MESH,
-            parent, 
+            parent,
             "Please select mesh to export.",
             MB_ICONINFORMATION
         );

@@ -158,7 +158,7 @@ void StippleTest::Animate ( float deltaTime ) noexcept
 
     _stipple->SetTransform ( transform );
 
-    _stippleColor._data[ 3U ] = std::abs ( std::sin ( _stippleAnimation ) );
+    _stippleColor._data[ 3U ] = static_cast<uint8_t> ( std::abs ( 128.0F + 127.0F * std::sin ( _stippleAnimation ) ) );
     _stipple->SetColor0 ( _stippleColor );
 }
 

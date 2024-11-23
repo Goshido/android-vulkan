@@ -8,7 +8,7 @@ namespace pbr {
 
 namespace {
 
-constexpr uint8_t OPAQUE = 0xFFU;
+constexpr uint8_t OPAQUE_VALUE = 0xFFU;
 
 } // end of anonymous namespace
 
@@ -251,7 +251,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor3 ( std::u32string_v
     if ( c0 & c1 & c2 )
     {
         _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), OPAQUE )
+            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), OPAQUE_VALUE )
         );
 
         return true;
@@ -315,7 +315,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor6 ( std::u32string_v
     if ( c0H & c0L & c1H & c1L & c2H & c2L )
     {
         _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), OPAQUE )
+            GXColorUNORM ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), OPAQUE_VALUE )
         );
 
         return true;
@@ -816,7 +816,7 @@ uint8_t ColorPropertyChecker::ToComponent ( char32_t c ) noexcept
 
 uint8_t ColorPropertyChecker::ToComponent ( char32_t high, char32_t low ) noexcept
 {
-    return FromHEX ( low ) | ( FromHEX ( high ) << UINT8_C ( 4 ) );
+    return static_cast<uint8_t> ( FromHEX ( low ) | ( FromHEX ( high ) << UINT8_C ( 4 ) ) );
 }
 
 } // namespace pbr

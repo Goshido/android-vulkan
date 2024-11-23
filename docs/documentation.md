@@ -9,6 +9,7 @@
 1) [Algorithms](./algorithms.md)
 1) [Building _Vulkan_ validation layers for _Android OS_](./vulkan-validation-layers.md)
 1) [_CPU_ tracing](./cpu-tracing.md)
+1) [Editor](./editor.md)
 1) [_HTML_ validator](./html-validator.md)
 1) [_Logcat™_ best practices](./logcat.md)
 1) [_Lua_ scripting frontend](./lua-scripting-frontend.md)

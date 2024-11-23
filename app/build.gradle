@@ -56,7 +56,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('../CMakeLists.txt')
-            version "3.30.5"
+            version "3.31.0"
         }
     }
 
@@ -76,7 +76,7 @@ android {
     }
 }
 
-// [2024-10-19] This allows to use recent Kotlin toolchain. Without it you will get the following error:
+// [2024-11-23] This allows to use recent Kotlin toolchain. Without it you will get the following error:
 // Inconsistent JVM-target compatibility detected for tasks 'compileDebugJavaWithJavac' (1.8) and
 // 'compileDebugKotlin' (21).
 // See https://kotlinlang.org/docs/gradle-configure-project.html#-5yydp1_177

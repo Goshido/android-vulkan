@@ -59,7 +59,7 @@ First step is to select _RenderDoc_ build configuration:
 
 Next step is to [compile _HLSL_ code into _SPIR-V_ with shader sources](./shader-compilation.md##spirv-sources).
 
-Under the hood it's used _RenderDoc_ compatibility is achieved using [the following](./renderdoc-integration.md).
+Under the hood it's used [_RenderDoc_ compatibility compile options](./renderdoc-integration.md).
 
 The build artefacts will be located in directory:
 

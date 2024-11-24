@@ -293,9 +293,9 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 ### <a id="opt-2-tbn-in-4-bytes">Compressing _TBN_ in 4 bytes</a>
 
-For othogonal _TBNs_ it's possible to represent it via unit-quaternion plus information about mirroring of the _bitangent_ vector.
+For orthogonal _TBNs_ it's possible to represent it via unit-quaternion plus information about mirroring of the _bitangent_ vector.
 
-First step is to make sure that _TBN_ is othogonal. Unfortunately _3ds Max_ provides non-orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
+First step is to make sure that _TBN_ is orthogonal. Unfortunately _3ds Max_ provides non-orthogonal _TBNs_. Good news that there is de-facto industry standard convention/library called [_Mikkt_](https://github.com/mmikk/MikkTSpace). This library provides orthogonal _tangents_ using mesh _normals_ and _UVs_.
 
 Second step is further data compression. Quaternion is 4 numbers. Mirroring information is single number. So it's needed 5 numbers. Good news that rendering system is using unit quaternions. So it's possible to store 3 components and recover 4<sup>th</sup> component using formula:
 
@@ -327,7 +327,7 @@ And last step is optimal data format: `VK_FORMAT_A2R10G10B10_UNORM`:
 
 ### <a id="opt-2-local-view-8-bytes">Storing local-view information in 8 bytes</a>
 
-_TBN_ must be rotated by _local-view_ matrix for proper shading the 3D model. This matrix is also orthogonal and could be represented by quaternion. It was decided to use more precise compression such so every component of the quaternion is described by 16 bits. So encoding one _local-view_ matrix requires 8 bytes. The catch is passing this information via uniform buffers. Such data must be aligned by 16 byte boundary. The solution is to store two quaternions instead of one. Together they occupy 16 bytes:
+_TBN_ must be rotated by _local-view_ matrix for proper shading of the 3D model. This matrix is also orthogonal and could be represented by quaternion. It was decided to use more precise compression such so every component of the quaternion is described by 16 bits. So encoding one _local-view_ matrix requires 8 bytes. The catch is passing this information via uniform buffers. Such data must be aligned by 16 byte boundary. The solution is to store two quaternions instead of one. Together they occupy 16 bytes:
 
 ```cpp
 struct TBN64

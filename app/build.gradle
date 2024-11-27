@@ -68,7 +68,6 @@ android {
 
             jniLibs {
                 srcDir makePrebuildLibraryPath(null)
-
             }
 
             java.srcDirs += "src/main/kotlin"

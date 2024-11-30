@@ -37,8 +37,6 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
 ) noexcept
 {
     bool isProgramBind = false;
-    constexpr VkDeviceSize const offset[] = { 0U, 0U };
-    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     for ( auto const &call : _sceneData )
     {
@@ -72,15 +70,18 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 isUniformBind = true;
             }
 
+            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+            VkBuffer buffer = info._buffer;
+            VkBuffer const vertexBuffers[] = { buffer, buffer };
+
             vkCmdBindVertexBuffers ( commandBuffer,
                 0U,
-                android_vulkan::MeshGeometry::GetVertexBufferCount (),
-                mesh->GetVertexBuffers (),
-                offset
+                static_cast<uint32_t> ( std::size ( vertexBuffers ) ),
+                vertexBuffers,
+                info._vertexDataOffsets
             );
 
-            android_vulkan::MeshGeometry::IndexBuffer const &indexBuffer = mesh->GetIndexBuffer ();
-            vkCmdBindIndexBuffer ( commandBuffer, indexBuffer._buffer, 0U, indexBuffer._type );
+            vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, info._indexType );
 
             vkCmdDrawIndexed ( commandBuffer,
                 mesh->GetVertexCount (),

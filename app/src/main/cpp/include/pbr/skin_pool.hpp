@@ -49,7 +49,7 @@ class SkinPool final
         void Push ( android_vulkan::BufferInfo pose,
             android_vulkan::BufferInfo skin,
             android_vulkan::MeshBufferInfo referenceMesh,
-            VkBuffer const* skinMeshBuffers
+            VkBuffer skinMeshBuffer
         ) noexcept;
 
         void SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept;

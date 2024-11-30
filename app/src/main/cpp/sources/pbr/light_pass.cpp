@@ -187,7 +187,7 @@ void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const 
 
 bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 {
-    constexpr uint32_t const indices[]
+    constexpr uint16_t const indices[]
     {
         0U, 2U, 1U,
         1U, 2U, 3U,

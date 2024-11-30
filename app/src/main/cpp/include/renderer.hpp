@@ -68,6 +68,7 @@ class Renderer final
         };
 
         size_t                                          _maxUniformBufferRange {};
+        size_t                                          _minStorageBufferOffsetAlignment {};
         MemoryAllocator                                 _memoryAllocator {};
 
         VkPhysicalDevice                                _physicalDevice = VK_NULL_HANDLE;
@@ -145,6 +146,7 @@ class Renderer final
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
+        [[nodiscard]] size_t GetMinStorageBufferOffsetAlignment () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
         [[nodiscard]] VkImageView const &GetPresentImageView ( size_t imageIndex ) const noexcept;

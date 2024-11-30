@@ -851,6 +851,11 @@ size_t Renderer::GetMaxUniformBufferRange () const noexcept
     return _maxUniformBufferRange;
 }
 
+size_t Renderer::GetMinStorageBufferOffsetAlignment () const noexcept
+{
+    return _minStorageBufferOffsetAlignment;
+}
+
 size_t Renderer::GetPresentImageCount () const noexcept
 {
     return _swapchainImageViews.size ();
@@ -2169,10 +2174,13 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         static_cast<size_t> ( limits.minUniformBufferOffsetAlignment )
     );
 
+    _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
+
     PrintSizeProp ( INDENT_1,
         "minStorageBufferOffsetAlignment",
         static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
     );
+
     std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
     PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );

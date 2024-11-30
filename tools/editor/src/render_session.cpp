@@ -849,7 +849,7 @@ void RenderSession::OnRenderFrame () noexcept
             vkCmdBindVertexBuffers ( commandBuffer,
                 0U,
                 1U,
-                _helloTriangleGeometry->GetVertexBuffers (),
+                &_helloTriangleGeometry->GetMeshBufferInfo ()._buffer,
                 &offsets
             );
 

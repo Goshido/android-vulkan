@@ -1,64 +1,48 @@
 #include <precompiled_headers.hpp>
+#include <android_vulkan_sdk/mesh2.hpp>
 #include <av_assert.hpp>
-#include <mesh_geometry.hpp>
 #include <file.hpp>
 #include <logger.hpp>
+#include <mesh_geometry.hpp>
 #include <vulkan_utils.hpp>
-#include <android_vulkan_sdk/mesh2.hpp>
 
 
 namespace android_vulkan {
 
 namespace {
 
-constexpr VkFlags VERTEX_BUFFER_USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
-    AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT );
-
 constexpr size_t INDEX16_LIMIT = 1U << 16U;
 constexpr size_t const INDEX_SIZES[] = { sizeof ( uint16_t ), sizeof ( uint32_t ) };
 
-//----------------------------------------------------------------------------------------------------------------------
-
-struct BufferSyncItem final
+constexpr struct BufferSyncItem final
 {
-    VkAccessFlags           _dstAccessMask;
-    VkPipelineStageFlags    _dstStage;
-    VkAccessFlags           _srcAccessMask;
-    VkPipelineStageFlags    _srcStage;
+    constexpr static size_t NO_INDEX_INFO = 0U;
+    constexpr static size_t WITH_INDEX_INFO = 1U;
 
-    constexpr explicit BufferSyncItem ( VkAccessFlags srcAccessMask,
-        VkPipelineStageFlags srcStage,
-        VkAccessFlags dstAccessMask,
-        VkPipelineStageFlags dstStage
-    ) noexcept:
-        _dstAccessMask ( dstAccessMask ),
-        _dstStage ( dstStage ),
-        _srcAccessMask ( srcAccessMask ),
-        _srcStage ( srcStage )
-    {
-        // NOTHING
-    }
-};
-
-std::map<VkBufferUsageFlags, BufferSyncItem> const g_accessMapper =
+    VkAccessFlags           _dstAccessMask = VK_IMAGE_ASPECT_NONE;
+    VkBufferUsageFlags      _usage = VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
+} const BUFFER_SYNC[]
 {
+    // Index data does not present.
     {
-        VERTEX_BUFFER_USAGE,
+        ._dstAccessMask = AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) |
+            AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
 
-        BufferSyncItem ( VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT )
-        )
+        ._usage = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT )
     },
-    {
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 
-        BufferSyncItem ( VK_ACCESS_TRANSFER_WRITE_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_ACCESS_INDEX_READ_BIT,
-            VK_PIPELINE_STAGE_VERTEX_INPUT_BIT
-        )
+    // Data contains index information.
+    {
+        ._dstAccessMask = AV_VK_FLAG ( VK_ACCESS_INDEX_READ_BIT ) |
+            AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) |
+            AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
+
+        ._usage = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT )
     }
 };
 
@@ -96,46 +80,14 @@ GXAABB const &MeshGeometry::GetBounds () const noexcept
     return _bounds;
 }
 
-VkBuffer const *MeshGeometry::GetVertexBuffers () const noexcept
+MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 {
-    return _vertexBuffers;
-}
-
-BufferInfo MeshGeometry::GetBufferInfo () const noexcept
-{
-    return
-    {
-        ._buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ],
-        ._range = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]._range,
-    };
-}
-
-MeshBufferInfo MeshGeometry::GetMeshBufferInfo () const noexcept
-{
-    return
-    {
-        ._postions
-        {
-            ._buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ],
-            ._range = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]._range
-        },
-
-        ._rest
-        {
-            ._buffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ],
-            ._range = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ]._range
-        }
-    };
+    return _meshBufferInfo;
 }
 
 uint32_t MeshGeometry::GetVertexBufferVertexCount () const noexcept
 {
     return _vertexBufferVertexCount;
-}
-
-MeshGeometry::IndexBuffer const &MeshGeometry::GetIndexBuffer () const noexcept
-{
-    return _indexBuffer;
 }
 
 std::string const &MeshGeometry::GetName () const noexcept
@@ -174,8 +126,11 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     static std::regex const isMesh2 ( R"__(^.+?\.mesh2$)__" );
     std::smatch match;
 
-    if ( !std::regex_match ( fileName, match, isMesh2 ) )
+    if ( !std::regex_match ( fileName, match, isMesh2 ) ) [[unlikely]]
+    {
+        LogError ( "LoadMesh::LoadMesh - Mesh format is not supported: %s", fileName.c_str () );
         return false;
+    }
 
     return LoadFromMesh2 ( renderer, commandBuffer, externalCommandBuffer, fence, std::move ( fileName ) );
 }
@@ -196,38 +151,44 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size =  static_cast<VkDeviceSize> ( data.size () ),
-        .usage = VERTEX_BUFFER_USAGE | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+        .usage = BUFFER_SYNC[ BufferSyncItem::NO_INDEX_INFO ]._usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
-    VkBuffer &buffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
-    Allocation &allocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
-
-    if ( !CreateBuffer ( renderer, buffer, allocation, bufferInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, "Mesh" ) )
-    {
-        [[unlikely]]
-        return false;
-    }
-
-    UploadJob const job
-    {
-        ._buffer = buffer,
-        ._data = data.data (),
-        ._size = allocation._range,
-        ._usage = VERTEX_BUFFER_USAGE
-    };
-
-    bool const result = GPUTransfer ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
-        { &job, 1U }
+    bool result = CreateBuffer ( renderer,
+        _meshBufferInfo._buffer,
+        _gpuAllocation,
+        bufferInfo,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        "Mesh"
     );
 
     if ( !result ) [[unlikely]]
         return false;
+
+    UploadJob const job
+    {
+        ._data = data.data (),
+        ._dstOffset = 0U,
+        ._size = _gpuAllocation._range
+    };
+
+    result = GPUTransfer ( renderer,
+        commandBuffer,
+        externalCommandBuffer,
+        fence,
+        { &job, 1U },
+        false
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _meshBufferInfo._indexType = VK_INDEX_TYPE_MAX_ENUM;
+    _meshBufferInfo._vertexDataOffsets[ 0U ] = 0U;
+    _meshBufferInfo._vertexDataRanges[ 0U ] = _gpuAllocation._range;
 
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
@@ -424,57 +385,27 @@ bool MeshGeometry::CreateBuffer ( Renderer &renderer,
 void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
     _vertexCount = 0U;
-    VkDevice device = renderer.GetDevice ();
 
-    if ( VkBuffer &positions = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; positions != VK_NULL_HANDLE )
+    if ( _meshBufferInfo._buffer != VK_NULL_HANDLE )
     {
-        [[likely]]
-        vkDestroyBuffer ( device, positions, nullptr );
-        positions = VK_NULL_HANDLE;
+        vkDestroyBuffer ( renderer.GetDevice (), _meshBufferInfo._buffer, nullptr );
+        _meshBufferInfo._buffer = VK_NULL_HANDLE;
     }
 
-    if ( VkBuffer &restData = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ]; restData != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( device, restData, nullptr );
-        restData = VK_NULL_HANDLE;
-    }
-
-    if ( _indexBuffer._buffer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( device, _indexBuffer._buffer, nullptr );
-        _indexBuffer._buffer = VK_NULL_HANDLE;
-    }
-
-    if ( _indexAllocation._memory != VK_NULL_HANDLE )
-    {
-        renderer.FreeMemory ( _indexAllocation._memory, _indexAllocation._offset );
-        _indexAllocation._memory = VK_NULL_HANDLE;
-        _indexAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
-    }
-
-    if ( Allocation &mem = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ]; mem._memory != VK_NULL_HANDLE )
-    {
-        [[likely]]
-        renderer.FreeMemory ( mem._memory, mem._offset );
-        mem._memory = VK_NULL_HANDLE;
-        mem._offset = std::numeric_limits<VkDeviceSize>::max ();
-    }
-
-    Allocation &rest = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
-
-    if ( rest._memory == VK_NULL_HANDLE )
+    if ( _gpuAllocation._memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    renderer.FreeMemory ( rest._memory, rest._offset );
-    rest._memory = VK_NULL_HANDLE;
-    rest._offset = std::numeric_limits<VkDeviceSize>::max ();
+    renderer.FreeMemory ( _gpuAllocation._memory, _gpuAllocation._offset );
+    _gpuAllocation._memory = VK_NULL_HANDLE;
+    _gpuAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
 bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
-    UploadJobs jobs
+    UploadJobs jobs,
+    bool hasIndexData
 ) noexcept
 {
     size_t const dataSize = [ &jobs ] () -> size_t {
@@ -555,62 +486,55 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     }
 
     // Note most extreme case is 3 upload jobs: index buffer, position buffer and 'rest data' buffer.
-    VkBufferMemoryBarrier barrierInfo[ 3U ];
+    //VkBufferMemoryBarrier barrierInfo[ 3U ];
+    VkBufferCopy bufferCopy[ 3U ];
     size_t const jobCount = jobs.size ();
-    AV_ASSERT ( jobCount <= std::size ( barrierInfo ) )
-
-    VkPipelineStageFlags srcStages = 0U;
-    VkPipelineStageFlags dstStages = 0U;
-
-    VkBufferCopy bufferCopy
-    {
-        .srcOffset = 0U,
-        .dstOffset = 0U,
-        .size = 0U
-    };
+    AV_ASSERT ( jobCount <= std::size ( bufferCopy ) )
+    VkDeviceSize offset = 0U;
 
     for ( size_t i = 0U; i < jobCount; ++i )
     {
         UploadJob const &job = jobs[ i ];
-        auto const findResult = g_accessMapper.find ( job._usage );
+        VkDeviceSize const size = job._size;
 
-        if ( findResult == g_accessMapper.cend () )
+        bufferCopy[ i ] =
         {
-            LogError ( "MeshGeometry::GPUTransfer - Unexpected usage 0x%08X", job._usage );
-            return false;
-        }
-
-        BufferSyncItem const &syncItem = findResult->second;
-        srcStages |= syncItem._srcStage;
-        dstStages |= syncItem._dstStage;
-        VkDeviceSize size = job._size;
-
-        barrierInfo[ i ] =
-        {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-            .pNext = nullptr,
-            .srcAccessMask = syncItem._srcAccessMask,
-            .dstAccessMask = syncItem._dstAccessMask,
-            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .buffer = job._buffer,
-            .offset = 0U,
+            .srcOffset = offset,
+            .dstOffset = job._dstOffset,
             .size = size
         };
 
-        bufferCopy.size = size;
-        vkCmdCopyBuffer ( commandBuffer, _transferBuffer, job._buffer, 1U, &bufferCopy );
-        bufferCopy.srcOffset += size;
+        offset += size;
     }
 
+    VkBuffer buffer = _meshBufferInfo._buffer;
+    vkCmdCopyBuffer ( commandBuffer, _transferBuffer, buffer, static_cast<uint32_t> ( jobCount ), bufferCopy );
+    UploadJob const &last = jobs.back ();
+
+    VkBufferMemoryBarrier const barrierInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .dstAccessMask = BUFFER_SYNC[ static_cast<size_t> ( hasIndexData ) ]._dstAccessMask,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = buffer,
+        .offset = 0U,
+        .size = last._dstOffset + last._size
+    };
+
+    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT );
+
     vkCmdPipelineBarrier ( commandBuffer,
-        srcStages,
-        dstStages,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        dstStage,
         0U,
         0U,
         nullptr,
-        static_cast<uint32_t> ( jobCount ),
-        barrierInfo,
+        1U,
+        &barrierInfo,
         0U,
         nullptr
     );
@@ -719,123 +643,118 @@ bool MeshGeometry::Upload ( Renderer &renderer,
     uint32_t vertexCount
 ) noexcept
 {
-    constexpr VkBufferUsageFlags indexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
-
     AV_ASSERT ( indexType == VK_INDEX_TYPE_UINT16 || indexType == VK_INDEX_TYPE_UINT32 )
 
-    auto const indexBufferSize = static_cast<VkDeviceSize> (
+    auto const indSize = static_cast<size_t> (
         indexCount * INDEX_SIZES[ static_cast<size_t> ( indexType == VK_INDEX_TYPE_UINT32 ) ]
     );
+
+    size_t const posSize = vertexStream0.size ();
+    auto const restSize = static_cast<size_t> ( vertexCount * sizeof ( VertexInfo ) );
+
+    size_t const vertexAlignment = std::max ( static_cast<size_t> ( 4U ),
+        renderer.GetMinStorageBufferOffsetAlignment ()
+    );
+
+    size_t sizeLeft = vertexAlignment + posSize + vertexAlignment + restSize;
+    auto* ptr = reinterpret_cast<void*> ( indSize );
+
+    auto const posOffset = reinterpret_cast<size_t> ( std::align ( vertexAlignment, posSize, ptr, sizeLeft ) );
+    ptr = static_cast<uint8_t*> ( ptr ) + posSize;
+    sizeLeft -= posSize;
+
+    auto const restOffset = reinterpret_cast<size_t> ( std::align ( vertexAlignment, restSize, ptr, sizeLeft ) );
 
     VkBufferCreateInfo bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = indexBufferSize,
-        .usage = indexBufferUsageFlags,
+        .size = static_cast<VkDeviceSize> ( restOffset + restSize ),
+        .usage = BUFFER_SYNC[ BufferSyncItem::WITH_INDEX_INFO ]._usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
     bool result = CreateBuffer ( renderer,
-        _indexBuffer._buffer,
-        _indexAllocation,
+        _meshBufferInfo._buffer,
+        _gpuAllocation,
         bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Mesh indices"
+        "Mesh"
     );
 
     if ( !result ) [[unlikely]]
         return false;
-
-    _indexBuffer._type = indexType;
-
-    constexpr VkBufferUsageFlags vertexBufferUsageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
-
-    bufferInfo.size = static_cast<VkDeviceSize> ( vertexStream0.size () );
-    bufferInfo.usage = vertexBufferUsageFlags;
-    VkBuffer &positionBuffer = _vertexBuffers[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
-    Allocation &positionAllocation = _vertexAllocations[ MeshBufferInfo::POSITION_BUFFER_INDEX ];
-
-    result = CreateBuffer ( renderer,
-        positionBuffer,
-        positionAllocation,
-        bufferInfo,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Mesh positions"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    constexpr VkBufferUsageFlags vertexDataUsage = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT );
 
     if ( vertexStream1.empty () )
     {
         UploadJob const jobs[]
         {
             {
-                ._buffer = _indexBuffer._buffer,
                 ._data = indices.data (),
-                ._size = _indexAllocation._range,
-                ._usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+                ._dstOffset = 0U,
+                ._size = static_cast<VkDeviceSize> ( indSize )
             },
             {
-                ._buffer = positionBuffer,
                 ._data = vertexStream0.data (),
-                ._size = positionAllocation._range,
-                ._usage = vertexDataUsage
+                ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+                ._size = static_cast<VkDeviceSize> ( posSize )
             }
         };
 
-        return GPUTransfer ( renderer, commandBuffer, externalCommandBuffer, fence, { jobs, std::size ( jobs ) } );
+        result = GPUTransfer ( renderer,
+            commandBuffer,
+            externalCommandBuffer,
+            fence,
+            { jobs, std::size ( jobs ) },
+            true
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        _meshBufferInfo._indexType = indexType;
+        _meshBufferInfo._vertexDataOffsets[ 0U ] = static_cast<VkDeviceSize> ( posOffset );
+        _meshBufferInfo._vertexDataRanges[ 0U ] = static_cast<VkDeviceSize> ( posSize );
+        return true;
     }
-
-    bufferInfo.size = static_cast<VkDeviceSize> ( vertexCount * sizeof ( VertexInfo ) );
-    bufferInfo.usage = vertexBufferUsageFlags;
-    VkBuffer &restDataBuffer = _vertexBuffers[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
-    Allocation &restDataAllocation = _vertexAllocations[ MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
-
-    result = CreateBuffer ( renderer,
-        restDataBuffer,
-        restDataAllocation,
-        bufferInfo,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Mesh rest data"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
 
     UploadJob const jobs[]
     {
         {
-            ._buffer = _indexBuffer._buffer,
             ._data = indices.data (),
-            ._size = _indexAllocation._range,
-            ._usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT
+            ._dstOffset = 0U,
+            ._size = static_cast<VkDeviceSize> ( indSize )
         },
         {
-            ._buffer = positionBuffer,
             ._data = vertexStream0.data (),
-            ._size = positionAllocation._range,
-            ._usage = vertexDataUsage
+            ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+            ._size = static_cast<VkDeviceSize> ( posSize )
         },
         {
-            ._buffer = restDataBuffer,
             ._data = vertexStream1.data (),
-            ._size = restDataAllocation._range,
-            ._usage = vertexDataUsage
+            ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
+            ._size = static_cast<VkDeviceSize> ( restSize )
         }
     };
 
-    return GPUTransfer ( renderer, commandBuffer, externalCommandBuffer, fence, { jobs, std::size ( jobs ) } );
+    if ( !GPUTransfer ( renderer, commandBuffer, externalCommandBuffer, fence, { jobs, std::size ( jobs ) }, true ) )
+    {
+        [[unlikely]]
+        return false;
+    }
+
+    _meshBufferInfo._indexType = indexType;
+
+    _meshBufferInfo._vertexDataOffsets[ 0U ] = static_cast<VkDeviceSize> ( posOffset );
+    _meshBufferInfo._vertexDataOffsets[ 1U ] = static_cast<VkDeviceSize> ( restOffset );
+
+    _meshBufferInfo._vertexDataRanges[ 0U ] = static_cast<VkDeviceSize> ( posSize );
+    _meshBufferInfo._vertexDataRanges[ 1U ] = static_cast<VkDeviceSize> ( restSize );
+
+    return true;
 }
 
 } // namespace android_vulkan

@@ -280,10 +280,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
     UpdateUniformBuffer ( renderer, commandBuffer, _onceDS[ commandBufferIndex ], deltaTime );
 
     vkCmdBeginRenderPass ( commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
-
     vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
-    constexpr VkDeviceSize const offset[] = { 0U, 0U };
-    static_assert ( std::size ( offset ) == android_vulkan::MeshGeometry::GetVertexBufferCount () );
 
     VkDescriptorSet standardSets[] = { _fixedDS, onceDS };
 
@@ -305,11 +302,15 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
         android_vulkan::MeshGeometry &mesh = item._mesh;
 
+        android_vulkan::MeshBufferInfo const &bufferInfo = mesh.GetMeshBufferInfo ();
+        VkBuffer buffer = bufferInfo._buffer;
+        VkBuffer const buffers[] = { buffer, buffer };
+
         vkCmdBindVertexBuffers ( commandBuffer,
             0U,
-            android_vulkan::MeshGeometry::GetVertexBufferCount (),
-            mesh.GetVertexBuffers (),
-            offset
+            2U,
+            buffers,
+            bufferInfo._vertexDataOffsets
         );
 
         vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );

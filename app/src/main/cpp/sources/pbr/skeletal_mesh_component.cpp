@@ -211,7 +211,7 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t co
         _skinPool.Push ( mesh._animationGraph->GetPoseInfo (),
             usage._skinData.GetSkinInfo (),
             mesh._referenceMesh->GetMeshBufferInfo (),
-            usage._skinMesh->GetVertexBuffers ()
+            usage._skinMesh->GetMeshBufferInfo ()._buffer
         );
     }
 

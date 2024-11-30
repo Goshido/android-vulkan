@@ -198,48 +198,72 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
 void SkinPool::Push ( android_vulkan::BufferInfo pose,
     android_vulkan::BufferInfo skin,
     android_vulkan::MeshBufferInfo referenceMesh,
-    VkBuffer const* skinMeshBuffers
+    VkBuffer skinMeshBuffer
 ) noexcept
 {
     VkDescriptorBufferInfo* buffers = _bufferInfo.data ();
     size_t const baseBufferInfoIdx = _itemWriteIndex * BIND_PER_SET;
 
-    VkDescriptorBufferInfo &poseInfo = buffers[ baseBufferInfoIdx + BIND_POSE ];
-    poseInfo.buffer = pose._buffer;
-    poseInfo.range = pose._range;
+    buffers[ baseBufferInfoIdx + BIND_POSE ] =
+    {
+        .buffer = pose._buffer,
+        .offset = 0U,
+        .range = pose._range
+    };
 
-    VkDescriptorBufferInfo &skinInfo = buffers[ baseBufferInfoIdx + BIND_SKIN_VERTICES ];
-    skinInfo.buffer = skin._buffer;
-    skinInfo.range = skin._range;
+    buffers[ baseBufferInfoIdx + BIND_SKIN_VERTICES ] =
+    {
+        .buffer = skin._buffer,
+        .offset = 0U,
+        .range = skin._range
+    };
 
-    VkDeviceSize const positionRange = referenceMesh._postions._range;
-    VkDeviceSize const restRange = referenceMesh._rest._range;
+    VkBuffer referenceBuffer = referenceMesh._buffer;
 
-    VkDescriptorBufferInfo &referencePositions = buffers[ baseBufferInfoIdx + BIND_REFERENCE_POSITIONS ];
-    referencePositions.buffer = referenceMesh._postions._buffer;
-    referencePositions.range = positionRange;
+    VkDeviceSize const positionOffset = referenceMesh._vertexDataOffsets[ 0U ];
+    VkDeviceSize const positionRange = referenceMesh._vertexDataRanges[ 0U ];
 
-    VkDescriptorBufferInfo &referenceRest = buffers[ baseBufferInfoIdx + BIND_REFERENCE_REST ];
-    referenceRest.buffer = referenceMesh._rest._buffer;
-    referenceRest.range = restRange;
+    VkDeviceSize const restOffset = referenceMesh._vertexDataOffsets[ 1U ];
+    VkDeviceSize const restRange = referenceMesh._vertexDataRanges[ 1U ];
 
-    VkBuffer skinPositionBuffer = skinMeshBuffers[ android_vulkan::MeshBufferInfo::POSITION_BUFFER_INDEX ];
-    VkDescriptorBufferInfo &skinPositions = buffers[ baseBufferInfoIdx + BIND_SKIN_POSITIONS ];
-    skinPositions.buffer = skinPositionBuffer;
-    skinPositions.range = positionRange;
+    buffers[ baseBufferInfoIdx + BIND_REFERENCE_POSITIONS ] =
+    {
+        .buffer = referenceBuffer,
+        .offset = positionOffset,
+        .range = positionRange
+    };
 
-    VkBuffer skinRestBuffer = skinMeshBuffers[ android_vulkan::MeshBufferInfo::REST_DATA_BUFFER_INDEX ];
-    VkDescriptorBufferInfo &skinRest = buffers[ baseBufferInfoIdx + BIND_SKIN_REST ];
-    skinRest.buffer = skinRestBuffer;
-    skinRest.range = restRange;
+    buffers[ baseBufferInfoIdx + BIND_REFERENCE_REST ] =
+    {
+        .buffer = referenceBuffer,
+        .offset = restOffset,
+        .range = restRange
+    };
+
+
+    buffers[ baseBufferInfoIdx + BIND_SKIN_POSITIONS ] =
+    {
+        .buffer = skinMeshBuffer,
+        .offset = positionOffset,
+        .range = positionRange
+    };
+
+    buffers[ baseBufferInfoIdx + BIND_SKIN_REST ] =
+    {
+        .buffer = skinMeshBuffer,
+        .offset = restOffset,
+        .range = restRange
+    };
 
     size_t baseBarrierIdx = _itemWriteIndex * BARRIER_PER_SET;
     VkBufferMemoryBarrier &positionBarrier = _barriers[ baseBarrierIdx++ ];
-    positionBarrier.buffer = skinPositionBuffer;
+    positionBarrier.buffer = skinMeshBuffer;
+    positionBarrier.offset = positionOffset;
     positionBarrier.size = positionRange;
 
     VkBufferMemoryBarrier &restBarrier = _barriers[ baseBarrierIdx ];
-    restBarrier.buffer = skinRestBuffer;
+    restBarrier.buffer = skinMeshBuffer;
+    restBarrier.offset = restOffset;
     restBarrier.size = restRange;
 
     _itemWriteIndex = ( _itemWriteIndex + 1U ) % SKIN_MESHES;

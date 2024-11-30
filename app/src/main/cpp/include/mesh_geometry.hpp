@@ -41,24 +41,18 @@ class MeshGeometry final
 
         struct UploadJob final
         {
-            VkBuffer                _buffer = VK_NULL_HANDLE;
             void const*             _data = nullptr;
+            VkDeviceSize            _dstOffset = 0U;
             VkDeviceSize            _size = 0U;
-            VkBufferUsageFlags      _usage = 0U;
         };
 
         using UploadJobs = std::span<UploadJob const>;
 
     private:
-        constexpr static size_t     VERTEX_BUFFER_COUNT = 2U;
-
         GXAABB                      _bounds {};
 
-        IndexBuffer                 _indexBuffer {};
-        Allocation                  _indexAllocation {};
-
-        VkBuffer                    _vertexBuffers[ VERTEX_BUFFER_COUNT ] { VK_NULL_HANDLE, VK_NULL_HANDLE };
-        Allocation                  _vertexAllocations[ VERTEX_BUFFER_COUNT ] {};
+        MeshBufferInfo              _meshBufferInfo{};
+        Allocation                  _gpuAllocation {};
 
         VkBuffer                    _transferBuffer = VK_NULL_HANDLE;
         Allocation                  _transferAllocation {};
@@ -82,14 +76,8 @@ class MeshGeometry final
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
-
-        // Method returns two buffers: position buffer and "rest data" buffer.
-        [[nodiscard]] VkBuffer const *GetVertexBuffers () const noexcept;
-
-        [[nodiscard]] BufferInfo GetBufferInfo () const noexcept;
-        [[nodiscard]] MeshBufferInfo GetMeshBufferInfo () const noexcept;
+        [[nodiscard]] MeshBufferInfo const &GetMeshBufferInfo () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
-        [[nodiscard]] IndexBuffer const &GetIndexBuffer () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
 
@@ -151,11 +139,6 @@ class MeshGeometry final
             GXAABB const &bounds
         ) noexcept;
 
-        [[nodiscard]] constexpr static uint32_t GetVertexBufferCount () noexcept
-        {
-            return static_cast<uint32_t> ( VERTEX_BUFFER_COUNT );
-        }
-
     private:
         [[nodiscard]] bool static CreateBuffer ( Renderer &renderer,
             VkBuffer &buffer,
@@ -171,7 +154,8 @@ class MeshGeometry final
             VkCommandBuffer commandBuffer,
             bool externalCommandBuffer,
             VkFence fence,
-            UploadJobs jobs
+            UploadJobs jobs,
+            bool hasIndexData
         ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh2 ( Renderer &renderer,

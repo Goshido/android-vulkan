@@ -800,7 +800,7 @@ bool Game::CreatePipeline ( android_vulkan::Renderer &renderer ) noexcept
         {
             .location = IN_SLOT_UV,
             .binding = IN_BUFFER_REST,
-            .format = VK_FORMAT_R32G32_SFLOAT,
+            .format = VK_FORMAT_R16G16_SFLOAT,
             .offset = static_cast<uint32_t> ( offsetof ( android_vulkan::VertexInfo, _uv ) )
         },
         {

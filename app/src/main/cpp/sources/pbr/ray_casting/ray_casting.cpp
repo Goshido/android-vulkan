@@ -322,7 +322,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         { -0.502F, -0.866F, 1.0F }
     };
 
-    constexpr android_vulkan::VertexInfo const vertices[]
+    android_vulkan::VertexInfo const vertices[]
     {
         {
             ._uv { 0.0F, 1.0F },

@@ -33,7 +33,7 @@ struct Half final
         [[nodiscard]] static uint16_t Convert ( float value );
 };
 
-struct [[maybe_unused]] Half2 final
+struct Half2 final
 {
     public:
         uint16_t    _data[ 2U ];

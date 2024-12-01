@@ -129,6 +129,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\half_types.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="include\animation_exporter.hpp" />
     <ClInclude Include="include\bone_data_exporter.hpp" />
@@ -147,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\half_types.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

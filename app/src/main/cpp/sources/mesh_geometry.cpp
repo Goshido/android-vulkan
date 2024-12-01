@@ -605,7 +605,7 @@ bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
 
         {
             rawData + static_cast<size_t> ( header._positionDataOffset ),
-            static_cast<size_t> ( header._vertexCount ) * sizeof ( VertexInfo )
+            static_cast<size_t> ( header._vertexCount ) * sizeof ( GXVec3 )
         },
 
         {

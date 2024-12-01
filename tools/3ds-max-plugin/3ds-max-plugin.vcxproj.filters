@@ -105,6 +105,9 @@
     <ClInclude Include="include\mikkt\mikktspace.h">
       <Filter>Header Files\mikkt</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\half_types.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="sources\class_desc.cpp">
@@ -154,6 +157,9 @@
     </ClCompile>
     <ClCompile Include="sources\mikkt\wrapper_with_precompiled_headers.cpp">
       <Filter>Source Files\mikkt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\half_types.cpp">
+      <Filter>Source Files\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

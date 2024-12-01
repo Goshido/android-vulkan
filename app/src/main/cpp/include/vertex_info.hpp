@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_VERTEX_INFO_HPP
 
 
-#include <GXCommon/GXMath.hpp>
+#include "half_types.hpp"
 
 
 namespace android_vulkan {
@@ -14,7 +14,7 @@ struct VertexInfo final
     // Non-mirrored identity quaternion.
     constexpr static uint32_t IDENTITY_TBN = 0xC000'0000U;
 
-    GXVec2      _uv {};
+    Half2       _uv {};
     uint32_t    _tbn = 0U;
 };
 

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <half_types.hpp>
 #include <mesh_exporter.hpp>
 #include <result_checker.hpp>
 #include <android_vulkan_sdk/mesh2.hpp>
@@ -26,6 +27,7 @@ class RawData final
         android_vulkan::Mesh2Index32*                       _indices = nullptr;
         GXVec3*                                             _positions = nullptr;
         GXVec3*                                             _normals = nullptr;
+        GXVec2*                                             _uvs = nullptr;
         android_vulkan::Mesh2Vertex*                        _vertices = nullptr;
         size_t const                                        _faceCount = 0U;
 
@@ -33,7 +35,7 @@ class RawData final
         std::unique_ptr<android_vulkan::Mesh2Index32[]>     _indexData {};
         size_t                                              _indexInsert = 0U;
 
-        std::unique_ptr<GXVec3[]>                           _vec3Data {};
+        std::unique_ptr<float[]>                            _floatData {};
         std::unique_ptr<android_vulkan::Mesh2Vertex[]>      _vertexData {};
 
     public:
@@ -56,12 +58,13 @@ class RawData final
 RawData::RawData ( size_t faceCount, size_t indexCount ) noexcept:
     _faceCount ( faceCount ),
     _indexData ( new android_vulkan::Mesh2Index32[ indexCount ] ),
-    _vec3Data ( new GXVec3[ indexCount * 2U ] ),
+    _floatData ( new float[ indexCount * ( 3U + 3U + 2U )]),
     _vertexData ( new android_vulkan::Mesh2Vertex[ indexCount ] )
 {
     _indices = _indexData.get ();
-    _positions = _vec3Data.get ();
+    _positions = reinterpret_cast<GXVec3*> ( _floatData.get () );
     _normals = _positions + indexCount;
+    _uvs = reinterpret_cast<GXVec2*> ( _normals + indexCount );
     _vertices = _vertexData.get ();
 }
 
@@ -116,7 +119,7 @@ void MikktGetTexCoord ( SMikkTSpaceContext const* pContext, float fvTexcOut[], i
         rawData._indices + static_cast<size_t> ( iFace * Exporter::FACE_CORNERS );
 
     std::memcpy ( fvTexcOut,
-        &rawData._vertices[ static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] ) ]._uv,
+        rawData._uvs + static_cast<size_t> ( faceIndices[ static_cast<size_t> ( iVert ) ] ),
         sizeof ( GXVec2 )
     );
 }
@@ -190,14 +193,20 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
     RawData rawData ( static_cast<size_t> ( faceCount ), indexCount );
     GXVec3* pos = rawData._positions;
     GXVec3* n = rawData._normals;
+    GXVec2* uvs = rawData._uvs;
     android_vulkan::Mesh2Vertex* v = rawData._vertices;
 
-    constexpr auto uvToVec2 = [] ( Point3 p3, android_vulkan::Vec2 &v2 ) noexcept {
-        v2[ 0U ] = p3.x;
-
+    constexpr auto uvToVec2 = [] ( Point3 p3, GXVec2 &uv, android_vulkan::HVec2 &h2 ) noexcept {
         // [2023/09/16] For some reason 3ds Max 2023 SDK completely ignores 'V' direction in UserCoord.
         // Patching V coordinate by ourself...
-        v2[ 1U ] = 1.0F - p3.y;
+        float const invV = 1.0F - p3.y;
+
+        uv._data[ 0U ] = p3.x;
+        uv._data[ 1U ] = invV;
+
+        android_vulkan::Half2 const hUV ( p3.x, invV );
+        h2[ 0U ] = hUV._data[ 0U ];
+        h2[ 1U ] = hUV._data[ 1U ];
     };
 
     constexpr auto p3ToGXVec3 = [] ( Point3 p3, GXVec3 &v3 ) noexcept {
@@ -231,7 +240,7 @@ void MeshExporter::Run ( HWND parent, MSTR const &path, bool exportInCurrentPose
             p3ToGXVec3 ( p, position );
             bounds.AddVertex ( p.x, p.y, p.z );
 
-            uvToVec2 ( mesh.GetMapVertex ( uvChannel, attributes._uv ), v[ idx ]._uv );
+            uvToVec2 ( mesh.GetMapVertex ( uvChannel, attributes._uv ), uvs[ idx ], v[ idx ]._uv );
             p3ToGXVec3 ( mesh.GetNormal ( attributes._normal, false ), n[ idx ] );
 
             rawData.PushIndex ( idx );

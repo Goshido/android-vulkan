@@ -14,7 +14,7 @@ struct Half final
         uint16_t    _data;
 
     public:
-        constexpr Half ():
+        constexpr Half () noexcept:
             _data ( 0U )
         {
             // NOTHING
@@ -26,20 +26,22 @@ struct Half final
         Half ( Half && ) = default;
         Half &operator = ( Half && ) = default;
 
-        [[maybe_unused]] Half ( float value );
+        [[maybe_unused]] explicit Half ( float value ) noexcept;
 
         ~Half () = default;
 
-        [[nodiscard]] static uint16_t Convert ( float value );
+        Half &operator = ( float v ) noexcept;
+
+        [[nodiscard]] static uint16_t Convert ( float value ) noexcept;
 };
 
-struct [[maybe_unused]] Half2 final
+struct Half2 final
 {
     public:
         uint16_t    _data[ 2U ];
 
     public:
-        constexpr Half2 ():
+        constexpr Half2 () noexcept:
             _data { 0U, 0U }
         {
             // NOTHING
@@ -51,7 +53,14 @@ struct [[maybe_unused]] Half2 final
         Half2 ( Half2 && ) = default;
         Half2 &operator = ( Half2 && ) = default;
 
-        [[maybe_unused]] Half2 ( float component0, float component1 );
+        constexpr Half2 ( uint16_t component0, uint16_t component1 ) noexcept:
+            _data { component0, component1 }
+        {
+            // NOTHING
+        }
+
+        [[maybe_unused]] Half2 ( float component0, float component1 ) noexcept;
+        [[maybe_unused]] explicit Half2 ( GXVec2 const &v ) noexcept;
 
         ~Half2 () = default;
 };
@@ -62,7 +71,7 @@ struct [[maybe_unused]] Half3 final
         uint16_t    _data[ 3U ];
 
     public:
-        constexpr Half3 ():
+        constexpr Half3 () noexcept:
             _data { 0U, 0U, 0U }
         {
             // NOTHING
@@ -74,11 +83,11 @@ struct [[maybe_unused]] Half3 final
         Half3 ( Half3 && ) = default;
         Half3 &operator = ( Half3 && ) = default;
 
-        [[maybe_unused]] Half3 ( float component0, float component1, float component2 );
+        [[maybe_unused]] Half3 ( float component0, float component1, float component2 ) noexcept;
 
         ~Half3 () = default;
 
-        Half3 &operator = ( GXVec3 const &other );
+        Half3 &operator = ( GXVec3 const &other ) noexcept;
 };
 
 struct Half4 final
@@ -87,7 +96,7 @@ struct Half4 final
         uint16_t    _data[ 4U ];
 
     public:
-        constexpr Half4 ():
+        constexpr Half4 () noexcept:
             _data { 0U, 0U, 0U, 0U }
         {
             // NOTHING
@@ -99,12 +108,12 @@ struct Half4 final
         Half4 ( Half4 && ) = default;
         Half4 &operator = ( Half4 && ) = default;
 
-        Half4 ( float component0, float component1, float component2, float component3 );
+        Half4 ( float component0, float component1, float component2, float component3 ) noexcept;
 
         ~Half4 () = default;
 
         // UNORM converter.
-        void From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 );
+        void From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 ) noexcept;
 };
 
 } // namespace android_vulkan

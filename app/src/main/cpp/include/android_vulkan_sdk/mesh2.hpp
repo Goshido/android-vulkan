@@ -25,7 +25,7 @@ struct [[maybe_unused]] Mesh2Header final
 
 struct [[maybe_unused]] Mesh2Vertex final
 {
-     Vec2           _uv;
+     HVec2          _uv;
      uint32_t       _tbn;
 };
 

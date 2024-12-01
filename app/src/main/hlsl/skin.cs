@@ -6,7 +6,9 @@
 
 struct Mesh2Vertex
 {
-    float32_t2                      _uv;
+    // Comressed form of float16_t2
+    uint32_t                        _uv;
+
     uint32_t                        _tbn;
 };
 

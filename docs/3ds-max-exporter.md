@@ -37,7 +37,7 @@ Take a note that exporter will calculate approximate bounds if the artist will i
 
 - [_3ds Max 2023 SDK_](https://aps.autodesk.com/developer/overview/3ds-max#3dsmax-sdk)
 - [_MikkTSpace_](https://github.com/mmikk/MikkTSpace) `3e895b49d05ea07e4c2133156cfa94369e19e409`
-- _Visual Studio 2022 Community 17.12.0_
+- _Visual Studio 2022 Community 17.12.2_
   - Workloads: Desktop development with C++
   - Individual components
     - MSBuild

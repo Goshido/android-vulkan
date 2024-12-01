@@ -2,7 +2,7 @@
 #define PBR_UI_VERTEX_INFO_HPP
 
 
-#include <GXCommon/GXMath.hpp>
+#include <half_types.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -17,18 +17,18 @@ namespace pbr {
 
 struct UIAtlas final
 {
-    GXVec2      _uv;
-    uint8_t     _layer;
+    android_vulkan::Half2       _uv {};
+    uint8_t                     _layer = 0U;
 
     // See <repo>/docs/data-compression.md#opt-2-further-compression
-    uint8_t     _padding[ 3U ] {};
+    uint8_t                     _padding[ 3U ] {};
 };
 
 struct UIVertex final
 {
-    GXVec2          _image;
-    UIAtlas         _atlas;
-    GXColorUNORM    _color;
+    android_vulkan::Half2       _image {};
+    UIAtlas                     _atlas {};
+    GXColorUNORM                _color {};
 };
 
 #pragma pack ( pop )

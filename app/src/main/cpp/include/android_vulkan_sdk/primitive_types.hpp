@@ -20,7 +20,7 @@ using Boolean = uint8_t;
 [[maybe_unused]] constexpr static Boolean AV_FALSE = 0U;
 
 using Mat4x4 = float[ 16U ];
-using Vec2 = float[ 2U ];
+using HVec2 = uint16_t[ 2U ];
 using Vec3 = float[ 3U ];
 
 // Mapping for indices:

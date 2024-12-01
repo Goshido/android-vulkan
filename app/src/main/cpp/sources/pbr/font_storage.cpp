@@ -11,6 +11,7 @@ namespace pbr {
 namespace {
 
 constexpr float SPECIAL_GLYPH_ATLAS_LAYER = 0.0F;
+constexpr uint32_t FONT_ATLAS_RESOLUTION = 1024U;
 
 } // end of anonymous namespace
 
@@ -142,8 +143,8 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
         .extent
         {
-            .width = _side,
-            .height = _side,
+            .width = FONT_ATLAS_RESOLUTION,
+            .height = FONT_ATLAS_RESOLUTION,
             .depth = 1U
         },
 
@@ -239,11 +240,6 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     _layers = layerCount;
     return true;
-}
-
-void FontStorage::Atlas::Init ( uint32_t side ) noexcept
-{
-    _side = side;
 }
 
 void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -427,7 +423,7 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &ol
 
                 .extent
                 {
-                    .width = _side,
+                    .width = FONT_ATLAS_RESOLUTION,
                     .height = _line._y + 1U,
                     .depth = 1U
                 }
@@ -473,8 +469,8 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &ol
 
             .extent
             {
-                .width = _side,
-                .height = _side,
+                .width = FONT_ATLAS_RESOLUTION,
+                .height = FONT_ATLAS_RESOLUTION,
                 .depth = 1U
             }
         };
@@ -494,9 +490,10 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &ol
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool FontStorage::Init () noexcept
+bool FontStorage::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" );
+    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" ) &&
+        MakeSpecialGlyphs ( renderer );
 }
 
 void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -587,33 +584,6 @@ FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Render
         return glyph->second;
 
     return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
-}
-
-bool FontStorage::SetMediaResolution ( android_vulkan::Renderer &renderer, VkExtent2D const &nativeViewport ) noexcept
-{
-    uint32_t const side = std::min ( nativeViewport.width, nativeViewport.height );
-
-    if ( side == _atlas._side )
-        return true;
-
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkDeviceWaitIdle ( renderer.GetDevice () ),
-        "pbr::FontStorage::SetMediaResolution",
-        "Can't wait device idle"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    DestroyAtlas ( renderer );
-
-    _atlas.Init ( side );
-    _pixToUV = 1.0F / static_cast<float> ( side );
-
-    float const threshold = _pixToUV * 0.25F;
-    _pointSamplerUVThreshold._data[ 0U ] = threshold;
-    _pointSamplerUVThreshold._data[ 1U ] = threshold;
-
-    return MakeSpecialGlyphs ( renderer );
 }
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
@@ -788,7 +758,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     char32_t character
 ) noexcept
 {
-    constexpr static GlyphInfo nullGlyph {};
+    static GlyphInfo const nullGlyph {};
     auto query = GetStagingBuffer ( renderer );
 
     if ( !query )
@@ -832,9 +802,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return status.first->second;
     }
 
-    uint32_t const side = _atlas._side;
-
-    if ( ( rows > side ) | ( width > side ) ) [[unlikely]]
+    if ( ( rows > FONT_ATLAS_RESOLUTION ) | ( width > FONT_ATLAS_RESOLUTION ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "FontStorage::EmbedGlyph - Font size is way too big: %u", fontSize );
         return nullGlyph;
@@ -861,7 +829,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         left = 0U;
     };
 
-    if ( left >= side )
+    if ( left >= FONT_ATLAS_RESOLUTION )
         goToNewLine ();
 
     auto const completeStagingBuffer = [ & ]() noexcept -> bool {
@@ -882,20 +850,20 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return true;
     };
 
-    if ( top >= side && !completeStagingBuffer () )
+    if ( top >= FONT_ATLAS_RESOLUTION && !completeStagingBuffer () )
         return nullGlyph;
 
     uint32_t right = left + toRight;
     uint32_t bottom = top + toBottom;
 
-    if ( right >= side )
+    if ( right >= FONT_ATLAS_RESOLUTION )
     {
         goToNewLine ();
         bottom = top + toBottom;
         right = toRight;
     }
 
-    if ( bottom >= side )
+    if ( bottom >= FONT_ATLAS_RESOLUTION )
     {
         if ( !completeStagingBuffer () )
             return nullGlyph;
@@ -907,7 +875,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     stagingBuffer->_endLine._height = std::max ( lineHeight, rows );
     stagingBuffer->_endLine._x = right;
     stagingBuffer->_endLine._y = top;
-    uint8_t* data = stagingBuffer->_data + ( top * side ) + left;
+    uint8_t* data = stagingBuffer->_data + ( top * FONT_ATLAS_RESOLUTION ) + left;
 
     auto const* raster = static_cast<uint8_t const*> ( bm.buffer );
     auto const pitch = static_cast<ptrdiff_t> ( bm.pitch );
@@ -920,7 +888,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     {
         std::memcpy ( data, raster, static_cast<size_t> ( width ) );
         raster += pitch;
-        data += static_cast<size_t> ( side );
+        data += static_cast<size_t> ( FONT_ATLAS_RESOLUTION );
     }
 
     uint32_t const cases[] = { 0U, _atlas._layers - 1U };
@@ -998,7 +966,7 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
 
     StagingBuffer &stagingBuffer = _activeStagingBuffer.emplace_front ();
 
-    if ( stagingBuffer.Init ( renderer, _atlas._side ) )
+    if ( stagingBuffer.Init ( renderer, FONT_ATLAS_RESOLUTION ) )
         return &stagingBuffer;
 
     return std::nullopt;
@@ -1048,12 +1016,15 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
 UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
     UIAtlas result {};
-    result._layer = static_cast<uint8_t>(layer);
+    result._layer = static_cast<uint8_t> ( layer );
 
-    result._uv.Sum ( _pointSamplerUVThreshold,
-        _pixToUV,
-        GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) )
-    );
+    constexpr float pix2UV = 1.0F / static_cast<float> ( FONT_ATLAS_RESOLUTION );
+    constexpr float threshold = pix2UV * 0.25F;
+    constexpr GXVec2 pointSamplerUVThreshold ( threshold, threshold );
+
+    GXVec2 a {};
+    a.Sum ( pointSamplerUVThreshold, pix2UV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    result._uv = android_vulkan::Half2 ( a );
 
     return result;
 }
@@ -1063,11 +1034,9 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
     VkBufferImageCopy bufferImageCopy[ 3U ];
     uint32_t targetLayer = _atlas._layers - 1U;
 
-    auto const offset = [ side = static_cast<VkDeviceSize> ( _atlas._side ) ] ( uint32_t x,
-        uint32_t y
-    ) noexcept -> VkDeviceSize
+    constexpr auto offset = [] ( uint32_t x, uint32_t y ) noexcept -> VkDeviceSize
     {
-        return static_cast<VkDeviceSize> ( y ) * side + static_cast<VkDeviceSize> ( x );
+        return static_cast<VkDeviceSize> ( y ) * FONT_ATLAS_RESOLUTION + static_cast<VkDeviceSize> ( x );
     };
 
     auto const transferComplex = [ & ] ( StagingBuffer const &b ) noexcept {
@@ -1077,7 +1046,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             bufferImageCopy[ 0U ] =
             {
                 .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
-                .bufferRowLength = _atlas._side,
+                .bufferRowLength = FONT_ATLAS_RESOLUTION,
                 .bufferImageHeight = b._endLine._height,
 
                 .imageSubresource
@@ -1121,7 +1090,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         bufferImageCopy[ 0U ] =
         {
             .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
-            .bufferRowLength = _atlas._side,
+            .bufferRowLength = FONT_ATLAS_RESOLUTION,
             .bufferImageHeight = b._startLine._height,
 
             .imageSubresource
@@ -1141,7 +1110,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
             .imageExtent
             {
-                .width = _atlas._side - b._startLine._x,
+                .width = FONT_ATLAS_RESOLUTION - b._startLine._x,
                 .height = b._startLine._height,
                 .depth = 1U,
             }
@@ -1156,7 +1125,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             bufferImageCopy[ 1U ] =
             {
                 .bufferOffset = offset ( 0U, nextY ),
-                .bufferRowLength = _atlas._side,
+                .bufferRowLength = FONT_ATLAS_RESOLUTION,
                 .bufferImageHeight = b._endLine._y - nextY,
 
                 .imageSubresource
@@ -1176,7 +1145,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
                 .imageExtent
                 {
-                    .width = _atlas._side,
+                    .width = FONT_ATLAS_RESOLUTION,
                     .height = b._endLine._y - nextY,
                     .depth = 1U,
                 }
@@ -1189,7 +1158,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         bufferImageCopy[ idx ] =
         {
             .bufferOffset = offset ( 0U, b._endLine._y ),
-            .bufferRowLength = _atlas._side,
+            .bufferRowLength = FONT_ATLAS_RESOLUTION,
             .bufferImageHeight = b._endLine._height,
 
             .imageSubresource
@@ -1267,8 +1236,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
             .imageExtent
             {
-                .width = _atlas._side,
-                .height = _atlas._side,
+                .width = FONT_ATLAS_RESOLUTION,
+                .height = FONT_ATLAS_RESOLUTION,
                 .depth = 1U,
             }
         };
@@ -1306,14 +1275,14 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
     b._startLine._height = b._endLine._height;
     b._state = StagingBuffer::eState::FirstLine;
 
-    if ( b._startLine._x >= _atlas._side )
+    if ( b._startLine._x >= FONT_ATLAS_RESOLUTION )
     {
         b._startLine._height = 0U;
         b._startLine._x = 0U;
         b._startLine._y += b._endLine._height;
     }
 
-    if ( b._startLine._y < _atlas._side )
+    if ( b._startLine._y < FONT_ATLAS_RESOLUTION )
     {
         b._endLine = b._startLine;
         return;

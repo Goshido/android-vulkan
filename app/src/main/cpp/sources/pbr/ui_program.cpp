@@ -490,7 +490,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     {
         .location = IN_SLOT_IMAGE_UV,
         .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R32G32_SFLOAT,
+        .format = VK_FORMAT_R16G16_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _image ) )
     };
 
@@ -498,7 +498,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     {
         .location = IN_SLOT_ATLAS_UV,
         .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R32G32_SFLOAT,
+        .format = VK_FORMAT_R16G16_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._uv ) )
     };
 

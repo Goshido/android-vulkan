@@ -816,10 +816,8 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     VkImageView transparent
 ) noexcept
 {
-    if ( !_fontStorage.Init () ) [[unlikely]]
-        return false;
-
-    bool result = _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
+    bool result = _fontStorage.Init ( renderer ) &&
+        _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
         _rest.Init ( renderer, "UI rest", "UI rest staging" );
 
     if ( !result ) [[unlikely]]
@@ -918,13 +916,12 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
-    bool const result = _fontStorage.SetMediaResolution ( renderer, resolution ) &&
-        _program.Init ( renderer,
-            renderPass,
-            subpass,
-            BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
-            resolution
-        );
+    bool const result = _program.Init ( renderer,
+        renderPass,
+        subpass,
+        BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
+        resolution
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -1062,26 +1059,28 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     GXVec2 const &imageBottomRight
 ) noexcept
 {
+    android_vulkan::Half2 const iTL ( imageTopLeft );
+    android_vulkan::Half2 const iBR ( imageBottomRight );
+
     targetPositions[ 0U ] = topLeft;
 
     targetVertices[ 0U ] =
     {
-        ._image = imageTopLeft,
+        ._image = iTL,
         ._atlas = glyphTopLeft,
         ._color = color
     };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-
     uint8_t const layer = glyphTopLeft._layer;
 
     targetVertices[ 1U ] =
     {
-        ._image = GXVec2 ( imageBottomRight._data[ 0U ], imageTopLeft._data[ 1U ] ),
+        ._image { iBR._data[ 0U ], iTL._data[ 1U ] },
 
         ._atlas
         {
-            ._uv = GXVec2 ( glyphBottomRight._uv._data[ 0U ], glyphTopLeft._uv._data[ 1U ] ),
+            ._uv { glyphBottomRight._uv._data[ 0U ], glyphTopLeft._uv._data[ 1U ] },
             ._layer = layer,
         },
 
@@ -1092,7 +1091,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 
     targetVertices[ 2U ] =
     {
-        ._image = imageBottomRight,
+        ._image = iBR,
         ._atlas = glyphBottomRight,
         ._color = color
     };
@@ -1101,7 +1100,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 
     targetVertices[ 3U ] =
     {
-        ._image = imageBottomRight,
+        ._image = iBR,
         ._atlas = glyphBottomRight,
         ._color = color
     };
@@ -1110,11 +1109,11 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 
     targetVertices[ 4U ] =
     {
-        ._image = GXVec2 ( imageTopLeft._data[ 0U ], imageBottomRight._data[ 1U ] ),
+        ._image { iTL._data[ 0U ], iBR._data[ 1U ] },
 
         ._atlas
         {
-            ._uv = GXVec2 ( glyphTopLeft._uv._data[ 0U ], glyphBottomRight._uv._data[ 1U ] ),
+            ._uv { glyphTopLeft._uv._data[ 0U ], glyphBottomRight._uv._data[ 1U ] },
             ._layer = layer
         },
 
@@ -1125,7 +1124,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 
     targetVertices[ 5U ] =
     {
-        ._image = imageTopLeft,
+        ._image = iTL,
         ._atlas = glyphTopLeft,
         ._color = color
     };

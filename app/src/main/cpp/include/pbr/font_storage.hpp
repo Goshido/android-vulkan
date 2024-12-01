@@ -113,7 +113,6 @@ class FontStorage final
 
                 uint32_t                        _layers = 0U;
                 Line                            _line {};
-                uint32_t                        _side = 0U;
 
             public:
                 Atlas () = default;
@@ -132,7 +131,6 @@ class FontStorage final
                     uint32_t layers
                 ) noexcept;
 
-                void Init ( uint32_t side ) noexcept;
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
                 void Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept;
 
@@ -153,9 +151,6 @@ class FontStorage final
         FT_Library                              _library = nullptr;
         std::forward_list<std::string>          _stringHeap {};
 
-        float                                   _pixToUV {};
-        GXVec2                                  _pointSamplerUVThreshold {};
-
         GlyphInfo                               _opaqueGlyph {};
         GlyphInfo                               _transparentGlyph {};
 
@@ -170,7 +165,7 @@ class FontStorage final
 
         ~FontStorage () = default;
 
-        [[nodiscard]] bool Init () noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
@@ -182,10 +177,6 @@ class FontStorage final
         [[nodiscard]] GlyphInfo const &GetGlyphInfo ( android_vulkan::Renderer &renderer,
             Font font,
             char32_t character
-        ) noexcept;
-
-        [[nodiscard]] bool SetMediaResolution ( android_vulkan::Renderer &renderer,
-            VkExtent2D const &nativeViewport
         ) noexcept;
 
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,

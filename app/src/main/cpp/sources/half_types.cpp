@@ -4,14 +4,19 @@
 
 namespace android_vulkan {
 
-
-[[maybe_unused]] Half::Half ( float value ):
+[[maybe_unused]] Half::Half ( float value ) noexcept:
     _data ( Convert ( value ) )
 {
     // NOTHING
 }
 
-uint16_t Half::Convert ( float value )
+Half &Half::operator = ( float v ) noexcept
+{
+    _data = Convert ( v );
+    return *this;
+}
+
+uint16_t Half::Convert ( float value ) noexcept
 {
     // see https://en.wikipedia.org/wiki/Single-precision_floating-point_format
     // see https://en.wikipedia.org/wiki/Half-precision_floating-point_format
@@ -91,21 +96,27 @@ uint16_t Half::Convert ( float value )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] Half2::Half2 ( float component0, float component1 ):
+[[maybe_unused]] Half2::Half2 ( float component0, float component1 ) noexcept:
     _data { Half::Convert ( component0 ), Half::Convert ( component1 ) }
+{
+    // NOTHING
+}
+
+[[maybe_unused]] Half2::Half2 ( GXVec2 const &v ) noexcept:
+    _data { Half::Convert ( v._data[ 0U ] ), Half::Convert ( v._data[ 1U ] ) }
 {
     // NOTHING
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] Half3::Half3 ( float component0, float component1, float component2 ):
+[[maybe_unused]] Half3::Half3 ( float component0, float component1, float component2 ) noexcept:
     _data { Half::Convert ( component0 ), Half::Convert ( component1 ), Half::Convert ( component2 ) }
 {
     // NOTHING
 }
 
-Half3 &Half3::operator = ( GXVec3 const &other )
+Half3 &Half3::operator = ( GXVec3 const &other ) noexcept
 {
     _data[ 0U ] = Half::Convert ( other._data[ 0U ] );
     _data[ 1U ] = Half::Convert ( other._data[ 0U ] );
@@ -116,7 +127,7 @@ Half3 &Half3::operator = ( GXVec3 const &other )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Half4::Half4 ( float component0, float component1, float component2, float component3 ):
+Half4::Half4 ( float component0, float component1, float component2, float component3 ) noexcept:
     _data
     {
         Half::Convert ( component0 ),
@@ -128,9 +139,9 @@ Half4::Half4 ( float component0, float component1, float component2, float compo
     // NOTHING
 }
 
-void Half4::From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 )
+void Half4::From ( uint8_t component0, uint8_t component1, uint8_t component2, uint8_t component3 ) noexcept
 {
-    constexpr float const unormToFloat = 1.0F / 255.0F;
+    constexpr float unormToFloat = 1.0F / 255.0F;
 
     _data[ 0U ] = Half::Convert ( static_cast<float> ( component0 ) * unormToFloat );
     _data[ 1U ] = Half::Convert ( static_cast<float> ( component1 ) * unormToFloat );

@@ -13,6 +13,8 @@
   - [_Storing local-view information in 8 bytes_](#opt-2-local-view-8-bytes)
   - [_Using `uint16_t` index buffers_](#opt-2-using-uint16-indices)
   - [_Further vertex data compression_](#opt-2-further-compression)
+- [_Optimization #3_](#optimization-3)
+  - [_UV coordinates as `float16_t2`_](#opt-3-uv-as-float16)
 
 ## <a id="brief">Brief</a>
 
@@ -28,9 +30,9 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.667 ms | -1.178 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.136 ms | -2.207 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
-_World 1-1_ | 9.477 ms | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 17.846 ms | 16.662 ms | -1.184 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.142 ms | -2.202 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.477 ms | 9.585 ms | +0.108 ms🔺 | +1.1%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
 
@@ -273,13 +275,13 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-108 | -140🟢 | -56.5%🟢
+112 | -136🟢 | -54.8%🟢
 
 ⁘ Bytes per scene vertex comparison with _optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-108 | -92🟢 | -46%🟢
+112 | -88🟢 | -44%🟢
 
 ---
 
@@ -287,7 +289,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
-24 | -26🟢 | -52%🟢
+32 | -18🟢 | -36%🟢
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -439,5 +441,159 @@ struct UIVertexInfo
 ```
 
 **Note:** 2024 November 30<sup>th</sup>. According to _Vertex Input Extraction_ from _Vulkan_ spec vertex exlement must be aligned by 4 bytes. Having vertex element non-multiple of 4 bytes causes runtime artefacts on [_XIAOMI Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030) looking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on [_NVIDIA RTX 4080_](https://vulkan.gpuinfo.org/displayreport.php?id=34593) does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="optimization-3">Optimization #3</a>
+
+⁘ Frame time comparison with stock version:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.662 ms | -1.184 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.142 ms | -2.202 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.585 ms | +0.108 ms🔺 | +1.1%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+⁘ Frame time comparison with _Optimization #2_:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.662 ms | -0.005 ms🟢 | -0.03%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.142 ms | +0.006 ms🔺 | +0.04%🔺 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.585 ms | +0.066 ms🔺 | +0.69%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+---
+
+⁘ Maximum instances comparison with stock version:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | +42🟢 | +100%🟢
+
+⁘ Maximum instances comparison with _optimizations #2_:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | 0 | 0%
+
+---
+
+⁘ Bytes per scene vertex comparison with stock version:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -140🟢 | -56.5%🟢
+
+⁘ Bytes per scene vertex comparison with _optimizations #2_:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -4🟢 | -3.6%🟢
+
+---
+
+⁘ Bytes per _UI_ vertex comparison with stock version:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+24 | -26🟢 | -52%🟢
+
+⁘ Bytes per _UI_ vertex comparison with _optimizations #2_:
+
+**Optimization #3** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+24 | -8🟢 | -25%🟢
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-3-uv-as-float16">_UV_ coordinates as `float16_t2`</a>
+
+The most critical part is text rendering which must be pixel perfect. In order to achieve that it was decided to set text atlas resolution to 1024x1024 which is fit perfectly to `float16_t` precision.
+
+⁘ **_3D_ scene workflow**
+
+Vertex buffer layout:
+
+```cpp
+// Vertex buffer #0
+struct VertexInfo
+{                                           // Vertex buffer #0
+    float32_t3      _vertex;                float32_t3          _position;
+
+                                            // Vertex buffer #1
+                                            struct VertexInfo
+                            ----------->    {
+    float32_t2      _uv;                        float16_t2      _uv;
+    float32_t3      _normal;                    uint32_t        _tbn;
+    float32_t3      _tangent;               };
+    float32_t3      _bitangent;
+}
+```
+
+Uniform buffer layout:
+
+```cpp
+                                                            struct TBN64
+                                                            {
+                                                                uint32_t        _q0High;
+                                                                uint32_t        _q0Low;
+                                                                uint32_t        _q1High;
+                                                                uint32_t        _q1Low;
+                                                            };
+
+                                                            struct ColorData
+            ----------------------------------->            {
+                                                                uint32_t        _emiRcol0rgb;
+                                                                uint32_t        _emiGcol1rgb;
+struct ObjectData                                               uint32_t        _emiBcol2rgb;
+{                                                               uint32_t        _col0aEmiIntens;
+    float32_t4x4    _localView;                             };
+    float32_t4x4    _localViewProjection;
+    float32_t4      _color0;                                // Uniform buffer #0 (vertex stage)
+    float32_t4      _color1;                                struct InstancePositionData
+    float32_t4      _color2;                                {
+    float32_t4      _emission;                                  float32_t4x4    _localViewProj[ 84U ];
+};                                                          };
+
+// Uniform buffer #0 (vertex, fragment stages)              // Uniform buffer #1 (vertex stage)
+struct InstanceData                                         struct InstanceNormalData
+{                                                           {
+    ObjectData      _instanceData[ 42U ];                       TBN64           _localView[ 84U / 2U ];
+};                                                          };
+
+                                                            // Uniform buffer #2 (frament stage)
+                                                            struct InstanceColorData
+            ----------------------------------->            {
+                                                                ColorData       _colorData[ 84U ];
+                                                            };
+```
+
+---
+
+⁘ **_UI_ workflow**
+
+Vertex buffer layout:
+
+```cpp
+// Vertex buffer #0
+struct UIVertexInfo
+{                                           // Vertex buffer #0
+    float32_t2      _vertex;                float32_t2          _position;
+
+                                            struct UIAtlas
+                                            {
+                                                float16_t2      _uv;
+                                                uint8_t         _layer;
+                                                uint8_t         _padding[ 3U ];
+                                            };
+
+                                            // Vertex buffer #1
+                                ------->    struct UIVertex
+                                            {
+    float32_t4      _color;                     float16_t2      _image;
+    float32_t3      _atlas;                     UIAtlas         _atlas;
+    float32_t2      _imageUV;                   uint32_t        _color;
+};                                          };
+```
 
 [↬ table of content ⇧](#table-of-content)

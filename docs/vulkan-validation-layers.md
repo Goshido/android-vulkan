@@ -128,3 +128,4 @@ Full screen triangle `VkPipeline` issue | [#7636](https://github.com/KhronosGrou
 First `vkGetSwapchainImagesKHR` false positive | [#8138](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8138) | ✔️ Fixed
 No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ✔️ Fixed
 `VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | 🛡️ Not an issue
+VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8970) | ⚠️ Submitted

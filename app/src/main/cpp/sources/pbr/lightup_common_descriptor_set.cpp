@@ -107,7 +107,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
 
     for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
-        AV_SET_VULKAN_OBJECT_NAME ( device, _sets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Lightup common [FIF ##%zu]", i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, _sets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Lightup common [FIF #%zu]", i )
 
 #endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
 

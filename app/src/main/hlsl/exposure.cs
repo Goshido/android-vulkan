@@ -177,7 +177,7 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
 
     uint32_t2 const alpha = xy + xy;
     uint32_t2 const betta = workGroupID * 16U + xy;
- 
+
     // See <repo>/docs/spd-algorithm.md#mip-1
 
     [unroll]

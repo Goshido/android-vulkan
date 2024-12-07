@@ -47,6 +47,12 @@ cbuffer ViewData:                                   register ( b0 )
     float32_t2              _padding0_0;
 };
 
+struct OutputData
+{
+    [[vk::location ( OUT_COLOR )]]
+    float32_t4              _color:                 SV_Target0;
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
 float16_t3 GetAlbedo ()

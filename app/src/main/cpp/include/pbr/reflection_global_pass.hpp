@@ -40,7 +40,6 @@ class ReflectionGlobalPass final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            uint32_t subpass,
             VkExtent2D const &viewport
         ) noexcept;
 

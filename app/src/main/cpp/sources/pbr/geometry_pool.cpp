@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <pbr/geometry_pass_bindings.inc>
+#include <pbr/geometry_pass_binds.inc>
 #include <pbr/geometry_pool.hpp>
 
 
@@ -28,6 +28,11 @@ void GeometryPool::Commit () noexcept
     _baseIndex = _writeIndex;
     _readIndex = _writeIndex;
     _written = 0U;
+}
+
+bool GeometryPool::HasNewData () const noexcept
+{
+    return _readIndex != _writeIndex;
 }
 
 void GeometryPool::IssueSync ( VkCommandBuffer commandBuffer ) const noexcept

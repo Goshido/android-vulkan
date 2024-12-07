@@ -2,6 +2,7 @@
 #define PBR_LIGHT_PASS_HPP
 
 
+#include "dummy_light_program.hpp"
 #include "gbuffer.hpp"
 #include "lightup_common_descriptor_set.hpp"
 #include "point_light_pass.hpp"
@@ -15,6 +16,7 @@ class LightPass final
 {
     private:
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        DummyLightProgram               _dummyLightProgram {};
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
         PointLightPass                  _pointLightPass {};
         ReflectionGlobalPass            _reflectionGlobalPass {};

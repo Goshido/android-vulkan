@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <pbr/lightup_common.inc>
 #include <pbr/reflection_global_program.hpp>
 
 
@@ -11,6 +12,7 @@ constexpr char const* FRAGMENT_SHADER = "shaders/reflection_global.ps.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
+constexpr uint32_t SUBPASS = 1U;
 
 } // end of anonymous namespace
 
@@ -69,7 +71,6 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
 
 bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -116,7 +117,7 @@ bool ReflectionGlobalProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
+    pipelineInfo.subpass = SUBPASS;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
@@ -152,7 +153,7 @@ VkPipelineColorBlendStateCreateInfo const* ReflectionGlobalProgram::InitColorBle
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    attachments[ 0U ] =
+    attachments[ OUT_COLOR ] =
     {
         .blendEnable = VK_TRUE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -197,7 +198,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
 
-        .front =
+        .front
         {
             .failOp = VK_STENCIL_OP_KEEP,
             .passOp = VK_STENCIL_OP_KEEP,
@@ -208,7 +209,7 @@ VkPipelineDepthStencilStateCreateInfo const* ReflectionGlobalProgram::InitDepthS
             .reference = 0U
         },
 
-        .back =
+        .back
         {
             .failOp = VK_STENCIL_OP_KEEP,
             .passOp = VK_STENCIL_OP_KEEP,
@@ -405,7 +406,7 @@ VkPipelineViewportStateCreateInfo const* ReflectionGlobalProgram::InitViewportIn
 
     *scissorInfo =
     {
-        .offset =
+        .offset
         {
             .x = 0,
             .y = 0

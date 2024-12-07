@@ -12,5 +12,7 @@
 #define BIND_PREFILTER_SAMPLER      6
 #define BIND_VIEW_DATA              7
 
+#define OUT_COLOR                   0
+
 
 #endif // LIGHTUP_COMMON_INC

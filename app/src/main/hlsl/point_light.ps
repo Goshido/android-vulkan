@@ -37,12 +37,6 @@ cbuffer LightData:                          register ( b2 )
     float32_t               _intensity;
 };
 
-struct OutputData
-{
-    [[vk::location ( 0 )]]
-    float32_t4              _color:         SV_Target0;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 float16_t3 GetDiffuseK ( in float16_t3 fresnelFactor, in float16_t metallic )

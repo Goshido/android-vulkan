@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <pbr/geometry_pass_bindings.inc>
+#include <pbr/geometry_pass_binds.inc>
 #include <pbr/geometry_pass_program.hpp>
 #include <vertex_info.hpp>
 
@@ -14,6 +14,7 @@ constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
 constexpr size_t VERTEX_ATTRIBUTE_COUNT = 3U;
 constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
+constexpr uint32_t SUBPASS = 0U;
 
 // TBN64 format contains two quaternions
 static_assert ( PBR_OPAQUE_MAX_INSTANCE_COUNT % 2 == 0 );
@@ -86,7 +87,6 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
 
 bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
     VkExtent2D const &viewport
 ) noexcept
 {
@@ -139,7 +139,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
+    pipelineInfo.subpass = SUBPASS;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
@@ -190,7 +190,7 @@ VkPipelineColorBlendStateCreateInfo const* GeometryPassProgram::InitColorBlendIn
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    attachments[ 0U ] =
+    attachments[ OUT_ALBEDO ] =
     {
         .blendEnable = VK_FALSE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -207,7 +207,7 @@ VkPipelineColorBlendStateCreateInfo const* GeometryPassProgram::InitColorBlendIn
             AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
     };
 
-    attachments[ 1U ] =
+    attachments[ OUT_EMISSION ] =
     {
         .blendEnable = VK_FALSE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -224,7 +224,7 @@ VkPipelineColorBlendStateCreateInfo const* GeometryPassProgram::InitColorBlendIn
             AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
     };
 
-    attachments[ 2U ] =
+    attachments[ OUT_NORMAL ] =
     {
         .blendEnable = VK_FALSE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -241,7 +241,7 @@ VkPipelineColorBlendStateCreateInfo const* GeometryPassProgram::InitColorBlendIn
             AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
     };
 
-    attachments[ 3U ] =
+    attachments[ OUT_PARAM ] =
     {
         .blendEnable = VK_FALSE,
         .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,

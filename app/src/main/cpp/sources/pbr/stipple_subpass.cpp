@@ -9,7 +9,7 @@ bool StippleSubpass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, 0U, resolution );
+    return _program.Init ( renderer, renderPass, resolution );
 }
 
 void StippleSubpass::Destroy ( VkDevice device ) noexcept

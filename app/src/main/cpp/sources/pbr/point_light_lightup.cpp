@@ -29,7 +29,6 @@ void PointLightLightup::BindProgram ( VkCommandBuffer commandBuffer ) noexcept
 
 bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
     VkExtent2D const &resolution
 ) noexcept
 {
@@ -55,7 +54,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    return _program.Init ( renderer, renderPass, subpass, resolution ) &&
+    return _program.Init ( renderer, renderPass, resolution ) &&
         _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
         AllocateDescriptorSets ( renderer );
 }

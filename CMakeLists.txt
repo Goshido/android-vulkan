@@ -86,6 +86,9 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/div_html5_element.cpp
     app/src/main/cpp/sources/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/pbr/doctype_parser.cpp
+    app/src/main/cpp/sources/pbr/dummy_geometry_program.cpp
+    app/src/main/cpp/sources/pbr/dummy_light_program.cpp
+    app/src/main/cpp/sources/pbr/dummy_program.cpp
     app/src/main/cpp/sources/pbr/exposure_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/exposure_pass.cpp
     app/src/main/cpp/sources/pbr/exposure_program.cpp

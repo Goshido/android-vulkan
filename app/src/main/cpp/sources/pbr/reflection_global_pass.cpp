@@ -43,12 +43,10 @@ void ReflectionGlobalPass::Execute ( VkDevice device, VkCommandBuffer commandBuf
 
 bool ReflectionGlobalPass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
-    uint32_t subpass,
     VkExtent2D const &viewport
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, subpass, viewport ) &&
-        AllocateDescriptorSets ( renderer.GetDevice () );
+    return _program.Init ( renderer, renderPass, viewport ) && AllocateDescriptorSets ( renderer.GetDevice () );
 }
 
 void ReflectionGlobalPass::Destroy ( VkDevice device ) noexcept

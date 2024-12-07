@@ -35,9 +35,9 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         AV_DX_ALIGNMENT_END
 
     private:
-        LightupCommonDescriptorSetLayout    _commonLayout;
-        LightVolumeDescriptorSetLayout      _lightVolumeLayout;
-        PointLightDescriptorSetLayout       _pointLightLayout;
+        LightupCommonDescriptorSetLayout    _commonLayout {};
+        LightVolumeDescriptorSetLayout      _lightVolumeLayout {};
+        PointLightDescriptorSetLayout       _pointLightLayout {};
 
     public:
         PointLightLightupProgram () noexcept;
@@ -54,7 +54,6 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
-            uint32_t subpass,
             VkExtent2D const &viewport
         ) noexcept;
 

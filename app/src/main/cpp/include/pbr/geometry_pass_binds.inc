@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_PASS_BINDINGS_INC
-#define GEOMETRY_PASS_BINDINGS_INC
+#ifndef GEOMETRY_PASS_BINDS_INC
+#define GEOMETRY_PASS_BINDS_INC
 
 
 #define IN_BUFFER_POSITION              0
@@ -30,5 +30,10 @@
 #define BIND_INSTANCE_NORMAL_DATA       1
 #define BIND_INSTANCE_COLOR_DATA        2
 
+#define OUT_ALBEDO                      0
+#define OUT_EMISSION                    1
+#define OUT_NORMAL                      2
+#define OUT_PARAM                       3
 
-#endif // GEOMETRY_PASS_BINDINGS_INC
+
+#endif // GEOMETRY_PASS_BINDS_INC

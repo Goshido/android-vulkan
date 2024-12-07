@@ -20,7 +20,7 @@ void FUCK () noexcept
             uint32_t _q1Low;
         }
         _gpu;
-        
+
         struct CPU final
         {
             uint64_t _q0;

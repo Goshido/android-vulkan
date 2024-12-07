@@ -16,12 +16,6 @@ struct InputData
     linear float32_t4       _pixel:         SV_Position;
 };
 
-struct OutputData
-{
-    [[vk::location (0)]]
-    float32_t4              _color:         SV_Target0;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 float32_t4 RestoreLocationViewUnnormalized ( in float32_t2 locationImage, in float32_t depth )

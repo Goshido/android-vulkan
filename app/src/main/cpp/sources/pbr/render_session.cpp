@@ -482,7 +482,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
         }
     };
 
-    constexpr static VkAttachmentReference const geometryColorReferences[] =
+    constexpr static VkAttachmentReference const geometryColorReferences[]
     {
         // #0: albedo
         {
@@ -516,7 +516,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
         .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     };
 
-    constexpr static VkAttachmentReference const lightColorReferences[] =
+    constexpr static VkAttachmentReference const lightColorReferences[]
     {
         // #1: HDR accumulator
         {
@@ -525,7 +525,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
         }
     };
 
-    constexpr static VkAttachmentReference const lightInputAttachments[] =
+    constexpr static VkAttachmentReference const lightInputAttachments[]
     {
         // #0: albedo
         {
@@ -533,26 +533,26 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
             .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
-        // #2: normal
+        // #1: normal
         {
             .attachment = 2U,
             .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
-        // #3: params
+        // #2: params
         {
             .attachment = 3U,
             .layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
 
-        // #4: depth
+        // #3: depth
         {
             .attachment = 4U,
             .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
         }
     };
 
-    constexpr VkSubpassDescription const subpasses[] =
+    constexpr VkSubpassDescription const subpasses[]
     {
         {
             .flags = 0U,
@@ -580,7 +580,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
         }
     };
 
-    constexpr VkSubpassDependency const dependencies[] =
+    constexpr VkSubpassDependency const dependencies[]
     {
         {
             .srcSubpass = VK_SUBPASS_EXTERNAL,
@@ -608,14 +608,12 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
 
             .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ),
 
             .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_INPUT_ATTACHMENT_READ_BIT ) |
-                AV_VK_FLAG ( VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_READ_BIT ) |
                 AV_VK_FLAG ( VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT ),
 

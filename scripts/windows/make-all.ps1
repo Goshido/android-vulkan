@@ -23,6 +23,12 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "VS"                                                                                                               `
     "vs"                                                                                                               `
+    "$MOBILE_HLSL_DIRECTORY\dummy.vs"                                                                                  `
+    "$MOBILE_SHADER_DIRECTORY\dummy.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "VS"                                                                                                               `
+    "vs"                                                                                                               `
     "$MOBILE_HLSL_DIRECTORY\full_screen_triangle.vs"                                                                   `
     "$MOBILE_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
@@ -80,6 +86,18 @@ scripts\windows\make-spv.ps1                                                    
     "ps"                                                                                                               `
     "$MOBILE_HLSL_DIRECTORY\blinn_phong_lut.ps"                                                                        `
     "$MOBILE_SHADER_DIRECTORY\blinn_phong_lut.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "PS"                                                                                                               `
+    "ps"                                                                                                               `
+    "$MOBILE_HLSL_DIRECTORY\dummy_gbuffer.ps"                                                                          `
+    "$MOBILE_SHADER_DIRECTORY\dummy_gbuffer.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "PS"                                                                                                               `
+    "ps"                                                                                                               `
+    "$MOBILE_HLSL_DIRECTORY\dummy_light.ps"                                                                            `
+    "$MOBILE_SHADER_DIRECTORY\dummy_light.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "PS"                                                                                                               `

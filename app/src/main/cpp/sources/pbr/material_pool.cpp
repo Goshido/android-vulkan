@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <pbr/command_buffer_count.hpp>
-#include <pbr/geometry_pass_bindings.inc>
+#include <pbr/geometry_pass_binds.inc>
 #include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
 #include <pbr/material_pool.hpp>
 #include <vulkan_utils.hpp>

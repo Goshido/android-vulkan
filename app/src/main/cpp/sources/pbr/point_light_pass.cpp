@@ -71,7 +71,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
             "Point light pass shadowmap"
         ) &&
 
-        _lightup.Init ( renderer, lightupRenderPass, 1U, resolution );
+        _lightup.Init ( renderer, lightupRenderPass, resolution );
 }
 
 void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept

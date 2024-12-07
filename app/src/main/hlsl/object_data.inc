@@ -2,7 +2,7 @@
 #define OBJECT_DATA_INC
 
 
-#include "pbr/geometry_pass_bindings.inc"
+#include "pbr/geometry_pass_binds.inc"
 #include "pbr/gpgpu_limits.inc"
 #include "tbn64.inc"
 

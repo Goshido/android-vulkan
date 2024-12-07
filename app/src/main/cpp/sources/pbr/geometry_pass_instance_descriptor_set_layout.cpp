@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <pbr/geometry_pass_bindings.inc>
+#include <pbr/geometry_pass_binds.inc>
 #include <pbr/geometry_pass_instance_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 

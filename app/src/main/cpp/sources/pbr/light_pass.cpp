@@ -33,8 +33,9 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution = gBuffer.GetResolution ();
 
     return _pointLightPass.Init ( renderer, resolution, renderPass ) &&
-        _reflectionGlobalPass.Init ( renderer, renderPass, 1U, resolution ) &&
-        _reflectionLocalPass.Init ( renderer, renderPass, 1U, resolution ) &&
+        _dummyLightProgram.Init ( renderer, renderPass, resolution ) &&
+        _reflectionGlobalPass.Init ( renderer, renderPass, resolution ) &&
+        _reflectionLocalPass.Init ( renderer, renderPass, resolution ) &&
         _lightupCommonDescriptorSet.Init ( renderer, _commandPool, gBuffer ) &&
         CreateUnitCube ( renderer ) &&
 
@@ -50,6 +51,7 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
+    _dummyLightProgram.Destroy ( device );
     _volumeBufferPool.Destroy ( renderer );
     _unitCube.FreeResources ( renderer );
 
@@ -142,10 +144,15 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     size_t const globalReflections = _reflectionGlobalPass.GetReflectionCount ();
     size_t const lightVolumes = pointLights + localReflections;
 
-    if ( lightVolumes + globalReflections == 0U )
-        return;
-
     _lightupCommonDescriptorSet.Bind ( commandBuffer, commandBufferIndex );
+
+    if ( lightVolumes + globalReflections == 0U )
+    {
+        // See https://github.com/Goshido/android-vulkan/issues/84
+        _dummyLightProgram.Bind ( commandBuffer );
+        vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
+        return;
+    }
 
     if ( pointLights )
         _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube, _volumeBufferPool );

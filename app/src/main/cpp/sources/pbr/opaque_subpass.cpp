@@ -14,7 +14,7 @@ bool OpaqueSubpass::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass
 ) noexcept
 {
-    return _program.Init ( renderer, renderPass, 0U, resolution );
+    return _program.Init ( renderer, renderPass, resolution );
 }
 
 void OpaqueSubpass::Destroy ( VkDevice device ) noexcept

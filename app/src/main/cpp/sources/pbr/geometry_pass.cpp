@@ -91,13 +91,15 @@ bool GeometryPass::Init ( android_vulkan::Renderer &renderer,
     return _opaqueSubpass.Init ( renderer, resolution, renderPass ) &&
         _stippleSubpass.Init ( renderer, resolution, renderPass ) &&
         _geometryPool.Init ( renderer ) &&
-        _materialPool.Init ( device, defaultTextureManager );
+        _materialPool.Init ( device, defaultTextureManager ) &&
+        _dummyGeometryProgram.Init ( renderer, renderPass, resolution );
 }
 
 void GeometryPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
+    _dummyGeometryProgram.Destroy ( device );
     _descriptorSetLayout.Destroy ( device );
     _stippleSubpass.Destroy ( device );
     _opaqueSubpass.Destroy ( device );
@@ -115,6 +117,14 @@ void GeometryPass::Execute ( VkCommandBuffer commandBuffer, RenderSessionStats &
 {
     AV_TRACE ( "Geometry pass: Execute" )
     AV_VULKAN_GROUP ( commandBuffer, "Geometry pass" )
+
+    if ( !_geometryPool.HasNewData () ) [[unlikely]]
+    {
+        // See https://github.com/Goshido/android-vulkan/issues/84
+        _dummyGeometryProgram.Bind ( commandBuffer );
+        vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
+        return;
+    }
 
     bool isSamplerUsed = false;
 

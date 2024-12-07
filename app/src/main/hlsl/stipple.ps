@@ -6,7 +6,7 @@
 // It is used modified Bayer matrix 4x4 which is used in HLSL::clip and HLSL::mad intrinsics
 // from https://en.wikipedia.org/wiki/Ordered_dithering
 // Basically it was added 1.0F to numerator and denominator and taking negative value.
-static float16_t4x4 const g_bayerMatrix = 
+static float16_t4x4 const g_bayerMatrix =
 {
     -0.05882H, -0.52941H, -0.17647H, -0.64705H,
     -0.76470H, -0.29411H, -0.88235H, -0.41176H,

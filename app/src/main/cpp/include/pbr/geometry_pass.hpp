@@ -2,6 +2,7 @@
 #define PBR_GEOMETRY_PASS_HPP
 
 
+#include "dummy_geometry_program.hpp"
 #include "opaque_subpass.hpp"
 #include "stipple_subpass.hpp"
 
@@ -14,6 +15,7 @@ class GeometryPass final
         VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
         GeometryPassSamplerDescriptorSetLayout      _descriptorSetLayout {};
+        DummyGeometryProgram                        _dummyGeometryProgram {};
 
         GeometryPool                                _geometryPool {};
         MaterialPool                                _materialPool {};

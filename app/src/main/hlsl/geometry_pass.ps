@@ -2,6 +2,7 @@
 #define GEOMETRY_PASS_PS
 
 
+#include "gbuffer_render_targets.ps"
 #include "object_data.inc"
 
 
@@ -51,14 +52,6 @@ struct InputData
     nointerpolation uint32_t        _instanceIndex:         INSTANCE_INDEX;
 
     linear float4                   _vertexH:               SV_Position;
-};
-
-struct OutputData
-{
-    float32_t4                      _albedo:                SV_Target0;
-    float32_t4                      _emission:              SV_Target1;
-    float32_t4                      _normal:                SV_Target2;
-    float32_t4                      _param:                 SV_Target3;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -41,6 +41,7 @@ class GeometryPool final
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
+        [[nodiscard]] bool HasNewData () const noexcept;
         void IssueSync ( VkCommandBuffer commandBuffer ) const noexcept;
 
         void Push ( VkCommandBuffer commandBuffer,

@@ -18,7 +18,7 @@ bool VulkanLoader::OpenLibrary () noexcept
 {
     if ( _vulkan ) [[unlikely]]
     {
-        LogError ( "VulkanLoader::OpenLoaderLibrary - Already loaded! Please check business logic." );
+        LogError ( "VulkanLoader::OpenLibrary - Already loaded! Please check business logic." );
         return false;
     }
 
@@ -27,7 +27,7 @@ bool VulkanLoader::OpenLibrary () noexcept
 
     if ( !_vulkan ) [[unlikely]]
     {
-        LogError ( "VulkanLoader::OpenLoaderLibrary - Can't load %s. Error: 0x%08X", VULKAN_LIBRARY,
+        LogError ( "VulkanLoader::OpenLibrary - Can't load %s. Error: 0x%08X", VULKAN_LIBRARY,
             GetLastError ()
         );
 
@@ -41,13 +41,13 @@ bool VulkanLoader::OpenLibrary () noexcept
     if ( vkGetInstanceProcAddr ) [[likely]]
         return true;
 
-    LogError ( "VulkanLoader::OpenLoaderLibrary - Can't find AcquireBootstrapFunctions. Error: 0x%08X",
+    LogError ( "VulkanLoader::OpenLibrary - Can't find AcquireBootstrapFunctions. Error: 0x%08X",
         VULKAN_LIBRARY,
         GetLastError ()
     );
 
     if ( !Unload () ) [[unlikely]]
-        LogError ( "VulkanLoader::OpenLoaderLibrary - Can't unload." );
+        LogError ( "VulkanLoader::OpenLibrary - Can't unload." );
 
     return false;
 }
@@ -60,7 +60,7 @@ bool VulkanLoader::CloseLibrary () noexcept
         return true;
     }
 
-    LogError ( "VulkanLoader::CloseLoaderLibrary - Can't unload %s. Error: 0x%08X", VULKAN_LIBRARY, GetLastError () );
+    LogError ( "VulkanLoader::CloseLibrary - Can't unload %s. Error: 0x%08X", VULKAN_LIBRARY, GetLastError () );
     return false;
 }
 

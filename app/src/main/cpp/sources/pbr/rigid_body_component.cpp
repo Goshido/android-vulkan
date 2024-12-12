@@ -55,7 +55,7 @@ RigidBodyComponent::RigidBodyComponent ( size_t &dataRead,
 
     // NOLINTNEXTLINE - downcast.
     auto &body = static_cast<android_vulkan::RigidBody &> ( *_rigidBody );
-    body.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &m._m[ 3U ][ 0U ] ), true );
+    body.SetLocation ( *reinterpret_cast<GXVec3 const*> ( m._data[ 3U ] ), true );
 
     GXQuat r {};
     r.FromFast ( m );

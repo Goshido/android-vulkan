@@ -10,7 +10,6 @@ namespace pbr {
 class DummyProgram : public GraphicsProgram
 {
     private:
-        uint32_t const              _colorRenderTargets = 0U;
         std::string_view const      _fragmentShaderSource;
         uint32_t const              _subpass = 0U;
 
@@ -35,7 +34,6 @@ class DummyProgram : public GraphicsProgram
     protected:
         explicit DummyProgram ( std::string_view &&name,
             std::string_view &&fragmentShader,
-            uint32_t colorRenderTargets,
             uint32_t subpass
         ) noexcept;
 

@@ -12,6 +12,7 @@ extern "C" {
 
 } // extern "C"
 
+#include <variant>
 #include <vector>
 
 GX_RESTORE_WARNING_STATE
@@ -33,47 +34,31 @@ class ScriptableGamepad final
             COUNT
         };
 
-        struct Key final
-        {
-            android_vulkan::eGamepadKey     _key;
-            android_vulkan::eButtonState    _state;
-        };
-
         struct Stick final
         {
-            float                           _x;
-            float                           _y;
+            float                           _x = 0.0F;
+            float                           _y = 0.0F;
         };
 
-        struct Trigger final
-        {
-            float                           _value;
-        };
+        using Variant = std::variant<android_vulkan::eGamepadKey, Stick, float>;
 
         struct Action final
         {
-            eType                           _type;
-
-            union
-            {
-                Key                         _key;
-                Stick                       _stick;
-                Trigger                     _trigger;
-            };
+            eType                           _type = eType::KeyUp;
+            Variant                         _variant;
         };
 
         struct KeyContext final
         {
-            ScriptableGamepad*              _instance;
-            android_vulkan::eGamepadKey     _key;
-            android_vulkan::eButtonState    _state;
-            eType                           _type;
+            ScriptableGamepad*              _instance = nullptr;
+            android_vulkan::eGamepadKey     _key = android_vulkan::eGamepadKey::A;
+            eType                           _type = eType::KeyUp;
         };
 
         struct AnalogContext final
         {
-            ScriptableGamepad*              _instance;
-            eType                           _type;
+            ScriptableGamepad*              _instance = nullptr;
+            eType                           _type = eType::LeftStick;
         };
 
         using ActionHandler = void ( ScriptableGamepad::* ) ( Action const &action,
@@ -83,10 +68,10 @@ class ScriptableGamepad final
         ) noexcept;
 
     private:
-        static constexpr size_t             TOTAL_KEYS = android_vulkan::TOTAL_GAMEPAD_KEYS;
-        static constexpr size_t             TOTAL_STATES = android_vulkan::TOTAL_GAMEPAD_KEY_STATES;
-        static constexpr size_t             LEFT_INDEX = 0U;
-        static constexpr size_t             RIGHT_INDEX = 1U;
+        constexpr static size_t             TOTAL_KEYS = android_vulkan::TOTAL_GAMEPAD_KEYS;
+        constexpr static size_t             TOTAL_STATES = android_vulkan::TOTAL_GAMEPAD_KEY_STATES;
+        constexpr static size_t             LEFT_INDEX = 0U;
+        constexpr static size_t             RIGHT_INDEX = 1U;
 
         ActionHandler                       _actionHandlers[ static_cast<size_t> ( eType::COUNT ) ] {};
 

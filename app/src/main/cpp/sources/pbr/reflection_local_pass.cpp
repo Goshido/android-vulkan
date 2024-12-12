@@ -123,9 +123,9 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
 
     for ( auto const &call : _calls )
     {
-        local._data[ 0U ] = call._size;
-        local._data[ 5U ] = call._size;
-        local._data[ 10U ] = call._size;
+        local._data[ 0U ][ 0U ] = call._size;
+        local._data[ 1U ][ 1U ] = call._size;
+        local._data[ 2U ][ 2U ] = call._size;
         local.SetW ( call._location );
 
         transform.Multiply ( local, viewProjection );

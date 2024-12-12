@@ -28,8 +28,6 @@ bool DummyProgram::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport
 ) noexcept
 {
-    AV_ASSERT ( _colorRenderTargets <= MAX_COLOR_RENDER_TARGET_COUNT )
-
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineColorBlendAttachmentState attachmentInfo[ MAX_COLOR_RENDER_TARGET_COUNT ];
     VkPipelineColorBlendStateCreateInfo blendInfo;
@@ -99,11 +97,9 @@ bool DummyProgram::Init ( android_vulkan::Renderer &renderer,
 
 DummyProgram::DummyProgram ( std::string_view &&name,
     std::string_view &&fragmentShader,
-    uint32_t colorRenderTargets,
     uint32_t subpass
 ) noexcept:
     GraphicsProgram ( std::forward<std::string_view> ( name ) ),
-    _colorRenderTargets ( colorRenderTargets ),
     _fragmentShaderSource ( fragmentShader ),
     _subpass ( subpass )
 {

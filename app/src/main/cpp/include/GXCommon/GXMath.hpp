@@ -1,4 +1,4 @@
-// version 1.93
+// version 1.94
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -227,7 +227,11 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVec4 ( GXVec4 && ) = default;
     [[maybe_unused]] GXVec4 &operator = ( GXVec4 && ) = default;
 
-    [[maybe_unused]] GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept;
+    [[maybe_unused]] constexpr GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept:
+        _data { vector._data[ 0U ], vector._data[ 1U ], vector._data[ 2U ], w }
+    {
+        // NOTHING
+    }
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
@@ -630,11 +634,7 @@ struct [[maybe_unused]] GXQuat final
 
 struct [[maybe_unused]] GXMat3 final
 {
-    union
-    {
-        GXFloat     _data[ 9U ];
-        GXFloat     _m[ 3U ][ 3U ];
-    };
+    GXFloat     _data[ 3U ][ 3U ];
 
     [[maybe_unused]] GXMat3 () = default;
 
@@ -702,11 +702,7 @@ struct [[maybe_unused]] GXMat3 final
 
 struct [[maybe_unused]] GXMat4 final
 {
-    union
-    {
-        GXFloat     _data[ 16u ];
-        GXFloat     _m[ 4u ][ 4u ];
-    };
+    GXFloat     _data[ 4U ][ 4U ];
 
     [[maybe_unused]] GXMat4 () = default;
 

@@ -1,4 +1,4 @@
-// version 1.8
+// version 1.9
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -17,32 +17,52 @@
     GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
     GXFloat const invRange = 1.0F / ( zNear - zFar );
 
-    _m[ 0U ][ 0U ] = ctan / aspectRatio;
-    _m[ 1U ][ 1U ] = -ctan;
-    _m[ 2U ][ 2U ] = invRange * zNear;
-    _m[ 2U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 2U ] = -invRange * zFar * zNear;
+    auto &m = _data;
 
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 3U ] = 0.0F;
+    m[ 0U ][ 0U ] = ctan / aspectRatio;
+    m[ 1U ][ 1U ] = -ctan;
+    m[ 2U ][ 2U ] = invRange * zNear;
+    m[ 2U ][ 3U ] = 1.0F;
+    m[ 3U ][ 2U ] = -invRange * zFar * zNear;
+
+    m[ 0U ][ 1U ] = 0.0F;
+    m[ 0U ][ 2U ] = 0.0F;
+    m[ 0U ][ 3U ] = 0.0F;
+
+    m[ 1U ][ 0U ] = 0.0F;
+    m[ 1U ][ 2U ] = 0.0F;
+    m[ 1U ][ 3U ] = 0.0F;
+
+    m[ 2U ][ 0U ] = 0.0F;
+    m[ 2U ][ 1U ] = 0.0F;
+
+    m[ 3U ][ 0U ] = 0.0F;
+    m[ 3U ][ 1U ] = 0.0F;
+    m[ 3U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept
 {
     GXFloat const invRange = 1.0f / ( zFar - zNear );
+    auto &m = _data;
 
-    _m[ 0U ][ 0U ] = 2.0F / width;
-    _m[ 1U ][ 1U ] = -2.0F / height;
-    _m[ 2U ][ 2U ] = invRange;
-    _m[ 3U ][ 2U ] = -invRange * zNear;
+    m[ 0U ][ 0U ] = 2.0F / width;
+    m[ 1U ][ 1U ] = -2.0F / height;
+    m[ 2U ][ 2U ] = invRange;
+    m[ 3U ][ 2U ] = -invRange * zNear;
+    m[ 3U ][ 3U ] = 1.0F;
 
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = 0.0F;
-    _m[ 3U ][ 3U ] = 1.0F;
+    m[ 0U ][ 1U ] = 0.0F;
+    m[ 0U ][ 2U ] = 0.0F;
+    m[ 0U ][ 3U ] = 0.0F;
+    m[ 1U ][ 0U ] = 0.0F;
+    m[ 1U ][ 2U ] = 0.0F;
+    m[ 1U ][ 3U ] = 0.0F;
+    m[ 2U ][ 0U ] = 0.0F;
+    m[ 2U ][ 1U ] = 0.0F;
+    m[ 2U ][ 3U ] = 0.0F;
+    m[ 3U ][ 0U ] = 0.0F;
+    m[ 3U ][ 1U ] = 0.0F;
 }
 
 // NOLINTNEXTLINE

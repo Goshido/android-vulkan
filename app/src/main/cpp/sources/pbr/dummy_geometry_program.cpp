@@ -18,7 +18,6 @@ constexpr uint32_t SUBPASS = 0U;
 DummyGeometryProgram::DummyGeometryProgram () noexcept:
     DummyProgram ( "Dummy for layout transitions (G-Buffer)",
         "shaders/dummy_gbuffer.ps.spv",
-        COLOR_RENDER_TARGET_COUNT,
         SUBPASS
     )
 {

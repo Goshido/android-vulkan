@@ -102,7 +102,7 @@ ComponentRef &PointLightComponent::GetReference () noexcept
 
 void PointLightComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
 {
-    SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
+    SetLocation ( *reinterpret_cast<GXVec3 const*> ( transformWorld._data[ 3U ] ) );
 }
 
 } // namespace pbr

@@ -1188,8 +1188,8 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
     UIProgram::Transform transform {};
-    transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ), scaleX );
-    transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] ), scaleY );
+    transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
+    transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
     transform._offset.Multiply ( _bottomRight, -0.5F );
 
     _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );

@@ -590,7 +590,7 @@ int8_t SaveState::Container::Read ( int8_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int8 ) [[likely]]
-        return c._data._i8;
+        return std::get<int8_t> ( c._data );
 
     return defaultValue;
 }
@@ -601,7 +601,7 @@ uint8_t SaveState::Container::Read ( uint8_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt8 ) [[likely]]
-        return c._data._ui8;
+        return std::get<uint8_t> ( c._data );
 
     return defaultValue;
 }
@@ -612,7 +612,7 @@ int16_t SaveState::Container::Read ( int16_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int16 ) [[likely]]
-        return c._data._i16;
+        return std::get<int16_t> ( c._data );
 
     return defaultValue;
 }
@@ -623,7 +623,7 @@ uint16_t SaveState::Container::Read ( uint16_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt16 ) [[likely]]
-        return c._data._ui16;
+        return std::get<uint16_t> ( c._data );
 
     return defaultValue;
 }
@@ -634,7 +634,7 @@ int32_t SaveState::Container::Read ( int32_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int32 ) [[likely]]
-        return c._data._i32;
+        return std::get<int32_t> ( c._data );
 
     return defaultValue;
 }
@@ -645,7 +645,7 @@ uint32_t SaveState::Container::Read ( uint32_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt32 ) [[likely]]
-        return c._data._ui32;
+        return std::get<uint32_t> ( c._data );
 
     return defaultValue;
 }
@@ -656,7 +656,7 @@ int64_t SaveState::Container::Read ( int64_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Int64 ) [[likely]]
-        return c._data._i64;
+        return std::get<int64_t> ( c._data );
 
     return defaultValue;
 }
@@ -667,7 +667,7 @@ uint64_t SaveState::Container::Read ( uint64_t defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::UInt64 ) [[likely]]
-        return c._data._ui64;
+        return std::get<uint64_t> ( c._data );
 
     return defaultValue;
 }
@@ -678,7 +678,7 @@ float SaveState::Container::Read ( float defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Float ) [[likely]]
-        return c._data._float;
+        return std::get<float> ( c._data );
 
     return defaultValue;
 }
@@ -689,7 +689,7 @@ double SaveState::Container::Read ( double defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Double ) [[likely]]
-        return c._data._double;
+        return std::get<double> ( c._data );
 
     return defaultValue;
 }
@@ -700,7 +700,7 @@ bool SaveState::Container::Read ( bool defaultValue ) const noexcept
         return defaultValue;
 
     if ( Container const &c = _arrayData[ _idx++ ]; c.GetType () == eType::Bool ) [[likely]]
-        return c._data._bool;
+        return std::get<bool> ( c._data );
 
     return defaultValue;
 }
@@ -726,7 +726,7 @@ int8_t SaveState::Container::Read ( std::string_view const &key, int8_t defaultV
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Int8 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._i8;
+    return std::get<int8_t> ( findResult->second._data );
 }
 
 uint8_t SaveState::Container::Read ( std::string_view const &key, uint8_t defaultValue ) const noexcept
@@ -739,7 +739,7 @@ uint8_t SaveState::Container::Read ( std::string_view const &key, uint8_t defaul
     if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt8 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._ui8;
+    return std::get<uint8_t> ( findResult->second._data );
 }
 
 int16_t SaveState::Container::Read ( std::string_view const &key, int16_t defaultValue ) const noexcept
@@ -752,7 +752,7 @@ int16_t SaveState::Container::Read ( std::string_view const &key, int16_t defaul
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Int16 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._i16;
+    return std::get<int16_t> ( findResult->second._data );
 }
 
 uint16_t SaveState::Container::Read ( std::string_view const &key, uint16_t defaultValue ) const noexcept
@@ -765,7 +765,7 @@ uint16_t SaveState::Container::Read ( std::string_view const &key, uint16_t defa
     if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt16 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._ui16;
+    return std::get<uint16_t> ( findResult->second._data );
 }
 
 int32_t SaveState::Container::Read ( std::string_view const &key, int32_t defaultValue ) const noexcept
@@ -778,7 +778,7 @@ int32_t SaveState::Container::Read ( std::string_view const &key, int32_t defaul
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Int32 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._i32;
+    return std::get<int32_t> ( findResult->second._data );
 }
 
 uint32_t SaveState::Container::Read ( std::string_view const &key, uint32_t defaultValue ) const noexcept
@@ -791,7 +791,7 @@ uint32_t SaveState::Container::Read ( std::string_view const &key, uint32_t defa
     if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt32 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._ui32;
+    return std::get<uint32_t> ( findResult->second._data );
 }
 
 int64_t SaveState::Container::Read ( std::string_view const &key, int64_t defaultValue ) const noexcept
@@ -804,7 +804,7 @@ int64_t SaveState::Container::Read ( std::string_view const &key, int64_t defaul
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Int64 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._i64;
+    return std::get<int64_t> ( findResult->second._data );
 }
 
 uint64_t SaveState::Container::Read ( std::string_view const &key, uint64_t defaultValue ) const noexcept
@@ -817,7 +817,7 @@ uint64_t SaveState::Container::Read ( std::string_view const &key, uint64_t defa
     if ( findResult == _containerData.cend () || findResult->second._type != eType::UInt64 ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._ui64;
+    return std::get<uint64_t> ( findResult->second._data );
 }
 
 float SaveState::Container::Read ( std::string_view const &key, float defaultValue ) const noexcept
@@ -830,7 +830,7 @@ float SaveState::Container::Read ( std::string_view const &key, float defaultVal
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Float ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._float;
+    return std::get<float> ( findResult->second._data );
 }
 
 double SaveState::Container::Read ( std::string_view const &key, double defaultValue ) const noexcept
@@ -843,7 +843,7 @@ double SaveState::Container::Read ( std::string_view const &key, double defaultV
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Double ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._double;
+    return std::get<double> ( findResult->second._data );
 }
 
 bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue ) const noexcept
@@ -856,7 +856,7 @@ bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue
     if ( findResult == _containerData.cend () || findResult->second._type != eType::Bool ) [[unlikely]]
         return defaultValue;
 
-    return findResult->second._data._bool;
+    return std::get<bool> ( findResult->second._data );
 }
 
 std::string_view SaveState::Container::Read ( std::string_view const &key,
@@ -881,132 +881,77 @@ SaveState::Container::Container ( eType type ) noexcept:
 }
 
 SaveState::Container::Container ( int8_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._i8 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Int8 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( uint8_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._ui8 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::UInt8 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( int16_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._i16 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Int16 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( uint16_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._ui16 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::UInt16 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( int32_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._i32 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Int32 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( uint32_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._ui32 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::UInt32 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( int64_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._i64 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Int64 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( uint64_t value ) noexcept:
-    _data (
-        Data
-        {
-            ._ui64 = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::UInt64 )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( float value ) noexcept:
-    _data (
-        Data
-        {
-            ._float = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Float )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( double value ) noexcept:
-    _data (
-        Data
-        {
-            ._double = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Double )
 {
     // NOTHING
 }
 
 SaveState::Container::Container ( bool value ) noexcept:
-    _data (
-        Data
-        {
-            ._bool = value
-        }
-    ),
+    _data ( value ),
     _type ( eType::Bool )
 {
     // NOTHING
@@ -1288,7 +1233,7 @@ void SaveState::EncodeInt8 ( Binary &aData, Container const &container, bool wri
 
     *reinterpret_cast<Int8Info*> ( aData.data () + offset ) = Int8Info
     {
-        ._data = container._data._i8
+        ._data = std::get<int8_t> ( container._data )
     };
 }
 
@@ -1303,7 +1248,7 @@ void SaveState::EncodeUInt8 ( Binary &aData, Container const &container, bool wr
 
     *reinterpret_cast<UInt8Info*> ( aData.data () + offset ) = UInt8Info
     {
-        ._data = container._data._ui8
+        ._data = std::get<uint8_t> ( container._data )
     };
 }
 
@@ -1318,7 +1263,7 @@ void SaveState::EncodeInt16 ( Binary &aData, Container const &container, bool wr
 
     *reinterpret_cast<Int16Info*> ( aData.data () + offset ) = Int16Info
     {
-        ._data = container._data._i16
+        ._data = std::get<int16_t> ( container._data )
     };
 }
 
@@ -1333,7 +1278,7 @@ void SaveState::EncodeUInt16 ( Binary &aData, Container const &container, bool w
 
     *reinterpret_cast<UInt16Info*> ( aData.data () + offset ) = UInt16Info
     {
-        ._data = container._data._ui16
+        ._data = std::get<uint16_t> ( container._data )
     };
 }
 
@@ -1348,7 +1293,7 @@ void SaveState::EncodeInt32 ( Binary &aData, Container const &container, bool wr
 
     *reinterpret_cast<Int32Info*> ( aData.data () + offset ) = Int32Info
     {
-        ._data = container._data._i32
+        ._data = std::get<int32_t> ( container._data )
     };
 }
 
@@ -1363,7 +1308,7 @@ void SaveState::EncodeUInt32 ( Binary &aData, Container const &container, bool w
 
     *reinterpret_cast<UInt32Info*> ( aData.data () + offset ) = UInt32Info
     {
-        ._data = container._data._ui16
+        ._data = std::get<uint32_t> ( container._data )
     };
 }
 
@@ -1378,7 +1323,7 @@ void SaveState::EncodeInt64 ( Binary &aData, Container const &container, bool wr
 
     *reinterpret_cast<Int64Info*> ( aData.data () + offset ) = Int64Info
     {
-        ._data = container._data._i64
+        ._data = std::get<int64_t> ( container._data )
     };
 }
 
@@ -1393,7 +1338,7 @@ void SaveState::EncodeUInt64 ( Binary &aData, Container const &container, bool w
 
     *reinterpret_cast<UInt64Info*> ( aData.data () + offset ) = UInt64Info
     {
-        ._data = container._data._ui64
+        ._data = std::get<uint64_t> ( container._data )
     };
 }
 
@@ -1429,7 +1374,7 @@ void SaveState::EncodeFloat ( Binary &aData, Container const &container, bool wr
 
     *reinterpret_cast<FloatInfo*> ( aData.data () + offset ) = FloatInfo
     {
-        ._data = container._data._float
+        ._data = std::get<float> ( container._data )
     };
 }
 
@@ -1444,7 +1389,7 @@ void SaveState::EncodeDouble ( Binary &aData, Container const &container, bool w
 
     *reinterpret_cast<DoubleInfo*> ( aData.data () + offset ) = DoubleInfo
     {
-        ._data = container._data._double
+        ._data = std::get<double> ( container._data )
     };
 }
 
@@ -1459,7 +1404,7 @@ void SaveState::EncodeBool ( Binary &aData, Container const &container, bool wri
 
     *reinterpret_cast<BoolInfo*> ( aData.data () + offset ) = BoolInfo
     {
-        ._data = container._data._bool ? android_vulkan::AV_TRUE : android_vulkan::AV_FALSE
+        ._data = std::get<bool> ( container._data ) ? android_vulkan::AV_TRUE : android_vulkan::AV_FALSE
     };
 }
 

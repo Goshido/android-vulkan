@@ -14,7 +14,7 @@
 
 ## <a id="compile-tool">Compile tool</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10117_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10120_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -55,6 +55,7 @@ dxc.exe                                                                         
     -fspv-target-env=vulkan1.1                                                          ^
     -enable-16bit-types                                                                 ^
     -WX                                                                                 ^
+    -ffinite-math-only                                                                  ^
     -O3                                                                                 ^
     -T vs_6_8                                                                           ^
     -E VS                                                                               ^
@@ -79,6 +80,7 @@ dxc.exe                                                                         
     -fspv-target-env=vulkan1.1                                                          ^
     -enable-16bit-types                                                                 ^
     -WX                                                                                 ^
+    -ffinite-math-only                                                                  ^
     -O3                                                                                 ^
     -T ps_6_8                                                                           ^
     -E PS                                                                               ^
@@ -103,6 +105,7 @@ dxc.exe                                                                         
     -fspv-target-env=vulkan1.1                                                          ^
     -enable-16bit-types                                                                 ^
     -WX                                                                                 ^
+    -ffinite-math-only                                                                  ^
     -O3                                                                                 ^
     -T cs_6_8                                                                           ^
     -E CS                                                                               ^
@@ -151,7 +154,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-11-23\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-12-12\bin`
 
 [↬ table of content ⇧](#table-of-content)
 

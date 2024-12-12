@@ -919,7 +919,7 @@ int Scene::OnSetSoundListenerTransform ( lua_State* state )
 {
     auto &self = *static_cast<Scene*> ( lua_touserdata ( state, 1 ) );
     GXMat4 const &transform = ScriptableGXMat4::Extract ( state, 2 );
-    self._soundMixer.SetListenerLocation ( *reinterpret_cast<GXVec3 const*> ( &transform._m[ 3U ][ 0U ] ) );
+    self._soundMixer.SetListenerLocation ( *reinterpret_cast<GXVec3 const*> ( transform._data[ 3U ] ) );
 
     GXQuat orientation {};
     orientation.From ( transform );

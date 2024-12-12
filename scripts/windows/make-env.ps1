@@ -19,6 +19,7 @@ $global:FLAGS =
     "-fspv-target-env=vulkan1.1",
     "-enable-16bit-types",
     "-WX",
+    "-ffinite-math-only",
     "-I", $EDITOR_HLSL_DIRECTORY,
     "-I", "$editorDirectory\include",
     "-I", $MOBILE_HLSL_DIRECTORY,

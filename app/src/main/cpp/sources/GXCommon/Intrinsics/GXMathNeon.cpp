@@ -1,4 +1,4 @@
-// version 1.15
+// version 1.16
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -85,7 +85,7 @@ namespace {
     float32x4_t const tmp = vnegq_f32 ( vld1q_f32 ( _data ) );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b ) noexcept
@@ -95,7 +95,7 @@ namespace {
     float32x4_t const tmp = vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b ) noexcept
@@ -105,7 +105,7 @@ namespace {
     float32x4_t const tmp = vfmaq_n_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ), bScale );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b ) noexcept
@@ -115,7 +115,7 @@ namespace {
     float32x4_t const tmp = vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXFloat scale ) noexcept
@@ -125,7 +125,7 @@ namespace {
     float32x4_t const tmp = vmulq_n_f32 ( vld1q_f32 ( a._data ), scale );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b ) noexcept
@@ -135,7 +135,7 @@ namespace {
     float32x4_t const tmp = vmulq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 [[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const noexcept
@@ -192,7 +192,7 @@ namespace {
     float32x4_t const tmp = vfmaq_n_f32 ( s, vsubq_f32 ( vld1q_f32 ( finish._data ), s ), interpolationFactor );
 
     vst1_f32 ( _data, vget_low_f32 ( tmp ) );
-    vst1_lane_s32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
+    vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -541,7 +541,7 @@ namespace {
     float32x4_t const yotta = vaddq_f32 ( beta, alpha2 );
 
     vst1_f32 ( result, vget_low_f32 ( yotta ) );
-    vst1_lane_s32 ( result + 2U, vget_high_f32 ( yotta ), 0 );
+    vst1_lane_f32 ( result + 2U, vget_high_f32 ( yotta ), 0 );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -552,50 +552,50 @@ namespace {
     constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
     uint32x4_t const mask = vld1q_u32 ( maskData );
 
-    float32x4_t const tmpA0 = vld1q_f32 ( a._data );
+    float32x4_t const tmpA0 = vld1q_f32 ( a._data[ 0U ] );
     float32x4_t const a0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA0, mask ) );
-    float32x4_t const tmpB0 = vld1q_f32 ( b._data );
+    float32x4_t const tmpB0 = vld1q_f32 ( b._data[ 0U ] );
     float32x4_t const b0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB0, mask ) );
     float32x4_t c0 = vmulq_laneq_f32 ( b0, a0, 0 );
 
-    float32x4_t const tmpA1 = vld1q_f32 ( a._data + 3U );
+    float32x4_t const tmpA1 = vld1q_f32 ( a._data[ 1U ] );
     float32x4_t const a1 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA1, mask ) );
     float32x4_t c1 = vmulq_laneq_f32 ( b0, a1, 0 );
 
-    float32x4_t const tmpB1 = vld1q_f32 ( b._data + 3U );
+    float32x4_t const tmpB1 = vld1q_f32 ( b._data[ 1U ] );
     float32x4_t const b1 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB1, mask ) );
     c0 = vfmaq_laneq_f32 ( c0, b1, a0, 1 );
     c1 = vfmaq_laneq_f32 ( c1, b1, a1, 1 );
 
-    float32x4_t const tmpA2 = vld1q_f32 ( a._data + 6U );
+    float32x4_t const tmpA2 = vld1q_f32 ( a._data[ 2U ] );
     float32x4_t const a2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpA2, mask ) );
     float32x4_t c2 = vmulq_laneq_f32 ( b0, a2, 0 );
     c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
 
-    float32x4_t const tmpB2 = vld1q_f32 ( b._data + 6U );
+    float32x4_t const tmpB2 = vld1q_f32 ( b._data[ 2U ] );
     float32x4_t const b2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpB2, mask ) );
     c0 = vfmaq_laneq_f32 ( c0, b2, a0, 2 );
     c1 = vfmaq_laneq_f32 ( c1, b2, a1, 2 );
-    vst1q_f32 ( _data, c0 );
+    vst1q_f32 ( _data[ 0U ], c0 );
 
     c2 = vfmaq_laneq_f32 ( c2, b2, a2, 2 );
-    vst1q_f32 ( _data + 3U, c1 );
+    vst1q_f32 ( _data[ 1U ], c1 );
 
-    vst1_f32 ( _data + 6U, vget_low_f32 ( c2 ) );
-    vst1_lane_s32 ( _data + 8U, vget_high_f32 ( c2 ), 0 );
+    vst1_f32 ( _data[ 2U ], vget_low_f32 ( c2 ) );
+    vst1_lane_f32 ( _data[ 2U ] + 2U, vget_high_f32 ( c2 ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXMat3::MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data ), v._data[ 0U ] );
-    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data + 3U ), v._data[ 1U ] );
-    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data + 6U ), v._data[ 2U ] );
+    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
+    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
+    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data[ 2U ] ), v._data[ 2U ] );
 
     float32x4_t const b = vaddq_f32 ( a0, a1 );
     float32x4_t const c = vaddq_f32 ( b, a2 );
 
     vst1_f32 ( out._data, vget_low_f32 ( c ) );
-    vst1_lane_s32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
+    vst1_lane_f32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept
@@ -604,13 +604,13 @@ namespace {
     constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
     uint32x4_t const mask = vld1q_u32 ( maskData );
 
-    float32x4_t const tmpM0 = vld1q_f32 ( _data );
+    float32x4_t const tmpM0 = vld1q_f32 ( _data[ 0U ] );
     float32x4_t const m0 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpM0, mask ) );
 
-    float32x4_t const tmpM1 = vld1q_f32 ( _data + 3U );
+    float32x4_t const tmpM1 = vld1q_f32 ( _data[ 1U ] );
     float32x4_t const m1 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpM1, mask ) );
 
-    float32x4_t const tmpM2 = vld1q_f32 ( _data + 6U );
+    float32x4_t const tmpM2 = vld1q_f32 ( _data[ 2U ] );
     float32x4_t const m2 = vreinterpretq_u32_f32 ( vandq_u32 ( tmpM2, mask ) );
 
     float32x4_t const tmpVec = vld1q_f32 ( v._data );
@@ -631,40 +631,40 @@ namespace {
     // Sub-matrices.
     float32_t const aExtract[ 4U ] =
     {
-        sourceMatrix._data[ 0U ],
-        sourceMatrix._data[ 1U ],
-        sourceMatrix._data[ 4U ],
-        sourceMatrix._data[ 5U ]
+        sourceMatrix._data[ 0U ][ 0U ],
+        sourceMatrix._data[ 0U ][ 1U ],
+        sourceMatrix._data[ 1U ][ 0U ],
+        sourceMatrix._data[ 1U ][ 1U ]
     };
 
     float32x4_t const a = vld1q_f32 ( aExtract );
 
     float32_t const bExtract[ 4U ] =
     {
-        sourceMatrix._data[ 2U ],
-        sourceMatrix._data[ 3U ],
-        sourceMatrix._data[ 6U ],
-        sourceMatrix._data[ 7U ]
+        sourceMatrix._data[ 0U ][ 2U ],
+        sourceMatrix._data[ 0U ][ 3U ],
+        sourceMatrix._data[ 1U ][ 2U ],
+        sourceMatrix._data[ 1U ][ 3U ]
     };
 
     float32x4_t const b = vld1q_f32 ( bExtract );
 
     float32_t const cExtract[ 4U ] =
     {
-        sourceMatrix._data[ 8U ],
-        sourceMatrix._data[ 9U ],
-        sourceMatrix._data[ 12U ],
-        sourceMatrix._data[ 13U ]
+        sourceMatrix._data[ 2U ][ 0U ],
+        sourceMatrix._data[ 2U ][ 1U ],
+        sourceMatrix._data[ 3U ][ 0U ],
+        sourceMatrix._data[ 3U ][ 1U ]
     };
 
     float32x4_t const c = vld1q_f32 ( cExtract );
 
     float32_t const dExtract[ 4U ] =
     {
-        sourceMatrix._data[ 10U ],
-        sourceMatrix._data[ 11U ],
-        sourceMatrix._data[ 14U ],
-        sourceMatrix._data[ 15U ]
+        sourceMatrix._data[ 2U ][ 2U ],
+        sourceMatrix._data[ 2U ][ 3U ],
+        sourceMatrix._data[ 3U ][ 2U ],
+        sourceMatrix._data[ 3U ][ 3U ]
     };
 
     float32x4_t const d = vld1q_f32 ( dExtract );
@@ -672,29 +672,35 @@ namespace {
     // Determinants: |A|, |B|, |C| and |D|.
     float32_t const d0[ 4U ] =
     {
-        sourceMatrix._data[ 0U ],
-        sourceMatrix._data[ 2U ],
-        sourceMatrix._data[ 8U ],
-        sourceMatrix._data[ 10U ]
+        sourceMatrix._data[ 0U ][ 0U ],
+        sourceMatrix._data[ 0U ][ 2U ],
+        sourceMatrix._data[ 2U ][ 0U ],
+        sourceMatrix._data[ 2U ][ 2U ]
     };
 
     float32_t const d1[ 4U ] =
     {
-        sourceMatrix._data[ 5U ],
-        sourceMatrix._data[ 7U ],
-        sourceMatrix._data[ 13U ],
-        sourceMatrix._data[ 15U ]
+        sourceMatrix._data[ 1U ][ 1U ],
+        sourceMatrix._data[ 1U ][ 3U ],
+        sourceMatrix._data[ 3U ][ 1U ],
+        sourceMatrix._data[ 3U ][ 3U ]
     };
 
     float32_t const d2[ 4U ] =
     {
-        sourceMatrix._data[ 4U ],
-        sourceMatrix._data[ 6U ],
-        sourceMatrix._data[ 12U ],
-        sourceMatrix._data[ 14U ]
+        sourceMatrix._data[ 1U ][ 0U ],
+        sourceMatrix._data[ 1U ][ 2U ],
+        sourceMatrix._data[ 3U ][ 0U ],
+        sourceMatrix._data[ 3U ][ 2U ]
     };
 
-    float32_t const d3[ 4U ] = { sourceMatrix._data[ 1U ], sourceMatrix._data[ 3U ], sourceMatrix._data[ 9U ], sourceMatrix._data[ 11U ] };
+    float32_t const d3[ 4U ] =
+    {
+        sourceMatrix._data[ 0U ][ 1U ],
+        sourceMatrix._data[ 0U ][ 3U ],
+        sourceMatrix._data[ 2U ][ 1U ],
+        sourceMatrix._data[ 2U ][ 3U ]
+    };
 
     float32x4_t const detComposite = vfmsq_f32 (
         vmulq_f32 ( vld1q_f32 ( d0 ), vld1q_f32 ( d1 ) ), vld1q_f32 ( d2 ), vld1q_f32 ( d3 )
@@ -810,87 +816,87 @@ namespace {
 
     float32x2_t const x02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( x ) ) );
     float32x4_t const xShift = vextq_f32 ( x, x, 1 );
-    vst1_f32 ( _data + 4U, vrev64_f32 ( x02 ) );
+    vst1_f32 ( _data[ 1U ], vrev64_f32 ( x02 ) );
 
     float32x2_t const x13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( xShift ) ) );
-    vst1_f32 ( _data, vrev64_f32 ( x13 ) );
+    vst1_f32 ( _data[ 0U ], vrev64_f32 ( x13 ) );
 
     // Z = { _m[ 3U ][ 1U ]     _m[ 2U ][ 1U ]      _m[ 3U ][ 0U ]      _m[ 2U ][ 0U ] }
     float32x4_t const z = vmulq_f32 ( zAdj, invDetMFactor );
 
     float32x2_t const y02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( y ) ) );
     float32x4_t const yShift = vextq_f32 ( y, y, 1 );
-    vst1_f32 ( _data + 6U, vrev64_f32 ( y02 ) );
+    vst1_f32 ( _data[ 1U ] + 2U, vrev64_f32 ( y02 ) );
 
     float32x2_t const y13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( yShift ) ) );
-    vst1_f32 ( _data + 2U, vrev64_f32 ( y13 ) );
+    vst1_f32 ( _data[ 0U ] + 2U, vrev64_f32 ( y13 ) );
 
     // W = { _m[ 3U ][ 3U ]     _m[ 2U ][ 3U ]      _m[ 3U ][ 2U ]      _m[ 2U ][ 2U ] }
     float32x4_t const w = vmulq_f32 ( wAdj, invDetMFactor );
 
     float32x2_t const z02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( z ) ) );
     float32x4_t const zShift = vextq_f32 ( z, z, 1 );
-    vst1_f32 ( _data + 12U, vrev64_f32 ( z02 ) );
+    vst1_f32 ( _data[ 3U ], vrev64_f32 ( z02 ) );
 
     float32x2_t const z13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( zShift ) ) );
-    vst1_f32 ( _data + 8U, vrev64_f32 ( z13 ) );
+    vst1_f32 ( _data[ 2U ], vrev64_f32 ( z13 ) );
 
     float32x2_t const w02 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( w ) ) );
     float32x4_t const wShift = vextq_f32 ( w, w, 1 );
-    vst1_f32 ( _data + 14U, vrev64_f32 ( w02 ) );
+    vst1_f32 ( _data[ 3U ] + 2U, vrev64_f32 ( w02 ) );
 
     float32x2_t const w13 = vreinterpret_f32_u32 ( vmovn_u64 ( vreinterpretq_u32_f32 ( wShift ) ) );
-    vst1_f32 ( _data + 10U, vrev64_f32 ( w13 ) );
+    vst1_f32 ( _data[ 2U ] + 2U, vrev64_f32 ( w13 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept
 {
     // see docs/arm-neon/matrix-multiplication.odt
 
-    float32x4_t const a0 = vld1q_f32 ( a._data );
-    float32x4_t const b0 = vld1q_f32 ( b._data );
+    float32x4_t const a0 = vld1q_f32 ( a._data[ 0U ] );
+    float32x4_t const b0 = vld1q_f32 ( b._data[ 0U ] );
     float32x4_t c0 = vmulq_laneq_f32 ( b0, a0, 0 );
 
-    float32x4_t const a1 = vld1q_f32 ( a._data + 4U );
+    float32x4_t const a1 = vld1q_f32 ( a._data[ 1U ] );
     float32x4_t c1 = vmulq_laneq_f32 ( b0, a1, 0 );
 
-    float32x4_t const b1 = vld1q_f32 ( b._data + 4U );
+    float32x4_t const b1 = vld1q_f32 ( b._data[ 1U ] );
     c0 = vfmaq_laneq_f32 ( c0, b1, a0, 1 );
     c1 = vfmaq_laneq_f32 ( c1, b1, a1, 1 );
 
-    float32x4_t const a2 = vld1q_f32 ( a._data + 8U );
+    float32x4_t const a2 = vld1q_f32 ( a._data[ 2U ] );
     float32x4_t c2 = vmulq_laneq_f32 ( b0, a2, 0 );
     c2 = vfmaq_laneq_f32 ( c2, b1, a2, 1 );
 
-    float32x4_t const b2 = vld1q_f32 ( b._data + 8U );
+    float32x4_t const b2 = vld1q_f32 ( b._data[ 2U ] );
     c0 = vfmaq_laneq_f32 ( c0, b2, a0, 2 );
     c1 = vfmaq_laneq_f32 ( c1, b2, a1, 2 );
     c2 = vfmaq_laneq_f32 ( c2, b2, a2, 2 );
 
-    float32x4_t const a3 = vld1q_f32 ( a._data + 12U );
+    float32x4_t const a3 = vld1q_f32 ( a._data[ 3U ] );
     float32x4_t c3 = vmulq_laneq_f32 ( b0, a3, 0 );
     c3 = vfmaq_laneq_f32 ( c3, b1, a3, 1 );
     c3 = vfmaq_laneq_f32 ( c3, b2, a3, 2 );
 
-    float32x4_t const b3 = vld1q_f32 ( b._data + 12U );
+    float32x4_t const b3 = vld1q_f32 ( b._data[ 3U ] );
     c0 = vfmaq_laneq_f32 ( c0, b3, a0, 3 );
     c1 = vfmaq_laneq_f32 ( c1, b3, a1, 3 );
-    vst1q_f32 ( _data, c0 );
+    vst1q_f32 ( _data[ 0U ], c0 );
 
     c2 = vfmaq_laneq_f32 ( c2, b3, a2, 3 );
-    vst1q_f32 ( _data + 4U, c1 );
+    vst1q_f32 ( _data[ 1U ], c1 );
 
     c3 = vfmaq_laneq_f32 ( c3, b3, a3, 3 );
-    vst1q_f32 ( _data + 8U, c2 );
-    vst1q_f32 ( _data + 12U, c3 );
+    vst1q_f32 ( _data[ 2U ], c2 );
+    vst1q_f32 ( _data[ 3U ], c3 );
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept
 {
-    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data ), v._data[ 0U ] );
-    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data + 4U ), v._data[ 1U ] );
-    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data + 8U ), v._data[ 2U ] );
-    float32x4_t const a3 = vmulq_n_f32 ( vld1q_f32 ( _data + 12U ), v._data[ 3U ] );
+    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
+    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
+    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data[ 2U ] ), v._data[ 2U ] );
+    float32x4_t const a3 = vmulq_n_f32 ( vld1q_f32 ( _data[ 3U ] ), v._data[ 3U ] );
 
     float32x4_t const b0 = vaddq_f32 ( a0, a1 );
     float32x4_t const b1 = vaddq_f32 ( a2, a3 );
@@ -902,38 +908,38 @@ namespace {
 {
     float32x4_t const vec = vld1q_f32 ( v._data );
 
-    out._data[ 0U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data ), vec ) );
-    out._data[ 1U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data + 4U ), vec ) );
-    out._data[ 2U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data + 8U ), vec ) );
-    out._data[ 3U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data + 12U ), vec ) );
+    out._data[ 0U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data[ 0U ] ), vec ) );
+    out._data[ 1U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data[ 1U ] ), vec ) );
+    out._data[ 2U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data[ 2U ] ), vec ) );
+    out._data[ 3U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data[ 3U ] ), vec ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data ), v._data[ 0U ] );
-    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data + 4U ), v._data[ 1U ] );
-    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data + 8U ), v._data[ 2U ] );
+    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
+    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
+    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data[ 2U ] ), v._data[ 2U ] );
 
     float32x4_t const b = vaddq_f32 ( a0, a1 );
     float32x4_t const c = vaddq_f32 ( b, a2 );
 
     vst1_f32 ( out._data, vget_low_f32 ( c ) );
-    vst1_lane_s32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
+    vst1_lane_f32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data ), v._data[ 0U ] );
-    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data + 4U ), v._data[ 1U ] );
-    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data + 8U ), v._data[ 2U ] );
+    float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
+    float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
+    float32x4_t const a2 = vmulq_n_f32 ( vld1q_f32 ( _data[ 2U ] ), v._data[ 2U ] );
 
-    float32x4_t const b0 = vaddq_f32 ( vld1q_f32 ( _data + 12U ), a0 );
+    float32x4_t const b0 = vaddq_f32 ( vld1q_f32 ( _data[ 3U ] ), a0 );
     float32x4_t const b1 = vaddq_f32 ( a1, a2 );
 
     float32x4_t const c = vaddq_f32 ( b0, b1 );
 
     vst1_f32 ( out._data, vget_low_f32 ( c ) );
-    vst1_lane_s32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
+    vst1_lane_f32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -22,25 +22,25 @@ Useful documentation is located [here](docs/documentation.md).
 ### Requirements
 
 * _Windows Vista_+ or _Monjaro KDE_
-* [_Android Studio Ladybug | 2024.2.1 Patch 2_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.7.2_
+* [_Android Studio Ladybug | 2024.2.1 Patch 3_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.7.3_
 * _Android NDK 27.2.12479018 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 15 (API level 35)_
 * _Android SDK Build-Tools 35.0.0_
 * _Android SDK Platform-Tools 35.0.2_
-* _Kotlin 2.0.21_
-* _Kotlin Gradle plugin 2.0.21_
-* _CMake 3.31.0_
+* _Kotlin 2.1.0_
+* _Kotlin Gradle plugin 2.1.0_
+* _CMake 3.31.1_
 * [_Gradle 8.11.1-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.8.2407.10117_](https://github.com/microsoft/DirectXShaderCompiler) `848b7c42bd8da13693273513412c0a554c7918a1`
-* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `3f3e3de34ee3613d621b643c58a40b93148e0932`
+* [_DirectX Shader Compiler 1.8.2407.10120_](https://github.com/microsoft/DirectXShaderCompiler) `d39324e0635130e834a68e33b0c603cf5fc9fb4f`
+* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `59320b2d3c2584ac01914ed0deff64bcc8fb23b2`
 * [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `7cf42ea17aef7bc1b7b21af70724840a96c2e7d0`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
 * [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
 * [_stb_image 2.30_](https://github.com/nothings/stb) `5c205738c191bcb0abc65c4febfa9bd25ff35234`
-* [_Vulkan Validation Layers 1.3.302_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `736e979cbb2579384ee420dc349de4611bdee3ee`
-* [_Lua 5.5.0_](https://github.com/lua/lua) `50c7c915ee2fa239043d5456237f5145d064089b`
+* [_Vulkan Validation Layers 1.4.303_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f`
+* [_Lua 5.5.0_](https://github.com/lua/lua) `2fccd3c4b9043a77b0be2da74c8c7ffe31ce28c7`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

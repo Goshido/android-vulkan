@@ -147,13 +147,13 @@ void StippleTest::Animate ( float deltaTime ) noexcept
     GXMat4 transform {};
     transform.From ( r, renderLocation );
 
-    GXVec3 &x = *reinterpret_cast<GXVec3*> ( &transform._m[ 0U ][ 0U ] );
+    GXVec3 &x = *reinterpret_cast<GXVec3*> ( transform._data[ 0U ] );
     x.Multiply ( x, renderScale._data[ 0U ] );
 
-    GXVec3 &y = *reinterpret_cast<GXVec3*> ( &transform._m[ 1U ][ 0U ] );
+    GXVec3 &y = *reinterpret_cast<GXVec3*> ( transform._data[ 1U ] );
     y.Multiply ( y, renderScale._data[ 1U ] );
 
-    GXVec3 &z = *reinterpret_cast<GXVec3*> ( &transform._m[ 2U ][ 0U ] );
+    GXVec3 &z = *reinterpret_cast<GXVec3*> ( transform._data[ 2U ] );
     z.Multiply ( z, renderScale._data[ 2U ] );
 
     _stipple->SetTransform ( transform );
@@ -231,9 +231,9 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     GXMat4 transform {};
     transform.Translation ( floorRenderLocation );
-    transform._m[ 0U ][ 0U ] = floorRenderScale._data[ 0U ];
-    transform._m[ 1U ][ 1U ] = floorRenderScale._data[ 1U ];
-    transform._m[ 2U ][ 2U ] = floorRenderScale._data[ 2U ];
+    transform._data[ 0U ][ 0U ] = floorRenderScale._data[ 0U ];
+    transform._data[ 1U ][ 1U ] = floorRenderScale._data[ 1U ];
+    transform._data[ 2U ][ 2U ] = floorRenderScale._data[ 2U ];
     _floor->SetTransform ( transform );
 
     cb += consumed;

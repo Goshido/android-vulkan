@@ -93,7 +93,7 @@ void ReflectionComponent::OnTransform ( GXMat4 const &transformWorld ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &probe = static_cast<ReflectionProbeLocal &> ( *_probe );
 
-    probe.SetLocation ( *reinterpret_cast<GXVec3 const*> ( &transformWorld._m[ 3U ][ 0U ] ) );
+    probe.SetLocation ( *reinterpret_cast<GXVec3 const*> ( transformWorld._data[ 3U ] ) );
 }
 
 } // namespace pbr

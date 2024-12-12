@@ -1,4 +1,4 @@
-// version 1.93
+// version 1.94
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -46,8 +46,9 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXVec2::Init ( GXFloat x, GXFloat y ) noexcept
 {
-    _data[ 0U ] = x;
-    _data[ 1U ] = y;
+    auto &d = _data;
+    d[ 0U ] = x;
+    d[ 1U ] = y;
 }
 
 [[maybe_unused]] GXVoid GXVec2::Normalize () noexcept
@@ -73,7 +74,9 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXBool GXVec2::IsEqual ( GXVec2 const &other ) const noexcept
 {
-    return ( _data[ 0U ] == other._data[ 0U ] ) & ( _data[ 1U ] == other._data[ 1U ] );
+    auto const &d = _data;
+    auto const &otherData = other._data;
+    return ( d[ 0U ] == otherData[ 0U ] ) & ( d[ 1U ] == otherData[ 1U ] );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -157,9 +160,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXVec3::Init ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
-    _data[ 0U ] = x;
-    _data[ 1U ] = y;
-    _data[ 2U ] = z;
+    auto &d = _data;
+    d[ 0U ] = x;
+    d[ 1U ] = y;
+    d[ 2U ] = z;
 }
 
 [[maybe_unused]] GXVoid GXVec3::Normalize () noexcept
@@ -201,13 +205,9 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXBool GXVec3::IsEqual ( GXVec3 const &other ) noexcept
 {
-    if ( _data[ 0U ] != other._data[ 0U ] )
-        return GX_FALSE;
-
-    if ( _data[ 1U ] != other._data[ 1U ] )
-        return GX_FALSE;
-
-    return _data[ 2U ] == other._data[ 2U ];
+    auto const &d = _data;
+    auto const &otherData = other._data;
+    return ( d[ 0U ] == otherData[ 0U ] ) & ( d[ 1U ] == otherData[ 1U ] ) & ( d[ 2U ] == otherData[ 2U ] );
 }
 
 [[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteX () noexcept
@@ -340,18 +340,13 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVec4::GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept:
-    _data { vector._data[ 0U ], vector._data[ 1U ], vector._data[ 2U ], w }
-{
-    // NOTHING
-}
-
 [[maybe_unused]] GXVoid GXVec4::Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept
 {
-    _data[ 0U ] = x;
-    _data[ 1U ] = y;
-    _data[ 2U ] = z;
-    _data[ 3U ] = w;
+    auto &d = _data;
+    d[ 0U ] = x;
+    d[ 1U ] = y;
+    d[ 2U ] = z;
+    d[ 3U ] = w;
 }
 
 [[maybe_unused]] GXVoid GXVec4::SetX ( GXFloat x ) noexcept
@@ -408,18 +403,20 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXVec6::Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 ) noexcept
 {
-    _data[ 0U ] = a1;
-    _data[ 1U ] = a2;
-    _data[ 2U ] = a3;
-    _data[ 3U ] = a4;
-    _data[ 4U ] = a5;
-    _data[ 5U ] = a6;
+    auto &d = _data;
+    d[ 0U ] = a1;
+    d[ 1U ] = a2;
+    d[ 2U ] = a3;
+    d[ 3U ] = a4;
+    d[ 4U ] = a5;
+    d[ 5U ] = a6;
 }
 
 [[maybe_unused]] GXVoid GXVec6::From ( GXVec3 const &v1, GXVec3 const &v2 ) noexcept
 {
-    std::memcpy ( _data, &v1, sizeof ( GXVec3 ) );
-    std::memcpy ( _data + 3U, &v2, sizeof ( GXVec3 ) );
+    auto &d = _data;
+    std::memcpy ( d, &v1, sizeof ( GXVec3 ) );
+    std::memcpy ( d + 3U, &v2, sizeof ( GXVec3 ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -438,10 +435,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXColorRGB::Init ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept
 {
-    _data[ 0U ] = red;
-    _data[ 1U ] = green;
-    _data[ 2U ] = blue;
-    _data[ 3U ] = alpha;
+    auto &d = _data;
+    d[ 0U ] = red;
+    d[ 1U ] = green;
+    d[ 2U ] = blue;
+    d[ 3U ] = alpha;
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::SetRed ( GXFloat red ) noexcept
@@ -505,44 +503,45 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     GXFloat const increment = minValue + delta;
     GXFloat const decrement = value - delta;
 
-    _data[ 3 ] = color.GetAlpha () * HSVA_TO_RGBA_FLOAT;
+    auto &d = _data;
+    d[ 3 ] = color.GetAlpha () * HSVA_TO_RGBA_FLOAT;
 
     switch ( selector )
     {
         case 0U:
-            _data[ 0U ] = value * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = increment * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = increment * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = minValue * HSVA_TO_RGBA_FLOAT;
         break;
 
         case 1U:
-            _data[ 0U ] = decrement * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = value * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = decrement * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = minValue * HSVA_TO_RGBA_FLOAT;
         break;
 
         case 2U:
-            _data[ 0U ] = minValue * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = value * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = increment * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = increment * HSVA_TO_RGBA_FLOAT;
         break;
 
         case 3U:
-            _data[ 0U ] = minValue * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = decrement * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = decrement * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = value * HSVA_TO_RGBA_FLOAT;
         break;
 
         case 4U:
-            _data[ 0U ] = increment * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = minValue * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = increment * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = value * HSVA_TO_RGBA_FLOAT;
         break;
 
         case 5U:
-            _data[ 0U ] = value * HSVA_TO_RGBA_FLOAT;
-            _data[ 1U ] = minValue * HSVA_TO_RGBA_FLOAT;
-            _data[ 2U ] = decrement * HSVA_TO_RGBA_FLOAT;
+            d[ 0U ] = value * HSVA_TO_RGBA_FLOAT;
+            d[ 1U ] = minValue * HSVA_TO_RGBA_FLOAT;
+            d[ 2U ] = decrement * HSVA_TO_RGBA_FLOAT;
         break;
 
         default:
@@ -584,10 +583,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     GXUByte &alpha
 ) const noexcept
 {
-    red = static_cast<GXUByte> ( std::lround ( _data[ 0U ] * RGBA_TO_UBYTE_FACTOR ) );
-    green = static_cast<GXUByte> ( std::lround ( _data[ 1U ] * RGBA_TO_UBYTE_FACTOR ) );
-    blue = static_cast<GXUByte> ( std::lround ( _data[ 2U ] * RGBA_TO_UBYTE_FACTOR ) );
-    alpha = static_cast<GXUByte> ( std::lround ( _data[ 3U ] * RGBA_TO_UBYTE_FACTOR ) );
+    auto const &d = _data;
+    red = static_cast<GXUByte> ( std::lround ( d[ 0U ] * RGBA_TO_UBYTE_FACTOR ) );
+    green = static_cast<GXUByte> ( std::lround ( d[ 1U ] * RGBA_TO_UBYTE_FACTOR ) );
+    blue = static_cast<GXUByte> ( std::lround ( d[ 2U ] * RGBA_TO_UBYTE_FACTOR ) );
+    alpha = static_cast<GXUByte> ( std::lround ( d[ 3U ] * RGBA_TO_UBYTE_FACTOR ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -642,26 +642,27 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 {
     GXFloat const maxValue = GXMaxf ( GXMaxf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
     GXFloat const minValue = GXMinf ( GXMinf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
+    auto &d = _data;
 
     if ( maxValue == minValue )
     {
-        _data[ 0U ] = 0.0F;
+        d[ 0U ] = 0.0F;
     }
     else if ( maxValue == color.GetRed () && color.GetGreen () >= color.GetBlue () )
     {
-        _data[ 0U ] = 60.0F * ( ( color.GetGreen () - color.GetBlue () ) / ( maxValue - minValue ) );
+        d[ 0U ] = 60.0F * ( ( color.GetGreen () - color.GetBlue () ) / ( maxValue - minValue ) );
     }
     else if ( maxValue == color.GetRed () && color.GetGreen () < color.GetBlue () )
     {
-        _data[ 0U ] = 60.0F * ( ( color.GetGreen () - color.GetBlue () ) / ( maxValue - minValue ) ) + 360.0F;
+        d[ 0U ] = 60.0F * ( ( color.GetGreen () - color.GetBlue () ) / ( maxValue - minValue ) ) + 360.0F;
     }
     else if ( maxValue == color.GetGreen () )
     {
-        _data[ 0U ] = 60.0F * ( ( color.GetBlue () - color.GetRed () ) / ( maxValue - minValue ) ) + 120.0F;
+        d[ 0U ] = 60.0F * ( ( color.GetBlue () - color.GetRed () ) / ( maxValue - minValue ) ) + 120.0F;
     }
     else if ( maxValue == color.GetBlue () )
     {
-        _data[ 0U ] = 60.0F * ( ( color.GetRed () - color.GetGreen () ) / ( maxValue - minValue ) ) + 240.0F;
+        d[ 0U ] = 60.0F * ( ( color.GetRed () - color.GetGreen () ) / ( maxValue - minValue ) ) + 240.0F;
     }
     else
     {
@@ -669,12 +670,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     }
 
     if ( maxValue == 0.0F )
-        _data[ 1U ] = 0.0F;
+        d[ 1U ] = 0.0F;
     else
-        _data[ 1U ] = 100.0F * ( 1.0F - minValue / maxValue );
+        d[ 1U ] = 100.0F * ( 1.0F - minValue / maxValue );
 
-    _data[ 2U ] = 100.0F * maxValue;
-    _data[ 3U ] = 100.0F * color.GetAlpha ();
+    d[ 2U ] = 100.0F * maxValue;
+    d[ 3U ] = 100.0F * color.GetAlpha ();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -833,10 +834,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXQuat::Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept
 {
-    _data[ 0U ] = r;
-    _data[ 1U ] = a;
-    _data[ 2U ] = b;
-    _data[ 3U ] = c;
+    auto &d = _data;
+    d[ 0U ] = r;
+    d[ 1U ] = a;
+    d[ 2U ] = b;
+    d[ 3U ] = c;
 }
 
 [[maybe_unused]] GXVoid GXQuat::SetR ( GXFloat r ) noexcept
@@ -881,8 +883,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXQuat::Identity () noexcept
 {
-    _data[ 0U ] = 1.0F;
-    _data[ 1U ] = _data[ 2U ] = _data[ 3U ] = 0.0F;
+    auto &d = _data;
+    d[ 0U ] = 1.0F;
+    d[ 1U ] = 0.0F;
+    d[ 2U ] = 0.0F;
+    d[ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( const GXVec3 &axis, GXFloat angle ) noexcept
@@ -892,11 +897,14 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXQuat::InverseFast ( GXQuat const &unitQuaternion ) noexcept
 {
+    auto &d = _data;
+    auto const &unitData = unitQuaternion._data;
+
     // See https://www.3dgep.com/understanding-quaternions/#Quaternion_Inverse
-    _data[ 0U ] = unitQuaternion._data[ 0U ];
-    _data[ 1U ] = -unitQuaternion._data[ 1U ];
-    _data[ 2U ] = -unitQuaternion._data[ 2U ];
-    _data[ 3U ] = -unitQuaternion._data[ 3U ];
+    d[ 0U ] = unitData[ 0U ];
+    d[ 1U ] = -unitData[ 1U ];
+    d[ 2U ] = -unitData[ 2U ];
+    d[ 3U ] = -unitData[ 3U ];
 }
 
 [[maybe_unused]] GXVoid GXQuat::From ( GXMat3 const &rotationMatrix ) noexcept
@@ -918,7 +926,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    auto const &m = pureRotationMatrix._m;
+    auto const &m = pureRotationMatrix._data;
 
     GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
     GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
@@ -951,6 +959,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
     }
 
+    auto &d = _data;
+
     switch ( solution )
     {
         case SOLUTION_ALPHA:
@@ -958,10 +968,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            d[ 0U ] = phi;
+            d[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            d[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            d[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
@@ -970,10 +980,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
-            _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            d[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            d[ 1U ] = phi;
+            d[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            d[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
@@ -982,10 +992,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
-            _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
+            d[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            d[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            d[ 2U ] = phi;
+            d[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
@@ -994,10 +1004,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
-            _data[ 3U ] = phi;
+            d[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            d[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            d[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
+            d[ 3U ] = phi;
         }
         break;
 
@@ -1012,7 +1022,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     // In ideal mathematics world all solutions are right.
     // But in practice more precise solution is the biggest "solutionFactorXXX" because of square root operation.
 
-    auto const &m = pureRotationMatrix._m;
+    auto const &m = pureRotationMatrix._data;
 
     GXFloat const solutionFactorAlpha = m[ 0U ][ 0U ] + m[ 1U ][ 1U ] + m[ 2U ][ 2U ] + 1.0F;
     GXFloat const solutionFactorBetta = m[ 0U ][ 0U ] - m[ 1U ][ 1U ] - m[ 2U ][ 2U ] + 1.0F;
@@ -1045,6 +1055,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         solution = cases[ static_cast<size_t> ( solutionFactorGamma > solutionFactorYotta ) ];
     }
 
+    auto &d = _data;
+
     switch ( solution )
     {
         case SOLUTION_ALPHA:
@@ -1052,10 +1064,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorAlpha );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = phi;
-            _data[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
-            _data[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
-            _data[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            d[ 0U ] = phi;
+            d[ 1U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            d[ 2U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            d[ 3U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
         }
         break;
 
@@ -1064,10 +1076,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorBetta );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
-            _data[ 1U ] = phi;
-            _data[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
-            _data[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            d[ 0U ] = omega * ( m[ 1U ][ 2U ] - m[ 2U ][ 1U ] );
+            d[ 1U ] = phi;
+            d[ 2U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            d[ 3U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
         }
         break;
 
@@ -1076,10 +1088,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorGamma );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
-            _data[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
-            _data[ 2U ] = phi;
-            _data[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
+            d[ 0U ] = omega * ( m[ 2U ][ 0U ] - m[ 0U ][ 2U ] );
+            d[ 1U ] = omega * ( m[ 0U ][ 1U ] + m[ 1U ][ 0U ] );
+            d[ 2U ] = phi;
+            d[ 3U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
         }
         break;
 
@@ -1088,10 +1100,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
             GXFloat const phi = 0.5F * std::sqrt ( solutionFactorYotta );
             GXFloat const omega = 0.25F / phi;
 
-            _data[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
-            _data[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
-            _data[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
-            _data[ 3U ] = phi;
+            d[ 0U ] = omega * ( m[ 0U ][ 1U ] - m[ 1U ][ 0U ] );
+            d[ 1U ] = omega * ( m[ 0U ][ 2U ] + m[ 2U ][ 0U ] );
+            d[ 2U ] = omega * ( m[ 1U ][ 2U ] + m[ 2U ][ 1U ] );
+            d[ 3U ] = phi;
         }
         break;
 
@@ -1110,9 +1122,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     angle = 2.0F * std::acos ( q._data[ 0U ] );
 
-    axis._data[ 0U ] = q._data[ 1U ];
-    axis._data[ 1U ] = q._data[ 2U ];
-    axis._data[ 2U ] = q._data[ 3U ];
+    auto &axisData = axis._data;
+    axisData[ 0U ] = q._data[ 1U ];
+    axisData[ 1U ] = q._data[ 2U ];
+    axisData[ 2U ] = q._data[ 3U ];
 
     GXFloat const s = std::sqrt ( 1.0F - q._data[ 0U ] * q._data[ 0U ] );
 
@@ -1124,30 +1137,35 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXQuat::Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    GXFloat const rr = _data[ 0U ] * _data[ 0U ];
-    GXFloat const ra2 = _data[ 0U ] * _data[ 1U ] * 2.0F;
-    GXFloat const rb2 = _data[ 0U ] * _data[ 2U ] * 2.0F;
-    GXFloat const rc2 = _data[ 0U ] * _data[ 3U ] * 2.0F;
+    auto const &d = _data;
 
-    GXFloat const aa = _data[ 1U ] * _data[ 1U ];
-    GXFloat const ab2 = _data[ 1U ] * _data[ 2U ] * 2.0F;
-    GXFloat const ac2 = _data[ 1U ] * _data[ 3U ] * 2.0F;
+    GXFloat const rr = d[ 0U ] * d[ 0U ];
+    GXFloat const ra2 = d[ 0U ] * d[ 1U ] * 2.0F;
+    GXFloat const rb2 = d[ 0U ] * d[ 2U ] * 2.0F;
+    GXFloat const rc2 = d[ 0U ] * d[ 3U ] * 2.0F;
 
-    GXFloat const bb = _data[ 2U ] * _data[ 2U ];
-    GXFloat const bc2 = _data[ 2U ] * _data[ 3U ] * 2.0F;
+    GXFloat const aa = d[ 1U ] * d[ 1U ];
+    GXFloat const ab2 = d[ 1U ] * d[ 2U ] * 2.0F;
+    GXFloat const ac2 = d[ 1U ] * d[ 3U ] * 2.0F;
 
-    GXFloat const cc = _data[ 3U ] * _data[ 3U ];
+    GXFloat const bb = d[ 2U ] * d[ 2U ];
+    GXFloat const bc2 = d[ 2U ] * d[ 3U ] * 2.0F;
+
+    GXFloat const cc = d[ 3U ] * d[ 3U ];
 
     GXFloat const inverseSquaredLength = 1.0F / ( rr + aa + bb + cc );
 
-    out._data[ 0U ] = inverseSquaredLength *
-        ( v._data[ 0U ] * ( rr + aa - bb - cc ) + v._data[ 1U ] * ( ab2 - rc2 ) + v._data[ 2U ] * ( rb2 + ac2 ) );
+    auto const &vData = v._data;
+    auto &result = out._data;
 
-    out._data[ 1U ] = inverseSquaredLength *
-        ( v._data[ 0U ] * ( rc2 + ab2 ) + v._data[ 1U ] * ( rr - aa + bb - cc ) + v._data[ 2U ] * ( bc2 - ra2 ) );
+    result[ 0U ] = inverseSquaredLength *
+        ( vData[ 0U ] * ( rr + aa - bb - cc ) + vData[ 1U ] * ( ab2 - rc2 ) + vData[ 2U ] * ( rb2 + ac2 ) );
 
-    out._data[ 2U ] = inverseSquaredLength *
-        ( v._data[ 0U ] * ( ac2 - rb2 ) + v._data[ 1U ] * ( ra2 + bc2 ) + v._data[ 2U ] * ( rr - aa - bb + cc ) );
+    result[ 1U ] = inverseSquaredLength *
+        ( vData[ 0U ] * ( rc2 + ab2 ) + vData[ 1U ] * ( rr - aa + bb - cc ) + vData[ 2U ] * ( bc2 - ra2 ) );
+
+    result[ 2U ] = inverseSquaredLength *
+        ( vData[ 0U ] * ( ac2 - rb2 ) + vData[ 1U ] * ( ra2 + bc2 ) + vData[ 2U ] * ( rr - aa - bb + cc ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1160,42 +1178,48 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::From ( GXQuat const &quaternion ) noexcept
 {
-    GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
-    GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
-    GXFloat const rb2 = quaternion._data[ 0U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const rc2 = quaternion._data[ 0U ] * quaternion._data[ 3u ] * 2.0F;
+    auto const &qData = quaternion._data;
 
-    GXFloat const aa = quaternion._data[ 1U ] * quaternion._data[ 1U ];
-    GXFloat const ab2 = quaternion._data[ 1U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const ac2 = quaternion._data[ 1U ] * quaternion._data[ 3u ] * 2.0F;
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3u ] * 2.0F;
 
-    GXFloat const bb = quaternion._data[ 2U ] * quaternion._data[ 2U ];
-    GXFloat const bc2 = quaternion._data[ 2U ] * quaternion._data[ 3u ] * 2.0F;
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3u ] * 2.0F;
 
-    GXFloat const cc = quaternion._data[ 3U ] * quaternion._data[ 3U ];
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3u ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
 
     GXFloat const inverseSquaredLength = 1.0F / ( rr + aa + bb + cc );
 
-    _m[ 0U ][ 0U ] = inverseSquaredLength * ( rr + aa - bb - cc );
-    _m[ 0U ][ 1U ] = inverseSquaredLength * ( rc2 + ab2 );
-    _m[ 0U ][ 2U ] = inverseSquaredLength * ( ac2 - rb2 );
+    auto &d = _data;
 
-    _m[ 1U ][ 0U ] = inverseSquaredLength * ( ab2 - rc2 );
-    _m[ 1U ][ 1U ] = inverseSquaredLength * ( rr - aa + bb - cc );
-    _m[ 1U ][ 2U ] = inverseSquaredLength * ( ra2 + bc2 );
+    d[ 0U ][ 0U ] = inverseSquaredLength * ( rr + aa - bb - cc );
+    d[ 0U ][ 1U ] = inverseSquaredLength * ( rc2 + ab2 );
+    d[ 0U ][ 2U ] = inverseSquaredLength * ( ac2 - rb2 );
 
-    _m[ 2U ][ 0U ] = inverseSquaredLength * ( rb2 + ac2 );
-    _m[ 2U ][ 1U ] = inverseSquaredLength * ( bc2 - ra2 );
-    _m[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
+    d[ 1U ][ 0U ] = inverseSquaredLength * ( ab2 - rc2 );
+    d[ 1U ][ 1U ] = inverseSquaredLength * ( rr - aa + bb - cc );
+    d[ 1U ][ 2U ] = inverseSquaredLength * ( ra2 + bc2 );
+
+    d[ 2U ][ 0U ] = inverseSquaredLength * ( rb2 + ac2 );
+    d[ 2U ][ 1U ] = inverseSquaredLength * ( bc2 - ra2 );
+    d[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
 }
 
 [[maybe_unused]] GXVoid GXMat3::From ( GXMat4 const &matrix ) noexcept
 {
     constexpr GXUPointer lineSize = 3U * sizeof ( GXFloat );
+    auto &d = _data;
+    auto const &m = matrix._data;
 
-    std::memcpy ( _data, matrix._data, lineSize );
-    std::memcpy ( _data + 3U, matrix._data + 4U, lineSize );
-    std::memcpy ( _data + 6U, matrix._data + 8U, lineSize );
+    std::memcpy ( d, m, lineSize );
+    std::memcpy ( d + 1U, m + 1U, lineSize );
+    std::memcpy ( d + 2U, m + 2U, lineSize );
 }
 
 [[maybe_unused]] GXVoid GXMat3::From ( const GXVec3 &zDirection ) noexcept
@@ -1227,31 +1251,35 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::FromFast ( GXQuat const &quaternion ) noexcept
 {
-    GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
-    GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
-    GXFloat const rb2 = quaternion._data[ 0U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const rc2 = quaternion._data[ 0U ] * quaternion._data[ 3u ] * 2.0F;
+    auto const &qData = quaternion._data;
 
-    GXFloat const aa = quaternion._data[ 1U ] * quaternion._data[ 1U ];
-    GXFloat const ab2 = quaternion._data[ 1U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const ac2 = quaternion._data[ 1U ] * quaternion._data[ 3u ] * 2.0F;
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3u ] * 2.0F;
 
-    GXFloat const bb = quaternion._data[ 2U ] * quaternion._data[ 2U ];
-    GXFloat const bc2 = quaternion._data[ 2U ] * quaternion._data[ 3u ] * 2.0F;
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3u ] * 2.0F;
 
-    GXFloat const cc = quaternion._data[ 3u ] * quaternion._data[ 3u ];
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3u ] * 2.0F;
 
-    _m[ 0U ][ 0U ] = rr + aa - bb - cc;
-    _m[ 0U ][ 1U ] = rc2 + ab2;
-    _m[ 0U ][ 2U ] = ac2 - rb2;
+    GXFloat const cc = qData[ 3u ] * qData[ 3u ];
 
-    _m[ 1U ][ 0U ] = ab2 - rc2;
-    _m[ 1U ][ 1U ] = rr - aa + bb - cc;
-    _m[ 1U ][ 2U ] = ra2 + bc2;
+    auto &d = _data;
 
-    _m[ 2U ][ 0U ] = rb2 + ac2;
-    _m[ 2U ][ 1U ] = bc2 - ra2;
-    _m[ 2U ][ 2U ] = rr - aa - bb + cc;
+    d[ 0U ][ 0U ] = rr + aa - bb - cc;
+    d[ 0U ][ 1U ] = rc2 + ab2;
+    d[ 0U ][ 2U ] = ac2 - rb2;
+
+    d[ 1U ][ 0U ] = ab2 - rc2;
+    d[ 1U ][ 1U ] = rr - aa + bb - cc;
+    d[ 1U ][ 2U ] = ra2 + bc2;
+
+    d[ 2U ][ 0U ] = rb2 + ac2;
+    d[ 2U ][ 1U ] = bc2 - ra2;
+    d[ 2U ][ 2U ] = rr - aa - bb + cc;
 }
 
 [[maybe_unused]] GXVoid GXMat3::SetX ( GXVec3 const &x ) noexcept
@@ -1266,30 +1294,38 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::SetY ( GXVec3 const &y ) noexcept
 {
-    std::memcpy ( _data + 3U, &y, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 1U, &y, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::GetY ( GXVec3 &y ) const noexcept
 {
-    std::memcpy ( &y, _data + 3U, sizeof ( GXVec3 ) );
+    std::memcpy ( &y, _data + 1U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::SetZ ( GXVec3 const &z ) noexcept
 {
-    std::memcpy ( _data + 6U, &z, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 2U, &z, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const noexcept
 {
-    std::memcpy ( &z, _data + 6U, sizeof ( GXVec3 ) );
+    std::memcpy ( &z, _data + 2U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Identity () noexcept
 {
-    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = 1.0F;
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 0U ] = 1.0F;
+    d[ 1U ][ 1U ] = 1.0F;
+    d[ 2U ][ 2U ] = 1.0F;
+
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat3::Zeros () noexcept
@@ -1299,45 +1335,44 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::Inverse ( GXMat3 const &sourceMatrix ) noexcept
 {
-    GXMat3 const &m = sourceMatrix;
+    auto const &m = sourceMatrix._data;
 
-    GXFloat determinant = m._m[ 0U ][ 0U ] *
-        ( m._m[ 1U ][ 1U ] * m._m[ 2U ][ 2U ] - m._m[ 2U ][ 1U ] * m._m[ 1U ][ 2U ] );
-
-    determinant -= m._m[ 0U ][ 1U ] *
-        ( m._m[ 1U ][ 0U ] * m._m[ 2U ][ 2U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 2U ] );
-
-    determinant += m._m[ 0U ][ 2U ] *
-        ( m._m[ 1U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 1U ] );
+    GXFloat determinant = m[ 0U ][ 0U ] * ( m[ 1U ][ 1U ] * m[ 2U ][ 2U ] - m[ 2U ][ 1U ] * m[ 1U ][ 2U ] );
+    determinant -= m[ 0U ][ 1U ] * ( m[ 1U ][ 0U ] * m[ 2U ][ 2U ] - m[ 2U ][ 0U ] * m[ 1U ][ 2U ] );
+    determinant += m[ 0U ][ 2U ] * ( m[ 1U ][ 0U ] * m[ 2U ][ 1U ] - m[ 2U ][ 0U ] * m[ 1U ][ 1U ] );
 
     GXFloat const invDeterminant = 1.0F / determinant;
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = invDeterminant * ( m._m[ 1U ][ 1U ] * m._m[ 2U ][ 2U ] - m._m[ 2U ][ 1U ] * m._m[ 1U ][ 2U ] );
-    _m[ 0U ][ 1U ] = invDeterminant * ( m._m[ 0U ][ 2U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 2U ] * m._m[ 0U ][ 1U ] );
-    _m[ 0U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 1U ] * m._m[ 1U ][ 2U ] - m._m[ 1U ][ 1U ] * m._m[ 0U ][ 2U ] );
+    d[ 0U ][ 0U ] = invDeterminant * ( m[ 1U ][ 1U ] * m[ 2U ][ 2U ] - m[ 2U ][ 1U ] * m[ 1U ][ 2U ] );
+    d[ 0U ][ 1U ] = invDeterminant * ( m[ 0U ][ 2U ] * m[ 2U ][ 1U ] - m[ 2U ][ 2U ] * m[ 0U ][ 1U ] );
+    d[ 0U ][ 2U ] = invDeterminant * ( m[ 0U ][ 1U ] * m[ 1U ][ 2U ] - m[ 1U ][ 1U ] * m[ 0U ][ 2U ] );
 
-    _m[ 1U ][ 0U ] = invDeterminant * ( m._m[ 1U ][ 2U ] * m._m[ 2U ][ 0U ] - m._m[ 2U ][ 2U ] * m._m[ 1U ][ 0U ] );
-    _m[ 1U ][ 1U ] = invDeterminant * ( m._m[ 0U ][ 0U ] * m._m[ 2U ][ 2U ] - m._m[ 2U ][ 0U ] * m._m[ 0U ][ 2U ] );
-    _m[ 1U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 2U ] * m._m[ 1U ][ 0U ] - m._m[ 1U ][ 2U ] * m._m[ 0U ][ 0U ] );
+    d[ 1U ][ 0U ] = invDeterminant * ( m[ 1U ][ 2U ] * m[ 2U ][ 0U ] - m[ 2U ][ 2U ] * m[ 1U ][ 0U ] );
+    d[ 1U ][ 1U ] = invDeterminant * ( m[ 0U ][ 0U ] * m[ 2U ][ 2U ] - m[ 2U ][ 0U ] * m[ 0U ][ 2U ] );
+    d[ 1U ][ 2U ] = invDeterminant * ( m[ 0U ][ 2U ] * m[ 1U ][ 0U ] - m[ 1U ][ 2U ] * m[ 0U ][ 0U ] );
 
-    _m[ 2U ][ 0U ] = invDeterminant * ( m._m[ 1U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 1U ] );
-    _m[ 2U ][ 1U ] = invDeterminant * ( m._m[ 0U ][ 1U ] * m._m[ 2U ][ 0U ] - m._m[ 2U ][ 1U ] * m._m[ 0U ][ 0U ] );
-    _m[ 2U ][ 2U ] = invDeterminant * ( m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ] );
+    d[ 2U ][ 0U ] = invDeterminant * ( m[ 1U ][ 0U ] * m[ 2U ][ 1U ] - m[ 2U ][ 0U ] * m[ 1U ][ 1U ] );
+    d[ 2U ][ 1U ] = invDeterminant * ( m[ 0U ][ 1U ] * m[ 2U ][ 0U ] - m[ 2U ][ 1U ] * m[ 0U ][ 0U ] );
+    d[ 2U ][ 2U ] = invDeterminant * ( m[ 0U ][ 0U ] * m[ 1U ][ 1U ] - m[ 1U ][ 0U ] * m[ 0U ][ 1U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Transpose ( GXMat3 const &sourceMatrix ) noexcept
 {
-    _m[ 0U ][ 0U ] = sourceMatrix._m[ 0U ][ 0U ];
-    _m[ 0U ][ 1U ] = sourceMatrix._m[ 1U ][ 0U ];
-    _m[ 0U ][ 2U ] = sourceMatrix._m[ 2U ][ 0U ];
+    auto const &m = sourceMatrix._data;
+    auto &d = _data;
 
-    _m[ 1U ][ 0U ] = sourceMatrix._m[ 0U ][ 1U ];
-    _m[ 1U ][ 1U ] = sourceMatrix._m[ 1U ][ 1U ];
-    _m[ 1U ][ 2U ] = sourceMatrix._m[ 2U ][ 1U ];
+    d[ 0U ][ 0U ] = m[ 0U ][ 0U ];
+    d[ 0U ][ 1U ] = m[ 1U ][ 0U ];
+    d[ 0U ][ 2U ] = m[ 2U ][ 0U ];
 
-    _m[ 2U ][ 0U ] = sourceMatrix._m[ 0U ][ 2U ];
-    _m[ 2U ][ 1U ] = sourceMatrix._m[ 1U ][ 2U ];
-    _m[ 2U ][ 2U ] = sourceMatrix._m[ 2U ][ 2U ];
+    d[ 1U ][ 0U ] = m[ 0U ][ 1U ];
+    d[ 1U ][ 1U ] = m[ 1U ][ 1U ];
+    d[ 1U ][ 2U ] = m[ 2U ][ 1U ];
+
+    d[ 2U ][ 0U ] = m[ 0U ][ 2U ];
+    d[ 2U ][ 1U ] = m[ 1U ][ 2U ];
+    d[ 2U ][ 2U ] = m[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::ClearRotation ( GXMat3 const &sourceMatrix ) noexcept
@@ -1384,123 +1419,146 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat3::SkewSymmetric ( GXVec3 const &base ) noexcept
 {
-    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = 0.0F;
+    auto const &bData = base._data;
+    auto &d = _data;
 
-    _m[ 0U ][ 1U ] = -base._data[ 2U ];
-    _m[ 0U ][ 2U ] = base._data[ 1U ];
+    d[ 0U ][ 0U ] = 0.0F;
+    d[ 1U ][ 1U ] = 0.0F;
+    d[ 2U ][ 2U ] = 0.0F;
 
-    _m[ 1U ][ 0U ] = base._data[ 2U ];
-    _m[ 1U ][ 2U ] = -base._data[ 0U ];
+    d[ 0U ][ 1U ] = -bData[ 2U ];
+    d[ 0U ][ 2U ] = bData[ 1U ];
 
-    _m[ 2U ][ 0U ] = -base._data[ 1U ];
-    _m[ 2U ][ 1U ] = base._data[ 0U ];
+    d[ 1U ][ 0U ] = bData[ 2U ];
+    d[ 1U ][ 2U ] = -bData[ 0U ];
+
+    d[ 2U ][ 0U ] = -bData[ 1U ];
+    d[ 2U ][ 1U ] = bData[ 0U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::Sum ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] + b._m[ 0U ][ 0U ];
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] + b._m[ 0U ][ 1U ];
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 2U ] + b._m[ 0U ][ 2U ];
+    auto const &aData = a._data;
+    auto const &bData = b._data;
+    auto &d = _data;
 
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] + b._m[ 1U ][ 0U ];
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 1U ] + b._m[ 1U ][ 1U ];
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 2U ] + b._m[ 1U ][ 2U ];
+    d[ 0U ][ 0U ] = aData[ 0U ][ 0U ] + bData[ 0U ][ 0U ];
+    d[ 0U ][ 1U ] = aData[ 0U ][ 1U ] + bData[ 0U ][ 1U ];
+    d[ 0U ][ 2U ] = aData[ 0U ][ 2U ] + bData[ 0U ][ 2U ];
 
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] + b._m[ 2U ][ 0U ];
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 1U ] + b._m[ 2U ][ 1U ];
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] + b._m[ 2U ][ 2U ];
+    d[ 1U ][ 0U ] = aData[ 1U ][ 0U ] + bData[ 1U ][ 0U ];
+    d[ 1U ][ 1U ] = aData[ 1U ][ 1U ] + bData[ 1U ][ 1U ];
+    d[ 1U ][ 2U ] = aData[ 1U ][ 2U ] + bData[ 1U ][ 2U ];
+
+    d[ 2U ][ 0U ] = aData[ 2U ][ 0U ] + bData[ 2U ][ 0U ];
+    d[ 2U ][ 1U ] = aData[ 2U ][ 1U ] + bData[ 2U ][ 1U ];
+    d[ 2U ][ 2U ] = aData[ 2U ][ 2U ] + bData[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::Subtract ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] - b._m[ 0U ][ 0U ];
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] - b._m[ 0U ][ 1U ];
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 2U ] - b._m[ 0U ][ 2U ];
+    auto const &aData = a._data;
+    auto const &bData = b._data;
+    auto &d = _data;
 
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] - b._m[ 1U ][ 0U ];
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 1U ] - b._m[ 1U ][ 1U ];
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 2U ] - b._m[ 1U ][ 2U ];
+    d[ 0U ][ 0U ] = aData[ 0U ][ 0U ] - bData[ 0U ][ 0U ];
+    d[ 0U ][ 1U ] = aData[ 0U ][ 1U ] - bData[ 0U ][ 1U ];
+    d[ 0U ][ 2U ] = aData[ 0U ][ 2U ] - bData[ 0U ][ 2U ];
 
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] - b._m[ 2U ][ 0U ];
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 1U ] - b._m[ 2U ][ 1U ];
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] - b._m[ 2U ][ 2U ];
+    d[ 1U ][ 0U ] = aData[ 1U ][ 0U ] - bData[ 1U ][ 0U ];
+    d[ 1U ][ 1U ] = aData[ 1U ][ 1U ] - bData[ 1U ][ 1U ];
+    d[ 1U ][ 2U ] = aData[ 1U ][ 2U ] - bData[ 1U ][ 2U ];
+
+    d[ 2U ][ 0U ] = aData[ 2U ][ 0U ] - bData[ 2U ][ 0U ];
+    d[ 2U ][ 1U ] = aData[ 2U ][ 1U ] - bData[ 2U ][ 1U ];
+    d[ 2U ][ 2U ] = aData[ 2U ][ 2U ] - bData[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXFloat factor ) noexcept
 {
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * factor;
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 1U ] * factor;
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 2U ] * factor;
+    auto const &aData = a._data;
+    auto &d = _data;
 
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] * factor;
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 1U ] * factor;
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 2U ] * factor;
+    d[ 0U ][ 0U ] = aData[ 0U ][ 0U ] * factor;
+    d[ 0U ][ 1U ] = aData[ 0U ][ 1U ] * factor;
+    d[ 0U ][ 2U ] = aData[ 0U ][ 2U ] * factor;
 
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] * factor;
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 1U ] * factor;
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 2U ] * factor;
+    d[ 1U ][ 0U ] = aData[ 1U ][ 0U ] * factor;
+    d[ 1U ][ 1U ] = aData[ 1U ][ 1U ] * factor;
+    d[ 1U ][ 2U ] = aData[ 1U ][ 2U ] * factor;
+
+    d[ 2U ][ 0U ] = aData[ 2U ][ 0U ] * factor;
+    d[ 2U ][ 1U ] = aData[ 2U ][ 1U ] * factor;
+    d[ 2U ][ 2U ] = aData[ 2U ][ 2U ] * factor;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXMat4::SetRotation ( GXQuat const &quaternion ) noexcept
 {
-    GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
-    GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
-    GXFloat const rb2 = quaternion._data[ 0U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const rc2 = quaternion._data[ 0U ] * quaternion._data[ 3U ] * 2.0F;
+    auto const &qData = quaternion._data;
 
-    GXFloat const aa = quaternion._data[ 1U ] * quaternion._data[ 1U ];
-    GXFloat const ab2 = quaternion._data[ 1U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const ac2 = quaternion._data[ 1U ] * quaternion._data[ 3U ] * 2.0F;
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const bb = quaternion._data[ 2U ] * quaternion._data[ 2U ];
-    GXFloat const bc2 = quaternion._data[ 2U ] * quaternion._data[ 3U ] * 2.0F;
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const cc = quaternion._data[ 3U ] * quaternion._data[ 3U ];
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
 
     GXFloat const inverseSquaredLength = 1.0F / ( rr + aa + bb + cc );
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = inverseSquaredLength * ( rr + aa - bb - cc );
-    _m[ 0U ][ 1U ] = inverseSquaredLength * ( rc2 + ab2 );
-    _m[ 0U ][ 2U ] = inverseSquaredLength * ( ac2 - rb2 );
+    d[ 0U ][ 0U ] = inverseSquaredLength * ( rr + aa - bb - cc );
+    d[ 0U ][ 1U ] = inverseSquaredLength * ( rc2 + ab2 );
+    d[ 0U ][ 2U ] = inverseSquaredLength * ( ac2 - rb2 );
 
-    _m[ 1U ][ 0U ] = inverseSquaredLength * ( ab2 - rc2 );
-    _m[ 1U ][ 1U ] = inverseSquaredLength * ( rr - aa + bb - cc );
-    _m[ 1U ][ 2U ] = inverseSquaredLength * ( ra2 + bc2 );
+    d[ 1U ][ 0U ] = inverseSquaredLength * ( ab2 - rc2 );
+    d[ 1U ][ 1U ] = inverseSquaredLength * ( rr - aa + bb - cc );
+    d[ 1U ][ 2U ] = inverseSquaredLength * ( ra2 + bc2 );
 
-    _m[ 2U ][ 0U ] = inverseSquaredLength * ( rb2 + ac2 );
-    _m[ 2U ][ 1U ] = inverseSquaredLength * ( bc2 - ra2 );
-    _m[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
+    d[ 2U ][ 0U ] = inverseSquaredLength * ( rb2 + ac2 );
+    d[ 2U ][ 1U ] = inverseSquaredLength * ( bc2 - ra2 );
+    d[ 2U ][ 2U ] = inverseSquaredLength * ( rr - aa - bb + cc );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetRotationFast ( GXQuat const &quaternion ) noexcept
 {
-    GXFloat const rr = quaternion._data[ 0U ] * quaternion._data[ 0U ];
-    GXFloat const ra2 = quaternion._data[ 0U ] * quaternion._data[ 1U ] * 2.0F;
-    GXFloat const rb2 = quaternion._data[ 0U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const rc2 = quaternion._data[ 0U ] * quaternion._data[ 3U ] * 2.0F;
+    auto const &qData = quaternion._data;
 
-    GXFloat const aa = quaternion._data[ 1U ] * quaternion._data[ 1U ];
-    GXFloat const ab2 = quaternion._data[ 1U ] * quaternion._data[ 2U ] * 2.0F;
-    GXFloat const ac2 = quaternion._data[ 1U ] * quaternion._data[ 3U ] * 2.0F;
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const bb = quaternion._data[ 2U ] * quaternion._data[ 2U ];
-    GXFloat const bc2 = quaternion._data[ 2U ] * quaternion._data[ 3U ] * 2.0F;
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const cc = quaternion._data[ 3U ] * quaternion._data[ 3U ];
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
 
-    _m[ 0U ][ 0U ] = rr + aa - bb - cc;
-    _m[ 0U ][ 1U ] = rc2 + ab2;
-    _m[ 0U ][ 2U ] = ac2 - rb2;
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
 
-    _m[ 1U ][ 0U ] = ab2 - rc2;
-    _m[ 1U ][ 1U ] = rr - aa + bb - cc;
-    _m[ 1U ][ 2U ] = ra2 + bc2;
+    auto &d = _data;
 
-    _m[ 2U ][ 0U ] = rb2 + ac2;
-    _m[ 2U ][ 1U ] = bc2 - ra2;
-    _m[ 2U ][ 2U ] = rr - aa - bb + cc;
+    d[ 0U ][ 0U ] = rr + aa - bb - cc;
+    d[ 0U ][ 1U ] = rc2 + ab2;
+    d[ 0U ][ 2U ] = ac2 - rb2;
+
+    d[ 1U ][ 0U ] = ab2 - rc2;
+    d[ 1U ][ 1U ] = rr - aa + bb - cc;
+    d[ 1U ][ 2U ] = ra2 + bc2;
+
+    d[ 2U ][ 0U ] = rb2 + ac2;
+    d[ 2U ][ 1U ] = bc2 - ra2;
+    d[ 2U ][ 2U ] = rr - aa - bb + cc;
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetOrigin ( GXVec3 const &origin ) noexcept
@@ -1513,8 +1571,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     SetRotation ( quaternion );
     SetOrigin ( origin );
 
-    _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 3U ] = 1.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::From ( GXMat3 const &rotation, GXVec3 const &origin ) noexcept
@@ -1531,8 +1593,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     SetW ( origin );
 
-    _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 3U ] = 1.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::From ( GXVec3 const &zDirection, GXVec3 const &origin ) noexcept
@@ -1562,10 +1628,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     SetZ ( zDirection );
     SetW ( origin );
 
-    _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 3U ] = 1.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::FromFast ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept
@@ -1573,8 +1641,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     SetRotationFast ( quaternion );
     SetOrigin ( origin );
 
-    _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 3U ] = 1.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetX ( GXVec3 const &x ) noexcept
@@ -1589,65 +1661,101 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat4::SetY ( GXVec3 const &y ) noexcept
 {
-    std::memcpy ( _data + 4U, &y, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 1U, &y, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetY ( GXVec3 &y ) const noexcept
 {
-    std::memcpy ( &y, _data + 4U, sizeof ( GXVec3 ) );
+    std::memcpy ( &y, _data + 1U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetZ ( GXVec3 const &z ) noexcept
 {
-    std::memcpy ( _data + 8U, &z, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 2U, &z, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetZ ( GXVec3 &z ) const noexcept
 {
-    std::memcpy ( &z, _data + 8U, sizeof ( GXVec3 ) );
+    std::memcpy ( &z, _data + 2U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::SetW ( GXVec3 const &w ) noexcept
 {
-    std::memcpy ( _data + 12U, &w, sizeof ( GXVec3 ) );
+    std::memcpy ( _data + 3U, &w, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const noexcept
 {
-    std::memcpy ( &w, _data + 12U, sizeof ( GXVec3 ) );
+    std::memcpy ( &w, _data + 3U, sizeof ( GXVec3 ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::Identity () noexcept
 {
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = _m[ 3U ][ 3U ] = 1.0F;
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+
+    d[ 0U ][ 0U ] = 1.0F;
+    d[ 1U ][ 1U ] = 1.0F;
+    d[ 2U ][ 2U ] = 1.0F;
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = _m[ 3U ][ 3U ] = 1.0F;
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
 
-    _m[ 3U ][ 0U ] = x;
-    _m[ 3U ][ 1U ] = y;
-    _m[ 3U ][ 2U ] = z;
+    d[ 0U ][ 0U ] = 1.0F;
+    d[ 1U ][ 1U ] = 1.0F;
+    d[ 2U ][ 2U ] = 1.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+
+    d[ 3U ][ 0U ] = x;
+    d[ 3U ][ 1U ] = y;
+    d[ 3U ][ 2U ] = z;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Translation ( GXVec3 const &location ) noexcept
 {
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = _m[ 0U ][ 3U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = _m[ 1U ][ 3U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = _m[ 2U ][ 3U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = _m[ 1U ][ 1U ] = _m[ 2U ][ 2U ] = _m[ 3U ][ 3U ] = 1.0F;
-    std::memcpy ( &_m[ 3U ][ 0U ], location._data, sizeof ( location ) );
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+
+    d[ 0U ][ 0U ] = 1.0F;
+    d[ 1U ][ 1U ] = 1.0F;
+    d[ 2U ][ 2U ] = 1.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+
+    std::memcpy ( d[ 3U ], location._data, sizeof ( location ) );
 }
 
 [[maybe_unused]] GXVoid GXMat4::TranslateTo ( GXFloat x, GXFloat y, GXFloat z ) noexcept
@@ -1663,56 +1771,86 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXMat4::RotationX ( GXFloat angle ) noexcept
 {
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
-    _m[ 1U ][ 0U ] = 0.0F;
-    _m[ 2U ][ 0U ] = 0.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
 
     GXFloat const c = std::cos ( angle );
     GXFloat const s = std::sin ( angle );
 
-    _m[ 1U ][ 1U ] = c;      _m[ 1U ][ 2U ] = s;
-    _m[ 2U ][ 1U ] = -s;     _m[ 2U ][ 2U ] = c;
+    d[ 1U ][ 1U ] = c;
+    d[ 1U ][ 2U ] = s;
+    d[ 2U ][ 1U ] = -s;
+    d[ 2U ][ 2U ] = c;
 
-    _m[ 0U ][ 0U ] = 1.0F;
+    d[ 0U ][ 0U ] = 1.0F;
 
-    _m[ 3U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::RotationY ( GXFloat angle ) noexcept
 {
-    _m[ 0U ][ 1U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
-    _m[ 2U ][ 1U ] = 0.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
 
     GXFloat const c = std::cos ( angle );
     GXFloat const s = std::sin ( angle );
 
-    _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 2U ] = -s;
-    _m[ 2U ][ 0U ] = s;      _m[ 2U ][ 2U ] = c;
+    d[ 0U ][ 0U ] = c;
+    d[ 0U ][ 2U ] = -s;
+    d[ 2U ][ 0U ] = s;
+    d[ 2U ][ 2U ] = c;
 
-    _m[ 1U ][ 1U ] = 1.0F;
+    d[ 1U ][ 1U ] = 1.0F;
 
-    _m[ 3U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::RotationZ ( GXFloat angle ) noexcept
 {
-    _m[ 0U ][ 2U ] = 0.0F;
-    _m[ 1U ][ 2U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
+    auto &d = _data;
+
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
 
     GXFloat const c = std::cos ( angle );
     GXFloat const s = std::sin ( angle );
 
-    _m[ 0U ][ 0U ] = c;      _m[ 0U ][ 1U ] = s;
-    _m[ 1U ][ 0U ] = -s;     _m[ 1U ][ 1U ] = c;
+    d[ 0U ][ 0U ] = c;
+    d[ 0U ][ 1U ] = s;
+    d[ 1U ][ 0U ] = -s;
+    d[ 1U ][ 1U ] = c;
 
-    _m[ 2U ][ 2U ] = 1.0F;
+    d[ 2U ][ 2U ] = 1.0F;
 
-    _m[ 3U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::RotationXY ( GXFloat pitchRadians, GXFloat yawRadians ) noexcept
@@ -1763,10 +1901,16 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     tmp.Multiply ( modelZ, 1.0F / modelZ.Length () );
     SetZ ( tmp );
 
-    _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 3U ][ 3U ] = 1.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::ClearRotation ( GXMat4 const &sourceMatrix ) noexcept
@@ -1789,24 +1933,40 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     tmp.Multiply ( modelZ, 1.0F / modelZ.Length () );
     SetZ ( tmp );
 
-    _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 3U ][ 3U ] = 1.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+
+    d[ 3U ][ 3U ] = 1.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Scale ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
-    _m[ 0U ][ 1U ] = _m[ 0U ][ 2U ] = 0.0F;
-    _m[ 1U ][ 0U ] = _m[ 1U ][ 2U ] = 0.0F;
-    _m[ 2U ][ 0U ] = _m[ 2U ][ 1U ] = 0.0F;
+    auto &d = _data;
 
-    _m[ 0U ][ 0U ] = x;
-    _m[ 1U ][ 1U ] = y;
-    _m[ 2U ][ 2U ] = z;
+    d[ 0U ][ 0U ] = x;
+    d[ 1U ][ 1U ] = y;
+    d[ 2U ][ 2U ] = z;
 
-    _m[ 3U ][ 3U ] = 1.0F;
-    _m[ 3U ][ 0U ] = _m[ 3U ][ 1U ] = _m[ 3U ][ 2U ] = _m[ 0U ][ 3U ] = _m[ 1U ][ 3U ] = _m[ 2U ][ 3U ] = 0.0F;
+    d[ 3U ][ 3U ] = 1.0F;
+
+    d[ 0U ][ 1U ] = 0.0F;
+    d[ 0U ][ 2U ] = 0.0F;
+    d[ 1U ][ 0U ] = 0.0F;
+    d[ 1U ][ 2U ] = 0.0F;
+    d[ 2U ][ 0U ] = 0.0F;
+    d[ 2U ][ 1U ] = 0.0F;
+    d[ 3U ][ 0U ] = 0.0F;
+    d[ 3U ][ 1U ] = 0.0F;
+    d[ 3U ][ 2U ] = 0.0F;
+    d[ 0U ][ 3U ] = 0.0F;
+    d[ 1U ][ 3U ] = 0.0F;
+    d[ 2U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::ClearScale ( GXVec3 &scale ) const noexcept
@@ -1835,16 +1995,19 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXAABB::Transform ( GXAABB &bounds, GXMat4 const &transform ) const noexcept
 {
-    GXVec3 const verticesLocal[ 8U ] =
+    auto const &minData = _min._data;
+    auto const &maxData = _max._data;
+
+    GXVec3 const verticesLocal[] =
     {
-        GXVec3 ( _min._data[ 0U ], _min._data[ 1U ], _min._data[ 2U ] ),
-        GXVec3 ( _max._data[ 0U ], _min._data[ 1U ], _min._data[ 2U ] ),
-        GXVec3 ( _max._data[ 0U ], _min._data[ 1U ], _max._data[ 2U ] ),
-        GXVec3 ( _min._data[ 0U ], _min._data[ 1U ], _max._data[ 2U ] ),
-        GXVec3 ( _min._data[ 0U ], _max._data[ 1U ], _min._data[ 2U ] ),
-        GXVec3 ( _max._data[ 0U ], _max._data[ 1U ], _min._data[ 2U ] ),
-        GXVec3 ( _max._data[ 0U ], _max._data[ 1U ], _max._data[ 2U ] ),
-        GXVec3 ( _min._data[ 0U ], _max._data[ 1U ], _max._data[ 2U ] )
+        GXVec3 ( minData[ 0U ], minData[ 1U ], minData[ 2U ] ),
+        GXVec3 ( maxData[ 0U ], minData[ 1U ], minData[ 2U ] ),
+        GXVec3 ( maxData[ 0U ], minData[ 1U ], maxData[ 2U ] ),
+        GXVec3 ( minData[ 0U ], minData[ 1U ], maxData[ 2U ] ),
+        GXVec3 ( minData[ 0U ], maxData[ 1U ], minData[ 2U ] ),
+        GXVec3 ( maxData[ 0U ], maxData[ 1U ], minData[ 2U ] ),
+        GXVec3 ( maxData[ 0U ], maxData[ 1U ], maxData[ 2U ] ),
+        GXVec3 ( minData[ 0U ], maxData[ 1U ], maxData[ 2U ] )
     };
 
     bounds.Empty ();
@@ -1859,27 +2022,31 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXAABB::AddVertex ( GXVec3 const &vertex ) noexcept
 {
-    AddVertex ( vertex._data[ 0U ], vertex._data[ 1U ], vertex._data[ 2U ] );
+    auto const &vData = vertex._data;
+    AddVertex ( vData[ 0U ], vData[ 1U ], vData[ 2U ] );
 }
 
 [[maybe_unused]] GXVoid GXAABB::AddVertex ( GXFloat x, GXFloat y, GXFloat z ) noexcept
 {
+    auto &minData = _min._data;
+    auto &maxData = _max._data;
+
     if ( _vertices > 1U )
     {
-        if ( _min._data[ 0U ] > x )
-            _min._data[ 0U ] = x;
-        else if ( _max._data[ 0U ] < x )
-            _max._data[ 0U ] = x;
+        if ( minData[ 0U ] > x )
+            minData[ 0U ] = x;
+        else if ( maxData[ 0U ] < x )
+            maxData[ 0U ] = x;
 
-        if ( _min._data[ 1U ] > y )
-            _min._data[ 1U ] = y;
-        else if ( _max._data[ 1U ] < y )
-            _max._data[ 1U ] = y;
+        if ( minData[ 1U ] > y )
+            minData[ 1U ] = y;
+        else if ( maxData[ 1U ] < y )
+            maxData[ 1U ] = y;
 
-        if ( _min._data[ 2U ] > z )
-            _min._data[ 2U ] = z;
-        else if ( _max._data[ 2U ] < z )
-            _max._data[ 2U ] = z;
+        if ( minData[ 2U ] > z )
+            minData[ 2U ] = z;
+        else if ( maxData[ 2U ] < z )
+            maxData[ 2U ] = z;
 
         return;
     }
@@ -1894,35 +2061,34 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     ++_vertices;
 
-    if ( _min._data[ 0U ] > x )
+    if ( minData[ 0U ] > x )
     {
-        _max._data[ 0U ] = _min._data[ 0U ];
-        _min._data[ 0U ] = x;
+        maxData[ 0U ] = minData[ 0U ];
+        minData[ 0U ] = x;
     }
     else
     {
-        _max._data[ 0U ] = x;
+        maxData[ 0U ] = x;
     }
 
-    if ( _min._data[ 1U ] > y )
+    if ( minData[ 1U ] > y )
     {
-        _max._data[ 1U ] = _min._data[ 1U ];
-        _min._data[ 1U ] = y;
+        maxData[ 1U ] = minData[ 1U ];
+        minData[ 1U ] = y;
     }
     else
     {
-        _max._data[ 1U ] = y;
+        maxData[ 1U ] = y;
     }
 
-    if ( _min._data[ 2U ] > z )
+    if ( minData[ 2U ] <= z )
     {
-        _max._data[ 2U ] = _min._data[ 2U ];
-        _min._data[ 2U ] = z;
+        maxData[ 2U ] = z;
+        return;
     }
-    else
-    {
-        _max._data[ 2U ] = z;
-    }
+
+    maxData[ 2U ] = minData[ 2U ];
+    minData[ 2U ] = z;
 }
 
 [[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const noexcept
@@ -2053,54 +2219,66 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXProjectionClipPlanes::From ( GXMat4 const &src ) noexcept
 {
+    auto const &m = src._data;
+    auto &planes = _planes;
+
     // Left clipping plane
-    _planes[ 0U ]._a = src._m[ 0U ][ 3U ] + src._m[ 0U ][ 0U ];
-    _planes[ 0U ]._b = src._m[ 1U ][ 3U ] + src._m[ 1U ][ 0U ];
-    _planes[ 0U ]._c = src._m[ 2U ][ 3U ] + src._m[ 2U ][ 0U ];
-    _planes[ 0U ]._d = src._m[ 3U ][ 3U ] + src._m[ 3U ][ 0U ];
+    GXPlane &p0 = planes[ 0U ];
+    p0._a = m[ 0U ][ 3U ] + m[ 0U ][ 0U ];
+    p0._b = m[ 1U ][ 3U ] + m[ 1U ][ 0U ];
+    p0._c = m[ 2U ][ 3U ] + m[ 2U ][ 0U ];
+    p0._d = m[ 3U ][ 3U ] + m[ 3U ][ 0U ];
 
     // Right clipping plane
-    _planes[ 1U ]._a = src._m[ 0U ][ 3U ] - src._m[ 0U ][ 0U ];
-    _planes[ 1U ]._b = src._m[ 1U ][ 3U ] - src._m[ 1U ][ 0U ];
-    _planes[ 1U ]._c = src._m[ 2U ][ 3U ] - src._m[ 2U ][ 0U ];
-    _planes[ 1U ]._d = src._m[ 3U ][ 3U ] - src._m[ 3U ][ 0U ];
+    GXPlane &p1 = planes[ 1U ];
+    p1._a = m[ 0U ][ 3U ] - m[ 0U ][ 0U ];
+    p1._b = m[ 1U ][ 3U ] - m[ 1U ][ 0U ];
+    p1._c = m[ 2U ][ 3U ] - m[ 2U ][ 0U ];
+    p1._d = m[ 3U ][ 3U ] - m[ 3U ][ 0U ];
 
     // Top clipping plane
-    _planes[ 2U ]._a = src._m[ 0U ][ 3U ] - src._m[ 0U ][ 1U ];
-    _planes[ 2U ]._b = src._m[ 1U ][ 3U ] - src._m[ 1U ][ 1U ];
-    _planes[ 2U ]._c = src._m[ 2U ][ 3U ] - src._m[ 2U ][ 1U ];
-    _planes[ 2U ]._d = src._m[ 3U ][ 3U ] - src._m[ 3U ][ 1U ];
+    GXPlane &p2 = planes[ 2U ];
+    p2._a = m[ 0U ][ 3U ] - m[ 0U ][ 1U ];
+    p2._b = m[ 1U ][ 3U ] - m[ 1U ][ 1U ];
+    p2._c = m[ 2U ][ 3U ] - m[ 2U ][ 1U ];
+    p2._d = m[ 3U ][ 3U ] - m[ 3U ][ 1U ];
 
     // Bottom clipping plane
-    _planes[ 3U ]._a = src._m[ 0U ][ 3U ] + src._m[ 0U ][ 1U ];
-    _planes[ 3U ]._b = src._m[ 1U ][ 3U ] + src._m[ 1U ][ 1U ];
-    _planes[ 3U ]._c = src._m[ 2U ][ 3U ] + src._m[ 2U ][ 1U ];
-    _planes[ 3U ]._d = src._m[ 3U ][ 3U ] + src._m[ 3U ][ 1U ];
+    GXPlane &p3 = planes[ 3U ];
+    p3._a = m[ 0U ][ 3U ] + m[ 0U ][ 1U ];
+    p3._b = m[ 1U ][ 3U ] + m[ 1U ][ 1U ];
+    p3._c = m[ 2U ][ 3U ] + m[ 2U ][ 1U ];
+    p3._d = m[ 3U ][ 3U ] + m[ 3U ][ 1U ];
 
     // Near clipping plane
-    _planes[ 4U ]._a = src._m[ 0U ][ 3U ] + src._m[ 0U ][ 2U ];
-    _planes[ 4U ]._b = src._m[ 1U ][ 3U ] + src._m[ 1U ][ 2U ];
-    _planes[ 4U ]._c = src._m[ 2U ][ 3U ] + src._m[ 2U ][ 2U ];
-    _planes[ 4U ]._d = src._m[ 3U ][ 3U ] + src._m[ 3U ][ 2U ];
+    GXPlane &p4 = planes[ 4U ];
+    p4._a = m[ 0U ][ 3U ] + m[ 0U ][ 2U ];
+    p4._b = m[ 1U ][ 3U ] + m[ 1U ][ 2U ];
+    p4._c = m[ 2U ][ 3U ] + m[ 2U ][ 2U ];
+    p4._d = m[ 3U ][ 3U ] + m[ 3U ][ 2U ];
 
     // Far clipping plane
-    _planes[ 5U ]._a = src._m[ 0U ][ 3U ] - src._m[ 0U ][ 2U ];
-    _planes[ 5U ]._b = src._m[ 1U ][ 3U ] - src._m[ 1U ][ 2U ];
-    _planes[ 5U ]._c = src._m[ 2U ][ 3U ] - src._m[ 2U ][ 2U ];
-    _planes[ 5U ]._d = src._m[ 3U ][ 3U ] - src._m[ 3U ][ 2U ];
+    GXPlane &p5 = planes[ 5U ];
+    p5._a = m[ 0U ][ 3U ] - m[ 0U ][ 2U ];
+    p5._b = m[ 1U ][ 3U ] - m[ 1U ][ 2U ];
+    p5._c = m[ 2U ][ 3U ] - m[ 2U ][ 2U ];
+    p5._d = m[ 3U ][ 3U ] - m[ 3U ][ 2U ];
 }
 
 [[maybe_unused]] GXBool GXProjectionClipPlanes::IsVisible ( GXAABB const &bounds ) const noexcept
 {
-    GXUByte flags = PlaneTest ( bounds._min._data[ 0U ], bounds._min._data[ 1U ], bounds._min._data[ 2U ] );
-    flags &= PlaneTest ( bounds._min._data[ 0U ], bounds._max._data[ 1U ], bounds._min._data[ 2U ] );
-    flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._max._data[ 1U ], bounds._min._data[ 2U ] );
-    flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._min._data[ 1U ], bounds._min._data[ 2U ] );
+    auto const &minData = bounds._min._data;
+    auto const &maxData = bounds._max._data;
 
-    flags &= PlaneTest ( bounds._min._data[ 0U ], bounds._min._data[ 1U ], bounds._max._data[ 2U ] );
-    flags &= PlaneTest ( bounds._min._data[ 0U ], bounds._max._data[ 1U ], bounds._max._data[ 2U ] );
-    flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._max._data[ 1U ], bounds._max._data[ 2U ] );
-    flags &= PlaneTest ( bounds._max._data[ 0U ], bounds._min._data[ 1U ], bounds._max._data[ 2U ] );
+    GXUByte flags = PlaneTest ( minData[ 0U ], minData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( minData[ 0U ], maxData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], maxData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], minData[ 1U ], minData[ 2U ] );
+
+    flags &= PlaneTest ( minData[ 0U ], minData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( minData[ 0U ], maxData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], maxData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], minData[ 1U ], maxData[ 2U ] );
 
     return flags == 0U;
 }
@@ -2118,10 +2296,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     };
 
     GXUByte result = 0U;
+    auto const &planes = _planes;
+    constexpr GXUPointer count = std::size ( masks );
 
-    for ( GXUPointer i = 0U; i < std::size ( masks ); ++i )
+    for ( GXUPointer i = 0U; i < count; ++i )
     {
-        if ( _planes[ i ].ClassifyVertex ( x, y, z ) != eGXPlaneClassifyVertex::Behind )
+        if ( planes[ i ].ClassifyVertex ( x, y, z ) != eGXPlaneClassifyVertex::Behind )
             continue;
 
         result |= masks[ i ];
@@ -2162,9 +2342,13 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, const GXVec3 &from, const GXVec3 &to ) noexcept
 {
-    out._data[ 0U ] = GXRandomBetween ( from._data[ 0U ], to._data[ 0U ] );
-    out._data[ 1U ] = GXRandomBetween ( from._data[ 1U ], to._data[ 1U ] );
-    out._data[ 2U ] = GXRandomBetween ( from._data[ 2U ], to._data[ 2U ] );
+    auto const &fData = from._data;
+    auto const &tData = to._data;
+    auto &result = out._data;
+
+    result[ 0U ] = GXRandomBetween ( fData[ 0U ], tData[ 0U ] );
+    result[ 1U ] = GXRandomBetween ( fData[ 1U ], tData[ 1U ] );
+    result[ 2U ] = GXRandomBetween ( fData[ 2U ], tData[ 2U ] );
 }
 
 [[maybe_unused]] GXVoid GXCALL GXGetTangentBitangent ( GXVec3 &outTangent,
@@ -2236,14 +2420,16 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     GXFloat const factor = 1.0F / ( dUVa._data[ 0U ] * dUVb._data[ 1U ] - dUVb._data[ 0U ] * dUVa._data[ 1U ] );
 
-    outTangent._data[ 0U ] = factor * ( dUVb._data[ 1U ] * a._data[ 0U ] - dUVa._data[ 1U ] * b._data[ 0U ] );
-    outTangent._data[ 1U ] = factor * ( dUVb._data[ 1U ] * a._data[ 1U ] - dUVa._data[ 1U ] * b._data[ 1U ] );
-    outTangent._data[ 2U ] = factor * ( dUVb._data[ 1U ] * a._data[ 2U ] - dUVa._data[ 1U ] * b._data[ 2U ] );
+    auto &tData = outTangent._data;
+    tData[ 0U ] = factor * ( dUVb._data[ 1U ] * a._data[ 0U ] - dUVa._data[ 1U ] * b._data[ 0U ] );
+    tData[ 1U ] = factor * ( dUVb._data[ 1U ] * a._data[ 1U ] - dUVa._data[ 1U ] * b._data[ 1U ] );
+    tData[ 2U ] = factor * ( dUVb._data[ 1U ] * a._data[ 2U ] - dUVa._data[ 1U ] * b._data[ 2U ] );
     outTangent.Normalize ();
 
-    outBitangent._data[ 0U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 0U ] + dUVa._data[ 0U ] * b._data[ 0U ] );
-    outBitangent._data[ 1U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 1U ] + dUVa._data[ 0U ] * b._data[ 1U ] );
-    outBitangent._data[ 2U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 2U ] + dUVa._data[ 0U ] * b._data[ 2U ] );
+    auto &bData = outBitangent._data;
+    bData[ 0U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 0U ] + dUVa._data[ 0U ] * b._data[ 0U ] );
+    bData[ 1U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 1U ] + dUVa._data[ 0U ] * b._data[ 1U ] );
+    bData[ 2U ] = factor * ( -dUVb._data[ 0U ] * a._data[ 2U ] + dUVa._data[ 0U ] * b._data[ 2U ] );
     outBitangent.Normalize ();
 }
 
@@ -2290,9 +2476,11 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
     GXFloat const denom = 1.0F / ( d00 * d11 - d01 * d01 );
 
-    out._data[ 1U ] = ( d11 * d20 - d01 * d21 ) * denom;
-    out._data[ 2U ] = ( d00 * d21 - d01 * d20 ) * denom;
-    out._data[ 0U ] = 1.0F - out._data[ 1U ] - out._data[ 2U ];
+    auto &result = out._data;
+
+    result[ 1U ] = ( d11 * d20 - d01 * d21 ) * denom;
+    result[ 2U ] = ( d00 * d21 - d01 * d20 ) * denom;
+    result[ 0U ] = 1.0F - result[ 1U ] - result[ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXCALL GXGetRayFromViewer ( GXVec3 &origin,

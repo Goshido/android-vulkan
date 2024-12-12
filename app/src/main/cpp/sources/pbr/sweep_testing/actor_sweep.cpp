@@ -20,7 +20,7 @@ constexpr float STICK_DEAD_ZONE = 0.2F;
 
 void ActorSweep::CaptureInput ( GXMat4 const &cameraLocal ) noexcept
 {
-    _cameraLeft = *reinterpret_cast<GXVec3 const*> ( &cameraLocal._m[ 0U ][ 0U ] );
+    _cameraLeft = *reinterpret_cast<GXVec3 const*> ( cameraLocal._data[ 0U ] );
 
     android_vulkan::Gamepad &gamepad = android_vulkan::Gamepad::GetInstance ();
     gamepad.BindLeftStick ( this, &ActorSweep::OnLeftStick );
@@ -115,21 +115,24 @@ void ActorSweep::Submit ( RenderSession &renderSession ) noexcept
     scale.Multiply ( shape.GetSize (), UNITS_IN_METER );
 
     GXMat4 transform {};
+    auto &m = transform._data;
 
-    auto &x = *reinterpret_cast<GXVec3*> ( &transform._m[ 0U ][ 0U ] );
-    x.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 0U ][ 0U ] ), scale._data[ 0U ] );
+    auto &x = *reinterpret_cast<GXVec3*> ( m[ 0U ] );
+    x.Multiply ( *reinterpret_cast<GXVec3 const*> ( shapeTransform._data[ 0U ] ), scale._data[ 0U ] );
 
-    auto &y = *reinterpret_cast<GXVec3*> ( &transform._m[ 1U ][ 0U ] );
-    y.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 1U ][ 0U ] ), scale._data[ 1U ] );
+    auto &y = *reinterpret_cast<GXVec3*> ( m[ 1U ] );
+    y.Multiply ( *reinterpret_cast<GXVec3 const*> ( shapeTransform._data[ 1U ] ), scale._data[ 1U ] );
 
-    auto &z = *reinterpret_cast<GXVec3*> ( &transform._m[ 2U ][ 0U ] );
-    z.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 2U ][ 0U ] ), scale._data[ 2U ] );
+    auto &z = *reinterpret_cast<GXVec3*> ( m[ 2U ] );
+    z.Multiply ( *reinterpret_cast<GXVec3 const*> ( shapeTransform._data[ 2U ] ), scale._data[ 2U ] );
 
-    auto &location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
-    location.Multiply ( *reinterpret_cast<GXVec3 const*> ( &shapeTransform._m[ 3U ][ 0U ] ), UNITS_IN_METER );
+    auto &location = *reinterpret_cast<GXVec3*> ( m[ 3U ] );
+    location.Multiply ( *reinterpret_cast<GXVec3 const*> ( shapeTransform._data[ 3U ] ), UNITS_IN_METER );
 
-    transform._m[ 0U ][ 3U ] = transform._m[ 1U ][ 3U ] = transform._m[ 2U ][ 3U ] = 0.0F;
-    transform._m[ 3U ][ 3U ] = 1.0F;
+    m[ 0U ][ 3U ] = 0.0F;
+    m[ 1U ][ 3U ] = 0.0F;
+    m[ 2U ][ 3U ] = 0.0F;
+    m[ 3U ][ 3U ] = 1.0F;
 
     // NOLINTNEXTLINE - downcast.
     auto &mesh = static_cast<StaticMeshComponent &> ( *_mesh );
@@ -165,9 +168,9 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
     constexpr GXVec3 up ( 0.0F, 1.0F, 0.0F );
 
     GXMat3 basis {};
-    auto &x = *reinterpret_cast<GXVec3*> ( &basis._m[ 0U ][ 0U ] );
-    auto &y = *reinterpret_cast<GXVec3*> ( &basis._m[ 1U ][ 0U ] );
-    auto &z = *reinterpret_cast<GXVec3*> ( &basis._m[ 2U ][ 0U ] );
+    auto &x = *reinterpret_cast<GXVec3*> ( basis._data[ 0U ] );
+    auto &y = *reinterpret_cast<GXVec3*> ( basis._data[ 1U ] );
+    auto &z = *reinterpret_cast<GXVec3*> ( basis._data[ 2U ] );
 
     x = _cameraLeft;
     y = up;
@@ -179,7 +182,7 @@ void ActorSweep::UpdateLocation ( float deltaTime ) noexcept
     // NOLINTNEXTLINE - downcast.
     auto &shape = static_cast<android_vulkan::ShapeBox &> ( *_shape );
     GXMat4 transform = shape.GetTransformWorld ();
-    auto &location = *reinterpret_cast<GXVec3*> ( &transform._m[ 3U ][ 0U ] );
+    auto &location = *reinterpret_cast<GXVec3*> ( transform._data[ 3U ] );
     location.Sum ( location, MOVING_SPEED * deltaTime, offset );
     shape.UpdateCacheData ( transform );
 }

@@ -77,9 +77,9 @@ GXMat4 const &Camera::GetProjectionMatrix () const noexcept
 
 void Camera::SetLocation ( GXVec3 const &location ) noexcept
 {
-    _local._m[ 3U ][ 0U ] = location._data[ 0U ];
-    _local._m[ 3U ][ 1U ] = location._data[ 1U ];
-    _local._m[ 3U ][ 2U ] = location._data[ 2U ];
+    _local._data[ 3U ][ 0U ] = location._data[ 0U ];
+    _local._data[ 3U ][ 1U ] = location._data[ 1U ];
+    _local._data[ 3U ][ 2U ] = location._data[ 2U ];
     _local.SetW ( location );
 }
 

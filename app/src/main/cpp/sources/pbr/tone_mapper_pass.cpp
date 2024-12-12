@@ -223,9 +223,9 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkComma
 
     ToneMapperProgram::Transform const transform
     {
-        ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 0U ][ 0U ] ),
+        ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ),
         ._padding0 {},
-        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( &orientation._m[ 1U ][ 0U ] )
+        ._transformRow1 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] )
     };
 
     _transformUniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );

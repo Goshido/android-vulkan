@@ -50,6 +50,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
 #ifdef __ANDROID__

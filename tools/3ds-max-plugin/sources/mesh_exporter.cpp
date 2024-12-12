@@ -134,9 +134,9 @@ void MikktSetTSpaceBasic ( SMikkTSpaceContext const* pContext,
     auto &rawData = *static_cast<RawData*> ( pContext->m_pUserData );
 
     GXMat3 m {};
-    auto &tangent = *reinterpret_cast<GXVec3*> ( &m._m[ 0U ][ 0U ] );
-    auto &bitangent = *reinterpret_cast<GXVec3*> ( &m._m[ 1U ][ 0U ] );
-    auto &normal = *reinterpret_cast<GXVec3*> ( &m._m[ 2U ][ 0U ] );
+    auto &tangent = *reinterpret_cast<GXVec3*> ( m._data[ 0U ] );
+    auto &bitangent = *reinterpret_cast<GXVec3*> ( m._data[ 1U ] );
+    auto &normal = *reinterpret_cast<GXVec3*> ( m._data[ 2U ] );
 
     std::memcpy ( &tangent, fvTangent, sizeof ( GXVec3 ) );
 

@@ -1,4 +1,4 @@
-// version 1.14
+// version 1.15
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -393,282 +393,307 @@
 
 [[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 0U ];
+    auto const &aData = a._data;
+    auto const &bData = b._data;
+    auto &result = _data;
 
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 1U ];
+    result[ 0U ][ 0U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 0U ];
 
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 2U ];
+    result[ 0U ][ 1U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 1U ];
 
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 0U ];
+    result[ 0U ][ 2U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 2U ];
 
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 1U ];
+    result[ 1U ][ 0U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 0U ];
 
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 2U ];
+    result[ 1U ][ 1U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 1U ];
 
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 0U ];
+    result[ 1U ][ 2U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 2U ];
 
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 1U ];
+    result[ 2U ][ 0U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 0U ];
 
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 2U ];
+    result[ 2U ][ 1U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 1U ];
+
+    result[ 2U ][ 2U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] + v._data[ 1U ] * _m[ 1U ][ 0U ] + v._data[ 2U ] * _m[ 2U ][ 0U ];
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] + v._data[ 1U ] * _m[ 1U ][ 1U ] + v._data[ 2U ] * _m[ 2U ][ 1U ];
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] + v._data[ 1U ] * _m[ 1U ][ 2U ] + v._data[ 2U ] * _m[ 2U ][ 2U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
+    out._data[ 0U ] = vData[ 0U ] * m[ 0U ][ 0U ] + vData[ 1U ] * m[ 1U ][ 0U ] + vData[ 2U ] * m[ 2U ][ 0U ];
+    out._data[ 1U ] = vData[ 0U ] * m[ 0U ][ 1U ] + vData[ 1U ] * m[ 1U ][ 1U ] + vData[ 2U ] * m[ 2U ][ 1U ];
+    out._data[ 2U ] = vData[ 0U ] * m[ 0U ][ 2U ] + vData[ 1U ] * m[ 1U ][ 2U ] + vData[ 2U ] * m[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    out._data[ 0U ] = _m[ 0U ][ 0U ] * v._data[ 0U ] + _m[ 0U ][ 1U ] * v._data[ 1U ] + _m[ 0U ][ 2U ] * v._data[ 2U ];
-    out._data[ 1U ] = _m[ 1U ][ 0U ] * v._data[ 0U ] + _m[ 1U ][ 1U ] * v._data[ 1U ] + _m[ 1U ][ 2U ] * v._data[ 2U ];
-    out._data[ 2U ] = _m[ 2U ][ 0U ] * v._data[ 0U ] + _m[ 2U ][ 1U ] * v._data[ 1U ] + _m[ 2U ][ 2U ] * v._data[ 2U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
+    out._data[ 0U ] = m[ 0U ][ 0U ] * vData[ 0U ] + m[ 0U ][ 1U ] * vData[ 1U ] + m[ 0U ][ 2U ] * vData[ 2U ];
+    out._data[ 1U ] = m[ 1U ][ 0U ] * vData[ 0U ] + m[ 1U ][ 1U ] * vData[ 1U ] + m[ 1U ][ 2U ] * vData[ 2U ];
+    out._data[ 2U ] = m[ 2U ][ 0U ] * vData[ 0U ] + m[ 2U ][ 1U ] * vData[ 1U ] + m[ 2U ][ 2U ] * vData[ 2U ];
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
 [[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
 {
-    GXMat4 const &m = sourceMatrix;
+    auto const &m = sourceMatrix._data;
 
     // 2x2 sub-determinants required to calculate 4x4 determinant
-    GXFloat const det2_01_01 = m._m[ 0U ][ 0U ] * m._m[ 1U ][ 1U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_02 = m._m[ 0U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_03 = m._m[ 0U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 0U ][ 1U ];
-    GXFloat const det2_01_12 = m._m[ 1U ][ 0U ] * m._m[ 2U ][ 1U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 1U ];
-    GXFloat const det2_01_13 = m._m[ 1U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 1U ][ 1U ];
-    GXFloat const det2_01_23 = m._m[ 2U ][ 0U ] * m._m[ 3U ][ 1U ] - m._m[ 3U ][ 0U ] * m._m[ 2U ][ 1U ];
+    GXFloat const det2_01_01 = m[ 0U ][ 0U ] * m[ 1U ][ 1U ] - m[ 1U ][ 0U ] * m[ 0U ][ 1U ];
+    GXFloat const det2_01_02 = m[ 0U ][ 0U ] * m[ 2U ][ 1U ] - m[ 2U ][ 0U ] * m[ 0U ][ 1U ];
+    GXFloat const det2_01_03 = m[ 0U ][ 0U ] * m[ 3U ][ 1U ] - m[ 3U ][ 0U ] * m[ 0U ][ 1U ];
+    GXFloat const det2_01_12 = m[ 1U ][ 0U ] * m[ 2U ][ 1U ] - m[ 2U ][ 0U ] * m[ 1U ][ 1U ];
+    GXFloat const det2_01_13 = m[ 1U ][ 0U ] * m[ 3U ][ 1U ] - m[ 3U ][ 0U ] * m[ 1U ][ 1U ];
+    GXFloat const det2_01_23 = m[ 2U ][ 0U ] * m[ 3U ][ 1U ] - m[ 3U ][ 0U ] * m[ 2U ][ 1U ];
 
     // 3x3 sub-determinants required to calculate 4x4 determinant
-    GXFloat const det3_201_012 = m._m[ 0U ][ 2U ] * det2_01_12 - m._m[ 1U ][ 2U ] * det2_01_02 + m._m[ 2U ][ 2U ] * det2_01_01;
-    GXFloat const det3_201_013 = m._m[ 0U ][ 2U ] * det2_01_13 - m._m[ 1U ][ 2U ] * det2_01_03 + m._m[ 3U ][ 2U ] * det2_01_01;
-    GXFloat const det3_201_023 = m._m[ 0U ][ 2U ] * det2_01_23 - m._m[ 2U ][ 2U ] * det2_01_03 + m._m[ 3U ][ 2U ] * det2_01_02;
-    GXFloat const det3_201_123 = m._m[ 1U ][ 2U ] * det2_01_23 - m._m[ 2U ][ 2U ] * det2_01_13 + m._m[ 3U ][ 2U ] * det2_01_12;
+    GXFloat const det3_201_012 = m[ 0U ][ 2U ] * det2_01_12 - m[ 1U ][ 2U ] * det2_01_02 + m[ 2U ][ 2U ] * det2_01_01;
+    GXFloat const det3_201_013 = m[ 0U ][ 2U ] * det2_01_13 - m[ 1U ][ 2U ] * det2_01_03 + m[ 3U ][ 2U ] * det2_01_01;
+    GXFloat const det3_201_023 = m[ 0U ][ 2U ] * det2_01_23 - m[ 2U ][ 2U ] * det2_01_03 + m[ 3U ][ 2U ] * det2_01_02;
+    GXFloat const det3_201_123 = m[ 1U ][ 2U ] * det2_01_23 - m[ 2U ][ 2U ] * det2_01_13 + m[ 3U ][ 2U ] * det2_01_12;
 
-    GXFloat const inverseDeterminant = 1.0F / ( -det3_201_123 * m._m[ 0U ][ 3U ] + det3_201_023 * m._m[ 1U ][ 3U ] - det3_201_013 * m._m[ 2U ][ 3U ] + det3_201_012 * m._m[ 3U ][ 3U ] );
+    GXFloat const inverseDeterminant = 1.0F / ( -det3_201_123 * m[ 0U ][ 3U ] + det3_201_023 * m[ 1U ][ 3U ] - det3_201_013 * m[ 2U ][ 3U ] + det3_201_012 * m[ 3U ][ 3U ] );
 
     // remaining 2x2 sub-determinants
-    GXFloat const det2_03_01 = m._m[ 0U ][ 0U ] * m._m[ 1U ][ 3U ] - m._m[ 1U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_02 = m._m[ 0U ][ 0U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_03 = m._m[ 0U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_03_12 = m._m[ 1U ][ 0U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 0U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_03_13 = m._m[ 1U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_03_23 = m._m[ 2U ][ 0U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 0U ] * m._m[ 2U ][ 3U ];
+    GXFloat const det2_03_01 = m[ 0U ][ 0U ] * m[ 1U ][ 3U ] - m[ 1U ][ 0U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_03_02 = m[ 0U ][ 0U ] * m[ 2U ][ 3U ] - m[ 2U ][ 0U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_03_03 = m[ 0U ][ 0U ] * m[ 3U ][ 3U ] - m[ 3U ][ 0U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_03_12 = m[ 1U ][ 0U ] * m[ 2U ][ 3U ] - m[ 2U ][ 0U ] * m[ 1U ][ 3U ];
+    GXFloat const det2_03_13 = m[ 1U ][ 0U ] * m[ 3U ][ 3U ] - m[ 3U ][ 0U ] * m[ 1U ][ 3U ];
+    GXFloat const det2_03_23 = m[ 2U ][ 0U ] * m[ 3U ][ 3U ] - m[ 3U ][ 0U ] * m[ 2U ][ 3U ];
 
-    GXFloat const det2_13_01 = m._m[ 0U ][ 1U ] * m._m[ 1U ][ 3U ] - m._m[ 1U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_02 = m._m[ 0U ][ 1U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_03 = m._m[ 0U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 0U ][ 3U ];
-    GXFloat const det2_13_12 = m._m[ 1U ][ 1U ] * m._m[ 2U ][ 3U ] - m._m[ 2U ][ 1U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_13_13 = m._m[ 1U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 1U ][ 3U ];
-    GXFloat const det2_13_23 = m._m[ 2U ][ 1U ] * m._m[ 3U ][ 3U ] - m._m[ 3U ][ 1U ] * m._m[ 2U ][ 3U ];
+    GXFloat const det2_13_01 = m[ 0U ][ 1U ] * m[ 1U ][ 3U ] - m[ 1U ][ 1U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_13_02 = m[ 0U ][ 1U ] * m[ 2U ][ 3U ] - m[ 2U ][ 1U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_13_03 = m[ 0U ][ 1U ] * m[ 3U ][ 3U ] - m[ 3U ][ 1U ] * m[ 0U ][ 3U ];
+    GXFloat const det2_13_12 = m[ 1U ][ 1U ] * m[ 2U ][ 3U ] - m[ 2U ][ 1U ] * m[ 1U ][ 3U ];
+    GXFloat const det2_13_13 = m[ 1U ][ 1U ] * m[ 3U ][ 3U ] - m[ 3U ][ 1U ] * m[ 1U ][ 3U ];
+    GXFloat const det2_13_23 = m[ 2U ][ 1U ] * m[ 3U ][ 3U ] - m[ 3U ][ 1U ] * m[ 2U ][ 3U ];
 
     // remaining 3x3 sub-determinants
-    GXFloat const det3_203_012 = m._m[ 0U ][ 2U ] * det2_03_12 - m._m[ 1U ][ 2U ] * det2_03_02 + m._m[ 2U ][ 2U ] * det2_03_01;
-    GXFloat const det3_203_013 = m._m[ 0U ][ 2U ] * det2_03_13 - m._m[ 1U ][ 2U ] * det2_03_03 + m._m[ 3U ][ 2U ] * det2_03_01;
-    GXFloat const det3_203_023 = m._m[ 0U ][ 2U ] * det2_03_23 - m._m[ 2U ][ 2U ] * det2_03_03 + m._m[ 3U ][ 2U ] * det2_03_02;
-    GXFloat const det3_203_123 = m._m[ 1U ][ 2U ] * det2_03_23 - m._m[ 2U ][ 2U ] * det2_03_13 + m._m[ 3U ][ 2U ] * det2_03_12;
+    GXFloat const det3_203_012 = m[ 0U ][ 2U ] * det2_03_12 - m[ 1U ][ 2U ] * det2_03_02 + m[ 2U ][ 2U ] * det2_03_01;
+    GXFloat const det3_203_013 = m[ 0U ][ 2U ] * det2_03_13 - m[ 1U ][ 2U ] * det2_03_03 + m[ 3U ][ 2U ] * det2_03_01;
+    GXFloat const det3_203_023 = m[ 0U ][ 2U ] * det2_03_23 - m[ 2U ][ 2U ] * det2_03_03 + m[ 3U ][ 2U ] * det2_03_02;
+    GXFloat const det3_203_123 = m[ 1U ][ 2U ] * det2_03_23 - m[ 2U ][ 2U ] * det2_03_13 + m[ 3U ][ 2U ] * det2_03_12;
 
-    GXFloat const det3_213_012 = m._m[ 0U ][ 2U ] * det2_13_12 - m._m[ 1U ][ 2U ] * det2_13_02 + m._m[ 2U ][ 2U ] * det2_13_01;
-    GXFloat const det3_213_013 = m._m[ 0U ][ 2U ] * det2_13_13 - m._m[ 1U ][ 2U ] * det2_13_03 + m._m[ 3U ][ 2U ] * det2_13_01;
-    GXFloat const det3_213_023 = m._m[ 0U ][ 2U ] * det2_13_23 - m._m[ 2U ][ 2U ] * det2_13_03 + m._m[ 3U ][ 2U ] * det2_13_02;
-    GXFloat const det3_213_123 = m._m[ 1U ][ 2U ] * det2_13_23 - m._m[ 2U ][ 2U ] * det2_13_13 + m._m[ 3U ][ 2U ] * det2_13_12;
+    GXFloat const det3_213_012 = m[ 0U ][ 2U ] * det2_13_12 - m[ 1U ][ 2U ] * det2_13_02 + m[ 2U ][ 2U ] * det2_13_01;
+    GXFloat const det3_213_013 = m[ 0U ][ 2U ] * det2_13_13 - m[ 1U ][ 2U ] * det2_13_03 + m[ 3U ][ 2U ] * det2_13_01;
+    GXFloat const det3_213_023 = m[ 0U ][ 2U ] * det2_13_23 - m[ 2U ][ 2U ] * det2_13_03 + m[ 3U ][ 2U ] * det2_13_02;
+    GXFloat const det3_213_123 = m[ 1U ][ 2U ] * det2_13_23 - m[ 2U ][ 2U ] * det2_13_13 + m[ 3U ][ 2U ] * det2_13_12;
 
-    GXFloat const det3_301_012 = m._m[ 0U ][ 3U ] * det2_01_12 - m._m[ 1U ][ 3U ] * det2_01_02 + m._m[ 2U ][ 3U ] * det2_01_01;
-    GXFloat const det3_301_013 = m._m[ 0U ][ 3U ] * det2_01_13 - m._m[ 1U ][ 3U ] * det2_01_03 + m._m[ 3U ][ 3U ] * det2_01_01;
-    GXFloat const det3_301_023 = m._m[ 0U ][ 3U ] * det2_01_23 - m._m[ 2U ][ 3U ] * det2_01_03 + m._m[ 3U ][ 3U ] * det2_01_02;
-    GXFloat const det3_301_123 = m._m[ 1U ][ 3U ] * det2_01_23 - m._m[ 2U ][ 3U ] * det2_01_13 + m._m[ 3U ][ 3U ] * det2_01_12;
+    GXFloat const det3_301_012 = m[ 0U ][ 3U ] * det2_01_12 - m[ 1U ][ 3U ] * det2_01_02 + m[ 2U ][ 3U ] * det2_01_01;
+    GXFloat const det3_301_013 = m[ 0U ][ 3U ] * det2_01_13 - m[ 1U ][ 3U ] * det2_01_03 + m[ 3U ][ 3U ] * det2_01_01;
+    GXFloat const det3_301_023 = m[ 0U ][ 3U ] * det2_01_23 - m[ 2U ][ 3U ] * det2_01_03 + m[ 3U ][ 3U ] * det2_01_02;
+    GXFloat const det3_301_123 = m[ 1U ][ 3U ] * det2_01_23 - m[ 2U ][ 3U ] * det2_01_13 + m[ 3U ][ 3U ] * det2_01_12;
 
-    _m[ 0U ][ 0U ] = -det3_213_123 * inverseDeterminant;
-    _m[ 0U ][ 1U ] = +det3_213_023 * inverseDeterminant;
-    _m[ 0U ][ 2U ] = -det3_213_013 * inverseDeterminant;
-    _m[ 0U ][ 3U ] = +det3_213_012 * inverseDeterminant;
+    auto &result = _data;
+    result[ 0U ][ 0U ] = -det3_213_123 * inverseDeterminant;
+    result[ 0U ][ 1U ] = +det3_213_023 * inverseDeterminant;
+    result[ 0U ][ 2U ] = -det3_213_013 * inverseDeterminant;
+    result[ 0U ][ 3U ] = +det3_213_012 * inverseDeterminant;
 
-    _m[ 1U ][ 0U ] = +det3_203_123 * inverseDeterminant;
-    _m[ 1U ][ 1U ] = -det3_203_023 * inverseDeterminant;
-    _m[ 1U ][ 2U ] = +det3_203_013 * inverseDeterminant;
-    _m[ 1U ][ 3U ] = -det3_203_012 * inverseDeterminant;
+    result[ 1U ][ 0U ] = +det3_203_123 * inverseDeterminant;
+    result[ 1U ][ 1U ] = -det3_203_023 * inverseDeterminant;
+    result[ 1U ][ 2U ] = +det3_203_013 * inverseDeterminant;
+    result[ 1U ][ 3U ] = -det3_203_012 * inverseDeterminant;
 
-    _m[ 2U ][ 0U ] = +det3_301_123 * inverseDeterminant;
-    _m[ 2U ][ 1U ] = -det3_301_023 * inverseDeterminant;
-    _m[ 2U ][ 2U ] = +det3_301_013 * inverseDeterminant;
-    _m[ 2U ][ 3U ] = -det3_301_012 * inverseDeterminant;
+    result[ 2U ][ 0U ] = +det3_301_123 * inverseDeterminant;
+    result[ 2U ][ 1U ] = -det3_301_023 * inverseDeterminant;
+    result[ 2U ][ 2U ] = +det3_301_013 * inverseDeterminant;
+    result[ 2U ][ 3U ] = -det3_301_012 * inverseDeterminant;
 
-    _m[ 3U ][ 0U ] = -det3_201_123 * inverseDeterminant;
-    _m[ 3U ][ 1U ] = +det3_201_023 * inverseDeterminant;
-    _m[ 3U ][ 2U ] = -det3_201_013 * inverseDeterminant;
-    _m[ 3U ][ 3U ] = +det3_201_012 * inverseDeterminant;
+    result[ 3U ][ 0U ] = -det3_201_123 * inverseDeterminant;
+    result[ 3U ][ 1U ] = +det3_201_023 * inverseDeterminant;
+    result[ 3U ][ 2U ] = -det3_201_013 * inverseDeterminant;
+    result[ 3U ][ 3U ] = +det3_201_012 * inverseDeterminant;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept
 {
-    _m[ 0U ][ 0U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 0U ] +
-        a._m[ 0U ][ 3U ] * b._m[ 3U ][ 0U ];
+    auto const &aData = a._data;
+    auto const &bData = b._data;
+    auto &result = _data;
 
-    _m[ 0U ][ 1U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 1U ] +
-        a._m[ 0U ][ 3U ] * b._m[ 3U ][ 1U ];
+    result[ 0U ][ 0U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 0U ] +
+        aData[ 0U ][ 3U ] * bData[ 3U ][ 0U ];
 
-    _m[ 0U ][ 2U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 2U ] +
-        a._m[ 0U ][ 3U ] * b._m[ 3U ][ 2U ];
+    result[ 0U ][ 1U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 1U ] +
+        aData[ 0U ][ 3U ] * bData[ 3U ][ 1U ];
 
-    _m[ 0U ][ 3U ] = a._m[ 0U ][ 0U ] * b._m[ 0U ][ 3U ] +
-        a._m[ 0U ][ 1U ] * b._m[ 1U ][ 3U ] +
-        a._m[ 0U ][ 2U ] * b._m[ 2U ][ 3U ] +
-        a._m[ 0U ][ 3U ] * b._m[ 3U ][ 3U ];
+    result[ 0U ][ 2U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 2U ] +
+        aData[ 0U ][ 3U ] * bData[ 3U ][ 2U ];
 
-    _m[ 1U ][ 0U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 0U ] +
-        a._m[ 1U ][ 3U ] * b._m[ 3U ][ 0U ];
+    result[ 0U ][ 3U ] = aData[ 0U ][ 0U ] * bData[ 0U ][ 3U ] +
+        aData[ 0U ][ 1U ] * bData[ 1U ][ 3U ] +
+        aData[ 0U ][ 2U ] * bData[ 2U ][ 3U ] +
+        aData[ 0U ][ 3U ] * bData[ 3U ][ 3U ];
 
-    _m[ 1U ][ 1U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 1U ] +
-        a._m[ 1U ][ 3U ] * b._m[ 3U ][ 1U ];
+    result[ 1U ][ 0U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 0U ] +
+        aData[ 1U ][ 3U ] * bData[ 3U ][ 0U ];
 
-    _m[ 1U ][ 2U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 2U ] +
-        a._m[ 1U ][ 3U ] * b._m[ 3U ][ 2U ];
+    result[ 1U ][ 1U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 1U ] +
+        aData[ 1U ][ 3U ] * bData[ 3U ][ 1U ];
 
-    _m[ 1U ][ 3U ] = a._m[ 1U ][ 0U ] * b._m[ 0U ][ 3U ] +
-        a._m[ 1U ][ 1U ] * b._m[ 1U ][ 3U ] +
-        a._m[ 1U ][ 2U ] * b._m[ 2U ][ 3U ] +
-        a._m[ 1U ][ 3U ] * b._m[ 3U ][ 3U ];
+    result[ 1U ][ 2U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 2U ] +
+        aData[ 1U ][ 3U ] * bData[ 3U ][ 2U ];
 
-    _m[ 2U ][ 0U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 0U ] +
-        a._m[ 2U ][ 3U ] * b._m[ 3U ][ 0U ];
+    result[ 1U ][ 3U ] = aData[ 1U ][ 0U ] * bData[ 0U ][ 3U ] +
+        aData[ 1U ][ 1U ] * bData[ 1U ][ 3U ] +
+        aData[ 1U ][ 2U ] * bData[ 2U ][ 3U ] +
+        aData[ 1U ][ 3U ] * bData[ 3U ][ 3U ];
 
-    _m[ 2U ][ 1U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 1U ] +
-        a._m[ 2U ][ 3U ] * b._m[ 3U ][ 1U ];
+    result[ 2U ][ 0U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 0U ] +
+        aData[ 2U ][ 3U ] * bData[ 3U ][ 0U ];
 
-    _m[ 2U ][ 2U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 2U ] +
-        a._m[ 2U ][ 3U ] * b._m[ 3U ][ 2U ];
+    result[ 2U ][ 1U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 1U ] +
+        aData[ 2U ][ 3U ] * bData[ 3U ][ 1U ];
 
-    _m[ 2U ][ 3U ] = a._m[ 2U ][ 0U ] * b._m[ 0U ][ 3U ] +
-        a._m[ 2U ][ 1U ] * b._m[ 1U ][ 3U ] +
-        a._m[ 2U ][ 2U ] * b._m[ 2U ][ 3U ] +
-        a._m[ 2U ][ 3U ] * b._m[ 3U ][ 3U ];
+    result[ 2U ][ 2U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 2U ] +
+        aData[ 2U ][ 3U ] * bData[ 3U ][ 2U ];
 
-    _m[ 3U ][ 0U ] = a._m[ 3U ][ 0U ] * b._m[ 0U ][ 0U ] +
-        a._m[ 3U ][ 1U ] * b._m[ 1U ][ 0U ] +
-        a._m[ 3U ][ 2U ] * b._m[ 2U ][ 0U ] +
-        a._m[ 3U ][ 3U ] * b._m[ 3U ][ 0U ];
+    result[ 2U ][ 3U ] = aData[ 2U ][ 0U ] * bData[ 0U ][ 3U ] +
+        aData[ 2U ][ 1U ] * bData[ 1U ][ 3U ] +
+        aData[ 2U ][ 2U ] * bData[ 2U ][ 3U ] +
+        aData[ 2U ][ 3U ] * bData[ 3U ][ 3U ];
 
-    _m[ 3U ][ 1U ] = a._m[ 3U ][ 0U ] * b._m[ 0U ][ 1U ] +
-        a._m[ 3U ][ 1U ] * b._m[ 1U ][ 1U ] +
-        a._m[ 3U ][ 2U ] * b._m[ 2U ][ 1U ] +
-        a._m[ 3U ][ 3U ] * b._m[ 3U ][ 1U ];
+    result[ 3U ][ 0U ] = aData[ 3U ][ 0U ] * bData[ 0U ][ 0U ] +
+        aData[ 3U ][ 1U ] * bData[ 1U ][ 0U ] +
+        aData[ 3U ][ 2U ] * bData[ 2U ][ 0U ] +
+        aData[ 3U ][ 3U ] * bData[ 3U ][ 0U ];
 
-    _m[ 3U ][ 2U ] = a._m[ 3U ][ 0U ] * b._m[ 0U ][ 2U ] +
-        a._m[ 3U ][ 1U ] * b._m[ 1U ][ 2U ] +
-        a._m[ 3U ][ 2U ] * b._m[ 2U ][ 2U ] +
-        a._m[ 3U ][ 3U ] * b._m[ 3U ][ 2U ];
+    result[ 3U ][ 1U ] = aData[ 3U ][ 0U ] * bData[ 0U ][ 1U ] +
+        aData[ 3U ][ 1U ] * bData[ 1U ][ 1U ] +
+        aData[ 3U ][ 2U ] * bData[ 2U ][ 1U ] +
+        aData[ 3U ][ 3U ] * bData[ 3U ][ 1U ];
 
-    _m[ 3U ][ 3U ] = a._m[ 3U ][ 0U ] * b._m[ 0U ][ 3U ] +
-        a._m[ 3U ][ 1U ] * b._m[ 1U ][ 3U ] +
-        a._m[ 3U ][ 2U ] * b._m[ 2U ][ 3U ] + a._m[ 3U ][ 3U ] * b._m[ 3U ][ 3U ];
+    result[ 3U ][ 2U ] = aData[ 3U ][ 0U ] * bData[ 0U ][ 2U ] +
+        aData[ 3U ][ 1U ] * bData[ 1U ][ 2U ] +
+        aData[ 3U ][ 2U ] * bData[ 2U ][ 2U ] +
+        aData[ 3U ][ 3U ] * bData[ 3U ][ 2U ];
+
+    result[ 3U ][ 3U ] = aData[ 3U ][ 0U ] * bData[ 0U ][ 3U ] +
+        aData[ 3U ][ 1U ] * bData[ 1U ][ 3U ] +
+        aData[ 3U ][ 2U ] * bData[ 2U ][ 3U ] +
+        aData[ 3U ][ 3U ] * bData[ 3U ][ 3U ];
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept
 {
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] +
-        v._data[ 1U ] * _m[ 1U ][ 0U ] +
-        v._data[ 2U ] * _m[ 2U ][ 0U ] +
-        v._data[ 3U ] * _m[ 3U ][ 0U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
 
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] +
-        v._data[ 1U ] * _m[ 1U ][ 1U ] +
-        v._data[ 2U ] * _m[ 2U ][ 1U ] +
-        v._data[ 3U ] * _m[ 3U ][ 1U ];
+    out._data[ 0U ] = vData[ 0U ] * m[ 0U ][ 0U ] +
+        vData[ 1U ] * m[ 1U ][ 0U ] +
+        vData[ 2U ] * m[ 2U ][ 0U ] +
+        vData[ 3U ] * m[ 3U ][ 0U ];
 
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] +
-        v._data[ 1U ] * _m[ 1U ][ 2U ] +
-        v._data[ 2U ] * _m[ 2U ][ 2U ] +
-        v._data[ 3U ] * _m[ 3U ][ 2U ];
+    out._data[ 1U ] = vData[ 0U ] * m[ 0U ][ 1U ] +
+        vData[ 1U ] * m[ 1U ][ 1U ] +
+        vData[ 2U ] * m[ 2U ][ 1U ] +
+        vData[ 3U ] * m[ 3U ][ 1U ];
 
-    out._data[ 3U ] = v._data[ 0U ] * _m[ 0U ][ 3U ] +
-        v._data[ 1U ] * _m[ 1U ][ 3U ] +
-        v._data[ 2U ] * _m[ 2U ][ 3U ] +
-        v._data[ 3U ] * _m[ 3U ][ 3U ];
+    out._data[ 2U ] = vData[ 0U ] * m[ 0U ][ 2U ] +
+        vData[ 1U ] * m[ 1U ][ 2U ] +
+        vData[ 2U ] * m[ 2U ][ 2U ] +
+        vData[ 3U ] * m[ 3U ][ 2U ];
+
+    out._data[ 3U ] = vData[ 0U ] * m[ 0U ][ 3U ] +
+        vData[ 1U ] * m[ 1U ][ 3U ] +
+        vData[ 2U ] * m[ 2U ][ 3U ] +
+        vData[ 3U ] * m[ 3U ][ 3U ];
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const noexcept
 {
-    out._data[ 0U ] = _m[ 0U ][ 0U ] * v._data[ 0U ] +
-        _m[ 0U ][ 1U ] * v._data[ 1U ] +
-        _m[ 0U ][ 2U ] * v._data[ 2U ] +
-        _m[ 0U ][ 3U ] * v._data[ 3U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
 
-    out._data[ 1U ] = _m[ 1U ][ 0U ] * v._data[ 0U ] +
-        _m[ 1U ][ 1U ] * v._data[ 1U ] +
-        _m[ 1U ][ 2U ] * v._data[ 2U ] +
-        _m[ 1U ][ 3U ] * v._data[ 3U ];
+    out._data[ 0U ] = m[ 0U ][ 0U ] * vData[ 0U ] +
+        m[ 0U ][ 1U ] * vData[ 1U ] +
+        m[ 0U ][ 2U ] * vData[ 2U ] +
+        m[ 0U ][ 3U ] * vData[ 3U ];
 
-    out._data[ 2U ] = _m[ 2U ][ 0U ] * v._data[ 0U ] +
-        _m[ 2U ][ 1U ] * v._data[ 1U ] +
-        _m[ 2U ][ 2U ] * v._data[ 2U ] +
-        _m[ 2U ][ 3U ] * v._data[ 3U ];
+    out._data[ 1U ] = m[ 1U ][ 0U ] * vData[ 0U ] +
+        m[ 1U ][ 1U ] * vData[ 1U ] +
+        m[ 1U ][ 2U ] * vData[ 2U ] +
+        m[ 1U ][ 3U ] * vData[ 3U ];
 
-    out._data[ 3U ] = _m[ 3U ][ 0U ] * v._data[ 0U ] +
-        _m[ 3U ][ 1U ] * v._data[ 1U ] +
-        _m[ 3U ][ 2U ] * v._data[ 2U ] +
-        _m[ 3U ][ 3U ] * v._data[ 3U ];
+    out._data[ 2U ] = m[ 2U ][ 0U ] * vData[ 0U ] +
+        m[ 2U ][ 1U ] * vData[ 1U ] +
+        m[ 2U ][ 2U ] * vData[ 2U ] +
+        m[ 2U ][ 3U ] * vData[ 3U ];
+
+    out._data[ 3U ] = m[ 3U ][ 0U ] * vData[ 0U ] +
+        m[ 3U ][ 1U ] * vData[ 1U ] +
+        m[ 3U ][ 2U ] * vData[ 2U ] +
+        m[ 3U ][ 3U ] * vData[ 3U ];
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] + v._data[ 1U ] * _m[ 1U ][ 0U ] + v._data[ 2U ] * _m[ 2U ][ 0U ];
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] + v._data[ 1U ] * _m[ 1U ][ 1U ] + v._data[ 2U ] * _m[ 2U ][ 1U ];
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] + v._data[ 1U ] * _m[ 1U ][ 2U ] + v._data[ 2U ] * _m[ 2U ][ 2U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
+    out._data[ 0U ] = vData[ 0U ] * m[ 0U ][ 0U ] + vData[ 1U ] * m[ 1U ][ 0U ] + vData[ 2U ] * m[ 2U ][ 0U ];
+    out._data[ 1U ] = vData[ 0U ] * m[ 0U ][ 1U ] + vData[ 1U ] * m[ 1U ][ 1U ] + vData[ 2U ] * m[ 2U ][ 1U ];
+    out._data[ 2U ] = vData[ 0U ] * m[ 0U ][ 2U ] + vData[ 1U ] * m[ 1U ][ 2U ] + vData[ 2U ] * m[ 2U ][ 2U ];
 }
 
 [[maybe_unused]] GXVoid GXMat4::MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
-    out._data[ 0U ] = v._data[ 0U ] * _m[ 0U ][ 0U ] +
-        v._data[ 1U ] * _m[ 1U ][ 0U ] +
-        v._data[ 2U ] * _m[ 2U ][ 0U ] +
-        _m[ 3U ][ 0U ];
+    auto const &m = _data;
+    auto const &vData = v._data;
 
-    out._data[ 1U ] = v._data[ 0U ] * _m[ 0U ][ 1U ] +
-        v._data[ 1U ] * _m[ 1U ][ 1U ] +
-        v._data[ 2U ] * _m[ 2U ][ 1U ] +
-        _m[ 3U ][ 1U ];
+    out._data[ 0U ] = vData[ 0U ] * m[ 0U ][ 0U ] +
+        vData[ 1U ] * m[ 1U ][ 0U ] +
+        vData[ 2U ] * m[ 2U ][ 0U ] +
+        m[ 3U ][ 0U ];
 
-    out._data[ 2U ] = v._data[ 0U ] * _m[ 0U ][ 2U ] +
-        v._data[ 1U ] * _m[ 1U ][ 2U ] +
-        v._data[ 2U ] * _m[ 2U ][ 2U ] +
-        _m[ 3U ][ 2U ];
+    out._data[ 1U ] = vData[ 0U ] * m[ 0U ][ 1U ] +
+        vData[ 1U ] * m[ 1U ][ 1U ] +
+        vData[ 2U ] * m[ 2U ][ 1U ] +
+        m[ 3U ][ 1U ];
+
+    out._data[ 2U ] = vData[ 0U ] * m[ 0U ][ 2U ] +
+        vData[ 1U ] * m[ 1U ][ 2U ] +
+        vData[ 2U ] * m[ 2U ][ 2U ] +
+        m[ 3U ][ 2U ];
 }
 
 //----------------------------------------------------------------------------------------------------------------------

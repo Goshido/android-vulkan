@@ -87,10 +87,10 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             localView.Multiply ( local, view );
 
             auto &x = *reinterpret_cast<GXVec3*> ( &localView );
-            auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+            auto &y = *reinterpret_cast<GXVec3*> ( localView._data[ 1U ] );
             x.Normalize ();
 
-            auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+            auto &z = *reinterpret_cast<GXVec3*> ( localView._data[ 2U ] );
             y.Normalize ();
             z.Normalize ();
 
@@ -136,10 +136,10 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
                 GXMat4 localView {};
                 localView.Multiply ( local, view );
                 auto &x = *reinterpret_cast<GXVec3*> ( &localView );
-                auto &y = *reinterpret_cast<GXVec3*> ( &localView._m[ 1U ][ 0U ] );
+                auto &y = *reinterpret_cast<GXVec3*> ( localView._data[ 1U ] );
                 x.Normalize ();
 
-                auto &z = *reinterpret_cast<GXVec3*> ( &localView._m[ 2U ][ 0U ] );
+                auto &z = *reinterpret_cast<GXVec3*> ( localView._data[ 2U ] );
                 y.Normalize ();
                 z.Normalize ();
 

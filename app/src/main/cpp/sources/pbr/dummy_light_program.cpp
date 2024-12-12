@@ -18,7 +18,6 @@ constexpr uint32_t SUBPASS = 1U;
 DummyLightProgram::DummyLightProgram () noexcept:
     DummyProgram ( "Dummy for layout transitions (lighting)",
         "shaders/dummy_light.ps.spv",
-        COLOR_RENDER_TARGET_COUNT,
         SUBPASS
     )
 {

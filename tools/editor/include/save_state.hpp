@@ -9,14 +9,13 @@ GX_DISABLE_COMMON_WARNINGS
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
-
-class SaveState;
 
 class SaveState final
 {
@@ -26,9 +25,6 @@ class SaveState final
             friend class SaveState;
 
             public:
-
-#pragma pack ( push, 1 )
-
                 enum class eType : uint8_t
                 {
                     Null = 0U,
@@ -48,23 +44,21 @@ class SaveState final
                     Bool = 14U
                 };
 
-#pragma pack ( pop )
-
             private:
-                union Data
-                {
-                    int8_t                                      _i8;
-                    uint8_t                                     _ui8;
-                    int16_t                                     _i16;
-                    uint16_t                                    _ui16;
-                    int32_t                                     _i32;
-                    uint32_t                                    _ui32;
-                    int64_t                                     _i64;
-                    uint64_t                                    _ui64;
-                    float                                       _float;
-                    double                                      _double;
-                    bool                                        _bool;
-                };
+                using Data = std::variant
+                <
+                    int8_t,
+                    uint8_t,
+                    int16_t,
+                    uint16_t,
+                    int32_t,
+                    uint32_t,
+                    int64_t,
+                    uint64_t,
+                    float,
+                    double,
+                    bool
+                >;
 
             private:
                 std::vector<Container>                          _arrayData {};

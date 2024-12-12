@@ -21,17 +21,18 @@ void ShapeSphere::CalculateInertiaTensor ( float mass ) noexcept
 {
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia
     float const diagonal = 1.0F / ( 0.4F * mass * _radius * _radius );
+    auto &m = _inertiaTensorInverse._data;
 
-    _inertiaTensorInverse._m[ 0U ][ 0U ] = diagonal;
-    _inertiaTensorInverse._m[ 1U ][ 1U ] = diagonal;
-    _inertiaTensorInverse._m[ 2U ][ 2U ] = diagonal;
+    m[ 0U ][ 0U ] = diagonal;
+    m[ 1U ][ 1U ] = diagonal;
+    m[ 2U ][ 2U ] = diagonal;
 
-    _inertiaTensorInverse._m[ 0U ][ 1U ] = 0.0F;
-    _inertiaTensorInverse._m[ 0U ][ 2U ] = 0.0F;
-    _inertiaTensorInverse._m[ 1U ][ 0U ] = 0.0F;
-    _inertiaTensorInverse._m[ 1U ][ 2U ] = 0.0F;
-    _inertiaTensorInverse._m[ 2U ][ 0U ] = 0.0F;
-    _inertiaTensorInverse._m[ 2U ][ 1U ] = 0.0F;
+    m[ 0U ][ 1U ] = 0.0F;
+    m[ 0U ][ 2U ] = 0.0F;
+    m[ 1U ][ 0U ] = 0.0F;
+    m[ 1U ][ 2U ] = 0.0F;
+    m[ 2U ][ 0U ] = 0.0F;
+    m[ 2U ][ 1U ] = 0.0F;
 }
 
 GXVec3 ShapeSphere::GetExtremePointWorld ( GXVec3 const &direction ) const noexcept

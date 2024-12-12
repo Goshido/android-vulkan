@@ -413,7 +413,7 @@ int ScriptableGXMat4::OnSetW ( lua_State* state )
 int ScriptableGXMat4::OnToString ( lua_State* state )
 {
     auto const &item = *static_cast<Item const*> ( lua_touserdata ( state, 1 ) );
-    GXMat4 const &m = item._matrix;
+    auto const &m = item._matrix._data;
 
     constexpr char const format[] =
 R"__(%14g %14g %14g %14g
@@ -426,22 +426,22 @@ R"__(%14g %14g %14g %14g
     int const len = std::snprintf ( result,
         std::size ( result ),
         format,
-        m._data[ 0U ],
-        m._data[ 1U ],
-        m._data[ 2U ],
-        m._data[ 3U ],
-        m._data[ 4U ],
-        m._data[ 5U ],
-        m._data[ 6U ],
-        m._data[ 7U ],
-        m._data[ 8U ],
-        m._data[ 9U ],
-        m._data[ 10U ],
-        m._data[ 11U ],
-        m._data[ 12U ],
-        m._data[ 13U ],
-        m._data[ 14U ],
-        m._data[ 15U ]
+        m[ 0U ][ 0U ],
+        m[ 0U ][ 1U ],
+        m[ 0U ][ 2U ],
+        m[ 0U ][ 3U ],
+        m[ 1U ][ 0U ],
+        m[ 1U ][ 1U ],
+        m[ 1U ][ 2U ],
+        m[ 1U ][ 3U ],
+        m[ 2U ][ 0U ],
+        m[ 2U ][ 1U ],
+        m[ 2U ][ 2U ],
+        m[ 2U ][ 3U ],
+        m[ 3U ][ 0U ],
+        m[ 3U ][ 1U ],
+        m[ 3U ][ 2U ],
+        m[ 3U ][ 3U ]
     );
 
     lua_pushlstring ( state, result, static_cast<size_t> ( len ) );

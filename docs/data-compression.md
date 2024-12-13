@@ -583,8 +583,7 @@ struct UIVertexInfo
                                             struct UIAtlas
                                             {
                                                 float16_t2      _uv;
-                                                uint8_t         _layer;
-                                                uint8_t         _padding[ 3U ];
+                                                float32_t       _layer;
                                             };
 
                                             // Vertex buffer #1
@@ -595,5 +594,7 @@ struct UIVertexInfo
     float32_t2      _imageUV;                   uint32_t        _color;
 };                                          };
 ```
+
+**Note:** 2024 December 13<sup>th</sup>. Turns out that `Adreno 730` does not support `VK_FORMAT_R8_USCALED` for vertex buffers at all. So it was decided to make `UIAtlas::_layer` field as `float32_t` because `VK_FORMAT_R32_SFLOAT` is widely supported for vertex buffers. At vertex shader side this value must be used as `float32_t` and aligned to 4-byte boundary anyway. As a bonus `UIAtlas::_padding` field is not needed anymore.
 
 [↬ table of content ⇧](#table-of-content)

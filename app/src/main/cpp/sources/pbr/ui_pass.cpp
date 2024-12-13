@@ -1072,7 +1072,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-    uint8_t const layer = glyphTopLeft._layer;
+    float const layer = glyphTopLeft._layer;
 
     targetVertices[ 1U ] =
     {

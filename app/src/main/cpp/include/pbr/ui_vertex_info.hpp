@@ -18,10 +18,8 @@ namespace pbr {
 struct UIAtlas final
 {
     android_vulkan::Half2       _uv {};
-    uint8_t                     _layer = 0U;
-
     // See <repo>/docs/data-compression.md#opt-2-further-compression
-    uint8_t                     _padding[ 3U ] {};
+    float                       _layer = 0.0F;
 };
 
 struct UIVertex final

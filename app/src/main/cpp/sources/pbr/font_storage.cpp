@@ -1016,7 +1016,7 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
 UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
 {
     UIAtlas result {};
-    result._layer = static_cast<uint8_t> ( layer );
+    result._layer = layer;
 
     constexpr float pix2UV = 1.0F / static_cast<float> ( FONT_ATLAS_RESOLUTION );
     constexpr float threshold = pix2UV * 0.25F;

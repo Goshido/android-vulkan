@@ -129,3 +129,4 @@ First `vkGetSwapchainImagesKHR` false positive | [#8138](https://github.com/Khro
 No resource type and name in error message | [#8139](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8139) | ✔️ Fixed
 `VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | 🛡️ Not an issue
 VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8970) | 🛡️ Not an issue
+Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted

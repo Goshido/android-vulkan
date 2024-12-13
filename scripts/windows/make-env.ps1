@@ -17,12 +17,10 @@ $global:FLAGS =
     "-fvk-use-dx-layout",
     "-fspv-reduce-load-size",
     "-fspv-target-env=vulkan1.1",
+    "-ffinite-math-only",
     "-enable-16bit-types",
     "-WX",
-    "-ffinite-math-only",
-    "-I", $EDITOR_HLSL_DIRECTORY,
     "-I", "$editorDirectory\include",
-    "-I", $MOBILE_HLSL_DIRECTORY,
     "-I", "$mobileDirectory\cpp\include"
 
 if ( $embedSources )

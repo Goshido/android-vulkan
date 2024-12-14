@@ -1,5 +1,5 @@
 #include "pbr/reflection_local.inc"
-#include "reflection_common.ps"
+#include "reflection_common.ps.hlsl"
 
 
 [[vk::binding ( BIND_LIGHT_DATA, SET_REFLECTION )]]

@@ -1,5 +1,5 @@
-#include "object_data.inc"
-#include "tbn.inc"
+#include "object_data.hlsl"
+#include "tbn.hlsl"
 
 
 struct InputData

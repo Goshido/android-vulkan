@@ -1,5 +1,5 @@
 #include "pbr/skin.inc"
-#include "tbn.inc"
+#include "tbn.hlsl"
 
 
 #define BONES_PER_VERTEX    4U

@@ -1,10 +1,10 @@
-#ifndef OBJECT_DATA_INC
-#define OBJECT_DATA_INC
+#ifndef OBJECT_DATA_HLSL
+#define OBJECT_DATA_HLSL
 
 
 #include "pbr/geometry_pass_binds.inc"
 #include "pbr/gpgpu_limits.inc"
-#include "tbn64.inc"
+#include "tbn64.hlsl"
 
 
 // In summary data per instance = 88 bytes
@@ -39,4 +39,4 @@ cbuffer InstanceColorData:          register ( b2 )
 }
 
 
-#endif // OBJECT_DATA_INC
+#endif // OBJECT_DATA_HLSL

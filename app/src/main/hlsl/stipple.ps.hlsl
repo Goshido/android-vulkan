@@ -1,4 +1,4 @@
-#include "geometry_pass.ps"
+#include "geometry_pass.ps.hlsl"
 
 
 // The implementation is based on ideas from

@@ -1,5 +1,5 @@
 #include "rotating_mesh/bindings.inc"
-#include "tbn.inc"
+#include "tbn.hlsl"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_ONCE )]]

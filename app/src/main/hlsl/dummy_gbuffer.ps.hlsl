@@ -1,4 +1,4 @@
-#include "gbuffer_render_targets.ps"
+#include "gbuffer_render_targets.ps.hlsl"
 
 
 OutputData PS ()

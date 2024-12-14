@@ -1,5 +1,5 @@
-#ifndef GBUFFER_RENDER_TARGETS_PS
-#define GBUFFER_RENDER_TARGETS_PS
+#ifndef GBUFFER_RENDER_TARGETS_PS_HLSL
+#define GBUFFER_RENDER_TARGETS_PS_HLSL
 
 
 #include "pbr/geometry_pass_binds.inc"
@@ -21,4 +21,4 @@ struct OutputData
 };
 
 
-#endif // GBUFFER_RENDER_TARGETS_PS
+#endif // GBUFFER_RENDER_TARGETS_PS_HLSL

@@ -1,5 +1,5 @@
-#ifndef MANDELBROT_PS
-#define MANDELBROT_PS
+#ifndef MANDELBROT_PS_HLSL
+#define MANDELBROT_PS_HLSL
 
 
 #define SQUARE_MODULE_STOP_TRAIT    4.0F
@@ -33,4 +33,4 @@ uint32_t CountIterations ( in float32_t2 coordinate )
 }
 
 
-#endif // MANDELBROT_PS
+#endif // MANDELBROT_PS_HLSL

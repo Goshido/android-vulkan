@@ -1,5 +1,5 @@
-#ifndef UI_COMMON_PS
-#define UI_COMMON_PS
+#ifndef UI_COMMON_PS_HLSL
+#define UI_COMMON_PS_HLSL
 
 
 #include "pbr/ui_program.inc"
@@ -49,4 +49,4 @@ float16_t4 Compute ( in InputData inputData )
 }
 
 
-#endif // UI_COMMON_PS
+#endif // UI_COMMON_PS_HLSL

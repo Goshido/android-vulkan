@@ -1,9 +1,9 @@
-#ifndef GEOMETRY_PASS_PS
-#define GEOMETRY_PASS_PS
+#ifndef GEOMETRY_PASS_PS_HLSL
+#define GEOMETRY_PASS_PS_HLSL
 
 
-#include "gbuffer_render_targets.ps"
-#include "object_data.inc"
+#include "gbuffer_render_targets.ps.hlsl"
+#include "object_data.hlsl"
 
 
 // 1.0 / 255.0
@@ -129,4 +129,4 @@ OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in floa
 }
 
 
-#endif // GEOMETRY_PASS_PS
+#endif // GEOMETRY_PASS_PS_HLSL

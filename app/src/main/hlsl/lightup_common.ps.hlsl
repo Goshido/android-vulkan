@@ -1,5 +1,5 @@
-#ifndef LIGHTUP_COMMON_PS
-#define LIGHTUP_COMMON_PS
+#ifndef LIGHTUP_COMMON_PS_HLSL
+#define LIGHTUP_COMMON_PS_HLSL
 
 
 #include "pbr/lightup_common.inc"
@@ -85,4 +85,4 @@ float16_t3 RestoreNormalView ()
 }
 
 
-#endif // LIGHTUP_COMMON_PS
+#endif // LIGHTUP_COMMON_PS_HLSL

@@ -1,4 +1,4 @@
-#include "geometry_pass.ps"
+#include "geometry_pass.ps.hlsl"
 
 
 OutputData PS ( in InputData inputData )

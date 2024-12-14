@@ -1,4 +1,4 @@
-#include "reflection_common.ps"
+#include "reflection_common.ps.hlsl"
 
 
 #define VOID_SPACE_DEPTH    0.0F

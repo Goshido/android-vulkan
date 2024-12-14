@@ -1,8 +1,8 @@
-#ifndef REFLECTION_COMMON_PS
-#define REFLECTION_COMMON_PS
+#ifndef REFLECTION_COMMON_PS_HLSL
+#define REFLECTION_COMMON_PS_HLSL
 
 
-#include "lightup_common.ps"
+#include "lightup_common.ps.hlsl"
 #include "pbr/reflection_common.inc"
 
 
@@ -55,4 +55,4 @@ float16_t3 GetReflection ( in float16_t3 toFragmentView )
 }
 
 
-#endif // REFLECTION_COMMON_PS
+#endif // REFLECTION_COMMON_PS_HLSL

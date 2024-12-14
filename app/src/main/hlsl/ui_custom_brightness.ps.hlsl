@@ -1,5 +1,5 @@
-#include "brightness_factor.ps"
-#include "ui_common.ps"
+#include "brightness_factor.ps.hlsl"
+#include "ui_common.ps.hlsl"
 
 
 //----------------------------------------------------------------------------------------------------------------------

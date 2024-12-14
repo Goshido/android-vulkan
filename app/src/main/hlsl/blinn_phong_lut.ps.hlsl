@@ -1,5 +1,5 @@
 #include "rotating_mesh/bindings.inc"
-#include "blinn_phong_gamma.ps"
+#include "blinn_phong_gamma.ps.hlsl"
 
 
 // Main reference is Source Engine

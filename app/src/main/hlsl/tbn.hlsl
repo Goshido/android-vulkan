@@ -1,8 +1,8 @@
-#ifndef TBN_INC
-#define TBN_INC
+#ifndef TBN_INC_HLSL
+#define TBN_INC_HLSL
 
 
-#include "tbn64.inc"
+#include "tbn64.hlsl"
 
 
 void GetNormalAndTangent ( out float16_t3 normalView, out float16_t3 tangentView, in float16_t4 tbn )
@@ -116,4 +116,4 @@ float16_t4 ToTBN ( in float16_t3x3 m )
 }
 
 
-#endif // TBN_INC
+#endif // TBN_INC_HLSL

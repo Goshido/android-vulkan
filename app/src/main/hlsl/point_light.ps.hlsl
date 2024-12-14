@@ -1,4 +1,4 @@
-#include "lightup_common.ps"
+#include "lightup_common.ps.hlsl"
 #include "pbr/point_light.inc"
 
 

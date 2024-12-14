@@ -20,6 +20,20 @@
             ]
         },
         {
+            "label": "Count LOC",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/scripts/windows/count-loc.ps1"
+            }
+        },
+        {
             "label": "Compile SPIR-V",
             "type": "shell",
             "group": "build",

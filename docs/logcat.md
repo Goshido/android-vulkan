@@ -10,5 +10,5 @@ _android-vulkan_ project is using `android_vulkan::C++` tag for logging. But it'
 So recommended _Logcat_'s filter is:
 
 ```txt
-package:mine tag:android_vulkan::C++ tag:libc tag:DEBUG tag:gralloc tag:ion tag:Gralloc3
+tag:android_vulkan::C++ tag:libc tag:DEBUG tag:gralloc tag:ioi tag:Gralloc3
 ```

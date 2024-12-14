@@ -12,7 +12,7 @@ The manual is based on `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f` commit of the 
 
 - _Windows 11_
 - _Android NDK 27.0.12077973_
-- _CMake 3.22.1_
+- _CMake 3.31.1_
 - _Ninja 1.10.2_
 - _Python 3.11.1_
 

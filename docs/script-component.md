@@ -21,7 +21,7 @@ require "av://engine/script_component.lua"
 
 ## <a id="brief">Brief</a>
 
-[_ScriptComponent_](./script-component.md) is a fundamental building block for scriptable logic. The class allows to create custom user scripts, handle events and interact with various scene entities. This class not can be used directly because it's a base abstract class. The user must subclass [_ScriptComponent_](./script-component.md) and attach the its instance to any [_Actor_](./actor.md) instance.
+[_ScriptComponent_](./script-component.md) is a fundamental building block for scriptable logic. The class allows to create custom user scripts, handle events and interact with various scene entities. This class can not be used directly because it's a base abstract class. The user must subclass [_ScriptComponent_](./script-component.md) and attach its instance to any [_Actor_](./actor.md) instance.
 
 Subclassing example:
 

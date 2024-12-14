@@ -41,6 +41,8 @@
   - ❌ Compilation script repo
   - ❌ VVL docs
   - ❌ Readme
+    - ❌ Main page
+    - ❌ Editor page
 - ❌ Lua
   - ❌ Binary
   - ❌ Compilation script repo
@@ -55,6 +57,8 @@
   - ❌ External archive
   - ❌ Shader compilation docs
   - ❌ Readme
+    - ❌ Main page
+    - ❌ Editor page
 - ❌ FreeType
   - ❌ Binary
     - ❌ _Android_
@@ -62,6 +66,8 @@
   - ❌ Compilation script repo
   - ❌ Headers
   - ❌ Readme
+    - ❌ Main page
+    - ❌ Editor page
 - ❌ Ogg
   - ❌ Binary
   - ❌ Compilation script repo
@@ -75,6 +81,8 @@
 - ❌ STB
   - ❌ Header
   - ❌ Readme
+    - ❌ Main page
+    - ❌ Editor page
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
 - ❌ Set starting project as PBR

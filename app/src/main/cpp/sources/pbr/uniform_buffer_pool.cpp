@@ -14,7 +14,7 @@ constexpr size_t KILOBYTES_TO_BYTES = 1024U;
 // See https://developercommunity.visualstudio.com/t/10711255
 GX_UNUSED_BEGIN
 
-// see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
+// see https://registry.khronos.org/vulkan/specs/latest/man/html/vkCmdUpdateBuffer.html
 [[maybe_unused]] constexpr size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
 
 GX_UNUSED_END
@@ -57,6 +57,7 @@ VkBuffer UniformBufferPool::GetBuffer ( size_t bufferIndex ) const noexcept
 
 bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept
 {
+    AV_ASSERT ( itemSize > 0U )
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
     AV_ASSERT ( itemSize <= UPDATE_BUFFER_MAX_SIZE )
 

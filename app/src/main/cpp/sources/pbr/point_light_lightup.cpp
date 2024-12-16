@@ -347,7 +347,7 @@ void PointLightLightup::IssueSync ( VkDevice device, VkCommandBuffer commandBuff
         nullptr
     );
 
-    if ( more < 1U )
+    if ( more < 1U ) [[likely]]
         return;
 
     vkCmdPipelineBarrier ( commandBuffer,

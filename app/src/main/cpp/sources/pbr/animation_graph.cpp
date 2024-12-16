@@ -141,7 +141,8 @@ bool AnimationGraph::BufferSet::Init ( VkDeviceSize size, size_t frameInFlightIn
     result = _renderer->MapMemory ( data,
         _transferPoseSkin._memory,
         _transferPoseSkin._offset,
-        "pbr::AnimationGraph::BufferSet::Init", "Can't map memory"
+        "pbr::AnimationGraph::BufferSet::Init",
+        "Can't map memory"
     );
 
     if ( result ) [[likely]]

@@ -67,8 +67,11 @@ class Renderer final
             .depth = 65535U
         };
 
-        size_t                                          _maxUniformBufferRange {};
-        size_t                                          _minStorageBufferOffsetAlignment {};
+        size_t                                          _maxUniformBufferRange = 0U;
+        size_t                                          _minStorageBufferOffsetAlignment = 0U;
+        size_t                                          _minUniformBufferOffsetAlignment = 0U;
+        size_t                                          _nonCoherentAtomSize = 0U;
+
         MemoryAllocator                                 _memoryAllocator {};
 
         VkPhysicalDevice                                _physicalDevice = VK_NULL_HANDLE;
@@ -147,6 +150,8 @@ class Renderer final
         [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
         [[nodiscard]] size_t GetMinStorageBufferOffsetAlignment () const noexcept;
+        [[nodiscard]] size_t GetMinUniformBufferOffsetAlignment () const noexcept;
+        [[nodiscard]] size_t GetNonCoherentAtomSize () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
         [[nodiscard]] VkImageView const &GetPresentImageView ( size_t imageIndex ) const noexcept;

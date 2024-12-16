@@ -856,6 +856,16 @@ size_t Renderer::GetMinStorageBufferOffsetAlignment () const noexcept
     return _minStorageBufferOffsetAlignment;
 }
 
+size_t Renderer::GetMinUniformBufferOffsetAlignment () const noexcept
+{
+    return _minUniformBufferOffsetAlignment;
+}
+
+size_t Renderer::GetNonCoherentAtomSize () const noexcept
+{
+    return _nonCoherentAtomSize;
+}
+
 size_t Renderer::GetPresentImageCount () const noexcept
 {
     return _swapchainImageViews.size ();
@@ -2175,6 +2185,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     );
 
     _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
+    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
+    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
 
     PrintSizeProp ( INDENT_1,
         "minStorageBufferOffsetAlignment",

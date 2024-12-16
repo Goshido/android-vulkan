@@ -3,20 +3,10 @@
 
 
 #include <renderer.hpp>
+#include "uniform_pool_size.hpp"
 
 
 namespace pbr {
-
-enum class eUniformPoolSize : size_t
-{
-    Nanoscopic_64KB = 64U,
-    Microscopic_1M [[maybe_unused]] = 1024U,
-    Tiny_4M = 4096U,
-    Small_8M [[maybe_unused]] = 8192U,
-    Medium_16M [[maybe_unused]] = 16384U,
-    Big_32M [[maybe_unused]] = 32768U,
-    Huge_64M = 65536U
-};
 
 // Note the class is NOT thread safe.
 class UniformBufferPool final

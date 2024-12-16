@@ -51,7 +51,7 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _baseIndex, 0U, nullptr );
 
-    if ( more < 1U ) [[unlikely]]
+    if ( more < 1U ) [[likely]]
         return;
 
     vkCmdPipelineBarrier ( commandBuffer,
@@ -88,7 +88,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     DescriptorSetLayout const &descriptorSetLayout,
     size_t itemSize,
     uint32_t bind,
-    char const* name
+    [[maybe_unused]] char const* name
 ) noexcept
 {
     if ( !_uniformPool.Init ( renderer, itemSize, name ) ) [[unlikely]]

@@ -72,7 +72,7 @@ void GeometryPool::IssueSync ( VkCommandBuffer commandBuffer ) const noexcept
         nullptr
     );
 
-    if ( more < 1U ) [[unlikely]]
+    if ( more < 1U ) [[likely]]
         return;
 
     vkCmdPipelineBarrier ( commandBuffer,

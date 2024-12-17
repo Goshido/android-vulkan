@@ -31,12 +31,16 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !_geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) ) [[unlikely]]
+        return false;
+
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % DUAL_COMMAND_BUFFER;
 
     VkFence &fence = commandInfo._fence;
-    VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
@@ -115,8 +119,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     if ( !result ) [[unlikely]]
         return false;
-
-    _geometryPass.UploadGPUData ( device, commandBuffer, _frustum, _view, _viewProjection );
 
     vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 

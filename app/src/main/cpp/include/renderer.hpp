@@ -92,14 +92,14 @@ class Renderer final
         VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
         VkSwapchainKHR                                  _oldSwapchain = VK_NULL_HANDLE;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
         PFN_vkCreateDebugUtilsMessengerEXT              vkCreateDebugUtilsMessengerEXT = nullptr;
         PFN_vkDestroyDebugUtilsMessengerEXT             vkDestroyDebugUtilsMessengerEXT = nullptr;
 
         VkDebugUtilsMessengerEXT                        _debugUtilsMessenger = VK_NULL_HANDLE;
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
         VkExtent2D                                      _viewportResolution
         {
@@ -158,7 +158,7 @@ class Renderer final
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the
         // mobile device. For more information please reference by links:
-        // See docs/preprocessor-macros.md#macro-android-native-mode
+        // See docs/preprocessor-macros.md#macro-av-native-mode
         [[nodiscard]] GXMat4 const &GetPresentationEngineTransform () const noexcept;
 
         [[nodiscard]] VkQueue GetQueue () const noexcept;
@@ -209,7 +209,7 @@ class Renderer final
         [[nodiscard]] static VkImageAspectFlags ResolveImageViewAspect ( VkFormat format ) noexcept;
         [[nodiscard]] static char const* ResolveVkFormat ( VkFormat format ) noexcept;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
         [[nodiscard]] static VkBool32 VKAPI_PTR OnVulkanDebugUtils (
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -218,7 +218,7 @@ class Renderer final
             void* pUserData
         );
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
     private:
         [[nodiscard]] bool CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept;
@@ -232,12 +232,12 @@ class Renderer final
 
         [[nodiscard]] bool CheckRequiredFormats () noexcept;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
         [[nodiscard]] bool DeployDebugFeatures () noexcept;
         void DestroyDebugFeatures () noexcept;
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
         [[nodiscard]] bool DeployDevice ( std::string_view const &userGPU ) noexcept;
         void DestroyDevice () noexcept;

@@ -2,7 +2,7 @@
 #define ANDROID_VULKAN_TRACE_HPP
 
 
-#ifndef ANDROID_ENABLE_TRACE
+#ifndef AV_ENABLE_TRACE
 
 #define AV_TRACE(name)
 #define AV_THREAD_NAME(name)
@@ -34,7 +34,7 @@ void SetThreadName ( char const* name ) noexcept;
 #define AV_TRACE(name) android_vulkan::Trace const _FuCk_TrAcE_ ( name );
 #define AV_THREAD_NAME(name) android_vulkan::SetThreadName ( name );
 
-#endif // ANDROID_ENABLE_TRACE
+#endif // AV_ENABLE_TRACE
 
 
 #endif // ANDROID_VULKAN_TRACE_HPP

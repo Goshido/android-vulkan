@@ -96,13 +96,12 @@ bool MaterialPool::Init ( VkDevice device, DefaultTextureManager const &defaultT
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     for ( size_t i = 0U; i < MATERIALS; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, descriptorSets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Material #%zu", i )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     // Initialize all immutable constant fields.
 

@@ -290,31 +290,17 @@ void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
 {
     MessageQueue &queue = _messageQueue;
 
-    if ( _dragArea.OnMouseMove ( queue, event ) )
-        return;
+    bool const handled = _dragArea.OnMouseMove ( queue, event ) ||
+        _resizeUp.OnMouseMove ( queue, event ) ||
+        _resizeDown.OnMouseMove ( queue, event ) ||
+        _resizeLeft.OnMouseMove ( queue, event ) ||
+        _resizeRight.OnMouseMove ( queue, event ) ||
+        _resizeTopLeft.OnMouseMove ( queue, event ) ||
+        _resizeTopRight.OnMouseMove ( queue, event ) ||
+        _resizeBottomLeft.OnMouseMove ( queue, event ) ||
+        _resizeBottomRight.OnMouseMove ( queue, event );
 
-    if ( _resizeUp.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeDown.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeLeft.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeRight.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeTopLeft.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeTopRight.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeBottomLeft.OnMouseMove ( queue, event ) )
-        return;
-
-    if ( _resizeBottomRight.OnMouseMove ( queue, event ) )
+    if ( handled )
         return;
 
     size_t const eventID = event._eventID;

@@ -1,7 +1,6 @@
 #include <precompiled_headers.hpp>
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
 #include <av_assert.hpp>
 #include <renderer.hpp>
@@ -93,4 +92,4 @@ void VulkanGroup::IssueGroup ( char const* name ) noexcept
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC

@@ -1,6 +1,6 @@
 # _CPU_ tracing
 
-The project supports _Android Studio_'s [tracing tool](https://developer.android.com/topic/performance/tracing). It's activated via preprocessor macro - [`ANDROID_ENABLE_TRACE`](preprocessor-macros.md#macro-android-enable-trace). The tool requires to make debuggable application to work. So recommended `CMakeLists.txt` configuration is the following:
+The project supports _Android Studio_'s [tracing tool](https://developer.android.com/topic/performance/tracing). It's activated via preprocessor macro - [`AV_ENABLE_TRACE`](preprocessor-macros.md#macro-av-enable-trace). The tool requires to make debuggable application to work. So recommended `CMakeLists.txt` configuration is the following:
 
 ```cmake
 ...
@@ -19,14 +19,15 @@ target_compile_options ( android-vulkan PRIVATE
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
-    -DANDROID_ENABLE_TRACE
-    -DANDROID_NATIVE_MODE_PORTRAIT
-#    -DANDROID_VULKAN_DEBUG
-#    -DANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-#    -DANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-#    -DANDROID_VULKAN_STRICT_MODE
-    -DVK_NO_PROTOTYPES
-    -DVK_USE_PLATFORM_ANDROID_KHR
+    AV_ENABLE_TRACE
+    AV_NATIVE_MODE_PORTRAIT
+#    AV_DEBUG
+#    AV_ENABLE_RENDERDOC
+#    AV_ENABLE_VVL
+#    AV_STRICT_MODE
+    AV_ARM_NEON
+    VK_NO_PROTOTYPES
+    VK_USE_PLATFORM_ANDROID_KHR
 )
 
 ...

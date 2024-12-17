@@ -48,8 +48,7 @@ class GeometryPass final
 
         void Reset () noexcept;
 
-        void UploadGPUData ( VkDevice device,
-            VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool UploadGPUData ( VkDevice device,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection

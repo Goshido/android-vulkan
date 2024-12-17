@@ -44,16 +44,13 @@ void OpaqueSubpass::Execute ( VkCommandBuffer commandBuffer,
     AppendDrawcalls ( commandBuffer, _program, geometryPool, materialPool, renderSessionStats );
 }
 
-void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
-    GeometryPool &geometryPool,
+void OpaqueSubpass::UpdateGPUData ( GeometryPool &geometryPool,
     MaterialPool &materialPool,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload opaque data" )
-
     if ( _sceneData.empty () )
         return;
 
@@ -99,7 +96,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             normalData._localView[ 0U ]._q0 = q.Compress64 ();
 
             colorData._colorData[ 0U ] = geometryData._colorData;
-            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, 1U );
+            geometryPool.Push ( positionData, normalData, colorData, 1U );
         }
 
         for ( auto const &item : geometryCall.GetBatchList () )
@@ -111,13 +108,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             {
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
-                    geometryPool.Push ( commandBuffer,
-                        positionData,
-                        normalData,
-                        colorData,
-                        PBR_OPAQUE_MAX_INSTANCE_COUNT
-                    );
-
+                    geometryPool.Push ( positionData, normalData, colorData, PBR_OPAQUE_MAX_INSTANCE_COUNT );
                     instanceIndex = 0U;
                 }
 
@@ -160,7 +151,7 @@ void OpaqueSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             if ( !instanceIndex ) [[likely]]
                 continue;
 
-            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, instanceIndex );
+            geometryPool.Push ( positionData, normalData, colorData, instanceIndex );
         }
     }
 }

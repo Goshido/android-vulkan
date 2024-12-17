@@ -17,7 +17,7 @@ class UniformBufferPool final
         size_t                      _index = 0U;
         size_t                      _itemSize = 0U;
         VkDeviceSize                _offset = std::numeric_limits<VkDeviceSize>::max ();
-        size_t                      _size;
+        size_t                      _size = 0U;
 
     public:
         UniformBufferPool () = delete;

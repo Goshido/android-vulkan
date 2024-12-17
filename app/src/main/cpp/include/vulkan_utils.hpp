@@ -3,13 +3,12 @@
 
 
 // Sanity check
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&                                                      \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) && defined ( AV_ENABLE_RENDERDOC )
 
-#error ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS and ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION \
+#error AV_ENABLE_VVL and AV_ENABLE_RENDERDOC \
 macro are mutually exclusive. Please check build configuration in the CMakeLists.txt file.
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS && ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL && AV_ENABLE_RENDERDOC
 
 #include <GXCommon/GXWarning.hpp>
 
@@ -24,8 +23,7 @@ GX_RESTORE_WARNING_STATE
 
 #define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
 
-#if !defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) &&                                                     \
-    !defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if !defined ( AV_ENABLE_VVL ) && !defined ( AV_ENABLE_RENDERDOC )
 
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)
 #define AV_VULKAN_GROUP(commandBuffer, ...)
@@ -83,7 +81,7 @@ class VulkanGroup final
 
 } // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
 
 #endif // VULKAN_UTILS_HPP

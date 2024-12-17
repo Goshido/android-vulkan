@@ -205,7 +205,8 @@ bool UMASparseUniformPool::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) ||       \
+    defined ( AV_ENABLE_RENDERDOC )
 
     for ( size_t i = 0U; i < items; ++i )
     {

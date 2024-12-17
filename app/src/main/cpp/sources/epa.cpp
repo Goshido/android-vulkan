@@ -182,7 +182,7 @@ bool EPA::Run ( Simplex const &simplex, Shape const &shapeA, Shape const &shapeB
         }
     }
 
-#ifdef ANDROID_VULKAN_DEBUG
+#ifdef AV_DEBUG
 
     constexpr char const format[] =
 R"__(EPA::Run - Algorithm exceeded maximum steps. Counters:
@@ -193,7 +193,7 @@ R"__(EPA::Run - Algorithm exceeded maximum steps. Counters:
 
     LogWarning ( format, _steps, _vertices.size (), _faces.size (), _edges.size () );
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // AV_DEBUG
 
     return false;
 }

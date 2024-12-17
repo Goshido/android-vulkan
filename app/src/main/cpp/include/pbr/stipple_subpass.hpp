@@ -41,8 +41,7 @@ class StippleSubpass final : public GeometrySubpassBase
             bool &isSamplerUsed
         ) noexcept;
 
-        void UpdateGPUData ( VkCommandBuffer commandBuffer,
-            GeometryPool &geometryPool,
+        void UpdateGPUData ( GeometryPool &geometryPool,
             MaterialPool &materialPool,
             GXMat4 const &view,
             GXMat4 const &viewProjection

@@ -40,7 +40,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     // [2022-08-10] RenderDoc 1.21 doesn't support VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT memory.
     // So VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT usage is not available.
 
-#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#ifdef AV_ENABLE_RENDERDOC
 
     constexpr VkImageUsageFlags usageColor = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT );
@@ -56,7 +56,7 @@ bool GBuffer::Init ( android_vulkan::Renderer &renderer, VkExtent2D const &resol
     constexpr VkImageUsageFlags usageDepthStencil = AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
         AV_VK_FLAG ( VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT );
 
-#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_RENDERDOC
 
     if ( !_albedo.CreateRenderTarget ( resolution, VK_FORMAT_R8G8B8A8_SRGB, usageColor, renderer ) ) [[unlikely]]
         return false;

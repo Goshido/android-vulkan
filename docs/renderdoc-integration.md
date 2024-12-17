@@ -1,5 +1,12 @@
 # _RenderDoc_ integration
 
+## <a id="table-of-content">Table of content</a>
+
+- [_Brief_](#brief)
+- [_Reported issues_](#issues)
+
+## <a id="brief">Brief</a>
+
 The project supports integration with [_RenderDoc v1.35_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
 
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
@@ -9,8 +16,8 @@ You could refer to [this thread](https://github.com/baldurk/renderdoc/issues/268
 
 So it's needed to make proper build of the project:
 
-- disable [_Vulkan Validation layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) feature: `ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS`. [How to](preprocessor-macros.md#macro-android-vulkan-enable-vulkan-validation-layers)
-- activate [_RenderDoc v1.35_](https://renderdoc.org/) compatibility feature: `ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`. [How to](preprocessor-macros.md#macro-android-vulkan-enable-render-doc-integration)
+- disable [_Vulkan Validation layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) feature: `AV_ENABLE_VVL`. [How to](preprocessor-macros.md#macro-av-enable-vvl)
+- activate [_RenderDoc v1.35_](https://renderdoc.org/) compatibility feature: `AV_ENABLE_RENDERDOC`. [How to](preprocessor-macros.md#macro-av-enable-renderdoc)
 
 For example the `CMakeLists.txt` should look like this:
 
@@ -20,12 +27,12 @@ For example the `CMakeLists.txt` should look like this:
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan
     PRIVATE
-#    ANDROID_ENABLE_TRACE
-    ANDROID_NATIVE_MODE_PORTRAIT
-#    ANDROID_VULKAN_DEBUG
-    ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-#    ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-#    ANDROID_VULKAN_STRICT_MODE
+#    AV_ENABLE_TRACE
+    AV_NATIVE_MODE_PORTRAIT
+#    AV_DEBUG
+    AV_ENABLE_RENDERDOC
+#    AV_ENABLE_VVL
+#    AV_STRICT_MODE
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR
 )
@@ -33,14 +40,18 @@ target_compile_definitions ( android-vulkan
 ...
 ```
 
-**Note:** The application will crash without _RenderDoc_ after using `ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION`. It's expected. The reason for this is that application will try to find and call _Vulkan_ debug marker and debug group functions. Most likely they will not be available on device.
+**Note:** The application will crash without _RenderDoc_ after using `AV_ENABLE_RENDERDOC`. It's expected. The reason for this is that application will try to find and call _Vulkan_ debug marker and debug group functions. Most likely they will not be available on device.
 
 That's it.
 
-## Reported issues
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="issues">Reported issues</a>
 
 Name | Link | Status
 --- | --- | ---
 spirv-cross.exe error when editing shaders | [#3353](https://github.com/baldurk/renderdoc/issues/3353) | ✔️ Fixed
 _Vulkan HLSL_ with source edit issue | [#3425](https://github.com/baldurk/renderdoc/issues/3425) | 🛡️ _DXC_ issue
 Can't compile shaders in Edit mode | [#3448](https://github.com/baldurk/renderdoc/issues/3448) | 🛡️ _DXC_ issue
+
+[↬ table of content ⇧](#table-of-content)

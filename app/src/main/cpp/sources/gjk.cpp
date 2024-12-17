@@ -70,7 +70,7 @@ bool GJK::Run ( Shape const &shapeA, Shape const &shapeB ) noexcept
     // could exceed over 1024 iterations. So it's normal for GJK to not detect small penetration contacts
     // for some shape combinations.
 
-#ifdef ANDROID_VULKAN_DEBUG
+#ifdef AV_DEBUG
 
     constexpr char const format[] =
 R"__(GJK::Run - Algorithm exceeded maximum steps. Counters:
@@ -81,7 +81,7 @@ R"__(GJK::Run - Algorithm exceeded maximum steps. Counters:
 
     LogWarning ( format, _steps, _testLine, _testTriangle, _testTetrahedron );
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // AV_DEBUG
 
     return false;
 }

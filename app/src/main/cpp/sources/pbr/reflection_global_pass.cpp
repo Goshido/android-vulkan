@@ -134,8 +134,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     for ( size_t i = 0U; i < REFLECTIONS; ++i )
     {
@@ -147,7 +146,7 @@ bool ReflectionGlobalPass::AllocateDescriptorSets ( VkDevice device ) noexcept
         )
     }
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     // Initialize all immutable constant fields.
 

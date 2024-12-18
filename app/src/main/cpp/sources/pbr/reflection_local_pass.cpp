@@ -37,7 +37,7 @@ void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &loca
 
 void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer,
     android_vulkan::MeshGeometry &unitCube,
-    UniformBufferPoolManager &volumeBufferPool
+    UMAUniformPool &volumeBufferPool
 ) noexcept
 {
     _program.Bind ( commandBuffer );
@@ -100,7 +100,7 @@ void ReflectionLocalPass::Reset () noexcept
 
 void ReflectionLocalPass::UploadGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
-    UniformBufferPoolManager &volumeBufferPool,
+    UMAUniformPool &volumeBufferPool,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
@@ -129,7 +129,7 @@ void ReflectionLocalPass::UploadGPUData ( VkDevice device,
         local.SetW ( call._location );
 
         transform.Multiply ( local, viewProjection );
-        volumeBufferPool.Push ( commandBuffer, &volumeData, sizeof ( volumeData ) );
+        volumeBufferPool.Push ( &volumeData );
 
         _imageInfo[ _itemWriteIndex ].imageView = call._prefilter->GetImageView ();
 

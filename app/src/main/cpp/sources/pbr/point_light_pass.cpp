@@ -16,7 +16,7 @@ constexpr uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
     android_vulkan::MeshGeometry &unitCube,
-    UniformBufferPoolManager &volumeBufferPool
+    UMAUniformPool &volumeBufferPool
 ) noexcept
 {
     if ( _interacts.empty () )
@@ -133,7 +133,7 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
 
 void PointLightPass::UploadGPUData ( VkDevice device,
     VkCommandBuffer commandBuffer,
-    UniformBufferPoolManager &volumeBufferPool,
+    UMAUniformPool &volumeBufferPool,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
@@ -144,7 +144,7 @@ void PointLightPass::UploadGPUData ( VkDevice device,
 
     AV_VULKAN_GROUP ( commandBuffer, "Upload point light result data" )
     _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
-    UpdateLightGPUData ( commandBuffer, volumeBufferPool, viewProjection );
+    UpdateLightGPUData ( volumeBufferPool, viewProjection );
 }
 
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
@@ -521,10 +521,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     _shadowmapBufferPool.IssueSync ( device, commandBuffer );
 }
 
-void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
-    UniformBufferPoolManager &volumeBufferPool,
-    GXMat4 const &viewProjection
-) noexcept
+void PointLightPass::UpdateLightGPUData ( UMAUniformPool &volumeBufferPool, GXMat4 const &viewProjection ) noexcept
 {
     size_t const lightCount = _interacts.size ();
 
@@ -546,7 +543,7 @@ void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        volumeBufferPool.Push ( commandBuffer, &volumeData, sizeof ( volumeData ) );
+        volumeBufferPool.Push ( &volumeData );
     }
 }
 

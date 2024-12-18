@@ -41,6 +41,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 
         _volumeBufferPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
+            eUniformPoolSize::Nanoscopic_64KB,
             sizeof ( PointLightLightupProgram::VolumeData ),
             0U,
             "Light pass light volume"
@@ -126,9 +127,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     );
 
     _reflectionLocalPass.UploadGPUData ( device, commandBuffer, _volumeBufferPool, view, viewProjection );
-    _volumeBufferPool.IssueSync ( device, commandBuffer );
-
-    return true;
+    return _volumeBufferPool.IssueSync ( device );
 }
 
 void LightPass::OnPostGeometryPass ( VkDevice device,

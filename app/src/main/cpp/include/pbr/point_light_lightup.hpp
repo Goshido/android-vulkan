@@ -6,6 +6,8 @@
 #include "point_light.hpp"
 #include "point_light_lightup_program.hpp"
 #include "sampler.hpp"
+
+// FUCK remove me
 #include "uniform_buffer_pool.hpp"
 
 
@@ -28,7 +30,10 @@ class PointLightLightup final
 
         PointLightLightupProgram                _program {};
         Sampler                                 _sampler {};
+
+        // FUCK replace me by UMAUniformPool
         UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
+
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -57,6 +62,7 @@ class PointLightLightup final
             android_vulkan::MeshGeometry &unitCube
         ) noexcept;
 
+        // FUCK command buffer is not needed
         void UpdateGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
             PointLightPass const &pointLightPass,

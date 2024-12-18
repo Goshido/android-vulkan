@@ -43,9 +43,6 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     AV_ASSERT ( itemSize > 0U )
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
 
-    constexpr VkBufferUsageFlags usageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT );
-
     size_t const bufferSize = KILOBYTES_TO_BYTES * static_cast<size_t> ( size );
 
     VkBufferCreateInfo const bufferCreateInfo
@@ -54,7 +51,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = static_cast<VkDeviceSize> ( bufferSize ),
-        .usage = usageFlags,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
@@ -91,7 +88,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _bufferInfo._buffer, _bufferInfo._memory, _bufferInfo._offset ),
         "pbr::UMASparseUniformBuffer::Init",
-        "Can't memory"
+        "Can't bind memory"
     );
 
     if ( !result ) [[unlikely]]

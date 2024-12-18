@@ -1,5 +1,5 @@
-#ifndef PBR_UMA_SPARSE_UNIFORM_POOL_HPP
-#define PBR_UMA_SPARSE_UNIFORM_POOL_HPP
+#ifndef PBR_UMA_UNIFORM_POOL_HPP
+#define PBR_UMA_UNIFORM_POOL_HPP
 
 
 #include "descriptor_set_layout.hpp"
@@ -8,39 +8,42 @@
 
 namespace pbr {
 
-class UMASparseUniformPool final
+class UMAUniformPool final
 {
     private:
-        VkBuffer                                _buffer = VK_NULL_HANDLE;
-        VkDescriptorPool                        _pool = VK_NULL_HANDLE;
-        std::vector<VkDescriptorSet>            _sets {};
-        std::vector<VkMappedMemoryRange>        _ranges {};
-        VkDeviceMemory                          _memory = VK_NULL_HANDLE;
-        VkDeviceSize                            _offset = 0U;
-        uint8_t*                                _data = nullptr;
-        size_t                                  _nonCoherentAtomSize = 0U;
+        VkBuffer                        _buffer = VK_NULL_HANDLE;
+        VkDescriptorPool                _pool = VK_NULL_HANDLE;
+        std::vector<VkDescriptorSet>    _sets {};
 
-        size_t                                  _baseIndex = 0U;
-        size_t                                  _readIndex = 0U;
-        size_t                                  _writeIndex = 0U;
-        size_t                                  _written = 0U;
+        VkMappedMemoryRange             _ranges[ 2U ]{};
+        size_t                          _rangeIndex = 0U;
+        size_t                          _rangeWritten = 0U;
+
+        uint8_t*                        _data = nullptr;
+        size_t                          _size = 0U;
+        size_t                          _itemSize = 0U;
+        size_t                          _stepSize = 0U;
+
+        size_t                          _readIndex = 0U;
+        size_t                          _writeIndex = 0U;
+        bool                            _written = false;
 
     public:
-        explicit UMASparseUniformPool () = default;
+        explicit UMAUniformPool () = default;
 
-        UMASparseUniformPool ( UMASparseUniformPool const & ) = delete;
-        UMASparseUniformPool &operator = ( UMASparseUniformPool const & ) = delete;
+        UMAUniformPool ( UMAUniformPool const & ) = delete;
+        UMAUniformPool &operator = ( UMAUniformPool const & ) = delete;
 
-        UMASparseUniformPool ( UMASparseUniformPool && ) = delete;
-        UMASparseUniformPool &operator = ( UMASparseUniformPool && ) = delete;
+        UMAUniformPool ( UMAUniformPool && ) = delete;
+        UMAUniformPool &operator = ( UMAUniformPool && ) = delete;
 
-        ~UMASparseUniformPool () = default;
+        ~UMAUniformPool () = default;
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
         [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
         [[nodiscard]] bool IssueSync ( VkDevice device ) const noexcept;
-        void Push ( void const* item, size_t size ) noexcept;
+        void Push ( void const* item ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             DescriptorSetLayout const &descriptorSetLayout,
@@ -56,4 +59,4 @@ class UMASparseUniformPool final
 } // namespace pbr
 
 
-#endif // PBR_UMA_SPARSE_UNIFORM_POOL_HPP
+#endif // PBR_UMA_UNIFORM_POOL_HPP

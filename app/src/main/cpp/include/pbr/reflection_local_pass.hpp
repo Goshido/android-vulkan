@@ -4,7 +4,11 @@
 
 #include "reflection_local_program.hpp"
 #include "types.hpp"
+
+// FUCK remove me
 #include "uniform_buffer_pool_manager.hpp"
+
+#include "uma_uniform_pool.hpp"
 
 
 namespace pbr {
@@ -14,9 +18,9 @@ class ReflectionLocalPass final
     private:
         struct Call final
         {
-            GXVec3                              _location;
+            GXVec3                              _location { 0.0F, 0.0F, 0.0F };
             TextureCubeRef                      _prefilter;
-            float                               _size;
+            float                               _size = 0.0F;
 
             Call () = default;
 
@@ -46,7 +50,9 @@ class ReflectionLocalPass final
 
         ReflectionLocalProgram                  _program {};
 
+        // FUCK replace me by UMAUniformPool
         UniformBufferPool                       _uniformPool { eUniformPoolSize::Nanoscopic_64KB };
+
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -65,7 +71,7 @@ class ReflectionLocalPass final
 
         void Execute ( VkCommandBuffer commandBuffer,
             android_vulkan::MeshGeometry &unitCube,
-            UniformBufferPoolManager &volumeBufferPool
+            UMAUniformPool &volumeBufferPool
         ) noexcept;
 
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
@@ -79,9 +85,10 @@ class ReflectionLocalPass final
 
         void Reset () noexcept;
 
+        // FUCK commandBuffer is not needed
         void UploadGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &volumeBufferPool,
+            UMAUniformPool &volumeBufferPool,
             GXMat4 const &view,
             GXMat4 const &viewProjection
         ) noexcept;

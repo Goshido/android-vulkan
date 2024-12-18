@@ -23,11 +23,7 @@ class LightPass final
         ReflectionLocalPass             _reflectionLocalPass {};
         android_vulkan::MeshGeometry    _unitCube {};
 
-        UniformBufferPoolManager        _volumeBufferPool
-        {
-            eUniformPoolSize::Nanoscopic_64KB,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-        };
+        UMAUniformPool                  _volumeBufferPool {};
 
     public:
         LightPass () = default;

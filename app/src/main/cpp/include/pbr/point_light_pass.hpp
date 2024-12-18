@@ -6,7 +6,11 @@
 #include "point_light_shadowmap_generator_program.hpp"
 #include "scene_data.hpp"
 #include "shadow_casters.hpp"
+
+// FUCK remove me
 #include "uniform_buffer_pool_manager.hpp"
+
+#include "uma_uniform_pool.hpp"
 
 
 namespace pbr {
@@ -24,6 +28,7 @@ class PointLightPass final
         std::vector<Interact>                   _interacts {};
         PointLightLightup                       _lightup {};
 
+        // FUCK replace me by UMASparseUniformBuffer
         UniformBufferPoolManager                _shadowmapBufferPool
         {
             eUniformPoolSize::Huge_64M,
@@ -50,7 +55,7 @@ class PointLightPass final
 
         void ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
             android_vulkan::MeshGeometry &unitCube,
-            UniformBufferPoolManager &volumeBufferPool
+            UMAUniformPool &volumeBufferPool
         ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
@@ -72,9 +77,10 @@ class PointLightPass final
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
 
+        // FUCK commandBuffer is not needed
         void UploadGPUData ( VkDevice device,
             VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &volumeBufferPool,
+            UMAUniformPool &volumeBufferPool,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
@@ -98,10 +104,7 @@ class PointLightPass final
             size_t opaqueMeshCount
         ) noexcept;
 
-        void UpdateLightGPUData ( VkCommandBuffer commandBuffer,
-            UniformBufferPoolManager &volumeBufferPool,
-            GXMat4 const &viewProjection
-        ) noexcept;
+        void UpdateLightGPUData ( UMAUniformPool &volumeBufferPool, GXMat4 const &viewProjection ) noexcept;
 };
 
 } // namespace pbr

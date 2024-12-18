@@ -84,9 +84,6 @@ bool UMASparseUniformPool::Init ( android_vulkan::Renderer &renderer,
     AV_ASSERT ( itemSize > 0U )
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
 
-    constexpr VkBufferUsageFlags usageFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT );
-
     size_t const bufferSize = KILOBYTES_TO_BYTES * static_cast<size_t> ( size );
 
     VkBufferCreateInfo const bufferCreateInfo
@@ -95,7 +92,7 @@ bool UMASparseUniformPool::Init ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = static_cast<VkDeviceSize> ( bufferSize ),
-        .usage = usageFlags,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
@@ -124,6 +121,14 @@ bool UMASparseUniformPool::Init ( android_vulkan::Renderer &renderer,
         requirements,
         memoryFlags,
         "Can't allocate GPU memory (pbr::UMASparseUniformPool::Init)"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _offset ),
+        "pbr::UMASparseUniformPool::Init",
+        "Can't bind memory"
     );
 
     if ( !result ) [[unlikely]]
@@ -268,7 +273,7 @@ bool UMASparseUniformPool::Init ( android_vulkan::Renderer &renderer,
         ( writes++ )->pBufferInfo = bi++;
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( items ), writes, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( items ), writeSets.data (), 0U, nullptr );
     return true;
 }
 

@@ -47,6 +47,7 @@ class LightPass final
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
         void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
+        // FUCK cut into two methods: upload and execute. Move upload earlier.
         [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             size_t commandBufferIndex,

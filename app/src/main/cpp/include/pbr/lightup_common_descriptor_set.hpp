@@ -6,7 +6,7 @@
 #include "gbuffer.hpp"
 #include "lightup_common_descriptor_set_layout.hpp"
 #include "sampler.hpp"
-#include "uniform_buffer_pool.hpp"
+#include "uma_uniform_buffer.hpp"
 
 
 namespace pbr {
@@ -14,18 +14,16 @@ namespace pbr {
 class LightupCommonDescriptorSet final
 {
     private:
-        VkBufferMemoryBarrier               _barrier {};
         android_vulkan::Texture2D           _brdfLUT {};
         Sampler                             _brdfLUTSampler {};
-        VkDescriptorBufferInfo              _bufferInfo {};
         VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
         LightupCommonDescriptorSetLayout    _layout {};
 
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
-        VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ];
-        UniformBufferPool                   _uniforms { eUniformPoolSize::Nanoscopic_64KB };
-        VkWriteDescriptorSet                _writeInfo {};
+        VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ]{};
+        UMAUniformBuffer                    _uniforms{};
+        VkMappedMemoryRange                 _uniformRanges[ DUAL_COMMAND_BUFFER ]{};
 
     public:
         LightupCommonDescriptorSet () = default;
@@ -48,8 +46,7 @@ class LightupCommonDescriptorSet final
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void Update ( VkDevice device,
-            VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool Update ( VkDevice device,
             size_t commandBufferIndex,
             VkExtent2D const &resolution,
             GXMat4 const &viewerLocal,

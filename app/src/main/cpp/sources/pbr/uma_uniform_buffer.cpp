@@ -1,40 +1,32 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <pbr/uma_sparse_uniform_buffer.hpp>
+#include <pbr/uma_uniform_buffer.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-namespace {
-
-constexpr size_t KILOBYTES_TO_BYTES = 1024U;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
-size_t UMASparseUniformBuffer::GetAvailableItemCount () const noexcept
+size_t UMAUniformBuffer::GetAvailableItemCount () const noexcept
 {
     return _size;
 }
 
-void UMASparseUniformBuffer::Push ( void const* item, size_t size ) noexcept
+void UMAUniformBuffer::Push ( void const* item, size_t size ) noexcept
 {
     std::memcpy ( _data + ( _index++ ) * _bufferInfo._stepSize, item, size );
 }
 
-UMASparseUniformBuffer::BufferInfo const &UMASparseUniformBuffer::GetBufferInfo () noexcept
+UMAUniformBuffer::BufferInfo const &UMAUniformBuffer::GetBufferInfo () noexcept
 {
     return _bufferInfo;
 }
 
-void UMASparseUniformBuffer::Reset () noexcept
+void UMAUniformBuffer::Reset () noexcept
 {
     _index = 0U;
 }
 
-bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
+bool UMAUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     eUniformPoolSize size,
     size_t itemSize,
     [[maybe_unused]] char const* name
@@ -43,7 +35,8 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     AV_ASSERT ( itemSize > 0U )
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
 
-    size_t const bufferSize = KILOBYTES_TO_BYTES * static_cast<size_t> ( size );
+    constexpr size_t kilobytesToBytesShift = 10U;
+    size_t const bufferSize = static_cast<size_t> ( size ) << kilobytesToBytesShift;
 
     VkBufferCreateInfo const bufferCreateInfo
     {
@@ -61,7 +54,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferCreateInfo, nullptr, &_bufferInfo._buffer ),
-        "pbr::UMASparseUniformBuffer::Init",
+        "pbr::UMAUniformBuffer::Init",
         "Can't create uniform buffer"
     );
 
@@ -79,7 +72,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
         _bufferInfo._offset,
         requirements,
         memoryFlags,
-        "Can't allocate GPU memory (pbr::UMASparseUniformBuffer::Init)"
+        "Can't allocate GPU memory (pbr::UMAUniformBuffer::Init)"
     );
 
     if ( !result ) [[unlikely]]
@@ -87,7 +80,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindBufferMemory ( device, _bufferInfo._buffer, _bufferInfo._memory, _bufferInfo._offset ),
-        "pbr::UMASparseUniformBuffer::Init",
+        "pbr::UMAUniformBuffer::Init",
         "Can't bind memory"
     );
 
@@ -99,7 +92,8 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     result = renderer.MapMemory ( ptr,
         _bufferInfo._memory,
         _bufferInfo._offset,
-        "pbr::UMASparseUniformBuffer::Init", "Can't map memory"
+        "pbr::UMAUniformBuffer::Init",
+        "Can't map memory"
     );
 
     if ( !result ) [[unlikely]]
@@ -130,7 +124,7 @@ bool UMASparseUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UMASparseUniformBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+void UMAUniformBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _bufferInfo._buffer != VK_NULL_HANDLE ) [[likely]]
     {

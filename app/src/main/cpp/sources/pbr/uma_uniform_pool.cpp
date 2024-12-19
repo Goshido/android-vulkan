@@ -6,14 +6,6 @@
 
 namespace pbr {
 
-namespace {
-
-constexpr size_t KILOBYTES_TO_BYTES = 1024U;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
 VkDescriptorSet UMAUniformPool::Acquire () noexcept
 {
     VkDescriptorSet set = _sets[ _readIndex ];
@@ -94,7 +86,9 @@ bool UMAUniformPool::Init ( android_vulkan::Renderer &renderer,
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
 
     _itemSize = itemSize;
-    _size = KILOBYTES_TO_BYTES * static_cast<size_t> ( size );
+
+    constexpr size_t kilobytesToBytesShift = 10U;
+    _size = static_cast<size_t> ( size ) << kilobytesToBytesShift;
 
     VkBufferCreateInfo const bufferCreateInfo
     {

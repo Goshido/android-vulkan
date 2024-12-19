@@ -17,8 +17,12 @@ class PointLightPass;
 class PointLightLightup final
 {
     private:
+        // FUCK remove me
         std::vector<VkBufferMemoryBarrier>      _barriers {};
+
+        // FUCK remove me
         std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
+
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
         std::vector<VkDescriptorSet>            _descriptorSets;
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
@@ -31,7 +35,7 @@ class PointLightLightup final
         PointLightLightupProgram                _program {};
         Sampler                                 _sampler {};
 
-        // FUCK replace me by UMAUniformPool
+        // FUCK replace me by UMAUniformBuffer
         UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
 
         std::vector<VkWriteDescriptorSet>       _writeSets {};

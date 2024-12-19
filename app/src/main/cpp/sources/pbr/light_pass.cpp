@@ -107,15 +107,16 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    _lightupCommonDescriptorSet.Update ( device,
-        commandBuffer,
-        commandBufferIndex,
-        resolution,
-        viewerLocal,
-        cvvToView
-    );
+    bool const result = _lightupCommonDescriptorSet.Update ( device,
+            commandBufferIndex,
+            resolution,
+            viewerLocal,
+            cvvToView
+        ) &&
 
-    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) ) [[unlikely]]
+        _pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     _pointLightPass.UploadGPUData ( device,

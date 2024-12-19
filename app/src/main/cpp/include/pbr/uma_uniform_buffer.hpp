@@ -1,5 +1,5 @@
-#ifndef PBR_UMA_SPARSE_UNIFORM_BUFFER_HPP
-#define PBR_UMA_SPARSE_UNIFORM_BUFFER_HPP
+#ifndef PBR_UMA_UNIFORM_BUFFER_HPP
+#define PBR_UMA_UNIFORM_BUFFER_HPP
 
 
 #include "descriptor_set_layout.hpp"
@@ -8,7 +8,7 @@
 
 namespace pbr {
 
-class UMASparseUniformBuffer final
+class UMAUniformBuffer final
 {
     public:
         struct BufferInfo final
@@ -26,15 +26,15 @@ class UMASparseUniformBuffer final
         size_t                  _size = 0U;
 
     public:
-        explicit UMASparseUniformBuffer () = default;
+        explicit UMAUniformBuffer () = default;
 
-        UMASparseUniformBuffer ( UMASparseUniformBuffer const & ) = delete;
-        UMASparseUniformBuffer &operator = ( UMASparseUniformBuffer const & ) = delete;
+        UMAUniformBuffer ( UMAUniformBuffer const & ) = delete;
+        UMAUniformBuffer &operator = ( UMAUniformBuffer const & ) = delete;
 
-        UMASparseUniformBuffer ( UMASparseUniformBuffer && ) = delete;
-        UMASparseUniformBuffer &operator = ( UMASparseUniformBuffer && ) = delete;
+        UMAUniformBuffer ( UMAUniformBuffer && ) = delete;
+        UMAUniformBuffer &operator = ( UMAUniformBuffer && ) = delete;
 
-        ~UMASparseUniformBuffer () = default;
+        ~UMAUniformBuffer () = default;
 
         [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
         void Push ( void const* item, size_t size ) noexcept;
@@ -55,4 +55,4 @@ class UMASparseUniformBuffer final
 } // namespace pbr
 
 
-#endif // PBR_UMA_SPARSE_UNIFORM_BUFFER_HPP
+#endif // PBR_UMA_UNIFORM_BUFFER_HPP

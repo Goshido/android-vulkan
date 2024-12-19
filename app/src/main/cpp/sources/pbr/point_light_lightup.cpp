@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <pbr/point_light_lightup.hpp>
 #include <pbr/coordinate_system.hpp>
+#include <pbr/point_light.inc>
 #include <pbr/point_light_descriptor_set_layout.hpp>
 #include <pbr/point_light_pass.hpp>
 
@@ -63,7 +64,7 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
-    if ( _descriptorPool != VK_NULL_HANDLE )
+    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyDescriptorPool ( device, _descriptorPool, nullptr );
         _descriptorPool = VK_NULL_HANDLE;
@@ -225,25 +226,26 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
 
     // Initialize all immutable constant fields.
 
-    VkDescriptorImageInfo const image
+    VkDescriptorImageInfo const imageTemplate
     {
         .sampler = _sampler.GetSampler (),
         .imageView = VK_NULL_HANDLE,
         .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
     };
 
-    _imageInfo.resize ( setCount, image );
+    _imageInfo.resize ( setCount, imageTemplate );
+    VkDescriptorImageInfo const* imageInfo = _imageInfo.data ();
 
-    constexpr VkDescriptorBufferInfo uniform
+    constexpr VkDescriptorBufferInfo uniformTemplate
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
         .range = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) )
     };
 
-    _bufferInfo.resize ( setCount, uniform );
+    _bufferInfo.resize ( setCount, uniformTemplate );
 
-    constexpr VkWriteDescriptorSet writeSet
+    constexpr VkWriteDescriptorSet writeSetTemplate
     {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
@@ -257,7 +259,8 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         .pTexelBufferView = nullptr
     };
 
-    _writeSets.resize ( BIND_PER_SET * setCount, writeSet );
+    _writeSets.resize ( BIND_PER_SET * setCount, writeSetTemplate );
+    VkWriteDescriptorSet* writes = _writeSets.data ();
 
     constexpr VkBufferMemoryBarrier bufferBarrier
     {
@@ -276,8 +279,19 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
 
     for ( size_t i = 0U; i < setCount; ++i )
     {
-        size_t const base = BIND_PER_SET * i;
         VkDescriptorSet set = descriptorSets[ i ];
+
+        VkWriteDescriptorSet &imageSet = *writes++;
+        imageSet.dstSet = set;
+        imageSet.dstBinding = BIND_SHADOWMAP_TEXTURE;
+        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        imageSet.pImageInfo = imageInfo;
+
+        VkWriteDescriptorSet &samplerSet = *writes++;
+        samplerSet.dstSet = set;
+        samplerSet.dstBinding = BIND_SHADOWMAP_SAMPLER;
+        samplerSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        samplerSet.pImageInfo = imageInfo++;
 
         VkBuffer buffer = _uniformPool.GetBuffer ( i );
         _barriers[ i ].buffer = buffer;
@@ -285,21 +299,9 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];
         bufferInfo.buffer = buffer;
 
-        VkWriteDescriptorSet &imageSet = _writeSets[ base ];
-        imageSet.dstSet = set;
-        imageSet.dstBinding = 0U;
-        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        imageSet.pImageInfo = &_imageInfo[ i ];
-
-        VkWriteDescriptorSet &samplerSet = _writeSets[ base + 1U ];
-        samplerSet.dstSet = set;
-        samplerSet.dstBinding = 1U;
-        samplerSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        samplerSet.pImageInfo = &_imageInfo[ i ];
-
-        VkWriteDescriptorSet &bufferSet = _writeSets[ base + 2U ];
+        VkWriteDescriptorSet &bufferSet = *writes++;
         bufferSet.dstSet = set;
-        bufferSet.dstBinding = 2U;
+        bufferSet.dstBinding = BIND_LIGHT_DATA;
         bufferSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         bufferSet.pBufferInfo = &bufferInfo;
     }

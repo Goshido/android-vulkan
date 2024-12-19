@@ -1,7 +1,8 @@
 #include <precompiled_headers.hpp>
-#include <vulkan_utils.hpp>
 #include <pbr/lightup_common_descriptor_set.hpp>
+#include <pbr/lightup_common.inc>
 #include <pbr/light_lightup_base_program.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -110,8 +111,36 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
-    if ( !_uniforms.Init ( renderer, sizeof ( LightLightupBaseProgram::ViewData ), "Light common" ) ) [[unlikely]]
+    constexpr auto viewDataSize = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
+
+    result = _uniforms.Init ( renderer,
+        eUniformPoolSize::Nanoscopic_64KB,
+        static_cast<size_t> ( viewDataSize ),
+        "Light common"
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
+
+    UMAUniformBuffer::BufferInfo const &bi = _uniforms.GetBufferInfo ();
+
+    _uniformRanges[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        .pNext = nullptr,
+        .memory = bi._memory,
+        .offset = bi._offset,
+        .size = bi._stepSize
+    };
+
+    _uniformRanges[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        .pNext = nullptr,
+        .memory = bi._memory,
+        .offset = bi._offset + bi._stepSize,
+        .size = bi._stepSize
+    };
 
     VkCommandBufferAllocateInfo const bufferAllocateInfo
     {
@@ -199,7 +228,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo, "Prefilter" ) ) [[unlikely]]
         return false;
 
-    VkDescriptorImageInfo const images[] =
+    VkDescriptorImageInfo const images[]
     {
         {
             .sampler = VK_NULL_HANDLE,
@@ -233,19 +262,35 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         }
     };
 
-    VkWriteDescriptorSet write[ 7U * DUAL_COMMAND_BUFFER ];
+    VkDescriptorBufferInfo const bufferInfo[ DUAL_COMMAND_BUFFER ]
+    {
+        {
+            .buffer = bi._buffer,
+            .offset = 0U,
+            .range = viewDataSize
+        },
+        {
+            .buffer = bi._buffer,
+            .offset = bi._stepSize,
+            .range = viewDataSize
+        }
+    };
+
+    VkDescriptorBufferInfo const *buffer = bufferInfo;
+
+    VkWriteDescriptorSet write[ 8U * DUAL_COMMAND_BUFFER ];
     size_t idx = 0U;
 
     for ( auto &set : _sets )
     {
         VkWriteDescriptorSet &albedo = write[ idx++ ];
 
-        albedo = VkWriteDescriptorSet
+        albedo =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 0U,
+            .dstBinding = BIND_ALBEDO_TEXTURE,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -256,12 +301,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &normal = write[ idx++ ];
 
-        normal = VkWriteDescriptorSet
+        normal =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 1U,
+            .dstBinding = BIND_NORMAL_TEXTURE,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -272,12 +317,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &params = write[ idx++ ];
 
-        params = VkWriteDescriptorSet
+        params =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 2U,
+            .dstBinding = BIND_PARAMS_TEXTURE,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -288,12 +333,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &depthStencil = write[ idx++ ];
 
-        depthStencil = VkWriteDescriptorSet
+        depthStencil =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 3U,
+            .dstBinding = BIND_DEPTH_TEXTURE,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -304,12 +349,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &brdfImage = write[ idx++ ];
 
-        brdfImage = VkWriteDescriptorSet
+        brdfImage =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 4U,
+            .dstBinding = BIND_BRDF_TEXTURE,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
@@ -320,12 +365,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &brdfSampler = write[ idx++ ];
 
-        brdfSampler = VkWriteDescriptorSet
+        brdfSampler =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 5U,
+            .dstBinding = BIND_BRDF_SAMPLER,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -336,17 +381,33 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
         VkWriteDescriptorSet &prefilterSampler = write[ idx++ ];
 
-        prefilterSampler = VkWriteDescriptorSet
+        prefilterSampler =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = set,
-            .dstBinding = 6U,
+            .dstBinding = BIND_PREFILTER_SAMPLER,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .pImageInfo = images + 5U,
             .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
+
+        VkWriteDescriptorSet &view = write[ idx++ ];
+
+        view =
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = BIND_VIEW_DATA,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .pImageInfo = nullptr,
+            .pBufferInfo = buffer++,
             .pTexelBufferView = nullptr
         };
     }
@@ -374,29 +435,6 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Lightup common" )
-
-    _bufferInfo.offset = 0U;
-    _bufferInfo.range = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
-
-    _writeInfo.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    _writeInfo.pNext = nullptr;
-    _writeInfo.dstBinding = 7U;
-    _writeInfo.dstArrayElement = 0U;
-    _writeInfo.descriptorCount = 1U;
-    _writeInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    _writeInfo.pImageInfo = nullptr;
-    _writeInfo.pBufferInfo = &_bufferInfo;
-    _writeInfo.pTexelBufferView = nullptr;
-
-    _barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    _barrier.pNext = nullptr;
-    _barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    _barrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
-    _barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    _barrier.offset = 0U;
-    _barrier.size = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
-
     return true;
 }
 
@@ -428,16 +466,13 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Rende
     _brdfLUT.FreeTransferResources ( renderer );
 }
 
-void LightupCommonDescriptorSet::Update ( VkDevice device,
-    VkCommandBuffer commandBuffer,
+bool LightupCommonDescriptorSet::Update ( VkDevice device,
     size_t commandBufferIndex,
     VkExtent2D const &resolution,
     GXMat4 const &viewerLocal,
     GXMat4 const &cvvToView
 ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload light data" )
-
     LightLightupBaseProgram::ViewData const viewData
     {
         ._cvvToView = cvvToView,
@@ -452,27 +487,15 @@ void LightupCommonDescriptorSet::Update ( VkDevice device,
         ._padding0_0 {}
     };
 
-    if ( _uniforms.GetAvailableItemCount () < 1U )
+    if ( commandBufferIndex == 0U )
         _uniforms.Reset ();
 
-    VkBuffer buffer = _uniforms.Push ( commandBuffer, &viewData, sizeof ( viewData ) );
+    _uniforms.Push ( &viewData, sizeof ( viewData ) );
 
-    _bufferInfo.buffer = buffer;
-    _writeInfo.dstSet = _sets[ commandBufferIndex ];
-    vkUpdateDescriptorSets ( device, 1U, &_writeInfo, 0U, nullptr );
-
-    _barrier.buffer = buffer;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &_barrier,
-        0U,
-        nullptr
+    return android_vulkan::Renderer::CheckVkResult (
+        vkFlushMappedMemoryRanges ( device, 1U, _uniformRanges + commandBufferIndex ),
+        "pbr::LightupCommonDescriptorSet::Update",
+        "Can't flush memory range"
     );
 }
 

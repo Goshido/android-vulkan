@@ -252,15 +252,15 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
     VkDescriptorBufferInfo* bufferInfo = bufferInfoStorage.data ();
     VkWriteDescriptorSet* writeSet = writeSetStorage.data ();
 
-    UMASparseUniformBuffer::BufferInfo positionInfo = _positionPool.GetBufferInfo ();
+    UMAUniformBuffer::BufferInfo positionInfo = _positionPool.GetBufferInfo ();
     auto const pSize = static_cast<VkDeviceSize> ( positionInfo._stepSize );
     VkDeviceSize positionBufferOffset = 0U;
 
-    UMASparseUniformBuffer::BufferInfo normalInfo = _normalPool.GetBufferInfo ();
+    UMAUniformBuffer::BufferInfo normalInfo = _normalPool.GetBufferInfo ();
     auto const nSize = static_cast<VkDeviceSize> ( normalInfo._stepSize );
     VkDeviceSize normalBufferOffset = 0U;
 
-    UMASparseUniformBuffer::BufferInfo colorInfo = _colorPool.GetBufferInfo ();
+    UMAUniformBuffer::BufferInfo colorInfo = _colorPool.GetBufferInfo ();
     auto const cSize = static_cast<VkDeviceSize> ( colorInfo._stepSize );
     VkDeviceSize colorBufferOffset = 0U;
 

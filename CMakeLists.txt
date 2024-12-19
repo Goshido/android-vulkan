@@ -218,8 +218,8 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ui_pass_image_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_transform_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_program.cpp
-    app/src/main/cpp/sources/pbr/uma_sparse_uniform_buffer.cpp
     app/src/main/cpp/sources/pbr/uma_sparse_uniform_pool.cpp
+    app/src/main/cpp/sources/pbr/uma_uniform_buffer.cpp
     app/src/main/cpp/sources/pbr/uma_uniform_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp

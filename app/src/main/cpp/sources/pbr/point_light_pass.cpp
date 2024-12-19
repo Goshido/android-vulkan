@@ -29,10 +29,11 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &bufferInfo._buffer, bufferInfo._vertexDataOffsets );
     vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
+    uint32_t const volumeVertices = unitCube.GetVertexCount ();
     size_t const limit = _interacts.size ();
 
     for ( size_t i = 0U; i < limit; ++i )
-        _lightup.Lightup ( commandBuffer, volumeBufferPool.Acquire (), unitCube );
+        _lightup.Lightup ( commandBuffer, volumeBufferPool.Acquire (), volumeVertices );
 
     _lightup.Commit ();
 }
@@ -131,8 +132,7 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
     _interacts.emplace_back ( light, ShadowCasters () );
 }
 
-void PointLightPass::UploadGPUData ( VkDevice device,
-    VkCommandBuffer commandBuffer,
+bool PointLightPass::UploadGPUData ( VkDevice device,
     UMAUniformPool &volumeBufferPool,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
@@ -140,11 +140,13 @@ void PointLightPass::UploadGPUData ( VkDevice device,
 ) noexcept
 {
     if ( _interacts.empty () )
-        return;
+        return true;
 
-    AV_VULKAN_GROUP ( commandBuffer, "Upload point light result data" )
-    _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
+    if ( !_lightup.UpdateGPUData ( device, *this, viewerLocal, view ) ) [[unlikely]]
+        return false;
+
     UpdateLightGPUData ( volumeBufferPool, viewProjection );
+    return true;
 }
 
 PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (

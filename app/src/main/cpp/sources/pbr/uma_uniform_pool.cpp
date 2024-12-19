@@ -15,63 +15,40 @@ VkDescriptorSet UMAUniformPool::Acquire () noexcept
 
 void UMAUniformPool::Commit () noexcept
 {
-    if ( !_written )
+    if ( _readIndex == _writeIndex )
         return;
 
-    _readIndex = _writeIndex;
-    _written = false;
     auto &[mainRange, overflowRange] = _ranges;
-
-    if ( mainRange.size + _stepSize <= _size ) [[likely]]
-    {
-        mainRange.offset += mainRange.size;
-    }
-    else
-    {
-        mainRange.offset = overflowRange.offset;
-        _rangeWritten = 0U;
-    }
-
+    VkDeviceSize const cases[] = { overflowRange.offset, mainRange.offset + mainRange.size };
+    mainRange.offset = cases[ static_cast<size_t> ( _writeIndex > 0U ) ];
     mainRange.size = 0U;
     overflowRange.size = 0U;
     _rangeIndex = 0U;
-}
 
-size_t UMAUniformPool::GetAvailableItemCount () const noexcept
-{
-    return _sets.size ();
+    _readIndex = _writeIndex;
 }
 
 bool UMAUniformPool::IssueSync ( VkDevice device ) const noexcept
 {
-    if ( !_written )
-        return true;
-
-    return android_vulkan::Renderer::CheckVkResult (
-        vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( _rangeIndex + 1U ), _ranges ),
-        "UMAUniformPool::IssueSync",
-        "Can't flush memory ranges"
-    );
+    return ( _readIndex == _writeIndex ) ||
+        android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( _rangeIndex + 1U ), _ranges ),
+            "UMAUniformPool::IssueSync",
+            "Can't flush memory ranges"
+        );
 }
 
 void UMAUniformPool::Push ( void const* item ) noexcept
 {
-    VkMappedMemoryRange* range = _ranges + _rangeIndex;
-    size_t offset = std::exchange ( _rangeWritten, _rangeWritten + _stepSize );
+    size_t const itemCount = _sets.size ();
 
-    if ( _rangeWritten > _size ) [[unlikely]]
-    {
-        _rangeIndex = 1U;
-        _rangeWritten = _stepSize;
-        range = _ranges + 1U;
-        offset = 0U;
-    }
+    std::memcpy ( _data + _stepSize * ( std::exchange ( _writeIndex, ( _writeIndex + 1U ) % itemCount ) % itemCount ),
+        item,
+        _itemSize
+    );
 
-    std::memcpy ( _data + offset, item, _itemSize );
-    range->size += _stepSize;
-
-    _writeIndex = ( _writeIndex + 1U ) % _sets.size ();
-    _written = true;
+    _rangeIndex += static_cast<size_t> ( _writeIndex == 0U );
+    _ranges[ _rangeIndex ].size += static_cast<VkDeviceSize> ( _stepSize );
 }
 
 bool UMAUniformPool::Init ( android_vulkan::Renderer &renderer,
@@ -133,32 +110,24 @@ bool UMAUniformPool::Init ( android_vulkan::Renderer &renderer,
 
     VkDeviceMemory &memory = overflowRange.memory;
     VkDeviceSize &offset = overflowRange.offset;
-
-    result = renderer.TryAllocateMemory ( memory,
-        offset,
-        requirements,
-        memoryFlags,
-        "Can't allocate GPU memory (pbr::UMAUniformPool::Init)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, memory, offset ),
-        "pbr::UMAUniformPool::Init",
-        "Can't bind memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     void* ptr;
 
-    if ( !renderer.MapMemory ( ptr, memory, offset, "pbr::UMAUniformPool::Init", "Can't map memory" ) )
-    {
-        [[unlikely]]
+    result = renderer.TryAllocateMemory ( memory,
+            offset,
+            requirements,
+            memoryFlags,
+            "Can't allocate GPU memory (pbr::UMAUniformPool::Init)"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, memory, offset ),
+            "pbr::UMAUniformPool::Init",
+            "Can't bind memory"
+        ) &&
+
+        renderer.MapMemory ( ptr, memory, offset, "pbr::UMAUniformPool::Init", "Can't map memory" );
+
+    if ( !result ) [[unlikely]]
         return false;
-    }
 
     mainRange = overflowRange;
     _data = static_cast<uint8_t*> ( ptr );

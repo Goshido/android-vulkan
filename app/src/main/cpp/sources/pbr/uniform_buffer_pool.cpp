@@ -46,7 +46,7 @@ void UniformBufferPool::Reset () noexcept
 
 size_t UniformBufferPool::GetAvailableItemCount () const noexcept
 {
-    return _buffers.capacity () - _index;
+    return _buffers.size () - _index;
 }
 
 VkBuffer UniformBufferPool::GetBuffer ( size_t bufferIndex ) const noexcept

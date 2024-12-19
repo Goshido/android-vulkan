@@ -6,9 +6,7 @@
 #include "point_light.hpp"
 #include "point_light_lightup_program.hpp"
 #include "sampler.hpp"
-
-// FUCK remove me
-#include "uniform_buffer_pool.hpp"
+#include "uma_uniform_buffer.hpp"
 
 
 namespace pbr {
@@ -17,14 +15,8 @@ class PointLightPass;
 class PointLightLightup final
 {
     private:
-        // FUCK remove me
-        std::vector<VkBufferMemoryBarrier>      _barriers {};
-
-        // FUCK remove me
-        std::vector<VkDescriptorBufferInfo>     _bufferInfo {};
-
         VkDescriptorPool                        _descriptorPool = VK_NULL_HANDLE;
-        std::vector<VkDescriptorSet>            _descriptorSets;
+        std::vector<VkDescriptorSet>            _descriptorSets {};
         std::vector<VkDescriptorImageInfo>      _imageInfo {};
 
         size_t                                  _itemBaseIndex = 0U;
@@ -32,12 +24,12 @@ class PointLightLightup final
         size_t                                  _itemWriteIndex = 0U;
         size_t                                  _itemWritten = 0U;
 
+        VkMappedMemoryRange                     _ranges[ 2U ]{};
+
         PointLightLightupProgram                _program {};
         Sampler                                 _sampler {};
 
-        // FUCK replace me by UMAUniformBuffer
-        UniformBufferPool                       _uniformPool { eUniformPoolSize::Tiny_4M };
-
+        UMAUniformBuffer                        _uniformPool {};
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
@@ -60,15 +52,9 @@ class PointLightLightup final
         ) noexcept;
 
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        void Lightup ( VkCommandBuffer commandBuffer, VkDescriptorSet transform, uint32_t volumeVertices ) noexcept;
 
-        void Lightup ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet transform,
-            android_vulkan::MeshGeometry &unitCube
-        ) noexcept;
-
-        // FUCK command buffer is not needed
-        void UpdateGPUData ( VkDevice device,
-            VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool UpdateGPUData ( VkDevice device,
             PointLightPass const &pointLightPass,
             GXMat4 const &viewerLocal,
             GXMat4 const &view
@@ -76,7 +62,6 @@ class PointLightLightup final
 
     private:
         [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
-        void IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept;
 };
 
 } // namespace pbr

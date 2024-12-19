@@ -77,9 +77,7 @@ class PointLightPass final
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
 
-        // FUCK commandBuffer is not needed
-        void UploadGPUData ( VkDevice device,
-            VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool UploadGPUData ( VkDevice device,
             UMAUniformPool &volumeBufferPool,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,

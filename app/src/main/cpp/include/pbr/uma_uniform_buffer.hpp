@@ -23,7 +23,7 @@ class UMAUniformBuffer final
         BufferInfo              _bufferInfo {};
         uint8_t*                _data = nullptr;
         size_t                  _index = 0U;
-        size_t                  _size = 0U;
+        size_t                  _itemCount = 0U;
 
     public:
         explicit UMAUniformBuffer () = default;

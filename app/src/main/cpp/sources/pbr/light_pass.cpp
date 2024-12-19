@@ -102,6 +102,7 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
     GXMat4 const &cvvToView
 ) noexcept
 {
+    // FUCK separate upload uniform operations from command buffer recording operations.
     AV_TRACE ( "Light pre-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light pre-geometry" )
 
@@ -114,18 +115,17 @@ bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
             cvvToView
         ) &&
 
-        _pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount );
+        _pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) &&
+
+        _pointLightPass.UploadGPUData ( device,
+            _volumeBufferPool,
+            viewerLocal,
+            view,
+            viewProjection
+        );
 
     if ( !result ) [[unlikely]]
         return false;
-
-    _pointLightPass.UploadGPUData ( device,
-        commandBuffer,
-        _volumeBufferPool,
-        viewerLocal,
-        view,
-        viewProjection
-    );
 
     _reflectionLocalPass.UploadGPUData ( device, commandBuffer, _volumeBufferPool, view, viewProjection );
     return _volumeBufferPool.IssueSync ( device );
@@ -136,6 +136,7 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     size_t commandBufferIndex
 ) noexcept
 {
+    // FUCK separate upload uniform operations from command buffer recording operations.
     AV_TRACE ( "Light post-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 

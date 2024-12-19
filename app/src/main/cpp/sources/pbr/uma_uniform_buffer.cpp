@@ -8,7 +8,7 @@ namespace pbr {
 
 size_t UMAUniformBuffer::GetAvailableItemCount () const noexcept
 {
-    return _size;
+    return _itemCount - _index;
 }
 
 void UMAUniformBuffer::Push ( void const* item, size_t size ) noexcept
@@ -68,39 +68,30 @@ bool UMAUniformBuffer::Init ( android_vulkan::Renderer &renderer,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_CACHED_BIT );
 
-    result = renderer.TryAllocateMemory ( _bufferInfo._memory,
-        _bufferInfo._offset,
-        requirements,
-        memoryFlags,
-        "Can't allocate GPU memory (pbr::UMAUniformBuffer::Init)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _bufferInfo._buffer, _bufferInfo._memory, _bufferInfo._offset ),
-        "pbr::UMAUniformBuffer::Init",
-        "Can't bind memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     void* ptr;
 
-    result = renderer.MapMemory ( ptr,
-        _bufferInfo._memory,
-        _bufferInfo._offset,
-        "pbr::UMAUniformBuffer::Init",
-        "Can't map memory"
-    );
+    result = renderer.TryAllocateMemory ( _bufferInfo._memory,
+            _bufferInfo._offset,
+            requirements,
+            memoryFlags,
+            "Can't allocate GPU memory (pbr::UMAUniformBuffer::Init)"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult (
+            vkBindBufferMemory ( device, _bufferInfo._buffer, _bufferInfo._memory, _bufferInfo._offset ),
+            "pbr::UMAUniformBuffer::Init",
+            "Can't bind memory"
+        ) &&
+
+        renderer.MapMemory ( ptr,
+            _bufferInfo._memory,
+            _bufferInfo._offset,
+            "pbr::UMAUniformBuffer::Init",
+            "Can't map memory"
+        );
 
     if ( !result ) [[unlikely]]
-    {
-        [[unlikely]]
         return false;
-    }
 
     _data = static_cast<uint8_t*> ( ptr );
     size_t const nonCoherentAtomSize = renderer.GetNonCoherentAtomSize ();
@@ -119,7 +110,7 @@ bool UMAUniformBuffer::Init ( android_vulkan::Renderer &renderer,
 
     size_t const alpha = itemSize - 1U;
     _bufferInfo._stepSize = alpha + alignment - ( alpha % alignment );
-    _size = bufferSize / _bufferInfo._stepSize;
+    _itemCount = bufferSize / _bufferInfo._stepSize;
 
     return true;
 }

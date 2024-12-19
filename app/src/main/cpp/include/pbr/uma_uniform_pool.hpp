@@ -17,7 +17,6 @@ class UMAUniformPool final
 
         VkMappedMemoryRange             _ranges[ 2U ]{};
         size_t                          _rangeIndex = 0U;
-        size_t                          _rangeWritten = 0U;
 
         uint8_t*                        _data = nullptr;
         size_t                          _size = 0U;
@@ -26,7 +25,6 @@ class UMAUniformPool final
 
         size_t                          _readIndex = 0U;
         size_t                          _writeIndex = 0U;
-        bool                            _written = false;
 
     public:
         explicit UMAUniformPool () = default;
@@ -41,7 +39,6 @@ class UMAUniformPool final
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
-        [[nodiscard]] size_t GetAvailableItemCount () const noexcept;
         [[nodiscard]] bool IssueSync ( VkDevice device ) const noexcept;
         void Push ( void const* item ) noexcept;
 

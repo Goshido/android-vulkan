@@ -5,7 +5,6 @@
 #include "mesh_geometry.hpp"
 #include "point_light.hpp"
 #include "point_light_lightup_program.hpp"
-#include "sampler.hpp"
 #include "uma_uniform_buffer.hpp"
 
 
@@ -56,9 +55,6 @@ class PointLightLightup final
             GXMat4 const &viewerLocal,
             GXMat4 const &view
         ) noexcept;
-
-    private:
-        [[nodiscard]] bool AllocateDescriptorSets ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr

@@ -25,6 +25,8 @@ class PointLightPass final
         using PointLightShadowmapInfo = std::pair<TextureCubeRef, VkFramebuffer>;
 
     private:
+        UMAUniformPool                          &_volumeDataPool;
+
         std::vector<Interact>                   _interacts {};
         PointLightLightup                       _lightup {};
 
@@ -43,7 +45,7 @@ class PointLightPass final
         size_t                                  _usedShadowmaps = 0U;
 
     public:
-        PointLightPass () = default;
+        PointLightPass () = delete;
 
         PointLightPass ( PointLightPass const & ) = delete;
         PointLightPass &operator = ( PointLightPass const & ) = delete;
@@ -51,12 +53,11 @@ class PointLightPass final
         PointLightPass ( PointLightPass && ) = delete;
         PointLightPass &operator = ( PointLightPass && ) = delete;
 
+        explicit PointLightPass ( UMAUniformPool &volumeDataPool ) noexcept;
+
         ~PointLightPass () = default;
 
-        void ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
-            android_vulkan::MeshGeometry &unitCube,
-            UMAUniformPool &volumeBufferPool
-        ) noexcept;
+        void ExecuteLightupPhase ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube ) noexcept;
 
         [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
@@ -78,7 +79,6 @@ class PointLightPass final
         void Submit ( LightRef const &light ) noexcept;
 
         [[nodiscard]] bool UploadGPUData ( VkDevice device,
-            UMAUniformPool &volumeBufferPool,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
@@ -102,7 +102,7 @@ class PointLightPass final
             size_t opaqueMeshCount
         ) noexcept;
 
-        void UpdateLightGPUData ( UMAUniformPool &volumeBufferPool, GXMat4 const &viewProjection ) noexcept;
+        void UpdateLightGPUData ( GXMat4 const &viewProjection ) noexcept;
 };
 
 } // namespace pbr

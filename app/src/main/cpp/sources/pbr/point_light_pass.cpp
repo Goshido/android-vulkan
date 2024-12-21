@@ -14,9 +14,14 @@ constexpr uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+PointLightPass::PointLightPass ( UMAUniformPool &volumeDataPool ) noexcept:
+    _volumeDataPool ( volumeDataPool )
+{
+    // NOTHING
+}
+
 void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
-    android_vulkan::MeshGeometry &unitCube,
-    UMAUniformPool &volumeBufferPool
+    android_vulkan::MeshGeometry &unitCube
 ) noexcept
 {
     if ( _interacts.empty () )
@@ -33,7 +38,7 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
     size_t const limit = _interacts.size ();
 
     for ( size_t i = 0U; i < limit; ++i )
-        _lightup.Lightup ( commandBuffer, volumeBufferPool.Acquire (), volumeVertices );
+        _lightup.Lightup ( commandBuffer, _volumeDataPool.Acquire (), volumeVertices );
 
     _lightup.Commit ();
 }
@@ -133,7 +138,6 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
 }
 
 bool PointLightPass::UploadGPUData ( VkDevice device,
-    UMAUniformPool &volumeBufferPool,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
@@ -145,7 +149,7 @@ bool PointLightPass::UploadGPUData ( VkDevice device,
     if ( !_lightup.UpdateGPUData ( device, *this, viewerLocal, view ) ) [[unlikely]]
         return false;
 
-    UpdateLightGPUData ( volumeBufferPool, viewProjection );
+    UpdateLightGPUData ( viewProjection );
     return true;
 }
 
@@ -523,11 +527,11 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     _shadowmapBufferPool.IssueSync ( device, commandBuffer );
 }
 
-void PointLightPass::UpdateLightGPUData ( UMAUniformPool &volumeBufferPool, GXMat4 const &viewProjection ) noexcept
+void PointLightPass::UpdateLightGPUData ( GXMat4 const &viewProjection ) noexcept
 {
     size_t const lightCount = _interacts.size ();
 
-    PointLightLightupProgram::VolumeData volumeData {};
+    VolumeData volumeData {};
     GXMat4 &transform = volumeData._transform;
     GXMat4 local {};
     GXVec3 alpha {};
@@ -545,7 +549,7 @@ void PointLightPass::UpdateLightGPUData ( UMAUniformPool &volumeBufferPool, GXMa
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        volumeBufferPool.Push ( &volumeData );
+        _volumeDataPool.Push ( &volumeData );
     }
 }
 

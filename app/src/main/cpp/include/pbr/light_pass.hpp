@@ -18,12 +18,13 @@ class LightPass final
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         DummyLightProgram               _dummyLightProgram {};
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
-        PointLightPass                  _pointLightPass {};
-        ReflectionGlobalPass            _reflectionGlobalPass {};
-        ReflectionLocalPass             _reflectionLocalPass {};
-        android_vulkan::MeshGeometry    _unitCube {};
 
-        UMAUniformPool                  _volumeBufferPool {};
+        UMAUniformPool                  _volumeDataPool {};
+
+        PointLightPass                  _pointLightPass { _volumeDataPool };
+        ReflectionGlobalPass            _reflectionGlobalPass {};
+        ReflectionLocalPass             _reflectionLocalPass { _volumeDataPool };
+        android_vulkan::MeshGeometry    _unitCube {};
 
     public:
         LightPass () = default;

@@ -10,7 +10,8 @@
 #define BIND_BRDF_TEXTURE           4
 #define BIND_BRDF_SAMPLER           5
 #define BIND_PREFILTER_SAMPLER      6
-#define BIND_VIEW_DATA              7
+#define BIND_SHADOW_SAMPLER         7
+#define BIND_VIEW_DATA              8
 
 #define OUT_COLOR                   0
 

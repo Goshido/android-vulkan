@@ -4,8 +4,7 @@
 
 #define SET_LIGHT_DATA              2
 #define BIND_SHADOWMAP_TEXTURE      0
-#define BIND_SHADOWMAP_SAMPLER      1
-#define BIND_LIGHT_DATA             2
+#define BIND_LIGHT_DATA             1
 
 
 #endif // POINT_LIGHT_INC

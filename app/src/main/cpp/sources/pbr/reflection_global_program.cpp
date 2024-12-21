@@ -258,6 +258,7 @@ bool ReflectionGlobalProgram::InitLayout ( VkDevice device, VkPipelineLayout &la
         return false;
     }
 
+    // FUCK avoid stub layout and use only 0 and 1 descriptor set
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),

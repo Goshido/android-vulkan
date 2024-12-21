@@ -21,12 +21,13 @@ class LightupCommonDescriptorSet final
 
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
+        Sampler                             _shadowSampler {};
         VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ]{};
         UMAUniformBuffer                    _uniforms{};
         VkMappedMemoryRange                 _uniformRanges[ DUAL_COMMAND_BUFFER ]{};
 
     public:
-        LightupCommonDescriptorSet () = default;
+        explicit LightupCommonDescriptorSet () = default;
 
         LightupCommonDescriptorSet ( LightupCommonDescriptorSet const & ) = delete;
         LightupCommonDescriptorSet &operator = ( LightupCommonDescriptorSet const & ) = delete;

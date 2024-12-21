@@ -39,7 +39,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 {
     VkDevice device = renderer.GetDevice ();
 
-    constexpr static VkDescriptorPoolSize const poolSizes[] =
+    constexpr static VkDescriptorPoolSize const poolSizes[]
     {
         {
             .type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,
@@ -51,7 +51,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = static_cast<uint32_t> ( 2U * DUAL_COMMAND_BUFFER )
+            .descriptorCount = static_cast<uint32_t> ( 3U * DUAL_COMMAND_BUFFER )
         },
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -200,9 +200,6 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_brdfLUTSampler.Init ( device, brdfSamplerInfo, "BRDF LUT" ) ) [[unlikely]]
-        return false;
-
     constexpr VkSamplerCreateInfo prefilterSamplerInfo
     {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -225,7 +222,33 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .unnormalizedCoordinates = VK_FALSE
     };
 
-    if ( !_prefilterSampler.Init ( device, prefilterSamplerInfo, "Prefilter" ) ) [[unlikely]]
+    constexpr VkSamplerCreateInfo shadowSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_TRUE,
+        .compareOp = VK_COMPARE_OP_GREATER,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    result = _brdfLUTSampler.Init ( device, brdfSamplerInfo, "BRDF LUT" ) &&
+        _prefilterSampler.Init ( device, prefilterSamplerInfo, "Prefilter" ) &&
+        _shadowSampler.Init ( device, shadowSamplerInfo, "Shadow" );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     VkDescriptorImageInfo const images[]
@@ -259,6 +282,11 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .sampler = _prefilterSampler.GetSampler (),
             .imageView = VK_NULL_HANDLE,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
+            .sampler = _shadowSampler.GetSampler (),
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
     };
 
@@ -278,12 +306,12 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     VkDescriptorBufferInfo const *buffer = bufferInfo;
 
-    VkWriteDescriptorSet write[ 8U * DUAL_COMMAND_BUFFER ];
-    size_t idx = 0U;
+    VkWriteDescriptorSet writes[ 9U * DUAL_COMMAND_BUFFER ];
+    VkWriteDescriptorSet* write = writes;
 
     for ( auto &set : _sets )
     {
-        VkWriteDescriptorSet &albedo = write[ idx++ ];
+        VkWriteDescriptorSet &albedo = *write++;
 
         albedo =
         {
@@ -299,7 +327,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &normal = write[ idx++ ];
+        VkWriteDescriptorSet &normal = *write++;
 
         normal =
         {
@@ -315,7 +343,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &params = write[ idx++ ];
+        VkWriteDescriptorSet &params = *write++;
 
         params =
         {
@@ -331,7 +359,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &depthStencil = write[ idx++ ];
+        VkWriteDescriptorSet &depthStencil = *write++;
 
         depthStencil =
         {
@@ -347,7 +375,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &brdfImage = write[ idx++ ];
+        VkWriteDescriptorSet &brdfImage = *write++;
 
         brdfImage =
         {
@@ -363,7 +391,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &brdfSampler = write[ idx++ ];
+        VkWriteDescriptorSet &brdfSampler = *write++;
 
         brdfSampler =
         {
@@ -379,7 +407,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &prefilterSampler = write[ idx++ ];
+        VkWriteDescriptorSet &prefilterSampler = *write++;
 
         prefilterSampler =
         {
@@ -395,7 +423,23 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
             .pTexelBufferView = nullptr
         };
 
-        VkWriteDescriptorSet &view = write[ idx++ ];
+        VkWriteDescriptorSet &shadowSampler = *write++;
+
+        shadowSampler =
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = set,
+            .dstBinding = BIND_SHADOW_SAMPLER,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = images + 6U,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        };
+
+        VkWriteDescriptorSet &view = *write++;
 
         view =
         {
@@ -412,7 +456,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         };
     }
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( write ) ), write, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
@@ -441,6 +485,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 void LightupCommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
+    _shadowSampler.Destroy ( device );
     _prefilterSampler.Destroy ( device );
     _brdfLUTSampler.Destroy ( device );
     _brdfLUT.FreeResources ( renderer );

@@ -24,16 +24,13 @@ class PointLightLightup final
         size_t                                  _itemWriteIndex = 0U;
         size_t                                  _itemWritten = 0U;
 
-        VkMappedMemoryRange                     _ranges[ 2U ]{};
-
         PointLightLightupProgram                _program {};
-        Sampler                                 _sampler {};
-
+        VkMappedMemoryRange                     _ranges[ 2U ]{};
         UMAUniformBuffer                        _uniformPool {};
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        PointLightLightup () = default;
+        explicit PointLightLightup () = default;
 
         PointLightLightup ( PointLightLightup const & ) = delete;
         PointLightLightup &operator = ( PointLightLightup const & ) = delete;

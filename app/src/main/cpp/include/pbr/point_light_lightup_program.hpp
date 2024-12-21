@@ -40,7 +40,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         PointLightDescriptorSetLayout       _pointLightLayout {};
 
     public:
-        PointLightLightupProgram () noexcept;
+        explicit PointLightLightupProgram () noexcept;
 
         PointLightLightupProgram ( PointLightLightupProgram const & ) = delete;
         PointLightLightupProgram &operator = ( PointLightLightupProgram const & ) = delete;

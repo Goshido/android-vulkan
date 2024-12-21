@@ -8,14 +8,6 @@
 
 namespace pbr {
 
-namespace {
-
-constexpr size_t BIND_PER_SET = 2U;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void PointLightLightup::Commit () noexcept
 {
     if ( !_itemWritten )
@@ -42,31 +34,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    constexpr VkSamplerCreateInfo samplerInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .magFilter = VK_FILTER_NEAREST,
-        .minFilter = VK_FILTER_NEAREST,
-        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-        .mipLodBias = 0.0F,
-        .anisotropyEnable = VK_FALSE,
-        .maxAnisotropy = 1.0F,
-        .compareEnable = VK_TRUE,
-        .compareOp = VK_COMPARE_OP_GREATER,
-        .minLod = 0.0F,
-        .maxLod = 0.0F,
-        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
-        .unnormalizedCoordinates = VK_FALSE
-    };
-
-    return _program.Init ( renderer, renderPass, resolution ) &&
-        _sampler.Init ( renderer.GetDevice (), samplerInfo, "Point light lightup" ) &&
-        AllocateDescriptorSets ( renderer );
+    return _program.Init ( renderer, renderPass, resolution ) && AllocateDescriptorSets ( renderer );
 }
 
 void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -89,7 +57,6 @@ void PointLightLightup::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     clean ( _writeSets );
 
     _uniformPool.Destroy ( renderer );
-    _sampler.Destroy ( device );
     _program.Destroy ( device );
 }
 
@@ -178,8 +145,8 @@ bool PointLightLightup::UpdateGPUData ( VkDevice device,
     VkWriteDescriptorSet const* writeSets = _writeSets.data ();
 
     vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( BIND_PER_SET * available ),
-        writeSets + BIND_PER_SET * _itemBaseIndex,
+        static_cast<uint32_t> ( available ),
+        writeSets + _itemBaseIndex,
         0U,
         nullptr
     );
@@ -187,7 +154,7 @@ bool PointLightLightup::UpdateGPUData ( VkDevice device,
     if ( more < 1U ) [[likely]]
         return true;
 
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( BIND_PER_SET * more ), writeSets, 0U, nullptr );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
     return true;
 }
 
@@ -225,10 +192,6 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( setCount )
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = static_cast<uint32_t> ( setCount )
         },
         {
@@ -289,14 +252,14 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
 
     // Initialize all immutable constant fields.
 
-    // FUCK shadow sampler in common descriptor set.
-    _imageInfo.resize ( setCount,
-        {
-            .sampler = _sampler.GetSampler (),
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
-        }
-    );
+    constexpr VkDescriptorImageInfo imageTemplate
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = VK_NULL_HANDLE,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL
+    };
+
+    _imageInfo.resize ( setCount, imageTemplate );
 
     VkDescriptorImageInfo const* imageInfo = _imageInfo.data ();
     VkDeviceSize bufferOffset = 0U;
@@ -333,16 +296,16 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .pNext = nullptr,
         .dstSet = VK_NULL_HANDLE,
-        .dstBinding = 0U,
+        .dstBinding = BIND_SHADOWMAP_TEXTURE,
         .dstArrayElement = 0U,
         .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
         .pImageInfo = nullptr,
         .pBufferInfo = nullptr,
         .pTexelBufferView = nullptr
     };
 
-    _writeSets.resize ( BIND_PER_SET * setCount, imageWriteTemplate );
+    _writeSets.resize ( setCount, imageWriteTemplate );
     VkWriteDescriptorSet* imageWrites = _writeSets.data ();
 
     auto const stepSize = static_cast<VkDeviceSize> ( umaBufferInfo._stepSize );
@@ -353,15 +316,7 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
 
         VkWriteDescriptorSet &imageSet = *imageWrites++;
         imageSet.dstSet = set;
-        imageSet.dstBinding = BIND_SHADOWMAP_TEXTURE;
-        imageSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         imageSet.pImageInfo = imageInfo;
-
-        VkWriteDescriptorSet &samplerSet = *imageWrites++;
-        samplerSet.dstSet = set;
-        samplerSet.dstBinding = BIND_SHADOWMAP_SAMPLER;
-        samplerSet.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        samplerSet.pImageInfo = imageInfo++;
 
         bi->offset = std::exchange ( bufferOffset, bufferOffset + stepSize );
 
@@ -371,9 +326,7 @@ bool PointLightLightup::AllocateDescriptorSets ( android_vulkan::Renderer &rende
     }
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( setCount ), bufferWrites.data (), 0U, nullptr );
-
-    // Now all what is needed to do is to init "_bufferInfo::buffer" and "_imageInfo::imageView".
-    // Then to invoke vkUpdateDescriptorSets.
+    // Now all what is needed to do is to init "_imageInfo::imageView" and to invoke vkUpdateDescriptorSets.
 
     _itemBaseIndex = 0U;
     _itemReadIndex = 0U;

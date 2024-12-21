@@ -13,7 +13,7 @@ class Sampler final
         VkSampler       _sampler = VK_NULL_HANDLE;
 
     public:
-        Sampler () = default;
+        explicit Sampler () = default;
 
         Sampler ( Sampler const & ) = delete;
         Sampler &operator = ( Sampler const & ) = delete;

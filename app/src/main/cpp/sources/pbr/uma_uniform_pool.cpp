@@ -53,7 +53,7 @@ void UMAUniformPool::Push ( void const* item ) noexcept
 
 bool UMAUniformPool::Init ( android_vulkan::Renderer &renderer,
     DescriptorSetLayout const &descriptorSetLayout,
-    eUniformPoolSize size,
+    eUniformSize size,
     size_t itemSize,
     uint32_t bind,
     [[maybe_unused]] char const* name

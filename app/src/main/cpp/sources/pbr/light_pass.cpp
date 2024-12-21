@@ -41,7 +41,7 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
 
         _volumeDataPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
-            eUniformPoolSize::Nanoscopic_64KB,
+            eUniformSize::Nanoscopic_64KB,
             sizeof ( VolumeData ),
             0U,
             "Light volume"

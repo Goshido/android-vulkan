@@ -1,15 +1,15 @@
-#ifndef PBR_UNIFORM_BUFFER_POOL_HPP
-#define PBR_UNIFORM_BUFFER_POOL_HPP
+#ifndef PBR_UNIFORM_BUFFER_HPP
+#define PBR_UNIFORM_BUFFER_HPP
 
 
 #include <renderer.hpp>
-#include "uniform_pool_size.hpp"
+#include "uniform_size.hpp"
 
 
 namespace pbr {
 
 // Note the class is NOT thread safe.
-class UniformBufferPool final
+class UniformBuffer final
 {
     private:
         std::vector<VkBuffer>       _buffers {};
@@ -20,16 +20,16 @@ class UniformBufferPool final
         size_t                      _size = 0U;
 
     public:
-        UniformBufferPool () = delete;
+        UniformBuffer () = delete;
 
-        UniformBufferPool ( UniformBufferPool const & ) = delete;
-        UniformBufferPool &operator = ( UniformBufferPool const & ) = delete;
+        UniformBuffer ( UniformBuffer const & ) = delete;
+        UniformBuffer &operator = ( UniformBuffer const & ) = delete;
 
-        UniformBufferPool ( UniformBufferPool && ) = delete;
-        UniformBufferPool &operator = ( UniformBufferPool && ) = delete;
+        UniformBuffer ( UniformBuffer && ) = delete;
+        UniformBuffer &operator = ( UniformBuffer && ) = delete;
 
-        explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
-        ~UniformBufferPool () = default;
+        explicit UniformBuffer ( eUniformSize size ) noexcept;
+        ~UniformBuffer () = default;
 
         // The method acquires one uniform buffer from the pool and fills it with data.
         // Method return buffer which has been just written.
@@ -61,4 +61,4 @@ class UniformBufferPool final
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_BUFFER_POOL_HPP
+#endif // PBR_UNIFORM_BUFFER_HPP

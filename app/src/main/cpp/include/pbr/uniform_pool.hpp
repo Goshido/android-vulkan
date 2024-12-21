@@ -1,14 +1,14 @@
-#ifndef PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
-#define PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
+#ifndef PBR_UNIFORM_POOL_HPP
+#define PBR_UNIFORM_POOL_HPP
 
 
 #include "descriptor_set_layout.hpp"
-#include "uniform_buffer_pool.hpp"
+#include "uniform_buffer.hpp"
 
 
 namespace pbr {
 
-class UniformBufferPoolManager final
+class UniformPool final
 {
     private:
         std::vector<VkBufferMemoryBarrier>      _barriers {};
@@ -22,21 +22,21 @@ class UniformBufferPoolManager final
         size_t                                  _writeIndex = 0U;
         size_t                                  _written = 0U;
 
-        UniformBufferPool                       _uniformPool;
+        UniformBuffer                           _uniformBuffer;
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        UniformBufferPoolManager () = delete;
+        UniformPool () = delete;
 
-        UniformBufferPoolManager ( UniformBufferPoolManager const & ) = delete;
-        UniformBufferPoolManager &operator = ( UniformBufferPoolManager const & ) = delete;
+        UniformPool ( UniformPool const & ) = delete;
+        UniformPool &operator = ( UniformPool const & ) = delete;
 
-        UniformBufferPoolManager ( UniformBufferPoolManager && ) = delete;
-        UniformBufferPoolManager &operator = ( UniformBufferPoolManager && ) = delete;
+        UniformPool ( UniformPool && ) = delete;
+        UniformPool &operator = ( UniformPool && ) = delete;
 
-        explicit UniformBufferPoolManager ( eUniformPoolSize size, VkPipelineStageFlags syncFlags ) noexcept;
+        explicit UniformPool ( eUniformSize size, VkPipelineStageFlags syncFlags ) noexcept;
 
-        ~UniformBufferPoolManager () = default;
+        ~UniformPool () = default;
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
@@ -56,4 +56,4 @@ class UniformBufferPoolManager final
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_BUFFER_POOL_MANAGER_HPP
+#endif // PBR_UNIFORM_POOL_HPP

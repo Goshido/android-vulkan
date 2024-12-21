@@ -6,10 +6,7 @@
 #include "point_light_shadowmap_generator_program.hpp"
 #include "scene_data.hpp"
 #include "shadow_casters.hpp"
-
-// FUCK remove me
-#include "uniform_buffer_pool_manager.hpp"
-
+#include "shadowmap_pool.hpp"
 #include "uma_uniform_pool.hpp"
 
 
@@ -30,13 +27,7 @@ class PointLightPass final
         std::vector<Interact>                   _interacts {};
         PointLightLightup                       _lightup {};
 
-        // FUCK replace me by UMASparseUniformBuffer
-        UniformBufferPoolManager                _shadowmapBufferPool
-        {
-            eUniformPoolSize::Huge_64M,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-        };
-
+        ShadowmapPool                           _shadowmapPool {};
         PointLightShadowmapGeneratorProgram     _shadowmapProgram {};
         VkRenderPass                            _shadowmapRenderPass = VK_NULL_HANDLE;
         VkRenderPassBeginInfo                   _shadowmapRenderPassInfo {};
@@ -96,8 +87,7 @@ class PointLightPass final
             VkCommandBuffer commandBuffer
         ) noexcept;
 
-        void UpdateShadowmapGPUData ( VkDevice device,
-            VkCommandBuffer commandBuffer,
+        [[nodiscard]] bool UpdateShadowmapGPUData ( VkDevice device,
             SceneData const &sceneData,
             size_t opaqueMeshCount
         ) noexcept;

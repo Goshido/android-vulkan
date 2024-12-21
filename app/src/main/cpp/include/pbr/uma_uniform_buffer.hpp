@@ -3,7 +3,7 @@
 
 
 #include "descriptor_set_layout.hpp"
-#include "uniform_pool_size.hpp"
+#include "uniform_size.hpp"
 
 
 namespace pbr {
@@ -44,7 +44,7 @@ class UMAUniformBuffer final
         void Reset () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            eUniformPoolSize size,
+            eUniformSize size,
             size_t itemSize,
             char const* name
         ) noexcept;

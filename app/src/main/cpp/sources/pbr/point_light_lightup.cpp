@@ -40,7 +40,7 @@ bool PointLightLightup::Init ( android_vulkan::Renderer &renderer,
     constexpr auto lightDataSize = static_cast<VkDeviceSize> ( sizeof ( PointLightLightupProgram::LightData ) );
 
     bool result = _uniformPool.Init ( renderer,
-        eUniformPoolSize::Tiny_4M,
+        eUniformSize::Tiny_4M,
         static_cast<size_t> ( lightDataSize ),
         "Point light lightup"
     );

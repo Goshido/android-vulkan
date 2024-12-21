@@ -188,6 +188,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scriptable_text_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_ui_element.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/shadowmap_pool.cpp
     app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
     app/src/main/cpp/sources/pbr/skin_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/skin_pool.cpp
@@ -218,11 +219,10 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ui_pass_image_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_transform_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_program.cpp
-    app/src/main/cpp/sources/pbr/uma_sparse_uniform_pool.cpp
     app/src/main/cpp/sources/pbr/uma_uniform_buffer.cpp
     app/src/main/cpp/sources/pbr/uma_uniform_pool.cpp
-    app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
-    app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
+    app/src/main/cpp/sources/pbr/uniform_buffer.cpp
+    app/src/main/cpp/sources/pbr/uniform_pool.cpp
     app/src/main/cpp/sources/pbr/unique_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/universal_game.cpp
     app/src/main/cpp/sources/pbr/utf8_parser.cpp

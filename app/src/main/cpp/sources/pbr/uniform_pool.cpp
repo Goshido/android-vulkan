@@ -1,32 +1,30 @@
 #include <precompiled_headers.hpp>
-#include <pbr/uniform_buffer_pool_manager.hpp>
+#include <pbr/uniform_pool.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-UniformBufferPoolManager::UniformBufferPoolManager ( eUniformPoolSize size, VkPipelineStageFlags syncFlags ) noexcept:
+UniformPool::UniformPool ( eUniformSize size, VkPipelineStageFlags syncFlags ) noexcept:
     _syncFlags ( syncFlags ),
-    _uniformPool ( size )
+    _uniformBuffer ( size )
 {
     // NOTHING
 }
 
-VkDescriptorSet UniformBufferPoolManager::Acquire () noexcept
+VkDescriptorSet UniformPool::Acquire () noexcept
 {
-    VkDescriptorSet set = _descriptorSets[ _readIndex ];
-    _readIndex = ( _readIndex + 1U ) % _descriptorSets.size ();
-    return set;
+    return _descriptorSets[ std::exchange ( _readIndex, ( _readIndex + 1U ) % _descriptorSets.size () ) ];
 }
 
-void UniformBufferPoolManager::Commit () noexcept
+void UniformPool::Commit () noexcept
 {
     _baseIndex = _writeIndex;
     _readIndex = _writeIndex;
     _written = 0U;
 }
 
-void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept
+void UniformPool::IssueSync ( VkDevice device, VkCommandBuffer commandBuffer ) const noexcept
 {
     size_t const count = _descriptorSets.size ();
     size_t const idx = _baseIndex + _written;
@@ -69,32 +67,30 @@ void UniformBufferPoolManager::IssueSync ( VkDevice device, VkCommandBuffer comm
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
 }
 
-void UniformBufferPoolManager::Push ( VkCommandBuffer commandBuffer, void const* item, size_t size ) noexcept
+void UniformPool::Push ( VkCommandBuffer commandBuffer, void const* item, size_t size ) noexcept
 {
-    _uniformPool.Push ( commandBuffer, item, size );
+    _uniformBuffer.Push ( commandBuffer, item, size );
 
-    VkBufferMemoryBarrier &barrier = _barriers[ _writeIndex ];
-    barrier.size = static_cast<VkDeviceSize> ( size );
+    _barriers[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _descriptorSets.size () ) ].size =
+        static_cast<VkDeviceSize> ( size );
 
-    _writeIndex = ( _writeIndex + 1U ) % _descriptorSets.size ();
-
-    if ( _writeIndex == 0U )
-        _uniformPool.Reset ();
+    if ( _writeIndex == 0U ) [[unlikely]]
+        _uniformBuffer.Reset ();
 
     ++_written;
 }
 
-bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
+bool UniformPool::Init ( android_vulkan::Renderer &renderer,
     DescriptorSetLayout const &descriptorSetLayout,
     size_t itemSize,
     uint32_t bind,
     [[maybe_unused]] char const* name
 ) noexcept
 {
-    if ( !_uniformPool.Init ( renderer, itemSize, name ) ) [[unlikely]]
+    if ( !_uniformBuffer.Init ( renderer, itemSize, name ) ) [[unlikely]]
         return false;
 
-    size_t const setCount = _uniformPool.GetAvailableItemCount ();
+    size_t const setCount = _uniformBuffer.GetAvailableItemCount ();
     VkDevice device = renderer.GetDevice ();
 
     VkDescriptorPoolSize const poolSizes =
@@ -115,7 +111,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::UniformBufferPoolManager::Init",
+        "pbr::UniformPool::Init",
         "Can't create descriptor pool"
     );
 
@@ -139,7 +135,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, descriptorSets ),
-        "pbr::UniformBufferPoolManager::Init",
+        "pbr::UniformPool::Init",
         "Can't allocate descriptor sets"
     );
 
@@ -204,7 +200,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
 
     for ( size_t i = 0U; i < setCount; ++i )
     {
-        VkBuffer buffer = _uniformPool.GetBuffer ( i );
+        VkBuffer buffer = _uniformBuffer.GetBuffer ( i );
 
         VkDescriptorBufferInfo &bufferInfo = _bufferInfo[ i ];
         bufferInfo.buffer = buffer;
@@ -220,7 +216,7 @@ bool UniformBufferPoolManager::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UniformBufferPoolManager::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+void UniformPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
     {
@@ -238,7 +234,7 @@ void UniformBufferPoolManager::Destroy ( android_vulkan::Renderer &renderer ) no
     clean ( _bufferInfo );
     clean ( _writeSets );
 
-    _uniformPool.Destroy ( renderer );
+    _uniformBuffer.Destroy ( renderer );
 }
 
 } // namespace pbr

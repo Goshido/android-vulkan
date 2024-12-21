@@ -1,10 +1,10 @@
-#ifndef PBR_UNIFORM_POOL_SIZE_HPP
-#define PBR_UNIFORM_POOL_SIZE_HPP
+#ifndef PBR_UNIFORM_SIZE_HPP
+#define PBR_UNIFORM_SIZE_HPP
 
 
 namespace pbr {
 
-enum class eUniformPoolSize : size_t
+enum class eUniformSize : size_t
 {
     Nanoscopic_64KB = 64U,
     Microscopic_1M [[maybe_unused]] = 1024U,
@@ -19,4 +19,4 @@ enum class eUniformPoolSize : size_t
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_POOL_SIZE_HPP
+#endif // PBR_UNIFORM_SIZE_HPP

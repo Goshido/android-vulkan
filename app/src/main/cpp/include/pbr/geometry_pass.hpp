@@ -23,7 +23,7 @@ class GeometryPass final
         StippleSubpass                              _stippleSubpass {};
 
     public:
-        GeometryPass () = default;
+        explicit GeometryPass () = default;
 
         GeometryPass ( GeometryPass const & ) = delete;
         GeometryPass &operator = ( GeometryPass const & ) = delete;

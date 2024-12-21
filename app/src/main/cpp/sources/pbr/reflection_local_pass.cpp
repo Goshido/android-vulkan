@@ -73,7 +73,7 @@ bool ReflectionLocalPass::Init ( android_vulkan::Renderer &renderer,
     constexpr auto lightDataSize = static_cast<VkDeviceSize> ( sizeof ( ReflectionLocalProgram::LightData ) );
 
     bool result = _uniformPool.Init ( renderer,
-        eUniformPoolSize::Nanoscopic_64KB,
+        eUniformSize::Nanoscopic_64KB,
         static_cast<size_t> ( lightDataSize ),
         "Reflection local"
     );

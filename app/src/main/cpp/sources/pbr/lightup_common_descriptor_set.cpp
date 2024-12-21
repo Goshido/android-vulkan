@@ -114,7 +114,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     constexpr auto viewDataSize = static_cast<VkDeviceSize> ( sizeof ( LightLightupBaseProgram::ViewData ) );
 
     result = _uniforms.Init ( renderer,
-        eUniformPoolSize::Nanoscopic_64KB,
+        eUniformSize::Nanoscopic_64KB,
         static_cast<size_t> ( viewDataSize ),
         "Light common"
     );

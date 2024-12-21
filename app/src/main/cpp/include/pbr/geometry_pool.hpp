@@ -2,10 +2,8 @@
 #define PBR_GEOMETRY_POOL_HPP
 
 
-#include "geometry_pass_instance_descriptor_set_layout.hpp"
 #include "geometry_pass_program.hpp"
 #include "uma_uniform_buffer.hpp"
-#include "uniform_buffer_pool.hpp"
 
 
 namespace pbr {

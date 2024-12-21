@@ -27,7 +27,7 @@ void UMAUniformBuffer::Reset () noexcept
 }
 
 bool UMAUniformBuffer::Init ( android_vulkan::Renderer &renderer,
-    eUniformPoolSize size,
+    eUniformSize size,
     size_t itemSize,
     [[maybe_unused]] char const* name
 ) noexcept

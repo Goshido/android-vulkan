@@ -52,8 +52,8 @@ bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
     if ( _interacts.empty () )
         return true;
 
-    UpdateShadowmapGPUData ( renderer.GetDevice (), commandBuffer, sceneData, opaqueMeshCount );
-    return GenerateShadowmaps ( renderer, commandBuffer );
+    return UpdateShadowmapGPUData ( renderer.GetDevice (), sceneData, opaqueMeshCount ) &&
+        GenerateShadowmaps ( renderer, commandBuffer );
 }
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
@@ -69,14 +69,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     return CreateShadowmapRenderPass ( renderer.GetDevice () ) &&
         _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) &&
-
-        _shadowmapBufferPool.Init ( renderer,
-            PointLightShadowmapGeneratorDescriptorSetLayout {},
-            sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
-            0U,
-            "Point light pass shadowmap"
-        ) &&
-
+        _shadowmapPool.Init ( renderer ) &&
         _lightup.Init ( renderer, lightupRenderPass, resolution );
 }
 
@@ -99,7 +92,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( renderer );
+    _shadowmapPool.Destroy ( renderer );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
@@ -371,7 +364,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
-            _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
+            _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapPool.Acquire () );
             vkCmdDrawIndexed ( commandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
         }
 
@@ -392,7 +385,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
                     static_cast<size_t> ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT )
                 );
 
-                _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
+                _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapPool.Acquire () );
 
                 vkCmdDrawIndexed ( commandBuffer,
                     vertexCount,
@@ -410,17 +403,15 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
         vkCmdEndRenderPass ( commandBuffer );
     }
 
-    _shadowmapBufferPool.Commit ();
+    _shadowmapPool.Commit ();
     return true;
 }
 
-void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
-    VkCommandBuffer commandBuffer,
+bool PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     SceneData const &sceneData,
     size_t opaqueMeshCount
 ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload point light shadowmap data" )
     PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {
@@ -457,12 +448,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
                 }
 
                 append ( matrices, 0U, opaqueData._local );
-
-                _shadowmapBufferPool.Push ( commandBuffer,
-                    &instanceData,
-                    sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
-                );
-
+                _shadowmapPool.Push ( instanceData, 1U );
                 uniques->push_back ( mesh );
             }
 
@@ -513,18 +499,14 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
                     ++instance;
                 }
 
-                _shadowmapBufferPool.Push ( commandBuffer,
-                    &instanceData,
-                    batches * sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
-                );
-
+                _shadowmapPool.Push ( instanceData, batches );
                 remain -= batches;
             }
             while ( remain );
         }
     }
 
-    _shadowmapBufferPool.IssueSync ( device, commandBuffer );
+    return _shadowmapPool.IssueSync ( device );
 }
 
 void PointLightPass::UpdateLightGPUData ( GXMat4 const &viewProjection ) noexcept

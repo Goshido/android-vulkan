@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <pbr/reflection_common.inc>
+#include <pbr/reflection_global.inc>
 #include <pbr/reflection_global_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 

@@ -140,14 +140,14 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     AV_TRACE ( "Light post-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 
-    size_t const pointLights = _pointLightPass.GetPointLightCount ();
-    size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
-    size_t const globalReflections = _reflectionGlobalPass.GetReflectionCount ();
-    size_t const lightVolumes = pointLights + localReflections;
+    size_t const pointLightCount = _pointLightPass.GetPointLightCount ();
+    size_t const reflectionLocalCount = _reflectionLocalPass.GetReflectionLocalCount ();
+    size_t const reflectionGlobalCount = _reflectionGlobalPass.GetReflectionCount ();
+    size_t const lightVolumeCount = pointLightCount + reflectionLocalCount;
 
     _lightupCommonDescriptorSet.Bind ( commandBuffer, commandBufferIndex );
 
-    if ( lightVolumes + globalReflections == 0U )
+    if ( lightVolumeCount + reflectionGlobalCount == 0U )
     {
         // See https://github.com/Goshido/android-vulkan/issues/84
         _dummyLightProgram.Bind ( commandBuffer );
@@ -155,19 +155,15 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
         return;
     }
 
-    if ( pointLights )
+    if ( pointLightCount )
         _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube, _volumeBufferPool );
 
-    if ( localReflections )
+    if ( reflectionLocalCount )
         _reflectionLocalPass.Execute ( commandBuffer, _unitCube, _volumeBufferPool );
 
-    if ( !globalReflections )
-    {
-        _volumeBufferPool.Commit ();
-        return;
-    }
+    if ( reflectionGlobalCount )
+        _reflectionGlobalPass.Execute ( device, commandBuffer );
 
-    _reflectionGlobalPass.Execute ( device, commandBuffer );
     _volumeBufferPool.Commit ();
 }
 

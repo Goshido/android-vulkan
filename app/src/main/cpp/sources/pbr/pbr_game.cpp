@@ -15,7 +15,7 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* SCENES[] =
+constexpr char const* const SCENES[] =
 {
     "pbr/assets/N7_ADM_Reception.scene",
     "pbr/assets/N7_ENG_Injection.scene"

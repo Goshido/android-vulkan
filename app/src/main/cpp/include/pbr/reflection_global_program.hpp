@@ -15,7 +15,6 @@ class ReflectionGlobalProgram final : public LightLightupBaseProgram
 {
     private:
         LightupCommonDescriptorSetLayout        _commonLayout {};
-        StubDescriptorSetLayout                 _stubLayout {};
         ReflectionGlobalDescriptorSetLayout     _reflectionLayout {};
 
     public:

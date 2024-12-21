@@ -10,7 +10,7 @@ namespace pbr {
 class ReflectionGlobalDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        ReflectionGlobalDescriptorSetLayout () = default;
+        explicit ReflectionGlobalDescriptorSetLayout () = default;
 
         ReflectionGlobalDescriptorSetLayout ( ReflectionGlobalDescriptorSetLayout const & ) = delete;
         ReflectionGlobalDescriptorSetLayout &operator = ( ReflectionGlobalDescriptorSetLayout const & ) = delete;

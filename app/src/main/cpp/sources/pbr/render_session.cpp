@@ -48,58 +48,50 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         .pInheritanceInfo = nullptr
     };
 
-    bool result =
-        (
-            AnimationGraph::UploadGPUData ( commandBufferIndex ) &&
-            _geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) &&
+    bool result = AnimationGraph::UploadGPUData ( commandBufferIndex ) &&
+        _geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) &&
 
-            _lightPass.UploadGPUData ( renderer,
-                commandBufferIndex,
-                _geometryPass.GetOpaqueSubpass ().GetSceneData (),
-                _opaqueMeshCount,
-                _gBuffer.GetResolution (),
-                _viewerLocal,
-                _view,
-                _viewProjection,
-                _cvvToView
-            ) &&
+        _lightPass.UploadGPUData ( renderer,
+            commandBufferIndex,
+            _geometryPass.GetOpaqueSubpass ().GetSceneData (),
+            _opaqueMeshCount,
+            _gBuffer.GetResolution (),
+            _viewerLocal,
+            _view,
+            _viewProjection,
+            _cvvToView
+        ) &&
 
-            android_vulkan::Renderer::CheckVkResult (
-                vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-                "pbr::RenderSession::End",
-                "Can't wait fence"
-            ) &&
+        android_vulkan::Renderer::CheckVkResult (
+            vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+            "pbr::RenderSession::End",
+            "Can't wait fence"
+        ) &&
 
-            android_vulkan::Renderer::CheckVkResult (
-                _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
-                "pbr::RenderSession::End",
-                "Can't acquire present image"
-            ) &&
+        android_vulkan::Renderer::CheckVkResult (
+            _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
+            "pbr::RenderSession::End",
+            "Can't acquire present image"
+        ) &&
 
-            android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
-                "pbr::RenderSession::End",
-                "Can't reset fence"
-            ) &&
+        android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
+            "pbr::RenderSession::End",
+            "Can't reset fence"
+        ) &&
 
-            android_vulkan::Renderer::CheckVkResult (
-                vkResetCommandPool ( device, commandInfo._pool, 0U ),
-                "pbr::RenderSession::End",
-                "Can't reset command pool"
-            ) &&
+        android_vulkan::Renderer::CheckVkResult (
+            vkResetCommandPool ( device, commandInfo._pool, 0U ),
+            "pbr::RenderSession::End",
+            "Can't reset command pool"
+        ) &&
 
-            android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
-                "pbr::RenderSession::End",
-                "Can't begin main render pass"
-            )
-        ) ||
+        android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+            "pbr::RenderSession::End",
+            "Can't begin main render pass"
+        ) &&
 
-        !_brightnessChanged ||
-        UpdateBrightness ( renderer );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
+        UpdateBrightness ( renderer ) &&
+        _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
         SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex );
 
     if ( !result ) [[unlikely]]
@@ -810,6 +802,9 @@ void RenderSession::SubmitReflectionLocal ( LightRef &light ) noexcept
 
 bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( !_brightnessChanged ) [[likely]]
+        return true;
+
     bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::RenderSession::UpdateBrightness",
         "Can't wait queue idle"
@@ -824,11 +819,10 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
     result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );
 
-    if ( !result ) [[unlikely]]
-        return false;
+    if ( result ) [[likely]]
+        _brightnessChanged = false;
 
-    _brightnessChanged = false;
-    return true;
+    return result;
 }
 
 bool RenderSession::AllocateCommandInfo ( CommandInfo &info,

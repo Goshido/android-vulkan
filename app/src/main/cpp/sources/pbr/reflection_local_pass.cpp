@@ -273,6 +273,7 @@ void ReflectionLocalPass::Destroy ( android_vulkan::Renderer &renderer ) noexcep
     clean ( _imageInfo );
     clean ( _writeSets );
 
+    _uniformPool.Destroy ( renderer );
     _program.Destroy ( device );
 }
 

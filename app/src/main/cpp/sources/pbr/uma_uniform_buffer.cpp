@@ -61,6 +61,8 @@ bool UMAUniformBuffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _bufferInfo._buffer, VK_OBJECT_TYPE_BUFFER, "UMA uniform buffer (%s)", name )
+
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, _bufferInfo._buffer, &requirements );
 

@@ -88,6 +88,8 @@ bool UMAUniformPool::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "UMA uniform pool (%s)", name )
+
     VkMemoryRequirements requirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &requirements );
 

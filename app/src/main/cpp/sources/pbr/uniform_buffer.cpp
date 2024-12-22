@@ -179,6 +179,8 @@ bool UniformBuffer::ResolveMemoryRequirements ( android_vulkan::Renderer &render
     if ( !result ) [[unlikely]]
         return false;
 
+    AV_SET_VULKAN_OBJECT_NAME ( device, buffer, VK_OBJECT_TYPE_BUFFER, "Uniform buffer probe" )
+
     vkGetBufferMemoryRequirements ( device, buffer, &requirements );
     vkDestroyBuffer ( device, buffer, nullptr );
     return true;

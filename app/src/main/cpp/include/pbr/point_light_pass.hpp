@@ -49,12 +49,7 @@ class PointLightPass final
         ~PointLightPass () = default;
 
         void ExecuteLightupPhase ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube ) noexcept;
-
-        [[nodiscard]] bool ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            SceneData const &sceneData,
-            size_t opaqueMeshCount
-        ) noexcept;
+        [[nodiscard]] bool ExecuteShadowPhase ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkExtent2D const &resolution,
@@ -69,23 +64,18 @@ class PointLightPass final
         void Reset () noexcept;
         void Submit ( LightRef const &light ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( VkDevice device,
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+            SceneData const &sceneData,
+            size_t opaqueMeshCount,
             GXMat4 const &viewerLocal,
             GXMat4 const &view,
             GXMat4 const &viewProjection
         ) noexcept;
 
     private:
-        // The method returns nullptr if it fails. Otherwise the method returns a valid pointer.
-        [[nodiscard]] PointLightShadowmapInfo* AcquirePointLightShadowmap (
-            android_vulkan::Renderer &renderer
-        ) noexcept;
-
         [[nodiscard]] bool CreateShadowmapRenderPass ( VkDevice device ) noexcept;
-
-        [[nodiscard]] bool GenerateShadowmaps ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer
-        ) noexcept;
+        [[nodiscard]] bool GenerateShadowmaps ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool ReserveShadowmaps ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool UpdateShadowmapGPUData ( VkDevice device,
             SceneData const &sceneData,

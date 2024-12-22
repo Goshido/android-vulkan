@@ -90,41 +90,14 @@ void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) n
     _commandPool = VK_NULL_HANDLE;
 }
 
-bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    size_t commandBufferIndex,
-    VkExtent2D const &resolution,
-    SceneData const &sceneData,
-    size_t opaqueMeshCount,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection,
-    GXMat4 const &cvvToView
-) noexcept
+bool LightPass::OnPreGeometryPass ( VkCommandBuffer commandBuffer ) noexcept
 {
-    // FUCK separate upload uniform operations from command buffer recording operations.
+    if ( !_hasWork )
+        return true;
+
     AV_TRACE ( "Light pre-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light pre-geometry" )
-
-    VkDevice device = renderer.GetDevice ();
-
-    return _lightupCommonDescriptorSet.Update ( device,
-            commandBufferIndex,
-            resolution,
-            viewerLocal,
-            cvvToView
-        ) &&
-
-        _pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) &&
-
-        _pointLightPass.UploadGPUData ( device,
-            viewerLocal,
-            view,
-            viewProjection
-        ) &&
-
-        _reflectionLocalPass.UploadGPUData ( device, view, viewProjection ) &&
-        _volumeDataPool.IssueSync ( device );
+    return _pointLightPass.ExecuteShadowPhase ( commandBuffer );
 }
 
 void LightPass::OnPostGeometryPass ( VkDevice device,
@@ -132,18 +105,12 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     size_t commandBufferIndex
 ) noexcept
 {
-    // FUCK separate upload uniform operations from command buffer recording operations.
     AV_TRACE ( "Light post-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 
-    size_t const pointLightCount = _pointLightPass.GetPointLightCount ();
-    size_t const reflectionLocalCount = _reflectionLocalPass.GetReflectionLocalCount ();
-    size_t const reflectionGlobalCount = _reflectionGlobalPass.GetReflectionCount ();
-    size_t const lightVolumeCount = pointLightCount + reflectionLocalCount;
-
     _lightupCommonDescriptorSet.Bind ( commandBuffer, commandBufferIndex );
 
-    if ( lightVolumeCount + reflectionGlobalCount == 0U )
+    if ( !_hasWork )
     {
         // See https://github.com/Goshido/android-vulkan/issues/84
         _dummyLightProgram.Bind ( commandBuffer );
@@ -151,16 +118,17 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
         return;
     }
 
-    if ( pointLightCount )
+    if ( _pointLightPass.GetPointLightCount () )
         _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube );
 
-    if ( reflectionLocalCount )
+    if ( _reflectionLocalPass.GetReflectionLocalCount () )
         _reflectionLocalPass.Execute ( commandBuffer, _unitCube );
 
-    if ( reflectionGlobalCount )
+    if ( _reflectionGlobalPass.GetReflectionCount () )
         _reflectionGlobalPass.Execute ( device, commandBuffer );
 
     _volumeDataPool.Commit ();
+    _hasWork = false;
 }
 
 void LightPass::Reset () noexcept
@@ -183,6 +151,45 @@ void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter ) noexcept
 void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
     _reflectionLocalPass.Append ( prefilter, location, size );
+}
+
+bool LightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    size_t commandBufferIndex,
+    SceneData const &sceneData,
+    size_t opaqueMeshCount,
+    VkExtent2D const &resolution,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection,
+    GXMat4 const &cvvToView
+) noexcept
+{
+    size_t const pointLightCount = _pointLightPass.GetPointLightCount ();
+    size_t const reflectionLocalCount = _reflectionLocalPass.GetReflectionLocalCount ();
+    size_t const reflectionGlobalCount = _reflectionGlobalPass.GetReflectionCount ();
+
+    if ( _hasWork = pointLightCount + reflectionLocalCount + reflectionGlobalCount > 0U; !_hasWork )
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+
+    return _lightupCommonDescriptorSet.UploadGPUData ( device,
+            commandBufferIndex,
+            resolution,
+            viewerLocal,
+            cvvToView
+        ) &&
+
+        _pointLightPass.UploadGPUData ( renderer,
+            sceneData,
+            opaqueMeshCount,
+            viewerLocal,
+            view,
+            viewProjection
+        ) &&
+
+        _reflectionLocalPass.UploadGPUData ( device, view, viewProjection ) &&
+        _volumeDataPool.IssueSync ( device );
 }
 
 bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept

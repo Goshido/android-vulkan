@@ -511,7 +511,7 @@ void LightupCommonDescriptorSet::OnFreeTransferResources ( android_vulkan::Rende
     _brdfLUT.FreeTransferResources ( renderer );
 }
 
-bool LightupCommonDescriptorSet::Update ( VkDevice device,
+bool LightupCommonDescriptorSet::UploadGPUData ( VkDevice device,
     size_t commandBufferIndex,
     VkExtent2D const &resolution,
     GXMat4 const &viewerLocal,
@@ -539,7 +539,7 @@ bool LightupCommonDescriptorSet::Update ( VkDevice device,
 
     return android_vulkan::Renderer::CheckVkResult (
         vkFlushMappedMemoryRanges ( device, 1U, _uniformRanges + commandBufferIndex ),
-        "pbr::LightupCommonDescriptorSet::Update",
+        "pbr::LightupCommonDescriptorSet::UploadGPUData",
         "Can't flush memory range"
     );
 }

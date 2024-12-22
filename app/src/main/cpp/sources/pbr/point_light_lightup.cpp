@@ -271,8 +271,9 @@ bool PointLightLightup::UpdateGPUData ( VkDevice device,
     for ( size_t i = 0U; i < lightCount; ++i )
     {
         auto const [light, shadowmap] = pointLightPass.GetPointLightInfo ( i );
-        _imageInfo[ _itemWriteIndex ].imageView = shadowmap->GetImageView ();
-        _itemWriteIndex = ( _itemWriteIndex + 1U ) % count;
+
+        _imageInfo[ std::exchange ( _itemWriteIndex, ( _itemWriteIndex + 1U ) % count ) ].imageView =
+            shadowmap->GetImageView ();
 
         if ( _itemWriteIndex == 0U ) [[unlikely]]
         {

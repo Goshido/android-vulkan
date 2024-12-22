@@ -31,53 +31,14 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    VkDevice device = renderer.GetDevice ();
+    size_t const commandBufferIndex = std::exchange ( _writingCommandInfo,
+        ( _writingCommandInfo + 1U ) % DUAL_COMMAND_BUFFER
+    );
 
-    if ( !_geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) ) [[unlikely]]
-        return false;
-
-    size_t const commandBufferIndex = _writingCommandInfo;
-    CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
-    _writingCommandInfo = ++_writingCommandInfo % DUAL_COMMAND_BUFFER;
-
+    CommandInfo &commandInfo = _commandInfo[ commandBufferIndex ];
     VkFence &fence = commandInfo._fence;
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::RenderSession::End",
-        "Can't wait fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
-        "pbr::RenderSession::End",
-        "Can't acquire present image"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
-        "pbr::RenderSession::End",
-        "Can't reset fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, commandInfo._pool, 0U ),
-        "pbr::RenderSession::End",
-        "Can't reset command pool"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     VkCommandBuffer commandBuffer = commandInfo._buffer;
+    VkDevice device = renderer.GetDevice ();
 
     constexpr VkCommandBufferBeginInfo beginInfo
     {
@@ -87,37 +48,69 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
         .pInheritanceInfo = nullptr
     };
 
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
-        "pbr::RenderSession::End",
-        "Can't begin main render pass"
-    );
+    bool result =
+        (
+            _geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) &&
 
-    if ( !result || ( _brightnessChanged && !UpdateBrightness ( renderer ) ) ) [[unlikely]]
+            _lightPass.UploadGPUData ( renderer,
+                commandBufferIndex,
+                _geometryPass.GetOpaqueSubpass ().GetSceneData (),
+                _opaqueMeshCount,
+                _gBuffer.GetResolution (),
+                _viewerLocal,
+                _view,
+                _viewProjection,
+                _cvvToView
+            ) &&
+
+            android_vulkan::Renderer::CheckVkResult (
+                vkWaitForFences ( device, 1U, &fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+                "pbr::RenderSession::End",
+                "Can't wait fence"
+            ) &&
+
+
+            android_vulkan::Renderer::CheckVkResult (
+                _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
+                "pbr::RenderSession::End",
+                "Can't acquire present image"
+            ) &&
+
+
+            android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
+                "pbr::RenderSession::End",
+                "Can't reset fence"
+            ) &&
+
+            android_vulkan::Renderer::CheckVkResult (
+                vkResetCommandPool ( device, commandInfo._pool, 0U ),
+                "pbr::RenderSession::End",
+                "Can't reset command pool"
+            ) &&
+
+            android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
+                "pbr::RenderSession::End",
+                "Can't begin main render pass"
+            )
+        ) ||
+
+        !_brightnessChanged ||
+        UpdateBrightness ( renderer );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     AnimationGraph::UploadGPUData ( commandBuffer, commandBufferIndex );
 
-    if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) ) [[unlikely]]
-        return false;
+    result = _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
+        SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex );
 
-    if ( !SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+    if ( !result ) [[unlikely]]
         return false;
 
     _toneMapperPass.UploadGPUData ( renderer, commandBuffer );
 
-    result = _lightPass.OnPreGeometryPass ( renderer,
-        commandBuffer,
-        commandBufferIndex,
-        _gBuffer.GetResolution (),
-        _geometryPass.GetOpaqueSubpass ().GetSceneData (),
-        _opaqueMeshCount,
-        _viewerLocal,
-        _view,
-        _viewProjection,
-        _cvvToView
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !_lightPass.OnPreGeometryPass ( commandBuffer ) ) [[unlikely]]
         return false;
 
     vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
@@ -131,9 +124,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
     vkCmdEndRenderPass ( commandBuffer );
 
     _exposurePass.Execute ( commandBuffer, static_cast<float> ( deltaTime ) );
-
     _presentRenderPass.Begin ( commandBuffer );
-
     _toneMapperPass.Execute ( commandBuffer );
 
     if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]

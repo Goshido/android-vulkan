@@ -40,7 +40,7 @@ To begin you have to run script
 
 `<repo>tools\editor\scripts\prepare-environment.ps1`
 
-This scripts gonna create symbolic links for:
+This script gonna create symbolic links for:
 
 - asset directories
 - [_PIX_](https://devblogs.microsoft.com/pix/) tooling library for _CPU_ tracing

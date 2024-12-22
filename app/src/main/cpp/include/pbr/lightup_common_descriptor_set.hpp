@@ -47,7 +47,7 @@ class LightupCommonDescriptorSet final
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool Update ( VkDevice device,
+        [[nodiscard]] bool UploadGPUData ( VkDevice device,
             size_t commandBufferIndex,
             VkExtent2D const &resolution,
             GXMat4 const &viewerLocal,

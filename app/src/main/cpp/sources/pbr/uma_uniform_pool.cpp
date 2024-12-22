@@ -13,10 +13,17 @@ VkDescriptorSet UMAUniformPool::Acquire () noexcept
     return set;
 }
 
-void UMAUniformPool::Commit () noexcept
+bool UMAUniformPool::IssueSync ( VkDevice device ) noexcept
 {
-    if ( _readIndex == _writeIndex )
-        return;
+    bool const result = !_written ||
+        android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( _rangeIndex + 1U ), _ranges ),
+            "UMAUniformPool::IssueSync",
+            "Can't flush memory ranges"
+        );
+
+    if ( !result ) [[unlikely]]
+        return false;
 
     auto &[mainRange, overflowRange] = _ranges;
     VkDeviceSize const cases[] = { overflowRange.offset, mainRange.offset + mainRange.size };
@@ -24,22 +31,13 @@ void UMAUniformPool::Commit () noexcept
     mainRange.size = 0U;
     overflowRange.size = 0U;
     _rangeIndex = 0U;
-
-    _readIndex = _writeIndex;
-}
-
-bool UMAUniformPool::IssueSync ( VkDevice device ) const noexcept
-{
-    return ( _readIndex == _writeIndex ) ||
-        android_vulkan::Renderer::CheckVkResult (
-            vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( _rangeIndex + 1U ), _ranges ),
-            "UMAUniformPool::IssueSync",
-            "Can't flush memory ranges"
-        );
+    _written = false;
+    return true;
 }
 
 void UMAUniformPool::Push ( void const* item ) noexcept
 {
+    _written = true;
     size_t const itemCount = _sets.size ();
 
     std::memcpy ( _data + _stepSize * ( std::exchange ( _writeIndex, ( _writeIndex + 1U ) % itemCount ) % itemCount ),

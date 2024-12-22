@@ -50,6 +50,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     bool result =
         (
+            AnimationGraph::UploadGPUData ( commandBufferIndex ) &&
             _geometryPass.UploadGPUData ( device, _frustum, _view, _viewProjection ) &&
 
             _lightPass.UploadGPUData ( renderer,
@@ -99,8 +100,6 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 
     if ( !result ) [[unlikely]]
         return false;
-
-    AnimationGraph::UploadGPUData ( commandBuffer, commandBufferIndex );
 
     result = _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
         SkeletalMeshComponent::ApplySkin ( commandBuffer, commandBufferIndex );

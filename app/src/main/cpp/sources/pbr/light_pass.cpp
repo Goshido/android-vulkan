@@ -127,7 +127,6 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     if ( _reflectionGlobalPass.GetReflectionCount () )
         _reflectionGlobalPass.Execute ( device, commandBuffer );
 
-    _volumeDataPool.Commit ();
     _hasWork = false;
 }
 

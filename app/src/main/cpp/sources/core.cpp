@@ -23,7 +23,7 @@ namespace {
 
 constexpr double FPS_PERIOD = 3.0;
 constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
-constexpr bool VSYNC = true;
+constexpr bool VSYNC = false;
 
 enum class eGame : uint16_t
 {
@@ -98,7 +98,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::eGame::World1x1 )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

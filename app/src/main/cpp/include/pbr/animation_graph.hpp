@@ -37,13 +37,22 @@ class AnimationGraph final : public NodeLink
 
         class Buffer final
         {
-            public:
-                VkBuffer                                _buffer = VK_NULL_HANDLE;
-                VkDeviceMemory                          _memory = VK_NULL_HANDLE;
-                VkDeviceSize                            _offset = std::numeric_limits<VkDeviceSize>::max ();
+            private:
+                VkMappedMemoryRange                     _range
+                {
+                    .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+                    .pNext = nullptr,
+                    .memory = VK_NULL_HANDLE,
+                    .offset = 0U,
+                    .size = 0U
+                };
 
             public:
-                Buffer () = default;
+                VkBuffer                                _buffer = VK_NULL_HANDLE;
+                android_vulkan::BoneJoint*              _poseSkin = nullptr;
+
+            public:
+                explicit Buffer () = default;
 
                 Buffer ( Buffer const& ) = delete;
                 Buffer& operator= ( Buffer const& ) = delete;
@@ -53,37 +62,9 @@ class AnimationGraph final : public NodeLink
 
                 ~Buffer () = default;
 
-                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    VkDeviceSize size,
-                    VkBufferUsageFlags usage,
-                    VkMemoryPropertyFlags memoryFlags,
-                    size_t frameInFlightIndex,
-                    char const* name
-                ) noexcept;
-
-                void Destroy ( bool isMapped ) noexcept;
-        };
-
-        class BufferSet final
-        {
-            public:
-                Buffer                                  _gpuPoseSkin {};
-                Buffer                                  _transferPoseSkin {};
-                android_vulkan::BoneJoint*              _poseSkin = nullptr;
-
-            public:
-                BufferSet () = default;
-
-                BufferSet ( BufferSet const & ) = delete;
-                BufferSet& operator= ( BufferSet const & ) = delete;
-
-                BufferSet ( BufferSet && ) = delete;
-                BufferSet& operator= ( BufferSet && ) = delete;
-
-                ~BufferSet () = default;
-
                 [[nodiscard]] bool Init ( VkDeviceSize size, size_t frameInFlightIndex ) noexcept;
                 void Destroy () noexcept;
+                [[nodiscard]] bool Flush () noexcept;
         };
 
     private:
@@ -97,10 +78,9 @@ class AnimationGraph final : public NodeLink
         Joints                                          _poseLocal {};
         Joints                                          _poseGlobal {};
 
-        BufferSet                                       _bufferSets[ DUAL_COMMAND_BUFFER ];
+        Buffer                                          _buffers[ DUAL_COMMAND_BUFFER ];
         std::string                                     _skeletonName {};
 
-        static std::vector<VkBufferMemoryBarrier>       _barriers;
         static size_t                                   _changedGraphCount;
         static Graphs                                   _graphs;
         static size_t                                   _lastCommandBufferIndex;
@@ -118,7 +98,7 @@ class AnimationGraph final : public NodeLink
 
         explicit AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept;
 
-        ~AnimationGraph () = default;
+        ~AnimationGraph () override = default;
 
         [[nodiscard]] android_vulkan::BufferInfo GetPoseInfo () const noexcept;
         [[nodiscard]] VkDeviceSize GetPoseRange () const noexcept;
@@ -127,13 +107,12 @@ class AnimationGraph final : public NodeLink
         static void Init ( lua_State &vm, android_vulkan::Renderer &renderer ) noexcept;
         static void Destroy () noexcept;
         static void Update ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept;
-        static void UploadGPUData ( VkCommandBuffer commandBuffer,  size_t commandBufferIndex ) noexcept;
+        [[nodiscard]] static bool UploadGPUData ( size_t commandBufferIndex ) noexcept;
 
     private:
         void FreeResources () noexcept;
         void UpdateInternal ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept;
 
-        static void AllocateVulkanStructures ( size_t needed ) noexcept;
         static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] static int OnAwake ( lua_State* state );

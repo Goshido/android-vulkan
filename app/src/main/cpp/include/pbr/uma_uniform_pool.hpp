@@ -25,6 +25,7 @@ class UMAUniformPool final
 
         size_t                          _readIndex = 0U;
         size_t                          _writeIndex = 0U;
+        bool                            _written = false;
 
     public:
         explicit UMAUniformPool () = default;
@@ -38,8 +39,7 @@ class UMAUniformPool final
         ~UMAUniformPool () = default;
 
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
-        void Commit () noexcept;
-        [[nodiscard]] bool IssueSync ( VkDevice device ) const noexcept;
+        [[nodiscard]] bool IssueSync ( VkDevice device ) noexcept;
         void Push ( void const* item ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

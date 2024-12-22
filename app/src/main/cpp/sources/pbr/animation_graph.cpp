@@ -19,35 +19,27 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-namespace {
-
-constexpr size_t INITIAL_GRAPH_COUNT = 64U;
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
-bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
-    VkDeviceSize size,
-    VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags memoryFlags,
-    [[maybe_unused]] size_t frameInFlightIndex,
-    [[maybe_unused]] char const* name
-) noexcept
+bool AnimationGraph::Buffer::Init ( VkDeviceSize size, [[maybe_unused]] size_t frameInFlightIndex ) noexcept
 {
+    size_t const alignment = std::lcm ( _renderer->GetNonCoherentAtomSize (),
+        _renderer->GetMinUniformBufferOffsetAlignment () );
+
+    size_t const alpha = static_cast<size_t> ( size ) - 1U;
+    _range.size = static_cast<VkDeviceSize> ( alpha + alignment - ( alpha % alignment ) );
+
     VkBufferCreateInfo const bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = size,
-        .usage = usage,
+        .size = _range.size,
+        .usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
-    VkDevice device = renderer.GetDevice ();
+    VkDevice device = _renderer->GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
@@ -58,29 +50,43 @@ bool AnimationGraph::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s {FIF #%zu}", name, frameInFlightIndex )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "Pose {FIF #%zu}", frameInFlightIndex )
+
+    constexpr VkMemoryPropertyFlags memoryFlags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) |
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_CACHED_BIT );
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
+    void* data;
 
-    result = renderer.TryAllocateMemory ( _memory,
-        _offset,
-        memoryRequirements,
-        memoryFlags,
-        "Can't allocate buffer memory (pbr::AnimationGraph::Buffer::Init)"
-    );
+    result = _renderer->TryAllocateMemory ( _range.memory,
+        _range.offset,
+            memoryRequirements,
+            memoryFlags,
+            "Can't allocate buffer memory (pbr::AnimationGraph::Buffer::Init)"
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
+        android_vulkan::Renderer::CheckVkResult (
+            vkBindBufferMemory ( device, _buffer, _range.memory, _range.offset ),
+            "pbr::AnimationGraph::Buffer::Init",
+            "Can't bind buffer memory"
+        ) &&
 
-    return android_vulkan::Renderer::CheckVkResult (
-        vkBindBufferMemory ( device, _buffer, _memory, _offset ),
-        "pbr::AnimationGraph::Buffer::Init",
-        "Can't bind buffer memory"
-    );
+        _renderer->MapMemory ( data,
+            _range.memory,
+            _range.offset,
+            "pbr::AnimationGraph::Buffer::Init",
+            "Can't map memory"
+        );
+
+    if ( result ) [[likely]]
+        _poseSkin = static_cast<android_vulkan::BoneJoint*> ( data );
+
+    return result;
 }
 
-void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
+void AnimationGraph::Buffer::Destroy () noexcept
 {
     VkDevice device = _renderer->GetDevice ();
 
@@ -90,80 +96,31 @@ void AnimationGraph::Buffer::Destroy ( bool isMapped ) noexcept
         _buffer = VK_NULL_HANDLE;
     }
 
-    if ( _memory == VK_NULL_HANDLE )
+    if ( _range.memory == VK_NULL_HANDLE )
         return;
 
-    if ( isMapped )
-        _renderer->UnmapMemory ( _memory );
+    if ( _poseSkin ) [[likely]]
+    {
+        _renderer->UnmapMemory ( _range.memory );
+        _poseSkin = nullptr;
+    }
 
-    _renderer->FreeMemory ( _memory, _offset );
-    _memory = VK_NULL_HANDLE;
-    _offset = std::numeric_limits<VkDeviceSize>::max ();
+    _renderer->FreeMemory ( _range.memory, _range.offset );
+    _range.memory = VK_NULL_HANDLE;
+    _range.offset = std::numeric_limits<VkDeviceSize>::max ();
+}
+
+[[nodiscard]] bool AnimationGraph::Buffer::Flush () noexcept
+{
+    return android_vulkan::Renderer::CheckVkResult (
+        vkFlushMappedMemoryRanges ( _renderer->GetDevice (), 1U, &_range ),
+        "pbr::AnimationGraph::Buffer::Flush",
+        "Can't flush memory range"
+    );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool AnimationGraph::BufferSet::Init ( VkDeviceSize size, size_t frameInFlightIndex ) noexcept
-{
-    constexpr VkBufferUsageFlags gpuFlags = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
-
-    bool result = _gpuPoseSkin.Init ( *_renderer,
-        size,
-        gpuFlags,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        frameInFlightIndex,
-        "Pose"
-    );
-
-    if ( !result )
-        return false;
-
-    constexpr VkMemoryPropertyFlags transferMemoryFlags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-    result = _transferPoseSkin.Init ( *_renderer,
-        size,
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        transferMemoryFlags,
-        frameInFlightIndex,
-        "Pose staging"
-    );
-
-    if ( !result ) [[unlikely]]
-    {
-        _gpuPoseSkin.Destroy ( false );
-        return false;
-    }
-
-    void* data;
-
-    result = _renderer->MapMemory ( data,
-        _transferPoseSkin._memory,
-        _transferPoseSkin._offset,
-        "pbr::AnimationGraph::BufferSet::Init", "Can't map memory"
-    );
-
-    if ( result ) [[likely]]
-    {
-        _poseSkin = static_cast<android_vulkan::BoneJoint*> ( data );
-        return true;
-    }
-
-    _gpuPoseSkin.Destroy ( false );
-    _transferPoseSkin.Destroy ( false );
-    return false;
-}
-
-void AnimationGraph::BufferSet::Destroy () noexcept
-{
-    _gpuPoseSkin.Destroy ( false );
-    _transferPoseSkin.Destroy ( _poseSkin != nullptr );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-std::vector<VkBufferMemoryBarrier> AnimationGraph::_barriers {};
 size_t AnimationGraph::_changedGraphCount = 0U;
 AnimationGraph::Graphs AnimationGraph::_graphs {};
 size_t AnimationGraph::_lastCommandBufferIndex = 0U;
@@ -210,7 +167,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
     {
-        if ( !_bufferSets[ i ].Init ( _jointSize, i ) ) [[unlikely]]
+        if ( !_buffers[ i ].Init ( _jointSize, i ) ) [[unlikely]]
             break;
 
         ++init;
@@ -221,20 +178,19 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
     if ( !success ) [[unlikely]]
     {
         for ( size_t i = 0U; i < init; ++i )
-            _bufferSets[ i ].Destroy ();
+            _buffers[ i ].Destroy ();
 
         return;
     }
 
     _skeletonName = std::move ( file.GetPath () );
-    AllocateVulkanStructures ( INITIAL_GRAPH_COUNT );
 }
 
 android_vulkan::BufferInfo AnimationGraph::GetPoseInfo () const noexcept
 {
     return
     {
-        ._buffer = _bufferSets[ _lastCommandBufferIndex ]._gpuPoseSkin._buffer,
+        ._buffer = _buffers[ _lastCommandBufferIndex ]._buffer,
         ._range = _jointSize
     };
 }
@@ -294,9 +250,6 @@ void AnimationGraph::Destroy () noexcept
     FreeUnusedResources ( 0U );
     FreeUnusedResources ( 1U );
 
-    _barriers.clear ();
-    _barriers.shrink_to_fit ();
-
     _graphs.clear ();
     _lastCommandBufferIndex = 0U;
     _renderer = nullptr;
@@ -312,59 +265,29 @@ void AnimationGraph::Update ( lua_State &vm, float deltaTime, size_t commandBuff
     }
 }
 
-void AnimationGraph::UploadGPUData ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+bool AnimationGraph::UploadGPUData ( size_t commandBufferIndex ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload poses" )
-
     _lastCommandBufferIndex = commandBufferIndex;
 
     if ( !_changedGraphCount )
-        return;
+        return true;
 
     FreeUnusedResources ( commandBufferIndex );
-    AllocateVulkanStructures ( _changedGraphCount );
-
-    VkBufferMemoryBarrier* barriers = _barriers.data ();
-    size_t i = 0U;
-
-    VkBufferCopy copy
-    {
-        .srcOffset = 0U,
-        .dstOffset = 0U,
-        .size = 0U
-    };
 
     for ( auto const &item : _graphs )
     {
-        AnimationGraph const &graph = *item.second;
+        AnimationGraph &graph = *item.second;
 
         if ( graph._isSleep | ( graph._inputNode == nullptr ) )
             continue;
 
-        VkBufferMemoryBarrier &barrier = barriers[ i++ ];
-        BufferSet const &bufferSet = graph._bufferSets[ commandBufferIndex ];
-
-        VkBuffer skinBuffer = bufferSet._gpuPoseSkin._buffer;
-        VkDeviceSize const size = graph._jointSize;
-
-        barrier.buffer = skinBuffer;
-        barrier.size = size;
-
-        copy.size = size;
-        vkCmdCopyBuffer ( commandBuffer, bufferSet._transferPoseSkin._buffer, skinBuffer, 1U, &copy );
+        if ( !graph._buffers[ commandBufferIndex ].Flush () ) [[unlikely]]
+        {
+            return false;
+        }
     }
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        static_cast<uint32_t> ( _changedGraphCount ),
-        barriers,
-        0U,
-        nullptr
-    );
+    return true;
 }
 
 void AnimationGraph::UpdateInternal ( lua_State &vm, float deltaTime, size_t commandBufferIndex ) noexcept
@@ -399,11 +322,11 @@ void AnimationGraph::UpdateInternal ( lua_State &vm, float deltaTime, size_t com
     // Note: Quaternion mathematics is similar to column-major notation of the matrix mathematics.
     // So we need to do multiplication in reverse order to calculate skin transform.
 
-    BufferSet &bufferSet = _bufferSets[ commandBufferIndex ];
+    Buffer &buffer = _buffers[ commandBufferIndex ];
 
     android_vulkan::BoneJoint const* inverseBind = _inverseBindTransforms.data ();
     android_vulkan::BoneJoint* poseGlobal = _poseGlobal.data ();
-    android_vulkan::BoneJoint* poseSkin = bufferSet._poseSkin;
+    android_vulkan::BoneJoint* poseSkin = buffer._poseSkin;
 
     auto const &rootOrientationInvBind = *reinterpret_cast<GXQuat const*> ( &inverseBind->_orientation );
     auto const &rootLocationInvBind = *reinterpret_cast<GXVec3 const*> ( &inverseBind->_location );
@@ -461,37 +384,9 @@ void AnimationGraph::UpdateInternal ( lua_State &vm, float deltaTime, size_t com
 
 void AnimationGraph::FreeResources () noexcept
 {
-    for ( auto &set : _bufferSets )
+    for ( auto &buffer : _buffers )
     {
-        set.Destroy ();
-    }
-}
-
-void AnimationGraph::AllocateVulkanStructures ( size_t needed ) noexcept
-{
-    size_t const count = _barriers.size ();
-
-    if ( count >= needed ) [[likely]]
-        return;
-
-    _barriers.reserve ( needed );
-
-    constexpr VkBufferMemoryBarrier memoryTemplate
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = VK_NULL_HANDLE,
-        .offset = 0U,
-        .size = 0U
-    };
-
-    for ( size_t i = count; i < needed; ++i )
-    {
-        _barriers.push_back ( memoryTemplate );
+        buffer.Destroy ();
     }
 }
 

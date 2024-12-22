@@ -69,7 +69,7 @@ class TextureCube final
 
         [[maybe_unused, nodiscard]] VkFormat GetFormat () const noexcept;
         [[maybe_unused, nodiscard]] VkImage GetImage () const noexcept;
-        [[nodiscard]] VkImageView GetImageView () const noexcept;
+        [[nodiscard]] VkImageView const &GetImageView () const noexcept;
         [[maybe_unused, nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[maybe_unused, nodiscard]] VkExtent2D const &GetResolution () const noexcept;
 

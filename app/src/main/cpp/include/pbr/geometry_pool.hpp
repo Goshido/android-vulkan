@@ -2,9 +2,8 @@
 #define PBR_GEOMETRY_POOL_HPP
 
 
-#include "geometry_pass_instance_descriptor_set_layout.hpp"
 #include "geometry_pass_program.hpp"
-#include "uniform_buffer_pool.hpp"
+#include "uma_uniform_buffer.hpp"
 
 
 namespace pbr {
@@ -12,8 +11,8 @@ namespace pbr {
 class GeometryPool final
 {
     private:
-        std::vector<VkBufferMemoryBarrier>          _vertexBarriers {};
-        std::vector<VkBufferMemoryBarrier>          _fragmentBarriers {};
+        std::vector<VkMappedMemoryRange>            _vertexRanges {};
+        std::vector<VkMappedMemoryRange>            _fragmentRanges {};
 
         VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
         GeometryPassInstanceDescriptorSetLayout     _descriptorSetLayout {};
@@ -24,9 +23,11 @@ class GeometryPool final
         size_t                                      _writeIndex = 0U;
         size_t                                      _written = 0U;
 
-        UniformBufferPool                           _positionPool { eUniformPoolSize::Big_32M };
-        UniformBufferPool                           _normalPool { eUniformPoolSize::Tiny_4M };
-        UniformBufferPool                           _colorPool { eUniformPoolSize::Small_8M };
+        size_t                                      _nonCoherentAtomSize = 0U;
+
+        UMAUniformBuffer                            _positionPool {};
+        UMAUniformBuffer                            _normalPool {};
+        UMAUniformBuffer                            _colorPool {};
 
     public:
         explicit GeometryPool () = default;
@@ -42,10 +43,9 @@ class GeometryPool final
         [[nodiscard]] VkDescriptorSet Acquire () noexcept;
         void Commit () noexcept;
         [[nodiscard]] bool HasNewData () const noexcept;
-        void IssueSync ( VkCommandBuffer commandBuffer ) const noexcept;
+        [[nodiscard]] bool IssueSync ( VkDevice device ) const noexcept;
 
-        void Push ( VkCommandBuffer commandBuffer,
-            GeometryPassProgram::InstancePositionData const &positionData,
+        void Push ( GeometryPassProgram::InstancePositionData const &positionData,
             GeometryPassProgram::InstanceNormalData const &normalData,
             GeometryPassProgram::InstanceColorData const &colorData,
             size_t items

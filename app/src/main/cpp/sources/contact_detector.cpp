@@ -56,11 +56,11 @@ void ContactDetector::Check ( ContactManager &contactManager, RigidBodyRef const
     if ( !_epa.Run ( _gjk.GetSimplex (), shapeA, shapeB ) )
     {
 
-#ifdef ANDROID_VULKAN_DEBUG
+#ifdef AV_DEBUG
 
         NotifyEPAFail ();
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // AV_DEBUG
 
         return;
     }

@@ -19,9 +19,6 @@
 [[vk::binding ( BIND_SHADOWMAP_TEXTURE, SET_LIGHT_DATA )]]
 TextureCube<float32_t>      g_shadowmap:    register ( t0 );
 
-[[vk::binding ( BIND_SHADOWMAP_SAMPLER, SET_LIGHT_DATA )]]
-SamplerComparisonState      g_sampler:      register ( s0 );
-
 [[vk::binding ( BIND_LIGHT_DATA, SET_LIGHT_DATA )]]
 cbuffer LightData:                          register ( b2 )
 {
@@ -78,7 +75,7 @@ float16_t GetShadowFactor ( in float32_t3 locationView )
     float32_t const z = max ( faceSelector.x, max ( faceSelector.y, faceSelector.z ) );
     float32_t4 const cvv = mul ( _lightProjection, float32_t4 ( 0.0F, 0.0F, z, 1.0F ) );
 
-    return (float16_t)g_shadowmap.SampleCmpLevelZero ( g_sampler, dir, cvv.z / cvv.w );
+    return (float16_t)g_shadowmap.SampleCmpLevelZero ( g_shadowSampler, dir, cvv.z / cvv.w );
 }
 
 float32_t3 RestoreLocationView ( in float32_t2 locationImage )

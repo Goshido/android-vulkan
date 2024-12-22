@@ -272,15 +272,14 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "UI #%zu", i )
     }
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     VkCommandBuffer* const buffers = _commandBuffers.data ();
 
     for ( size_t i = current; i < size; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, buffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "UI #%zu", i )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     return true;
 }
@@ -502,13 +501,12 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     for ( size_t i = 0U; i < count; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, ds[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI image #%zu", i )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     _transparent = _descriptorSets.back ();
     _descriptorSets.pop_back ();

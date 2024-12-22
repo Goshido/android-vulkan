@@ -3,13 +3,10 @@
 
 
 #include "lightup_common.ps.hlsl"
-#include "pbr/reflection_common.inc"
 
 
 #define PREFILTER_MAX_MIP_LEVEL     8.0H
 
-[[vk::binding ( BIND_PREFILTER_TEXTURE, SET_REFLECTION )]]
-TextureCube<float32_t4>     g_prefilter:    register ( t1 );
 
 struct InputData
 {
@@ -31,7 +28,7 @@ float32_t Roughness2Mip ( in float16_t roughness )
     return (float32_t)clamp ( mip, 0.0H, PREFILTER_MAX_MIP_LEVEL );
 }
 
-float16_t3 GetReflection ( in float16_t3 toFragmentView )
+float16_t3 GetReflection ( in float16_t3 toFragmentView, in TextureCube<float32_t4> prefilter )
 {
     float16_t roughness;
     float16_t metallic;
@@ -45,7 +42,7 @@ float16_t3 GetReflection ( in float16_t3 toFragmentView )
     float32_t3 const refl = -mul ( (float32_t3x3)_viewToWorld, (float32_t3)( reflect ( directionView, normalView ) ) );
     float32_t const mip = Roughness2Mip ( roughness );
 
-    float16_t3 const prefilterColor = (float16_t3)g_prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
+    float16_t3 const prefilterColor = (float16_t3)prefilter.SampleLevel ( g_prefilterSampler, refl, mip ).xyz;
 
     float16_t2 const brdf = (float16_t2)g_brdf.Sample (
         g_brdfSampler, float32_t2 ( (float32_t)dN, 1.0F - roughness )

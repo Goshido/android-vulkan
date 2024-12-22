@@ -43,8 +43,7 @@ class OpaqueSubpass final : public GeometrySubpassBase
             bool &isSamplerUsed
         ) noexcept;
 
-        void UpdateGPUData ( VkCommandBuffer commandBuffer,
-            GeometryPool &geometryPool,
+        void UpdateGPUData ( GeometryPool &geometryPool,
             MaterialPool &materialPool,
             GXProjectionClipPlanes const &frustum,
             GXMat4 const &view,

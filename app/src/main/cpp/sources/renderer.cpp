@@ -352,7 +352,7 @@ std::unordered_map<size_t, char const*> g_vkFeatureMap =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
 // MessageID list of the ignored messages.
 std::unordered_set<uint32_t> g_validationFilter =
@@ -412,7 +412,7 @@ constexpr VkDebugUtilsMessengerCreateInfoEXT g_debugUtilsMessengerCreateInfo
     .pUserData = nullptr
 };
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
 std::map<VkColorSpaceKHR, char const*> const g_vkColorSpaceMap =
 {
@@ -856,6 +856,16 @@ size_t Renderer::GetMinStorageBufferOffsetAlignment () const noexcept
     return _minStorageBufferOffsetAlignment;
 }
 
+size_t Renderer::GetMinUniformBufferOffsetAlignment () const noexcept
+{
+    return _minUniformBufferOffsetAlignment;
+}
+
+size_t Renderer::GetNonCoherentAtomSize () const noexcept
+{
+    return _nonCoherentAtomSize;
+}
+
 size_t Renderer::GetPresentImageCount () const noexcept
 {
     return _swapchainImageViews.size ();
@@ -935,12 +945,12 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
     if ( !DeployInstance () ) [[unlikely]]
         return false;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
     if ( !DeployDebugFeatures () ) [[unlikely]]
         return false;
 
-#endif
+#endif // AV_ENABLE_VVL
 
     uint32_t physicalDeviceCount = 0U;
     vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, nullptr );
@@ -1021,11 +1031,11 @@ void Renderer::OnDestroyDevice () noexcept
 
     DestroyDevice ();
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
     DestroyDebugFeatures ();
 
-#endif
+#endif // AV_ENABLE_VVL
 
     DestroyInstance ();
 
@@ -1119,7 +1129,7 @@ char const* Renderer::ResolveVkFormat ( VkFormat format ) noexcept
     return findResult == g_vkFormatMap.cend () ? UNKNOWN_RESULT : findResult->second;
 }
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
 VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -1212,16 +1222,16 @@ message: %s
         pCallbackData->pMessage
     );
 
-#ifdef ANDROID_VULKAN_STRICT_MODE
+#ifdef AV_STRICT_MODE
 
     AV_ASSERT ( false )
 
-#endif // ANDROID_VULKAN_STRICT_MODE
+#endif // AV_STRICT_MODE
 
     return VK_FALSE;
 }
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
 bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
 {
@@ -1381,7 +1391,7 @@ bool Renderer::CheckRequiredFormats () noexcept
     return false;
 }
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
 bool Renderer::DeployDebugFeatures () noexcept
 {
@@ -1418,7 +1428,7 @@ void Renderer::DestroyDebugFeatures () noexcept
     _debugUtilsMessenger = VK_NULL_HANDLE;
 }
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
 bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
 {
@@ -1512,13 +1522,12 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     InitVulkanDebugUtils ( _instance );
     AV_SET_VULKAN_OBJECT_NAME ( _device, _device, VK_OBJECT_TYPE_DEVICE, "Main device" )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
         return false;
@@ -1586,7 +1595,7 @@ bool Renderer::DeployInstance () noexcept
     instanceCreateInfo.flags = 0U;
     instanceCreateInfo.pApplicationInfo = &applicationInfo;
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
     // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
     // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
@@ -1639,7 +1648,7 @@ bool Renderer::DeployInstance () noexcept
     instanceCreateInfo.enabledLayerCount = 0U;
     instanceCreateInfo.ppEnabledLayerNames = nullptr;
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
     std::span<char const* const> extensions = GetInstanceExtensions ();
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( extensions.size () );
@@ -1692,18 +1701,18 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 
         _surfaceSize = caps.value ()->currentExtent;
 
-#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+#ifdef AV_NATIVE_MODE_PORTRAIT
 
         _viewportResolution.width = _surfaceSize.height;
         _viewportResolution.height = _surfaceSize.width;
 
-#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
 
         _viewportResolution = _surfaceSize;
 
 #else
 
-#error Please specify ANDROID_NATIVE_MODE_PORTRAIT or ANDROID_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+#error Please specify AV_NATIVE_MODE_PORTRAIT or AV_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
 
 #endif
 
@@ -1734,18 +1743,18 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
         return false;
     }
 
-#ifdef ANDROID_NATIVE_MODE_PORTRAIT
+#ifdef AV_NATIVE_MODE_PORTRAIT
 
     _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
     _viewportResolution.width = _surfaceSize.height;
     _viewportResolution.height = _surfaceSize.width;
 
-#elif defined ( ANDROID_NATIVE_MODE_LANDSCAPE )
+#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
 
     _presentationEngineTransform.Identity ();
     _viewportResolution = _surfaceSize;
 
-#endif // ANDROID_NATIVE_MODE_PORTRAIT | ANDROID_NATIVE_MODE_LANDSCAPE
+#endif // AV_NATIVE_MODE_PORTRAIT | AV_NATIVE_MODE_LANDSCAPE
 
     VkBool32 isSupported = VK_FALSE;
 
@@ -1847,7 +1856,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
         // There is no much to say but you have to consider image rotation after projection transform in your code.
         // That's a cost for memory bandwidth saving in the mobile device world.
-        // See docs/preprocessor-macros.md#macro-android-native-mode
+        // See docs/preprocessor-macros.md#macro-av-native-mode
         .preTransform = _surfaceTransform,
 
         .compositeAlpha = compositeAlpha,
@@ -2175,6 +2184,8 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     );
 
     _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
+    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
+    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
 
     PrintSizeProp ( INDENT_1,
         "minStorageBufferOffsetAlignment",

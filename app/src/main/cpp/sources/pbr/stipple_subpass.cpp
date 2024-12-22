@@ -39,15 +39,12 @@ void StippleSubpass::Execute ( VkCommandBuffer commandBuffer,
     AppendDrawcalls ( commandBuffer, _program, geometryPool, materialPool, renderSessionStats );
 }
 
-void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
-    GeometryPool &geometryPool,
+void StippleSubpass::UpdateGPUData ( GeometryPool &geometryPool,
     MaterialPool &materialPool,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload stipple data" )
-
     // Note all stipple objects already pass frustum test at RenderSession::SubmitMesh call.
     // So all meshes are visible.
 
@@ -83,7 +80,7 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             normalData._localView[ 0U ]._q0 = q.Compress64 ();
 
             colorData._colorData[ 0U ] = geometryData._colorData;
-            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, 1U );
+            geometryPool.Push ( positionData, normalData, colorData, 1U );
         }
 
         for ( auto const &item : geometryCall.GetBatchList () )
@@ -95,13 +92,7 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             {
                 if ( instanceIndex >= PBR_OPAQUE_MAX_INSTANCE_COUNT )
                 {
-                    geometryPool.Push ( commandBuffer,
-                        positionData,
-                        normalData,
-                        colorData,
-                        PBR_OPAQUE_MAX_INSTANCE_COUNT
-                    );
-
+                    geometryPool.Push ( positionData, normalData, colorData, PBR_OPAQUE_MAX_INSTANCE_COUNT );
                     instanceIndex = 0U;
                 }
 
@@ -135,7 +126,7 @@ void StippleSubpass::UpdateGPUData ( VkCommandBuffer commandBuffer,
             if ( !instanceIndex ) [[likely]]
                 continue;
 
-            geometryPool.Push ( commandBuffer, positionData, normalData, colorData, instanceIndex );
+            geometryPool.Push ( positionData, normalData, colorData, instanceIndex );
         }
     }
 }

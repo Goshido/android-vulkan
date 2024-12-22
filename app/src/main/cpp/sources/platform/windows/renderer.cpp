@@ -152,11 +152,11 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
     constexpr static char const* extensions[] =
     {
 
-#ifdef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#ifdef AV_ENABLE_RENDERDOC
 
         VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
 
-#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_RENDERDOC
 
         VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME,
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
@@ -173,11 +173,11 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
     constexpr static char const* extensions[] =
     {
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME
@@ -208,11 +208,11 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &d
     return AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
         AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
 
-#ifndef ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#ifndef AV_ENABLE_RENDERDOC
 
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME ) ) &
 
-#endif // ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_RENDERDOC
 
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &

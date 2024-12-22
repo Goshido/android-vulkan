@@ -4,7 +4,7 @@
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
 #include "tone_mapper_program.hpp"
-#include "uniform_buffer_pool_manager.hpp"
+#include "uniform_pool.hpp"
 
 
 namespace pbr {
@@ -19,9 +19,9 @@ class ToneMapperPass final
         FullScreenTriangleDescriptorSetLayout       _transformLayout {};
         VkDescriptorPool                            _resourceDescriptorPool = VK_NULL_HANDLE;
 
-        UniformBufferPoolManager                    _transformUniformPool
+        UniformPool                                 _transformUniformPool
         {
-            eUniformPoolSize::Nanoscopic_64KB,
+            eUniformSize::Nanoscopic_64KB,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         };
 

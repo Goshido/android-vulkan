@@ -1,14 +1,27 @@
 # Building _Vulkan_ validation layers for _Android OS_
 
-## Brief
+## <a id="table-of-content">Table of content</a>
+
+- [_Brief_](#brief)
+- [_Compatible version_](#compatible-version)
+- [_Requirements_](#requirements)
+- [_Building_](#building)
+  - [_Building `libVkLayer_khronos_validation.so`_](#making-library)
+  - [_Reported issues_](#issues)
+
+## <a id="brief">Brief</a>
 
 Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have been removed (see [source](https://github.com/android/ndk/wiki/Changelog-r23)). The official _Khronos_ [repo](https://github.com/KhronosGroup/Vulkan-ValidationLayers) does not provide enough information about building `libVkLayer_khronos_validation.so` from scratch for _Android OS_. So in this document essential steps for building will be covered.
 
-## Compatible version
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="compatible-version">Compatible version</a>
 
 The manual is based on `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
-## Requirements
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="requirements">Requirements</a>
 
 - _Windows 11_
 - _Android NDK 27.0.12077973_
@@ -16,7 +29,9 @@ The manual is based on `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f` commit of the 
 - _Ninja 1.10.2_
 - _Python 3.11.1_
 
-## Building
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="building">Building</a>
 
 First of all clone the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. Next step is to switch to the `master` branch.
 
@@ -33,7 +48,9 @@ cd <python directory>
 mklink python3.exe python.exe
 ```
 
-### Building `libVkLayer_khronos_validation.so`
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="making-library">Building `libVkLayer_khronos_validation.so`</a>
 
 Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process is significantly simplified:
 
@@ -114,7 +131,9 @@ Write-Host "Done"
 
 That's all!
 
-### Reported issues
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="issues">Reported issues</a>
 
 Name | Link | Status
 --- | --- | ---
@@ -130,3 +149,5 @@ No resource type and name in error message | [#8139](https://github.com/KhronosG
 `VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | 🛡️ Not an issue
 VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8970) | 🛡️ Not an issue
 Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted
+
+[↬ table of content ⇧](#table-of-content)

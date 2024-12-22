@@ -10,7 +10,7 @@ namespace pbr {
 class PointLightShadowmapGeneratorDescriptorSetLayout final : public DescriptorSetLayout
 {
     public:
-        PointLightShadowmapGeneratorDescriptorSetLayout () = default;
+        explicit PointLightShadowmapGeneratorDescriptorSetLayout () = default;
 
         PointLightShadowmapGeneratorDescriptorSetLayout (
             PointLightShadowmapGeneratorDescriptorSetLayout const &

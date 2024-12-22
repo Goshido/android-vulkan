@@ -18,9 +18,7 @@ constexpr size_t NORMAL_INDEX = 1U;
 
 VkDescriptorSet GeometryPool::Acquire () noexcept
 {
-    VkDescriptorSet set = _descriptorSets[ _readIndex ];
-    _readIndex = ( _readIndex + 1U ) % _descriptorSets.size ();
-    return set;
+    return _descriptorSets[ std::exchange ( _readIndex, ( _readIndex + 1U ) % _descriptorSets.size () ) ];
 }
 
 void GeometryPool::Commit () noexcept
@@ -35,7 +33,7 @@ bool GeometryPool::HasNewData () const noexcept
     return _readIndex != _writeIndex;
 }
 
-void GeometryPool::IssueSync ( VkCommandBuffer commandBuffer ) const noexcept
+bool GeometryPool::IssueSync ( VkDevice device ) const noexcept
 {
     size_t const count = _descriptorSets.size ();
     size_t const idx = _baseIndex + _written;
@@ -43,85 +41,69 @@ void GeometryPool::IssueSync ( VkCommandBuffer commandBuffer ) const noexcept
     size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
     size_t const available = _written - more;
 
-    VkBufferMemoryBarrier const* vertexBarriers = _vertexBarriers.data ();
+    VkMappedMemoryRange const* vertexRanges = _vertexRanges.data ();
     auto const av = static_cast<uint32_t> ( available );
+    VkMappedMemoryRange const* fragmentRanges = _fragmentRanges.data ();
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        av << 1U,
-        vertexBarriers + ( _baseIndex << 1U ),
-        0U,
-        nullptr
-    );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, av << 1U, vertexRanges + ( _baseIndex << 1U ) ),
+            "pbr::GeometryPool::IssueSync",
+            "Can't flush vertex memory ranges (a)"
+        ) &&
 
-    VkBufferMemoryBarrier const* fragmentBarriers = _fragmentBarriers.data ();
+        android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, av, fragmentRanges + _baseIndex ),
+            "pbr::GeometryPool::IssueSync",
+            "Can't flush fragment memory ranges (a)"
+        );
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        av,
-        fragmentBarriers + _baseIndex,
-        0U,
-        nullptr
-    );
+    if ( !result ) [[unlikely]]
+        return false;
 
-    if ( more < 1U ) [[unlikely]]
-        return;
+    if ( more < 1U ) [[likely]]
+        return true;
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        static_cast<uint32_t> ( more << 1U ),
-        vertexBarriers,
-        0U,
-        nullptr
-    );
+    return android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( more << 1U ), vertexRanges ),
+            "pbr::GeometryPool::IssueSync",
+            "Can't flush vertex memory ranges (b)"
+        ) &&
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        static_cast<uint32_t> ( more ),
-        fragmentBarriers,
-        0U,
-        nullptr
-    );
+        android_vulkan::Renderer::CheckVkResult (
+            vkFlushMappedMemoryRanges ( device, static_cast<uint32_t> ( more ), fragmentRanges ),
+            "pbr::GeometryPool::IssueSync",
+            "Can't flush fragment memory ranges (b)"
+        );
 }
 
-void GeometryPool::Push ( VkCommandBuffer commandBuffer,
-    GeometryPassProgram::InstancePositionData const &positionData,
+void GeometryPool::Push ( GeometryPassProgram::InstancePositionData const &positionData,
     GeometryPassProgram::InstanceNormalData const &normalData,
     GeometryPassProgram::InstanceColorData const &colorData,
     size_t items
 ) noexcept
 {
     size_t const positionDataSize = items * sizeof ( GXMat4 );
-    _positionPool.Push ( commandBuffer, &positionData, positionDataSize );
+    _positionPool.Push ( &positionData, positionDataSize );
 
     size_t const normalDataSize = ( ( items + 1U ) >> 1U ) * sizeof ( GeometryPassProgram::TBN64 );
-    _normalPool.Push ( commandBuffer, &normalData, normalDataSize );
+    _normalPool.Push ( &normalData, normalDataSize );
 
     size_t const colorDataSize = items * sizeof ( GeometryPassProgram::ColorData );
-    _colorPool.Push ( commandBuffer, &colorData, colorDataSize );
+    _colorPool.Push ( &colorData, colorDataSize );
 
-    VkBufferMemoryBarrier *vertexBarriers = _vertexBarriers.data () + ( _writeIndex << 1U );
-    vertexBarriers[ POSITION_INDEX ].size = static_cast<VkDeviceSize> ( positionDataSize );
-    vertexBarriers[ NORMAL_INDEX ].size = static_cast<VkDeviceSize> ( normalDataSize );
+    constexpr auto hwSize = [] ( size_t size, size_t nonCoherentAtomSize ) noexcept -> VkDeviceSize
+    {
+        size_t const alpha = size - 1U;
+        return static_cast<VkDeviceSize> ( alpha + nonCoherentAtomSize - ( alpha % nonCoherentAtomSize ) );
+    };
 
-    _fragmentBarriers[ _writeIndex ].size = static_cast<VkDeviceSize> ( colorDataSize );
-    _writeIndex = ( _writeIndex + 1U ) % _descriptorSets.size ();
+    size_t const idx = std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _descriptorSets.size () );
+
+    VkMappedMemoryRange* vertexRanges = _vertexRanges.data () + ( idx << 1U );
+    vertexRanges[ POSITION_INDEX ].size = hwSize ( positionDataSize, _nonCoherentAtomSize );
+    vertexRanges[ NORMAL_INDEX ].size = hwSize ( normalDataSize, _nonCoherentAtomSize );
+
+    _fragmentRanges[ idx ].size = hwSize ( colorDataSize, _nonCoherentAtomSize );
 
     if ( _writeIndex == 0U ) [[unlikely]]
     {
@@ -136,16 +118,27 @@ void GeometryPool::Push ( VkCommandBuffer commandBuffer,
 bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
+    _nonCoherentAtomSize = renderer.GetNonCoherentAtomSize ();
 
-    bool result = _colorPool.Init ( renderer, sizeof ( GeometryPassProgram::InstanceColorData ), "Color data" ) &&
+    bool result = _descriptorSetLayout.Init ( device ) &&
 
         _positionPool.Init ( renderer,
+            eUniformSize::Big_32M,
             sizeof ( GeometryPassProgram::InstancePositionData ),
             "Position transform"
         ) &&
 
-        _normalPool.Init ( renderer, sizeof ( GeometryPassProgram::InstanceNormalData ), "Normal transform" ) &&
-        _descriptorSetLayout.Init ( device );
+        _normalPool.Init ( renderer,
+            eUniformSize::Tiny_4M,
+            sizeof ( GeometryPassProgram::InstanceNormalData ),
+            "Normal transform"
+        ) &&
+
+        _colorPool.Init ( renderer,
+            eUniformSize::Small_8M,
+            sizeof ( GeometryPassProgram::InstanceColorData ),
+            "Color data"
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -206,13 +199,12 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     for ( size_t i = 0U; i < logicalCount; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, descriptorSets[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Geometry #%zu", i )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     // Initialize all immutable constant fields.
 
@@ -220,7 +212,7 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
     {
         .buffer = VK_NULL_HANDLE,
         .offset = 0U,
-        .range = VK_WHOLE_SIZE
+        .range = 0U
     };
 
     std::vector<VkDescriptorBufferInfo> bufferInfoStorage ( bufferCount, bufferTemplate );
@@ -239,76 +231,91 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
         .pTexelBufferView = nullptr
     };
 
-    std::vector<VkWriteDescriptorSet> writeSetStorage ( bufferCount, writeSetTemplate );
+    std::vector<VkWriteDescriptorSet> writeSets ( bufferCount, writeSetTemplate );
 
-    constexpr VkBufferMemoryBarrier bufferBarrierTemplate
+    constexpr VkMappedMemoryRange rangeTemplate
     {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = VK_NULL_HANDLE,
+        .memory = VK_NULL_HANDLE,
         .offset = 0U,
         .size = 0U
     };
 
-    _vertexBarriers.resize ( logicalCount << 1U, bufferBarrierTemplate );
-    _fragmentBarriers.resize ( colorCount, bufferBarrierTemplate );
+    _vertexRanges.resize ( logicalCount << 1U, rangeTemplate );
+    _fragmentRanges.resize ( logicalCount, rangeTemplate );
 
-    VkBufferMemoryBarrier* vertexBarrier = _vertexBarriers.data ();
-    VkBufferMemoryBarrier* fragmentBarrier = _fragmentBarriers.data ();
+    VkMappedMemoryRange* vertexRange = _vertexRanges.data ();
+    VkMappedMemoryRange* fragmentRange = _fragmentRanges.data ();
 
     VkDescriptorBufferInfo* bufferInfo = bufferInfoStorage.data ();
-    VkWriteDescriptorSet* writeSet = writeSetStorage.data ();
+    VkWriteDescriptorSet* writeSet = writeSets.data ();
+
+    UMAUniformBuffer::BufferInfo positionInfo = _positionPool.GetBufferInfo ();
+    auto const pSize = static_cast<VkDeviceSize> ( positionInfo._stepSize );
+    VkDeviceSize positionBufferOffset = 0U;
+
+    UMAUniformBuffer::BufferInfo normalInfo = _normalPool.GetBufferInfo ();
+    auto const nSize = static_cast<VkDeviceSize> ( normalInfo._stepSize );
+    VkDeviceSize normalBufferOffset = 0U;
+
+    UMAUniformBuffer::BufferInfo colorInfo = _colorPool.GetBufferInfo ();
+    auto const cSize = static_cast<VkDeviceSize> ( colorInfo._stepSize );
+    VkDeviceSize colorBufferOffset = 0U;
 
     for ( size_t i = 0U; i < logicalCount; ++i )
     {
         VkDescriptorSet descriptorSet = descriptorSets[ i ];
 
-        VkBuffer positionBuffer = _positionPool.GetBuffer ( i );
-        ( vertexBarrier++ )->buffer = positionBuffer;
+        vertexRange->memory = positionInfo._memory;
+        ( vertexRange++ )->offset = std::exchange ( positionInfo._offset, positionInfo._offset + pSize );
 
-        VkDescriptorBufferInfo* positionBufferInfo = bufferInfo++;
-        positionBufferInfo->buffer = positionBuffer;
+        *bufferInfo =
+        {
+            .buffer = positionInfo._buffer,
+            .offset = std::exchange ( positionBufferOffset, positionBufferOffset + pSize ),
+            .range = pSize
+        };
 
         VkWriteDescriptorSet &positionWrite = *writeSet++;
         positionWrite.dstSet = descriptorSet;
         positionWrite.dstBinding = BIND_INSTANCE_POSITON_DATA;
-        positionWrite.pBufferInfo = positionBufferInfo;
+        positionWrite.pBufferInfo = bufferInfo++;
 
-        VkBuffer normalBuffer = _normalPool.GetBuffer ( i );
-        ( vertexBarrier++ )->buffer = normalBuffer;
+        vertexRange->memory = normalInfo._memory;
+        ( vertexRange++ )->offset = std::exchange ( normalInfo._offset, normalInfo._offset + nSize );
 
-        VkDescriptorBufferInfo* normalBufferInfo = bufferInfo++;
-        normalBufferInfo->buffer = normalBuffer;
+        *bufferInfo =
+        {
+            .buffer = normalInfo._buffer,
+            .offset = std::exchange ( normalBufferOffset, normalBufferOffset + nSize ),
+            .range = nSize
+        };
 
         VkWriteDescriptorSet &normalWrite = *writeSet++;
         normalWrite.dstSet = descriptorSet;
         normalWrite.dstBinding = BIND_INSTANCE_NORMAL_DATA;
-        normalWrite.pBufferInfo = normalBufferInfo;
+        normalWrite.pBufferInfo = bufferInfo++;
 
-        VkBuffer colorBuffer = _colorPool.GetBuffer ( i );
-        ( fragmentBarrier++ )->buffer = colorBuffer;
+        fragmentRange->memory = colorInfo._memory;
+        ( fragmentRange++ )->offset = std::exchange ( colorInfo._offset, colorInfo._offset + cSize );
 
-        VkDescriptorBufferInfo* colorBufferInfo = bufferInfo++;
-        colorBufferInfo->buffer = colorBuffer;
+        *bufferInfo =
+        {
+            .buffer = colorInfo._buffer,
+            .offset = std::exchange ( colorBufferOffset, colorBufferOffset + cSize ),
+            .range = cSize
+        };
 
         VkWriteDescriptorSet &colorWrite = *writeSet++;
         colorWrite.dstSet = descriptorSet;
         colorWrite.dstBinding = BIND_INSTANCE_COLOR_DATA;
-        colorWrite.pBufferInfo = colorBufferInfo;
+        colorWrite.pBufferInfo = bufferInfo++;
     }
 
-    vkUpdateDescriptorSets ( device,
-        static_cast<uint32_t> ( writeSetStorage.size () ),
-        writeSetStorage.data (),
-        0U,
-        nullptr
-    );
+    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( bufferCount ), writeSets.data (), 0U, nullptr );
 
-    // Now all what is needed to do is to init "VkBufferMemoryBarrier::size".
+    // Now all what is needed to do is to init "VkMappedMemoryRange::size".
     _baseIndex = 0U;
     return true;
 }
@@ -328,8 +335,8 @@ void GeometryPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         vector.shrink_to_fit ();
     };
 
-    clean ( _vertexBarriers );
-    clean ( _fragmentBarriers );
+    clean ( _vertexRanges );
+    clean ( _fragmentRanges );
     clean ( _descriptorSets );
 
     _positionPool.Destroy ( renderer );

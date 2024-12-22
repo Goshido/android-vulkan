@@ -6,6 +6,7 @@
 #include "light_lightup_base_program.hpp"
 #include "light_volume_descriptor_set_layout.hpp"
 #include "point_light_descriptor_set_layout.hpp"
+#include "volume_data.hpp"
 
 
 namespace pbr {
@@ -14,11 +15,6 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
-
-        struct VolumeData final
-        {
-            [[maybe_unused]] GXMat4         _transform;
-        };
 
         struct LightData final
         {
@@ -40,7 +36,7 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         PointLightDescriptorSetLayout       _pointLightLayout {};
 
     public:
-        PointLightLightupProgram () noexcept;
+        explicit PointLightLightupProgram () noexcept;
 
         PointLightLightupProgram ( PointLightLightupProgram const & ) = delete;
         PointLightLightupProgram &operator = ( PointLightLightupProgram const & ) = delete;

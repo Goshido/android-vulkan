@@ -65,7 +65,6 @@ void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
     GraphicsProgram::Destroy ( device );
 
     _reflectionLayout.Destroy ( device );
-    _stubLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
 }
 
@@ -140,7 +139,7 @@ void ReflectionGlobalProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, 
     vkCmdBindDescriptorSets ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         _pipelineLayout,
-        2U,
+        1U,
         1U,
         &set,
         0U,
@@ -252,16 +251,12 @@ VkPipelineInputAssemblyStateCreateInfo const* ReflectionGlobalProgram::InitInput
 
 bool ReflectionGlobalProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_commonLayout.Init ( device ) || !_stubLayout.Init ( device ) || !_reflectionLayout.Init ( device ) )
-    {
-        [[unlikely]]
+    if ( !_commonLayout.Init ( device ) || !_reflectionLayout.Init ( device ) ) [[unlikely]]
         return false;
-    }
 
     VkDescriptorSetLayout const layouts[] =
     {
         _commonLayout.GetLayout (),
-        _stubLayout.GetLayout (),
         _reflectionLayout.GetLayout ()
     };
 

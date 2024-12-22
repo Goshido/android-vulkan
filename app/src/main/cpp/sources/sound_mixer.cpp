@@ -113,7 +113,7 @@ void SoundMixer::StreamInfo::Modify ( bool fillSilence ) noexcept
 void SoundMixer::CheckMemoryLeaks () noexcept
 {
 
-#ifdef ANDROID_VULKAN_DEBUG
+#ifdef AV_DEBUG
 
     if ( !_streamMap.empty () )
     {
@@ -130,15 +130,15 @@ void SoundMixer::CheckMemoryLeaks () noexcept
 
         LogError ( "<<<" );
 
-#ifdef ANDROID_VULKAN_STRICT_MODE
+#ifdef AV_STRICT_MODE
 
         AV_ASSERT ( false )
 
-#endif // ANDROID_VULKAN_STRICT_MODE
+#endif // AV_STRICT_MODE
 
     }
 
-#endif // ANDROID_VULKAN_DEBUG
+#endif // AV_DEBUG
 
     _streamMap.clear ();
 }

@@ -189,12 +189,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_program.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_buffer_pool.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_buffer_pool_manager.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\default_texture_manager.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -251,6 +245,12 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
       <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_buffer.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_pool.cpp">
+      <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -401,12 +401,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer_pool_manager.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\default_texture_manager.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
@@ -544,6 +538,12 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp">
       <Filter>Header Files\core\GXCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_pool.hpp">
+      <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

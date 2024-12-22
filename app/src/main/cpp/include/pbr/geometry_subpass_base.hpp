@@ -6,7 +6,6 @@
 #include "material_pool.hpp"
 #include "render_session_stats.hpp"
 #include "scene_data.hpp"
-#include "uniform_buffer_pool_manager.hpp"
 
 
 namespace pbr {

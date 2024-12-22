@@ -1,25 +1,15 @@
-#ifndef PBR_UNIFORM_BUFFER_POOL_HPP
-#define PBR_UNIFORM_BUFFER_POOL_HPP
+#ifndef PBR_UNIFORM_BUFFER_HPP
+#define PBR_UNIFORM_BUFFER_HPP
 
 
 #include <renderer.hpp>
+#include "uniform_size.hpp"
 
 
 namespace pbr {
 
-enum class eUniformPoolSize : size_t
-{
-    Nanoscopic_64KB = 64U,
-    Microscopic_1M [[maybe_unused]] = 1024U,
-    Tiny_4M = 4096U,
-    Small_8M [[maybe_unused]] = 8192U,
-    Medium_16M [[maybe_unused]] = 16384U,
-    Big_32M [[maybe_unused]] = 32768U,
-    Huge_64M = 65536U
-};
-
 // Note the class is NOT thread safe.
-class UniformBufferPool final
+class UniformBuffer final
 {
     private:
         std::vector<VkBuffer>       _buffers {};
@@ -27,19 +17,19 @@ class UniformBufferPool final
         size_t                      _index = 0U;
         size_t                      _itemSize = 0U;
         VkDeviceSize                _offset = std::numeric_limits<VkDeviceSize>::max ();
-        size_t                      _size;
+        size_t                      _size = 0U;
 
     public:
-        UniformBufferPool () = delete;
+        UniformBuffer () = delete;
 
-        UniformBufferPool ( UniformBufferPool const & ) = delete;
-        UniformBufferPool &operator = ( UniformBufferPool const & ) = delete;
+        UniformBuffer ( UniformBuffer const & ) = delete;
+        UniformBuffer &operator = ( UniformBuffer const & ) = delete;
 
-        UniformBufferPool ( UniformBufferPool && ) = delete;
-        UniformBufferPool &operator = ( UniformBufferPool && ) = delete;
+        UniformBuffer ( UniformBuffer && ) = delete;
+        UniformBuffer &operator = ( UniformBuffer && ) = delete;
 
-        explicit UniformBufferPool ( eUniformPoolSize size ) noexcept;
-        ~UniformBufferPool () = default;
+        explicit UniformBuffer ( eUniformSize size ) noexcept;
+        ~UniformBuffer () = default;
 
         // The method acquires one uniform buffer from the pool and fills it with data.
         // Method return buffer which has been just written.
@@ -71,4 +61,4 @@ class UniformBufferPool final
 } // namespace pbr
 
 
-#endif // PBR_UNIFORM_BUFFER_POOL_HPP
+#endif // PBR_UNIFORM_BUFFER_HPP

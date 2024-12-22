@@ -361,7 +361,7 @@ void TextureCube::FreeTransferResources ( Renderer &renderer ) noexcept
     return _image;
 }
 
-VkImageView TextureCube::GetImageView () const noexcept
+VkImageView const &TextureCube::GetImageView () const noexcept
 {
     return _imageView;
 }

@@ -39,11 +39,12 @@ bool LightPass::Init ( android_vulkan::Renderer &renderer,
         _lightupCommonDescriptorSet.Init ( renderer, _commandPool, gBuffer ) &&
         CreateUnitCube ( renderer ) &&
 
-        _volumeBufferPool.Init ( renderer,
+        _volumeDataPool.Init ( renderer,
             LightVolumeDescriptorSetLayout {},
-            sizeof ( PointLightLightupProgram::VolumeData ),
+            eUniformSize::Nanoscopic_64KB,
+            sizeof ( VolumeData ),
             0U,
-            "Light pass light volume"
+            "Light volume"
         );
 }
 
@@ -52,7 +53,7 @@ void LightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     VkDevice device = renderer.GetDevice ();
 
     _dummyLightProgram.Destroy ( device );
-    _volumeBufferPool.Destroy ( renderer );
+    _volumeDataPool.Destroy ( renderer );
     _unitCube.FreeResources ( renderer );
 
     _reflectionLocalPass.Destroy ( renderer );
@@ -89,46 +90,14 @@ void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) n
     _commandPool = VK_NULL_HANDLE;
 }
 
-bool LightPass::OnPreGeometryPass ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    size_t commandBufferIndex,
-    VkExtent2D const &resolution,
-    SceneData const &sceneData,
-    size_t opaqueMeshCount,
-    GXMat4 const &viewerLocal,
-    GXMat4 const &view,
-    GXMat4 const &viewProjection,
-    GXMat4 const &cvvToView
-) noexcept
+bool LightPass::OnPreGeometryPass ( VkCommandBuffer commandBuffer ) noexcept
 {
+    if ( !_hasWork )
+        return true;
+
     AV_TRACE ( "Light pre-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light pre-geometry" )
-
-    VkDevice device = renderer.GetDevice ();
-
-    _lightupCommonDescriptorSet.Update ( device,
-        commandBuffer,
-        commandBufferIndex,
-        resolution,
-        viewerLocal,
-        cvvToView
-    );
-
-    if ( !_pointLightPass.ExecuteShadowPhase ( renderer, commandBuffer, sceneData, opaqueMeshCount ) ) [[unlikely]]
-        return false;
-
-    _pointLightPass.UploadGPUData ( device,
-        commandBuffer,
-        _volumeBufferPool,
-        viewerLocal,
-        view,
-        viewProjection
-    );
-
-    _reflectionLocalPass.UploadGPUData ( device, commandBuffer, _volumeBufferPool, view, viewProjection );
-    _volumeBufferPool.IssueSync ( device, commandBuffer );
-
-    return true;
+    return _pointLightPass.ExecuteShadowPhase ( commandBuffer );
 }
 
 void LightPass::OnPostGeometryPass ( VkDevice device,
@@ -139,14 +108,9 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
     AV_TRACE ( "Light post-geometry" )
     AV_VULKAN_GROUP ( commandBuffer, "Light post-geometry" )
 
-    size_t const pointLights = _pointLightPass.GetPointLightCount ();
-    size_t const localReflections = _reflectionLocalPass.GetReflectionLocalCount ();
-    size_t const globalReflections = _reflectionGlobalPass.GetReflectionCount ();
-    size_t const lightVolumes = pointLights + localReflections;
-
     _lightupCommonDescriptorSet.Bind ( commandBuffer, commandBufferIndex );
 
-    if ( lightVolumes + globalReflections == 0U )
+    if ( !_hasWork )
     {
         // See https://github.com/Goshido/android-vulkan/issues/84
         _dummyLightProgram.Bind ( commandBuffer );
@@ -154,20 +118,16 @@ void LightPass::OnPostGeometryPass ( VkDevice device,
         return;
     }
 
-    if ( pointLights )
-        _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube, _volumeBufferPool );
+    if ( _pointLightPass.GetPointLightCount () )
+        _pointLightPass.ExecuteLightupPhase ( commandBuffer, _unitCube );
 
-    if ( localReflections )
-        _reflectionLocalPass.Execute ( commandBuffer, _unitCube, _volumeBufferPool );
+    if ( _reflectionLocalPass.GetReflectionLocalCount () )
+        _reflectionLocalPass.Execute ( commandBuffer, _unitCube );
 
-    if ( !globalReflections )
-    {
-        _volumeBufferPool.Commit ();
-        return;
-    }
+    if ( _reflectionGlobalPass.GetReflectionCount () )
+        _reflectionGlobalPass.Execute ( device, commandBuffer );
 
-    _reflectionGlobalPass.Execute ( device, commandBuffer );
-    _volumeBufferPool.Commit ();
+    _hasWork = false;
 }
 
 void LightPass::Reset () noexcept
@@ -190,6 +150,45 @@ void LightPass::SubmitReflectionGlobal ( TextureCubeRef &prefilter ) noexcept
 void LightPass::SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept
 {
     _reflectionLocalPass.Append ( prefilter, location, size );
+}
+
+bool LightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    size_t commandBufferIndex,
+    SceneData const &sceneData,
+    size_t opaqueMeshCount,
+    VkExtent2D const &resolution,
+    GXMat4 const &viewerLocal,
+    GXMat4 const &view,
+    GXMat4 const &viewProjection,
+    GXMat4 const &cvvToView
+) noexcept
+{
+    size_t const pointLightCount = _pointLightPass.GetPointLightCount ();
+    size_t const reflectionLocalCount = _reflectionLocalPass.GetReflectionLocalCount ();
+    size_t const reflectionGlobalCount = _reflectionGlobalPass.GetReflectionCount ();
+
+    if ( _hasWork = pointLightCount + reflectionLocalCount + reflectionGlobalCount > 0U; !_hasWork )
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+
+    return _lightupCommonDescriptorSet.UploadGPUData ( device,
+            commandBufferIndex,
+            resolution,
+            viewerLocal,
+            cvvToView
+        ) &&
+
+        _pointLightPass.UploadGPUData ( renderer,
+            sceneData,
+            opaqueMeshCount,
+            viewerLocal,
+            view,
+            viewProjection
+        ) &&
+
+        _reflectionLocalPass.UploadGPUData ( device, view, viewProjection ) &&
+        _volumeDataPool.IssueSync ( device );
 }
 
 bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
@@ -239,7 +238,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( renderer.GetDevice (), &bufferAllocateInfo, &commandBuffer ),
-        "pbr::CreateUnitCube::CreateUnitCube",
+        "pbr::LightPass::CreateUnitCube",
         "Can't allocate command buffer"
     );
 

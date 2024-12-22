@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 
-#ifdef ANDROID_ENABLE_TRACE
+#ifdef AV_ENABLE_TRACE
 
 #include <trace.hpp>
 #include <GXCommon/GXWarning.hpp>
@@ -28,4 +28,4 @@ void SetThreadName ( char const* /*name*/ ) noexcept
 } // namespace android_vulkan
 
 
-#endif // ANDROID_ENABLE_TRACE
+#endif // AV_ENABLE_TRACE

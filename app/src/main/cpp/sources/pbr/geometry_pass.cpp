@@ -164,33 +164,22 @@ void GeometryPass::Reset () noexcept
     _stippleSubpass.Reset ();
 }
 
-void GeometryPass::UploadGPUData ( VkDevice device,
-    VkCommandBuffer commandBuffer,
+bool GeometryPass::UploadGPUData ( VkDevice device,
     GXProjectionClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
 {
     AV_TRACE ( "Geometry pass: Upload GPU data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload geometry data" )
 
-    _opaqueSubpass.UpdateGPUData ( commandBuffer,
-        _geometryPool,
-        _materialPool,
-        frustum,
-        view,
-        viewProjection
-    );
+    _opaqueSubpass.UpdateGPUData ( _geometryPool, _materialPool, frustum, view, viewProjection );
+    _stippleSubpass.UpdateGPUData ( _geometryPool, _materialPool, view, viewProjection );
 
-    _stippleSubpass.UpdateGPUData ( commandBuffer,
-        _geometryPool,
-        _materialPool,
-        view,
-        viewProjection
-    );
+    if ( !_geometryPool.IssueSync ( device ) ) [[unlikely]]
+        return false;
 
-    _geometryPool.IssueSync ( commandBuffer );
     _materialPool.IssueSync ( device );
+    return true;
 }
 
 } // namespace pbr

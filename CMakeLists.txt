@@ -188,6 +188,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/scriptable_text_ui_element.cpp
     app/src/main/cpp/sources/pbr/scriptable_ui_element.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
+    app/src/main/cpp/sources/pbr/shadowmap_pool.cpp
     app/src/main/cpp/sources/pbr/skeletal_mesh_component.cpp
     app/src/main/cpp/sources/pbr/skin_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/skin_pool.cpp
@@ -218,8 +219,10 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ui_pass_image_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_transform_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_program.cpp
-    app/src/main/cpp/sources/pbr/uniform_buffer_pool.cpp
-    app/src/main/cpp/sources/pbr/uniform_buffer_pool_manager.cpp
+    app/src/main/cpp/sources/pbr/uma_uniform_buffer.cpp
+    app/src/main/cpp/sources/pbr/uma_uniform_pool.cpp
+    app/src/main/cpp/sources/pbr/uniform_buffer.cpp
+    app/src/main/cpp/sources/pbr/uniform_pool.cpp
     app/src/main/cpp/sources/pbr/unique_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/universal_game.cpp
     app/src/main/cpp/sources/pbr/utf8_parser.cpp
@@ -275,12 +278,12 @@ target_compile_options ( android-vulkan PRIVATE
 
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan PRIVATE
-#    ANDROID_ENABLE_TRACE
-    ANDROID_NATIVE_MODE_PORTRAIT
-    ANDROID_VULKAN_DEBUG
-#    ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
-    ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
-    ANDROID_VULKAN_STRICT_MODE
+#    AV_ENABLE_TRACE
+    AV_NATIVE_MODE_PORTRAIT
+    AV_DEBUG
+#    AV_ENABLE_RENDERDOC
+    AV_ENABLE_VVL
+    AV_STRICT_MODE
     AV_ARM_NEON
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR

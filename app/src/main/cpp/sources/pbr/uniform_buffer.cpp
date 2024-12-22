@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <pbr/uniform_buffer_pool.hpp>
+#include <pbr/uniform_buffer.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -8,13 +8,13 @@ namespace pbr {
 
 namespace {
 
-constexpr size_t KILOBYTES_TO_BYTES = 1024U;
+constexpr size_t KILOBYTES_TO_BYTES_SHIFT = 10U;
 
 // [2024/11/09] CL compiler does not respect [[maybe_unused]].
 // See https://developercommunity.visualstudio.com/t/10711255
 GX_UNUSED_BEGIN
 
-// see https://vulkan.lunarg.com/doc/view/1.1.108.0/mac/chunked_spec/chap18.html#vkCmdUpdateBuffer
+// see https://registry.khronos.org/vulkan/specs/latest/man/html/vkCmdUpdateBuffer.html
 [[maybe_unused]] constexpr size_t UPDATE_BUFFER_MAX_SIZE = 65536U;
 
 GX_UNUSED_END
@@ -23,13 +23,13 @@ GX_UNUSED_END
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UniformBufferPool::UniformBufferPool ( eUniformPoolSize size ) noexcept:
-    _size ( KILOBYTES_TO_BYTES * static_cast<size_t> ( size ) )
+UniformBuffer::UniformBuffer ( eUniformSize size ) noexcept:
+    _size ( static_cast<size_t> ( size ) << KILOBYTES_TO_BYTES_SHIFT )
 {
     // NOTHING
 }
 
-VkBuffer UniformBufferPool::Push ( VkCommandBuffer commandBuffer, void const* data, size_t size ) noexcept
+VkBuffer UniformBuffer::Push ( VkCommandBuffer commandBuffer, void const* data, size_t size ) noexcept
 {
     AV_ASSERT ( size <= _itemSize )
     AV_ASSERT ( _buffers.size () > _index )
@@ -39,24 +39,25 @@ VkBuffer UniformBufferPool::Push ( VkCommandBuffer commandBuffer, void const* da
     return buffer;
 }
 
-void UniformBufferPool::Reset () noexcept
+void UniformBuffer::Reset () noexcept
 {
     _index = 0U;
 }
 
-size_t UniformBufferPool::GetAvailableItemCount () const noexcept
+size_t UniformBuffer::GetAvailableItemCount () const noexcept
 {
-    return _buffers.capacity () - _index;
+    return _buffers.size () - _index;
 }
 
-VkBuffer UniformBufferPool::GetBuffer ( size_t bufferIndex ) const noexcept
+VkBuffer UniformBuffer::GetBuffer ( size_t bufferIndex ) const noexcept
 {
     AV_ASSERT ( bufferIndex < _buffers.size () )
     return _buffers[ bufferIndex ];
 }
 
-bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept
+bool UniformBuffer::Init ( android_vulkan::Renderer &renderer, size_t itemSize, char const* name ) noexcept
 {
+    AV_ASSERT ( itemSize > 0U )
     AV_ASSERT ( itemSize <= renderer.GetMaxUniformBufferRange () )
     AV_ASSERT ( itemSize <= UPDATE_BUFFER_MAX_SIZE )
 
@@ -86,7 +87,7 @@ bool UniformBufferPool::Init ( android_vulkan::Renderer &renderer, size_t itemSi
     return AllocateBuffers ( renderer, requirements, _size / alignedBlockSize, bufferInfo, name );
 }
 
-void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+void UniformBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
 
@@ -103,7 +104,7 @@ void UniformBufferPool::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
-bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
+bool UniformBuffer::AllocateBuffers ( android_vulkan::Renderer &renderer,
     VkMemoryRequirements &requirements,
     size_t itemCount,
     VkBufferCreateInfo const &bufferInfo,
@@ -120,7 +121,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
         _offset,
         requirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate GPU memory (pbr::UniformBufferPool::AllocateBuffers)"
+        "Can't allocate GPU memory (pbr::UniformBuffer::AllocateBuffers)"
     );
 
     if ( !result ) [[unlikely]]
@@ -134,7 +135,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
 
         result = android_vulkan::Renderer::CheckVkResult (
             vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-            "pbr::UniformBufferPool::AllocateBuffers",
+            "pbr::UniformBuffer::AllocateBuffers",
             "Can't create uniform buffer"
         );
 
@@ -146,15 +147,14 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
         vkGetBufferMemoryRequirements ( device, buffer, &requirements );
 
         result = android_vulkan::Renderer::CheckVkResult (
-            vkBindBufferMemory ( device, buffer, _memory, offset ),
-            "pbr::UniformBufferPool::AllocateBuffers",
+            vkBindBufferMemory ( device, buffer, _memory, std::exchange ( offset, offset + alignedBlockSize ) ),
+            "pbr::UniformBuffer::AllocateBuffers",
             "Can't bind uniform buffer memory"
         );
 
         if ( !result ) [[unlikely]]
             return false;
 
-        offset += alignedBlockSize;
         _buffers.push_back ( buffer );
     }
 
@@ -162,7 +162,7 @@ bool UniformBufferPool::AllocateBuffers ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-bool UniformBufferPool::ResolveMemoryRequirements ( android_vulkan::Renderer &renderer,
+bool UniformBuffer::ResolveMemoryRequirements ( android_vulkan::Renderer &renderer,
     VkMemoryRequirements &requirements,
     VkBufferCreateInfo const &bufferInfo
 ) noexcept
@@ -172,7 +172,7 @@ bool UniformBufferPool::ResolveMemoryRequirements ( android_vulkan::Renderer &re
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-        "pbr::UniformBufferPool::ResolveAlignment",
+        "pbr::UniformBuffer::ResolveAlignment",
         "Can't create uniform buffer"
     );
 

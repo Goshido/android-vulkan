@@ -6,7 +6,7 @@
 #include "lightup_common_descriptor_set_layout.hpp"
 #include "light_volume_descriptor_set_layout.hpp"
 #include "reflection_local_descriptor_set_layout.hpp"
-#include <vulkan_utils.hpp>
+#include "volume_data.hpp"
 
 
 namespace pbr {
@@ -15,11 +15,6 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
-
-        struct VolumeData final
-        {
-            [[maybe_unused]] GXMat4             _transform;
-        };
 
         struct LightData final
         {
@@ -35,7 +30,7 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
         ReflectionLocalDescriptorSetLayout      _reflectionLayout;
 
     public:
-        ReflectionLocalProgram () noexcept;
+        explicit ReflectionLocalProgram () noexcept;
 
         ReflectionLocalProgram ( ReflectionLocalProgram const & ) = delete;
         ReflectionLocalProgram &operator = ( ReflectionLocalProgram const & ) = delete;

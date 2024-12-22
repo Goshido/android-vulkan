@@ -18,16 +18,15 @@ class LightPass final
         VkCommandPool                   _commandPool = VK_NULL_HANDLE;
         DummyLightProgram               _dummyLightProgram {};
         LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
-        PointLightPass                  _pointLightPass {};
+
+        UMAUniformPool                  _volumeDataPool {};
+
+        PointLightPass                  _pointLightPass { _volumeDataPool };
         ReflectionGlobalPass            _reflectionGlobalPass {};
-        ReflectionLocalPass             _reflectionLocalPass {};
+        ReflectionLocalPass             _reflectionLocalPass { _volumeDataPool };
         android_vulkan::MeshGeometry    _unitCube {};
 
-        UniformBufferPoolManager        _volumeBufferPool
-        {
-            eUniformPoolSize::Nanoscopic_64KB,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-        };
+        bool                            _hasWork = false;
 
     public:
         LightPass () = default;
@@ -51,24 +50,24 @@ class LightPass final
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
         void OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool OnPreGeometryPass ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            size_t commandBufferIndex,
-            VkExtent2D const &resolution,
-            SceneData const &sceneData,
-            size_t opaqueMeshCount,
-            GXMat4 const &viewerLocal,
-            GXMat4 const &view,
-            GXMat4 const &viewProjection,
-            GXMat4 const &cvvToView
-        ) noexcept;
-
+        [[nodiscard]] bool OnPreGeometryPass ( VkCommandBuffer commandBuffer ) noexcept;
         void OnPostGeometryPass ( VkDevice device, VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         void Reset () noexcept;
 
         void SubmitPointLight ( LightRef const &light ) noexcept;
         void SubmitReflectionGlobal ( TextureCubeRef &prefilter ) noexcept;
         void SubmitReflectionLocal ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
+
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
+            size_t commandBufferIndex,
+            SceneData const &sceneData,
+            size_t opaqueMeshCount,
+            VkExtent2D const &resolution,
+            GXMat4 const &viewerLocal,
+            GXMat4 const &view,
+            GXMat4 const &viewProjection,
+            GXMat4 const &cvvToView
+        ) noexcept;
 
     private:
         [[nodiscard]] bool CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept;

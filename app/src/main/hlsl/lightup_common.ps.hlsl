@@ -35,6 +35,9 @@ SamplerState                g_brdfSampler:          register ( s1 );
 [[vk::binding ( BIND_PREFILTER_SAMPLER, SET_COMMON )]]
 SamplerState                g_prefilterSampler:     register ( s2 );
 
+[[vk::binding ( BIND_SHADOW_SAMPLER, SET_COMMON )]]
+SamplerComparisonState      g_shadowSampler:        register ( s3 );
+
 [[vk::binding ( BIND_VIEW_DATA, SET_COMMON )]]
 cbuffer ViewData:                                   register ( b0 )
 {

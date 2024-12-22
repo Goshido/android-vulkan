@@ -14,9 +14,14 @@ constexpr uint32_t SHADOWMAP_RESOLUTION = 512U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+PointLightPass::PointLightPass ( UMAUniformPool &volumeDataPool ) noexcept:
+    _volumeDataPool ( volumeDataPool )
+{
+    // NOTHING
+}
+
 void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
-    android_vulkan::MeshGeometry &unitCube,
-    UniformBufferPoolManager &volumeBufferPool
+    android_vulkan::MeshGeometry &unitCube
 ) noexcept
 {
     if ( _interacts.empty () )
@@ -29,25 +34,18 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &bufferInfo._buffer, bufferInfo._vertexDataOffsets );
     vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
+    uint32_t const volumeVertices = unitCube.GetVertexCount ();
     size_t const limit = _interacts.size ();
 
     for ( size_t i = 0U; i < limit; ++i )
-        _lightup.Lightup ( commandBuffer, volumeBufferPool.Acquire (), unitCube );
+        _lightup.Lightup ( commandBuffer, _volumeDataPool.Acquire (), volumeVertices );
 
     _lightup.Commit ();
 }
 
-bool PointLightPass::ExecuteShadowPhase ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    SceneData const &sceneData,
-    size_t opaqueMeshCount
-) noexcept
+bool PointLightPass::ExecuteShadowPhase ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( _interacts.empty () )
-        return true;
-
-    UpdateShadowmapGPUData ( renderer.GetDevice (), commandBuffer, sceneData, opaqueMeshCount );
-    return GenerateShadowmaps ( renderer, commandBuffer );
+    return _interacts.empty () || GenerateShadowmaps ( commandBuffer );
 }
 
 bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
@@ -63,14 +61,7 @@ bool PointLightPass::Init ( android_vulkan::Renderer &renderer,
 
     return CreateShadowmapRenderPass ( renderer.GetDevice () ) &&
         _shadowmapProgram.Init ( renderer, _shadowmapRenderPass, 0U, shadowmapResolution ) &&
-
-        _shadowmapBufferPool.Init ( renderer,
-            PointLightShadowmapGeneratorDescriptorSetLayout {},
-            sizeof ( PointLightShadowmapGeneratorProgram::InstanceData ),
-            0U,
-            "Point light pass shadowmap"
-        ) &&
-
+        _shadowmapPool.Init ( renderer ) &&
         _lightup.Init ( renderer, lightupRenderPass, resolution );
 }
 
@@ -93,7 +84,7 @@ void PointLightPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         _shadowmaps.clear ();
     }
 
-    _shadowmapBufferPool.Destroy ( renderer );
+    _shadowmapPool.Destroy ( renderer );
     _shadowmapProgram.Destroy ( device );
 
     if ( _shadowmapRenderPass == VK_NULL_HANDLE )
@@ -131,78 +122,28 @@ void PointLightPass::Submit ( LightRef const &light ) noexcept
     _interacts.emplace_back ( light, ShadowCasters () );
 }
 
-void PointLightPass::UploadGPUData ( VkDevice device,
-    VkCommandBuffer commandBuffer,
-    UniformBufferPoolManager &volumeBufferPool,
+bool PointLightPass::UploadGPUData ( android_vulkan::Renderer &renderer,
+    SceneData const &sceneData,
+    size_t opaqueMeshCount,
     GXMat4 const &viewerLocal,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept
 {
     if ( _interacts.empty () )
-        return;
-
-    AV_VULKAN_GROUP ( commandBuffer, "Upload point light result data" )
-    _lightup.UpdateGPUData ( device, commandBuffer, *this, viewerLocal, view );
-    UpdateLightGPUData ( commandBuffer, volumeBufferPool, viewProjection );
-}
-
-PointLightPass::PointLightShadowmapInfo* PointLightPass::AcquirePointLightShadowmap (
-    android_vulkan::Renderer &renderer
-) noexcept
-{
-    if ( !_shadowmaps.empty () && _usedShadowmaps < _shadowmaps.size () )
-        return &_shadowmaps[ _usedShadowmaps++ ];
-
-    PointLightShadowmapInfo info;
-    auto &[shadowmap, framebuffer] = info;
-    shadowmap = std::make_shared<android_vulkan::TextureCube> ();
-
-    constexpr VkExtent2D resolution
-    {
-        .width = SHADOWMAP_RESOLUTION,
-        .height = SHADOWMAP_RESOLUTION
-    };
-
-    constexpr VkImageUsageFlags flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
-        AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
-
-    if ( !shadowmap->CreateRenderTarget ( renderer, resolution, renderer.GetDefaultDepthFormat (), flags ) )
-        return nullptr;
-
-    VkImageView const attachments[] = { shadowmap->GetImageView () };
-
-    VkFramebufferCreateInfo const framebufferInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .renderPass = _shadowmapRenderPass,
-        .attachmentCount = static_cast<uint32_t> ( std::size ( attachments ) ),
-        .pAttachments = attachments,
-        .width = resolution.width,
-        .height = resolution.height,
-        .layers = 1U
-    };
+        return true;
 
     VkDevice device = renderer.GetDevice ();
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
-        "pbr::RenderSession::AcquirePointLightShadowmap",
-        "Can't create framebuffer"
-    );
+    bool const result = UpdateShadowmapGPUData ( device, sceneData, opaqueMeshCount ) &&
+        ReserveShadowmaps ( renderer ) &&
+        _lightup.UpdateGPUData ( device, *this, viewerLocal, view );
 
     if ( !result ) [[unlikely]]
-    {
-        shadowmap->FreeResources ( renderer );
-        return nullptr;
-    }
+        return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Point light #%zu", _usedShadowmaps )
-
-    ++_usedShadowmaps;
-    return &_shadowmaps.emplace_back ( std::move ( info ) );
+    UpdateLightGPUData ( viewProjection );
+    return true;
 }
 
 bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
@@ -340,18 +281,13 @@ bool PointLightPass::CreateShadowmapRenderPass ( VkDevice device ) noexcept
     return true;
 }
 
-bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer) noexcept
+bool PointLightPass::GenerateShadowmaps ( VkCommandBuffer commandBuffer) noexcept
 {
     for ( auto const &[light, casters] : _interacts )
     {
-        PointLightShadowmapInfo const* shadowmapInfo = AcquirePointLightShadowmap ( renderer );
-
-        if ( !shadowmapInfo )
-            return false;
-
         AV_VULKAN_GROUP ( commandBuffer, "Point light shadowmap" )
 
-        _shadowmapRenderPassInfo.framebuffer = shadowmapInfo->second;
+        _shadowmapRenderPassInfo.framebuffer = _shadowmaps[ _usedShadowmaps++ ].second;
         vkCmdBeginRenderPass ( commandBuffer, &_shadowmapRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         // Note it's required to set graphic pipeline object every time when new render pass or sub pass begin with
@@ -365,7 +301,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
-            _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
+            _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapPool.Acquire () );
             vkCmdDrawIndexed ( commandBuffer, unique->GetVertexCount (), 1U, 0U, 0, 0U );
         }
 
@@ -386,7 +322,7 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
                     static_cast<size_t> ( PBR_POINT_LIGHT_MAX_SHADOW_CASTER_INSTANCE_COUNT )
                 );
 
-                _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapBufferPool.Acquire () );
+                _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapPool.Acquire () );
 
                 vkCmdDrawIndexed ( commandBuffer,
                     vertexCount,
@@ -404,17 +340,78 @@ bool PointLightPass::GenerateShadowmaps ( android_vulkan::Renderer &renderer, Vk
         vkCmdEndRenderPass ( commandBuffer );
     }
 
-    _shadowmapBufferPool.Commit ();
+    _shadowmapPool.Commit ();
     return true;
 }
 
-void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
-    VkCommandBuffer commandBuffer,
+bool PointLightPass::ReserveShadowmaps ( android_vulkan::Renderer &renderer ) noexcept
+{
+    size_t const needed = _interacts.size ();
+    size_t const allocated = _shadowmaps.size ();
+
+    if ( needed <= allocated ) [[likely]]
+        return true;
+
+    constexpr VkExtent2D resolution
+    {
+        .width = SHADOWMAP_RESOLUTION,
+        .height = SHADOWMAP_RESOLUTION
+    };
+
+    constexpr VkImageUsageFlags flags = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT );
+
+    VkFramebufferCreateInfo framebufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .renderPass = _shadowmapRenderPass,
+        .attachmentCount = 1U,
+        .pAttachments = nullptr,
+        .width = resolution.width,
+        .height = resolution.height,
+        .layers = 1U
+    };
+
+    VkFormat const depthFormat = renderer.GetDefaultDepthFormat ();
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = allocated; i < needed; ++i )
+    {
+        PointLightShadowmapInfo info;
+        auto &[shadowmap, framebuffer] = info;
+        shadowmap = std::make_shared<android_vulkan::TextureCube> ();
+
+        if ( !shadowmap->CreateRenderTarget ( renderer, resolution, depthFormat, flags ) ) [[unlikely]]
+            return false;
+
+        framebufferInfo.pAttachments = &shadowmap->GetImageView ();
+
+        bool const result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &framebuffer ),
+            "pbr::RenderSession::ReserveShadowmaps",
+            "Can't create framebuffer"
+        );
+
+        if ( !result ) [[unlikely]]
+        {
+            shadowmap->FreeResources ( renderer );
+            return false;
+        }
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Point light #%zu", i )
+        _shadowmaps.push_back ( std::move ( info ) );
+    }
+
+    return true;
+}
+
+bool PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
     SceneData const &sceneData,
     size_t opaqueMeshCount
 ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload point light shadowmap data" )
     PointLightShadowmapGeneratorProgram::InstanceData instanceData {};
 
     auto append = [ & ] ( PointLight::Matrices const &matrices, size_t instance, GXMat4 const &local ) {
@@ -451,12 +448,7 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
                 }
 
                 append ( matrices, 0U, opaqueData._local );
-
-                _shadowmapBufferPool.Push ( commandBuffer,
-                    &instanceData,
-                    sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
-                );
-
+                _shadowmapPool.Push ( instanceData, 1U );
                 uniques->push_back ( mesh );
             }
 
@@ -507,28 +499,21 @@ void PointLightPass::UpdateShadowmapGPUData ( VkDevice device,
                     ++instance;
                 }
 
-                _shadowmapBufferPool.Push ( commandBuffer,
-                    &instanceData,
-                    batches * sizeof ( PointLightShadowmapGeneratorProgram::ObjectData )
-                );
-
+                _shadowmapPool.Push ( instanceData, batches );
                 remain -= batches;
             }
             while ( remain );
         }
     }
 
-    _shadowmapBufferPool.IssueSync ( device, commandBuffer );
+    return _shadowmapPool.IssueSync ( device );
 }
 
-void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
-    UniformBufferPoolManager &volumeBufferPool,
-    GXMat4 const &viewProjection
-) noexcept
+void PointLightPass::UpdateLightGPUData ( GXMat4 const &viewProjection ) noexcept
 {
     size_t const lightCount = _interacts.size ();
 
-    PointLightLightupProgram::VolumeData volumeData {};
+    VolumeData volumeData {};
     GXMat4 &transform = volumeData._transform;
     GXMat4 local {};
     GXVec3 alpha {};
@@ -546,7 +531,7 @@ void PointLightPass::UpdateLightGPUData ( VkCommandBuffer commandBuffer,
         local.SetW ( alpha );
         transform.Multiply ( local, viewProjection );
 
-        volumeBufferPool.Push ( commandBuffer, &volumeData, sizeof ( volumeData ) );
+        _volumeDataPool.Push ( &volumeData );
     }
 }
 

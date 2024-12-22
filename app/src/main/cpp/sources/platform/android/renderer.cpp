@@ -81,11 +81,11 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
     constexpr static char const* extensions[] =
     {
 
-#ifdef ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#ifdef AV_ENABLE_VVL
 
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS
+#endif // AV_ENABLE_VVL
 
         VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
         VK_KHR_SURFACE_EXTENSION_NAME

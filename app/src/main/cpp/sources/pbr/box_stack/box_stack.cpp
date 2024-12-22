@@ -317,15 +317,14 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS ) ||       \
-    defined ( ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
     VkDevice device = renderer.GetDevice ();
 
     for ( size_t i = 0U; i < comBuffs; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Asset #%zu", i )
 
-#endif // ANDROID_VULKAN_ENABLE_VULKAN_VALIDATION_LAYERS || ANDROID_VULKAN_ENABLE_RENDER_DOC_INTEGRATION
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
     size_t consumed = 0U;
     ComponentRef cuboid {};

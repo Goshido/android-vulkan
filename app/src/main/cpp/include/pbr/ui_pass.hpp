@@ -7,7 +7,7 @@
 #include "types.hpp"
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
-#include "uniform_buffer_pool_manager.hpp"
+#include "uniform_pool.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -203,9 +203,9 @@ class UIPass final
 
         VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
 
-        UniformBufferPoolManager                        _uniformPool
+        UniformPool                                     _uniformPool
         {
-            eUniformPoolSize::Nanoscopic_64KB,
+            eUniformSize::Nanoscopic_64KB,
             VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
         };
 

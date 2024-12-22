@@ -277,8 +277,6 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
             .range = pSize
         };
 
-        positionInfo._offset += pSize;
-
         VkWriteDescriptorSet &positionWrite = *writeSet++;
         positionWrite.dstSet = descriptorSet;
         positionWrite.dstBinding = BIND_INSTANCE_POSITON_DATA;

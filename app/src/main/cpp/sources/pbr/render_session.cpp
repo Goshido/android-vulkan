@@ -70,13 +70,11 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
                 "Can't wait fence"
             ) &&
 
-
             android_vulkan::Renderer::CheckVkResult (
                 _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire ),
                 "pbr::RenderSession::End",
                 "Can't acquire present image"
             ) &&
-
 
             android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, 1U, &fence ),
                 "pbr::RenderSession::End",

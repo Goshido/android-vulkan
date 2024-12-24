@@ -23,7 +23,7 @@ Useful documentation is located [here](docs/documentation.md).
 
 Note desktop operating system requirements apply for builder machine only. In other words you can build, deploy and debug the project out of the box as soon as you are able to install proper [_Android Studio_](https://developer.android.com/studio).
 
-The canonic way is to use real _Android_ device via _USB_ connection. _Android_ emulator is never tested and there are no plans to support it.
+The canonical way is to use real _Android_ device via _USB_ connection. _Android_ emulator is never tested and there are no plans to support it.
 
 Pay attention that all 3<sup>rd</sup> party libraries already prebuild and project has all needed header files. You **_do not need_** to build them by yourself. Same applies to _SPIR-V_ shader blobs and game assets.
 

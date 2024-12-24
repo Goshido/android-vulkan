@@ -21,7 +21,13 @@ Useful documentation is located [here](docs/documentation.md).
 
 ### Requirements
 
-* _Windows Vista_+ or _Monjaro KDE_
+Note desktop operating system requirements apply for builder machine only. In other words you can build, deploy and debug the project out of the box as soon as you are able to install proper [_Android Studio_](https://developer.android.com/studio).
+
+The canonic way is to use real _Android_ device via _USB_ connection. _Android_ emulator is never tested and there are no plans to support it.
+
+Pay attention that all 3<sup>rd</sup> party libraries already prebuild and projec has all needed header files. You **do not need** to build them by yourself. Same applies to _SPIR-V_ shader blobs and game assets.
+
+* _Windows 10+_ or _Monjaro KDE_
 * [_Android Studio Ladybug | 2024.2.1 Patch 3_](https://developer.android.com/studio)
 * _Android Studio Gradle Plugin 8.7.3_
 * _Android NDK 27.2.12479018 (side by side)_
@@ -43,6 +49,8 @@ Useful documentation is located [here](docs/documentation.md).
 * [_Lua 5.5.0_](https://github.com/lua/lua) `2fccd3c4b9043a77b0be2da74c8c7ffe31ce28c7`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
+
+## Building manual
 
 To begin, clone this repository onto your local drive.
 

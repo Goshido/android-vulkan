@@ -50,7 +50,7 @@ Pay attention that all 3<sup>rd</sup> party libraries already prebuild and proje
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 
-## Building manual
+### Building manual
 
 To begin, clone this repository onto your local drive.
 

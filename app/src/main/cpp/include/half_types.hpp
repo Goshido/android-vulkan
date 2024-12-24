@@ -26,6 +26,10 @@ struct Half final
         Half ( Half && ) = default;
         Half &operator = ( Half && ) = default;
 
+        constexpr explicit Half ( uint32_t value ) noexcept:
+            _data ( static_cast<uint16_t> ( value ) )
+        {}
+
         [[maybe_unused]] explicit Half ( float value ) noexcept;
 
         ~Half () = default;

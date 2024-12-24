@@ -1070,7 +1070,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-    float const layer = glyphTopLeft._layer;
+    android_vulkan::Half const layer = glyphTopLeft._layer;
 
     targetVertices[ 1U ] =
     {

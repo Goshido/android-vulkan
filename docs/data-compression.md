@@ -14,7 +14,10 @@
   - [_Using `uint16_t` index buffers_](#opt-2-using-uint16-indices)
   - [_Further vertex data compression_](#opt-2-further-compression)
 - [_Optimization #3_](#optimization-3)
-  - [_UV coordinates as `float16_t2`_](#opt-3-uv-as-float16)
+  - [_UV coordinates as `float16_t2_](#opt-3-uv-as-float16)
+- [_Optimizations #4_](#optimizations-4)
+  - [_Using UMA_](#opt-4-uma)
+  - [_Further UI vertex compression_](#opt-4-ui-compression)
 
 ## <a id="brief">Brief</a>
 
@@ -30,9 +33,9 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.662 ms | -1.184 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.142 ms | -2.202 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
-_World 1-1_ | 9.477 ms | 9.585 ms | +0.108 ms🔺 | +1.1%🔺 | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 17.846 ms | 16.645 ms | -1.2 ms🟢 | -6.7%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.07 ms | -2.273 ms🟢 | -13.1%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.477 ms | 9.576 ms | +0.099 ms🔺 | +1.05%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
 
@@ -50,7 +53,7 @@ _World 1-1_ | 9.477 ms | 9.585 ms | +0.108 ms🔺 | +1.1%🔺 | <img src="./imag
 
 **Stock** | **Optimized** | **Absolute difference** | **Relative difference**
 --- | --- | --- | ---
-50 | 24 | -26🟢 | -52%🟢
+50 | 22 | -28🟢 | -56%🟢
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -247,7 +250,7 @@ _PBR_ | 16.667 ms | -1.178 ms🟢 | -6.6%🟢 | <img src="./images/compression-p
 _Skeletal mesh_ | 15.136 ms | -2.207 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.519 ms | +0.042 ms🔺 | +0.4%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
-⁘ Frame time comparison with _Optimization #1_:
+⁘ Frame time comparison with _Optimizations #1_:
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
@@ -263,7 +266,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 --- | --- | ---
 84 | +42🟢 | +100%🟢
 
-⁘ Maximum instances comparison with _optimizations #1_:
+⁘ Maximum instances comparison with _Optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -277,7 +280,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 --- | --- | ---
 112 | -136🟢 | -54.8%🟢
 
-⁘ Bytes per scene vertex comparison with _optimizations #1_:
+⁘ Bytes per scene vertex comparison with _Optimizations #1_:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -285,7 +288,7 @@ _World 1-1_ | 9.519 ms | +0.033 ms🔺 | +0.3%🔺 | <img src="./images/compress
 
 ---
 
-⁘ Bytes per _UI_ vertex comparison with stock/_optimizations #1_ versions:
+⁘ Bytes per _UI_ vertex comparison with stock/_Optimizations #1_ versions:
 
 **Optimizations #2** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -454,7 +457,7 @@ _PBR_ | 16.662 ms | -1.184 ms🟢 | -6.6%🟢 | <img src="./images/compression-p
 _Skeletal mesh_ | 15.142 ms | -2.202 ms🟢 | -12.7%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 9.585 ms | +0.108 ms🔺 | +1.1%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
-⁘ Frame time comparison with _Optimization #2_:
+⁘ Frame time comparison with _Optimizations #2_:
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
@@ -470,7 +473,7 @@ _World 1-1_ | 9.585 ms | +0.066 ms🔺 | +0.69%🔺 | <img src="./images/compres
 --- | --- | ---
 84 | +42🟢 | +100%🟢
 
-⁘ Maximum instances comparison with _optimizations #2_:
+⁘ Maximum instances comparison with _Optimizations #2_:
 
 **Optimization #3** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -484,7 +487,7 @@ _World 1-1_ | 9.585 ms | +0.066 ms🔺 | +0.69%🔺 | <img src="./images/compres
 --- | --- | ---
 108 | -140🟢 | -56.5%🟢
 
-⁘ Bytes per scene vertex comparison with _optimizations #2_:
+⁘ Bytes per scene vertex comparison with _Optimizations #2_:
 
 **Optimization #3** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -498,7 +501,7 @@ _World 1-1_ | 9.585 ms | +0.066 ms🔺 | +0.69%🔺 | <img src="./images/compres
 --- | --- | ---
 24 | -26🟢 | -52%🟢
 
-⁘ Bytes per _UI_ vertex comparison with _optimizations #2_:
+⁘ Bytes per _UI_ vertex comparison with _Optimizations #2_:
 
 **Optimization #3** | **Absolute difference** | **Relative difference**
 --- | --- | ---
@@ -596,5 +599,109 @@ struct UIVertexInfo
 ```
 
 **Note:** 2024 December 13<sup>th</sup>. Turns out that `Adreno 730` does not support `VK_FORMAT_R8_USCALED` for vertex buffers at all. So it was decided to make `UIAtlas::_layer` field as `float32_t` because `VK_FORMAT_R32_SFLOAT` is widely supported for vertex buffers. At vertex shader side this value must be used as `float32_t` and aligned to 4-byte boundary anyway. As a bonus `UIAtlas::_padding` field is not needed anymore.
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="optimizations-4">Optimizations #4</a>
+
+⁘ Frame time comparison with stock version:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.645 ms | -1.2 ms🟢 | -6.7%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.07 ms | -2.273 ms🟢 | -13.1%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.576 ms | +0.099 ms🔺 | +1.05%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+⁘ Frame time comparison with _Optimization #3_:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.645 ms | -0.017 ms🟢 | -0.1%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.07 ms | -0.072 ms🟢 | -0.5%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.576 ms | -0.009 ms🟢 | -0.1%🟢 | <img src="./images/compression-world1x1.png" width="100">
+
+---
+
+⁘ Maximum instances comparison with stock version:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | +42🟢 | +100%🟢
+
+⁘ Maximum instances comparison with _Optimization #3_:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | 0 | 0%
+
+---
+
+⁘ Bytes per scene vertex comparison with stock version:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -140🟢 | -56.5%🟢
+
+⁘ Bytes per scene vertex comparison with _Optimization #3_:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | 0 | 0%
+
+---
+
+⁘ Bytes per _UI_ vertex comparison with stock version:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+22 | -28🟢 | -56%🟢
+
+⁘ Bytes per _UI_ vertex comparison with _Optimization #3_:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+22 | -2🟢 | -8.3%🟢
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-4-uma">Using _UMA_</a>
+
+_Android_ devices mostly use unified memory architecture (_UMA_). It could be used for uniform buffers and storage buffers. This significantly simplifies _Vulkan_ code and reduces memory traffic:
+
+- `vkCmdPipelineBarrier` for transfer operations are removed
+- no copy overhead related to staging buffers
+- no implicit copy overhead related to `vkCmdUpdateBuffer`
+- upload operations do not require `VkCommandBuffer` handle
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-4-ui-compression">Further _UI_ vertex compression</a>
+
+The `UIAtlas::_layer` was changed from `float32_t` to `float16_t` type.
+
+⁘ **_UI_ workflow**
+
+Vertex buffer layout:
+
+```cpp
+// Vertex buffer #0
+struct UIVertexInfo
+{                                           // Vertex buffer #0
+    float32_t2      _vertex;                float32_t2          _position;
+
+                                            struct UIAtlas
+                                            {
+                                                float16_t2      _uv;
+                                                float16_t       _layer;
+                                            };
+
+                                            // Vertex buffer #1
+                                ------->    struct UIVertex
+                                            {
+    float32_t4      _color;                     float16_t2      _image;
+    float32_t3      _atlas;                     UIAtlas         _atlas;
+    float32_t2      _imageUV;                   uint32_t        _color;
+};                                          };
+```
 
 [↬ table of content ⇧](#table-of-content)

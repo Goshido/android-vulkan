@@ -27,14 +27,14 @@ class FontStorage final
             UIAtlas                             _topLeft
             {
                 ._uv { 0.0F, 0.0F },
-                ._layer = 0U
+                ._layer { 0U }
 
             };
 
             UIAtlas                             _bottomRight
             {
                 ._uv { 0.0F, 0.0F },
-                ._layer = 0U
+                ._layer { 0U }
             };
 
             int32_t                             _width = 0;

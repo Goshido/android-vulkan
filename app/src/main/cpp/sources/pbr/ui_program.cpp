@@ -506,7 +506,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     {
         .location = IN_SLOT_ATLAS_LAYER,
         .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R32_SFLOAT,
+        .format = VK_FORMAT_R16_SFLOAT,
         .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._layer ) )
     };
 

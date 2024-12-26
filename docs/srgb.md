@@ -13,7 +13,7 @@ Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we
 $$
 C_{linear}=
 \begin{cases}
-    \dfrac{C_{srgb}}{12.92} & 0 \leq RGB_{srgb} \leq 4.045 \times 10^{-2} \\
+    \dfrac{C_{srgb}}{12.92} & 0 \leq C_{srgb} \leq 4.045 \times 10^{-2} \\
 \\
     \left(\dfrac{C_{srgb} + 5.5 \times 10^{-2}}{1.055}\right)^{2.4} & 4.045 \times 10^{-2} \lt C_{srgb} \leq 1
 \end{cases}

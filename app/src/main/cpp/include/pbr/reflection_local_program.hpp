@@ -40,7 +40,6 @@ class ReflectionLocalProgram final : public LightLightupBaseProgram
 
         ~ReflectionLocalProgram () override = default;
 
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
         void Destroy ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

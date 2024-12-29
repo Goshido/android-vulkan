@@ -17,7 +17,7 @@ namespace android_vulkan {
 
 constexpr size_t const MAX_MIPS = 20U;
 
-// Note the class object instance is not reusable by design.
+// Note color space is defined in ktx container itself and can be fully trusted.
 // The KTXv1 format is described here: https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec
 class KTXMediaContainer final
 {

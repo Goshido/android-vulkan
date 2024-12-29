@@ -49,33 +49,6 @@ GeometryPassProgram::ColorData::ColorData ( GXColorUNORM color0,
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GraphicsProgram::DescriptorSetInfo const &GeometryPassProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info =
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 1U
-            }
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 5U
-            },
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 3U
-            }
-        }
-    };
-
-    return info;
-}
-
 void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );

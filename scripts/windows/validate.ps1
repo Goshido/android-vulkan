@@ -1,13 +1,16 @@
 [string] $src = $args[ 0 ]
-[string] $entryPoint = $args[ 1 ]
-[string] $profilePrefix = $args[ 2 ]
+
+#-----------------------------------------------------------------------------------------------------------------------
 
 Clear-Host
 . scripts\windows\make-env.ps1 $false
 
+[PSCustomObject] $type = Resolve-Type-HLSL      `
+    -Src $src
+
 $params =
-    "-E", $entryPoint,
-    "-T", "${profilePrefix}_$HLSL_PROFILE",
+    "-E", $type._entryPoint,
+    "-T", $type._profile,
     "-Fo", "$MOBILE_HLSL_DIRECTORY\validation\blob.spv",
     $src
 

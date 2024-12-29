@@ -17,12 +17,6 @@ constexpr size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-GraphicsProgram::DescriptorSetInfo const &DummyProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info {};
-    return info;
-}
-
 bool DummyProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     VkExtent2D const &viewport

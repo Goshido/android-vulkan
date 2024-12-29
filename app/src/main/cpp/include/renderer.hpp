@@ -278,7 +278,7 @@ class Renderer final
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;
-        static void PrintFloatVec2Prop ( char const* indent, char const* name, const float value[] ) noexcept;
+        static void PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] ) noexcept;
         static void PrintINT32Prop ( char const* indent, char const* name, int32_t value ) noexcept;
         [[nodiscard]] static bool PrintInstanceLayerInfo () noexcept;
         static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) noexcept;
@@ -311,8 +311,7 @@ class Renderer final
         static void PrintVkFlagsProp ( char const* indent,
             char const* name,
             VkFlags flags,
-            size_t flagSetCount,
-            std::pair<uint32_t, char const*> const flagSet[]
+            std::span<std::pair<uint32_t, char const*> const> flagSet
         ) noexcept;
 
         static void PrintVkHandler ( char const* indent, char const* name, void* handler ) noexcept;
@@ -334,8 +333,7 @@ class Renderer final
         [[nodiscard]] static char const* ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept;
 
         [[nodiscard]] static std::string StringifyVkFlags ( VkFlags flags,
-            size_t flagSetCount,
-            std::pair<uint32_t, char const*> const flagSet[]
+            std::span<std::pair<uint32_t, char const*> const> flagSet
         ) noexcept;
 };
 

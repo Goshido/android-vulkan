@@ -24,8 +24,6 @@ class DummyProgram : public GraphicsProgram
 
         ~DummyProgram () override = default;
 
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
-
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             VkExtent2D const &viewport

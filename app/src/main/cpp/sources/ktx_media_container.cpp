@@ -81,52 +81,37 @@ bool KTXMediaContainer::Init ( char const* fileName )
 
     _file = std::make_unique<File> ( fileName );
 
-    if ( !_file->LoadContent () )
+    if ( !_file->LoadContent () ) [[unlikely]]
         return false;
 
     std::vector<uint8_t> const &content = _file->GetContent ();
     size_t const size = content.size ();
 
-    if ( !CheckSize ( size, fileName ) )
+    if ( !CheckSize ( size, fileName ) ) [[unlikely]]
         return false;
 
     uint8_t const* rawData = content.data ();
     auto const &header = *reinterpret_cast<KTXHeader const*> ( rawData );
-
-    if ( !CheckSignature ( header, fileName ) )
-        return false;
-
     ReadHander reader = nullptr;
 
-    if ( !ResolveReader ( reader, header._endianness, fileName ) )
-        return false;
+    bool const result = CheckSignature ( header, fileName ) &&
+        ResolveReader ( reader, header._endianness, fileName ) &&
+        CheckField ( header._glType, "_glType", TARGET_GL_TYPE, reader, fileName ) &&
+        CheckField ( header._glTypeSize, "_glTypeSize", TARGET_GL_TYPE_SIZE, reader, fileName ) &&
+        CheckField ( header._glFormat, "_glFormat", TARGET_GL_FORMAT, reader, fileName ) &&
+        CheckField ( header._numberOfFaces, "_numberOfFaces", TARGET_NUMBER_OF_FACES, reader, fileName ) &&
+        CheckField ( header._pixelDepth, "_pixelDepth", TARGET_PIXEL_DEPTH, reader, fileName ) &&
 
-    if ( !CheckField ( header._glType, "_glType", TARGET_GL_TYPE, reader, fileName ) )
-        return false;
+        CheckField ( header._numberOfArrayElements,
+            "_numberOfArrayElements",
+            TARGET_NUMBER_OF_ARRAY_ELEMENTS,
+            reader,
+            fileName
+        ) &&
 
-    if ( !CheckField ( header._glTypeSize, "_glTypeSize", TARGET_GL_TYPE_SIZE, reader, fileName ) )
-        return false;
+        ResolveFormat ( header._glInternalFormat, _format, reader, fileName );
 
-    if ( !CheckField ( header._glFormat, "_glFormat", TARGET_GL_FORMAT, reader, fileName ) )
-        return false;
-
-    if ( !CheckField ( header._numberOfFaces, "_numberOfFaces", TARGET_NUMBER_OF_FACES, reader, fileName ) )
-        return false;
-
-    if ( !CheckField ( header._pixelDepth, "_pixelDepth", TARGET_PIXEL_DEPTH, reader, fileName ) )
-        return false;
-
-    bool const isFail = !CheckField ( header._numberOfArrayElements,
-        "_numberOfArrayElements",
-        TARGET_NUMBER_OF_ARRAY_ELEMENTS,
-        reader,
-        fileName
-    );
-
-    if ( isFail )
-        return false;
-
-    if ( !ResolveFormat ( header._glInternalFormat, _format, reader, fileName ) )
+    if ( !result ) [[unlikely]]
         return false;
 
     ExtractMips ( rawData, size, header, reader );

@@ -44,8 +44,6 @@ class GraphicsProgram
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
-        [[nodiscard]] virtual DescriptorSetInfo const &GetResourceInfo () const noexcept = 0;
-
         // Successor classes MUST call this method.
         virtual void Destroy ( VkDevice device ) noexcept;
 

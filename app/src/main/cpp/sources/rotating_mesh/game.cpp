@@ -110,7 +110,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
         bool const result = drawcall._diffuse.UploadData ( renderer,
             textureFiles[ i ],
-            android_vulkan::eFormat::sRGB,
+            android_vulkan::eColorSpace::sRGB,
             true,
             commandBuffers[ i ],
             VK_NULL_HANDLE
@@ -126,7 +126,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     bool result = secondMaterial._normal.UploadData ( renderer,
         MATERIAL_2_NORMAL,
-        android_vulkan::eFormat::Unorm,
+        android_vulkan::eColorSpace::Unorm,
         true,
         commandBuffers[ 3U ],
         VK_NULL_HANDLE
@@ -139,7 +139,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     result = thirdMaterial._normal.UploadData ( renderer,
         MATERIAL_3_NORMAL,
-        android_vulkan::eFormat::Unorm,
+        android_vulkan::eColorSpace::Unorm,
         true,
         commandBuffers[ 4U ],
         VK_NULL_HANDLE

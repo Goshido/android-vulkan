@@ -59,8 +59,6 @@ class PointLightLightupProgram final : public LightLightupBaseProgram
         ) const noexcept;
 
     private:
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
-
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
             VkPipelineColorBlendAttachmentState* attachments

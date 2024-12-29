@@ -93,7 +93,7 @@ class MaterialManager final
             size_t &commandBufferConsumed,
             uint8_t const* data,
             uint64_t nameOffset,
-            android_vulkan::eFormat format,
+            android_vulkan::eColorSpace space,
             VkCommandBuffer const* commandBuffers,
             VkFence const* fences
         ) noexcept;

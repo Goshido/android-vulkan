@@ -23,6 +23,36 @@ $global:FLAGS =
     "-I", "$editorDirectory\include",
     "-I", "$mobileDirectory\cpp\include"
 
+function Resolve-Type-HLSL
+{
+    param
+    (
+        [Parameter(Mandatory)]
+        [string] $Src
+    )
+
+    if ( $Src.EndsWith("ps.hlsl") )
+    {
+        return [PSCustomObject]@{
+            _entryPoint = "PS"
+            _profile = "ps_$HLSL_PROFILE"
+        }
+    }
+
+    if ( $Src.EndsWith("vs.hlsl") )
+    {
+        return [PSCustomObject]@{
+            _entryPoint = "VS"
+            _profile = "vs_$HLSL_PROFILE"
+        }
+    }
+
+    return [PSCustomObject]@{
+        _entryPoint = "CS"
+        _profile = "cs_$HLSL_PROFILE"
+    }
+}
+
 if ( $embedSources )
 {
     $FLAGS +=

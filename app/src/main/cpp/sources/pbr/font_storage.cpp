@@ -761,7 +761,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     static GlyphInfo const nullGlyph {};
     auto query = GetStagingBuffer ( renderer );
 
-    if ( !query )
+    if ( !query ) [[unlikely]]
         return nullGlyph;
 
     StagingBuffer* stagingBuffer = query.value ();
@@ -840,7 +840,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
         query = GetStagingBuffer ( renderer );
 
-        if ( !query )
+        if ( !query ) [[unlikely]]
             return false;
 
         lineHeight = 0U;
@@ -850,7 +850,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return true;
     };
 
-    if ( top >= FONT_ATLAS_RESOLUTION && !completeStagingBuffer () )
+    if ( top >= FONT_ATLAS_RESOLUTION && !completeStagingBuffer () ) [[unlikely]]
         return nullGlyph;
 
     uint32_t right = left + toRight;
@@ -865,7 +865,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     if ( bottom >= FONT_ATLAS_RESOLUTION )
     {
-        if ( !completeStagingBuffer () )
+        if ( !completeStagingBuffer () ) [[unlikely]]
             return nullGlyph;
 
         bottom = toBottom;
@@ -1011,22 +1011,6 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     stagingBuffer._endLine._height = 1U;
 
     return true;
-}
-
-UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept
-{
-    UIAtlas result {};
-    result._layer = layer;
-
-    constexpr float pix2UV = 1.0F / static_cast<float> ( FONT_ATLAS_RESOLUTION );
-    constexpr float threshold = pix2UV * 0.25F;
-    constexpr GXVec2 pointSamplerUVThreshold ( threshold, threshold );
-
-    GXVec2 a {};
-    a.Sum ( pointSamplerUVThreshold, pix2UV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
-    result._uv = android_vulkan::Half2 ( a );
-
-    return result;
 }
 
 void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
@@ -1298,6 +1282,22 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
 
     android_vulkan::LogError ( "%s - %s. Error: %s.", from, message, FT_Error_String ( result ) );
     return false;
+}
+
+UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) noexcept
+{
+    UIAtlas result {};
+    result._layer = layer;
+
+    constexpr float pix2UV = 1.0F / static_cast<float> ( FONT_ATLAS_RESOLUTION );
+    constexpr float threshold = pix2UV * 0.25F;
+    constexpr GXVec2 pointSamplerUVThreshold ( threshold, threshold );
+
+    GXVec2 a {};
+    a.Sum ( pointSamplerUVThreshold, pix2UV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
+    result._uv = android_vulkan::Half2 ( a );
+
+    return result;
 }
 
 } // namespace pbr

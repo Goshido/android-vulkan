@@ -48,8 +48,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkCompositeAlphaFlagBitsKHRMa
     }
 };
 
-constexpr size_t g_vkCompositeAlphaFlagBitsKHRMapperItems = std::size ( g_vkCompositeAlphaFlagBitsKHRMapper );
-
 constexpr std::pair<uint32_t, char const*> const g_vkFormatFeatureFlagBitsMapper[] =
 {
     { static_cast<uint32_t> ( VK_FORMAT_FEATURE_BLIT_DST_BIT ), "VK_FORMAT_FEATURE_BLIT_DST_BIT" },
@@ -151,15 +149,11 @@ constexpr std::pair<uint32_t, char const*> const g_vkFormatFeatureFlagBitsMapper
     { static_cast<uint32_t> ( VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT ), "VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT" }
 };
 
-constexpr size_t g_vkFormatFeatureFlagBitsMapperItems = std::size ( g_vkFormatFeatureFlagBitsMapper );
-
 constexpr std::pair<uint32_t, char const*> g_vkMemoryHeapFlagBitsMapper[] =
 {
     { static_cast<uint32_t> ( VK_MEMORY_HEAP_DEVICE_LOCAL_BIT ), "VK_MEMORY_HEAP_DEVICE_LOCAL_BIT" },
     { static_cast<uint32_t> ( VK_MEMORY_HEAP_MULTI_INSTANCE_BIT ), "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT" }
 };
-
-constexpr size_t g_vkMemoryHeapFlagBitsMapperItems = std::size ( g_vkMemoryHeapFlagBitsMapper );
 
 constexpr std::pair<uint32_t, char const*> const g_vkMemoryPropertyFlagBitsMapper[] =
 {
@@ -180,8 +174,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkMemoryPropertyFlagBitsMappe
         "VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD"
     }
 };
-
-constexpr size_t g_vkMemoryPropertyFlagBitsMapperItems = std::size ( g_vkMemoryPropertyFlagBitsMapper );
 
 constexpr std::pair<uint32_t, char const*> const g_vkImageUsageFlagBitsMapper[] =
 {
@@ -205,8 +197,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkImageUsageFlagBitsMapper[] 
     }
 };
 
-constexpr size_t g_vkImageUsageFlagBitsMapperItems = std::size ( g_vkImageUsageFlagBitsMapper );
-
 constexpr std::pair<uint32_t, char const*> const g_vkSampleCountFlagMapper[] =
 {
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_1_BIT ), "VK_SAMPLE_COUNT_1_BIT" },
@@ -218,8 +208,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkSampleCountFlagMapper[] =
     { static_cast<uint32_t> ( VK_SAMPLE_COUNT_64_BIT ), "VK_SAMPLE_COUNT_64_BIT" }
 };
 
-constexpr size_t g_vkSampleCountFlagMapperItems = std::size ( g_vkSampleCountFlagMapper );
-
 constexpr std::pair<uint32_t, char const*> const g_vkQueueFlagMapper[] =
 {
     { static_cast<uint32_t> ( VK_QUEUE_COMPUTE_BIT ), "VK_QUEUE_COMPUTE_BIT" },
@@ -228,8 +216,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkQueueFlagMapper[] =
     { static_cast<uint32_t> ( VK_QUEUE_SPARSE_BINDING_BIT ), "VK_QUEUE_SPARSE_BINDING_BIT" },
     { static_cast<uint32_t> ( VK_QUEUE_TRANSFER_BIT ), "VK_QUEUE_TRANSFER_BIT" }
 };
-
-constexpr size_t g_vkQueueFlagMapperItems = std::size ( g_vkQueueFlagMapper );
 
 constexpr std::pair<uint32_t, char const*> const g_vkSurfaceTransformFlagBitsKHRMapper[] =
 {
@@ -255,8 +241,6 @@ constexpr std::pair<uint32_t, char const*> const g_vkSurfaceTransformFlagBitsKHR
         "VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR"
     }
 };
-
-constexpr size_t g_vkSurfaceTransformFlagBitsKHRMapperItems = std::size ( g_vkSurfaceTransformFlagBitsKHRMapper );
 
 // Kung-Fu: used in Renderer::PrintPhysicalDeviceGroupInfo to print physical device features.
 std::unordered_map<size_t, char const*> g_vkFeatureMap =
@@ -380,20 +364,12 @@ constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFl
     { VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT, "Error" }
 };
 
-constexpr size_t g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems = std::size (
-    g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
-);
-
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageTypeFlagBitsEXTMapper[] =
 {
     { VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT, "General" },
     { VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT, "Validation" },
     { VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT, "Performance" }
 };
-
-constexpr size_t g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems = std::size (
-    g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
-);
 
 constexpr VkDebugUtilsMessengerCreateInfoEXT g_debugUtilsMessengerCreateInfo
 {
@@ -1194,15 +1170,8 @@ message: %s
     std::string commandBuffers {};
     std::string objects {};
 
-    std::string const severity = StringifyVkFlags ( messageSeverity,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper
-    );
-
-    std::string const type = StringifyVkFlags ( messageTypes,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapperItems,
-        g_vkDebugUtilsMessageTypeFlagBitsEXTMapper
-    );
+    std::string const severity = StringifyVkFlags ( messageSeverity, g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper );
+    std::string const type = StringifyVkFlags ( messageTypes, g_vkDebugUtilsMessageTypeFlagBitsEXTMapper );
 
     constexpr auto prettyMessage = [] ( char const* message ) noexcept -> char const* {
         char const* cases[] = { message, "N/A" };
@@ -1361,24 +1330,16 @@ bool Renderer::CheckRequiredFormats () noexcept
         PrintVkFlagsProp ( INDENT_2,
             "linearTilingFeatures",
             props.linearTilingFeatures,
-            g_vkFormatFeatureFlagBitsMapperItems,
             g_vkFormatFeatureFlagBitsMapper
         );
 
         PrintVkFlagsProp ( INDENT_2,
             "optimalTilingFeatures",
             props.optimalTilingFeatures,
-            g_vkFormatFeatureFlagBitsMapperItems,
             g_vkFormatFeatureFlagBitsMapper
         );
 
-        PrintVkFlagsProp ( INDENT_2,
-            "bufferFeatures",
-            props.bufferFeatures,
-            g_vkFormatFeatureFlagBitsMapperItems,
-            g_vkFormatFeatureFlagBitsMapper
-        );
-
+        PrintVkFlagsProp ( INDENT_2, "bufferFeatures", props.bufferFeatures, g_vkFormatFeatureFlagBitsMapper );
         std::this_thread::sleep_for ( ANTISPAM_DELAY );
     }
 
@@ -2209,28 +2170,24 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferColorSampleCounts",
         limits.framebufferColorSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferDepthSampleCounts",
         limits.framebufferDepthSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferStencilSampleCounts",
         limits.framebufferStencilSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "framebufferNoAttachmentsSampleCounts",
         limits.framebufferNoAttachmentsSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
@@ -2239,7 +2196,6 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageColorSampleCounts",
         limits.sampledImageColorSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
@@ -2248,28 +2204,24 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageIntegerSampleCounts",
         limits.sampledImageIntegerSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageDepthSampleCounts",
         limits.sampledImageDepthSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "sampledImageStencilSampleCounts",
         limits.sampledImageStencilSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
     PrintVkFlagsProp ( INDENT_1,
         "storageImageSampleCounts",
         limits.storageImageSampleCounts,
-        g_vkSampleCountFlagMapperItems,
         g_vkSampleCountFlagMapper
     );
 
@@ -2315,13 +2267,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
         VkMemoryType const &type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
         LogInfo ( "%smemoryType: #%u", INDENT_2, i );
 
-        PrintVkFlagsProp ( INDENT_3,
-            "memoryTypes",
-            type.propertyFlags,
-            g_vkMemoryPropertyFlagBitsMapperItems,
-            g_vkMemoryPropertyFlagBitsMapper
-        );
-
+        PrintVkFlagsProp ( INDENT_3, "memoryTypes", type.propertyFlags, g_vkMemoryPropertyFlagBitsMapper );
         PrintUINT32Prop ( INDENT_3, "heapIndex", type.heapIndex );
     }
 
@@ -2333,13 +2279,7 @@ void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDe
 
         LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
         PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
-
-        PrintVkFlagsProp ( INDENT_3,
-            "memoryTypes",
-            heap.flags,
-            g_vkMemoryHeapFlagBitsMapperItems,
-            g_vkMemoryHeapFlagBitsMapper
-        );
+        PrintVkFlagsProp ( INDENT_3, "memoryTypes", heap.flags, g_vkMemoryHeapFlagBitsMapper );
     }
 }
 
@@ -2747,7 +2687,7 @@ void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
 {
     LogInfo ( "%sQueue family: #%u", INDENT_1, queueFamilyIndex );
 
-    PrintVkFlagsProp ( INDENT_2, "queueFlags", props.queueFlags, g_vkQueueFlagMapperItems, g_vkQueueFlagMapper );
+    PrintVkFlagsProp ( INDENT_2, "queueFlags", props.queueFlags, g_vkQueueFlagMapper );
     PrintUINT32Prop ( INDENT_2, "queueCount", props.queueCount );
     PrintUINT32Prop ( INDENT_2, "timestampValidBits", props.timestampValidBits );
     PrintVkExtent3DProp ( INDENT_2, "minImageTransferGranularity", props.minImageTransferGranularity );
@@ -2827,8 +2767,7 @@ void Renderer::PrintVkExtensionProp ( uint32_t extensionIndex, char const* categ
 void Renderer::PrintVkFlagsProp ( char const* indent,
     char const* name,
     VkFlags flags,
-    size_t flagSetCount,
-    std::pair<uint32_t, char const*> const flagSet[]
+    std::span<std::pair<uint32_t, char const*> const> flagSet
 ) noexcept
 {
     if ( !flags )
@@ -2837,7 +2776,7 @@ void Renderer::PrintVkFlagsProp ( char const* indent,
         return;
     }
 
-    LogInfo ( "%s%s:%s", indent, name, StringifyVkFlags ( flags, flagSetCount, flagSet ).c_str () );
+    LogInfo ( "%s%s:%s", indent, name, StringifyVkFlags ( flags, flagSet ).c_str () );
 }
 
 void Renderer::PrintVkHandler ( char const* indent, char const* name, void* handler ) noexcept
@@ -2875,7 +2814,6 @@ void Renderer::PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps
     PrintVkFlagsProp ( INDENT_1,
         "supportedTransforms",
         caps.supportedTransforms,
-        g_vkSurfaceTransformFlagBitsKHRMapperItems,
         g_vkSurfaceTransformFlagBitsKHRMapper
     );
 
@@ -2884,16 +2822,10 @@ void Renderer::PrintVkSurfaceCapabilities ( VkSurfaceCapabilitiesKHR const &caps
     PrintVkFlagsProp ( INDENT_1,
         "supportedCompositeAlpha",
         caps.supportedCompositeAlpha,
-        g_vkCompositeAlphaFlagBitsKHRMapperItems,
         g_vkCompositeAlphaFlagBitsKHRMapper
     );
 
-    PrintVkFlagsProp ( INDENT_1,
-        "supportedUsageFlags",
-        caps.supportedUsageFlags,
-        g_vkImageUsageFlagBitsMapperItems,
-        g_vkImageUsageFlagBitsMapper
-    );
+    PrintVkFlagsProp ( INDENT_1, "supportedUsageFlags", caps.supportedUsageFlags, g_vkImageUsageFlagBitsMapper );
 }
 
 void Renderer::PrintVkSurfaceFormatKHRProp ( uint32_t formatIndex, VkSurfaceFormatKHR const &format ) noexcept
@@ -2962,22 +2894,18 @@ char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR tra
 }
 
 std::string Renderer::StringifyVkFlags ( VkFlags flags,
-    size_t flagSetCount,
-    std::pair<uint32_t, char const*> const flagSet[]
+    std::span<std::pair<uint32_t, char const*> const> flagSet
 ) noexcept
 {
-    std::string result;
-    auto const bitmask = static_cast<uint32_t> ( flags );
+    std::string result{};
 
-    for ( size_t i = 0U; i < flagSetCount; ++i )
+    for ( auto const &flag : flagSet )
     {
-        auto const &item = flagSet[ i ];
-
-        if ( !( item.first & bitmask ) ) [[unlikely]]
+        if ( !( flags & flag.first ) ) [[unlikely]]
             continue;
 
         result += " ";
-        result += item.second;
+        result += flag.second;
     }
 
     return result;

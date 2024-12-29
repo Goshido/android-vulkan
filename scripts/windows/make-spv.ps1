@@ -1,11 +1,12 @@
-[string] $entryPoint = $args[ 0 ]
-[string] $profilePrefix = $args[ 1 ]
-[string] $src = $args[ 2 ]
-[string] $dst = $args[ 3 ]
+[string] $src = $args[ 0 ]
+[string] $dst = $args[ 1 ]
+
+[PSCustomObject] $type = Resolve-Type-HLSL      `
+    -Src $src
 
 $params =
-    "-E", $entryPoint,
-    "-T", "${profilePrefix}_$HLSL_PROFILE",
+    "-E", $type._entryPoint,
+    "-T", $type._profile,
     "-Fo", $dst,
     $src
 

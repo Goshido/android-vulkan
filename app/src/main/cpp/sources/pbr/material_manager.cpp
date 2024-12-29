@@ -130,7 +130,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._diffuseOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -147,7 +147,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._emissionOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -164,7 +164,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._maskOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -181,7 +181,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._normalOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -198,7 +198,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._paramOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -235,7 +235,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             commandBufferConsumed,
             data,
             h._diffuseOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -252,7 +252,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             commandBufferConsumed,
             data,
             h._emissionOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -269,7 +269,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             commandBufferConsumed,
             data,
             h._maskOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::sRGB,
             commandBuffers,
             fences
         );
@@ -286,7 +286,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             commandBufferConsumed,
             data,
             h._normalOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -303,7 +303,7 @@ MaterialRef MaterialManager::CreateStippleMaterial ( android_vulkan::Renderer &r
             commandBufferConsumed,
             data,
             h._paramOffset,
-            android_vulkan::eFormat::Unorm,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -329,7 +329,7 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
     size_t &commandBufferConsumed,
     uint8_t const* data,
     uint64_t nameOffset,
-    android_vulkan::eFormat format,
+    android_vulkan::eColorSpace space,
     VkCommandBuffer const* commandBuffers,
     VkFence const* fences
 ) noexcept
@@ -343,7 +343,7 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
     VkFence fnc = fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE;
 
-    if ( !texture->UploadData ( renderer, name, format, true, commandBuffers[ commandBufferConsumed ], fnc ) )
+    if ( !texture->UploadData ( renderer, name, space, true, commandBuffers[ commandBufferConsumed ], fnc ) )
     {
         texture = nullptr;
     }

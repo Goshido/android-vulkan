@@ -112,37 +112,6 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-GraphicsProgram::DescriptorSetInfo const &UIProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            },
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-                .descriptorCount = 2U
-            },
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 1U
-            }
-        },
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
-    return info;
-}
-
 void UIProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
     VkDescriptorSet const* sets,
     uint32_t startIndex,

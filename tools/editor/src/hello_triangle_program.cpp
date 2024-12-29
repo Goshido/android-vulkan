@@ -26,12 +26,6 @@ HelloTriangleProgram::HelloTriangleProgram () noexcept:
     // NOTHING
 }
 
-pbr::GraphicsProgram::DescriptorSetInfo const &HelloTriangleProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info {};
-    return info;
-}
-
 bool HelloTriangleProgram::Init ( android_vulkan::Renderer &renderer,
     VkRenderPass renderPass,
     uint32_t subpass

@@ -13,6 +13,9 @@ OFFSET:Init ( 512.0, 128.0, 0.0 )
 local SPEED = 2.0e-2
 local TOLERANCE = 1.0e-4
 
+local MIN_BRIGHTNESS = -2.68
+local MAX_BRIGHTNESS = 0.0
+
 -- Class declaration
 local Camera = {}
 
@@ -24,6 +27,9 @@ local function OnActorConstructed ( self, actor )
     camera:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), ZNEAR, ZFAR )
     self._cameraComponent = camera
     g_scene:SetActiveCamera ( camera )
+
+    g_scene:SetExposureMinimumBrightness ( MIN_BRIGHTNESS )
+    g_scene:SetExposureMaximumBrightness ( MAX_BRIGHTNESS )
 end
 
 local function OnRenderTargetChanged ( self )

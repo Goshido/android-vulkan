@@ -2,7 +2,8 @@
 #define TEXTURE_2D_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include "color_space.hpp"
+#include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -10,16 +11,8 @@ GX_DISABLE_COMMON_WARNINGS
 
 GX_RESTORE_WARNING_STATE
 
-#include "renderer.hpp"
-
 
 namespace android_vulkan {
-
-enum class eFormat : uint8_t
-{
-    Unorm,
-    sRGB
-};
 
 class Texture2D final
 {
@@ -78,7 +71,7 @@ class Texture2D final
         // Supported formats: PNG.
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             std::string const &fileName,
-            eFormat format,
+            eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -89,7 +82,7 @@ class Texture2D final
         // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             std::string &&fileName,
-            eFormat format,
+            eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -100,7 +93,7 @@ class Texture2D final
         // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             std::string_view const &fileName,
-            eFormat format,
+            eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -111,7 +104,7 @@ class Texture2D final
         // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             char const* fileName,
-            eFormat format,
+            eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
             VkFence fence
@@ -149,7 +142,6 @@ class Texture2D final
 
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,
-            eFormat format,
             VkCommandBuffer commandBuffer,
             VkFence fence
         ) noexcept;
@@ -173,7 +165,7 @@ class Texture2D final
         ) noexcept;
 
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
-        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept;
+        [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noexcept;
 };
 
 } // namespace android_vulkan

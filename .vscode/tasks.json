@@ -69,7 +69,7 @@
             ]
         },
         {
-            "label": "Validate Vertex Shader",
+            "label": "Validate Shader",
             "type": "shell",
             "group": "build",
 
@@ -86,77 +86,11 @@
                 {
                     "quoting": "strong",
                     "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "VS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "vs"
                 }
             ]
         },
         {
-            "label": "Validate Pixel Shader",
-            "type": "shell",
-            "group": "build",
-
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-
-            "command": {
-                "quoting": "weak",
-                "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
-            },
-
-            "args": [
-                {
-                    "quoting": "strong",
-                    "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "PS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "ps"
-                }
-            ]
-        },
-        {
-            "label": "Validate Compute Shader",
-            "type": "shell",
-            "group": "build",
-
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-
-            "command": {
-                "quoting": "weak",
-                "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
-            },
-
-            "args": [
-                {
-                    "quoting": "strong",
-                    "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "CS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "cs"
-                }
-            ]
-        },
-        {
-            "label": "Disassemble Vertex Shader",
+            "label": "Disassemble Shader",
             "type": "shell",
             "group": "build",
 
@@ -173,72 +107,6 @@
                 {
                     "quoting": "strong",
                     "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "VS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "vs"
-                }
-            ]
-        },
-        {
-            "label": "Disassemble Pixel Shader",
-            "type": "shell",
-            "group": "build",
-
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-
-            "command": {
-                "quoting": "weak",
-                "value" : "${workspaceFolder}/scripts/windows/disassm.ps1"
-            },
-
-            "args": [
-                {
-                    "quoting": "strong",
-                    "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "PS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "ps"
-                }
-            ]
-        },
-        {
-            "label": "Disassemble Compute Shader",
-            "type": "shell",
-            "group": "build",
-
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-
-            "command": {
-                "quoting": "weak",
-                "value" : "${workspaceFolder}/scripts/windows/disassm.ps1"
-            },
-
-            "args": [
-                {
-                    "quoting": "strong",
-                    "value": "${file}"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "CS"
-                },
-                {
-                    "quoting": "weak",
-                    "value": "cs"
                 }
             ]
         }

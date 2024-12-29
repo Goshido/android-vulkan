@@ -25,21 +25,6 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
     // NOTHING
 }
 
-GraphicsProgram::DescriptorSetInfo const &PointLightShadowmapGeneratorProgram::GetResourceInfo () const noexcept
-{
-    static DescriptorSetInfo const info
-    {
-        {
-            {
-                .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .descriptorCount = 1U
-            }
-        }
-    };
-
-    return info;
-}
-
 void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );

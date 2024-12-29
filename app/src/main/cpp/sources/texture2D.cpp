@@ -133,7 +133,7 @@ VkExtent2D const &Texture2D::GetResolution () const noexcept
 
 bool Texture2D::UploadData ( Renderer &renderer,
     std::string const &fileName,
-    eFormat format,
+    eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
     VkFence fence
@@ -166,7 +166,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     bool result = CreateCommonResources ( imageInfo,
         resolution,
-        ResolveFormat ( actualFormat, format ),
+        ResolveFormat ( actualFormat, space ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
@@ -193,7 +193,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
 bool Texture2D::UploadData ( Renderer &renderer,
     std::string &&fileName,
-    eFormat format,
+    eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
     VkFence fence
@@ -209,7 +209,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     if ( IsCompressed ( fileName ) )
     {
-        if ( !UploadCompressed ( renderer, fileName, format, commandBuffer, fence ) ) [[unlikely]]
+        if ( !UploadCompressed ( renderer, fileName, commandBuffer, fence ) ) [[unlikely]]
             return false;
 
         _fileName = std::move ( fileName );
@@ -236,7 +236,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     bool result = CreateCommonResources ( imageInfo,
         resolution,
-        ResolveFormat ( actualFormat, format ),
+        ResolveFormat ( actualFormat, space ),
         IMMUTABLE_TEXTURE_USAGE,
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
@@ -263,24 +263,24 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
 bool Texture2D::UploadData ( Renderer &renderer,
     std::string_view const &fileName,
-    eFormat format,
+    eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
     VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer, fence );
+    return UploadData ( renderer, std::string ( fileName ), space, isGenerateMipmaps, commandBuffer, fence );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
     char const *fileName,
-    eFormat format,
+    eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
     VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), format, isGenerateMipmaps, commandBuffer, fence );
+    return UploadData ( renderer, std::string ( fileName ), space, isGenerateMipmaps, commandBuffer, fence );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
@@ -545,21 +545,21 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
 
 bool Texture2D::UploadCompressed ( Renderer &renderer,
     std::string const &fileName,
-    eFormat format,
     VkCommandBuffer commandBuffer,
     VkFence fence
 ) noexcept
 {
-    KTXMediaContainer ktx;
+    KTXMediaContainer ktx{};
 
     if ( !ktx.Init ( fileName ) ) [[unlikely]]
         return false;
 
-    VkImageCreateInfo imageInfo;
+    // Note color space is defined in ktx container itself and can be fully trusted.
+    VkImageCreateInfo imageInfo{};
 
     bool result = CreateCommonResources ( imageInfo,
         ktx.GetMip ( 0U )._resolution,
-        ResolveFormat ( ktx.GetFormat (), format ),
+        ktx.GetFormat (),
         IMMUTABLE_TEXTURE_USAGE,
         ktx.GetMipCount (),
         renderer
@@ -1187,9 +1187,9 @@ VkFormat Texture2D::PickupFormat ( int channels ) noexcept
     }
 }
 
-VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eFormat format ) noexcept
+VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noexcept
 {
-    if ( format == eFormat::Unorm )
+    if ( space == eColorSpace::Unorm )
         return baseFormat;
 
     auto const findResult = g_FormatMapper.find ( baseFormat );

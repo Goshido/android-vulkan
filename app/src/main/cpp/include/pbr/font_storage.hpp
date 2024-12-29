@@ -200,10 +200,10 @@ class FontStorage final
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
         [[nodiscard]] bool MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] UIAtlas PixToUV ( uint32_t x, uint32_t y, float layer ) const noexcept;
         void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
+        [[nodiscard]] static UIAtlas PixToUV ( uint32_t x, uint32_t y, float layer ) noexcept;
 };
 
 } // namespace pbr

@@ -166,7 +166,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result = _brdfLUT.UploadData ( renderer,
         BRDF_LUT,
-        android_vulkan::eFormat::Unorm,
+        android_vulkan::eColorSpace::Unorm,
         false,
         textureCommandBuffer,
         VK_NULL_HANDLE

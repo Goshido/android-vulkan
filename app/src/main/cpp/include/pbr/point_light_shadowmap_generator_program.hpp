@@ -41,7 +41,6 @@ class PointLightShadowmapGeneratorProgram final : public GraphicsProgram
 
         ~PointLightShadowmapGeneratorProgram () override = default;
 
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
         void Destroy ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

@@ -20,8 +20,6 @@ class HelloTriangleProgram final : public pbr::GraphicsProgram
 
         ~HelloTriangleProgram () override = default;
 
-        [[nodiscard]] DescriptorSetInfo const &GetResourceInfo () const noexcept override;
-
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             VkRenderPass renderPass,
             uint32_t subpass

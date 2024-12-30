@@ -9,7 +9,7 @@
 
 ## <a id="brief">Brief</a>
 
-_Android_ development ecosystem requires to sign every release _APK_. It's achieved via `app/build.gragle` file. The sign certificate can be generated locally per user basis via built-in [_Android Studio_ tool](https://developer.android.com/studio/publish/app-signing#generate-key).
+_Android_ development ecosystem requires to sign every release _APK_. It's achieved via `app/build.gradle` file. The sign certificate can be generated locally per user basis via built-in [_Android Studio_ tool](https://developer.android.com/studio/publish/app-signing#generate-key).
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -7,14 +7,7 @@
 namespace pbr {
 
 DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
-    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
-    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
-    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock ),
-
-    _widthSelectorBase (
-        ( static_cast<size_t> ( _isInlineBlock ) << 2U ) | ( static_cast<size_t> ( _isAutoWidth ) << 1U )
-    )
+    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
 }
@@ -57,6 +50,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     };
 
     GXVec2 &penOut = info._pen;
+    bool const isInlineBlock = _css._display == DisplayProperty::eValue::InlineBlock;
 
     switch ( _css._position )
     {
@@ -73,7 +67,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
                 break;
             }
 
-            if ( !_isInlineBlock )
+            if ( !isInlineBlock )
             {
                 newLine ();
                 break;
@@ -98,16 +92,16 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         parentWidth - ( pen._data[ 0U ] + paddingRight + marginRight )
     };
 
-    _canvasSize = GXVec2 ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
-        ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true )
-    );
+    bool const isAutoWidth = _css._width.GetType () == LengthValue::eType::Auto;
+    auto selector = static_cast<size_t> ( isAutoWidth | ( _css._display == DisplayProperty::eValue::None ) );
+    _canvasSize = GXVec2 ( widthCases[ selector ], ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true ) );
 
     if ( _canvasSize._data[ 0U ] == 0.0F )
     {
         // Trying to resolve recursion with 'auto' width from parent and 'percentage' width from child.
         bool const isPercent = _css._width.GetType () == LengthValue::eType::Percent;
         float const cases[] = { 0.0F, 1.0e-2F * parentWidth * _css._width.GetValue () };
-        _canvasSize._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !_isInlineBlock ) ];
+        _canvasSize._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !isInlineBlock ) ];
     }
 
     _lineHeights.clear ();
@@ -129,7 +123,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     bool const hasLines = !_lineHeights.empty ();
 
-    if ( _isAutoHeight & hasLines )
+    if ( ( _css._height.GetType () == LengthValue::eType::Auto ) & hasLines )
         _canvasSize._data[ 1U ] = childInfo._pen._data[ 1U ] + _lineHeights.back ();
 
     float const finalWidth[] =
@@ -144,8 +138,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         widthCases[ 1U ]
     };
 
-    bool const isFullLine = _lineHeights.size () > 1U;
-    size_t const selector = _widthSelectorBase | static_cast<size_t> ( isFullLine );
+    selector = ( static_cast<size_t> ( isInlineBlock ) << 2U ) |
+        ( static_cast<size_t> ( isAutoWidth ) << 1U ) |
+        static_cast<size_t> ( _lineHeights.size () > 1U );
+
     _canvasSize._data[ 0U ] = finalWidth[ selector ];
 
     GXVec2 padding {};

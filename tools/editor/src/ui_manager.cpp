@@ -3,8 +3,8 @@
 #include <mouse_key_event.hpp>
 #include <mouse_move_event.hpp>
 #include <trace.hpp>
-#include <ui_dialog_box.hpp>
 #include <ui_manager.hpp>
+#include <ui_props.hpp>
 
 
 namespace editor {
@@ -85,7 +85,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
 
 void UIManager::CreateWidgets () noexcept
 {
-    auto* dialogBox = new UIDialogBox ( *_messageQueue );
+    auto* dialogBox = new UIProps ( *_messageQueue );
     dialogBox->SetRect ( Rect ( 100, 500, 100, 300 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
@@ -130,6 +130,10 @@ void UIManager::EventLoop () noexcept
 
             case eMessageType::StopWidgetCaptureMouse:
                 OnStopWidgetCaptureMouse ();
+            break;
+
+            case eMessageType::UILabelSetText:
+                OnUILabeleSetText ( std::move ( message ) );
             break;
 
             default:
@@ -181,13 +185,8 @@ void UIManager::OnMouseKeyUp ( Message &&message ) noexcept
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
     if ( _mouseCapture ) [[unlikely]]
-    {
         _mouseCapture->OnMouseKeyUp ( *event );
-        delete event;
-        return;
-    }
 
-    // FUCK
     delete event;
 }
 
@@ -278,6 +277,13 @@ void UIManager::OnStopWidgetCaptureMouse () noexcept
             ._serialNumber = 0U
         }
     );
+}
+
+void UIManager::OnUILabeleSetText ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Label set text" )
+    _messageQueue->DequeueEnd ();
+    UILabel::OnSetText ( std::move ( message ) );
 }
 
 } // namespace editor

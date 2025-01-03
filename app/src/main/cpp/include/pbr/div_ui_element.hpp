@@ -26,15 +26,10 @@ class DIVUIElement final : public UIElement
         bool                        _hasBackground = false;
         GXVec2                      _marginTopLeft {};
 
-        bool                        _isAutoWidth;
-        bool                        _isAutoHeight;
-        bool                        _isInlineBlock;
-
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
         GXVec2                      _positions[ UIPass::GetVerticesPerRectangle() ] {};
         UIVertex                    _vertices[ UIPass::GetVerticesPerRectangle() ] {};
-        size_t const                _widthSelectorBase;
 
     public:
         DIVUIElement () = delete;

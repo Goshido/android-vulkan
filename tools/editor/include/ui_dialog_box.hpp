@@ -10,7 +10,7 @@
 
 namespace editor {
 
-class UIDialogBox final : public Widget
+class UIDialogBox : public Widget
 {
     private:
         class Gizmo final
@@ -37,9 +37,11 @@ class UIDialogBox final : public Widget
                 [[nodiscard]] bool OnMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept;
         };
 
+    protected:
+        pbr::DIVUIElement           _div { nullptr, {} };
+
     private:
         std::vector<float>          _lineHeights { 1U, 0.0F };
-        pbr::DIVUIElement           _div { nullptr, {} };
         bool                        _dragState = false;
         size_t                      _eventID = 0U;
         MessageQueue                &_messageQueue;
@@ -75,18 +77,18 @@ class UIDialogBox final : public Widget
         Gizmo                       _resizeBottomRight { eCursor::NorthWestSouthEast };
 
     public:
-        explicit UIDialogBox ( MessageQueue &messageQueue ) noexcept;
-
         UIDialogBox ( UIDialogBox const & ) = delete;
         UIDialogBox &operator = ( UIDialogBox const & ) = delete;
 
         UIDialogBox ( UIDialogBox && ) = delete;
         UIDialogBox &operator = ( UIDialogBox && ) = delete;
 
-        ~UIDialogBox () override = default;
-
         void SetRect ( Rect const &rect ) noexcept;
         void SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept;
+
+    protected:
+        explicit UIDialogBox ( MessageQueue &messageQueue ) noexcept;
+        ~UIDialogBox () override = default;
 
     private:
         void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;

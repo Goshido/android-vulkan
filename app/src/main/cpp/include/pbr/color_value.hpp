@@ -20,7 +20,7 @@ class ColorValue final
         NotifyChanged       _notifyChanged = nullptr;
 
     public:
-        explicit ColorValue () = default;
+        ColorValue () = default;
 
         ColorValue ( ColorValue const & ) = default;
         ColorValue &operator = ( ColorValue const & ) = default;

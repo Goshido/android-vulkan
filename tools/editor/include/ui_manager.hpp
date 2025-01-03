@@ -49,6 +49,7 @@ class UIManager final
         void OnShutdown ( Message &&refund ) noexcept;
         void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
         void OnStopWidgetCaptureMouse () noexcept;
+        void OnUILabeleSetText ( Message &&message ) noexcept;
 };
 
 } // namespace editor

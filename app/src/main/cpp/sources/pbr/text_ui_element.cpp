@@ -44,20 +44,60 @@ bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool TextUIElement::SubmitCache::Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) noexcept
+bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
+    TextAlignProperty::eValue horizontal,
+    VerticalAlignProperty::eValue vertical,
+    std::vector<float> const &cachedLineHeight
+) noexcept
 {
     bool const c0 = _isTextChanged;
     bool const c1 = _isColorChanged;
-    bool const c2 = !_penIn.IsEqual ( info._pen );
-    bool const c3 = !_parenTopLeft.IsEqual ( info._parentTopLeft );
 
-    std::span<float const> dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
-    bool const c4 = !std::equal ( dst.begin (), dst.end (), cachedLineHeight.cbegin () );
+    std::span<float const> const dst ( info._parentLineHeights + info._line, cachedLineHeight.size () );
+    bool const c2 = !std::equal ( dst.begin (), dst.end (), cachedLineHeight.cbegin () );
+
+    bool c3 = false;
+
+    switch ( horizontal )
+    {
+        case TextAlignProperty::eValue::Right:
+            [[fallthrough]];
+        case TextAlignProperty::eValue::Center:
+            c3 = !_parenSize.IsEqual ( info._parentSize );
+        break;
+
+        case TextAlignProperty::eValue::Left:
+            c3 = !_penIn.IsEqual ( info._pen );
+        break;
+
+        case TextAlignProperty::eValue::Inherit:
+            AV_ASSERT ( false )
+        break;
+    }
+
+    bool c4 = false;
+
+    switch ( vertical )
+    {
+        case VerticalAlignProperty::eValue::Bottom:
+            [[fallthrough]];
+        case VerticalAlignProperty::eValue::Middle:
+            c4 = !_parenSize.IsEqual ( info._parentSize );
+        break;
+
+        case VerticalAlignProperty::eValue::Top:
+            c4 = !_penIn.IsEqual ( info._pen );
+        break;
+
+        case VerticalAlignProperty::eValue::Inherit:
+            AV_ASSERT ( false )
+        break;
+    }
 
     _isTextChanged = false;
     _isColorChanged = false;
 
-    if ( c0 | c1 | c2 | c3 | c4 )
+    if ( c0 | c1 | c2 | c3 | c4 ) [[likely]]
         return false;
 
     info._pen = _penOut;
@@ -73,6 +113,15 @@ TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32st
     _glyphs.resize ( _text.size () );
 }
 
+TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept:
+    UIElement ( visible, parent )
+{
+    if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
+        _text = std::move ( *str );
+
+    _glyphs.resize ( _text.size () );
+}
+
 void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
 {
     _color = color;
@@ -80,6 +129,11 @@ void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
 }
 
 void TextUIElement::SetText ( char const* text ) noexcept
+{
+    SetText ( std::string_view ( text ) );
+}
+
+void TextUIElement::SetText ( std::string_view text ) noexcept
 {
     auto str = UTF8Parser::ToU32String ( text );
 
@@ -303,10 +357,13 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     bool const needRefill = _visibilityChanged;
     _visibilityChanged = false;
 
-    if ( ( !_visible | ( glyphCount == 0U ) ) || _submitCache.Run ( info, _applyLayoutCache._lineHeights ) )
+    if ( !_visible | ( glyphCount == 0U ) )
         return needRefill;
 
-    _submitCache._parenTopLeft = info._parentTopLeft;
+    if ( _submitCache.Run ( info, GetTextAlignment (), GetVerticalAlignment (), _applyLayoutCache._lineHeights ) )
+        return needRefill;
+
+    _submitCache._parenSize = info._parentSize;
     _submitCache._penIn = info._pen;
 
     std::vector<GXVec2> &positionBuffer = _submitCache._positions;
@@ -341,8 +398,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         ++height;
     }
 
-    AlignIntegerHandler const textAlignment = ResolveIntegerTextAlignment ( _parent );
-    AlignIntegerHandler const verticalAlignment = ResolveIntegerVerticalAlignment ( _parent );
+    AlignIntegerHandler const textAlignment = GetIntegerTextAlignment ();
+    AlignIntegerHandler const verticalAlignment = GetIntegerVerticalAlignment ();
 
     auto x = static_cast<int32_t> ( pen._data[ 0U ] );
     auto y = static_cast<int32_t> ( pen._data[ 1U ] );
@@ -397,6 +454,102 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return true;
 }
 
+TextAlignProperty::eValue TextUIElement::GetTextAlignment () const noexcept
+{
+    for ( UIElement const* p = _parent; p; )
+    {
+        switch ( TextAlignProperty::eValue const align = p->GetCSS ()._textAlign; align )
+        {
+            case TextAlignProperty::eValue::Inherit:
+                p = p->_parent;
+            break;
+
+            case TextAlignProperty::eValue::Center:
+                [[fallthrough]];
+            case TextAlignProperty::eValue::Left:
+                [[fallthrough]];
+            case TextAlignProperty::eValue::Right:
+            return align;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return TextAlignProperty::eValue::Left;
+}
+
+VerticalAlignProperty::eValue TextUIElement::GetVerticalAlignment () const noexcept
+{
+    for ( UIElement const* p = _parent; p; )
+    {
+        switch ( VerticalAlignProperty::eValue const align = p->GetCSS ()._verticalAlign; align )
+        {
+            case VerticalAlignProperty::eValue::Inherit:
+                p = p->_parent;
+            break;
+
+            case VerticalAlignProperty::eValue::Bottom:
+                [[fallthrough]];
+            case VerticalAlignProperty::eValue::Middle:
+                [[fallthrough]];
+            case VerticalAlignProperty::eValue::Top:
+            return align;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return VerticalAlignProperty::eValue::Top;
+}
+
+TextUIElement::AlignIntegerHandler TextUIElement::GetIntegerTextAlignment () const noexcept
+{
+    for ( UIElement const* p = _parent; p; )
+    {
+        switch ( p->GetCSS ()._textAlign )
+        {
+            case TextAlignProperty::eValue::Center:
+            return &TextUIElement::AlignIntegerToCenter;
+
+            case TextAlignProperty::eValue::Left:
+            return &TextUIElement::AlignIntegerToStart;
+
+            case TextAlignProperty::eValue::Right:
+            return &TextUIElement::AlignIntegerToEnd;
+
+            case TextAlignProperty::eValue::Inherit:
+                p = p->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &TextUIElement::AlignIntegerToStart;
+}
+
+TextUIElement::AlignIntegerHandler TextUIElement::GetIntegerVerticalAlignment () const noexcept
+{
+    for ( UIElement const* p = _parent; p; )
+    {
+        switch ( p->GetCSS ()._verticalAlign )
+        {
+            case VerticalAlignProperty::eValue::Bottom:
+            return &TextUIElement::AlignIntegerToEnd;
+
+            case VerticalAlignProperty::eValue::Middle:
+            return &TextUIElement::AlignIntegerToCenter;
+
+            case VerticalAlignProperty::eValue::Top:
+            return &TextUIElement::AlignIntegerToStart;
+
+            case VerticalAlignProperty::eValue::Inherit:
+                p = p->_parent;
+            break;
+        }
+    }
+
+    AV_ASSERT ( false )
+    return &TextUIElement::AlignIntegerToStart;
+}
+
 GXColorUNORM TextUIElement::ResolveColor () const noexcept
 {
     if ( _color )
@@ -425,11 +578,7 @@ std::string const* TextUIElement::ResolveFont () const noexcept
 {
     for ( UIElement const* p = _parent; p; p = p->_parent )
     {
-        // NOLINTNEXTLINE - downcast.
-        auto const &div = *static_cast<DIVUIElement const*> ( p );
-        std::string const &fontFile = div.GetCSS ()._fontFile;
-
-        if ( !fontFile.empty () )
+        if ( std::string const &fontFile = p->GetCSS ()._fontFile; !fontFile.empty () )
         {
             return &fontFile;
         }
@@ -452,62 +601,6 @@ int32_t TextUIElement::AlignIntegerToStart ( int32_t pen, int32_t /*parentSize*/
 int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept
 {
     return pen + parentSize - lineSize;
-}
-
-TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerTextAlignment ( UIElement const* parent ) noexcept
-{
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const &div = static_cast<DIVUIElement const &> ( *parent );
-
-        switch ( div.GetCSS ()._textAlign )
-        {
-            case TextAlignProperty::eValue::Center:
-            return &TextUIElement::AlignIntegerToCenter;
-
-            case TextAlignProperty::eValue::Left:
-            return &TextUIElement::AlignIntegerToStart;
-
-            case TextAlignProperty::eValue::Right:
-            return &TextUIElement::AlignIntegerToEnd;
-
-            case TextAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
-            break;
-        }
-    }
-
-    AV_ASSERT ( false )
-    return &TextUIElement::AlignIntegerToStart;
-}
-
-TextUIElement::AlignIntegerHandler TextUIElement::ResolveIntegerVerticalAlignment ( UIElement const* parent ) noexcept
-{
-    while ( parent )
-    {
-        // NOLINTNEXTLINE - downcast
-        auto const &div = static_cast<DIVUIElement const &> ( *parent );
-
-        switch ( div.GetCSS ()._verticalAlign )
-        {
-            case VerticalAlignProperty::eValue::Bottom:
-            return &TextUIElement::AlignIntegerToEnd;
-
-            case VerticalAlignProperty::eValue::Middle:
-            return &TextUIElement::AlignIntegerToCenter;
-
-            case VerticalAlignProperty::eValue::Top:
-            return &TextUIElement::AlignIntegerToStart;
-
-            case VerticalAlignProperty::eValue::Inherit:
-                parent = parent->_parent;
-            break;
-        }
-    }
-
-    AV_ASSERT ( false )
-    return &TextUIElement::AlignIntegerToStart;
 }
 
 } // namespace pbr

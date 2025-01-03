@@ -861,7 +861,9 @@
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
+    <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
+    <ClCompile Include="src\ui_props.cpp" />
     <ClCompile Include="src\widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -960,7 +962,9 @@
     <ClInclude Include="include\save_state.hpp" />
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
+    <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
+    <ClInclude Include="include\ui_props.hpp" />
     <ClInclude Include="include\widget.hpp" />
   </ItemGroup>
   <ItemGroup>

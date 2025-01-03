@@ -45,27 +45,6 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue& messageQueue, MouseMoveEven
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIDialogBox::UIDialogBox ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    pbr::CSSComputedValues &css = _div.GetCSS ();
-    css._position = pbr::PositionProperty::eValue::Absolute;
-    css._backgroundColor = theme::BACKGROUND_COLOR;
-    css._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
-
-    pbr::LengthValue const zero ( pbr::LengthValue::eType::PX, 0.0F );
-    css._marginBottom = zero;
-    css._marginLeft = zero;
-    css._marginRight = zero;
-    css._marginTop = zero;
-    css._paddingBottom = zero;
-    css._paddingLeft = zero;
-    css._paddingRight = zero;
-    css._paddingTop = zero;
-    css._right = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
-    css._bottom = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
-}
-
 void UIDialogBox::SetRect ( Rect const &rect ) noexcept
 {
     _isChanged = true;
@@ -78,6 +57,26 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
     _minWidthCSS = width;
     _minHeightCSS = height;
     UpdateMinSize ();
+}
+
+UIDialogBox::UIDialogBox ( MessageQueue &messageQueue ) noexcept:
+    _messageQueue ( messageQueue )
+{
+    pbr::CSSComputedValues &css = _div.GetCSS ();
+    css._position = pbr::PositionProperty::eValue::Absolute;
+    css._backgroundColor = theme::BACKGROUND_COLOR;
+    css._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
+
+    css._marginBottom = theme::ZERO_LENGTH;
+    css._marginLeft = theme::ZERO_LENGTH;
+    css._marginRight = theme::ZERO_LENGTH;
+    css._marginTop = theme::ZERO_LENGTH;
+    css._paddingBottom = theme::ZERO_LENGTH;
+    css._paddingLeft = theme::ZERO_LENGTH;
+    css._paddingRight = theme::ZERO_LENGTH;
+    css._paddingTop = theme::ZERO_LENGTH;
+    css._right = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
+    css._bottom = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
 }
 
 void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept

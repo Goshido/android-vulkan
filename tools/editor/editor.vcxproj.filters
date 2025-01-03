@@ -252,6 +252,12 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\uniform_pool.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui_label.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_props.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -544,6 +550,12 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_pool.hpp">
       <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_label.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_props.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

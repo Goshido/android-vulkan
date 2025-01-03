@@ -4,13 +4,6 @@
 
 namespace pbr {
 
-LengthValue::LengthValue ( eType type, float value ) noexcept:
-    _type ( type ),
-    _value ( value )
-{
-    // NOTHING
-}
-
 LengthValue::eType LengthValue::GetType () const noexcept
 {
     return _type;

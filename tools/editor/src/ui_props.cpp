@@ -7,20 +7,53 @@ namespace editor {
 
 UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     UIDialogBox ( messageQueue ),
-    _header ( std::make_unique<UILabel> ( messageQueue, _div, "Properties" ) )
-{
-    pbr::DIVUIElement &headerDiv = _header->GetDIV ();
-    pbr::CSSComputedValues &h = headerDiv.GetCSS ();
-    h._backgroundColor = theme::HEADER_COLOR;
-    h._textAlign = pbr::TextAlignProperty::eValue::Center;
-    h._paddingTop = theme::HEADER_VERTICAL_PADDING;
-    h._paddingBottom = theme::HEADER_VERTICAL_PADDING;
-    h._paddingLeft = theme::ZERO_LENGTH;
-    h._paddingRight = theme::ZERO_LENGTH;
-    h._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
-    h._height = theme::AUTO_LENGTH;
 
-    _div.AppendChildElement ( headerDiv );
+    _headerLine (
+        std::make_unique<pbr::DIVUIElement> ( &_div,
+
+            pbr::CSSComputedValues
+            {
+                ._backgroundColor = theme::HEADER_COLOR,
+                ._backgroundSize = theme::ZERO_LENGTH,
+                ._bottom = theme::ZERO_LENGTH,
+                ._left = theme::ZERO_LENGTH,
+                ._right = theme::ZERO_LENGTH,
+                ._top = theme::ZERO_LENGTH,
+                ._color = theme::TRANSPARENT_COLOR,
+                ._display = pbr::DisplayProperty::eValue::Block,
+                ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+                ._fontSize = theme::HEADER_FONT_SIZE,
+                ._marginBottom = theme::ZERO_LENGTH,
+                ._marginLeft = theme::ZERO_LENGTH,
+                ._marginRight = theme::ZERO_LENGTH,
+                ._marginTop = theme::ZERO_LENGTH,
+                ._paddingBottom = theme::ZERO_LENGTH,
+                ._paddingLeft = theme::ZERO_LENGTH,
+                ._paddingRight = theme::ZERO_LENGTH,
+                ._paddingTop = theme::ZERO_LENGTH,
+                ._position = pbr::PositionProperty::eValue::Static,
+                ._textAlign = pbr::TextAlignProperty::eValue::Left,
+                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+                ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+                ._height = theme::HEADER_HEIGHT
+            }
+        )
+    ),
+
+    _headerText ( std::make_unique<UILabel> ( messageQueue, *_headerLine, "Properties" ) ),
+    _closeButton ( std::make_unique<UICloseButton> ( messageQueue, *_headerLine ) )
+{
+    pbr::CSSComputedValues &headerTextStyle = _headerText->GetCSS ();
+    headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
+    headerTextStyle._textAlign = pbr::TextAlignProperty::eValue::Center;
+    headerTextStyle._paddingTop = theme::HEADER_VERTICAL_PADDING;
+    headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
+
+    pbr::CSSComputedValues &closeButtonStyle = _closeButton->GetCSS ();
+    closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 2.0F );
+    closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
+
+    _div.AppendChildElement ( *_headerLine );
 }
 
 } // namespace editor

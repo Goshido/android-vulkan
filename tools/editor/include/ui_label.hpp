@@ -5,7 +5,6 @@
 #include "message_queue.hpp"
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
-#include "widget.hpp"
 
 
 namespace editor {
@@ -30,13 +29,13 @@ class UILabel final
         UILabel ( UILabel && ) = delete;
         UILabel &operator = ( UILabel && ) = delete;
 
-        explicit UILabel ( MessageQueue &messageQueue, pbr::UIElement const &parent, std::string_view text ) noexcept;
+        explicit UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string_view text ) noexcept;
 
         ~UILabel () = default;
 
         void operator = ( std::string &&text ) noexcept;
 
-        [[nodiscard]] pbr::DIVUIElement &GetDIV () noexcept;
+        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
     private:
         static void OnSetText ( Message &&message ) noexcept;

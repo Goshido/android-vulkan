@@ -860,6 +860,7 @@
     <ClCompile Include="src\rect.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
+    <ClCompile Include="src\ui_close_button.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
@@ -948,6 +949,7 @@
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\keys.hpp" />
@@ -961,6 +963,7 @@
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\save_state.hpp" />
     <ClInclude Include="include\theme.hpp" />
+    <ClInclude Include="include\ui_close_button.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />

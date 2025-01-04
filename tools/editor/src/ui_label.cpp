@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include "theme.hpp"
+#include <theme.hpp>
 #include <ui_label.hpp>
 
 
@@ -17,23 +17,23 @@ struct SetTextEvent final
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UILabel::UILabel ( MessageQueue &messageQueue, pbr::UIElement const &parent, std::string_view text ) noexcept:
+UILabel::UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string_view text ) noexcept:
     _messageQueue ( messageQueue )
 {
     _div = std::make_unique<pbr::DIVUIElement> ( &parent,
 
         pbr::CSSComputedValues
         {
-            ._backgroundColor = pbr::ColorValue ( false, theme::TRANSPARENT_COLOR ),
+            ._backgroundColor = theme::TRANSPARENT_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::ZERO_LENGTH,
             ._left = theme::ZERO_LENGTH,
             ._right = theme::ZERO_LENGTH,
             ._top = theme::ZERO_LENGTH,
-            ._color = pbr::ColorValue ( false, theme::TEXT_COLOR_NORMAL ),
+            ._color = theme::TEXT_COLOR_NORMAL,
             ._display = pbr::DisplayProperty::eValue::Block,
             ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
-            ._fontSize = theme::FONT_SIZE,
+            ._fontSize = theme::NORMAL_FONT_SIZE,
             ._marginBottom = theme::ZERO_LENGTH,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
@@ -53,6 +53,7 @@ UILabel::UILabel ( MessageQueue &messageQueue, pbr::UIElement const &parent, std
     pbr::DIVUIElement &div = *_div;
     _text = std::make_unique<pbr::TextUIElement> ( true, &div, text );
     div.AppendChildElement ( *_text );
+    parent.AppendChildElement ( div );
 }
 
 void UILabel::operator = ( std::string &&text ) noexcept
@@ -72,9 +73,9 @@ void UILabel::operator = ( std::string &&text ) noexcept
     );
 }
 
-pbr::DIVUIElement& UILabel::GetDIV () noexcept
+pbr::CSSComputedValues &UILabel::GetCSS () noexcept
 {
-    return *_div;
+    return _div->GetCSS ();
 }
 
 void UILabel::OnSetText ( Message &&message ) noexcept

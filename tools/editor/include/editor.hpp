@@ -15,7 +15,7 @@ class Editor final
 {
     private:
         constexpr static std::string_view       DEFAULT_GPU = "";
-        constexpr static float                  DEFAULT_UI_ZOOM = 1.0F;
+        constexpr static float                  DEFAULT_UI_ZOOM = 0.9F;
         constexpr static bool                   DEFAULT_VSYNC = true;
 
         struct Config final

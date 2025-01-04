@@ -29,6 +29,12 @@ class ColorValue final
         ColorValue &operator = ( ColorValue &&other ) noexcept;
         ColorValue &operator = ( GXColorUNORM srgb ) noexcept;
 
+        constexpr explicit ColorValue ( uint32_t rSRGB, uint32_t gSRGB, uint32_t bSRGB, uint32_t a ) noexcept:
+            _srgb ( rSRGB, gSRGB, bSRGB, a )
+        {
+            // NOTHING
+        }
+
         explicit ColorValue ( bool inherit, GXColorUNORM srgb ) noexcept;
 
         ~ColorValue () = default;

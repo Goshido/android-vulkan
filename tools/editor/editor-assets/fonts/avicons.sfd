@@ -1,0 +1,219 @@
+SplineFontDB: 3.2
+FontName: AVIcons
+FullName: AVIcons
+FamilyName: AVIcons
+Weight: Regular
+Copyright: Copyright (c) 2025, Goshido Inc
+UComments: "2025-1-4: Created with FontForge (http://fontforge.org)"
+Version: 001.000
+DefaultBaseFilename: avicons
+ItalicAngle: 0
+UnderlinePosition: -99
+UnderlineWidth: 49
+Ascent: 1000
+Descent: 0
+InvalidEm: 0
+LayerCount: 2
+Layer: 0 0 "Back" 1
+Layer: 1 0 "Fore" 0
+XUID: [1021 654 893643841 7267]
+FSType: 0
+OS2Version: 0
+OS2_WeightWidthSlopeOnly: 0
+OS2_UseTypoMetrics: 1
+CreationTime: 1735976778
+ModificationTime: 1735991131
+PfmFamily: 17
+TTFWeight: 400
+TTFWidth: 5
+LineGap: 369
+VLineGap: 0
+OS2TypoAscent: 0
+OS2TypoAOffset: 1
+OS2TypoDescent: 0
+OS2TypoDOffset: 1
+OS2TypoLinegap: 369
+OS2WinAscent: 0
+OS2WinAOffset: 1
+OS2WinDescent: 0
+OS2WinDOffset: 1
+HheadAscent: 0
+HheadAOffset: 1
+HheadDescent: 0
+HheadDOffset: 1
+OS2Vendor: 'PfEd'
+MarkAttachClasses: 1
+DEI: 91125
+LangName: 1033
+Encoding: ISO8859-1
+UnicodeInterp: none
+NameList: AGL For New Fonts
+DisplaySize: -48
+AntiAlias: 1
+FitToEm: 0
+WinInfo: 0 22 11
+BeginPrivate: 0
+EndPrivate
+Grid
+500 -254.8828125 m 29
+ 500 1146.97265625 l 1053
+-535.400390625 500 m 25
+ 1847.41210938 500 l 1049
+EndSplineSet
+TeXData: 1 0 0 346030 173015 115343 0 1048576 115343 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+BeginChars: 256 4
+
+StartChar: exclam
+Encoding: 33 33 0
+Width: 1000
+Flags: W
+HStem: 0 24<32.177 966.692> 973 26<28.8613 968.942>
+VStem: 0 25<31.0585 967.942> 975 25<31.1073 967.942>
+LayerCount: 2
+Fore
+SplineSet
+56 973 m 2
+ 32 973 25 959 25 943 c 2
+ 25 56 l 2
+ 25 36 40 24 56 24 c 2
+ 942 24 l 2
+ 964 24 975 42 975 59 c 2
+ 975 940 l 2
+ 975 952 968 973 948 973 c 2
+ 56 973 l 2
+49 999 m 2
+ 951 999 l 2
+ 978 999 1000 977 1000 950 c 2
+ 1000 49 l 2
+ 1000 22 978 0 951 0 c 2
+ 49 0 l 2
+ 22 0 0 22 0 49 c 2
+ 0 950 l 2
+ 0 977 22 999 49 999 c 2
+864 154 m 2
+ 853 144 l 2
+ 843.5 134.5 831 129.75 818.5 129.75 c 0
+ 806 129.75 793.5 134.5 784 144 c 2
+ 505 422 l 1
+ 221 138 l 2
+ 211.5 128.5 199 123.75 186.5 123.75 c 0
+ 174 123.75 161.5 128.5 152 138 c 2
+ 142 149 l 2
+ 132.5 158.5 127.75 171 127.75 183.5 c 0
+ 127.75 196 132.5 208.5 142 218 c 2
+ 426 502 l 1
+ 166 761 l 2
+ 156.5 770.5 151.75 783 151.75 795.5 c 0
+ 151.75 808 156.5 820.5 166 830 c 2
+ 177 841 l 2
+ 186.5 850.5 199 855.25 211.5 855.25 c 0
+ 224 855.25 236.5 850.5 246 841 c 2
+ 505 582 l 1
+ 759 836 l 2
+ 768.5 845.5 781 850.25 793.5 850.25 c 0
+ 806 850.25 818.5 845.5 828 836 c 2
+ 839 825 l 2
+ 848.5 815.5 853.25 803 853.25 790.5 c 0
+ 853.25 778 848.5 765.5 839 756 c 2
+ 585 502 l 1
+ 864 223 l 2
+ 873.5 213.5 878.25 201 878.25 188.5 c 0
+ 878.25 176 873.5 163.5 864 154 c 2
+EndSplineSet
+Validated: 524289
+EndChar
+
+StartChar: quotedbl
+Encoding: 34 34 1
+Width: 1000
+Flags: W
+HStem: 0 999<8.38477 991.615>
+VStem: 0 1000<8.38477 990.615>
+LayerCount: 2
+Fore
+SplineSet
+49 999 m 2
+ 951 999 l 2
+ 978 999 1000 977 1000 950 c 2
+ 1000 49 l 2
+ 1000 22 978 0 951 0 c 2
+ 49 0 l 2
+ 22 0 0 22 0 49 c 2
+ 0 950 l 2
+ 0 977 22 999 49 999 c 2
+EndSplineSet
+Validated: 1
+EndChar
+
+StartChar: numbersign
+Encoding: 35 35 2
+Width: 1000
+Flags: W
+HStem: 0 24<32.177 966.692> 973 26<28.8613 968.942>
+VStem: 0 25<31.0585 967.942> 975 25<31.1073 967.942>
+LayerCount: 2
+Fore
+SplineSet
+56 973 m 2
+ 32 973 25 959 25 943 c 2
+ 25 56 l 2
+ 25 36 40 24 56 24 c 2
+ 942 24 l 2
+ 964 24 975 42 975 59 c 2
+ 975 940 l 2
+ 975 952 968 973 948 973 c 2
+ 56 973 l 2
+49 999 m 2
+ 951 999 l 2
+ 978 999 1000 977 1000 950 c 2
+ 1000 49 l 2
+ 1000 22 978 0 951 0 c 2
+ 49 0 l 2
+ 22 0 0 22 0 49 c 2
+ 0 950 l 2
+ 0 977 22 999 49 999 c 2
+EndSplineSet
+Validated: 1
+EndChar
+
+StartChar: dollar
+Encoding: 36 36 3
+Width: 1000
+Flags: WO
+LayerCount: 2
+Fore
+SplineSet
+864 154 m 2
+ 853 144 l 2
+ 843.5 134.5 831 129.75 818.5 129.75 c 0
+ 806 129.75 793.5 134.5 784 144 c 2
+ 505 422 l 1
+ 221 138 l 2
+ 211.5 128.5 199 123.75 186.5 123.75 c 0
+ 174 123.75 161.5 128.5 152 138 c 2
+ 142 149 l 2
+ 132.5 158.5 127.75 171 127.75 183.5 c 0
+ 127.75 196 132.5 208.5 142 218 c 2
+ 426 502 l 1
+ 166 761 l 2
+ 156.5 770.5 151.75 783 151.75 795.5 c 0
+ 151.75 808 156.5 820.5 166 830 c 2
+ 177 841 l 2
+ 186.5 850.5 199 855.25 211.5 855.25 c 0
+ 224 855.25 236.5 850.5 246 841 c 2
+ 505 582 l 1
+ 759 836 l 2
+ 768.5 845.5 781 850.25 793.5 850.25 c 0
+ 806 850.25 818.5 845.5 828 836 c 2
+ 839 825 l 2
+ 848.5 815.5 853.25 803 853.25 790.5 c 0
+ 853.25 778 848.5 765.5 839 756 c 2
+ 585 502 l 1
+ 864 223 l 2
+ 873.5 213.5 878.25 201 878.25 188.5 c 0
+ 878.25 176 873.5 163.5 864 154 c 2
+EndSplineSet
+Validated: 524289
+EndChar
+EndChars
+EndSplineFont

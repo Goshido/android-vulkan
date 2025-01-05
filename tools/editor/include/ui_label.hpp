@@ -29,7 +29,11 @@ class UILabel final
         UILabel ( UILabel && ) = delete;
         UILabel &operator = ( UILabel && ) = delete;
 
-        explicit UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string_view text ) noexcept;
+        explicit UILabel ( MessageQueue &messageQueue,
+            pbr::DIVUIElement &parent,
+            std::string_view text,
+            std::string &&name
+        ) noexcept;
 
         ~UILabel () = default;
 

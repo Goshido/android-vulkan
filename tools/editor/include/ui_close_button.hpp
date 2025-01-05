@@ -38,7 +38,7 @@ class UICloseButton final
         UICloseButton ( UICloseButton && ) = delete;
         UICloseButton &operator = ( UICloseButton && ) = delete;
 
-        explicit UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent ) noexcept;
+        explicit UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string &&name ) noexcept;
 
         ~UICloseButton () = default;
 

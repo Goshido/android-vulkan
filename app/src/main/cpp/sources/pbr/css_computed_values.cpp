@@ -126,6 +126,14 @@ class ApplyHandlers final
             CSSParser const &css
         ) noexcept;
 
+        [[nodiscard]] static bool HandleLineHeight ( char const* html,
+            CSSComputedValues &target,
+            Property const &property,
+            char const* kind,
+            std::u32string const &name,
+            CSSParser const &css
+        ) noexcept;
+
         [[nodiscard]] static bool HandleMarginBottom ( char const* html,
             CSSComputedValues &target,
             Property const &property,
@@ -252,6 +260,7 @@ ApplyHandlers::ApplyHandlers () noexcept
     _handlers[ static_cast<size_t> ( Property::eType::FontSize ) ] = &ApplyHandlers::HandleFontSize;
     _handlers[ static_cast<size_t> ( Property::eType::Height ) ] = &ApplyHandlers::HandleHeight;
     _handlers[ static_cast<size_t> ( Property::eType::Left ) ] = &ApplyHandlers::HandleLeft;
+    _handlers[ static_cast<size_t> ( Property::eType::LineHeight ) ] = &ApplyHandlers::HandleLineHeight;
     _handlers[ static_cast<size_t> ( Property::eType::Margin ) ] = &ApplyHandlers::HandleFail;
     _handlers[ static_cast<size_t> ( Property::eType::MarginBottom ) ] = &ApplyHandlers::HandleMarginBottom;
     _handlers[ static_cast<size_t> ( Property::eType::MarginLeft ) ] = &ApplyHandlers::HandleMarginLeft;
@@ -436,6 +445,19 @@ bool ApplyHandlers::HandleLeft ( char const* /*html*/,
 {
     // NOLINTNEXTLINE - downcast.
     target._left = static_cast<LengthProperty const &> ( property ).GetValue ();
+    return true;
+}
+
+bool ApplyHandlers::HandleLineHeight ( char const* /*html*/,
+    CSSComputedValues &target,
+    Property const &property,
+    char const* /*kind*/,
+    std::u32string const &/*name*/,
+    CSSParser const &/*css*/
+) noexcept
+{
+    // NOLINTNEXTLINE - downcast.
+    target._lineHeight = static_cast<LengthProperty const &> ( property ).GetValue ();
     return true;
 }
 

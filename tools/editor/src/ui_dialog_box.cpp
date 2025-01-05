@@ -59,24 +59,42 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
     UpdateMinSize ();
 }
 
-UIDialogBox::UIDialogBox ( MessageQueue &messageQueue ) noexcept:
+UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept:
+    _div ( nullptr,
+
+        {
+            ._backgroundColor = theme::BACKGROUND_COLOR,
+            ._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TEXT_COLOR_NORMAL,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::NORMAL_LINE_HEIGHT,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = theme::SMALL_BUTTON_HEIGHT,
+            ._height = theme::SMALL_BUTTON_HEIGHT
+        },
+
+        std::move ( name )
+    ),
+
     _messageQueue ( messageQueue )
 {
-    pbr::CSSComputedValues &css = _div.GetCSS ();
-    css._position = pbr::PositionProperty::eValue::Absolute;
-    css._backgroundColor = theme::BACKGROUND_COLOR;
-    css._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
-
-    css._marginBottom = theme::ZERO_LENGTH;
-    css._marginLeft = theme::ZERO_LENGTH;
-    css._marginRight = theme::ZERO_LENGTH;
-    css._marginTop = theme::ZERO_LENGTH;
-    css._paddingBottom = theme::ZERO_LENGTH;
-    css._paddingLeft = theme::ZERO_LENGTH;
-    css._paddingRight = theme::ZERO_LENGTH;
-    css._paddingTop = theme::ZERO_LENGTH;
-    css._right = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
-    css._bottom = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
+    // NOTHING
 }
 
 void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
@@ -372,6 +390,8 @@ void UIDialogBox::UpdateMinSize () noexcept
             case pbr::LengthValue::eType::Auto:
                 [[fallthrough]];
             case pbr::LengthValue::eType::Percent:
+                [[fallthrough]];
+            case pbr::LengthValue::eType::Unitless:
                 [[fallthrough]];
             default:
                 android_vulkan::LogWarning ( "UIDialogBox::UpdateMinSize - Only MM, PT and PX units are supported. "

@@ -81,6 +81,26 @@ ImageUIElement::ImageUIElement ( bool &success,
     }
 }
 
+ImageUIElement::ImageUIElement ( bool &success,
+    UIElement const* parent,
+    std::string &&asset,
+    CSSComputedValues &&css,
+    std::string &&name
+) noexcept:
+    UIElement ( true, parent, std::move ( css ), std::move ( name ) ),
+    _asset ( std::move ( android_vulkan::File ( std::move ( asset ) ).GetPath () ) ),
+    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
+    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
+    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
+{
+    auto const texture = UIPass::RequestImage ( _asset );
+
+    if ( success = texture.has_value (); success )
+    {
+        _submitCache._texture = *texture;
+    }
+}
+
 ImageUIElement::~ImageUIElement () noexcept
 {
     if ( _submitCache._texture )

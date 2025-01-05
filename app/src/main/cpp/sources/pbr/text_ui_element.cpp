@@ -113,8 +113,32 @@ TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32st
     _glyphs.resize ( _text.size () );
 }
 
+TextUIElement::TextUIElement ( bool visible,
+    UIElement const* parent,
+    std::u32string &&text,
+    std::string &&name
+) noexcept:
+    UIElement ( visible, parent, std::move ( name ) ),
+    _text ( std::move ( text ) )
+{
+    _glyphs.resize ( _text.size () );
+}
+
 TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept:
     UIElement ( visible, parent )
+{
+    if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
+        _text = std::move ( *str );
+
+    _glyphs.resize ( _text.size () );
+}
+
+TextUIElement::TextUIElement ( bool visible,
+    UIElement const* parent,
+    std::string_view text,
+    std::string &&name
+) noexcept:
+    UIElement ( visible, parent, std::move ( name ) )
 {
     if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
         _text = std::move ( *str );

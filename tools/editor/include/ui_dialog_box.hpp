@@ -38,7 +38,7 @@ class UIDialogBox : public Widget
         };
 
     protected:
-        pbr::DIVUIElement           _div { nullptr, {} };
+        pbr::DIVUIElement           _div;
 
     private:
         std::vector<float>          _lineHeights { 1U, 0.0F };
@@ -87,7 +87,7 @@ class UIDialogBox : public Widget
         void SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept;
 
     protected:
-        explicit UIDialogBox ( MessageQueue &messageQueue ) noexcept;
+        explicit UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept;
         ~UIDialogBox () override = default;
 
     private:

@@ -8,8 +8,8 @@ UComments: "2025-1-4: Created with FontForge (http://fontforge.org)"
 Version: 001.000
 DefaultBaseFilename: avicons
 ItalicAngle: 0
-UnderlinePosition: -99
-UnderlineWidth: 49
+UnderlinePosition: 0
+UnderlineWidth: 1000
 Ascent: 1000
 Descent: 0
 InvalidEm: 0
@@ -22,7 +22,7 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1735976778
-ModificationTime: 1735991131
+ModificationTime: 1736081428
 PfmFamily: 17
 TTFWeight: 400
 TTFWidth: 5
@@ -51,7 +51,7 @@ NameList: AGL For New Fonts
 DisplaySize: -48
 AntiAlias: 1
 FitToEm: 0
-WinInfo: 0 22 11
+WinInfo: 22 22 11
 BeginPrivate: 0
 EndPrivate
 Grid
@@ -120,7 +120,7 @@ SplineSet
  873.5 213.5 878.25 201 878.25 188.5 c 0
  878.25 176 873.5 163.5 864 154 c 2
 EndSplineSet
-Validated: 524289
+Validated: 1
 EndChar
 
 StartChar: quotedbl
@@ -179,7 +179,7 @@ EndChar
 StartChar: dollar
 Encoding: 36 36 3
 Width: 1000
-Flags: WO
+Flags: W
 LayerCount: 2
 Fore
 SplineSet
@@ -213,7 +213,7 @@ SplineSet
  873.5 213.5 878.25 201 878.25 188.5 c 0
  878.25 176 873.5 163.5 864 154 c 2
 EndSplineSet
-Validated: 524289
+Validated: 1
 EndChar
 EndChars
 EndSplineFont

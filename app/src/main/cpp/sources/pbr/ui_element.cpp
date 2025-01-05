@@ -41,6 +41,14 @@ UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
     // NOTHING
 }
 
+UIElement::UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept:
+    _name ( std::move ( name ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
 UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept:
     _css ( std::move ( css ) ),
     _visible ( visible ),
@@ -49,8 +57,17 @@ UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues 
     // NOTHING
 }
 
+UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
+    _css ( std::move ( css ) ),
+    _name ( std::move ( name ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
 float UIElement::ResolvePixelLength ( LengthValue const &length,
-    float parentLength,
+    float referenceLength,
     bool isHeight
 ) const noexcept
 {
@@ -86,8 +103,11 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
                 }
             }
 
-            return 1.0e-2F * parentLength * length.GetValue ();
+            return 1.0e-2F * referenceLength * length.GetValue ();
         }
+
+        case LengthValue::eType::Unitless:
+        return referenceLength * length.GetValue ();
 
         case LengthValue::eType::Auto:
         return 0.0F;
@@ -146,13 +166,12 @@ float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexc
 
         case LengthValue::eType::Percent:
             [[fallthrough]];
-
         case LengthValue::eType::EM:
             [[fallthrough]];
-
         case LengthValue::eType::Auto:
             [[fallthrough]];
-
+        case LengthValue::eType::Unitless:
+            [[fallthrough]];
         default:
             // IMPOSSIBLE
             AV_ASSERT ( false )

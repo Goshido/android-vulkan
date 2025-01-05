@@ -17,7 +17,11 @@ struct SetTextEvent final
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UILabel::UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string_view text ) noexcept:
+UILabel::UILabel ( MessageQueue &messageQueue,
+    pbr::DIVUIElement &parent,
+    std::string_view text,
+    std::string &&name
+) noexcept:
     _messageQueue ( messageQueue )
 {
     _div = std::make_unique<pbr::DIVUIElement> ( &parent,
@@ -34,6 +38,7 @@ UILabel::UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::s
             ._display = pbr::DisplayProperty::eValue::Block,
             ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
             ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
             ._marginBottom = theme::ZERO_LENGTH,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
@@ -47,11 +52,13 @@ UILabel::UILabel ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::s
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = theme::ZERO_LENGTH,
             ._height = theme::ZERO_LENGTH
-        }
+        },
+
+        name + " (DIV)"
     );
 
     pbr::DIVUIElement &div = *_div;
-    _text = std::make_unique<pbr::TextUIElement> ( true, &div, text );
+    _text = std::make_unique<pbr::TextUIElement> ( true, &div, text, name + " (text)" );
     div.AppendChildElement ( *_text );
     parent.AppendChildElement ( div );
 }

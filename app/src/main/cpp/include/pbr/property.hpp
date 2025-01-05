@@ -27,6 +27,7 @@ class Property
             FontSize,
             Height,
             Left,
+            LineHeight,
             Margin,
             MarginBottom,
             MarginLeft,

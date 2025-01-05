@@ -12,6 +12,12 @@ DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) 
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
 }
 
+DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
+    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ), std::move ( name ) )
+{
+    _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
+}
+
 void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
     if ( !_visible )

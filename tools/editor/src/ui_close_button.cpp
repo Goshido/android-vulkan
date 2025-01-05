@@ -6,7 +6,7 @@
 
 namespace editor {
 
-UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent ) noexcept:
+UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string &&name ) noexcept:
     _messageQueue ( messageQueue ),
 
     _base (
@@ -16,14 +16,15 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
             {
                 ._backgroundColor = theme::TRANSPARENT_COLOR,
                 ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
                 ._color = theme::TRANSPARENT_COLOR,
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile { glyph::FONT_FAMILY.data (), glyph::FONT_FAMILY.size () },
                 ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
+                ._lineHeight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
                 ._marginRight = theme::ZERO_LENGTH,
@@ -37,7 +38,9 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
                 ._width = theme::SMALL_BUTTON_HEIGHT,
                 ._height = theme::SMALL_BUTTON_HEIGHT
-            }
+            },
+
+            name + " (base)"
         )
     ),
 
@@ -48,14 +51,15 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
             {
                 ._backgroundColor = theme::TRANSPARENT_COLOR,
                 ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
                 ._color = pbr::ColorValue ( 106U, 172U, 0U, 255U ),
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
                 ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
                 ._marginRight = theme::ZERO_LENGTH,
@@ -69,12 +73,18 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
                 ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
-            }
+            },
+
+            name + " (background DIV)"
         )
     ),
 
     _backgroundText (
-        std::make_unique<pbr::TextUIElement> ( true, _backgroundDIV.get (), glyph::CLOSE_BUTTON_BACKGROUND )
+        std::make_unique<pbr::TextUIElement> ( true,
+            _backgroundDIV.get (),
+            glyph::CLOSE_BUTTON_BACKGROUND,
+            name + " (background text)"
+        )
     ),
 
     _borderDIV (
@@ -84,14 +94,15 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
             {
                 ._backgroundColor = theme::TRANSPARENT_COLOR,
                 ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
                 ._color = pbr::ColorValue ( 255U, 255U, 255U, 255U ),
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
                 ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
                 ._marginRight = theme::ZERO_LENGTH,
@@ -105,11 +116,19 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
                 ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
-            }
+            },
+
+            name + " (border DIV)"
         )
     ),
 
-    _borderText ( std::make_unique<pbr::TextUIElement> ( true, _borderDIV.get (), glyph::CLOSE_BUTTON_BORDER ) ),
+    _borderText (
+        std::make_unique<pbr::TextUIElement> ( true,
+            _borderDIV.get (),
+            glyph::CLOSE_BUTTON_BORDER,
+            name + " (border text)"
+        )
+    ),
 
     _crossDIV (
         std::make_unique<pbr::DIVUIElement> ( _base.get (),
@@ -118,14 +137,15 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
             {
                 ._backgroundColor = theme::TRANSPARENT_COLOR,
                 ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
                 ._color = pbr::ColorValue ( 0U, 0U, 0U, 255U ),
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
                 ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
                 ._marginRight = theme::ZERO_LENGTH,
@@ -139,11 +159,19 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
                 ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
-            }
+            },
+
+            name + " (cross DIV)"
         )
     ),
 
-    _crossText ( std::make_unique<pbr::TextUIElement> ( true, _crossDIV.get (), glyph::CLOSE_BUTTON_CROSS ) )
+    _crossText (
+        std::make_unique<pbr::TextUIElement> ( true,
+            _crossDIV.get (),
+            glyph::CLOSE_BUTTON_CROSS,
+            name + " (cross text)"
+        )
+    )
 {
     pbr::DIVUIElement &backgroundDIV = *_backgroundDIV;
     backgroundDIV.AppendChildElement ( *_backgroundText );

@@ -33,7 +33,7 @@ BEGIN
             VALUE "FileDescription", "HTML Validator"
             VALUE "FileVersion", VERSION_STRING
             VALUE "InternalName", "html-validator.exe"
-            VALUE "LegalCopyright", "2023 - 2024. Goshido Inc. All rights reserved."
+            VALUE "LegalCopyright", "2023 - 2025. Goshido Inc. All rights reserved."
             VALUE "OriginalFilename", "html-validator.exe"
             VALUE "ProductName", "HTML Validator"
             VALUE "ProductVersion", VERSION_STRING

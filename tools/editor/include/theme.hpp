@@ -23,6 +23,7 @@ constexpr pbr::ColorValue TEXT_COLOR_NORMAL ( 178U, 178U, 178U, 255U );
 constexpr pbr::ColorValue TRANSPARENT_COLOR ( 0U, 0U, 0U, 0U );
 
 constexpr pbr::LengthValue NORMAL_FONT_SIZE ( pbr::LengthValue::eType::PX, 12.0F );
+constexpr pbr::LengthValue NORMAL_LINE_HEIGHT ( pbr::LengthValue::eType::Unitless, 1.2F );
 
 constexpr pbr::LengthValue HEADER_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
 constexpr pbr::LengthValue HEADER_VERTICAL_PADDING ( pbr::LengthValue::eType::PX, 6.0F );

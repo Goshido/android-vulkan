@@ -38,6 +38,7 @@ struct CSSComputedValues final
     std::string                         _fontFile;
 
     LengthValue                         _fontSize;
+    LengthValue                         _lineHeight;
 
     LengthValue                         _marginBottom;
     LengthValue                         _marginLeft;

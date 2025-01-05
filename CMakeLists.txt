@@ -127,6 +127,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/line_height_property_checker.cpp
     app/src/main/cpp/sources/pbr/link_html5_element.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp

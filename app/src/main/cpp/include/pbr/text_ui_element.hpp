@@ -90,7 +90,20 @@ class TextUIElement final : public UIElement
         TextUIElement &operator = ( TextUIElement && ) = delete;
 
         explicit TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept;
+
+        explicit TextUIElement ( bool visible,
+            UIElement const* parent,
+            std::u32string &&text,
+            std::string &&name
+        ) noexcept;
+
         explicit TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept;
+
+        explicit TextUIElement ( bool visible,
+            UIElement const* parent,
+            std::string_view text,
+            std::string &&name
+        ) noexcept;
 
         ~TextUIElement () override = default;
 

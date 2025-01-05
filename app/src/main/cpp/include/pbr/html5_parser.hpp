@@ -22,10 +22,37 @@ class HTML5Parser final
 
         std::unordered_set<std::u32string>      _bodyClasses {};
         HTML5Children                           _bodyChildren {};
-        std::u32string                          _bodyID {};
 
+        CSSComputedValues                       _bodyCSS
+        {
+            ._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) ),
+            ._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F ),
+            ._bottom = LengthValue ( LengthValue::eType::Auto, 42.0F ),
+            ._left = LengthValue ( LengthValue::eType::Auto, 42.0F ),
+            ._right = LengthValue ( LengthValue::eType::Auto, 42.0F ),
+            ._top = LengthValue ( LengthValue::eType::Auto, 42.0F ),
+            ._color = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0xFFU ) ),
+            ._display = DisplayProperty::eValue::Block,
+            ._fontFile {},
+            ._fontSize = LengthValue ( LengthValue::eType::PX, 16.0F ),
+            ._lineHeight = LengthValue ( LengthValue::eType::Unitless, 1.2F ),
+            ._marginBottom = LengthValue ( LengthValue::eType::PX, 8.0F ),
+            ._marginLeft = LengthValue ( LengthValue::eType::PX, 8.0F ),
+            ._marginRight = LengthValue ( LengthValue::eType::PX, 8.0F ),
+            ._marginTop = LengthValue ( LengthValue::eType::PX, 8.0F ),
+            ._paddingBottom = LengthValue ( LengthValue::eType::PX, 0.0F ),
+            ._paddingLeft = LengthValue ( LengthValue::eType::PX, 0.0F ),
+            ._paddingRight = LengthValue ( LengthValue::eType::PX, 0.0F ),
+            ._paddingTop = LengthValue ( LengthValue::eType::PX, 0.0F ),
+            ._position = PositionProperty::eValue::Static,
+            ._textAlign = TextAlignProperty::eValue::Left,
+            ._verticalAlign = VerticalAlignProperty::eValue::Top,
+            ._width = LengthValue ( LengthValue::eType::Percent, 100.0F ),
+            ._height = LengthValue ( LengthValue::eType::Percent, 100.0F ),
+        };
+
+        std::u32string                          _bodyID {};
         CSSParser                               _css {};
-        CSSComputedValues                       _cssComputedValues {};
 
     public:
         HTML5Parser () = default;
@@ -46,8 +73,6 @@ class HTML5Parser final
         [[nodiscard]] bool Parse ( char const* html, Stream stream, char const* assetRoot ) noexcept;
 
     private:
-        void ApplyDefaultCSS () noexcept;
-
         [[nodiscard]] ParseResult ParseBodyElement ( char const* html, Stream stream, char const* assetRoot ) noexcept;
         [[nodiscard]] bool ParseHTMLElement ( char const* html, Stream stream, char const* assetRoot ) noexcept;
         [[nodiscard]] ParseResult ParseHeadElement ( char const* html, Stream stream, char const* assetRoot ) noexcept;

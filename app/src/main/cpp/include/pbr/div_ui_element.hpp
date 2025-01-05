@@ -41,6 +41,7 @@ class DIVUIElement final : public UIElement
         DIVUIElement &operator = ( DIVUIElement && ) = delete;
 
         explicit DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept;
+        explicit DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept;
 
         ~DIVUIElement () override = default;
 

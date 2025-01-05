@@ -23,7 +23,8 @@ class LengthValue final
             MM,
             PT,
             PX,
-            Percent
+            Percent,
+            Unitless
         };
 
     private:

@@ -43,6 +43,7 @@ class UIElement
 
     protected:
         CSSComputedValues                   _css {};
+        std::string                         _name {};
 
         bool                                _visible = false;
         bool                                _visibilityChanged = true;
@@ -80,10 +81,17 @@ class UIElement
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
+        explicit UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept;
         explicit UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept;
 
+        explicit UIElement ( bool visible,
+            UIElement const* parent,
+            CSSComputedValues &&css,
+            std::string &&name
+        ) noexcept;
+
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
-            float parentLength,
+            float referenceLength,
             bool isHeight
         ) const noexcept;
 

@@ -190,12 +190,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _glyphs.reserve ( glyphCount );
 
     FontStorage &fontStorage = *info._fontStorage;
+    auto font = fontStorage.GetFont ( _parent->ResolveFont (), static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
 
-    std::string const &fontAsset = *ResolveFont ();
-    auto const size = static_cast<uint32_t> ( ResolveFontSize ( *_parent ) );
-    auto font = fontStorage.GetFont ( fontAsset, size );
-
-    if ( !font )
+    if ( !font ) [[unlikely]]
         return;
 
     auto f = *font;
@@ -210,7 +207,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
 
-    _fontSize = f->second._lineHeight;
+    _fontSize = f->second._metrics._baselineToBaseline;
     auto const fontSizeF = static_cast<float> ( _fontSize );
 
     int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
@@ -596,20 +593,6 @@ GXColorUNORM TextUIElement::ResolveColor () const noexcept
 
     constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
     return nullColor;
-}
-
-std::string const* TextUIElement::ResolveFont () const noexcept
-{
-    for ( UIElement const* p = _parent; p; p = p->_parent )
-    {
-        if ( std::string const &fontFile = p->GetCSS ()._fontFile; !fontFile.empty () )
-        {
-            return &fontFile;
-        }
-    }
-
-    AV_ASSERT ( false )
-    return nullptr;
 }
 
 int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept

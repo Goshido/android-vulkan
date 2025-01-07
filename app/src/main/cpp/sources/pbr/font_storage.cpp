@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <precompiled_headers.hpp>
 #include <pbr/font_storage.hpp>
 #include <file.hpp>
 #include <logger.hpp>
@@ -530,10 +529,12 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
 
     FontResource* f = *fontResource;
     auto const s = static_cast<FT_UInt> ( size );
-    FT_Face face = f->_face;
 
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( f->_face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
+    {
+        [[unlikely]]
         return std::nullopt;
+    }
 
     // Hash function is based on Boost implementation:
     // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
@@ -549,17 +550,29 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
         return findResult;
 
-    auto status = _fonts.emplace ( hash,
-        FontData
-        {
-            ._fontResource = f,
-            ._fontSize = size,
-            ._glyphs = {},
-            ._lineHeight = static_cast<int32_t> ( static_cast<uint32_t> ( face->size->metrics.height ) >> 6U )
-        }
+    EMFontMetrics const &metrics = f->_metrics;
+    auto const sz = static_cast<double> ( size );
+
+    auto status = _fonts.insert (
+        std::make_pair (
+            hash,
+
+            FontData
+            {
+                ._fontResource = f,
+                ._fontSize = size,
+                ._glyphs = {},
+
+                ._metrics
+                {
+                    ._baselineToBaseline = static_cast<int32_t> ( sz * metrics._baselineToBaseline ),
+                    ._contentArea = static_cast<int32_t> ( sz * metrics._contentArea )
+                }
+            }
+        )
     );
 
-    return status.first;
+    return std::optional<FontStorage::Font> { status.first };
 }
 
 FontStorage::GlyphInfo const &FontStorage::GetOpaqueGlyphInfo () const noexcept
@@ -768,7 +781,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     bool const result = CheckFTResult ( FT_Load_Char ( face, static_cast<FT_ULong> ( character ), FT_LOAD_RENDER ),
         "pbr::FontStorage::EmbedGlyph",
-        "Can't set size"
+        "Can't get glyph bitmap"
     );
 
     if ( !result )
@@ -787,16 +800,19 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     if ( ( rows == 0U ) | ( width == 0U ) )
     {
-        auto const status = glyphs.emplace ( character,
-            GlyphInfo
-            {
-                ._topLeft = _transparentGlyph._topLeft,
-                ._bottomRight = _transparentGlyph._bottomRight,
-                ._width = static_cast<int32_t> ( width ),
-                ._height = static_cast<int32_t> ( rows ),
-                ._advance = advance,
-                ._offsetY = offsetY
-            }
+        auto const status = glyphs.insert (
+            std::make_pair ( character,
+
+                GlyphInfo
+                {
+                    ._topLeft = _transparentGlyph._topLeft,
+                    ._bottomRight = _transparentGlyph._bottomRight,
+                    ._width = 0,
+                    ._height = 0,
+                    ._advance = advance,
+                    ._offsetY = offsetY
+                }
+            )
         );
 
         return status.first->second;
@@ -895,16 +911,19 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     uint32_t const base = cases[ static_cast<size_t> ( _atlas._layers != 0U ) ];
     auto const layer = static_cast<float> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) );
 
-    auto const status = glyphs.emplace ( character,
-        GlyphInfo
-        {
-            ._topLeft = PixToUV ( left, top, layer ),
-            ._bottomRight = PixToUV ( right + 1U, bottom + 1U, layer ),
-            ._width = static_cast<int32_t> ( width ),
-            ._height = static_cast<int32_t> ( rows ),
-            ._advance = advance,
-            ._offsetY = offsetY
-        }
+    auto const status = glyphs.insert (
+        std::make_pair ( character,
+
+            GlyphInfo
+            {
+                ._topLeft = PixToUV ( left, top, layer ),
+                ._bottomRight = PixToUV ( right + 1U, bottom + 1U, layer ),
+                ._width = static_cast<int32_t> ( width ),
+                ._height = static_cast<int32_t> ( rows ),
+                ._advance = advance,
+                ._offsetY = offsetY
+            }
+        )
     );
 
     return status.first->second;
@@ -916,7 +935,9 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
         return &findResult->second;
 
     android_vulkan::File fontAsset ( font );
-    [[maybe_unused]] bool const result = fontAsset.LoadContent ();
+
+    if ( !fontAsset.LoadContent () ) [[unlikely]]
+        return std::nullopt;
 
     auto status = _fontResources.emplace ( std::string_view ( _stringHeap.emplace_front ( font ) ),
         FontResource
@@ -927,25 +948,91 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
     );
 
     FontResource &resource = status.first->second;
+    FT_Face &face = resource._face;
 
-    bool const init = CheckFTResult (
+    bool result = CheckFTResult (
         FT_New_Memory_Face ( _library,
             resource._fontAsset.data (),
             static_cast<FT_Long> ( resource._fontAsset.size () ),
             0,
-            &resource._face
+            &face
         ),
 
         "pbr::FontStorage::GetFontResource",
         "Can't load face"
     );
 
-    if ( init )
-        return &resource;
+    if ( !result ) [[unlikely]]
+    {
+        _fontResources.erase ( status.first );
+        _stringHeap.pop_front ();
+        return std::nullopt;
+    }
 
-    _fontResources.erase ( status.first );
-    _stringHeap.pop_front ();
-    return std::nullopt;
+    // Based on ideas from Skia:
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/skia/src/ports/SkFontHost_FreeType.cpp;l=1559;drc=f39c57f31413abcb41d3068cfb2c7a1718003cc5;bpv=0;bpt=1
+
+    EMFontMetrics &metrics = resource._metrics;
+    auto const em = static_cast<FT_UInt> ( face->units_per_EM );
+    auto const invEM = 1.0 / static_cast<double> ( em );
+
+    metrics =
+    {
+        ._ascend = invEM * static_cast<double> ( face->ascender ),
+        ._baselineToBaseline = invEM * static_cast<double> ( face->height ),
+
+        // Note: FreeType provides 'face->descender' as negative value.
+        ._contentArea = invEM * static_cast<double> ( face->ascender - face->descender ),
+
+        ._descent = invEM * static_cast<double> ( -face->descender ),
+    };
+
+    if ( auto const* os2 = static_cast<TT_OS2 const*> ( FT_Get_Sfnt_Table ( face, ft_sfnt_os2 ) ); os2 )
+    {
+        if ( FT_Short const xHeight = os2->sxHeight; xHeight != 0 )
+        {
+            metrics._xHeight = invEM * static_cast<double> ( xHeight );
+            return &resource;
+        }
+    }
+
+    // Trying to use actual 'x' glyph to get metrics.
+
+    // Half of EM size. Blind guess. Better than nothing.
+    auto const defaultXHeight = invEM * static_cast<double> ( em >> 1U );
+
+    if ( !( face->face_flags & FT_FACE_FLAG_SCALABLE ) )
+    {
+        metrics._xHeight = defaultXHeight;
+        return &resource;
+    }
+
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ), "pbr::FontStorage::GetFontResource", "Can't set size" ) )
+    {
+        [[unlikely]]
+        _fontResources.erase ( status.first );
+        _stringHeap.pop_front ();
+        return std::nullopt;
+    }
+
+    result = FT_Load_Char ( face, static_cast<FT_ULong> ( U'x' ), FT_LOAD_BITMAP_METRICS_ONLY ) == FT_Err_Ok &&
+        face->glyph->format == FT_GLYPH_FORMAT_OUTLINE;
+
+    if ( !result )
+    {
+        metrics._xHeight = defaultXHeight;
+        return &resource;
+    }
+
+    FT_Pos maxY = 0;
+    FT_Outline const &outline = face->glyph->outline;
+
+    for ( FT_Vector const &p : std::span<FT_Vector const> ( outline.points, static_cast<size_t> ( outline.n_points ) ) )
+        maxY = std::max ( maxY, p.y );
+
+    double const cases[] = { defaultXHeight, invEM * static_cast<double> ( maxY >> 6 ) };
+    metrics._xHeight = cases[ static_cast<size_t> ( maxY > 0 ) ];
+    return &resource;
 }
 
 std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (

@@ -43,20 +43,37 @@ class FontStorage final
             int32_t                             _offsetY = 0;
         };
 
+        // Coefficients for getting pixel metrics of the font.
+        struct EMFontMetrics final
+        {
+            double                              _ascend = 0.0;
+            double                              _baselineToBaseline = 0.0;
+            double                              _contentArea = 0.0;
+            double                              _descent = 0.0;
+            double                              _xHeight = 0.0;
+        };
+
+        struct PixelFontMetrics final
+        {
+            int32_t                             _baselineToBaseline = 0;
+            int32_t                             _contentArea = 0;
+        };
+
         struct FontResource final
         {
-            FT_Face                             _face;
+            FT_Face                             _face = nullptr;
             std::vector<uint8_t>                _fontAsset;
+            EMFontMetrics                       _metrics {};
         };
 
         using GlyphStorage = std::unordered_map<char32_t, GlyphInfo>;
 
         struct FontData final
         {
-            FontResource*                       _fontResource;
-            uint32_t                            _fontSize;
-            GlyphStorage                        _glyphs;
-            int32_t                             _lineHeight;
+            FontResource*                       _fontResource = nullptr;
+            uint32_t                            _fontSize = 0U;
+            GlyphStorage                        _glyphs {};
+            PixelFontMetrics                    _metrics {};
         };
 
         using FontHash = size_t;
@@ -170,7 +187,6 @@ class FontStorage final
 
         [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
-
         [[nodiscard]] GlyphInfo const &GetOpaqueGlyphInfo () const noexcept;
         [[nodiscard]] GlyphInfo const &GetTransparentGlyphInfo () const noexcept;
 

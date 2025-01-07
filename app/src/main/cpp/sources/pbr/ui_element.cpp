@@ -34,100 +34,29 @@ CSSComputedValues const& UIElement::GetCSS () const noexcept
     return _css;
 }
 
-UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
-    _visible ( visible ),
-    _parent ( parent )
+std::string_view UIElement::ResolveFont () const noexcept
 {
-    // NOTHING
-}
-
-UIElement::UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept:
-    _name ( std::move ( name ) ),
-    _visible ( visible ),
-    _parent ( parent )
-{
-    // NOTHING
-}
-
-UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept:
-    _css ( std::move ( css ) ),
-    _visible ( visible ),
-    _parent ( parent )
-{
-    // NOTHING
-}
-
-UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
-    _css ( std::move ( css ) ),
-    _name ( std::move ( name ) ),
-    _visible ( visible ),
-    _parent ( parent )
-{
-    // NOTHING
-}
-
-float UIElement::ResolvePixelLength ( LengthValue const &length,
-    float referenceLength,
-    bool isHeight
-) const noexcept
-{
-    CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
-
-    switch ( length.GetType () )
+    for ( UIElement const* p = this; p; p = p->_parent )
     {
-        case LengthValue::eType::EM:
-        return static_cast<float> ( ResolveFontSize ( *this ) );
-
-        case LengthValue::eType::MM:
-        return units._fromMM * length.GetValue ();
-
-        case LengthValue::eType::PT:
-        return units._fromPT * length.GetValue ();
-
-        case LengthValue::eType::PX:
-        return units._fromPX * length.GetValue ();
-
-        case LengthValue::eType::Percent:
+        if ( std::string const &fontFile = p->GetCSS ()._fontFile; !fontFile.empty () )
         {
-            if ( _parent )
-            {
-                UIElement const &div = *_parent;
-
-                LengthValue const* cases[] = { &div._css._width, &div._css._height };
-                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
-
-                if ( isAuto & isHeight )
-                {
-                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
-                    return 0.0F;
-                }
-            }
-
-            return 1.0e-2F * referenceLength * length.GetValue ();
+            return std::string_view ( fontFile );
         }
-
-        case LengthValue::eType::Unitless:
-        return referenceLength * length.GetValue ();
-
-        case LengthValue::eType::Auto:
-        return 0.0F;
-
-        default:
-            AV_ASSERT ( false )
-        return 0.0F;
     }
+
+    AV_ASSERT ( false )
+    return {};
 }
 
-float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexcept
+float UIElement::ResolveFontSize () const noexcept
 {
     LengthValue const* target = nullptr;
     float relativeScale = 1.0F;
     LengthValue::eType type = LengthValue::eType::Auto;
 
-    for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
+    for ( UIElement const* p = this; p; p = p->_parent )
     {
-        UIElement const &div = *p;
-        LengthValue const &size = div._css._fontSize;
+        LengthValue const &size = p->_css._fontSize;
         type = size.GetType ();
 
         if ( type == LengthValue::eType::EM )
@@ -174,6 +103,90 @@ float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexc
             [[fallthrough]];
         default:
             // IMPOSSIBLE
+            AV_ASSERT ( false )
+        return 0.0F;
+    }
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept:
+    _name ( std::move ( name ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept:
+    _css ( std::move ( css ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
+    _css ( std::move ( css ) ),
+    _name ( std::move ( name ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+float UIElement::ResolvePixelLength ( LengthValue const &length,
+    float referenceLength,
+    bool isHeight
+) const noexcept
+{
+    CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
+
+    switch ( length.GetType () )
+    {
+        case LengthValue::eType::EM:
+        return ResolveFontSize () * length.GetValue ();
+
+        case LengthValue::eType::MM:
+        return units._fromMM * length.GetValue ();
+
+        case LengthValue::eType::PT:
+        return units._fromPT * length.GetValue ();
+
+        case LengthValue::eType::PX:
+        return units._fromPX * length.GetValue ();
+
+        case LengthValue::eType::Percent:
+        {
+            if ( _parent )
+            {
+                UIElement const &div = *_parent;
+
+                LengthValue const* cases[] = { &div._css._width, &div._css._height };
+                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
+
+                if ( isAuto & isHeight )
+                {
+                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
+                    return 0.0F;
+                }
+            }
+
+            return 1.0e-2F * referenceLength * length.GetValue ();
+        }
+
+        case LengthValue::eType::Unitless:
+        return referenceLength * length.GetValue ();
+
+        case LengthValue::eType::Auto:
+        return 0.0F;
+
+        default:
             AV_ASSERT ( false )
         return 0.0F;
     }

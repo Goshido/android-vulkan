@@ -198,6 +198,17 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     }
 
     // 'inline-block' territory.
+    // Based on ideas from https://iamvdo.me/en/blog/css-font-metrics-line-height-and-vertical-align
+    // The most significant feature - adding implicit spaces between blocks in horizontal and vertical direction.
+    // [2025-01-06] It was discovered that Google Chrome v131.0.6778.205 is using actual space (U+0020) character
+    // of current font face and current font size to get horizontal spacing value. The kerning is ignored.
+
+    FontStorage &fontStorage = *info._fontStorage;
+    auto font = fontStorage.GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
+    auto const spacing = static_cast<float> ( fontStorage.GetGlyphInfo ( *info._renderer, *font, U' ' )._advance );
+    (void)spacing;
+
+    // FUCK
 
     constexpr GXVec2 zero ( 0.0F, 0.0F );
     bool const firstBlock = penOut.IsEqual ( zero );

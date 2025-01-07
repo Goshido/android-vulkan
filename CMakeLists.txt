@@ -279,13 +279,14 @@ target_compile_options ( android-vulkan PRIVATE
 
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan PRIVATE
-#    AV_ENABLE_TRACE
-    AV_NATIVE_MODE_PORTRAIT
+    AV_ARM_NEON
     AV_DEBUG
 #    AV_ENABLE_RENDERDOC
+#    AV_ENABLE_TRACE
     AV_ENABLE_VVL
+    AV_FREETYPE
+    AV_NATIVE_MODE_PORTRAIT
     AV_STRICT_MODE
-    AV_ARM_NEON
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR
 )

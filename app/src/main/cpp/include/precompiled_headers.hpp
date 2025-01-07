@@ -109,6 +109,14 @@ GX_DISABLE_COMMON_WARNINGS
 
 #endif // AV_PIX
 
+#ifdef AV_FREETYPE
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <freetype/tttables.h>
+
+#endif // AV_FREETYPE
+
 GX_RESTORE_WARNING_STATE
 
 

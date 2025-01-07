@@ -123,7 +123,6 @@ class TextUIElement final : public UIElement
         [[nodiscard]] AlignIntegerHandler GetIntegerVerticalAlignment () const noexcept;
 
         [[nodiscard]] GXColorUNORM ResolveColor () const noexcept;
-        [[nodiscard]] std::string const* ResolveFont () const noexcept;
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,
             int32_t parentSize,

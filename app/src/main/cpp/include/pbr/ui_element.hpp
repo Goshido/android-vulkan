@@ -79,6 +79,9 @@ class UIElement
         [[nodiscard]] CSSComputedValues &GetCSS () noexcept;
         [[nodiscard]] CSSComputedValues const &GetCSS () const noexcept;
 
+        [[nodiscard]] std::string_view ResolveFont () const noexcept;
+        [[nodiscard]] float ResolveFontSize () const noexcept;
+
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
         explicit UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept;
@@ -95,7 +98,6 @@ class UIElement
             bool isHeight
         ) const noexcept;
 
-        [[nodiscard]] static float ResolveFontSize ( UIElement const &startTraverseElement ) noexcept;
         [[nodiscard]] static AlignHandler ResolveTextAlignment ( UIElement const &parent ) noexcept;
         [[nodiscard]] static AlignHandler ResolveVerticalAlignment ( UIElement const &parent ) noexcept;
 

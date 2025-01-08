@@ -35,7 +35,7 @@ class HTML5Parser final
             ._display = DisplayProperty::eValue::Block,
             ._fontFile {},
             ._fontSize = LengthValue ( LengthValue::eType::PX, 16.0F ),
-            ._lineHeight = LengthValue ( LengthValue::eType::Unitless, 1.2F ),
+            ._lineHeight = LengthValue ( LengthValue::eType::Auto, 42.0F ),
             ._marginBottom = LengthValue ( LengthValue::eType::PX, 8.0F ),
             ._marginLeft = LengthValue ( LengthValue::eType::PX, 8.0F ),
             ._marginRight = LengthValue ( LengthValue::eType::PX, 8.0F ),

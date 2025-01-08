@@ -190,12 +190,12 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _glyphs.reserve ( glyphCount );
 
     FontStorage &fontStorage = *info._fontStorage;
-    auto font = fontStorage.GetFont ( _parent->ResolveFont (), static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
+    auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (), static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
 
-    if ( !font ) [[unlikely]]
+    if ( !fontProbe ) [[unlikely]]
         return;
 
-    auto f = *font;
+    FontStorage::Font const font = *fontProbe;
     constexpr size_t firstLineHeightIdx = 1U;
 
     std::vector<float> &divLineHeights = *info._lineHeights;
@@ -207,11 +207,13 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
 
-    _fontSize = f->second._metrics._baselineToBaseline;
-    auto const fontSizeF = static_cast<float> ( _fontSize );
+    FontStorage::PixelFontMetrics const &metrics = FontStorage::GetFontPixelMetrics ( font );
+    _baselineToBaseline = metrics._baselineToBaseline;
+    _contentAreaHeight = metrics._contentAreaHeight;
+    auto const baselineToBaselineF = static_cast<float> ( _baselineToBaseline );
 
-    int32_t const lineHeights[] = { _fontSize, std::max ( _fontSize, currentLineHeightInteger ) };
-    float const lineHeightsF[] = { fontSizeF, std::max ( fontSizeF, currentLineHeight ) };
+    int32_t const lineHeights[] = { _baselineToBaseline, std::max ( _baselineToBaseline, currentLineHeightInteger ) };
+    float const lineHeightsF[] = { baselineToBaselineF, std::max ( baselineToBaselineF, currentLineHeight ) };
 
     GXVec2 &pen = info._pen;
     _applyLayoutCache._penIn = pen;
@@ -220,7 +222,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     auto const w = static_cast<int32_t> ( canvasWidth );
 
     auto x = static_cast<int32_t> ( pen._data[ 0U ] );
-    auto start = x;
+    int32_t start = x;
 
     size_t glyphsPerLine = 0U;
 
@@ -240,6 +242,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
                 ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
                 ._atlasBottomRight = glyphInfo._bottomRight,
+                ._offsetX = glyphInfo._offsetX,
                 ._offsetY = glyphInfo._offsetY,
                 ._parentLine = line,
                 ._width = glyphInfo._width,
@@ -256,9 +259,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         char32_t const rightCharacter = text[ 0U ];
         text = text.substr ( 1U );
 
-        gi = &fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         previousX = x;
-        x += gi->_advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
+        x += gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
         ++glyphsPerLine;
 
@@ -280,8 +283,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
             x = gi->_advance;
 
             appendGlyph ( parentLine, *gi );
-            divLineHeights.push_back ( fontSizeF );
-            _applyLayoutCache._lineHeights.push_back ( fontSizeF );
+            divLineHeights.push_back ( baselineToBaselineF );
+            _applyLayoutCache._lineHeights.push_back ( baselineToBaselineF );
         }
     }
 
@@ -289,9 +292,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     for ( char32_t const rightCharacter : text )
     {
-        gi = &fontStorage.GetGlyphInfo ( renderer, f, rightCharacter );
+        gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         int32_t const baseX = x;
-        int32_t const advance = gi->_advance + FontStorage::GetKerning ( f, leftCharacter, rightCharacter );
+        int32_t const advance = gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         x += advance;
         leftCharacter = rightCharacter;
 
@@ -330,8 +333,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         appendGlyph ( parentLine, *gi );
         previousX = 0;
 
-        divLineHeights.push_back ( fontSizeF );
-        _applyLayoutCache._lineHeights.push_back ( fontSizeF );
+        divLineHeights.push_back ( baselineToBaselineF );
+        _applyLayoutCache._lineHeights.push_back ( baselineToBaselineF );
     }
 
     glyph->_advance = gi->_advance;
@@ -425,27 +428,35 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     auto x = static_cast<int32_t> ( pen._data[ 0U ] );
     auto y = static_cast<int32_t> ( pen._data[ 1U ] );
 
+    // Defined by CSS 2 spec:
+    // See https://drafts.csswg.org/css2/#leading
+    int32_t const halfLeading = ( static_cast<int32_t> ( info._lineHeight ) - _contentAreaHeight ) >> 1U;
+
     auto const parentLeft = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
     auto const parentWidth =  static_cast<int32_t> ( info._parentSize._data[ 0U ] );
 
     for ( Line const &line : _lines )
     {
-        x = textAlignment ( x, parentWidth, line._length );
-        y = verticalAlignment ( y, static_cast<int32_t> ( *height ), _fontSize );
+        x = textAlignment ( x, parentWidth, line._length, 0 );
+        y = verticalAlignment ( y, static_cast<int32_t> ( *height ), _baselineToBaseline, halfLeading );
         limit += line._glyphs;
+        bool first = true;
 
         for ( ; i < limit; ++i )
         {
             Glyph const &g = glyphs[ i ];
 
+            int32_t const cases[] = { 0, g._offsetX };
+            int32_t const penX = x + cases[ static_cast<size_t> ( std::exchange ( first, false ) ) ];
+
             int32_t const glyphTop = y + g._offsetY;
             int32_t const glyphBottom = glyphTop + g._height;
-            int32_t const glyphRight = x + g._width;
+            int32_t const glyphRight = penX + g._width;
 
             UIPass::AppendRectangle ( p,
                 v,
                 color,
-                GXVec2 ( static_cast<float> ( x ), static_cast<float> ( glyphTop ) ),
+                GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,
                 g._atlasBottomRight,
@@ -595,19 +606,31 @@ GXColorUNORM TextUIElement::ResolveColor () const noexcept
     return nullColor;
 }
 
-int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept
+int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen,
+    int32_t parentSize,
+    int32_t lineSize,
+    int32_t /*halfLeading*/
+) noexcept
 {
-    return pen + ( ( parentSize - lineSize ) / 2 );
+    return pen + ( ( parentSize - lineSize ) >> 1 );
 }
 
-int32_t TextUIElement::AlignIntegerToStart ( int32_t pen, int32_t /*parentSize*/, int32_t /*lineLength*/ ) noexcept
+int32_t TextUIElement::AlignIntegerToStart ( int32_t pen,
+    int32_t /*parentSize*/,
+    int32_t /*lineLength*/,
+    int32_t halfLeading
+) noexcept
 {
-    return pen;
+    return pen + halfLeading;
 }
 
-int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept
+int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen,
+    int32_t parentSize,
+    int32_t lineSize,
+    int32_t halfLeading
+) noexcept
 {
-    return pen + parentSize - lineSize;
+    return pen + parentSize - lineSize - halfLeading;
 }
 
 } // namespace pbr

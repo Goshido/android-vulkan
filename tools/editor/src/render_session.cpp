@@ -556,7 +556,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
     {
         .color
         {
-            .float32 = { 0.0F, 0.0F, 0.0F, 1.0F }
+            .float32 = { 0.5F, 0.5F, 0.5F, 1.0F }
         }
     };
 

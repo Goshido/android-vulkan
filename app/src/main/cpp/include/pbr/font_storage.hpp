@@ -40,6 +40,7 @@ class FontStorage final
             int32_t                             _width = 0;
             int32_t                             _height = 0;
             int32_t                             _advance = 0;
+            int32_t                             _offsetX = 0;
             int32_t                             _offsetY = 0;
         };
 
@@ -48,15 +49,15 @@ class FontStorage final
         {
             double                              _ascend = 0.0;
             double                              _baselineToBaseline = 0.0;
-            double                              _contentArea = 0.0;
-            double                              _descent = 0.0;
+            double                              _contentAreaHeight = 0.0;
             double                              _xHeight = 0.0;
         };
 
         struct PixelFontMetrics final
         {
+            int32_t                             _ascend = 0;
             int32_t                             _baselineToBaseline = 0;
-            int32_t                             _contentArea = 0;
+            int32_t                             _contentAreaHeight = 0;
         };
 
         struct FontResource final
@@ -195,6 +196,8 @@ class FontStorage final
             char32_t character
         ) noexcept;
 
+        [[nodiscard]] static PixelFontMetrics const &GetFontPixelMetrics ( Font font ) noexcept;
+
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
             size_t commandBufferIndex
@@ -209,6 +212,7 @@ class FontStorage final
             GlyphStorage &glyphs,
             FT_Face face,
             uint32_t fontSize,
+            int32_t ascend,
             char32_t character
         ) noexcept;
 

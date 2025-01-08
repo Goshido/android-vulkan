@@ -61,6 +61,8 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
+            // FUCK calculations shoud be done relative Nearest Positioned Ancestor.
+            // Long story short: it's needed to work relative closest 'position: absolute' element.
             pen = _canvasTopLeftOffset;
             _parentLine = std::numeric_limits<size_t>::max ();
         break;
@@ -201,14 +203,13 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     // Based on ideas from https://iamvdo.me/en/blog/css-font-metrics-line-height-and-vertical-align
     // The most significant feature - adding implicit spaces between blocks in horizontal and vertical direction.
     // [2025-01-06] It was discovered that Google Chrome v131.0.6778.205 is using actual space (U+0020) character
-    // of current font face and current font size to get horizontal spacing value. The kerning is ignored.
+    // of current font family and current font size to get horizontal spacing value. The kerning is ignored.
+    // For vertical spacing the following properties must be considered:
+    //  - current font family
+    //  - current font size
+    //  - current line-height
 
-    FontStorage &fontStorage = *info._fontStorage;
-    auto font = fontStorage.GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
-    auto const spacing = static_cast<float> ( fontStorage.GetGlyphInfo ( *info._renderer, *font, U' ' )._advance );
-    (void)spacing;
-
-    // FUCK
+    // FUCK needed to implement
 
     constexpr GXVec2 zero ( 0.0F, 0.0F );
     bool const firstBlock = penOut.IsEqual ( zero );
@@ -269,6 +270,12 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _visibilityChanged = false;
 
     if ( !_visible )
+        return needRefill;
+
+    FontStorage &fontStorage = *info._fontStorage;
+    auto const fontProbe = fontStorage.GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
+
+    if ( !fontProbe ) [[unlikely]]
         return needRefill;
 
     GXVec2 pen {};
@@ -355,6 +362,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     {
         ._fontStorage = info._fontStorage,
         ._line = 0U,
+        ._lineHeight = ResolveLineHeight ( *fontProbe ),
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = _canvasSize,
         ._parentTopLeft = topLeft,

@@ -28,7 +28,10 @@ std::optional<LengthValue> LengthValueParser::Parse ( char const* css,
 ) noexcept
 {
     if ( value == U"auto" )
-        return LengthValue ( LengthValue::eType::Auto, 0.0F );
+        return LengthValue ( LengthValue::eType::Auto, 42.0F );
+
+    if ( value == U"inherit" )
+        return LengthValue ( LengthValue::eType::Inherit, 42.0F );
 
     auto const number = NumberParser::Parse ( css, line, value );
 
@@ -45,7 +48,7 @@ std::optional<LengthValue> LengthValueParser::Parse ( char const* css,
     for ( auto const &item : g_types )
         supported += *UTF8Parser::ToUTF8 ( item.first ) + s;
 
-    supported += "auto";
+    supported += "auto | inherit";
 
     android_vulkan::LogError ( "pbr::LengthValueParser::Parse - %s:%zu: Unsupported length unit '%s' was detected. "
         "Supported units: %s.",

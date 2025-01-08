@@ -32,6 +32,7 @@ class UIElement
         {
             FontStorage*                    _fontStorage = nullptr;
             size_t                          _line = 0U;
+            float                           _lineHeight = 0.0F;
             float const*                    _parentLineHeights = nullptr;
             GXVec2                          _parentSize {};
             GXVec2                          _parentTopLeft {};
@@ -81,6 +82,7 @@ class UIElement
 
         [[nodiscard]] std::string_view ResolveFont () const noexcept;
         [[nodiscard]] float ResolveFontSize () const noexcept;
+        [[nodiscard]] float ResolveLineHeight ( FontStorage::Font font ) const noexcept;
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;

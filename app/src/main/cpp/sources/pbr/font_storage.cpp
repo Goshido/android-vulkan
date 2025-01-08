@@ -565,8 +565,9 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
 
                 ._metrics
                 {
+                    ._ascend = static_cast<int32_t> ( sz * metrics._ascend ),
                     ._baselineToBaseline = static_cast<int32_t> ( sz * metrics._baselineToBaseline ),
-                    ._contentArea = static_cast<int32_t> ( sz * metrics._contentArea )
+                    ._contentAreaHeight = static_cast<int32_t> ( sz * metrics._contentAreaHeight )
                 }
             }
         )
@@ -596,7 +597,18 @@ FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Render
     if ( auto const glyph = glyphs.find ( character ); glyph != glyphs.cend () )
         return glyph->second;
 
-    return EmbedGlyph ( renderer, glyphs, fontData._fontResource->_face, fontData._fontSize, character );
+    return EmbedGlyph ( renderer,
+        glyphs,
+        fontData._fontResource->_face,
+        fontData._fontSize,
+        fontData._metrics._ascend,
+        character
+    );
+}
+
+FontStorage::PixelFontMetrics const &FontStorage::GetFontPixelMetrics ( Font font ) noexcept
+{
+    return font->second._metrics;
 }
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
@@ -768,6 +780,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     GlyphStorage &glyphs,
     FT_Face face,
     uint32_t fontSize,
+    int32_t ascend,
     char32_t character
 ) noexcept
 {
@@ -794,9 +807,10 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     auto const width = static_cast<size_t> ( bm.width );
     auto const advance = static_cast<int32_t> ( slot->advance.x ) >> 6U;
 
-    int32_t const toBaseLine = static_cast<int32_t> ( fontSize ) - static_cast<int32_t> ( rows );
-    auto const offsetYFactor = static_cast<int32_t> ( slot->metrics.height - slot->metrics.horiBearingY ) >> 6U;
-    int32_t const offsetY = toBaseLine + offsetYFactor;
+    FT_Glyph_Metrics const &metrics = slot->metrics;
+    auto const offsetX = static_cast<int32_t> ( metrics.horiBearingX ) >> 6U;
+    auto const offsetYFactor = static_cast<int32_t> ( metrics.height - metrics.horiBearingY ) >> 6U;
+    int32_t const offsetY = ascend - static_cast<int32_t> ( rows ) + offsetYFactor;
 
     if ( ( rows == 0U ) | ( width == 0U ) )
     {
@@ -810,7 +824,8 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
                     ._width = 0,
                     ._height = 0,
                     ._advance = advance,
-                    ._offsetY = offsetY
+                    ._offsetX = 0,
+                    ._offsetY = 0
                 }
             )
         );
@@ -921,6 +936,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
                 ._advance = advance,
+                ._offsetX = offsetX,
                 ._offsetY = offsetY
             }
         )
@@ -981,10 +997,8 @@ std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::st
         ._ascend = invEM * static_cast<double> ( face->ascender ),
         ._baselineToBaseline = invEM * static_cast<double> ( face->height ),
 
-        // Note: FreeType provides 'face->descender' as negative value.
-        ._contentArea = invEM * static_cast<double> ( face->ascender - face->descender ),
-
-        ._descent = invEM * static_cast<double> ( -face->descender ),
+        // FreeType provides 'face->descender' as negative value.
+        ._contentAreaHeight = invEM * static_cast<double> ( face->ascender - face->descender )
     };
 
     if ( auto const* os2 = static_cast<TT_OS2 const*> ( FT_Get_Sfnt_Table ( face, ft_sfnt_os2 ) ); os2 )

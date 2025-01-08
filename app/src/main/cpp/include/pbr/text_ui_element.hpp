@@ -17,6 +17,7 @@ class TextUIElement final : public UIElement
             UIAtlas                         _atlasTopLeft;
             UIAtlas                         _atlasBottomRight;
 
+            int32_t                         _offsetX;
             int32_t                         _offsetY;
             size_t                          _parentLine;
 
@@ -65,7 +66,11 @@ class TextUIElement final : public UIElement
             ) noexcept;
         };
 
-        using AlignIntegerHandler = int32_t ( * ) ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
+        using AlignIntegerHandler = int32_t ( * ) ( int32_t pen,
+            int32_t parentSize,
+            int32_t lineSize,
+            int32_t leading
+        ) noexcept;
 
     private:
         ApplyLayoutCache                    _applyLayoutCache {};
@@ -74,7 +79,8 @@ class TextUIElement final : public UIElement
         // Way the user could override color which arrived from CSS.
         std::optional<GXColorUNORM>         _color {};
 
-        int32_t                             _fontSize = 0;
+        int32_t                             _baselineToBaseline = 0;
+        int32_t                             _contentAreaHeight = 0;
         std::vector<Glyph>                  _glyphs {};
 
         std::vector<Line>                   _lines {};
@@ -126,13 +132,21 @@ class TextUIElement final : public UIElement
 
         [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,
             int32_t parentSize,
-            int32_t lineSize
+            int32_t lineSize,
+            int32_t halfLeading
         ) noexcept;
 
-        [[nodiscard]] static int32_t AlignIntegerToStart ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
-        [[nodiscard]] static int32_t AlignIntegerToEnd ( int32_t pen, int32_t parentSize, int32_t lineSize ) noexcept;
+        [[nodiscard]] static int32_t AlignIntegerToStart ( int32_t pen,
+            int32_t parentSize,
+            int32_t lineSize,
+            int32_t halfLeading
+        ) noexcept;
 
-
+        [[nodiscard]] static int32_t AlignIntegerToEnd ( int32_t pen,
+            int32_t parentSize,
+            int32_t lineSize,
+            int32_t halfLeading
+        ) noexcept;
 };
 
 } // namespace pbr

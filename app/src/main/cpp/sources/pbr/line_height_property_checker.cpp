@@ -38,13 +38,13 @@ PropertyChecker::Result LineHeightPropertyChecker::Process ( PropertyParser::Res
 
     if ( result._value == U"normal" )
     {
-        _target = LengthValue ( LengthValue::eType::Unitless, 1.2F );
+        _target = LengthValue ( LengthValue::eType::Auto, 42.0F );
         return true;
     }
 
     if ( result._value == U"inherit" )
     {
-        _target = LengthValue ( LengthValue::eType::Auto, 42.0F );
+        _target = LengthValue ( LengthValue::eType::Inherit, 42.0F );
         return true;
     }
 

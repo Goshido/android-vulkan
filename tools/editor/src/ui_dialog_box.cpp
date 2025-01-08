@@ -385,9 +385,11 @@ void UIDialogBox::UpdateMinSize () noexcept
                 dst = static_cast<int32_t> ( units._fromPX * src.GetValue () );
             break;
 
+            case pbr::LengthValue::eType::Auto:
+                [[fallthrough]];
             case pbr::LengthValue::eType::EM:
                 [[fallthrough]];
-            case pbr::LengthValue::eType::Auto:
+            case pbr::LengthValue::eType::Inherit:
                 [[fallthrough]];
             case pbr::LengthValue::eType::Percent:
                 [[fallthrough]];

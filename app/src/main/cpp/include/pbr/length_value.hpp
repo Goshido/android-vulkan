@@ -20,6 +20,7 @@ class LengthValue final
         {
             Auto,
             EM,
+            Inherit,
             MM,
             PT,
             PX,

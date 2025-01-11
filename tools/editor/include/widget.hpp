@@ -41,13 +41,11 @@ class Widget
 
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
-        ) noexcept = 0;
+        ) noexcept;
 
-        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept = 0;
-
-        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage,
-            VkExtent2D const &viewport
-        ) noexcept = 0;
+        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
+        virtual void UpdatedRect () noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;
 

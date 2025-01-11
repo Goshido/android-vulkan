@@ -331,23 +331,19 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], parentHeight, _blockSize._data[ 1U ] );
 
+    _absoluteRect._topLeft.Sum ( pen, _marginTopLeft );
+    _absoluteRect._bottomRight.Sum ( _absoluteRect._topLeft, _borderSize );
+
     if ( _hasBackground )
     {
         constexpr GXVec2 imageUV ( 0.5F, 0.5F );
-
-        GXVec2 topLeft {};
-        topLeft.Sum ( pen, _marginTopLeft );
-
-        GXVec2 bottomRight {};
-        bottomRight.Sum ( topLeft, _borderSize );
-
         FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
 
         UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
-            topLeft,
-            bottomRight,
+            _absoluteRect._topLeft,
+            _absoluteRect._bottomRight,
             glyphInfo._topLeft,
             glyphInfo._bottomRight,
             imageUV,
@@ -379,6 +375,11 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
 {
     _children.emplace_back ( &element );
+}
+
+DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
+{
+    return _absoluteRect;
 }
 
 } // namespace pbr

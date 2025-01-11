@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <cursor.hpp>
 #include <glyphs.hpp>
 #include <theme.hpp>
 #include <ui_close_button.hpp>
@@ -24,7 +25,7 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile { glyph::FONT_FAMILY.data (), glyph::FONT_FAMILY.size () },
                 ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
-                ._lineHeight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
+                ._lineHeight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 22.0 ),
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
                 ._marginRight = theme::ZERO_LENGTH,
@@ -36,8 +37,8 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._position = pbr::PositionProperty::eValue::Absolute,
                 ._textAlign = pbr::TextAlignProperty::eValue::Right,
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = theme::SMALL_BUTTON_HEIGHT,
-                ._height = theme::SMALL_BUTTON_HEIGHT
+                ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 21.0F ),
+                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 21.0F )
             },
 
             name + " (base)"
@@ -55,10 +56,10 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
-                ._color = pbr::ColorValue ( 106U, 172U, 0U, 255U ),
+                ._color = theme::MAIN_COLOR,
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::Inherit, 42.0F ),
                 ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
@@ -98,10 +99,10 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
-                ._color = pbr::ColorValue ( 255U, 255U, 255U, 255U ),
+                ._color = theme::BORDER_COLOR,
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::Inherit, 42.0F ),
                 ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
@@ -141,10 +142,10 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
                 ._left = theme::AUTO_LENGTH,
                 ._right = theme::ZERO_LENGTH,
                 ._top = theme::ZERO_LENGTH,
-                ._color = pbr::ColorValue ( 0U, 0U, 0U, 255U ),
+                ._color = theme::BORDER_COLOR,
                 ._display = pbr::DisplayProperty::eValue::InlineBlock,
                 ._fontFile = "",
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::EM, 1.0F ),
+                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::Inherit, 42.0F ),
                 ._lineHeight = theme::AUTO_LENGTH,
                 ._marginBottom = theme::ZERO_LENGTH,
                 ._marginLeft = theme::ZERO_LENGTH,
@@ -188,6 +189,25 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
     base.AppendChildElement ( crossDIV );
 
     parent.AppendChildElement ( base );
+}
+
+void UICloseButton::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+{
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
+        return;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ChangeCursor,
+            ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void UICloseButton::UpdatedRect () noexcept
+{
+    _rect.From ( _base->GetAbsoluteRect () );
 }
 
 pbr::CSSComputedValues &UICloseButton::GetCSS () noexcept

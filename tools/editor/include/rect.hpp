@@ -2,7 +2,7 @@
 #define EDITOR_RECT_HPP
 
 
-#include <pbr/css_computed_values.hpp>
+#include <pbr/div_ui_element.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -41,6 +41,7 @@ class Rect final
 
         ~Rect () = default;
 
+        void From ( pbr::DIVUIElement::Rect const &rect ) noexcept;
         void From ( GXVec2 const &topLeft, GXVec2 const &bottomRight ) noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;

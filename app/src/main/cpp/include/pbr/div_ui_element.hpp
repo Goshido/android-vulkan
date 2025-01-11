@@ -15,7 +15,16 @@ namespace pbr {
 
 class DIVUIElement final : public UIElement
 {
+    public:
+        struct Rect final
+        {
+            GXVec2                  _topLeft {};
+            GXVec2                  _bottomRight {};
+        };
+
     private:
+        Rect                        _absoluteRect {};
+
         GXVec2                      _blockSize {};
         GXVec2                      _borderSize {};
 
@@ -50,6 +59,7 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         void AppendChildElement ( UIElement &element ) noexcept;
+        [[nodiscard]] Rect const &GetAbsoluteRect () const noexcept;
 };
 
 } // namespace pbr

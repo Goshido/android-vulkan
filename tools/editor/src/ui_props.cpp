@@ -59,4 +59,29 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     _div.AppendChildElement ( *_headerLine );
 }
 
+void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+{
+    if ( _dragState )
+    {
+        UIDialogBox::OnMouseMove ( event );
+        return;
+    }
+
+    UICloseButton &closeButton = *_closeButton;
+
+    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    {
+        closeButton.OnMouseMove ( event );
+        return;
+    }
+
+    UIDialogBox::OnMouseMove ( event );
+}
+
+void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+{
+    UIDialogBox::Submit ( info );
+    _closeButton->UpdatedRect ();
+}
+
 } // namespace editor

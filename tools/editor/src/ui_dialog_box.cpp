@@ -11,7 +11,7 @@ namespace editor {
 namespace {
 
 constexpr float RESIZE_THICKNESS = 2.0F;
-constexpr float DRAG_THICKNESS = 3.5F;
+constexpr float DRAG_THICKNESS = 5.5F;
 
 } // end of anonymous namespace
 
@@ -28,18 +28,17 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue& messageQueue, MouseMoveEven
     if ( !_rect.IsOverlapped ( event._x, event._y ) )
         return false;
 
-    if ( event._eventID - _eventID > 1U )
-    {
-        messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::ChangeCursor,
-                ._params = reinterpret_cast<void*> ( _cursor ),
-                ._serialNumber = 0U
-            }
-        );
-    }
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
+        return true;
 
-    _eventID = event._eventID;
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ChangeCursor,
+            ._params = reinterpret_cast<void*> ( _cursor ),
+            ._serialNumber = 0U
+        }
+    );
+
     return true;
 }
 
@@ -95,6 +94,22 @@ UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noex
     _messageQueue ( messageQueue )
 {
     // NOTHING
+}
+
+void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+{
+    if ( _dragState ) [[unlikely]]
+    {
+        DoDrag ( event );
+        return;
+    }
+
+    DoHover ( event );
+}
+
+void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+{
+    _div.Submit ( info );
 }
 
 void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
@@ -200,17 +215,6 @@ void UIDialogBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
     );
 }
 
-void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
-{
-    if ( _dragState ) [[unlikely]]
-    {
-        DoDrag ( event );
-        return;
-    }
-
-    DoHover ( event );
-}
-
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,
     pbr::FontStorage &fontStorage
 ) noexcept
@@ -239,11 +243,6 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
         ._hasChanges = info._hasChanges,
         ._neededUIVertices = info._vertices
     };
-}
-
-void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
-{
-    _div.Submit ( info );
 }
 
 bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept

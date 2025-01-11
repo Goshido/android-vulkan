@@ -5,16 +5,15 @@
 #include "message_queue.hpp"
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
+#include "widget.hpp"
 
 
 namespace editor {
 
 class UIManager;
 
-class UICloseButton final
+class UICloseButton final : public Widget
 {
-    friend class UIManager;
-
     private:
         MessageQueue                            &_messageQueue;
 
@@ -29,6 +28,8 @@ class UICloseButton final
         std::unique_ptr<pbr::DIVUIElement>      _crossDIV {};
         std::unique_ptr<pbr::TextUIElement>     _crossText {};
 
+        size_t                                  _eventID = 0U;
+
     public:
         UICloseButton () = delete;
 
@@ -40,7 +41,10 @@ class UICloseButton final
 
         explicit UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string &&name ) noexcept;
 
-        ~UICloseButton () = default;
+        ~UICloseButton () override = default;
+
+        void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+        void UpdatedRect () noexcept override;
 
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 };

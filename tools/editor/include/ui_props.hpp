@@ -26,6 +26,10 @@ class UIProps final : public UIDialogBox
         UIProps &operator = ( UIProps && ) = delete;
 
         ~UIProps () override = default;
+
+    private:
+        void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 };
 
 } // namespace editor

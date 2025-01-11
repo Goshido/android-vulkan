@@ -39,10 +39,10 @@ class UIDialogBox : public Widget
 
     protected:
         pbr::DIVUIElement           _div;
+        bool                        _dragState = false;
 
     private:
         std::vector<float>          _lineHeights { 1U, 0.0F };
-        bool                        _dragState = false;
         size_t                      _eventID = 0U;
         MessageQueue                &_messageQueue;
 
@@ -90,16 +90,17 @@ class UIDialogBox : public Widget
         explicit UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept;
         ~UIDialogBox () override = default;
 
+        void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+
     private:
         void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
         ) noexcept override;
 
-        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
 
         void DoDrag ( MouseMoveEvent const &event ) noexcept;

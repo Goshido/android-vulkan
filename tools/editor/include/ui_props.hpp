@@ -28,8 +28,12 @@ class UIProps final : public UIDialogBox
         ~UIProps () override = default;
 
     private:
+        void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+
+        void OnClose () noexcept;
 };
 
 } // namespace editor

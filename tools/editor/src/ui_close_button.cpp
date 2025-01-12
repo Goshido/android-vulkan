@@ -8,7 +8,7 @@
 namespace editor {
 
 UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string &&name ) noexcept:
-    _messageQueue ( messageQueue ),
+    Widget ( messageQueue ),
 
     _base (
         std::make_unique<pbr::DIVUIElement> ( &parent,
@@ -191,8 +191,27 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
     parent.AppendChildElement ( base );
 }
 
+void UICloseButton::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+{
+    if ( event._key == eKey::LeftMouseButton ) [[likely]]
+    {
+        _backgroundText->SetColor ( theme::PRESS_COLOR );
+    }
+}
+
+void UICloseButton::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+{
+    if ( event._key == eKey::LeftMouseButton ) [[likely]]
+    {
+        _callback ();
+        _backgroundText->SetColor ( theme::HOVER_COLOR );
+    }
+}
+
 void UICloseButton::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
+    Widget::OnMouseMove ( event );
+
     if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
         return;
 
@@ -203,6 +222,8 @@ void UICloseButton::OnMouseMove ( MouseMoveEvent const &event ) noexcept
             ._serialNumber = 0U
         }
     );
+
+    _backgroundText->SetColor ( theme::HOVER_COLOR );
 }
 
 void UICloseButton::UpdatedRect () noexcept
@@ -210,9 +231,19 @@ void UICloseButton::UpdatedRect () noexcept
     _rect.From ( _base->GetAbsoluteRect () );
 }
 
+void UICloseButton::Connect ( Callback &&callback ) noexcept
+{
+    _callback = std::move ( callback );
+}
+
 pbr::CSSComputedValues &UICloseButton::GetCSS () noexcept
 {
     return _base->GetCSS ();
+}
+
+void UICloseButton::OnMouseLeave () noexcept
+{
+    _backgroundText->SetColor ( theme::MAIN_COLOR );
 }
 
 } // namespace editor

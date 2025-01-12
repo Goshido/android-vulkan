@@ -3,7 +3,6 @@
 
 
 #include "cursor.hpp"
-#include "message_queue.hpp"
 #include <pbr/div_ui_element.hpp>
 #include "widget.hpp"
 
@@ -44,7 +43,6 @@ class UIDialogBox : public Widget
     private:
         std::vector<float>          _lineHeights { 1U, 0.0F };
         size_t                      _eventID = 0U;
-        MessageQueue                &_messageQueue;
 
         Rect                        _initialRect {};
         int32_t                     _initialX = 0;
@@ -90,13 +88,12 @@ class UIDialogBox : public Widget
         explicit UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept;
         ~UIDialogBox () override = default;
 
+        void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
     private:
-        void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
-
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
         ) noexcept override;

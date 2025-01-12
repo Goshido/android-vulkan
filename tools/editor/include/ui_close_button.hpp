@@ -2,10 +2,15 @@
 #define EDITOR_UI_CLOSE_BUTTON_HPP
 
 
-#include "message_queue.hpp"
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
 #include "widget.hpp"
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <functional>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
@@ -14,9 +19,10 @@ class UIManager;
 
 class UICloseButton final : public Widget
 {
-    private:
-        MessageQueue                            &_messageQueue;
+    public:
+        using Callback = std::function<void ()>;
 
+    private:
         std::unique_ptr<pbr::DIVUIElement>      _base {};
 
         std::unique_ptr<pbr::DIVUIElement>      _backgroundDIV {};
@@ -28,6 +34,7 @@ class UICloseButton final : public Widget
         std::unique_ptr<pbr::DIVUIElement>      _crossDIV {};
         std::unique_ptr<pbr::TextUIElement>     _crossText {};
 
+        Callback                                _callback {};
         size_t                                  _eventID = 0U;
 
     public:
@@ -43,10 +50,16 @@ class UICloseButton final : public Widget
 
         ~UICloseButton () override = default;
 
+        void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
+        void Connect ( Callback &&callback ) noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
+
+    private:
+        void OnMouseLeave () noexcept override;
 };
 
 } // namespace editor

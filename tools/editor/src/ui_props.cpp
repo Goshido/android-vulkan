@@ -52,11 +52,44 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     headerTextStyle._paddingTop = theme::HEADER_VERTICAL_PADDING;
     headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
 
-    pbr::CSSComputedValues &closeButtonStyle = _closeButton->GetCSS ();
+    UICloseButton &closeButton = *_closeButton;
+    pbr::CSSComputedValues &closeButtonStyle = closeButton.GetCSS ();
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 2.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
+    closeButton.Connect (
+        [ this ] () noexcept {
+            OnClose ();
+        }
+    );
+
     _div.AppendChildElement ( *_headerLine );
+}
+
+void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+{
+    UICloseButton &closeButton = *_closeButton;
+
+    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    {
+        closeButton.OnMouseKeyDown ( event );
+        return;
+    }
+
+    UIDialogBox::OnMouseKeyDown ( event );
+}
+
+void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+{
+    UICloseButton &closeButton = *_closeButton;
+
+    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    {
+        closeButton.OnMouseKeyUp ( event );
+        return;
+    }
+
+    UIDialogBox::OnMouseKeyUp ( event );
 }
 
 void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -82,6 +115,11 @@ void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
     _closeButton->UpdatedRect ();
+}
+
+void UIProps::OnClose () noexcept
+{
+    // FUCK - need to implement
 }
 
 } // namespace editor

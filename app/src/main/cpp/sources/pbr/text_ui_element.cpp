@@ -146,6 +146,12 @@ TextUIElement::TextUIElement ( bool visible,
     _glyphs.resize ( _text.size () );
 }
 
+void TextUIElement::SetColor ( ColorValue const &color ) noexcept
+{
+    _color = color.GetSRGB ();
+    _submitCache._isColorChanged = true;
+}
+
 void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
 {
     _color = color;

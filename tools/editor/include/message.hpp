@@ -22,6 +22,7 @@ enum class eMessageType : uint32_t
     FrameComplete,
     HelloTriangleReady,
     ModuleStopped,
+    MouseHover,
     MouseKeyDown,
     MouseKeyUp,
     MouseMoved,

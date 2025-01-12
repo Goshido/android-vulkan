@@ -108,6 +108,10 @@ void UIManager::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::MouseHover:
+                OnMouseHover ( std::move ( message ) );
+            break;
+
             case eMessageType::MouseKeyDown:
                 OnMouseKeyDown ( std::move ( message ) );
             break;
@@ -144,6 +148,17 @@ void UIManager::EventLoop () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void UIManager::OnMouseHover ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Mouse hover" )
+    _messageQueue->DequeueEnd ();
+
+    if ( _hoverWidget ) [[likely]]
+        _hoverWidget->OnMouseLeave ();
+
+    _hoverWidget = static_cast<Widget*> ( message._params );
 }
 
 void UIManager::OnMouseKeyDown ( Message &&message ) noexcept
@@ -185,7 +200,25 @@ void UIManager::OnMouseKeyUp ( Message &&message ) noexcept
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
     if ( _mouseCapture ) [[unlikely]]
+    {
         _mouseCapture->OnMouseKeyUp ( *event );
+        delete event;
+        return;
+    }
+
+    int32_t const x = event->_x;
+    int32_t const y = event->_y;
+
+    for ( auto &widget : _widgets )
+    {
+        Widget &w = *widget;
+
+        if ( w.IsOverlapped ( x, y ) )
+        {
+            w.OnMouseKeyUp ( *event );
+            break;
+        }
+    }
 
     delete event;
 }
@@ -200,13 +233,14 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     if ( _mouseCapture ) [[unlikely]]
     {
         _mouseCapture->OnMouseMove ( *event );
+        delete event;
         return;
     }
 
     int32_t const x = event->_x;
     int32_t const y = event->_y;
 
-    for ( auto& widget : _widgets )
+    for ( auto &widget : _widgets )
     {
         Widget &w = *widget;
 
@@ -220,7 +254,7 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
     size_t const eventID = event->_eventID;
 
-    if ( eventID - _eventID > 1U ) [[unlikely]]
+    if ( eventID - std::exchange( _eventID, eventID ) > 1U ) [[unlikely]]
     {
         _messageQueue->EnqueueBack (
             {
@@ -231,7 +265,6 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
         );
     }
 
-    _eventID = eventID;
     delete event;
 }
 

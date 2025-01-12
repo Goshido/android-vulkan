@@ -14,6 +14,11 @@ void Widget::OnKeyUp ( eKey /*key*/ ) noexcept
     // NOTHING
 }
 
+void Widget::OnMouseLeave () noexcept
+{
+    // NOTHING
+}
+
 void Widget::OnMouseKeyDown ( MouseKeyEvent const &/*event*/ ) noexcept
 {
     // NOTHING
@@ -24,9 +29,18 @@ void Widget::OnMouseKeyUp ( MouseKeyEvent const &/*event*/ ) noexcept
     // NOTHING
 }
 
-void Widget::OnMouseMove ( MouseMoveEvent const &/*event*/ ) noexcept
+void Widget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
-    // NOTHING
+    if ( event._eventID - std::exchange ( _hoverEventID, event._eventID ) < 2U ) [[likely]]
+        return;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::MouseHover,
+            ._params = this,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
@@ -54,6 +68,12 @@ void Widget::UpdatedRect () noexcept
 bool Widget::IsOverlapped ( int32_t x, int32_t y ) const noexcept
 {
     return _rect.IsOverlapped ( x, y );
+}
+
+Widget::Widget ( MessageQueue &messageQueue ) noexcept:
+    _messageQueue ( messageQueue )
+{
+    // NOTHING
 }
 
 } // namespace editor

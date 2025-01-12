@@ -19,6 +19,7 @@ class UIManager final
 {
     private:
         size_t                                  _eventID = 0U;
+        Widget*                                 _hoverWidget = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
         Widget*                                 _mouseCapture = nullptr;
         std::thread                             _thread {};
@@ -43,6 +44,7 @@ class UIManager final
     private:
         void CreateWidgets () noexcept;
         void EventLoop () noexcept;
+        void OnMouseHover ( Message &&message ) noexcept;
         void OnMouseKeyDown ( Message &&message ) noexcept;
         void OnMouseKeyUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;

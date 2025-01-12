@@ -113,6 +113,7 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () override = default;
 
+        void SetColor ( ColorValue const &color ) noexcept;
         void SetColor ( GXColorUNORM color ) noexcept;
         void SetText ( char const* text ) noexcept;
         void SetText ( std::string_view text ) noexcept;

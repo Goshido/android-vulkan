@@ -59,6 +59,7 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
 }
 
 UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept:
+    Widget ( messageQueue ),
     _div ( nullptr,
 
         {
@@ -89,27 +90,9 @@ UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noex
         },
 
         std::move ( name )
-    ),
-
-    _messageQueue ( messageQueue )
+    )
 {
     // NOTHING
-}
-
-void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
-{
-    if ( _dragState ) [[unlikely]]
-    {
-        DoDrag ( event );
-        return;
-    }
-
-    DoHover ( event );
-}
-
-void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
-{
-    _div.Submit ( info );
 }
 
 void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
@@ -213,6 +196,23 @@ void UIDialogBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
             ._serialNumber = 0U
         }
     );
+}
+
+void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+{
+    if ( _dragState ) [[unlikely]]
+    {
+        DoDrag ( event );
+        return;
+    }
+
+    DoHover ( event );
+    Widget::OnMouseMove ( event );
+}
+
+void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+{
+    _div.Submit ( info );
 }
 
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,

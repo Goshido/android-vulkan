@@ -30,6 +30,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <float.h>
 #include <forward_list>
 #include <fstream>
+#include <functional>
 #include <list>
 #include <locale>
 #include <map>

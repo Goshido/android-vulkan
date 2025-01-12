@@ -20,7 +20,9 @@ constexpr std::string_view NORMAL_FONT_FAMILY = "pbr/assets/Props/experimental/w
 constexpr pbr::ColorValue BACKGROUND_COLOR ( 30U, 30U, 30U, 217U );
 constexpr pbr::ColorValue BORDER_COLOR ( 7U, 7U, 7U, 255U );
 constexpr pbr::ColorValue HEADER_COLOR ( 15U, 15U, 15U, 217U );
+constexpr pbr::ColorValue HOVER_COLOR ( 152U, 241U, 7U, 255U );
 constexpr pbr::ColorValue MAIN_COLOR ( 106U, 172U, 0U, 255U );
+constexpr pbr::ColorValue PRESS_COLOR ( 233U, 7U, 7U, 255U );
 constexpr pbr::ColorValue TEXT_COLOR_NORMAL ( 178U, 178U, 178U, 255U );
 constexpr pbr::ColorValue TRANSPARENT_COLOR ( 0U, 0U, 0U, 0U );
 

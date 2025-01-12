@@ -56,7 +56,7 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 
     WNDCLASSA const wndClass
     {
-        .style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
         .lpfnWndProc = &MainWindow::WindowHandler,
         .cbClsExtra = 0,
         .cbWndExtra = 0,

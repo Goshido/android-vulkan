@@ -377,6 +377,11 @@ void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
     _children.emplace_back ( &element );
 }
 
+void DIVUIElement::PrependChildElement ( UIElement& element ) noexcept
+{
+    _children.emplace_front ( &element );
+}
+
 DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
 {
     return _absoluteRect;

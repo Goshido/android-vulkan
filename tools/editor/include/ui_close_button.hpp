@@ -23,19 +23,19 @@ class UICloseButton final : public Widget
         using Callback = std::function<void ()>;
 
     private:
-        std::unique_ptr<pbr::DIVUIElement>      _base {};
+        pbr::DIVUIElement       _base;
 
-        std::unique_ptr<pbr::DIVUIElement>      _backgroundDIV {};
-        std::unique_ptr<pbr::TextUIElement>     _backgroundText {};
+        pbr::DIVUIElement       _backgroundDIV;
+        pbr::TextUIElement      _backgroundText;
 
-        std::unique_ptr<pbr::DIVUIElement>      _borderDIV {};
-        std::unique_ptr<pbr::TextUIElement>     _borderText {};
+        pbr::DIVUIElement       _borderDIV;
+        pbr::TextUIElement      _borderText;
 
-        std::unique_ptr<pbr::DIVUIElement>      _crossDIV {};
-        std::unique_ptr<pbr::TextUIElement>     _crossText {};
+        pbr::DIVUIElement       _crossDIV;
+        pbr::TextUIElement      _crossText;
 
-        Callback                                _callback {};
-        size_t                                  _eventID = 0U;
+        Callback                _callback {};
+        size_t                  _eventID = 0U;
 
     public:
         UICloseButton () = delete;

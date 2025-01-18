@@ -8,71 +8,79 @@ namespace editor {
 UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
 
-    _headerLine (
-        std::make_unique<pbr::DIVUIElement> ( &_div,
+    _headerLine ( &_div,
 
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::HEADER_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
-                ._right = theme::ZERO_LENGTH,
-                ._top = theme::ZERO_LENGTH,
-                ._color = theme::TRANSPARENT_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
-                ._fontSize = theme::HEADER_FONT_SIZE,
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = theme::ZERO_LENGTH,
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Static,
-                ._textAlign = pbr::TextAlignProperty::eValue::Left,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-                ._height = theme::HEADER_HEIGHT
-            },
+        pbr::CSSComputedValues
+        {
+            ._backgroundColor = theme::HEADER_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::ZERO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::ZERO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::HEADER_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Static,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._height = theme::HEADER_HEIGHT
+        },
 
-            "Header line"
-        )
+        "Header line"
     ),
 
-    _headerText ( std::make_unique<UILabel> ( messageQueue, *_headerLine, "Properties", "Header" ) ),
-    _closeButton ( std::make_unique<UICloseButton> ( messageQueue, *_headerLine, "Close button" ) )
+    _headerText ( messageQueue, _headerLine, "Properties", "Header" ),
+    _closeButton ( messageQueue, _headerLine, "Close button" ),
+    _checkbox ( messageQueue, _div, "Shadows", "Checkbox" )
 {
-    pbr::CSSComputedValues &headerTextStyle = _headerText->GetCSS ();
+    pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
     headerTextStyle._textAlign = pbr::TextAlignProperty::eValue::Center;
     headerTextStyle._paddingTop = theme::HEADER_VERTICAL_PADDING;
     headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
 
-    UICloseButton &closeButton = *_closeButton;
-    pbr::CSSComputedValues &closeButtonStyle = closeButton.GetCSS ();
+    pbr::CSSComputedValues &closeButtonStyle = _closeButton.GetCSS ();
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 2.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    closeButton.Connect (
+    _closeButton.Connect (
         [ this ] () noexcept {
             OnClose ();
         }
     );
 
-    _div.AppendChildElement ( *_headerLine );
+    _checkbox.Connect (
+        [ this ] ( UICheckbox::eState state ) noexcept {
+            OnCheckBox ( state );
+        }
+    );
+
+    _div.PrependChildElement ( _headerLine );
 }
 
 void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
 {
-    UICloseButton &closeButton = *_closeButton;
-
-    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
-        closeButton.OnMouseKeyDown ( event );
+        _closeButton.OnMouseKeyDown ( event );
+        return;
+    }
+
+    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    {
+        _checkbox.OnMouseKeyDown ( event );
         return;
     }
 
@@ -81,11 +89,15 @@ void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
 
 void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
 {
-    UICloseButton &closeButton = *_closeButton;
-
-    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
-        closeButton.OnMouseKeyUp ( event );
+        _closeButton.OnMouseKeyUp ( event );
+        return;
+    }
+
+    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    {
+        _checkbox.OnMouseKeyUp ( event );
         return;
     }
 
@@ -100,11 +112,15 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
-    UICloseButton &closeButton = *_closeButton;
-
-    if ( closeButton.IsOverlapped ( event._x, event._y ) )
+    if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
-        closeButton.OnMouseMove ( event );
+        _closeButton.OnMouseMove ( event );
+        return;
+    }
+
+    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    {
+        _checkbox.OnMouseMove ( event );
         return;
     }
 
@@ -114,7 +130,13 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
-    _closeButton->UpdatedRect ();
+    _closeButton.UpdatedRect ();
+    _checkbox.UpdatedRect ();
+}
+
+void UIProps::OnCheckBox ( UICheckbox::eState /*state*/ ) noexcept
+{
+    // FUCK - need to implement
 }
 
 void UIProps::OnClose () noexcept

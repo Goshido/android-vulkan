@@ -2,6 +2,7 @@
 #define EDITOR_UI_PROPS_HPP
 
 
+#include "ui_checkbox.hpp"
 #include "ui_close_button.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_label.hpp"
@@ -12,9 +13,10 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
-        std::unique_ptr<pbr::DIVUIElement>      _headerLine {};
-        std::unique_ptr<UILabel>                _headerText {};
-        std::unique_ptr<UICloseButton>          _closeButton {};
+        pbr::DIVUIElement       _headerLine;
+        UILabel                 _headerText;
+        UICloseButton           _closeButton;
+        UICheckbox              _checkbox;
 
     public:
         explicit UIProps ( MessageQueue &messageQueue ) noexcept;
@@ -33,6 +35,7 @@ class UIProps final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
+        void OnCheckBox ( UICheckbox::eState state ) noexcept;
         void OnClose () noexcept;
 };
 

@@ -26,7 +26,7 @@ constexpr pbr::ColorValue PRESS_COLOR ( 233U, 7U, 7U, 255U );
 constexpr pbr::ColorValue TEXT_COLOR_NORMAL ( 178U, 178U, 178U, 255U );
 constexpr pbr::ColorValue TRANSPARENT_COLOR ( 0U, 0U, 0U, 0U );
 
-constexpr pbr::LengthValue NORMAL_FONT_SIZE ( pbr::LengthValue::eType::PX, 12.0F );
+constexpr pbr::LengthValue NORMAL_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
 constexpr pbr::LengthValue NORMAL_LINE_HEIGHT ( pbr::LengthValue::eType::Auto, 42.0F );
 
 constexpr pbr::LengthValue HEADER_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
@@ -36,6 +36,7 @@ constexpr pbr::LengthValue HEADER_HEIGHT ( pbr::LengthValue::eType::PX, 30.0F );
 constexpr pbr::LengthValue SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40.0F );
 
 constexpr pbr::LengthValue AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
+constexpr pbr::LengthValue INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );
 constexpr pbr::LengthValue ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
 
 } // namespace editor::theme

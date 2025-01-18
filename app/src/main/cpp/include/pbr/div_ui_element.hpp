@@ -59,6 +59,8 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         void AppendChildElement ( UIElement &element ) noexcept;
+        void PrependChildElement ( UIElement &element ) noexcept;
+
         [[nodiscard]] Rect const &GetAbsoluteRect () const noexcept;
 };
 

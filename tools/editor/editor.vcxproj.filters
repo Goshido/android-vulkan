@@ -261,6 +261,9 @@
     <ClCompile Include="src\ui_close_button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui_checkbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -564,6 +567,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\glyphs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_checkbox.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

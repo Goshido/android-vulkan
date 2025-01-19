@@ -22,25 +22,25 @@ OS2Version: 0
 OS2_WeightWidthSlopeOnly: 0
 OS2_UseTypoMetrics: 1
 CreationTime: 1735976778
-ModificationTime: 1737191617
+ModificationTime: 1737286421
 PfmFamily: 17
 TTFWeight: 400
 TTFWidth: 5
 LineGap: 0
 VLineGap: 0
-OS2TypoAscent: 0
-OS2TypoAOffset: 1
+OS2TypoAscent: 1000
+OS2TypoAOffset: 0
 OS2TypoDescent: 0
-OS2TypoDOffset: 1
-OS2TypoLinegap: 369
-OS2WinAscent: 0
-OS2WinAOffset: 1
+OS2TypoDOffset: 0
+OS2TypoLinegap: 0
+OS2WinAscent: 1000
+OS2WinAOffset: 0
 OS2WinDescent: 0
-OS2WinDOffset: 1
-HheadAscent: 0
-HheadAOffset: 1
+OS2WinDOffset: 0
+HheadAscent: 1000
+HheadAOffset: 0
 HheadDescent: 0
-HheadDOffset: 1
+HheadDOffset: 0
 OS2XHeight: 1000
 OS2Vendor: 'PfEd'
 MarkAttachClasses: 1
@@ -292,13 +292,13 @@ SplineSet
  0 923 l 1
  0 925 l 2
 EndSplineSet
-Validated: 524289
+Validated: 1
 EndChar
 
 StartChar: Checkbox._uncheck
 Encoding: 45 45 5
 Width: 1000
-Flags: WO
+Flags: W
 HStem: 0 158<157 843> 842 158<157 843>
 VStem: 0 157<158 842> 843 157<158 842>
 LayerCount: 2

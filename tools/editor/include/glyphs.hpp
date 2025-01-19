@@ -15,13 +15,13 @@ namespace editor::glyph {
 
 constexpr std::string_view FONT_FAMILY = "../editor-assets/fonts/avicons.otf";
 
-constexpr std::string_view CHECKBOX_CHECK = ",";
-constexpr std::string_view CHECKBOX_UNCHECK = "-";
-constexpr std::string_view CHECKBOX_MULTI = ".";
+constexpr std::string_view CHECKBOX_CHECK = "\u002C";
+constexpr std::string_view CHECKBOX_UNCHECK = "\u002D";
+constexpr std::string_view CHECKBOX_MULTI = "\u002E";
 
-constexpr std::string_view CLOSE_BUTTON_BACKGROUND = R"__(")__";
-constexpr std::string_view CLOSE_BUTTON_BORDER = "#";
-constexpr std::string_view CLOSE_BUTTON_CROSS = "$";
+constexpr std::string_view CLOSE_BUTTON_BACKGROUND = "\u0022";
+constexpr std::string_view CLOSE_BUTTON_BORDER = "\u0023";
+constexpr std::string_view CLOSE_BUTTON_CROSS = "\u0024";
 
 } // namespace editor::glyph
 

@@ -52,7 +52,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
 
     pbr::CSSComputedValues &closeButtonStyle = _closeButton.GetCSS ();
-    closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 2.0F );
+    closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
     _closeButton.Connect (

@@ -1,5 +1,5 @@
-#ifndef EDITOR_UI_CHECKBOX_HPP
-#define EDITOR_UI_CHECKBOX_HPP
+#ifndef EDITOR_UI_COMBOBOX_HPP
+#define EDITOR_UI_COMBOBOX_HPP
 
 
 #include <pbr/div_ui_element.hpp>
@@ -17,17 +17,10 @@ namespace editor {
 
 class UIManager;
 
-class UICheckbox final : public Widget
+class UICombobox final : public Widget
 {
     public:
-        enum class eState : uint8_t
-        {
-            Check,
-            Unckeck,
-            Multi
-        };
-
-        using Callback = std::function<void ( eState state )>;
+        using Callback = std::function<void ( uint32_t )>;
 
     private:
         pbr::DIVUIElement       _lineDIV;
@@ -37,29 +30,32 @@ class UICheckbox final : public Widget
         pbr::TextUIElement      _captionText;
 
         pbr::DIVUIElement       _valueDIV;
-        pbr::TextUIElement      _valueIcon;
+
+        pbr::DIVUIElement       _textDIV;
+        pbr::TextUIElement      _text;
+
+        pbr::DIVUIElement       _iconDIV;
+        pbr::TextUIElement      _icon;
 
         Callback                _callback {};
         size_t                  _eventID = 0U;
 
-        eState                  _state = eState::Check;
-
     public:
-        UICheckbox () = delete;
+        UICombobox () = delete;
 
-        UICheckbox ( UICheckbox const & ) = delete;
-        UICheckbox &operator = ( UICheckbox const & ) = delete;
+        UICombobox ( UICombobox const & ) = delete;
+        UICombobox &operator = ( UICombobox const & ) = delete;
 
-        UICheckbox ( UICheckbox && ) = delete;
-        UICheckbox &operator = ( UICheckbox && ) = delete;
+        UICombobox ( UICombobox && ) = delete;
+        UICombobox &operator = ( UICombobox && ) = delete;
 
-        explicit UICheckbox ( MessageQueue &messageQueue,
+        explicit UICombobox ( MessageQueue &messageQueue,
             pbr::DIVUIElement &parent,
             std::string_view caption,
             std::string &&name
         ) noexcept;
 
-        ~UICheckbox () override = default;
+        ~UICombobox () override = default;
 
         void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
@@ -76,4 +72,4 @@ class UICheckbox final : public Widget
 } // namespace editor
 
 
-#endif // EDITOR_UI_CHECKBOX_HPP
+#endif // EDITOR_UI_COMBOBOX_HPP

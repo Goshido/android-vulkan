@@ -61,12 +61,12 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
-            // FUCK calculations shoud be done relative Nearest Positioned Ancestor.
-            // Long story short: it's needed to work relative closest 'position: absolute' element.
             pen = _canvasTopLeftOffset;
             _parentLine = std::numeric_limits<size_t>::max ();
         break;
 
+        case PositionProperty::eValue::Relative:
+            [[fallthrough]];
         case PositionProperty::eValue::Static:
         {
             if ( penOut._data[ 0U ] == 0.0F )
@@ -281,8 +281,9 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 pen {};
     AlignHandler verticalAlign = &UIElement::AlignToStart;
     float parentHeight = 0.0F;
+    PositionProperty::eValue const position = _css._position;
 
-    if ( _css._position == PositionProperty::eValue::Static )
+    if ( ( position == PositionProperty::eValue::Static ) | ( position == PositionProperty::eValue::Relative ) )
     {
         pen = info._pen;
         verticalAlign = ResolveVerticalAlignment ( *this );
@@ -301,6 +302,18 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     {
         // 'absolute' block territory.
         pen = info._parentTopLeft;
+
+        for ( UIElement const* p = _parent; p; p = p->_parent )
+        {
+            // According to CSS calculations shoud be done relative Nearest Positioned Ancestor.
+            // Long story short: it's needed to work relative closest 'position: absolute or relative' element.
+            if ( p->GetCSS ()._position == PositionProperty::eValue::Static )
+                continue;
+
+            // NOLINTNEXTLINE - downcast
+            pen = static_cast<DIVUIElement const*> ( p )->_absoluteRect._topLeft;
+            break;
+        }
 
         if ( _css._top.GetType () != LengthValue::eType::Auto )
             pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true );

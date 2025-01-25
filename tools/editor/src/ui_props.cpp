@@ -14,8 +14,8 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
         {
             ._backgroundColor = theme::HEADER_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::ZERO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::AUTO_LENGTH,
             ._right = theme::ZERO_LENGTH,
             ._top = theme::ZERO_LENGTH,
             ._color = theme::TRANSPARENT_COLOR,
@@ -31,7 +31,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
             ._paddingLeft = theme::ZERO_LENGTH,
             ._paddingRight = theme::ZERO_LENGTH,
             ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
+            ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
@@ -43,7 +43,8 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
 
     _headerText ( messageQueue, _headerLine, "Properties", "Header" ),
     _closeButton ( messageQueue, _headerLine, "Close button" ),
-    _checkbox ( messageQueue, _div, "Shadows", "Checkbox" )
+    _checkbox ( messageQueue, _div, "Shadows", "Checkbox" ),
+    _combobox ( messageQueue, _div, "Resolution", "Combobox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -67,6 +68,12 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
         }
     );
 
+    _combobox.Connect (
+        [ this ] ( uint32_t value ) noexcept {
+            OnCombobox ( value );
+        }
+    );
+
     _div.PrependChildElement ( _headerLine );
 }
 
@@ -84,6 +91,12 @@ void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
         return;
     }
 
+    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    {
+        _combobox.OnMouseKeyDown ( event );
+        return;
+    }
+
     UIDialogBox::OnMouseKeyDown ( event );
 }
 
@@ -98,6 +111,12 @@ void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
     if ( _checkbox.IsOverlapped ( event._x, event._y ) )
     {
         _checkbox.OnMouseKeyUp ( event );
+        return;
+    }
+
+    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    {
+        _combobox.OnMouseKeyUp ( event );
         return;
     }
 
@@ -124,6 +143,12 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
+    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    {
+        _combobox.OnMouseMove ( event );
+        return;
+    }
+
     UIDialogBox::OnMouseMove ( event );
 }
 
@@ -132,6 +157,7 @@ void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();
     _checkbox.UpdatedRect ();
+    _combobox.UpdatedRect ();
 }
 
 void UIProps::OnCheckBox ( UICheckbox::eState /*state*/ ) noexcept
@@ -140,6 +166,11 @@ void UIProps::OnCheckBox ( UICheckbox::eState /*state*/ ) noexcept
 }
 
 void UIProps::OnClose () noexcept
+{
+    // FUCK - need to implement
+}
+
+void UIProps::OnCombobox ( uint32_t /*value*/ ) noexcept
 {
     // FUCK - need to implement
 }

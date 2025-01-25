@@ -29,13 +29,6 @@ ColorValue &ColorValue::operator = ( GXColorUNORM srgb ) noexcept
     return *this;
 }
 
-ColorValue::ColorValue ( bool inherit, GXColorUNORM srgb ) noexcept:
-    _inherit ( inherit ),
-    _srgb ( srgb )
-{
-    // NOTHING
-}
-
 void ColorValue::AttachNotifier ( Context context, NotifyChanged notifier ) noexcept
 {
     _context = context;

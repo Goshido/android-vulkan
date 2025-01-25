@@ -13,6 +13,7 @@ class PositionProperty final : public Property
         enum class eValue : uint8_t
         {
             Absolute,
+            Relative,
             Static
         };
 

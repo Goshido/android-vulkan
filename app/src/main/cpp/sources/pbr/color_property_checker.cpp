@@ -184,13 +184,13 @@ PropertyChecker::Result ColorPropertyChecker::Process ( PropertyParser::Result &
 
     if ( value == U"inherit" )
     {
-        _target = ColorValue ( true, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
+        _target = ColorValue {};
         return true;
     }
 
     if ( auto const findResult = _colorMap.find ( result._value ); findResult != _colorMap.cend () )
     {
-        _target = ColorValue ( false, findResult->second );
+        _target = ColorValue ( findResult->second );
         return true;
     }
 
@@ -250,10 +250,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor3 ( std::u32string_v
 
     if ( c0 & c1 & c2 )
     {
-        _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), OPAQUE_VALUE )
-        );
-
+        _target = ColorValue ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), OPAQUE_VALUE );
         return true;
     }
 
@@ -280,10 +277,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor4 ( std::u32string_v
 
     if ( c0 & c1 & c2 & c3 )
     {
-        _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), ToComponent ( a ) )
-        );
-
+        _target = ColorValue ( ToComponent ( r ), ToComponent ( g ), ToComponent ( b ), ToComponent ( a ) );
         return true;
     }
 
@@ -314,10 +308,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor6 ( std::u32string_v
 
     if ( c0H & c0L & c1H & c1L & c2H & c2L )
     {
-        _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), OPAQUE_VALUE )
-        );
-
+        _target = ColorValue ( ToComponent ( rH, rL ), ToComponent ( gH, gL ), ToComponent ( bH, bL ), OPAQUE_VALUE );
         return true;
     }
 
@@ -352,12 +343,10 @@ PropertyChecker::Result ColorPropertyChecker::HandleHEXColor8 ( std::u32string_v
 
     if ( c0H & c0L & c1H & c1L & c2H & c2L & c3H & c3L )
     {
-        _target = ColorValue ( false,
-            GXColorUNORM ( ToComponent ( rH, rL ),
-                ToComponent ( gH, gL ),
-                ToComponent ( bH, bL ),
-                ToComponent ( aH, aL )
-            )
+        _target = ColorValue ( ToComponent ( rH, rL ),
+            ToComponent ( gH, gL ),
+            ToComponent ( bH, bL ),
+            ToComponent ( aH, aL )
         );
 
         return true;
@@ -482,7 +471,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
     if ( value == U")" )
     {
         color._data[ 3U ] = 1.0F;
-        _target = ColorValue ( false, color.ToColorUNORM () );
+        _target = ColorValue ( color.ToColorUNORM () );
         return true;
     }
 
@@ -505,7 +494,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleHSLColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false, color.ToColorUNORM () );
+        _target = ColorValue ( color.ToColorUNORM () );
         return true;
     }
 
@@ -612,7 +601,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
     if ( value == U")" )
     {
         color._data[ 3U ] = 1.0F;
-        _target = ColorValue ( false, color.ToColorUNORM () );
+        _target = ColorValue ( color.ToColorUNORM () );
         return true;
     }
 
@@ -635,7 +624,7 @@ PropertyChecker::Result ColorPropertyChecker::HandleRGBColor ( std::u32string_vi
 
     if ( value == U")" )
     {
-        _target = ColorValue ( false, color.ToColorUNORM () );
+        _target = ColorValue ( color.ToColorUNORM () );
         return true;
     }
 

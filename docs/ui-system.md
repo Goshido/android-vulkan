@@ -424,7 +424,7 @@ Supported values: From 1 to 4 values according to [_CSS_ specification](https://
 
 ### <a id="position">`position`</a>
 
-Supported values: `absolute` and `static`.
+Supported values: `absolute`, `relative` and `static`.
 
 [↬ table of content ⇧](#table-of-content)
 

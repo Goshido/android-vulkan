@@ -4,6 +4,7 @@
 
 #include "ui_checkbox.hpp"
 #include "ui_close_button.hpp"
+#include "ui_combobox.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_label.hpp"
 
@@ -17,6 +18,7 @@ class UIProps final : public UIDialogBox
         UILabel                 _headerText;
         UICloseButton           _closeButton;
         UICheckbox              _checkbox;
+        UICombobox              _combobox;
 
     public:
         explicit UIProps ( MessageQueue &messageQueue ) noexcept;
@@ -36,6 +38,7 @@ class UIProps final : public UIDialogBox
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
         void OnCheckBox ( UICheckbox::eState state ) noexcept;
+        void OnCombobox ( uint32_t value ) noexcept;
         void OnClose () noexcept;
 };
 

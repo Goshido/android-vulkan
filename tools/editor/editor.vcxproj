@@ -862,6 +862,7 @@
     <ClCompile Include="src\save_state.cpp" />
     <ClCompile Include="src\ui_checkbox.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
+    <ClCompile Include="src\ui_combobox.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
@@ -966,6 +967,7 @@
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\ui_checkbox.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
+    <ClInclude Include="include\ui_combobox.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />

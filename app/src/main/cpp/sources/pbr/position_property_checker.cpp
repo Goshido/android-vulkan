@@ -11,6 +11,7 @@ namespace {
 std::unordered_map<std::u32string_view, PositionProperty::eValue> const VALUES =
 {
     { U"absolute", PositionProperty::eValue::Absolute },
+    { U"relative", PositionProperty::eValue::Relative },
     { U"static", PositionProperty::eValue::Static }
 };
 

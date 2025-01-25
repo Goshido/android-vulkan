@@ -159,6 +159,8 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
             _parentLine = 0U;
         break;
 
+        case PositionProperty::eValue::Relative:
+            [[fallthrough]];
         case PositionProperty::eValue::Static:
         {
             if ( penOut._data[ 0U ] == 0.0F )

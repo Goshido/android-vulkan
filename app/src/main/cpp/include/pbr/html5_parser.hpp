@@ -25,13 +25,13 @@ class HTML5Parser final
 
         CSSComputedValues                       _bodyCSS
         {
-            ._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) ),
+            ._backgroundColor = ColorValue ( 0U, 0U, 0U, 0U ),
             ._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F ),
             ._bottom = LengthValue ( LengthValue::eType::Auto, 42.0F ),
             ._left = LengthValue ( LengthValue::eType::Auto, 42.0F ),
             ._right = LengthValue ( LengthValue::eType::Auto, 42.0F ),
             ._top = LengthValue ( LengthValue::eType::Auto, 42.0F ),
-            ._color = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0xFFU ) ),
+            ._color = ColorValue ( 0U, 0U, 0U, 255U ),
             ._display = DisplayProperty::eValue::Block,
             ._fontFile {},
             ._fontSize = LengthValue ( LengthValue::eType::PX, 16.0F ),

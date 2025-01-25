@@ -23,6 +23,9 @@ constexpr std::string_view CLOSE_BUTTON_BACKGROUND = "\u0022";
 constexpr std::string_view CLOSE_BUTTON_BORDER = "\u0023";
 constexpr std::string_view CLOSE_BUTTON_CROSS = "\u0024";
 
+constexpr std::string_view COMBOBOX_DOWN = "\u0042";
+constexpr std::string_view COMBOBOX_UP = "\u0043";
+
 } // namespace editor::glyph
 
 

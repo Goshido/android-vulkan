@@ -2,11 +2,11 @@
 
 ## <a id="table-of-content">Table of content</a>
 
-- [_Linear to sRGB_](#linear-to-srgb)
 - [_sRGB to Linear_](#srgb-to-linear)
+- [_Linear to sRGB_](#linear-to-srgb)
 - [_Brightness for sRGB_](#new-gamma)
 
-## <a id="linear-to-srgb">_Linear_ to _sRGB_</a>
+## <a id="srgb-to-linear">_sRGB_ to _Linear_</a>
 
 Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 
@@ -32,7 +32,7 @@ $$
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="srgb-to-linear">_sRGB_ to _Linear_</a>
+## <a id="linear-to-srgb">_Linear_ to _sRGB_</a>
 
 Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 

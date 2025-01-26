@@ -431,8 +431,9 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     AlignIntegerHandler const textAlignment = GetIntegerTextAlignment ();
     AlignIntegerHandler const verticalAlignment = GetIntegerVerticalAlignment ();
 
-    auto x = static_cast<int32_t> ( pen._data[ 0U ] );
-    auto y = static_cast<int32_t> ( pen._data[ 1U ] );
+    // [2025/01/26] Mimicking for Google Chrome v131.0.6778.265.
+    auto x = static_cast<int32_t> ( std::lround ( pen._data[ 0U ] ) );
+    auto y = static_cast<int32_t> ( std::lround ( pen._data[ 1U ] ) );
 
     // Defined by CSS 2 spec:
     // See https://drafts.csswg.org/css2/#leading

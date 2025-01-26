@@ -6,7 +6,7 @@
 
 ## Brief
 
-The project has ability to make a snapshot of current _Vulkan_ memory state. The _API_ to do that is `android_vulkan::Renderer::MakeMakeVulkanMemorySnapshot`. The resulting file could be opened in [_Google Chrome Tracing_](https://slack.engineering/chrome-tracing-for-fun-and-profit) build-in tool.
+The project has ability to make a snapshot of current _Vulkan_ memory state. The _API_ to do that is `android_vulkan::Renderer::MakeVulkanMemorySnapshot`. The resulting file could be opened in [_Google Chrome Tracing_](https://slack.engineering/chrome-tracing-for-fun-and-profit) build-in tool.
 
 <img src="./images/vulkan-memory-viewer.png"/>
 

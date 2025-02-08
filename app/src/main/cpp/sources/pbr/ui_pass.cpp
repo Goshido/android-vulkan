@@ -105,15 +105,16 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
 
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
 
+    // Note UNORM is correct mode because of pixel shader, alpha blending and swapchain UNORM format.
     bool const result = texture->UploadData ( *_renderer,
         asset,
-        android_vulkan::eColorSpace::sRGB,
+        android_vulkan::eColorSpace::Unorm,
         true,
         _commandBuffers[ _commandBufferIndex ],
         _fences[ _commandBufferIndex ]
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return std::nullopt;
 
     _commandBufferIndex += COMMAND_BUFFERS_PER_TEXTURE;
@@ -469,6 +470,103 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+UIPass::BufferStream::BufferStream ( size_t elementSize ) noexcept:
+    _elementSize ( elementSize )
+{
+    // NOTHING
+}
+
+bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
+    char const *vertexName,
+    char const *stagingName
+) noexcept
+{
+    constexpr VkMemoryPropertyFlags stagingProps = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+
+    size_t const size = MAX_VERTICES * _elementSize;
+
+    if ( !_staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) ) [[unlikely]]
+        return false;
+
+    void* data;
+
+    bool const result = renderer.MapMemory ( data,
+        _staging._memory,
+        _staging._memoryOffset,
+        "pbr::UIPass::BufferStream::Init",
+        "Can't map memory"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _data = static_cast<uint8_t*> ( data );
+
+    constexpr VkBufferUsageFlags vertexUsage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
+
+    if ( !_vertex.Init ( renderer, size, vertexUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexName ) ) [[unlikely]]
+        return false;
+
+    _barrier.buffer = _vertex._buffer;
+    return true;
+}
+
+void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+{
+    if ( _data ) [[likely]]
+    {
+        renderer.UnmapMemory ( _staging._memory );
+        _data = nullptr;
+    }
+
+    _staging.Destroy ( renderer );
+    _vertex.Destroy ( renderer );
+}
+
+VkBuffer UIPass::BufferStream::GetBuffer () const noexcept
+{
+    return _vertex._buffer;
+}
+
+void *UIPass::BufferStream::GetData ( size_t startIndex ) const noexcept
+{
+    return _data + startIndex * _elementSize;
+}
+
+void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept
+{
+    auto const offset = static_cast<VkDeviceSize> ( _elementSize * readIdx );
+    auto const size = static_cast<VkDeviceSize> ( _elementSize * ( writeIdx - readIdx ) );
+
+    VkBufferCopy const copy
+    {
+        .srcOffset = offset,
+        .dstOffset = offset,
+        .size = size
+    };
+
+    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
+
+    _barrier.offset = offset;
+    _barrier.size = size;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &_barrier,
+        0U,
+        nullptr
+    );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
     VkDescriptorPool descriptorPool,
     VkImageView transparent
@@ -648,103 +746,6 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
     }
 
     i->second = 2U;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-UIPass::BufferStream::BufferStream ( size_t elementSize ) noexcept:
-    _elementSize ( elementSize )
-{
-    // NOTHING
-}
-
-bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
-    char const *vertexName,
-    char const *stagingName
-) noexcept
-{
-    constexpr VkMemoryPropertyFlags stagingProps = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-    size_t const size = MAX_VERTICES * _elementSize;
-
-    if ( !_staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) ) [[unlikely]]
-        return false;
-
-    void* data;
-
-    bool const result = renderer.MapMemory ( data,
-        _staging._memory,
-        _staging._memoryOffset,
-        "pbr::UIPass::BufferStream::Init",
-        "Can't map memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _data = static_cast<uint8_t*> ( data );
-
-    constexpr VkBufferUsageFlags vertexUsage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
-
-    if ( !_vertex.Init ( renderer, size, vertexUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexName ) ) [[unlikely]]
-        return false;
-
-    _barrier.buffer = _vertex._buffer;
-    return true;
-}
-
-void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexcept
-{
-    if ( _data ) [[likely]]
-    {
-        renderer.UnmapMemory ( _staging._memory );
-        _data = nullptr;
-    }
-
-    _staging.Destroy ( renderer );
-    _vertex.Destroy ( renderer );
-}
-
-VkBuffer UIPass::BufferStream::GetBuffer () const noexcept
-{
-    return _vertex._buffer;
-}
-
-void *UIPass::BufferStream::GetData ( size_t startIndex ) const noexcept
-{
-    return _data + startIndex * _elementSize;
-}
-
-void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept
-{
-    auto const offset = static_cast<VkDeviceSize> ( _elementSize * readIdx );
-    auto const size = static_cast<VkDeviceSize> ( _elementSize * ( writeIdx - readIdx ) );
-
-    VkBufferCopy const copy
-    {
-        .srcOffset = offset,
-        .dstOffset = offset,
-        .size = size
-    };
-
-    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
-
-    _barrier.offset = offset;
-    _barrier.size = size;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &_barrier,
-        0U,
-        nullptr
-    );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

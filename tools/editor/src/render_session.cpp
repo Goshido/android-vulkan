@@ -945,10 +945,7 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     FreeCommandBuffers ( device );
 
     if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
-        _renderPassInfo.framebuffer = VK_NULL_HANDLE;
-    }
+        vkDestroyFramebuffer ( device, std::exchange ( _renderPassInfo.framebuffer, VK_NULL_HANDLE ), nullptr );
 
     if ( _helloTriangleProgram ) [[likely]]
     {
@@ -965,10 +962,7 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _renderTarget.FreeResources ( renderer );
 
     if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyRenderPass ( device, _renderPassInfo.renderPass, VK_NULL_HANDLE );
-        _renderPassInfo.renderPass = VK_NULL_HANDLE;
-    }
+        vkDestroyRenderPass ( device, std::exchange ( _renderPassInfo.renderPass, VK_NULL_HANDLE ), nullptr );
 
     _uiPass.OnSwapchainDestroyed ();
     _uiPass.OnDestroyDevice ( renderer );

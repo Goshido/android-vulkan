@@ -221,7 +221,6 @@ class UIPass final
         ~UIPass () = default;
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
-
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 

@@ -55,7 +55,7 @@ Let's start from the issue:
 
 The text looks thinner in _Android-Vulkan_ implementation than _Google Chrome_ implementation.
 
-On the first though it could be subpixel rendering on the _Window_. It has impact on appearance of course. But I assure you that this is not the main contribution to the visuals.
+On the first thought it could be subpixel rendering on the _Windows_. It has impact on appearance of course. But I assure you that this is not the main contribution to the visuals.
 
 It should be some mapping from:
 
@@ -98,7 +98,7 @@ That's it.
 
 ## <a id="gpu">_GPU_ implementation</a>
 
-There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solutions share common math about cubic Bezier curve:
+There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solutions share common math about cubic _Bezier_ curve:
 
 $$
 P=(1-t)^3P_0+3(1-t)^2P_1t+3(1-t)P_2t^2+P_3t^3

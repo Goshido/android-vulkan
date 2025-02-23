@@ -9,13 +9,76 @@
 
 ## <a id="blending">Proper blending</a>
 
-Let's start from the issue demonstration:
+Let's start from the issue:
 
+<img src="./images/ui-wrong-blending.png"/>
 
+You could notice than _Google Chrome_ much darker that _Android-Vulkan_. Caption area is a good example that blending looks different. Same time any opaque area has exactly the same color in both impementations. For example close button color is 1 to 1 match. Accoriding to [_CSS_](https://www.w3.org/TR/SVG11/masking.html#SimpleAlphaBlending) it should be used _premultiplied alpha_ or classic alpha blending. One blending could be transformed into another. _premultiplied alpha_ has advantages in image filtering and it allows to separate blending areas for later compositing.
+
+It turns out that the answer is `UNORM` format for render target. Hardware produces slightly different results for `UNORM` and `sRGB` during blending. In the case above the render target format is `sRGB`. After changing it to `UNORM` the blending itself starts to match:
+
+<img src="./images/ui-correct-blending.png"/>
+
+The bending equation is classical:
+
+```cpp
+...
+
+.blendEnable = VK_TRUE,
+.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+.colorBlendOp = VK_BLEND_OP_ADD,
+.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+.alphaBlendOp = VK_BLEND_OP_ADD,
+
+.colorWriteMask =
+    VK_COLOR_COMPONENT_R_BIT |
+    VK_COLOR_COMPONENT_G_BIT |
+    VK_COLOR_COMPONENT_B_BIT |
+    VK_COLOR_COMPONENT_A_BIT
+
+...
+```
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="text">Proper text rendering</a>
+
+Let's start from the issue:
+
+<img src="./images/ui-incorrect-text-blending.png"/>
+
+The text looks thinner in _Android-Vulkan_ implementation.
+
+On the first though it could be subpixel rendering on the _Window_. It has impact on appearance of course. But I assure you that this is not the main contribution to the visuals.
+
+It should be some mapping from:
+
+- Glyph luma
+- Color alpha
+
+<img src="./images/ui-color-alpha-luma-idea.png"/>
+
+After some amount of experiments such mapping has been found. Here is final result:
+
+<img src="./images/ui-correct-text-blending.png"/>
+
+Let's look how this mapping is looks like first:
+
+<img src="./images/ui-text-alpha-mapping-001.png"/>
+
+<img src="./images/ui-text-alpha-mapping-002.png"/>
+
+<img src="./images/ui-text-alpha-mapping-003.png"/>
+
+<img src="./images/ui-text-alpha-mapping-004.png"/>
+
+<img src="./images/ui-text-alpha-mapping-005.png"/>
+
+Full video link is [here](./videos/ui-text-alpha-mapping.mp4).
+
+This fancy mapping is constructed by three cubic [Bezier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
 
 [↬ table of content ⇧](#table-of-content)
 

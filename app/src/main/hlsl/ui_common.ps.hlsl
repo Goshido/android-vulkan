@@ -44,8 +44,6 @@ struct InputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// FUCK - make a reference to documentation.
-
 float16_t4 HandleImage ( in float16_t4 color, in InputData inputData )
 {
     return color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
@@ -66,6 +64,7 @@ float16_t4 HandleText ( in float16_t4 color, in InputData inputData )
 
 float16_t4 Compute ( in InputData inputData )
 {
+    // See <repo>/docs/proper-ui.md
     float16_t4 const color = (float16_t4)inputData._color;
 
     switch ( inputData._uiPrimitiveType )

@@ -552,7 +552,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 [[maybe_unused]] GXColorRGB GXColorRGB::ToLinearSpace () const noexcept
 {
-    // See <repo>/docs/srgb#srgb-to-linear
+    // See <repo>/docs/srgb.md#srgb-to-linear
     float const* c = _data;
     GXVec3 const &srgb = *reinterpret_cast<GXVec3 const*> ( this );
 

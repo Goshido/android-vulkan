@@ -2,13 +2,16 @@
 
 ## <a id="table-of-content">Table of content</a>
 
-- [_Proper bending_](#blending)
+- [_Proper blending_](#blending)
 - [_Proper text rendering_](#text)
 - [_Benchmarking_](#benchmark)
+- [_Conclusion_](#conclusion)
 
 ## <a id="blending">Proper blending</a>
 
-TODO
+Let's start from the issue demonstration:
+
+
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -36,8 +39,21 @@ _UI_ vertices | 35520 | 35520 | 0%
 
 **Method** | **Frame time**
 --- | ---
-Newton approximation | 17.281 ms
-Lossless _LUT_ | ??? ms
-Compressed _LUT_ | ??? ms
+Lossless _LUT_ | 14.651 ms
+Compressed _ASTC6x6 LUT_ | 14.671 ms
+Newton approximation | 17.967 ms
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="conclusion">Conclusion</a>
+
+_LUT_ approach shows better performance compare to iterative _Newton_ approximation of two Bezier curves. Lossless and compressed _LUT_ show similar performance on real hardware. So it's decided to stick with _Lossless LUT_.
+
+So:
+
+- Swapchain format has been changed to `UNORM`
+- It was added 3 types of primitives at pixel shader level: text, images and geometry
+- _LUT_ is faster then _Newton_ approximation by 18.5%🟢
+- Uncompress _LUT_ is universal solution (_ASTC_ is not widely supported on _PC_)
 
 [↬ table of content ⇧](#table-of-content)

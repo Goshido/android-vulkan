@@ -4,6 +4,7 @@
 #include <pbr/ui_pass.hpp>
 #include <pbr/ui_program.inc>
 #include <trace.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -18,6 +19,11 @@ constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 
 constexpr size_t TRANSPARENT_DESCRIPTOR_SET_COUNT = 1U;
+
+constexpr uint32_t COMMON_DESCRIPTOR_SET_IMAGE_COUNT = 2U;
+constexpr uint32_t COMMON_DESCRIPTOR_SET_SAMPLER_COUNT = 3U;
+
+constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -289,13 +295,47 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
+bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     VkDescriptorPool descriptorPool,
     SamplerManager const &samplerManager
 ) noexcept
 {
-    if ( !_layout.Init ( device ) ) [[unlikely]]
+    VkCommandPoolCreateInfo const poolInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
+    };
+
+    constexpr VkFenceCreateInfo fenceInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result =
+        android_vulkan::Renderer::CheckVkResult (
+            vkCreateCommandPool ( device, &poolInfo, nullptr, &_pool ),
+            "pbr::UIPass::CommonDescriptorSet::Init",
+            "Can't create command pool"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
+            "pbr::UIPass::CommonDescriptorSet::Init",
+            "Can't create fence"
+        ) &&
+
+        _layout.Init ( device );
+
+    if ( !result ) [[unlikely]]
         return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pool, VK_OBJECT_TYPE_COMMAND_POOL, "Text LUT" );
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fence, VK_OBJECT_TYPE_FENCE, "Text LUT" );
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -306,16 +346,46 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
         .pSetLayouts = &_layout.GetLayout ()
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-        "pbr::UIPass::CommonDescriptorSet::Init",
-        "Can't allocate descriptor sets"
-    );
+    VkCommandBufferAllocateInfo const bufferAllocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = _pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+
+    result =
+        android_vulkan::Renderer::CheckVkResult (
+            vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
+            "pbr::UIPass::CommonDescriptorSet::Init",
+            "Can't allocate descriptor sets"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult (
+            vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
+            "pbr::UIPass::CommonDescriptorSet::Init",
+            "Can't allocate command buffer"
+        );
 
     if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI common" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Text LUT" )
+
+    result = _textLUT.UploadData ( renderer,
+        TEXT_LUT,
+        android_vulkan::eColorSpace::Unorm,
+        false,
+        commandBuffer,
+        _fence
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
 
     VkDescriptorImageInfo const imageInfo[] =
     {
@@ -325,11 +395,21 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         },
         {
+            .sampler = samplerManager.GetClampToEdgeSampler (),
+            .imageView = _textLUT.GetImageView (),
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        },
+        {
             .sampler = samplerManager.GetMaterialSampler (),
             .imageView = VK_NULL_HANDLE,
             .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         }
     };
+
+    constexpr size_t textLUTResources = 1U;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _textLUT.GetImage (), VK_OBJECT_TYPE_IMAGE, "Text LUT" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, imageInfo[ textLUTResources ].imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Text LUT")
 
     VkWriteDescriptorSet const writes[] =
     {
@@ -349,11 +429,35 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
             .pNext = nullptr,
             .dstSet = _descriptorSet,
+            .dstBinding = BIND_TEXT_LUT_TEXTURE,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = imageInfo + textLUTResources,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
+            .dstBinding = BIND_TEXT_LUT_SAMPLER,
+            .dstArrayElement = 0U,
+            .descriptorCount = 1U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = imageInfo + textLUTResources,
+            .pBufferInfo = nullptr,
+            .pTexelBufferView = nullptr
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .pNext = nullptr,
+            .dstSet = _descriptorSet,
             .dstBinding = BIND_IMAGE_SAMPLER,
             .dstArrayElement = 0U,
             .descriptorCount = 1U,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = imageInfo + 1U,
+            .pImageInfo = imageInfo + 2U,
             .pBufferInfo = nullptr,
             .pTexelBufferView = nullptr
         }
@@ -385,18 +489,57 @@ bool UIPass::CommonDescriptorSet::Init ( VkDevice device,
     return true;
 }
 
-void UIPass::CommonDescriptorSet::Destroy ( VkDevice device ) noexcept
+void UIPass::CommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _layout.Destroy ( device );
+    _layout.Destroy ( renderer.GetDevice () );
+    _textLUT.FreeResources ( renderer );
+    VkDevice device = renderer.GetDevice ();
+
+    if ( _fence != VK_NULL_HANDLE ) [[unlikely]]
+        vkDestroyFence ( device, std::exchange ( _fence, VK_NULL_HANDLE ), nullptr );
+
+    if ( _pool != VK_NULL_HANDLE ) [[unlikely]]
+    {
+        vkDestroyCommandPool ( device, std::exchange ( _pool, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
-void UIPass::CommonDescriptorSet::Update ( VkDevice device, VkImageView currentAtlas ) noexcept
+bool UIPass::CommonDescriptorSet::Update ( android_vulkan::Renderer &renderer, VkImageView currentAtlas ) noexcept
 {
-    if ( _imageInfo.imageView == currentAtlas )
-        return;
+    if ( !FreeTransferResources ( renderer ) ) [[unlikely]]
+        return false;
+
+    if ( _imageInfo.imageView == currentAtlas ) [[likely]]
+        return true;
 
     _imageInfo.imageView = currentAtlas;
-    vkUpdateDescriptorSets ( device, 1U, &_write, 0U, nullptr );
+    vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &_write, 0U, nullptr );
+    return true;
+}
+
+[[nodiscard]] bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+{
+    if ( _pool == VK_NULL_HANDLE ) [[likely]]
+        return true;
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
+        "pbr::UIPass::CommonDescriptorSet::UploadTextLUT",
+        "Can't wait for fence"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    vkDestroyFence ( device, std::exchange ( _fence, VK_NULL_HANDLE ), nullptr );
+
+    if ( _pool != VK_NULL_HANDLE ) [[unlikely]]
+        vkDestroyCommandPool ( device, std::exchange ( _pool, VK_NULL_HANDLE ), nullptr );
+
+    _textLUT.FreeTransferResources ( renderer );
+    return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -454,17 +597,13 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
 
 void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _buffer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( renderer.GetDevice (), _buffer, nullptr );
-        _buffer = VK_NULL_HANDLE;
-    }
+    if ( _buffer != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( _buffer, VK_NULL_HANDLE ), nullptr );
 
-    if ( _memory == VK_NULL_HANDLE )
+    if ( _memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    renderer.FreeMemory ( _memory, _memoryOffset );
-    _memory = VK_NULL_HANDLE;
+    renderer.FreeMemory ( std::exchange ( _memory, VK_NULL_HANDLE ), _memoryOffset );
     _memoryOffset = 0U;
 }
 
@@ -825,15 +964,19 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     constexpr size_t commonDescriptorSetCount = 1U;
     constexpr size_t descriptorSetCount = commonDescriptorSetCount + MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
 
+    constexpr auto images = COMMON_DESCRIPTOR_SET_IMAGE_COUNT +
+        static_cast<uint32_t> ( MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT );
+
     constexpr static VkDescriptorPoolSize const poolSizes[] =
     {
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = static_cast<uint32_t> ( descriptorSetCount )
+            .descriptorCount = images
+
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = 2U
+            .descriptorCount = COMMON_DESCRIPTOR_SET_SAMPLER_COUNT
         }
     };
 
@@ -860,7 +1003,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "UI pass" )
 
-    return _commonDescriptorSet.Init ( device, _descriptorPool, samplerManager ) &&
+    return _commonDescriptorSet.Init ( renderer, _descriptorPool, samplerManager ) &&
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
         ImageStorage::OnInitDevice ( renderer ) &&
@@ -873,14 +1016,11 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Destroy ( device );
-    _commonDescriptorSet.Destroy ( device );
+    _commonDescriptorSet.Destroy ( renderer );
     _transformLayout.Destroy ( device );
 
     if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyDescriptorPool ( renderer.GetDevice (), _descriptorPool, nullptr );
-        _descriptorPool = VK_NULL_HANDLE;
-    }
+        vkDestroyDescriptorPool ( device, std::exchange ( _descriptorPool, VK_NULL_HANDLE ), nullptr );
 
     _program.Destroy ( device );
 
@@ -1033,10 +1173,12 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     _imageDescriptorSets.Commit ( device );
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) ) [[unlikely]]
-        return false;
+    bool const result =
+        _fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) &&
+        _commonDescriptorSet.Update ( renderer, _fontStorage.GetAtlasImageView () );
 
-    _commonDescriptorSet.Update ( device, _fontStorage.GetAtlasImageView () );
+    if ( !result ) [[unlikely]]
+        return false;
 
     if ( _isTransformChanged )
         UpdateTransform ( renderer, commandBuffer );

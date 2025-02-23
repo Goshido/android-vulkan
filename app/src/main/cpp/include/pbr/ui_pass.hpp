@@ -31,6 +31,9 @@ class UIPass final
                 VkDescriptorImageInfo                   _imageInfo {};
                 UIPassCommonDescriptorSetLayout         _layout {};
                 VkWriteDescriptorSet                    _write {};
+                VkCommandPool                           _pool = VK_NULL_HANDLE;
+                VkFence                                 _fence = VK_NULL_HANDLE;
+                android_vulkan::Texture2D               _textLUT {};
 
             public:
                 CommonDescriptorSet () = default;
@@ -43,13 +46,16 @@ class UIPass final
 
                 ~CommonDescriptorSet () = default;
 
-                [[nodiscard]] bool Init ( VkDevice device,
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                     VkDescriptorPool descriptorPool,
                     SamplerManager const &samplerManager
                 ) noexcept;
 
-                void Destroy ( VkDevice device ) noexcept;
-                void Update ( VkDevice device, VkImageView currentAtlas ) noexcept;
+                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+                [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer, VkImageView currentAtlas ) noexcept;
+
+            private:
+                [[nodiscard]] bool FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
         struct Buffer final

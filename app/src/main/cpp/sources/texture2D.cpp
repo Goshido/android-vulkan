@@ -87,17 +87,13 @@ void Texture2D::FreeResources ( Renderer &renderer ) noexcept
 
 void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
 {
-    if ( _transfer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( renderer.GetDevice (), _transfer, nullptr );
-        _transfer = VK_NULL_HANDLE;
-    }
+    if ( _transfer != VK_NULL_HANDLE ) [[unlikely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( _transfer, VK_NULL_HANDLE ), nullptr );
 
-    if ( _transferDeviceMemory == VK_NULL_HANDLE )
+    if ( _transferDeviceMemory == VK_NULL_HANDLE ) [[likely]]
         return;
 
-    renderer.FreeMemory ( _transferDeviceMemory, _transferMemoryOffset );
-    _transferDeviceMemory = VK_NULL_HANDLE;
+    renderer.FreeMemory ( std::exchange ( _transferDeviceMemory, VK_NULL_HANDLE ), _transferMemoryOffset );
     _transferMemoryOffset = 0U;
 }
 
@@ -125,6 +121,11 @@ uint8_t Texture2D::GetMipLevelCount () const noexcept
 std::string const &Texture2D::GetName () const noexcept
 {
     return _fileName;
+}
+
+bool Texture2D::IsInit () const noexcept
+{
+    return _format != VK_FORMAT_UNDEFINED;
 }
 
 VkExtent2D const &Texture2D::GetResolution () const noexcept
@@ -525,22 +526,15 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     VkDevice device = renderer.GetDevice ();
 
     if ( _imageView != VK_NULL_HANDLE )
-    {
-        vkDestroyImageView ( device, _imageView, nullptr );
-        _imageView = VK_NULL_HANDLE;
-    }
+        vkDestroyImageView ( device, std::exchange ( _imageView, VK_NULL_HANDLE ), nullptr );
 
     if ( _image != VK_NULL_HANDLE )
-    {
-        vkDestroyImage ( device, _image, nullptr );
-        _image = VK_NULL_HANDLE;
-    }
+        vkDestroyImage ( device, std::exchange ( _image, VK_NULL_HANDLE ), nullptr );
 
     if ( _imageDeviceMemory == VK_NULL_HANDLE )
         return;
 
-    renderer.FreeMemory ( _imageDeviceMemory, _imageMemoryOffset );
-    _imageDeviceMemory = VK_NULL_HANDLE;
+    renderer.FreeMemory ( std::exchange ( _imageDeviceMemory, VK_NULL_HANDLE ), _imageMemoryOffset );
     _imageMemoryOffset = 0U;
 }
 

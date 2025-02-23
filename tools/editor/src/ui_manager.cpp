@@ -86,7 +86,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
 void UIManager::CreateWidgets () noexcept
 {
     auto* dialogBox = new UIProps ( *_messageQueue );
-    dialogBox->SetRect ( Rect ( 100, 500, 100, 300 ) );
+    dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
         pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );

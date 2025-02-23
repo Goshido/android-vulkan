@@ -87,6 +87,10 @@ float16_t CubicBezier ( in float16_t p1, in float16_t p2, in float16_t t )
 
 float16_t ResolveTextAlpha ( float16_t colorAlpha, float16_t glyphLuma )
 {
+    // [2025/02/23] It turns out that this gives real frame time reduction benefit on mobile hardware.
+    if ( glyphLuma == 0.0H )
+        return 0.0H;
+
     float16_t const guesses[ 3U ] =
     {
         mad ( 1.6H, colorAlpha, -3.8e-1H ),

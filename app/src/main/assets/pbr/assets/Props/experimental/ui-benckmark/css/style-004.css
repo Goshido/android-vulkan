@@ -1,0 +1,20 @@
+@font-face {
+    font-family: "BenchFont";
+    src: url("../../world-1-1/ui/fonts/trebuc.ttf");
+}
+
+#main-widget {
+    color: rgb(201, 36, 146);
+    font-size: 30px;
+    font-family: "BenchFont";
+}
+
+.ui-panel {
+    position: absolute;
+    display: inline-block;
+    padding: 0px;
+    height: 100%;
+    width: 100%;
+    left: 9px;
+    top: 9px;
+}

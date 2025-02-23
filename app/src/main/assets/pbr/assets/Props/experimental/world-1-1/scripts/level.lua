@@ -98,6 +98,16 @@ local function Constructor ( self, handle, params )
     obj._uiLayer = UILayer ( params._uiAsset )
     obj._uiDebug = UILayer ( "pbr/assets/Props/experimental/world-1-1/ui/debug.html" )
 
+    -- FUCK - remove this
+    obj._uiBench_001 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-001.html" )
+    obj._uiBench_002 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-002.html" )
+    obj._uiBench_003 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-003.html" )
+    obj._uiBench_004 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-004.html" )
+    obj._uiBench_005 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-005.html" )
+    obj._uiBench_006 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-006.html" )
+    obj._uiBench_007 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-007.html" )
+    obj._uiBench_008 = UILayer ( "pbr/assets/Props/experimental/ui-benckmark/index-008.html" )
+
     -- Methods
     obj.AddScore = AddScore
     obj.QuitGame = QuitGame

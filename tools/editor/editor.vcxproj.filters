@@ -626,5 +626,8 @@
     <None Include="..\..\app\src\main\cpp\include\pbr\brightness_factor.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\ui_primitive_type.inc">
+      <Filter>Header Files\core\pbr</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -986,6 +986,7 @@
     <None Include="..\..\app\src\main\cpp\include\pbr\exposure.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc" />
+    <None Include="..\..\app\src\main\cpp\include\pbr\ui_primitive_type.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\ui_program.inc" />
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in" />
     <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in">

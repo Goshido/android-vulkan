@@ -3,6 +3,7 @@
 
 
 #include <half_types.hpp>
+#include "ui_primitive_type.inc"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -18,13 +19,14 @@ namespace pbr {
 struct UIAtlas final
 {
     android_vulkan::Half2       _uv {};
-    android_vulkan::Half        _layer { 0U };
+    uint8_t                     _layer = 0U;
 };
 
 struct UIVertex final
 {
     android_vulkan::Half2       _image {};
     UIAtlas                     _atlas {};
+    uint8_t                     _uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
     GXColorUNORM                _color {};
 };
 

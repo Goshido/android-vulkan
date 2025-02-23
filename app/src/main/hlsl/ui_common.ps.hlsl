@@ -2,11 +2,12 @@
 #define UI_COMMON_PS_HLSL
 
 
+#include "pbr/ui_primitive_type.inc"
 #include "pbr/ui_program.inc"
+
 
 #define COLOR_ALPHA_GUESS_1         3.72545e-1H
 #define COLOR_ALPHA_GUESS_2         7.5557e-1H
-
 
 // P means Bezier control point
 static float16_t2 const             COLOR_ALPHA_P_X = float16_t2 ( 7.48e-1H, 3.99e-1H );
@@ -33,16 +34,19 @@ Texture2D<float32_t4>               g_imageTexture:     register ( t1 );
 struct InputData
 {
     [[vk::location ( ATT_SLOT_IMAGE_UV )]]
-    noperspective float32_t2        _imageUV:           IMAGE_UV;
+    noperspective float32_t2        _imageUV:               IMAGE_UV;
 
     [[vk::location ( ATT_SLOT_ATLAS_UV )]]
-    noperspective float32_t2        _atlasUV:           ATLAS_UV;
+    noperspective float32_t2        _atlasUV:               ATLAS_UV;
 
     [[vk::location ( ATT_SLOT_ATLAS_LAYER )]]
-    nointerpolation float32_t       _atlasLayer:        ATLAS_LAYER;
+    nointerpolation float32_t       _atlasLayer:            ATLAS_LAYER;
+
+    [[vk::location ( ATT_SLOT_UI_PRIMITIVE_TYPE )]]
+    nointerpolation uint32_t        _uiPrimitiveType:       UI_PRIMITIVE_TYPE;
 
     [[vk::location ( ATT_SLOT_COLOR )]]
-    nointerpolation float32_t4      _color:             COLOR;
+    nointerpolation float32_t4      _color:                 COLOR;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -102,19 +106,34 @@ float16_t ResolveTextAlpha ( float16_t colorAlpha, float16_t glyphLuma )
     return CubicBezier ( p1.y, p2.y, SolveNewton ( p1.x, p2.x, glyphLuma, glyphLuma ) );
 }
 
+float16_t4 HandleImage ( in float16_t4 color, in InputData inputData )
+{
+    return color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
+}
+
+float16_t4 HandleText ( in float16_t4 color, in InputData inputData )
+{
+    float32_t3 const atlasCoordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
+    float16_t const glyphLuma = (float16_t)g_atlasTexture.SampleLevel ( g_atlasSampler, atlasCoordinate, 0.0F ).x;
+    return float16_t4 ( color.xyz, ResolveTextAlpha ( color.a, glyphLuma ) );
+}
+
 float16_t4 Compute ( in InputData inputData )
 {
     float16_t4 const color = (float16_t4)inputData._color;
 
-    float16_t4 const imagePart =
-        color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
+    switch ( inputData._uiPrimitiveType )
+    {
+        case PBR_UI_PRIMITIVE_TYPE_TEXT:
+        return HandleText ( color, inputData );
 
-    float32_t3 const atlasCoordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
-    float16_t const glyphLuma = (float16_t)g_atlasTexture.SampleLevel ( g_atlasSampler, atlasCoordinate, 0.0F ).x;
-    float16_t const textAlpha = ResolveTextAlpha ( color.a, glyphLuma );
-    float16_t4 const textPart = float16_t4 ( color.xyz, textAlpha );
+        case PBR_UI_PRIMITIVE_TYPE_IMAGE:
+        return HandleImage ( color, inputData );
 
-    return lerp ( textPart, imagePart, textAlpha == 0.0F );
+        case PBR_UI_PRIMITIVE_TYPE_GEOMETRY:
+        default:
+        return color;
+    }
 }
 
 

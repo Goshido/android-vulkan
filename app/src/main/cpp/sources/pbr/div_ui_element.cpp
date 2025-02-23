@@ -355,6 +355,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
+            PBR_UI_PRIMITIVE_TYPE_GEOMETRY,
             _absoluteRect._topLeft,
             _absoluteRect._bottomRight,
             glyphInfo._topLeft,

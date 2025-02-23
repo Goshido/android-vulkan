@@ -322,6 +322,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     UIPass::AppendRectangle ( _submitCache._positions,
         _submitCache._vertices,
         white,
+        PBR_UI_PRIMITIVE_TYPE_IMAGE,
         topLeft,
         bottomRight,
         g._topLeft,

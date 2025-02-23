@@ -9,7 +9,7 @@ namespace pbr {
 
 namespace {
 
-constexpr float SPECIAL_GLYPH_ATLAS_LAYER = 0.0F;
+constexpr uint8_t SPECIAL_GLYPH_ATLAS_LAYER = 0U;
 constexpr uint32_t FONT_ATLAS_RESOLUTION = 1024U;
 
 } // end of anonymous namespace
@@ -924,7 +924,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
     uint32_t const cases[] = { 0U, _atlas._layers - 1U };
     uint32_t const base = cases[ static_cast<size_t> ( _atlas._layers != 0U ) ];
-    auto const layer = static_cast<float> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) );
+    auto const layer = static_cast<uint8_t> ( base + static_cast<uint32_t> ( _fullStagingBuffers.size () ) );
 
     auto const status = glyphs.insert (
         std::make_pair ( character,
@@ -1385,7 +1385,7 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
     return false;
 }
 
-UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, float layer ) noexcept
+UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, uint8_t layer ) noexcept
 {
     UIAtlas result {};
     result._layer = layer;

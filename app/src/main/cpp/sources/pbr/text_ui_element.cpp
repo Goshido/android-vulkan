@@ -463,6 +463,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             UIPass::AppendRectangle ( p,
                 v,
                 color,
+                PBR_UI_PRIMITIVE_TYPE_TEXT,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,

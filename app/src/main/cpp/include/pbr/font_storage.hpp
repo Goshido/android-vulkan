@@ -27,14 +27,14 @@ class FontStorage final
             UIAtlas                             _topLeft
             {
                 ._uv { 0.0F, 0.0F },
-                ._layer { 0U }
+                ._layer = 0U
 
             };
 
             UIAtlas                             _bottomRight
             {
                 ._uv { 0.0F, 0.0F },
-                ._layer { 0U }
+                ._layer = 0U
             };
 
             int32_t                             _width = 0;
@@ -223,7 +223,7 @@ class FontStorage final
         void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
-        [[nodiscard]] static UIAtlas PixToUV ( uint32_t x, uint32_t y, float layer ) noexcept;
+        [[nodiscard]] static UIAtlas PixToUV ( uint32_t x, uint32_t y, uint8_t layer ) noexcept;
 };
 
 } // namespace pbr

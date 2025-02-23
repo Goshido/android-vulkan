@@ -1050,6 +1050,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 void UIPass::AppendRectangle ( GXVec2* targetPositions,
     UIVertex* targetVertices,
     GXColorUNORM color,
+    uint8_t uiPrimitiveType,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
     UIAtlas const &glyphTopLeft,
@@ -1067,11 +1068,12 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     {
         ._image = iTL,
         ._atlas = glyphTopLeft,
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-    android_vulkan::Half const layer = glyphTopLeft._layer;
+    uint8_t const layer = glyphTopLeft._layer;
 
     targetVertices[ 1U ] =
     {
@@ -1083,6 +1085,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
             ._layer = layer,
         },
 
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 
@@ -1092,6 +1095,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     {
         ._image = iBR,
         ._atlas = glyphBottomRight,
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 
@@ -1101,6 +1105,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     {
         ._image = iBR,
         ._atlas = glyphBottomRight,
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 
@@ -1116,6 +1121,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
             ._layer = layer
         },
 
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 
@@ -1125,6 +1131,7 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     {
         ._image = iTL,
         ._atlas = glyphTopLeft,
+        ._uiPrimitiveType = uiPrimitiveType,
         ._color = color
     };
 }

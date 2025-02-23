@@ -7,6 +7,7 @@
 - [_GPU implementation_](#gpu)
   - [_Exact analytic solution_](#cardano)
   - [_Newton approximation_](#newton)
+  - [_LUT solution_](#lut)
 - [_Benchmarking_](#benchmark)
 - [_Conclusion_](#conclusion)
 
@@ -16,13 +17,13 @@ Let's start from the issue:
 
 <img src="./images/ui-wrong-blending.png"/>
 
-You could notice than _Google Chrome_ much darker that _Android-Vulkan_. Caption area is a good example that blending looks different. Same time any opaque area has exactly the same color in both impementations. For example close button color is 1 to 1 match. Accoriding to [_CSS_](https://www.w3.org/TR/SVG11/masking.html#SimpleAlphaBlending) it should be used _premultiplied alpha_ or classic alpha blending. One blending could be transformed into another. _premultiplied alpha_ has advantages in image filtering and it allows to separate blending areas for later compositing.
+You could notice than _Google Chrome_ much darker that _Android-Vulkan_. Caption area is a good example that blending looks different. Same time any opaque area has exactly the same color in both impementations. For example close button color is 1 to 1 match. Accoriding to [_CSS_](https://www.w3.org/TR/SVG11/masking.html#SimpleAlphaBlending) it should be used _premultiplied alpha_ or classic alpha blending. One blending could be transformed into another. _Premultiplied alpha_ has advantages in image filtering and it allows to separate blending areas for later compositing.
 
-It turns out that the answer is `UNORM` format for render target. Hardware produces slightly different results for `UNORM` and `sRGB` during blending. In the case above the render target format is `sRGB`. After changing it to `UNORM` the blending itself starts to match:
+It turns out that the answer is `UNORM` format for render target. Hardware produces slightly different results for `UNORM` and `sRGB` during blending. In the case above the render target format was `sRGB`. After changing it to `UNORM` the blending starts to match:
 
 <img src="./images/ui-correct-blending.png"/>
 
-The bending equation is classical:
+The blending equation is classical:
 
 ```cpp
 ...
@@ -52,7 +53,7 @@ Let's start from the issue:
 
 <img src="./images/ui-incorrect-text-blending.png"/>
 
-The text looks thinner in _Android-Vulkan_ implementation.
+The text looks thinner in _Android-Vulkan_ implementation than _Google Chrome_ implementation.
 
 On the first though it could be subpixel rendering on the _Window_. It has impact on appearance of course. But I assure you that this is not the main contribution to the visuals.
 
@@ -67,7 +68,7 @@ After some amount of experiments such mapping has been found. Here is final resu
 
 <img src="./images/ui-correct-text-blending.png"/>
 
-Let's look how this mapping is looks like first:
+Let's look at this fancy surface first:
 
 <img src="./images/ui-text-alpha-mapping-001.png"/>
 
@@ -97,7 +98,7 @@ That's it.
 
 ## <a id="gpu">_GPU_ implementation</a>
 
-There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solution shares common math about cubic Bezier curve:
+There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solutions share common math about cubic Bezier curve:
 
 $$
 P=(1-t)^3P_0+3(1-t)^2P_1t+3(1-t)P_2t^2+P_3t^3
@@ -150,6 +151,8 @@ $$
 
 [↬ table of content ⇧](#table-of-content)
 
+---
+
 ### <a id="cardano">Exact analytic solution</a>
 
 Using [_Cardano method_](https://en.wikipedia.org/wiki/Cubic_equation#General_cubic_formula) to solve cubic:
@@ -189,6 +192,8 @@ Testing shows that target solution is derived from **!!!_complex values_!!!**. S
 
 [↬ table of content ⇧](#table-of-content)
 
+---
+
 ### <a id="newton">_Newton_ approximation</a>
 
 Using [_Newton method_](https://en.wikipedia.org/wiki/Newton%27s_method) to solve cubic:
@@ -216,11 +221,36 @@ $$
     \end{array}
 $$
 
+The key of success for _Newton_ method is initial guess. Experiments showed that three lines are good initial guess for _Color alpha_. Such initial guess returns very precise value after `3` iterations of the the _Newton_ method:
+
+<img src="./images/ui-color-alpha-initial-guess.png"/>
+
+For solving _Glyph luma_ the good initial guess is just $t$ value itself. After only `3` iterations the good precision will be achieved. Here is absolute difference between surfaces from exact solution and approximation using _Newton_ method:
+
+<img src="./images/ui-exact-vs-approx.png"/>
+
+[↬ table of content ⇧](#table-of-content)
+
+---
+
+### <a id="lut">_LUT_ solution</a>
+
+The easiest approach. Precompute all 256x256 values into 8bit `UNORM` image. The only possible optimization here is to use some hardware compression format. For example _ASTC 6x6 UNORM_.
+
+**Type** | **Size**
+--- | ---
+Uncompressed | 64 kb
+_ASTC 6x6 UNORM_ | 29 kb
+
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="benchmark">Benchmarking</a>
 
-<img src="./images/text-benchmark.png" width="800"/>
+After having several solutions it's needed to decide which to use. It's perfect task for profiling. The fastest method will be the winner. Let's go.
+
+Testing device: [_Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030).
+
+<img src="./images/text-benchmark.png"/>
 
 ⁘ Scene complexity
 
@@ -239,8 +269,8 @@ _UI_ vertices | 35520 | 35520 | 0%
 **Method** | **Frame time**
 --- | ---
 Lossless _LUT_ | 14.651 ms
-Compressed _ASTC6x6 LUT_ | 14.671 ms
-Newton approximation | 17.967 ms
+Compressed _ASTC 6x6 LUT_ | 14.671 ms
+_Newton_ approximation | 17.967 ms
 
 [↬ table of content ⇧](#table-of-content)
 

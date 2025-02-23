@@ -4,6 +4,9 @@
 
 #include "pbr/ui_program.inc"
 
+#define COLOR_ALPHA_GUESS_1         3.72545e-1H
+#define COLOR_ALPHA_GUESS_2         7.5557e-1H
+
 
 // P means Bezier control point
 static float16_t2 const             COLOR_ALPHA_P_X = float16_t2 ( 7.48e-1H, 3.99e-1H );
@@ -80,17 +83,17 @@ float16_t CubicBezier ( in float16_t p1, in float16_t p2, in float16_t t )
 
 float16_t ResolveTextAlpha ( float16_t colorAlpha, float16_t glyphLuma )
 {
-    // FUCK simplify to branchless
-    float16_t guess;
+    float16_t const guesses[ 3U ] =
+    {
+        mad ( 1.6H, colorAlpha, -3.8e-1H ),
+        mad ( 7.0e-1H, colorAlpha, 3.0e-1H ),
+        5.8e-1H * colorAlpha
+    };
 
-    if ( colorAlpha < 3.72545e-1H )
-        guess = 5.8e-1H * colorAlpha;
-    else if ( colorAlpha < 3.72545e-1H )
-        guess = mad ( 1.6H, colorAlpha, -3.8e-1H );
-    else
-        guess = mad ( 7.0e-1H, colorAlpha, 3.0e-1H );
+    uint16_t const idx = ( (uint16_t)( colorAlpha < COLOR_ALPHA_GUESS_1 ) << 1U ) +
+        (uint16_t)( colorAlpha >= COLOR_ALPHA_GUESS_2 );
 
-    float16_t const t = SolveNewton ( COLOR_ALPHA_P_X.x, COLOR_ALPHA_P_X.y, colorAlpha, guess );
+    float16_t const t = SolveNewton ( COLOR_ALPHA_P_X.x, COLOR_ALPHA_P_X.y, colorAlpha, guesses[ idx ] );
     float16_t const lumaLerp = CubicBezier ( COLOR_ALPHA_P_Y.x, COLOR_ALPHA_P_Y.y, t );
 
     float16_t2 const p1 = lerp ( LUMA_BOTTOM_P1, LUMA_TOP_P1, lumaLerp );

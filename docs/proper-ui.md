@@ -4,6 +4,9 @@
 
 - [_Proper blending_](#blending)
 - [_Proper text rendering_](#text)
+- [_GPU implementation_](#gpu)
+  - [_Exact analytic solution_](#cardano)
+  - [_Newton approximation_](#newton)
 - [_Benchmarking_](#benchmark)
 - [_Conclusion_](#conclusion)
 
@@ -79,6 +82,139 @@ Let's look how this mapping is looks like first:
 Full video link is [here](./videos/ui-text-alpha-mapping.mp4).
 
 This fancy mapping is constructed by three cubic [Bezier curves](https://en.wikipedia.org/wiki/B%C3%A9zier_curve).
+
+Let's call first two curves _Luma top_ and _Luma bottom_. They are defined like this:
+
+<img src="./images/ui-text-luma.png"/>
+
+Blue arrows show how control points should be interpolated. The interpolation is controlled by _Color alpha_ curve. It's defined like this:
+
+<img src="./images/ui-text-color-alpha.png"/>
+
+That's it.
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="gpu">_GPU_ implementation</a>
+
+There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solution shares common math about cubic Bezier curve:
+
+$$
+P=(1-t)^3P_0+3(1-t)^2P_1t+3(1-t)P_2t^2+P_3t^3
+$$
+
+Note that
+
+$$
+    \begin{array}{l}
+        P_0=(0, 0)\\
+        P_3=(1, 1)
+    \end{array}
+$$
+
+So first term and last could be simplified.
+
+$$
+    P=3(1-t)^2P_1t+3(1-t)P_2t^2+t^3
+$$
+
+Opening brackets:
+
+$$
+    \begin{array}{l}
+        P=3(1-2t+t^2)P_1t+3P_2t^2-3P_2t^3+t^3\\
+        P=3P_1t-6P_1t^2+3P_1t^3+3P_2t^2-3P_2t^3+t^3\\
+        P=(3P_1-3P_2+1)t^3+(3P_2-6P_1)t^2+3P_1t\\
+        P=3\left(\left(P_1-P_2+\dfrac{1}{3}\right)t^3+(P_2-2P_1)t^2+P_1t\right)
+    \end{array}
+$$
+
+Equation above is usefull for computing $P_y$ component.
+
+For computing $P_x$ component let's rearrange queation to general form.
+
+$$
+    (3P_1-3P_2+1)t^3+(3P_2-6P_1)t^2+3P_1t-P=0
+$$
+
+This gives us:
+
+$$
+    \begin{array}{l}
+        a=3P_1-3P_2+1\\
+        b=3P_2-6P_1\\
+        c=3P_1\\
+        d=-P
+    \end{array}
+$$
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="cardano">Exact analytic solution</a>
+
+Using [_Cardano method_](https://en.wikipedia.org/wiki/Cubic_equation#General_cubic_formula) to solve cubic:
+
+$$
+    \begin{array}{l}
+        T^3+pT+q=0\\
+        \text{}\\
+        T=t+\dfrac{b}{3a}\\
+        p=\dfrac{3ac-b^2}{3a^2}\\
+        q=\dfrac{2b^3-9abc+27a^2d}{27a^3}\\
+        \text{}\\
+        u_1=-\dfrac{q}{2}+\sqrt{\dfrac{q^2}{4}+\dfrac{p^3}{27}}\\
+        u_2=-\dfrac{q}{2}-\sqrt{\dfrac{q^2}{4}+\dfrac{p^3}{27}}\\
+        \text{}\\
+        T_1=\sqrt[3]{u_1}+\sqrt[3]{u_2}\\
+        T_2=\dfrac{-1+i\sqrt{3}}{2}\sqrt[3]{u_1}+\dfrac{-1-i\sqrt{3}}{2}\sqrt[3]{u_2}\\
+        T_3=\dfrac{-1-i\sqrt{3}}{2}\sqrt[3]{u_1}+\dfrac{-1+i\sqrt{3}}{2}\sqrt[3]{u_2}\\
+    \end{array}
+$$
+
+So all three roots equal:
+
+$$
+    t_1=T_1-\dfrac{b}{3a}\\
+    t_2=T_2-\dfrac{b}{3a}\\
+    t_3=T_3-\dfrac{b}{3a}
+$$
+
+Here is where the problems begins.
+
+Experiments show that $\sqrt{\dfrac{q^2}{4}+\dfrac{p^3}{27}}$ produces complex value.
+
+This leads to extract cubic root from complex values: $\sqrt[3]{u_1}$ and $\sqrt[3]{u_2}$.
+
+Testing shows that target solution is derived from **!!!_complex values_!!!**. So explicit analytic solution sounds complex enough for implementation on shader side for each pixel of the _UI_. It's not practical.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="newton">_Newton_ approximation</a>
+
+Using [_Newton method_](https://en.wikipedia.org/wiki/Newton%27s_method) to solve cubic:
+
+$$
+    \begin{array}{l}
+        x_{n+1} = x_n - \dfrac{f(x_n)}{f'(x_n)}\\
+        \text{}
+        f(x_n)=(3P_1-3P_2+1)t^3+(3P_2-6P_1)t^2+3P_1t-P\\
+        f'(x_n)=(9P_1-9P_2+3)t^2+(6P_2-12P_1)t+3P_1\\
+        \text{}\\
+        \alpha=3\left(P_1-P_2+\dfrac{1}{3}\right)\\
+        \beta=3P_2-6P_1\\
+        \omega=3P_1\\
+        \xi=3\alpha\\
+        \zeta=2\beta\\
+        \text{}\\
+        f(x_n)=\alpha{t}^3+\beta{t}^2+\omega{t}-P\\
+        f'(x_n)=\xi{t}^2+\zeta{t}+\omega\\
+        \text{}\\
+        \gamma=t^2\\
+        \text{}\\
+        f(x_n)=\gamma(\alpha{t}+\beta)+(\omega{t}-P)\\
+        f'(x_n)=\xi\gamma+(\zeta{t}+\omega)
+    \end{array}
+$$
 
 [↬ table of content ⇧](#table-of-content)
 

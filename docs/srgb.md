@@ -77,6 +77,4 @@ This formula describes connection between power and brightness balance:
 
 $$P = 5^{-B}$$
 
-Take into account that swapchain image has _sRGB_ native format. That means it's expected output in _Linear_ space from pixel shaders. Conversion to _sRGB_ will be done in hardware.
-
 [↬ table of content ⇧](#table-of-content)

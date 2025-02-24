@@ -13,7 +13,7 @@
 
 ## <a id="blending">Proper blending</a>
 
-Let's start from the issue:
+Let's start from the issue. Please open this image in `new tab` and look at it in `100% zoom`:
 
 <img src="./images/ui-wrong-blending.png"/>
 
@@ -49,7 +49,7 @@ The blending equation is classical:
 
 ## <a id="text">Proper text rendering</a>
 
-Let's start from the issue:
+Let's start from the issue. Please open this image in `new tab` and look at it in `100% zoom`:
 
 <img src="./images/ui-incorrect-text-blending.png"/>
 
@@ -64,7 +64,7 @@ It should be some mapping from:
 
 <img src="./images/ui-color-alpha-luma-idea.png"/>
 
-After some amount of experiments such mapping has been found. Here is final result:
+After some amount of experiments such mapping has been found. Here is final result. Please open this image in `new tab` and look at it in `100% zoom`:
 
 <img src="./images/ui-correct-text-blending.png"/>
 

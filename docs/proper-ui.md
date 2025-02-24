@@ -177,9 +177,11 @@ $$
 So all three roots equal:
 
 $$
-    t_1=T_1-\dfrac{b}{3a}\\
-    t_2=T_2-\dfrac{b}{3a}\\
-    t_3=T_3-\dfrac{b}{3a}
+    \begin{array}{l}
+        t_1=T_1-\dfrac{b}{3a}\\
+        t_2=T_2-\dfrac{b}{3a}\\
+        t_3=T_3-\dfrac{b}{3a}
+    \end{array}
 $$
 
 Here is where the problems begins.

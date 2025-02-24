@@ -14,7 +14,7 @@
   - [_Using `uint16_t` index buffers_](#opt-2-using-uint16-indices)
   - [_Further vertex data compression_](#opt-2-further-compression)
 - [_Optimization #3_](#optimization-3)
-  - [_UV coordinates as `float16_t2_](#opt-3-uv-as-float16)
+  - [_UV coordinates as `float16_t2`_](#opt-3-uv-as-float16)
 - [_Optimizations #4_](#optimizations-4)
   - [_Using UMA_](#opt-4-uma)
   - [_Further UI vertex compression_](#opt-4-ui-compression)

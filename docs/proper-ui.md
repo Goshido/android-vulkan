@@ -98,7 +98,7 @@ That's it.
 
 ## <a id="gpu">_GPU_ implementation</a>
 
-There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. All three solutions share common math about cubic _Bezier_ curve:
+There are three ways to use this fancy surface in runtime: exact runtime analytic solution, approximate iterative solution, precomputed _LUT_. Computations must be done with `float16_t` precision to be as fast as possible. All three solutions share common math about cubic _Bezier_ curve:
 
 $$
 P=(1-t)^3P_0+3(1-t)^2P_1t+3(1-t)P_2t^2+P_3t^3

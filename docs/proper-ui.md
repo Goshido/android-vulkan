@@ -113,7 +113,7 @@ $$
     \end{array}
 $$
 
-So first term and last could be simplified.
+So the first and the last terms could be simplified.
 
 $$
     P=3(1-t)^2P_1t+3(1-t)P_2t^2+t^3
@@ -132,7 +132,7 @@ $$
 
 Equation above is usefull for computing $P_y$ component.
 
-For computing $P_x$ component let's rearrange queation to general form.
+For computing $P_x$ component let's rearrange equation to general form.
 
 $$
     (3P_1-3P_2+1)t^3+(3P_2-6P_1)t^2+3P_1t-P=0
@@ -248,7 +248,7 @@ _ASTC 6x6 UNORM_ | 29 kb
 
 ## <a id="benchmark">Benchmarking</a>
 
-After having several solutions it's needed to decide which to use. It's perfect task for profiling. The fastest method will be the winner. Let's go.
+After having several solutions it's needed to decide which one to use. It's perfect task for profiling. The fastest method will be the winner. Let's go.
 
 Testing device: [_Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030).
 
@@ -285,6 +285,6 @@ So:
 - Swapchain format has been changed to `UNORM`
 - It was added 3 types of primitives at pixel shader level: text, images and geometry
 - _LUT_ is faster then _Newton_ approximation by 18.5%🟢
-- Uncompress _LUT_ is universal solution (_ASTC_ is not widely supported on _PC_)
+- Lossless _LUT_ is universal solution (_ASTC_ compression format is not widely supported on _PC_)
 
 [↬ table of content ⇧](#table-of-content)

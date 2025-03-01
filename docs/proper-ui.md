@@ -7,6 +7,7 @@
 - [_GPU implementation_](#gpu)
   - [_Exact analytic solution_](#cardano)
   - [_Newton approximation_](#newton)
+  - [_Polynomial approximation_](#polynomial)
   - [_LUT solution_](#lut)
 - [_Benchmarking_](#benchmark)
 - [_Conclusion_](#conclusion)
@@ -235,6 +236,51 @@ For solving _Glyph luma_ the good initial guess is just $t$ value itself. After 
 
 ---
 
+### <a id="polynomial">Polynomial approximation</a>
+
+The idea is to use ground truth dataset and try to approximate it using another polynomial from two variable. The experiments with _Python_ solver shows the following candidate:
+
+$$
+    \begin{array}{l}
+        Alpha\left(x_0, x_1\right)=\\
+        \phantom{Alpha\left(x_0, x_1\right)=+}0.0\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }0.5110411\cdot{x_0}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }0.3230329\cdot{x_1}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }0.1824622\cdot{x_0^2}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }0.6972448\cdot{x_0x_1}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }3.4005306\cdot{x_1^2}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }1.4717692\cdot{x_0^3}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }1.3813718\cdot{x_0^2x_1}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }9.018358\cdot{x_0x_1^2}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }10.0230089\cdot{x_1^3}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }2.4570389\cdot{x_0^4}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }2.9943197\cdot{x_0^3x_1}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }12.4283102\cdot{x_0^2x_1^2}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }7.8590004\cdot{x_0x_1^3}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }11.1873564\cdot{x_1^4}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }1.5675098\cdot{x_0^5}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}-\text{ }3.1576838\cdot{x_0^4x_1}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }3.4968898\cdot{x_0^3x_1^2}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }5.5737564\cdot{x_0^2x_1^3}\\
+        \phantom{Alpha\left(x_0, x_1\right)=}+\text{ }1.7995902\cdot{x_0x_1^4}\\
+        \text{}
+        x_0\text{ - glyph luma}\\
+        x_1\text{ - color alpha}\\
+    \end{array}
+$$
+
+The difference with ground truth looks like this:
+
+<img src="./images/ui-exact-vs-polymonial.png"/>
+
+And this solution do have small impact on quality. Please open this image in `new tab` and look at it in `100% zoom`:
+
+<img src="./images/ui-polymonial-artifacts.png"/>
+
+[↬ table of content ⇧](#table-of-content)
+
+---
+
 ### <a id="lut">_LUT_ solution</a>
 
 The easiest approach. Precompute all 256x256 values into 8bit `UNORM` image. The only possible optimization here is to use some hardware compression format. For example _ASTC 6x6 UNORM_.
@@ -270,21 +316,23 @@ _UI_ vertices | 35520 | 35520 | 0%
 
 **Method** | **Frame time**
 --- | ---
-Lossless _LUT_ | 14.651 ms
-Compressed _ASTC 6x6 LUT_ | 14.671 ms
-_Newton_ approximation | 17.967 ms
+Lossless _LUT_ | 14.651 ms🟢
+Compressed _ASTC 6x6 LUT_ | 14.671 ms🟢
+Polynomial approximation | 14.748 ms🔺
+_Newton_ approximation | 17.967 ms🔺🔺
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="conclusion">Conclusion</a>
 
-_LUT_ approach shows better performance compare to iterative _Newton_ approximation of two Bezier curves. Lossless and compressed _LUT_ show similar performance on real hardware. So it's decided to stick with _Lossless LUT_.
+_LUT_ approach shows better performance compare to iterative _Newton_ approximation of two Bezier curves. Lossless and compressed _LUT_ show similar performance on real hardware. Polynomial approach is fast but it produces visual artifacts compare to other methods. So it's decided to stick with _Lossless LUT_.
 
 So:
 
 - Swapchain format has been changed to `UNORM`
 - It was added 3 types of primitives at pixel shader level: text, images and geometry
 - _LUT_ is faster then _Newton_ approximation by 18.5%🟢
+- Polynomial approach produces visual artifact
 - Lossless _LUT_ is universal solution (_ASTC_ compression format is not widely supported on _PC_)
 
 [↬ table of content ⇧](#table-of-content)

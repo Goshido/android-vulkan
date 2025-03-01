@@ -26,11 +26,8 @@ Texture2D<float32_t4>               g_imageTexture:         register ( t2 );
 
 struct InputData
 {
-    [[vk::location ( ATT_SLOT_IMAGE_UV )]]
-    noperspective float32_t2        _imageUV:               IMAGE_UV;
-
-    [[vk::location ( ATT_SLOT_ATLAS_UV )]]
-    noperspective float32_t2        _atlasUV:               ATLAS_UV;
+    [[vk::location ( ATT_SLOT_UV )]]
+    noperspective float32_t2        _uv:                    UV;
 
     [[vk::location ( ATT_SLOT_ATLAS_LAYER )]]
     nointerpolation float32_t       _atlasLayer:            ATLAS_LAYER;
@@ -46,12 +43,12 @@ struct InputData
 
 float16_t4 HandleImage ( in float16_t4 color, in InputData inputData )
 {
-    return color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
+    return color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._uv, 0.0F );
 }
 
 float16_t4 HandleText ( in float16_t4 color, in InputData inputData )
 {
-    float32_t3 const atlasCoordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
+    float32_t3 const atlasCoordinate = float32_t3 ( inputData._uv, inputData._atlasLayer );
     float32_t const glyphLuma = g_atlasTexture.SampleLevel ( g_atlasSampler, atlasCoordinate, 0.0F ).x;
 
     // [2025/02/23] It turns out that this gives real frame time reduction benefit on mobile hardware.

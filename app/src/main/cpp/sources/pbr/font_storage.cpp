@@ -9,8 +9,8 @@ namespace pbr {
 
 namespace {
 
-constexpr uint8_t SPECIAL_GLYPH_ATLAS_LAYER = 0U;
 constexpr uint32_t FONT_ATLAS_RESOLUTION = 1024U;
+constexpr uint8_t TRANSPARENT_GLYPH_ATLAS_LAYER = 0U;
 
 } // end of anonymous namespace
 
@@ -492,7 +492,7 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &ol
 bool FontStorage::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" ) &&
-        MakeSpecialGlyphs ( renderer );
+        MakeTransparentGlyph ( renderer );
 }
 
 void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -574,16 +574,6 @@ std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, u
     );
 
     return std::optional<FontStorage::Font> { status.first };
-}
-
-FontStorage::GlyphInfo const &FontStorage::GetOpaqueGlyphInfo () const noexcept
-{
-    return _opaqueGlyph;
-}
-
-FontStorage::GlyphInfo const &FontStorage::GetTransparentGlyphInfo () const noexcept
-{
-    return _transparentGlyph;
 }
 
 FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
@@ -821,6 +811,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
                 {
                     ._topLeft = _transparentGlyph._topLeft,
                     ._bottomRight = _transparentGlyph._bottomRight,
+                    ._layer = _transparentGlyph._layer,
                     ._width = 0,
                     ._height = 0,
                     ._advance = advance,
@@ -931,8 +922,9 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
 
             GlyphInfo
             {
-                ._topLeft = PixToUV ( left, top, layer ),
-                ._bottomRight = PixToUV ( right + 1U, bottom + 1U, layer ),
+                ._topLeft = PixToUV ( left, top ),
+                ._bottomRight = PixToUV ( right + 1U, bottom + 1U ),
+                ._layer = layer,
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
                 ._advance = advance,
@@ -1073,31 +1065,20 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
     return std::nullopt;
 }
 
-bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept
+bool FontStorage::MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) noexcept
 {
     auto query = GetStagingBuffer ( renderer );
 
-    if ( !query )
+    if ( !query ) [[unlikely]]
         return false;
 
-    UIAtlas const opaque = PixToUV ( 0U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
-
-    _opaqueGlyph =
-    {
-        ._topLeft = opaque,
-        ._bottomRight = opaque,
-        ._width = 1,
-        ._height = 1,
-        ._advance = 0,
-        ._offsetY = 0
-    };
-
-    UIAtlas const transparent = PixToUV ( 1U, 0U, SPECIAL_GLYPH_ATLAS_LAYER );
+    android_vulkan::Half2 const transparent = PixToUV ( 0U, 0U );
 
     _transparentGlyph =
     {
         ._topLeft = transparent,
         ._bottomRight = transparent,
+        ._layer = TRANSPARENT_GLYPH_ATLAS_LAYER,
         ._width = 1,
         ._height = 1,
         ._advance = 0,
@@ -1105,10 +1086,8 @@ bool FontStorage::MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexc
     };
 
     StagingBuffer &stagingBuffer = *query.value ();
-    stagingBuffer._data[ 0U ] = std::numeric_limits<uint8_t>::max ();
-    stagingBuffer._data[ 1U ] = 0U;
-
-    stagingBuffer._endLine._x = 1U;
+    stagingBuffer._data[ 0U ] = 0U;
+    stagingBuffer._endLine._x = 0U;
     stagingBuffer._endLine._height = 1U;
 
     return true;
@@ -1385,20 +1364,16 @@ bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const*
     return false;
 }
 
-UIAtlas FontStorage::PixToUV ( uint32_t x, uint32_t y, uint8_t layer ) noexcept
+android_vulkan::Half2 FontStorage::PixToUV ( uint32_t x, uint32_t y ) noexcept
 {
-    UIAtlas result {};
-    result._layer = layer;
-
     constexpr float pix2UV = 1.0F / static_cast<float> ( FONT_ATLAS_RESOLUTION );
     constexpr float threshold = pix2UV * 0.25F;
     constexpr GXVec2 pointSamplerUVThreshold ( threshold, threshold );
 
     GXVec2 a {};
     a.Sum ( pointSamplerUVThreshold, pix2UV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
-    result._uv = android_vulkan::Half2 ( a );
 
-    return result;
+    return android_vulkan::Half2 ( a );
 }
 
 } // namespace pbr

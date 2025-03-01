@@ -248,6 +248,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
                 ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
                 ._atlasBottomRight = glyphInfo._bottomRight,
+                ._atlasLayer = glyphInfo._layer,
                 ._offsetX = glyphInfo._offsetX,
                 ._offsetY = glyphInfo._offsetY,
                 ._parentLine = line,
@@ -412,7 +413,6 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorUNORM const color = ResolveColor ();
-    constexpr GXVec2 imageUV ( 0.5F, 0.5F );
 
     size_t limit = 0U;
     size_t i = 0U;
@@ -460,16 +460,14 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            UIPass::AppendRectangle ( p,
+            UIPass::AppendText ( p,
                 v,
                 color,
-                PBR_UI_PRIMITIVE_TYPE_TEXT,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,
                 g._atlasBottomRight,
-                imageUV,
-                imageUV
+                g._atlasLayer
             );
 
             x += g._advance;

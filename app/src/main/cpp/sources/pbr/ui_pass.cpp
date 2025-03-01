@@ -25,6 +25,9 @@ constexpr uint32_t COMMON_DESCRIPTOR_SET_SAMPLER_COUNT = 3U;
 
 constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
 
+android_vulkan::Half2 const IMAGE_TOP_LEFT ( 0.0F, 0.0F );
+android_vulkan::Half2 const IMAGE_BOTTOM_RIGHT ( 1.0F, 1.0F );
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class ImageStorage final
@@ -1189,93 +1192,159 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UIPass::AppendRectangle ( GXVec2* targetPositions,
+void UIPass::AppendImage ( GXVec2* targetPositions,
     UIVertex* targetVertices,
     GXColorUNORM color,
-    uint8_t uiPrimitiveType,
     GXVec2 const &topLeft,
-    GXVec2 const &bottomRight,
-    UIAtlas const &glyphTopLeft,
-    UIAtlas const &glyphBottomRight,
-    GXVec2 const &imageTopLeft,
-    GXVec2 const &imageBottomRight
+    GXVec2 const &bottomRight
 ) noexcept
 {
-    android_vulkan::Half2 const iTL ( imageTopLeft );
-    android_vulkan::Half2 const iBR ( imageBottomRight );
-
     targetPositions[ 0U ] = topLeft;
 
-    targetVertices[ 0U ] =
-    {
-        ._image = iTL,
-        ._atlas = glyphTopLeft,
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v0 = targetVertices[ 0U ];
+    v0._uv = IMAGE_TOP_LEFT;
+    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v0._color = color;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-    uint8_t const layer = glyphTopLeft._layer;
 
-    targetVertices[ 1U ] =
-    {
-        ._image { iBR._data[ 0U ], iTL._data[ 1U ] },
-
-        ._atlas
-        {
-            ._uv { glyphBottomRight._uv._data[ 0U ], glyphTopLeft._uv._data[ 1U ] },
-            ._layer = layer,
-        },
-
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v1 = targetVertices[ 1U ];
+    v1._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] );
+    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v1._color = color;
 
     targetPositions[ 2U ] = bottomRight;
 
-    targetVertices[ 2U ] =
-    {
-        ._image = iBR,
-        ._atlas = glyphBottomRight,
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v2 = targetVertices[ 2U ];
+    v2._uv = IMAGE_BOTTOM_RIGHT;
+    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v2._color = color;
 
     targetPositions[ 3U ] = bottomRight;
 
-    targetVertices[ 3U ] =
-    {
-        ._image = iBR,
-        ._atlas = glyphBottomRight,
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v3 = targetVertices[ 3U ];
+    v3._uv = IMAGE_BOTTOM_RIGHT;
+    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v3._color = color;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    targetVertices[ 4U ] =
-    {
-        ._image { iTL._data[ 0U ], iBR._data[ 1U ] },
-
-        ._atlas
-        {
-            ._uv { glyphTopLeft._uv._data[ 0U ], glyphBottomRight._uv._data[ 1U ] },
-            ._layer = layer
-        },
-
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v4 = targetVertices[ 4U ];
+    v4._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] );
+    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v4._color = color;
 
     targetPositions[ 5U ] = topLeft;
 
-    targetVertices[ 5U ] =
-    {
-        ._image = iTL,
-        ._atlas = glyphTopLeft,
-        ._uiPrimitiveType = uiPrimitiveType,
-        ._color = color
-    };
+    UIVertex &v5 = targetVertices[ 5U ];
+    v5._uv = IMAGE_TOP_LEFT;
+    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
+    v5._color = color;
+}
+
+void UIPass::AppendRectangle ( GXVec2* targetPositions,
+    UIVertex* targetVertices,
+    GXColorUNORM color,
+    GXVec2 const &topLeft,
+    GXVec2 const &bottomRight
+) noexcept
+{
+    targetPositions[ 0U ] = topLeft;
+
+    UIVertex &v0 = targetVertices[ 0U ];
+    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v0._color = color;
+
+    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
+
+    UIVertex &v1 = targetVertices[ 1U ];
+    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v1._color = color;
+
+    targetPositions[ 2U ] = bottomRight;
+
+    UIVertex &v2 = targetVertices[ 2U ];
+    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v2._color = color;
+
+    targetPositions[ 3U ] = bottomRight;
+
+    UIVertex &v3 = targetVertices[ 3U ];
+    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v3._color = color;
+
+    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+
+    UIVertex &v4 = targetVertices[ 4U ];
+    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v4._color = color;
+
+    targetPositions[ 5U ] = topLeft;
+
+    UIVertex &v5 = targetVertices[ 5U ];
+    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    v5._color = color;
+}
+
+void UIPass::AppendText ( GXVec2* targetPositions,
+    UIVertex* targetVertices,
+    GXColorUNORM color,
+    GXVec2 const &topLeft,
+    GXVec2 const &bottomRight,
+    android_vulkan::Half2 const &glyphTopLeft,
+    android_vulkan::Half2 const &glyphBottomRight,
+    uint8_t atlasLayer
+) noexcept
+{
+    targetPositions[ 0U ] = topLeft;
+
+    UIVertex &v0 = targetVertices[ 0U ];
+    v0._uv = glyphTopLeft;
+    v0._atlasLayer = atlasLayer;
+    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v0._color = color;
+
+    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
+
+    UIVertex &v1 = targetVertices[ 1U ];
+
+    v1._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] );
+    v1._atlasLayer = atlasLayer;
+    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v1._color = color;
+
+    targetPositions[ 2U ] = bottomRight;
+
+    UIVertex &v2 = targetVertices[ 2U ];
+    v2._uv = glyphBottomRight;
+    v2._atlasLayer = atlasLayer;
+    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v2._color = color;
+
+    targetPositions[ 3U ] = bottomRight;
+
+    UIVertex &v3 = targetVertices[ 3U ];
+    v3._uv = glyphBottomRight;
+    v3._atlasLayer = atlasLayer;
+    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v3._color = color;
+
+    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+
+    UIVertex &v4 = targetVertices[ 4U ];
+
+    v4._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] );
+    v4._atlasLayer = atlasLayer;
+    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v4._color = color;
+
+    targetPositions[ 5U ] = topLeft;
+
+    UIVertex &v5 = targetVertices[ 5U ];
+    v5._uv = glyphTopLeft;
+    v5._atlasLayer = atlasLayer;
+    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    v5._color = color;
 }
 
 void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept

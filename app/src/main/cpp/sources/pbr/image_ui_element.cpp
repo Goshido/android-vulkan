@@ -314,22 +314,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     bottomRight.Sum ( topLeft, _borderSize );
 
     constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
-    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
-    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
-
-    FontStorage::GlyphInfo const &g = info._fontStorage->GetTransparentGlyphInfo ();
-
-    UIPass::AppendRectangle ( _submitCache._positions,
-        _submitCache._vertices,
-        white,
-        PBR_UI_PRIMITIVE_TYPE_IMAGE,
-        topLeft,
-        bottomRight,
-        g._topLeft,
-        g._bottomRight,
-        imageTopLeft,
-        imageBottomRight
-    );
+    UIPass::AppendImage ( _submitCache._positions, _submitCache._vertices, white, topLeft, bottomRight );
 
     pen._data[ 0U ] += blockWidth;
     _submitCache._penOut = pen;

@@ -7,15 +7,13 @@
 
 #define IN_BUFFER_REST                                  1
 #define IN_SLOT_IMAGE_UV                                1
-#define IN_SLOT_ATLAS_UV                                2
-#define IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE       3
-#define IN_SLOT_COLOR                                   4
+#define IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE       2
+#define IN_SLOT_COLOR                                   3
 
-#define ATT_SLOT_IMAGE_UV                               0
-#define ATT_SLOT_ATLAS_UV                               1
-#define ATT_SLOT_ATLAS_LAYER                            2
-#define ATT_SLOT_UI_PRIMITIVE_TYPE                      3
-#define ATT_SLOT_COLOR                                  4
+#define ATT_SLOT_UV                                     0
+#define ATT_SLOT_ATLAS_LAYER                            1
+#define ATT_SLOT_UI_PRIMITIVE_TYPE                      2
+#define ATT_SLOT_COLOR                                  3
 
 #define SET_TRANSFORM                                   0
 #define BIND_TRANSFORM                                  0

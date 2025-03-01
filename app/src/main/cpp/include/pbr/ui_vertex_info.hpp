@@ -16,16 +16,10 @@ namespace pbr {
 
 #pragma pack ( push, 1 )
 
-struct UIAtlas final
-{
-    android_vulkan::Half2       _uv {};
-    uint8_t                     _layer = 0U;
-};
-
 struct UIVertex final
 {
-    android_vulkan::Half2       _image {};
-    UIAtlas                     _atlas {};
+    android_vulkan::Half2       _uv {};
+    uint8_t                     _atlasLayer = 0U;
     uint8_t                     _uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
     GXColorUNORM                _color {};
 };

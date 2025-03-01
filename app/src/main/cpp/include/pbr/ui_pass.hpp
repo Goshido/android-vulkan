@@ -267,16 +267,28 @@ class UIPass final
             return 6U;
         }
 
+        static void AppendImage ( GXVec2* targetPositions,
+            UIVertex* targetVertices,
+            GXColorUNORM color,
+            GXVec2 const &topLeft,
+            GXVec2 const &bottomRight
+        ) noexcept;
+
         static void AppendRectangle ( GXVec2* targetPositions,
             UIVertex* targetVertices,
             GXColorUNORM color,
-            uint8_t uiPrimitiveType,
+            GXVec2 const &topLeft,
+            GXVec2 const &bottomRight
+        ) noexcept;
+
+        static void AppendText ( GXVec2* targetPositions,
+            UIVertex* targetVertices,
+            GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
-            UIAtlas const &glyphTopLeft,
-            UIAtlas const &glyphBottomRight,
-            GXVec2 const &imageTopLeft,
-            GXVec2 const &imageBottomRight
+            android_vulkan::Half2 const &glyphTopLeft,
+            android_vulkan::Half2 const &glyphBottomRight,
+            uint8_t atlasLayer
         ) noexcept;
 
         static void ReleaseImage ( Texture2DRef const &image ) noexcept;

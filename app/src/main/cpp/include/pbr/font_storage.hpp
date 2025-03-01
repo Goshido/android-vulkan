@@ -24,18 +24,9 @@ class FontStorage final
     public:
         struct GlyphInfo final
         {
-            UIAtlas                             _topLeft
-            {
-                ._uv { 0.0F, 0.0F },
-                ._layer = 0U
-
-            };
-
-            UIAtlas                             _bottomRight
-            {
-                ._uv { 0.0F, 0.0F },
-                ._layer = 0U
-            };
+            android_vulkan::Half2               _topLeft { 0.0F, 0.0F };
+            android_vulkan::Half2               _bottomRight { 0.0F, 0.0F };
+            uint8_t                             _layer = 0U;
 
             int32_t                             _width = 0;
             int32_t                             _height = 0;
@@ -169,7 +160,6 @@ class FontStorage final
         FT_Library                              _library = nullptr;
         std::forward_list<std::string>          _stringHeap {};
 
-        GlyphInfo                               _opaqueGlyph {};
         GlyphInfo                               _transparentGlyph {};
 
     public:
@@ -188,8 +178,6 @@ class FontStorage final
 
         [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
         [[nodiscard]] std::optional<Font> GetFont ( std::string_view font, uint32_t size ) noexcept;
-        [[nodiscard]] GlyphInfo const &GetOpaqueGlyphInfo () const noexcept;
-        [[nodiscard]] GlyphInfo const &GetTransparentGlyphInfo () const noexcept;
 
         [[nodiscard]] GlyphInfo const &GetGlyphInfo ( android_vulkan::Renderer &renderer,
             Font font,
@@ -219,11 +207,11 @@ class FontStorage final
         [[nodiscard]] std::optional<FontResource*> GetFontResource ( std::string_view font ) noexcept;
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool MakeSpecialGlyphs ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) noexcept;
         void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
-        [[nodiscard]] static UIAtlas PixToUV ( uint32_t x, uint32_t y, uint8_t layer ) noexcept;
+        [[nodiscard]] static android_vulkan::Half2 PixToUV ( uint32_t x, uint32_t y ) noexcept;
 };
 
 } // namespace pbr

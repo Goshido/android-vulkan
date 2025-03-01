@@ -349,19 +349,11 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        constexpr GXVec2 imageUV ( 0.5F, 0.5F );
-        FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
-
         UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
-            PBR_UI_PRIMITIVE_TYPE_GEOMETRY,
             _absoluteRect._topLeft,
-            _absoluteRect._bottomRight,
-            glyphInfo._topLeft,
-            glyphInfo._bottomRight,
-            imageUV,
-            imageUV
+            _absoluteRect._bottomRight
         );
     }
 

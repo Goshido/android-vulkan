@@ -14,8 +14,9 @@ class TextUIElement final : public UIElement
         {
             int32_t                         _advance;
 
-            UIAtlas                         _atlasTopLeft;
-            UIAtlas                         _atlasBottomRight;
+            android_vulkan::Half2           _atlasTopLeft;
+            android_vulkan::Half2           _atlasBottomRight;
+            uint8_t                         _atlasLayer;
 
             int32_t                         _offsetX;
             int32_t                         _offsetY;

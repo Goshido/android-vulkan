@@ -6,19 +6,6 @@
 #include "pbr/ui_program.inc"
 
 
-#define COLOR_ALPHA_GUESS_1         3.72545e-1H
-#define COLOR_ALPHA_GUESS_2         7.5557e-1H
-
-// P means Bezier control point
-static float16_t2 const             COLOR_ALPHA_P_X = float16_t2 ( 7.48e-1H, 3.99e-1H );
-static float16_t2 const             COLOR_ALPHA_P_Y = float16_t2 ( 8.04e-1H, 1.0H );
-
-static float16_t2 const             LUMA_BOTTOM_P1 = float16_t2 ( 5.4e-1H, 2.7e-1H );
-static float16_t2 const             LUMA_BOTTOM_P2 = float16_t2 ( 9.9e-1H, 6.18e-1H );
-
-static float16_t2 const             LUMA_TOP_P1 = float16_t2 ( 3.0e-2H, 2.12e-1H );
-static float16_t2 const             LUMA_TOP_P2 = float16_t2 ( 3.42e-1H, 7.18e-1H );
-
 [[vk::binding ( BIND_ATLAS_SAMPLER, SET_COMMON )]]
 SamplerState                        g_atlasSampler:     register ( s0 );
 
@@ -51,63 +38,59 @@ struct InputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// FUCK - make a reference to documentation.
-
-float16_t SolveNewton ( in float16_t p1, in float16_t p2, in float16_t p, in float16_t guess )
-{
-    float16_t2 const vv = 3.0H * float16_t2 ( p1, p2 );
-    float16_t const a = vv.x - vv.y + 1.0H;
-    float16_t const b = mad ( -2.0H, vv.x, vv.y );
-    float16_t const xi = 3.0H * a;
-    float16_t const zeta = 2.0H * b;
-    p = -p;
-
-    [unroll ( 3 )]
-    for ( uint16_t i = 0U; i < 3U; ++i )
-    {
-        float16_t const gamma = guess * guess;
-        float16_t const t0 = mad ( a, guess, b );
-        float16_t const t1 = mad ( vv.x, guess, p );
-        float16_t const t2 = mad ( zeta, guess, vv.x );
-        guess = guess - mad ( gamma, t0, t1 ) / mad ( xi, gamma, t2 );
-    }
-
-    return guess;
-}
-
-float16_t CubicBezier ( in float16_t p1, in float16_t p2, in float16_t t )
-{
-    float16_t const t2 = t * t;
-    float16_t const w0 = t * p1;
-    float16_t const w1 = mad ( -2.0H, p1, p2 );
-    float16_t const w2 = ( p1 - p2 + 3.33333e-1H ) * t2;
-    float16_t const w3 = mad ( w1, t2, w0 );
-    return 3.0H * mad ( w2, t, w3 );
-}
-
-float16_t ResolveTextAlpha ( float16_t colorAlpha, float16_t glyphLuma )
+float16_t ResolveTextAlpha ( in float32_t colorAlpha, in float32_t glyphLuma )
 {
     // [2025/02/23] It turns out that this gives real frame time reduction benefit on mobile hardware.
-    if ( glyphLuma == 0.0H )
+    if ( glyphLuma == 0.0F )
         return 0.0H;
 
-    float16_t const guesses[ 3U ] =
-    {
-        mad ( 1.6H, colorAlpha, -3.8e-1H ),
-        mad ( 7.0e-1H, colorAlpha, 3.0e-1H ),
-        5.8e-1H * colorAlpha
-    };
+    float32_t2 const v1 = float32_t2 ( glyphLuma, colorAlpha );
+    float32_t2 const v2 = v1 * v1;
+    float32_t2 const v4 = v2 * v2;
+    float32_t2 const v3 = v2 * v1;
+    float32_t2 const v5 = v4 * v1;
 
-    uint16_t const idx = ( (uint16_t)( colorAlpha < COLOR_ALPHA_GUESS_1 ) << 1U ) +
-        (uint16_t)( colorAlpha >= COLOR_ALPHA_GUESS_2 );
+    float32_t4 const l0 = float32_t4 ( v1.x, v2.x, v1.x, v3.x );
+    float32_t4 const r0 = float32_t4 ( v1.y, v1.y, v2.y, v1.y );
 
-    float16_t const t = SolveNewton ( COLOR_ALPHA_P_X.x, COLOR_ALPHA_P_X.y, colorAlpha, guesses[ idx ] );
-    float16_t const lumaLerp = CubicBezier ( COLOR_ALPHA_P_Y.x, COLOR_ALPHA_P_Y.y, t );
+    float32_t4 const l1 = float32_t4 ( v2.x, v1.x, v4.x, v3.x );
+    float32_t4 const r1 = float32_t4 ( v2.y, v3.y, v1.y, v2.y );
 
-    float16_t2 const p1 = lerp ( LUMA_BOTTOM_P1, LUMA_TOP_P1, lumaLerp );
-    float16_t2 const p2 = lerp ( LUMA_BOTTOM_P2, LUMA_TOP_P2, lumaLerp );
+    float32_t4 const w0 = l0 * r0;
 
-    return CubicBezier ( p1.y, p2.y, SolveNewton ( p1.x, p2.x, glyphLuma, glyphLuma ) );
+    float32_t2 const l2 = float32_t2 ( v2.x, v1.x );
+    float32_t2 const r2 = float32_t2 ( v3.y, v4.y );
+
+    float32_t4 const w1 = l1 * r1;
+
+    float32_t const d0 = dot ( float32_t4 ( v1.x, v1.y, v2.x, w0.x ),
+        float32_t4 ( 0.5110411F, 0.3230329F, -0.1824622F, -0.6972448F )
+    );
+
+    float32_t2 const w2 = l2 * r2;
+
+    float32_t const d1 = dot ( float32_t4 ( v2.y, v3.x, w0.y, w0.z ),
+        float32_t4 ( -3.4005306F, 1.4717692F, 1.3813718F, 9.018358F )
+    );
+
+    float32_t const d2 = dot ( float32_t4 ( v3.y, v4.x, w0.w, w1.x ),
+        float32_t4 ( 10.0230089F, -2.4570389F, 2.9943197F, -12.4283102F )
+    );
+
+    float32_t const d3 = dot ( float32_t4 ( w1.y, v4.y, v5.x, w1.z ),
+        float32_t4 ( -7.8590004F, -11.1873564F, 1.5675098F, -3.1576838F )
+    );
+
+    float32_t const d4 = dot ( float32_t4 ( w1.w, w2.x, w2.y, v5.y ),
+        float32_t4 ( 3.4968898F, 5.5737564F, 1.7995902F, 4.2639596F )
+    );
+
+
+    float32_t const f0 = d0 + d1;
+    float32_t const f1 = d2 + d3;
+    float32_t const f2 = f0 + d4;
+
+    return (float16_t)( f1 + f2 );
 }
 
 float16_t4 HandleImage ( in float16_t4 color, in InputData inputData )
@@ -115,16 +98,16 @@ float16_t4 HandleImage ( in float16_t4 color, in InputData inputData )
     return color * (float16_t4)g_imageTexture.SampleLevel ( g_imageSampler, inputData._imageUV, 0.0F );
 }
 
-float16_t4 HandleText ( in float16_t4 color, in InputData inputData )
+float16_t4 HandleText ( in float32_t4 color, in InputData inputData )
 {
     float32_t3 const atlasCoordinate = float32_t3 ( inputData._atlasUV, inputData._atlasLayer );
-    float16_t const glyphLuma = (float16_t)g_atlasTexture.SampleLevel ( g_atlasSampler, atlasCoordinate, 0.0F ).x;
-    return float16_t4 ( color.xyz, ResolveTextAlpha ( color.a, glyphLuma ) );
+    float32_t const glyphLuma = g_atlasTexture.SampleLevel ( g_atlasSampler, atlasCoordinate, 0.0F ).x;
+    return float16_t4 ( (float16_t3)color.xyz, ResolveTextAlpha ( color.a, glyphLuma ) );
 }
 
 float16_t4 Compute ( in InputData inputData )
 {
-    float16_t4 const color = (float16_t4)inputData._color;
+    float32_t4 const color = (float16_t4)inputData._color;
 
     switch ( inputData._uiPrimitiveType )
     {
@@ -132,11 +115,11 @@ float16_t4 Compute ( in InputData inputData )
         return HandleText ( color, inputData );
 
         case PBR_UI_PRIMITIVE_TYPE_IMAGE:
-        return HandleImage ( color, inputData );
+        return HandleImage ( (float16_t4)color, inputData );
 
         case PBR_UI_PRIMITIVE_TYPE_GEOMETRY:
         default:
-        return color;
+        return (float16_t4)color;
     }
 }
 

@@ -130,7 +130,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._diffuseOffset,
-            android_vulkan::eColorSpace::sRGB,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -147,7 +147,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._emissionOffset,
-            android_vulkan::eColorSpace::sRGB,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );
@@ -164,7 +164,7 @@ MaterialRef MaterialManager::CreateOpaqueMaterial ( android_vulkan::Renderer &re
             commandBufferConsumed,
             data,
             h._maskOffset,
-            android_vulkan::eColorSpace::sRGB,
+            android_vulkan::eColorSpace::Unorm,
             commandBuffers,
             fences
         );

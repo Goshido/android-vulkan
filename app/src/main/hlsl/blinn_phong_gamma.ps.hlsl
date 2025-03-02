@@ -1,9 +1,0 @@
-#ifndef BLINN_PHONG_GAMMA_PS_HLSL
-#define BLINN_PHONG_GAMMA_PS_HLSL
-
-
-// 1.0H / 2.4H
-#define INVERSE_GAMMA       4.16667e-1H
-
-
-#endif // BLINN_PHONG_GAMMA_PS_HLSL

@@ -836,8 +836,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     uint32_t lineHeight = stagingBuffer->_endLine._height;
 
     // Move position on one pixel right to not overwrite previously rendered glyph last column.
-    uint32_t const x = stagingBuffer->_endLine._x;
-    uint32_t left = x + static_cast<uint32_t> ( x > 0U );
+    uint32_t left = stagingBuffer->_endLine._x + static_cast<uint32_t> ( lineHeight > 0U );
     uint32_t top = stagingBuffer->_endLine._y;
 
     auto const goToNewLine = [ & ]() noexcept {
@@ -1087,8 +1086,13 @@ bool FontStorage::MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) no
 
     StagingBuffer &stagingBuffer = *query.value ();
     stagingBuffer._data[ 0U ] = 0U;
-    stagingBuffer._endLine._x = 0U;
-    stagingBuffer._endLine._height = 1U;
+
+    stagingBuffer._endLine =
+    {
+        ._height = 1U,
+        ._x = 0U,
+        ._y = 0U
+    };
 
     return true;
 }

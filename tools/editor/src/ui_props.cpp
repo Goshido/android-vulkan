@@ -1,9 +1,41 @@
 #include <precompiled_headers.hpp>
+#include <logger.hpp>
 #include <theme.hpp>
 #include <ui_props.hpp>
 
 
 namespace editor {
+
+namespace {
+
+constexpr UICombobox::ID R1920x1080 = 0U;
+constexpr UICombobox::ID R1680x1050 = 1U;
+constexpr UICombobox::ID R1600x1024 = 2U;
+constexpr UICombobox::ID R1600x900 = 3U;
+
+constexpr UICombobox::Item const RESOLUTIONS[] =
+{
+    {
+        ._caption = "1920x1080",
+        ._id = R1920x1080
+    },
+    {
+        ._caption = "1680x1050",
+        ._id = R1680x1050
+    },
+    {
+        ._caption = "1600x1024",
+        ._id = R1600x1024
+    },
+    {
+        ._caption = "1600x900",
+        ._id = R1600x900
+    }
+};
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
@@ -44,7 +76,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     _headerText ( messageQueue, _headerLine, "Properties", "Header" ),
     _closeButton ( messageQueue, _headerLine, "Close button" ),
     _checkbox ( messageQueue, _div, "Shadows", "Checkbox" ),
-    _combobox ( messageQueue, _div, "Resolution", "Combobox" )
+    _combobox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "Combobox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -56,23 +88,9 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    _closeButton.Connect (
-        [ this ] () noexcept {
-            OnClose ();
-        }
-    );
-
-    _checkbox.Connect (
-        [ this ] ( UICheckbox::eState state ) noexcept {
-            OnCheckBox ( state );
-        }
-    );
-
-    _combobox.Connect (
-        [ this ] ( uint32_t value ) noexcept {
-            OnCombobox ( value );
-        }
-    );
+    _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
+    _checkbox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
+    _combobox.Connect ( std::bind ( &UIProps::OnCombobox, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
 }
@@ -160,19 +178,19 @@ void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _combobox.UpdatedRect ();
 }
 
-void UIProps::OnCheckBox ( UICheckbox::eState /*state*/ ) noexcept
+void UIProps::OnCheckBox ( UICheckbox::eState state ) noexcept
 {
-    // FUCK - need to implement
+    android_vulkan::LogDebug ( "OnCheckBox - %hhu", static_cast<uint8_t> ( state ) );
 }
 
 void UIProps::OnClose () noexcept
 {
-    // FUCK - need to implement
+    android_vulkan::LogDebug ( "OnClose" );
 }
 
-void UIProps::OnCombobox ( uint32_t /*value*/ ) noexcept
+void UIProps::OnCombobox ( UICombobox::ID id ) noexcept
 {
-    // FUCK - need to implement
+    android_vulkan::LogDebug ( "OnCombobox - %u", id );
 }
 
 } // namespace editor

@@ -38,7 +38,7 @@ class UIProps final : public UIDialogBox
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
         void OnCheckBox ( UICheckbox::eState state ) noexcept;
-        void OnCombobox ( uint32_t value ) noexcept;
+        void OnCombobox ( UICombobox::ID id ) noexcept;
         void OnClose () noexcept;
 };
 

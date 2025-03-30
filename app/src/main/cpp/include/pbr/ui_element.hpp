@@ -17,6 +17,7 @@ class UIElement
             FontStorage*                    _fontStorage = nullptr;
             bool                            _hasChanges = false;
             std::vector<float>*             _lineHeights = nullptr;
+            GXVec2                          _parentPaddingExtent {};
             GXVec2                          _pen {};
             android_vulkan::Renderer*       _renderer = nullptr;
             size_t                          _vertices = 0U;

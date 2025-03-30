@@ -155,10 +155,12 @@ void UIManager::OnMouseHover ( Message &&message ) noexcept
     AV_TRACE ( "Mouse hover" )
     _messageQueue->DequeueEnd ();
 
-    if ( _hoverWidget ) [[likely]]
+    auto* widget = static_cast<Widget*> ( message._params );
+
+    if ( ( _hoverWidget != nullptr ) & ( _hoverWidget != widget ) ) [[likely]]
         _hoverWidget->OnMouseLeave ();
 
-    _hoverWidget = static_cast<Widget*> ( message._params );
+    _hoverWidget = widget;
 }
 
 void UIManager::OnMouseKeyDown ( Message &&message ) noexcept

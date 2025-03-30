@@ -146,6 +146,7 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
         ._fontStorage = &fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
+        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = &renderer,
         ._vertices = 0U

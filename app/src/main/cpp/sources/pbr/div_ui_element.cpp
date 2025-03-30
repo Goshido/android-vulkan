@@ -57,12 +57,17 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     GXVec2 &penOut = info._pen;
     bool const isInlineBlock = _css._display == DisplayProperty::eValue::InlineBlock;
+    GXVec2 referenceSize = canvasSize;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
             pen = _canvasTopLeftOffset;
             _parentLine = std::numeric_limits<size_t>::max ();
+
+            // Reference size should include parent padding for absolute positioned elements.
+            // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_display/Containing_block#identifying_the_containing_block
+            referenceSize.Sum ( referenceSize, info._parentPaddingExtent );
         break;
 
         case PositionProperty::eValue::Relative:
@@ -90,7 +95,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
     }
 
-    float const &parentWidth = canvasSize._data[ 0U ];
+    float const &parentWidth = referenceSize._data[ 0U ];
     float const &paddingRight = paddingBottomRight._data[ 0U ];
     float const &marginRight = marginBottomRight._data[ 0U ];
 
@@ -102,7 +107,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     bool const isAutoWidth = _css._width.GetType () == LengthValue::eType::Auto;
     auto selector = static_cast<size_t> ( isAutoWidth | ( _css._display == DisplayProperty::eValue::None ) );
-    _canvasSize = GXVec2 ( widthCases[ selector ], ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true ) );
+
+    _canvasSize = GXVec2 ( widthCases[ selector ],
+        ResolvePixelLength ( _css._height, referenceSize._data[ 1U ], true )
+    );
 
     if ( _canvasSize._data[ 0U ] == 0.0F )
     {
@@ -115,12 +123,16 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
+    GXVec2 parentPaddingExtent ( paddingTopLeft );
+    parentPaddingExtent.Sum ( parentPaddingExtent, paddingBottomRight );
+
     ApplyInfo childInfo
     {
         ._canvasSize = _canvasSize,
         ._fontStorage = info._fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
+        ._parentPaddingExtent = parentPaddingExtent,
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = info._renderer,
         ._vertices = 0U

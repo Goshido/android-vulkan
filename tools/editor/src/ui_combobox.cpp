@@ -46,10 +46,10 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
+            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 9.0F ),
             ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
             ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
-            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
+            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
@@ -401,11 +401,6 @@ void UICombobox::UpdatedRect () noexcept
 void UICombobox::Connect ( Callback &&callback ) noexcept
 {
     _callback = std::move ( callback );
-}
-
-pbr::CSSComputedValues &UICombobox::GetCSS () noexcept
-{
-    return _lineDIV.GetCSS ();
 }
 
 void UICombobox::OnMouseLeave () noexcept

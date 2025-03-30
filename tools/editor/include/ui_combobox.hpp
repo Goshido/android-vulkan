@@ -117,7 +117,6 @@ class UICombobox final : public Widget
         void UpdatedRect () noexcept override;
 
         void Connect ( Callback &&callback ) noexcept;
-        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
     private:
         void OnMouseLeave () noexcept override;

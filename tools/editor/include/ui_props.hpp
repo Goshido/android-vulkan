@@ -7,6 +7,7 @@
 #include "ui_combobox.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_label.hpp"
+#include "ui_slider.hpp"
 
 
 namespace editor {
@@ -19,6 +20,7 @@ class UIProps final : public UIDialogBox
         UICloseButton           _closeButton;
         UICheckbox              _checkbox;
         UICombobox              _combobox;
+        UISlider                _slider;
 
     public:
         explicit UIProps ( MessageQueue &messageQueue ) noexcept;
@@ -40,6 +42,7 @@ class UIProps final : public UIDialogBox
         void OnCheckBox ( UICheckbox::eState state ) noexcept;
         void OnCombobox ( UICombobox::ID id ) noexcept;
         void OnClose () noexcept;
+        void OnSlider ( double value ) noexcept;
 };
 
 } // namespace editor

@@ -55,7 +55,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
             ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
             ._fontSize = theme::HEADER_FONT_SIZE,
             ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 2.0F ),
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
@@ -76,7 +76,8 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     _headerText ( messageQueue, _headerLine, "Properties", "Header" ),
     _closeButton ( messageQueue, _headerLine, "Close button" ),
     _checkbox ( messageQueue, _div, "Shadows", "Checkbox" ),
-    _combobox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "Combobox" )
+    _combobox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "Combobox" ),
+    _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -91,6 +92,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
     _checkbox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
     _combobox.Connect ( std::bind ( &UIProps::OnCombobox, this, std::placeholders::_1 ) );
+    _slider.Connect ( std::bind ( &UIProps::OnSlider, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
 }
@@ -115,6 +117,12 @@ void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
         return;
     }
 
+    if ( _slider.IsOverlapped ( event._x, event._y ) )
+    {
+        _slider.OnMouseKeyDown ( event );
+        return;
+    }
+
     UIDialogBox::OnMouseKeyDown ( event );
 }
 
@@ -135,6 +143,12 @@ void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
     if ( _combobox.IsOverlapped ( event._x, event._y ) )
     {
         _combobox.OnMouseKeyUp ( event );
+        return;
+    }
+
+    if ( _slider.IsOverlapped ( event._x, event._y ) )
+    {
+        _slider.OnMouseKeyUp ( event );
         return;
     }
 
@@ -167,6 +181,12 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
+    if ( _slider.IsOverlapped ( event._x, event._y ) )
+    {
+        _slider.OnMouseMove ( event );
+        return;
+    }
+
     UIDialogBox::OnMouseMove ( event );
 }
 
@@ -176,6 +196,7 @@ void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _closeButton.UpdatedRect ();
     _checkbox.UpdatedRect ();
     _combobox.UpdatedRect ();
+    _slider.UpdatedRect ();
 }
 
 void UIProps::OnCheckBox ( UICheckbox::eState state ) noexcept
@@ -191,6 +212,11 @@ void UIProps::OnClose () noexcept
 void UIProps::OnCombobox ( UICombobox::ID id ) noexcept
 {
     android_vulkan::LogDebug ( "OnCombobox - %u", id );
+}
+
+void UIProps::OnSlider ( double value ) noexcept
+{
+    android_vulkan::LogDebug ( "OnSlider - %g", value );
 }
 
 } // namespace editor

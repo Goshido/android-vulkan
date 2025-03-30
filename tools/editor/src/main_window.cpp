@@ -566,6 +566,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_LBUTTONUP:
+            // [2025/03/30] Win11 24H2 26100.3624 will send WM_MOUSEMOVE event right after WM_LBUTTONUP automatically.
             mainWindow.OnLButtonUp ( lParam );
         return 0;
 

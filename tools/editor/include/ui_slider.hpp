@@ -2,8 +2,7 @@
 #define EDITOR_UI_SLIDER_HPP
 
 
-#include <pbr/div_ui_element.hpp>
-#include <pbr/text_ui_element.hpp>
+#include "text_ui_element.hpp"
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -27,30 +26,30 @@ class UISlider final : public Widget
         using MouseMoveHandler = void ( UISlider::* ) ( MouseMoveEvent const &event ) noexcept;
 
     private:
-        pbr::DIVUIElement       _lineDIV;
-        pbr::DIVUIElement       _columnDIV;
+        DIVUIElement        _lineDIV;
+        DIVUIElement        _columnDIV;
 
-        pbr::DIVUIElement       _captionDIV;
-        pbr::TextUIElement      _captionText;
+        DIVUIElement        _captionDIV;
+        TextUIElement       _captionText;
 
-        pbr::DIVUIElement       _valueDIV;
-        pbr::DIVUIElement       _progressDIV;
+        DIVUIElement        _valueDIV;
+        DIVUIElement        _progressDIV;
 
-        pbr::DIVUIElement       _numberDIV;
-        pbr::TextUIElement      _number;
+        DIVUIElement        _numberDIV;
+        TextUIElement       _number;
 
-        Callback                _callback {};
-        size_t                  _eventID = 0U;
+        Callback            _callback {};
+        size_t              _eventID = 0U;
 
-        double                  _minValue = 0.0;
-        double                  _maxValue = 1.0;
-        double                  _range = 1.0;
-        double                  _value = 0.0;
-        double                  _defaultValue = 0.0;
+        double              _minValue = 0.0;
+        double              _maxValue = 1.0;
+        double              _range = 1.0;
+        double              _value = 0.0;
+        double              _defaultValue = 0.0;
 
-        MouseKeyHandler         _onMouseKeyDown = &UISlider::OnMouseKeyDownNormal;
-        MouseKeyHandler         _onMouseKeyUp = &UISlider::OnMouseKeyUpNormal;
-        MouseMoveHandler        _onMouseMove = &UISlider::OnMouseMoveNormal;
+        MouseKeyHandler     _onMouseKeyDown = &UISlider::OnMouseKeyDownNormal;
+        MouseKeyHandler     _onMouseKeyUp = &UISlider::OnMouseKeyUpNormal;
+        MouseMoveHandler    _onMouseMove = &UISlider::OnMouseMoveNormal;
 
     public:
         UISlider () = delete;
@@ -62,7 +61,7 @@ class UISlider final : public Widget
         UISlider &operator = ( UISlider && ) = delete;
 
         explicit UISlider ( MessageQueue &messageQueue,
-            pbr::DIVUIElement &parent,
+            DIVUIElement &parent,
             std::string_view caption,
             double minValue,
             double maxValue,

@@ -40,8 +40,8 @@ class RenderSession final
         std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
         std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
 
-        MessageQueue*                                       _messageQueue = nullptr;
-        android_vulkan::Renderer*                           _renderer = nullptr;
+        MessageQueue                                        &_messageQueue;
+        android_vulkan::Renderer                            &_renderer;
         pbr::PresentRenderPass                              _presentRenderPass {};
         VkRenderPassBeginInfo                               _renderPassInfo {};
         android_vulkan::Texture2D                           _renderTarget {};
@@ -50,12 +50,13 @@ class RenderSession final
         std::thread                                         _thread {};
         Timestamp                                           _timestamp {};
         pbr::ToneMapperPass                                 _toneMapper {};
+        size_t                                              _uiElements = 0U;
         pbr::UIPass                                         _uiPass {};
-        UIManager*                                          _uiManager = nullptr;
+        UIManager                                           &_uiManager;
         VkViewport                                          _viewport {};
 
     public:
-        explicit RenderSession () = default;
+        RenderSession () = delete;
 
         RenderSession ( RenderSession const & ) = delete;
         RenderSession &operator = ( RenderSession const & ) = delete;
@@ -63,13 +64,14 @@ class RenderSession final
         RenderSession ( RenderSession && ) = delete;
         RenderSession &operator = ( RenderSession && ) = delete;
 
-        ~RenderSession () = default;
-
-        [[nodiscard]] bool Init ( MessageQueue &messageQueue,
+        explicit RenderSession ( MessageQueue &messageQueue,
             android_vulkan::Renderer &renderer,
             UIManager &uiManager
         ) noexcept;
 
+        ~RenderSession () = default;
+
+        void Init () noexcept;
         void Destroy () noexcept;
 
     private:
@@ -87,6 +89,11 @@ class RenderSession final
         void OnRenderFrame () noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
         void OnSwapchainCreated () noexcept;
+        void OnUIAppendChildElement ( Message &&message ) noexcept;
+        void OnUIDeleteElement ( Message &&message ) noexcept;
+        void OnUIElementCreated () noexcept;
+        void OnUIPrependChildElement ( Message &&message ) noexcept;
+        void OnUISetText ( Message &&message ) noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
 

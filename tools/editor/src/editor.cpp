@@ -99,7 +99,7 @@ bool Editor::InitModules () noexcept
 
             default:
                 knownSerialNumber = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -124,13 +124,10 @@ bool Editor::InitModules () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    _uiManager.Init ( _messageQueue );
-    _runningModules = 1U;
+    _uiManager.Init ();
+    _renderSession.Init ();
+    _runningModules = 2U;
 
-    if ( !result || !_renderSession.Init ( _messageQueue, _renderer, _uiManager ) ) [[unlikely]]
-        return false;
-
-    ++_runningModules;
     return true;
 }
 
@@ -157,7 +154,7 @@ void Editor::DestroyModules () noexcept
 
             default:
                 knownSerialNumber = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -239,7 +236,7 @@ void Editor::EventLoop () noexcept
 
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -270,6 +267,7 @@ void Editor::OnChangeCursor ( Message &&message ) noexcept
 
 void Editor::OnDPIChanged ( Message &&message ) noexcept
 {
+    AV_TRACE ( "DPI changed" )
     _messageQueue.DequeueEnd ();
     _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
     // FUCK
@@ -382,7 +380,7 @@ void Editor::OnShutdown () noexcept
 
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 

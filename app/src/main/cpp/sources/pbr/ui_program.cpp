@@ -468,7 +468,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8_UNORM,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex,_atlasLayer ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlasLayer ) )
     };
 
     attributes[ IN_SLOT_COLOR ] =

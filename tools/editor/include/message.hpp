@@ -34,7 +34,11 @@ enum class eMessageType : uint32_t
     StartWidgetCaptureMouse,
     StopWidgetCaptureMouse,
     SwapchainCreated,
-    UILabelSetText,
+    UIAppendChildElement,
+    UIDeleteElement,
+    UIElementCreated,
+    UIPrependChildElement,
+    UISetText,
     VulkanInitReport,
     WindowVisibilityChanged,
     Unknown

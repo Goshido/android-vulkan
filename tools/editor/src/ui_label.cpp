@@ -5,28 +5,18 @@
 
 namespace editor {
 
-namespace {
-
-struct SetTextEvent final
-{
-    std::string             _text {};
-    pbr::TextUIElement*     _ui = nullptr;
-};
-
-} // end of anonymous namespace
-
 //----------------------------------------------------------------------------------------------------------------------
 
 UILabel::UILabel ( MessageQueue &messageQueue,
-    pbr::DIVUIElement &parent,
+    DIVUIElement &parent,
     std::string_view text,
     std::string &&name
 ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    _div = std::make_unique<pbr::DIVUIElement> ( &parent,
+    _messageQueue ( messageQueue ),
 
-        pbr::CSSComputedValues
+    _div ( messageQueue,
+        parent,
+
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
@@ -55,42 +45,17 @@ UILabel::UILabel ( MessageQueue &messageQueue,
         },
 
         name + " (DIV)"
-    );
+    ),
 
-    pbr::DIVUIElement &div = *_div;
-    _text = std::make_unique<pbr::TextUIElement> ( true, &div, text, name + " (text)" );
-    div.AppendChildElement ( *_text );
-    parent.AppendChildElement ( div );
-}
-
-void UILabel::operator = ( std::string &&text ) noexcept
+    _text ( messageQueue, _div, text, name + " (text)" )
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UILabelSetText,
-
-            ._params = new SetTextEvent
-            {
-                ._text = std::move ( text ),
-                ._ui = _text.get ()
-            },
-
-            ._serialNumber = 0U
-        }
-    );
+    _div.AppendChildElement ( _text );
+    parent.AppendChildElement ( _div );
 }
 
 pbr::CSSComputedValues &UILabel::GetCSS () noexcept
 {
-    return _div->GetCSS ();
-}
-
-void UILabel::OnSetText ( Message &&message ) noexcept
-{
-    auto const* event = static_cast<SetTextEvent const*> ( message._params );
-    std::string const &text = event->_text;
-    event->_ui->SetText ( std::string_view ( text.data (), text.size () ) );
-    delete event;
+    return _div.GetCSS ();
 }
 
 } // namespace editor

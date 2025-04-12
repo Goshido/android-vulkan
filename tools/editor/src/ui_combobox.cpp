@@ -8,8 +8,8 @@
 
 namespace editor {
 
-UICombobox::MenuItem::MenuItem ( std::unique_ptr<pbr::DIVUIElement> &&div,
-    std::unique_ptr<pbr::TextUIElement> &&text
+UICombobox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
+    std::unique_ptr<TextUIElement> &&text
 ) noexcept:
     _div ( std::move ( div ) ),
     _text ( std::move ( text ) )
@@ -20,7 +20,7 @@ UICombobox::MenuItem::MenuItem ( std::unique_ptr<pbr::DIVUIElement> &&div,
 //----------------------------------------------------------------------------------------------------------------------
 
 UICombobox::UICombobox ( MessageQueue &messageQueue,
-    pbr::DIVUIElement &parent,
+    DIVUIElement &parent,
     std::string_view caption,
     Items items,
     uint32_t selected,
@@ -28,7 +28,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
 ) noexcept:
     Widget ( messageQueue ),
 
-    _lineDIV ( &parent,
+    _lineDIV ( messageQueue,
+        parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -60,7 +61,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( &_lineDIV,
+    _columnDIV ( messageQueue,
+        _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -92,7 +94,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( &_columnDIV,
+    _captionDIV ( messageQueue,
+        _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -124,9 +127,10 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( true, &_captionDIV, caption, name + " (caption)" ),
+    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( &_columnDIV,
+    _valueDIV ( messageQueue,
+        _columnDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -158,7 +162,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _textDIV ( &_valueDIV,
+    _textDIV ( messageQueue,
+        _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -190,9 +195,10 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (text)"
     ),
 
-    _text ( true, &_textDIV, "", name + " (text)" ),
+    _text ( messageQueue, _textDIV, "", name + " (text)" ),
 
-    _iconDIV ( &_valueDIV,
+    _iconDIV ( messageQueue,
+        _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -224,9 +230,10 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (icon)"
     ),
 
-    _icon ( true, &_iconDIV, glyph::COMBOBOX_DOWN, name + " (icon)" ),
+    _icon ( messageQueue, _iconDIV, glyph::COMBOBOX_DOWN, name + " (icon)" ),
 
-    _menuAnchorDIV ( &_valueDIV,
+    _menuAnchorDIV ( messageQueue,
+        _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -258,7 +265,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (menu anchor)"
     ),
 
-    _menuDIV ( &_menuAnchorDIV,
+    _menuDIV ( messageQueue,
+        _menuAnchorDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -321,7 +329,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         size_t const cases[] = { _selected, i };
         _selected = cases[ static_cast<size_t> ( item._id == selected ) ];
 
-        std::unique_ptr<pbr::DIVUIElement> div = std::make_unique<pbr::DIVUIElement> ( &_menuDIV,
+        std::unique_ptr<DIVUIElement> div = std::make_unique<DIVUIElement> ( messageQueue,
+            _menuDIV,
 
             pbr::CSSComputedValues
             {
@@ -354,8 +363,8 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
             name + " (item: " + item._caption.data () + ")"
         );
 
-        std::unique_ptr<pbr::TextUIElement> text = std::make_unique<pbr::TextUIElement> ( true,
-            div.get (),
+        std::unique_ptr<TextUIElement> text = std::make_unique<TextUIElement> ( messageQueue,
+            *div,
             item._caption,
             name + " (item: " + item._caption.data () + ")"
         );
@@ -477,7 +486,8 @@ void UICombobox::OnMouseMoveMenu ( MouseMoveEvent const &event ) noexcept
     MenuItem* menuItems = _menuItems.data ();
 
     auto const isOverlap = [ &event, menuItems ] ( size_t idx ) noexcept -> bool {
-        return Rect ( menuItems[ idx ]._div->GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
+        return
+            Rect ( menuItems[ idx ]._div->GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
     };
 
     if ( _focused != NO_INDEX && isOverlap ( _focused ) ) [[likely]]

@@ -2,8 +2,7 @@
 #define EDITOR_UI_COMBOBOX_HPP
 
 
-#include <pbr/div_ui_element.hpp>
-#include <pbr/text_ui_element.hpp>
+#include "text_ui_element.hpp"
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -25,8 +24,8 @@ class UICombobox final : public Widget
 
         struct Item final
         {
-            std::string_view                            _caption {};
-            ID                                          _id = 0U;
+            std::string_view                        _caption {};
+            ID                                      _id = 0U;
         };
 
         using Items = std::span<Item const>;
@@ -41,8 +40,8 @@ class UICombobox final : public Widget
         class MenuItem final
         {
             public:
-                std::unique_ptr<pbr::DIVUIElement>      _div {};
-                std::unique_ptr<pbr::TextUIElement>     _text {};
+                std::unique_ptr<DIVUIElement>       _div {};
+                std::unique_ptr<TextUIElement>      _text {};
 
             public:
                 MenuItem () = delete;
@@ -53,44 +52,44 @@ class UICombobox final : public Widget
                 MenuItem ( MenuItem && ) = default;
                 MenuItem &operator = ( MenuItem && ) = default;
 
-                explicit MenuItem ( std::unique_ptr<pbr::DIVUIElement> &&div,
-                    std::unique_ptr<pbr::TextUIElement> &&text
+                explicit MenuItem ( std::unique_ptr<DIVUIElement> &&div,
+                    std::unique_ptr<TextUIElement> &&text
                 ) noexcept;
 
                 ~MenuItem () = default;
         };
 
     private:
-        pbr::DIVUIElement                               _lineDIV;
-        pbr::DIVUIElement                               _columnDIV;
+        DIVUIElement                                _lineDIV;
+        DIVUIElement                                _columnDIV;
 
-        pbr::DIVUIElement                               _captionDIV;
-        pbr::TextUIElement                              _captionText;
+        DIVUIElement                                _captionDIV;
+        TextUIElement                               _captionText;
 
-        pbr::DIVUIElement                               _valueDIV;
+        DIVUIElement                                _valueDIV;
 
-        pbr::DIVUIElement                               _textDIV;
-        pbr::TextUIElement                              _text;
+        DIVUIElement                                _textDIV;
+        TextUIElement                               _text;
 
-        pbr::DIVUIElement                               _iconDIV;
-        pbr::TextUIElement                              _icon;
+        DIVUIElement                                _iconDIV;
+        TextUIElement                               _icon;
 
-        pbr::DIVUIElement                               _menuAnchorDIV;
-        pbr::DIVUIElement                               _menuDIV;
-        std::vector<MenuItem>                           _menuItems {};
+        DIVUIElement                                _menuAnchorDIV;
+        DIVUIElement                                _menuDIV;
+        std::vector<MenuItem>                       _menuItems {};
 
-        Callback                                        _callback {};
-        size_t                                          _eventID = 0U;
+        Callback                                    _callback {};
+        size_t                                      _eventID = 0U;
 
-        Items const                                     _items;
-        size_t                                          _focused = NO_INDEX;
-        size_t                                          _selected = NO_INDEX;
-        size_t                                          _targeted = NO_INDEX;
+        Items const                                 _items;
+        size_t                                      _focused = NO_INDEX;
+        size_t                                      _selected = NO_INDEX;
+        size_t                                      _targeted = NO_INDEX;
 
-        MouseKeyHandler                                 _onMouseKeyDown = &UICombobox::OnMouseKeyDownNormal;
-        MouseKeyHandler                                 _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
-        MouseMoveHandler                                _onMouseMove = &UICombobox::OnMouseMoveNormal;
-        UpdateRectHandler                               _updateRect = &UICombobox::UpdatedRectNormal;
+        MouseKeyHandler                             _onMouseKeyDown = &UICombobox::OnMouseKeyDownNormal;
+        MouseKeyHandler                             _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
+        MouseMoveHandler                            _onMouseMove = &UICombobox::OnMouseMoveNormal;
+        UpdateRectHandler                           _updateRect = &UICombobox::UpdatedRectNormal;
 
     public:
         UICombobox () = delete;
@@ -102,7 +101,7 @@ class UICombobox final : public Widget
         UICombobox &operator = ( UICombobox && ) = delete;
 
         explicit UICombobox ( MessageQueue &messageQueue,
-            pbr::DIVUIElement &parent,
+            DIVUIElement &parent,
             std::string_view caption,
             Items items,
             uint32_t selected,

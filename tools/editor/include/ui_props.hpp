@@ -15,12 +15,12 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
-        pbr::DIVUIElement       _headerLine;
-        UILabel                 _headerText;
-        UICloseButton           _closeButton;
-        UICheckbox              _checkbox;
-        UICombobox              _combobox;
-        UISlider                _slider;
+        DIVUIElement        _headerLine;
+        UILabel             _headerText;
+        UICloseButton       _closeButton;
+        UICheckbox          _checkbox;
+        UICombobox          _combobox;
+        UISlider            _slider;
 
     public:
         explicit UIProps ( MessageQueue &messageQueue ) noexcept;

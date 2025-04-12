@@ -3,7 +3,7 @@
 
 
 #include "cursor.hpp"
-#include <pbr/div_ui_element.hpp>
+#include "div_ui_element.hpp"
 #include "widget.hpp"
 
 
@@ -37,7 +37,7 @@ class UIDialogBox : public Widget
         };
 
     protected:
-        pbr::DIVUIElement           _div;
+        DIVUIElement                _div;
         bool                        _dragState = false;
 
     private:

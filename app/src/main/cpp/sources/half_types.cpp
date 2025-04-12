@@ -23,11 +23,11 @@ uint16_t Half::Convert ( float value ) noexcept
     // see https://en.wikipedia.org/wiki/NaN
     // see https://en.wikipedia.org/wiki/IEEE_754-1985#Positive_and_negative_infinity
 
-    const uint32_t from = *reinterpret_cast<uint32_t*> ( &value );
+    uint32_t const from = *reinterpret_cast<uint32_t*> ( &value );
 
-    const uint32_t mantissa = from & 0x007FFFFFU;
-    const uint32_t sign = from & 0x80000000U;
-    const uint32_t exponent = from & 0x7F800000U;
+    uint32_t const mantissa = from & 0x007FFFFFU;
+    uint32_t const sign = from & 0x80000000U;
+    uint32_t const exponent = from & 0x7F800000U;
 
     // checking special cases: zeros, NaNs and INFs
 
@@ -57,7 +57,7 @@ uint16_t Half::Convert ( float value ) noexcept
         return static_cast<uint16_t> ( ( sign >> 16U ) | 0x00007E00U );
     }
 
-    const auto exponentRaw = static_cast<uint8_t> ( exponent >> 23U );
+    auto const exponentRaw = static_cast<uint8_t> ( exponent >> 23U );
 
     // removing exponent bias (subtract 127)
     // see https://en.wikipedia.org/wiki/Single-precision_floating-point_format

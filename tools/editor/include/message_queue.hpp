@@ -17,6 +17,13 @@ namespace editor {
 
 class MessageQueue final
 {
+    public:
+        enum class eRefundLocation : uint8_t
+        {
+            Front,
+            Back
+        };
+
     private:
         std::mutex                  _mutex {};
         std::condition_variable     _isQueueChanged {};
@@ -39,7 +46,7 @@ class MessageQueue final
 
         [[nodiscard]] Message DequeueBegin ( std::optional<Message::SerialNumber> waitOnSerialNumber ) noexcept;
         void DequeueEnd () noexcept;
-        void DequeueEnd ( Message &&refund ) noexcept;
+        void DequeueEnd ( Message &&refund, eRefundLocation location ) noexcept;
 };
 
 } // namespace editor

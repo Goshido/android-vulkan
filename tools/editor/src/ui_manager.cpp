@@ -9,10 +9,15 @@
 
 namespace editor {
 
-void UIManager::Init ( MessageQueue &messageQueue ) noexcept
+UIManager::UIManager ( MessageQueue &messageQueue ) noexcept:
+    _messageQueue ( messageQueue )
+{
+    // NOTHING
+}
+
+void UIManager::Init () noexcept
 {
     AV_TRACE ( "UI: init" )
-    _messageQueue = &messageQueue;
 
     _thread = std::thread (
         [ this ]() noexcept
@@ -29,9 +34,9 @@ void UIManager::Destroy () noexcept
     AV_TRACE ( "UI: destroy" )
 
     if ( _thread.joinable () ) [[likely]]
+    {
         _thread.join ();
-
-    _messageQueue = nullptr;
+    }
 }
 
 void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
@@ -85,7 +90,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
 
 void UIManager::CreateWidgets () noexcept
 {
-    auto* dialogBox = new UIProps ( *_messageQueue );
+    auto* dialogBox = new UIProps ( _messageQueue );
     dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
@@ -96,7 +101,7 @@ void UIManager::CreateWidgets () noexcept
 
 void UIManager::EventLoop () noexcept
 {
-    MessageQueue &messageQueue = *_messageQueue;
+    MessageQueue &messageQueue = _messageQueue;
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -136,13 +141,9 @@ void UIManager::EventLoop () noexcept
                 OnStopWidgetCaptureMouse ();
             break;
 
-            case eMessageType::UILabelSetText:
-                OnUILabeleSetText ( std::move ( message ) );
-            break;
-
             default:
                 lastRefund = message._serialNumber;
-                messageQueue.DequeueEnd ( std::move ( message ) );
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -153,7 +154,7 @@ void UIManager::EventLoop () noexcept
 void UIManager::OnMouseHover ( Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse hover" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
     auto* widget = static_cast<Widget*> ( message._params );
 
@@ -166,7 +167,7 @@ void UIManager::OnMouseHover ( Message &&message ) noexcept
 void UIManager::OnMouseKeyDown ( Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse key down" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
@@ -197,7 +198,7 @@ void UIManager::OnMouseKeyDown ( Message &&message ) noexcept
 void UIManager::OnMouseKeyUp ( Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse key up" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
@@ -228,7 +229,7 @@ void UIManager::OnMouseKeyUp ( Message &&message ) noexcept
 void UIManager::OnMouseMoved ( Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse moved" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
     auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
 
@@ -258,7 +259,7 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
     if ( eventID - std::exchange( _eventID, eventID ) > 1U ) [[unlikely]]
     {
-        _messageQueue->EnqueueBack (
+        _messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::ChangeCursor,
                 ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
@@ -273,9 +274,10 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 void UIManager::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue->DequeueEnd ( std::move ( refund ) );
+    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
+    _widgets.clear ();
 
-    _messageQueue->EnqueueFront (
+    _messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
             ._params = nullptr,
@@ -287,10 +289,10 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
 void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start widget capture mouse" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
     _mouseCapture = static_cast<Widget*> ( message._params );
 
-    _messageQueue->EnqueueBack (
+    _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::CaptureMouse,
             ._params = nullptr,
@@ -302,23 +304,16 @@ void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
 void UIManager::OnStopWidgetCaptureMouse () noexcept
 {
     AV_TRACE ( "Stop widget capture mouse" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
     _mouseCapture = nullptr;
 
-    _messageQueue->EnqueueBack (
+    _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReleaseMouse,
             ._params = nullptr,
             ._serialNumber = 0U
         }
     );
-}
-
-void UIManager::OnUILabeleSetText ( Message &&message ) noexcept
-{
-    AV_TRACE ( "Label set text" )
-    _messageQueue->DequeueEnd ();
-    UILabel::OnSetText ( std::move ( message ) );
 }
 
 } // namespace editor

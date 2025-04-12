@@ -30,11 +30,11 @@ class Editor final
         bool                                    _frameComplete = true;
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
-        RenderSession                           _renderSession {};
         android_vulkan::Renderer                _renderer {};
+        UIManager                               _uiManager { _messageQueue };
+        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;
-        UIManager                               _uiManager {};
         float                                   _uiZoom = DEFAULT_UI_ZOOM;
 
     public:

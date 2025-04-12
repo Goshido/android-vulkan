@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug - GPU select|x64">
@@ -850,20 +850,26 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="src\append_ui_child_element_event.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
+    <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
+    <ClCompile Include="src\prepend_ui_child_element_event.cpp" />
     <ClCompile Include="src\rect.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
+    <ClCompile Include="src\set_text_event.cpp" />
+    <ClCompile Include="src\text_ui_element.cpp" />
     <ClCompile Include="src\ui_checkbox.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
     <ClCompile Include="src\ui_combobox.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
+    <ClCompile Include="src\ui_element.cpp" />
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
     <ClCompile Include="src\ui_props.cpp" />
@@ -917,7 +923,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\light.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\material.hpp" />
@@ -949,12 +954,15 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
+    <ClInclude Include="include\append_ui_child_element_event.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
+    <ClInclude Include="include\div_ui_element.hpp" />
     <ClInclude Include="include\editor.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
+    <ClInclude Include="include\image_ui_element.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
@@ -962,14 +970,18 @@
     <ClInclude Include="include\mouse_key_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\prepend_ui_child_element_event.hpp" />
     <ClInclude Include="include\rect.hpp" />
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\save_state.hpp" />
+    <ClInclude Include="include\set_text_event.hpp" />
+    <ClInclude Include="include\text_ui_element.hpp" />
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\ui_checkbox.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
     <ClInclude Include="include\ui_combobox.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
+    <ClInclude Include="include\ui_element.hpp" />
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
     <ClInclude Include="include\ui_props.hpp" />

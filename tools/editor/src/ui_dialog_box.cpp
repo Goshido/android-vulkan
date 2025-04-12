@@ -60,7 +60,7 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
 
 UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept:
     Widget ( messageQueue ),
-    _div ( nullptr,
+    _div ( messageQueue,
 
         {
             ._backgroundColor = theme::BACKGROUND_COLOR,

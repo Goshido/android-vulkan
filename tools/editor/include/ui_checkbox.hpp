@@ -2,8 +2,7 @@
 #define EDITOR_UI_CHECKBOX_HPP
 
 
-#include <pbr/div_ui_element.hpp>
-#include <pbr/text_ui_element.hpp>
+#include "text_ui_element.hpp"
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -30,19 +29,19 @@ class UICheckbox final : public Widget
         using Callback = std::function<void ( eState state )>;
 
     private:
-        pbr::DIVUIElement       _lineDIV;
-        pbr::DIVUIElement       _columnDIV;
+        DIVUIElement        _lineDIV;
+        DIVUIElement        _columnDIV;
 
-        pbr::DIVUIElement       _captionDIV;
-        pbr::TextUIElement      _captionText;
+        DIVUIElement        _captionDIV;
+        TextUIElement       _captionText;
 
-        pbr::DIVUIElement       _valueDIV;
-        pbr::TextUIElement      _valueIcon;
+        DIVUIElement        _valueDIV;
+        TextUIElement       _valueIcon;
 
-        Callback                _callback {};
-        size_t                  _eventID = 0U;
+        Callback            _callback {};
+        size_t              _eventID = 0U;
 
-        eState                  _state = eState::Check;
+        eState              _state = eState::Check;
 
     public:
         UICheckbox () = delete;
@@ -54,7 +53,7 @@ class UICheckbox final : public Widget
         UICheckbox &operator = ( UICheckbox && ) = delete;
 
         explicit UICheckbox ( MessageQueue &messageQueue,
-            pbr::DIVUIElement &parent,
+            DIVUIElement &parent,
             std::string_view caption,
             std::string &&name
         ) noexcept;

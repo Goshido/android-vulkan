@@ -7,10 +7,11 @@
 
 namespace editor {
 
-UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &parent, std::string &&name ) noexcept:
+UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent, std::string &&name ) noexcept:
     Widget ( messageQueue ),
 
-    _base ( &parent,
+    _base ( messageQueue,
+        parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -42,8 +43,8 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
         name + " (base)"
     ),
 
-    _backgroundDIV (
-        &_base,
+    _backgroundDIV ( messageQueue,
+        _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -75,9 +76,10 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
         name + " (background DIV)"
     ),
 
-    _backgroundText ( true, &_backgroundDIV, glyph::CLOSE_BUTTON_BACKGROUND, name + " (background text)" ),
+    _backgroundText ( messageQueue, _backgroundDIV, glyph::CLOSE_BUTTON_BACKGROUND, name + " (background text)" ),
 
-    _borderDIV ( &_base,
+    _borderDIV ( messageQueue,
+        _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -109,9 +111,10 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
         name + " (border DIV)"
     ),
 
-    _borderText ( true, &_borderDIV, glyph::CLOSE_BUTTON_BORDER, name + " (border text)" ),
+    _borderText ( messageQueue, _borderDIV, glyph::CLOSE_BUTTON_BORDER, name + " (border text)" ),
 
-    _crossDIV ( &_base,
+    _crossDIV ( messageQueue,
+        _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -143,7 +146,7 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, pbr::DIVUIElement &pa
         name + " (cross DIV)"
     ),
 
-    _crossText ( true, &_crossDIV, glyph::CLOSE_BUTTON_CROSS, name + " (cross text)" )
+    _crossText ( messageQueue, _crossDIV, glyph::CLOSE_BUTTON_CROSS, name + " (cross text)" )
 {
     _backgroundDIV.AppendChildElement ( _backgroundText );
 

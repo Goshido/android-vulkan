@@ -67,10 +67,26 @@ void MessageQueue::DequeueEnd () noexcept
     _mutex.unlock ();
 }
 
-void MessageQueue::DequeueEnd ( Message &&refund ) noexcept
+void MessageQueue::DequeueEnd ( Message &&refund, eRefundLocation location ) noexcept
 {
     AV_TRACE ( "Dequeue message end" )
-    _queue.push_front ( std::move ( refund ) );
+
+    switch ( location )
+    {
+        case eRefundLocation::Front:
+            _queue.push_front ( std::move ( refund ) );
+        break;
+
+        case eRefundLocation::Back:
+            _queue.push_back ( std::move ( refund ) );
+            _isQueueChanged.notify_all ();
+        break;
+
+        default:
+            // IMPOSSIBLE
+        break;
+    }
+
     _mutex.unlock ();
 }
 

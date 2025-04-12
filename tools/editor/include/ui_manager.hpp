@@ -20,13 +20,13 @@ class UIManager final
     private:
         size_t                                  _eventID = 0U;
         Widget*                                 _hoverWidget = nullptr;
-        MessageQueue*                           _messageQueue = nullptr;
+        MessageQueue                            &_messageQueue;
         Widget*                                 _mouseCapture = nullptr;
         std::thread                             _thread {};
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
     public:
-        explicit UIManager () = default;
+        UIManager () = delete;
 
         UIManager ( UIManager const & ) = delete;
         UIManager &operator = ( UIManager const & ) = delete;
@@ -34,9 +34,11 @@ class UIManager final
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
 
+        explicit UIManager ( MessageQueue &messageQueue ) noexcept;
+
         ~UIManager () = default;
 
-        void Init ( MessageQueue &messageQueue ) noexcept;
+        void Init () noexcept;
         void Destroy () noexcept;
 
         void RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
@@ -51,7 +53,6 @@ class UIManager final
         void OnShutdown ( Message &&refund ) noexcept;
         void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
         void OnStopWidgetCaptureMouse () noexcept;
-        void OnUILabeleSetText ( Message &&message ) noexcept;
 };
 
 } // namespace editor

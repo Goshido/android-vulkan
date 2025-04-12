@@ -270,6 +270,24 @@
     <ClCompile Include="src\ui_slider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\div_ui_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\text_ui_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_element.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\set_text_event.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\prepend_ui_child_element_event.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\append_ui_child_element_event.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -473,9 +491,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_ui_element.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="include\theme.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -582,6 +597,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ui_slider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\div_ui_element.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\image_ui_element.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\text_ui_element.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_element.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\set_text_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\append_ui_child_element_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\prepend_ui_child_element_event.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

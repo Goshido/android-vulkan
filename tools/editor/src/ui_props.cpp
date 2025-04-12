@@ -40,9 +40,9 @@ constexpr UICombobox::Item const RESOLUTIONS[] =
 UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
 
-    _headerLine ( &_div,
+    _headerLine ( messageQueue,
+        _div,
 
-        pbr::CSSComputedValues
         {
             ._backgroundColor = theme::HEADER_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
@@ -73,7 +73,7 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
         "Header line"
     ),
 
-    _headerText ( messageQueue, _headerLine, "Properties", "Header" ),
+    _headerText ( messageQueue, _headerLine, "Properties", "Header"),
     _closeButton ( messageQueue, _headerLine, "Close button" ),
     _checkbox ( messageQueue, _div, "Shadows", "Checkbox" ),
     _combobox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "Combobox" ),

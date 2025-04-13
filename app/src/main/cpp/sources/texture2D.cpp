@@ -1104,7 +1104,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
         size_t srcRowSkipPixels,
         size_t rowPixelCount,
         uint32_t oneAlphaMask
-    ) {
+    ) noexcept {
         while ( dst < nonDstMemory )
         {
             for ( size_t i = 0U; i < rowPixelCount; ++i )

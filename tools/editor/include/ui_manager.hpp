@@ -8,6 +8,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <shared_mutex>
 #include <thread>
 
 GX_RESTORE_WARNING_STATE
@@ -22,6 +23,7 @@ class UIManager final
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
         Widget*                                 _mouseCapture = nullptr;
+        std::shared_mutex                       _mutex {};
         std::thread                             _thread {};
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
@@ -53,6 +55,8 @@ class UIManager final
         void OnShutdown ( Message &&refund ) noexcept;
         void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
         void OnStopWidgetCaptureMouse () noexcept;
+        void OnUIAddWidget ( Message &&message ) noexcept;
+        void OnUIRemoveWidget ( Message &&message ) noexcept;
 };
 
 } // namespace editor

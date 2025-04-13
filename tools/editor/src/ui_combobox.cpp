@@ -2,6 +2,7 @@
 #include <av_assert.hpp>
 #include <cursor.hpp>
 #include <glyphs.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
 #include <theme.hpp>
 #include <ui_combobox.hpp>
 
@@ -15,6 +16,287 @@ UICombobox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
     _text ( std::move ( text ) )
 {
     // NOTHING
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+UICombobox::Popup::Popup ( MessageQueue &messageQueue,
+    DIVUIElement const &positionAnchor,
+    DIVUIElement const &widthAnchor,
+    Items items,
+    size_t &selected,
+    TextUIElement &text,
+    Callback &callback,
+    std::string const &name
+) noexcept:
+    Widget ( messageQueue ),
+
+    _div ( messageQueue,
+        {
+            ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._height = theme::AUTO_LENGTH
+        },
+
+        name + " (menu)"
+    ),
+
+    _text ( text ),
+    _callback ( callback ),
+    _items ( items ),
+    _selected ( selected )
+{
+    float const devicePXtoCSSPX = pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX;
+    GXVec2 topLeft {};
+    topLeft.Multiply ( positionAnchor.GetAbsoluteRect ()._topLeft, devicePXtoCSSPX );
+
+    pbr::CSSComputedValues &css = _div.GetCSS ();
+    css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 0U ] );
+    css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 1U ] );
+
+    pbr::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
+
+    css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX,
+        devicePXtoCSSPX * ( widthRect._bottomRight._data[ 0U ] - widthRect._topLeft._data[ 0U ] )
+    );
+
+    size_t const count = items.size ();
+    _menuItems.reserve ( count );
+
+    for ( size_t i = 0U; i < count; ++i )
+    {
+        Item const &item = items[ i ];
+
+        size_t const cases[] = { _selected, i };
+        _selected = cases[ static_cast<size_t> ( item._id == selected ) ];
+
+        std::unique_ptr<DIVUIElement> div = std::make_unique<DIVUIElement> ( messageQueue,
+            _div,
+
+            pbr::CSSComputedValues
+            {
+                ._backgroundColor = theme::TRANSPARENT_COLOR,
+                ._backgroundSize = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
+                ._right = theme::AUTO_LENGTH,
+                ._top = theme::AUTO_LENGTH,
+                ._color = theme::MAIN_COLOR,
+                ._display = pbr::DisplayProperty::eValue::Block,
+                ._fontFile{},
+                ._fontSize = theme::INHERIT_LENGTH,
+                ._lineHeight = theme::AUTO_LENGTH,
+                ._marginBottom = theme::ZERO_LENGTH,
+                ._marginLeft = theme::ZERO_LENGTH,
+                ._marginRight = theme::ZERO_LENGTH,
+                ._marginTop = theme::ZERO_LENGTH,
+                ._paddingBottom = theme::ZERO_LENGTH,
+                ._paddingLeft = theme::ZERO_LENGTH,
+                ._paddingRight = theme::ZERO_LENGTH,
+                ._paddingTop = theme::ZERO_LENGTH,
+                ._position = pbr::PositionProperty::eValue::Static,
+                ._textAlign = pbr::TextAlignProperty::eValue::Left,
+                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+                ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+                ._height = theme::MENU_ITEM_HEIGHT
+            },
+
+            name + " (item: " + item._caption.data () + ")"
+        );
+
+        std::unique_ptr<TextUIElement> t = std::make_unique<TextUIElement> ( messageQueue,
+            *div,
+            item._caption,
+            name + " (item: " + item._caption.data () + ")"
+        );
+
+        div->AppendChildElement ( *t );
+        _div.AppendChildElement ( *div );
+        _menuItems.emplace_back ( std::move ( div ), std::move ( t ) );
+    }
+
+    if ( _selected == NO_INDEX ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        _selected = 0U;
+    }
+
+    Item const &item = items[ _selected ];
+    _selected = item._id;
+}
+
+void UICombobox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+{
+    MenuItem* menuItems = _menuItems.data ();
+
+    auto const isOverlap = [ &event, menuItems ] ( size_t idx ) noexcept -> bool {
+        return Rect ( menuItems[ idx ]._div->GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
+    };
+
+    if ( _focused != NO_INDEX && isOverlap ( _focused ) ) [[likely]]
+        return;
+
+    size_t const oldFocused = std::exchange ( _focused, NO_INDEX );
+    size_t const count = _items.size ();
+
+    for ( size_t i = 0U; i < count; ++i )
+    {
+        if ( isOverlap ( i ) )
+        {
+            _focused = i;
+            break;
+        }
+    }
+
+    if ( oldFocused == _focused ) [[unlikely]]
+        return;
+
+    _targeted = NO_INDEX;
+
+    auto const setColor = [ menuItems ] ( size_t idx, pbr::ColorValue const &color ) noexcept {
+        if ( idx != NO_INDEX ) [[likely]]
+        {
+            menuItems[ idx ]._text->SetColor ( color );
+        }
+    };
+
+    setColor ( oldFocused, theme::MAIN_COLOR );
+    setColor ( _focused, theme::HOVER_COLOR );
+    _isChanged = true;
+}
+
+Widget::LayoutStatus UICombobox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
+    pbr::FontStorage &fontStorage
+) noexcept
+{
+    VkExtent2D const viewport = renderer.GetViewportResolution ();
+
+    _lineHeights.clear ();
+    _lineHeights.push_back ( 0.0F );
+
+    pbr::UIElement::ApplyInfo info
+    {
+        ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._fontStorage = &fontStorage,
+        ._hasChanges = _isChanged,
+        ._lineHeights = &_lineHeights,
+        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
+        ._renderer = &renderer,
+        ._vertices = 0U
+    };
+
+    _div.ApplyLayout ( info );
+    _isChanged = false;
+
+    return
+    {
+        ._hasChanges = info._hasChanges,
+        ._neededUIVertices = info._vertices
+    };
+}
+
+void UICombobox::Popup::Submit ( pbr::UIElement::SubmitInfo& info ) noexcept
+{
+    _div.Submit ( info );
+}
+
+bool UICombobox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+{
+    pbr::UIElement::UpdateInfo info
+    {
+        ._fontStorage = &fontStorage,
+        ._line = 0U,
+        ._parentLineHeights = _lineHeights.data (),
+        ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F )
+    };
+
+    return _div.UpdateCache ( info );
+}
+
+bool UICombobox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+{
+    if ( !_rect.IsOverlapped ( event._x, event._y ) ) [[unlikely]]
+        return true;
+
+    _targeted = _focused;
+    _menuItems[ _focused ]._text->SetColor ( theme::PRESS_COLOR );
+    _isChanged = true;
+    return false;
+}
+
+bool UICombobox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+{
+    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+        return false;
+
+    if ( !_div.IsVisible () ) [[unlikely]]
+    {
+        _messageQueue.EnqueueBack (
+            {
+                ._type = eMessageType::StopWidgetCaptureMouse,
+                ._params = this,
+                ._serialNumber = 0U
+            }
+        );
+
+        return true;
+    }
+
+    if ( _targeted == NO_INDEX ) [[unlikely]]
+        return false;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._params = this,
+            ._serialNumber = 0U
+        }
+    );
+
+    _menuItems[ _targeted ]._text->SetColor ( theme::MAIN_COLOR );
+
+    if ( _targeted == _selected ) [[unlikely]]
+        return true;
+
+    _selected = _targeted;
+    Item const &item = _items[ _targeted ];
+    _text.SetText ( item._caption );
+
+    // FUCK - consider callback in always provided
+    if ( _callback ) [[likely]]
+        _callback ( item._id );
+
+    return true;
+}
+
+Rect const &UICombobox::Popup::HandleUpdatedRect () noexcept
+{
+    _rect.From ( _div.GetAbsoluteRect () );
+    return _rect;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -265,39 +547,7 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
         name + " (menu anchor)"
     ),
 
-    _menuDIV ( messageQueue,
-        _menuAnchorDIV,
-
-        {
-            ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::AUTO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
-            ._right = theme::AUTO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = theme::TRANSPARENT_COLOR,
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile { theme::NORMAL_FONT_FAMILY },
-            ._fontSize = theme::NORMAL_FONT_SIZE,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = theme::ZERO_LENGTH,
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Absolute,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = theme::AUTO_LENGTH
-        },
-
-        name + " (menu)"
-    ),
-
+    _name ( std::move ( name ) ),
     _items ( items )
 {
     AV_ASSERT ( !items.empty () )
@@ -311,7 +561,6 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
     _iconDIV.AppendChildElement ( _icon );
     _valueDIV.AppendChildElement ( _iconDIV );
 
-    _menuAnchorDIV.AppendChildElement ( _menuDIV );
     _valueDIV.AppendChildElement ( _menuAnchorDIV );
 
     _columnDIV.AppendChildElement ( _valueDIV );
@@ -319,7 +568,6 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
     _lineDIV.AppendChildElement ( _columnDIV );
     parent.AppendChildElement ( _lineDIV );
 
-    _menuItems.reserve ( items.size () );
     size_t const count = items.size ();
 
     for ( size_t i = 0U; i < count; ++i )
@@ -328,50 +576,6 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
 
         size_t const cases[] = { _selected, i };
         _selected = cases[ static_cast<size_t> ( item._id == selected ) ];
-
-        std::unique_ptr<DIVUIElement> div = std::make_unique<DIVUIElement> ( messageQueue,
-            _menuDIV,
-
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::AUTO_LENGTH,
-                ._left = theme::AUTO_LENGTH,
-                ._right = theme::AUTO_LENGTH,
-                ._top = theme::AUTO_LENGTH,
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile{},
-                ._fontSize = theme::INHERIT_LENGTH,
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = theme::ZERO_LENGTH,
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Static,
-                ._textAlign = pbr::TextAlignProperty::eValue::Left,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-                ._height = theme::MENU_ITEM_HEIGHT
-            },
-
-            name + " (item: " + item._caption.data () + ")"
-        );
-
-        std::unique_ptr<TextUIElement> text = std::make_unique<TextUIElement> ( messageQueue,
-            *div,
-            item._caption,
-            name + " (item: " + item._caption.data () + ")"
-        );
-
-        div->AppendChildElement ( *text );
-        _menuDIV.AppendChildElement ( *div );
-        _menuItems.emplace_back ( std::move ( div ), std::move ( text ) );
     }
 
     if ( _selected == NO_INDEX ) [[unlikely]]
@@ -420,110 +624,30 @@ void UICombobox::OnMouseLeave () noexcept
 
 void UICombobox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
 {
-    if ( _rect.IsOverlapped ( event._x, event._y ) ) [[likely]]
+    if ( _popup->HandleMouseKeyDown ( event ) )
     {
-        _targeted = _focused;
-        _menuItems[ _focused ]._text->SetColor ( theme::PRESS_COLOR );
-        return;
+        SwitchToNormalState ();
+        --_eventID;
     }
-
-    _icon.SetText ( glyph::COMBOBOX_DOWN );
-    _menuDIV.Hide ();
-    --_eventID;
 }
 
 void UICombobox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
 {
-    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
-        return;
-
-    if ( !_menuDIV.IsVisible () ) [[unlikely]]
-    {
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::StopWidgetCaptureMouse,
-                ._params = this,
-                ._serialNumber = 0U
-            }
-        );
-
-        SwitchToNormalState ();
-        return;
-    }
-
-    if ( _targeted == NO_INDEX ) [[unlikely]]
-        return;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureMouse,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
-
-    _menuItems[ _targeted ]._text->SetColor ( theme::MAIN_COLOR );
-
-    if ( _targeted == _selected ) [[unlikely]]
+    if ( _popup->HandleMouseKeyUp ( event ) )
     {
         SwitchToNormalState ();
-        return;
     }
-
-    _selected = _targeted;
-    Item const &item = _items[ _targeted ];
-    _text.SetText ( item._caption );
-
-    if ( _callback ) [[likely]]
-        _callback ( item._id );
-
-    SwitchToNormalState ();
 }
 
 void UICombobox::OnMouseMoveMenu ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
-    MenuItem* menuItems = _menuItems.data ();
-
-    auto const isOverlap = [ &event, menuItems ] ( size_t idx ) noexcept -> bool {
-        return
-            Rect ( menuItems[ idx ]._div->GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
-    };
-
-    if ( _focused != NO_INDEX && isOverlap ( _focused ) ) [[likely]]
-        return;
-
-    size_t const oldFocused = std::exchange ( _focused, NO_INDEX );
-    size_t const count = _items.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-    {
-        if ( isOverlap ( i ) )
-        {
-            _focused = i;
-            break;
-        }
-    }
-
-    if ( oldFocused == _focused ) [[unlikely]]
-        return;
-
-    _targeted = NO_INDEX;
-
-    auto const setColor = [ menuItems ] ( size_t idx, pbr::ColorValue const &color ) noexcept {
-        if ( idx != NO_INDEX ) [[likely]]
-        {
-            menuItems[ idx ]._text->SetColor ( color );
-        }
-    };
-
-    setColor ( oldFocused, theme::MAIN_COLOR );
-    setColor ( _focused, theme::HOVER_COLOR );
+    _popup->OnMouseMove ( event );
 }
 
 void UICombobox::UpdatedRectMenu () noexcept
 {
-    _rect.From ( _menuDIV.GetAbsoluteRect () );
+    _rect = _popup->HandleUpdatedRect ();
 }
 
 void UICombobox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
@@ -571,7 +695,6 @@ void UICombobox::UpdatedRectNormal () noexcept
 
 void UICombobox::SwitchToNormalState () noexcept
 {
-    _menuDIV.Hide ();
     _icon.SetText ( glyph::COMBOBOX_DOWN );
     UpdatedRectNormal ();
 
@@ -579,6 +702,17 @@ void UICombobox::SwitchToNormalState () noexcept
     _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
     _onMouseMove = &UICombobox::OnMouseMoveNormal;
     _updateRect = &UICombobox::UpdatedRectNormal;
+
+    if ( !_popup ) [[unlikely]]
+        return;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIRemoveWidget,
+            ._params = std::exchange ( _popup, nullptr ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void UICombobox::SwitchToMenuState () noexcept
@@ -586,14 +720,29 @@ void UICombobox::SwitchToMenuState () noexcept
     _icon.SetText ( glyph::COMBOBOX_UP );
     _text.SetColor ( theme::MAIN_COLOR );
     _icon.SetColor ( theme::MAIN_COLOR );
-    _focused = NO_INDEX;
-    _targeted = NO_INDEX;
+
+    _popup = new Popup ( _messageQueue,
+        _menuAnchorDIV,
+        _valueDIV,
+        _items,
+        _selected,
+        _text,
+        _callback,
+        _name
+    );
 
     _onMouseKeyDown = &UICombobox::OnMouseKeyDownMenu;
     _onMouseKeyUp = &UICombobox::OnMouseKeyUpMenu;
     _onMouseMove = &UICombobox::OnMouseMoveMenu;
     _updateRect = &UICombobox::UpdatedRectMenu;
-    _menuDIV.Show ();
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+            ._params = _popup,
+            ._serialNumber = 0U
+        }
+    );
 
     _messageQueue.EnqueueBack (
         {

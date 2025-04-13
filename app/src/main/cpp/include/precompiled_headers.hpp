@@ -42,6 +42,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <random>
 #include <regex>
 #include <set>
+#include <shared_mutex>
 #include <span>
 #include <stdio.h>
 #include <stdlib.h>

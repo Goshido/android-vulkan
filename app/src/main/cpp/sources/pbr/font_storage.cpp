@@ -1102,8 +1102,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
     VkBufferImageCopy bufferImageCopy[ 3U ];
     uint32_t targetLayer = _atlas._layers - 1U;
 
-    constexpr auto offset = [] ( uint32_t x, uint32_t y ) noexcept -> VkDeviceSize
-    {
+    constexpr auto offset = [] ( uint32_t x, uint32_t y ) noexcept -> VkDeviceSize {
         return static_cast<VkDeviceSize> ( y ) * FONT_ATLAS_RESOLUTION + static_cast<VkDeviceSize> ( x );
     };
 

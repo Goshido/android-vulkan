@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <logger.hpp>
 #include <mouse_key_event.hpp>
 #include <mouse_move_event.hpp>
@@ -46,6 +47,8 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
     pbr::FontStorage &fontStorage = pass.GetFontStorage ();
     bool needRefill = false;
     size_t neededUIVertices = 0U;
+
+    std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )
     {
@@ -96,7 +99,13 @@ void UIManager::CreateWidgets () noexcept
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
         pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
 
-    _widgets.push_back ( std::unique_ptr<Widget> ( dialogBox ) );
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+            ._params = dialogBox,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void UIManager::EventLoop () noexcept
@@ -141,6 +150,14 @@ void UIManager::EventLoop () noexcept
                 OnStopWidgetCaptureMouse ();
             break;
 
+            case eMessageType::UIAddWidget:
+                OnUIAddWidget ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIRemoveWidget:
+                OnUIRemoveWidget ( std::move ( message ) );
+            break;
+
             default:
                 lastRefund = message._serialNumber;
                 messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
@@ -181,14 +198,18 @@ void UIManager::OnMouseKeyDown ( Message &&message ) noexcept
     int32_t const x = event->_x;
     int32_t const y = event->_y;
 
-    for ( auto& widget : _widgets )
     {
-        Widget &w = *widget;
+        std::shared_lock const lock ( _mutex );
 
-        if ( w.IsOverlapped ( x, y ) )
+        for ( auto& widget : _widgets )
         {
-            w.OnMouseKeyDown ( *event );
-            break;
+            Widget &w = *widget;
+
+            if ( w.IsOverlapped ( x, y ) )
+            {
+                w.OnMouseKeyDown ( *event );
+                break;
+            }
         }
     }
 
@@ -212,14 +233,18 @@ void UIManager::OnMouseKeyUp ( Message &&message ) noexcept
     int32_t const x = event->_x;
     int32_t const y = event->_y;
 
-    for ( auto &widget : _widgets )
     {
-        Widget &w = *widget;
+        std::shared_lock const lock ( _mutex );
 
-        if ( w.IsOverlapped ( x, y ) )
+        for ( auto &widget : _widgets )
         {
-            w.OnMouseKeyUp ( *event );
-            break;
+            Widget &w = *widget;
+
+            if ( w.IsOverlapped ( x, y ) )
+            {
+                w.OnMouseKeyUp ( *event );
+                break;
+            }
         }
     }
 
@@ -243,15 +268,19 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     int32_t const x = event->_x;
     int32_t const y = event->_y;
 
-    for ( auto &widget : _widgets )
     {
-        Widget &w = *widget;
+        std::shared_lock const lock ( _mutex );
 
-        if ( w.IsOverlapped ( x, y ) )
+        for ( auto &widget : _widgets )
         {
-            w.OnMouseMove ( *event );
-            delete event;
-            return;
+            Widget &w = *widget;
+
+            if ( w.IsOverlapped ( x, y ) )
+            {
+                w.OnMouseMove ( *event );
+                delete event;
+                return;
+            }
         }
     }
 
@@ -275,7 +304,11 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
     _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
-    _widgets.clear ();
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _widgets.clear ();
+    }
 
     _messageQueue.EnqueueFront (
         {
@@ -314,6 +347,42 @@ void UIManager::OnStopWidgetCaptureMouse () noexcept
             ._serialNumber = 0U
         }
     );
+}
+
+void UIManager::OnUIAddWidget ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Add widget" )
+    _messageQueue.DequeueEnd ();
+
+    std::lock_guard const lock ( _mutex );
+    _widgets.emplace_back ( static_cast<Widget*> ( message._params ) );
+}
+
+void UIManager::OnUIRemoveWidget ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Remove widget" )
+    _messageQueue.DequeueEnd ();
+    auto const* widget = static_cast<Widget const*> ( message._params );
+
+    std::lock_guard const lock ( _mutex );
+    auto const end = _widgets.cend ();
+
+    auto const findResult = std::find_if ( _widgets.cbegin (),
+        end,
+
+        [ widget ] ( std::unique_ptr<Widget> const &w ) noexcept -> bool {
+            return w.get () == widget;
+        }
+    );
+
+    if ( findResult != end ) [[likely]]
+    {
+        _widgets.erase ( findResult );
+        return;
+    }
+
+    android_vulkan::LogWarning ( "UIManager::OnUIRemoveWidget - Can't find widget!" );
+    AV_ASSERT ( false );
 }
 
 } // namespace editor

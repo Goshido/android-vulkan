@@ -59,6 +59,65 @@ class UICombobox final : public Widget
                 ~MenuItem () = default;
         };
 
+        class Popup final : public Widget
+        {
+            private:
+                DIVUIElement                        _div;
+                std::vector<MenuItem>               _menuItems {};
+
+                TextUIElement                       &_text;
+
+                Callback                            &_callback;
+
+                std::vector<float>                  _lineHeights { 1U, 0.0F };
+                bool                                _isChanged = false;
+
+                Items const                         _items;
+                size_t                              _focused = NO_INDEX;
+                size_t                              &_selected;
+                size_t                              _targeted = NO_INDEX;
+
+            public:
+                Popup () = delete;
+
+                Popup ( Popup const & ) = delete;
+                Popup &operator = ( Popup const & ) = delete;
+
+                Popup ( Popup && ) = delete;
+                Popup &operator = ( Popup && ) = delete;
+
+                explicit Popup ( MessageQueue &messageQueue,
+                    DIVUIElement const &positionAnchor,
+                    DIVUIElement const &widthAnchor,
+                    Items items,
+                    size_t &selected,
+                    TextUIElement &text,
+                    Callback &callback,
+                    std::string const &name
+                ) noexcept;
+
+                ~Popup () = default;
+
+                void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+
+                [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
+                    pbr::FontStorage &fontStorage
+                ) noexcept override;
+
+                void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+
+                [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
+                    VkExtent2D const &viewport ) noexcept override;
+
+                // Returns true if popup menu should be closed. Otherwise the method returns false.
+                [[nodiscard]] bool HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept;
+
+                // Returns true if popup menu should be closed. Otherwise the method returns false.
+                [[nodiscard]] bool HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
+
+                [[nodiscard]] Rect const &HandleUpdatedRect () noexcept;
+        };
+
     private:
         DIVUIElement                                _lineDIV;
         DIVUIElement                                _columnDIV;
@@ -75,21 +134,20 @@ class UICombobox final : public Widget
         TextUIElement                               _icon;
 
         DIVUIElement                                _menuAnchorDIV;
-        DIVUIElement                                _menuDIV;
-        std::vector<MenuItem>                       _menuItems {};
 
         Callback                                    _callback {};
         size_t                                      _eventID = 0U;
 
+        std::string const                           _name;
         Items const                                 _items;
-        size_t                                      _focused = NO_INDEX;
         size_t                                      _selected = NO_INDEX;
-        size_t                                      _targeted = NO_INDEX;
 
         MouseKeyHandler                             _onMouseKeyDown = &UICombobox::OnMouseKeyDownNormal;
         MouseKeyHandler                             _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
         MouseMoveHandler                            _onMouseMove = &UICombobox::OnMouseMoveNormal;
         UpdateRectHandler                           _updateRect = &UICombobox::UpdatedRectNormal;
+
+        Popup*                                      _popup = nullptr;
 
     public:
         UICombobox () = delete;

@@ -250,45 +250,11 @@ bool UICombobox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexce
 
 bool UICombobox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
 {
-    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+    if ( event._key != eKey::LeftMouseButton || _targeted == NO_INDEX ) [[unlikely]]
         return false;
 
-    if ( !_div.IsVisible () ) [[unlikely]]
-    {
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::StopWidgetCaptureMouse,
-                ._params = this,
-                ._serialNumber = 0U
-            }
-        );
-
-        return true;
-    }
-
-    if ( _targeted == NO_INDEX ) [[unlikely]]
-        return false;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureMouse,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
-
-    _menuItems[ _targeted ]._text->SetColor ( theme::MAIN_COLOR );
-
-    if ( _targeted == _selected ) [[unlikely]]
-        return true;
-
-    _selected = _targeted;
-    Item const &item = _items[ _targeted ];
-    _text.SetText ( item._caption );
-
-    // FUCK - consider callback in always provided
-    if ( _callback ) [[likely]]
-        _callback ( item._id );
+    if ( ( _targeted != _selected ) & static_cast<bool> ( _callback ) ) [[likely]]
+        _callback ( _items[ _targeted ]._id );
 
     return true;
 }
@@ -624,11 +590,14 @@ void UICombobox::OnMouseLeave () noexcept
 
 void UICombobox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
 {
-    if ( _popup->HandleMouseKeyDown ( event ) )
-    {
-        SwitchToNormalState ();
-        --_eventID;
-    }
+    if ( !_popup->HandleMouseKeyDown ( event ) )
+        return;
+
+    if ( event._key == eKey::LeftMouseButton )
+        _cancelNextLeftMouseKeyDownEvent = Rect ( _valueDIV.GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
+
+    SwitchToNormalState ();
+    --_eventID;
 }
 
 void UICombobox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
@@ -661,7 +630,7 @@ void UICombobox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
 
 void UICombobox::OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept
 {
-    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+    if ( event._key != eKey::LeftMouseButton || std::exchange ( _cancelNextLeftMouseKeyDownEvent, false ) ) [[unlikely]]
         return;
 
     _text.SetColor ( theme::HOVER_COLOR );
@@ -705,6 +674,14 @@ void UICombobox::SwitchToNormalState () noexcept
 
     if ( !_popup ) [[unlikely]]
         return;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._params = _popup,
+            ._serialNumber = 0U
+        }
+    );
 
     _messageQueue.EnqueueBack (
         {

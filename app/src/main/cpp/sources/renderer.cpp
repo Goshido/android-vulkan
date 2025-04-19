@@ -1616,7 +1616,7 @@ bool Renderer::DeployInstance () noexcept
 #endif // AV_ENABLE_VVL
 
     std::span<char const* const> extensions = GetInstanceExtensions ();
-    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( extensions.size () );
+    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensions.size () );
     instanceCreateInfo.ppEnabledExtensionNames = extensions.data ();
 
     result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
@@ -1641,8 +1641,7 @@ void Renderer::DestroyInstance () noexcept
 
 bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 {
-    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const *>
-    {
+    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const*> {
         VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
         bool const result = CheckVkResult (

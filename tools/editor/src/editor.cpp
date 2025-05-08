@@ -125,8 +125,9 @@ bool Editor::InitModules () noexcept
         return false;
 
     _uiManager.Init ();
+    _timerManager.Init ();
     _renderSession.Init ();
-    _runningModules = 2U;
+    _runningModules = 3U;
 
     return true;
 }
@@ -173,6 +174,7 @@ void Editor::DestroyModules () noexcept
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
 
+    _timerManager.Destroy ();
     _renderSession.Destroy ();
     _uiManager.Destroy ();
     _renderer.OnDestroySwapchain ( false );
@@ -376,6 +378,12 @@ void Editor::OnShutdown () noexcept
 
             case eMessageType::ModuleStopped:
                 OnModuleStopped ();
+            break;
+
+            case eMessageType::StartTimer:
+                [[fallthrough]];
+            case eMessageType::StopTimer:
+                _messageQueue.DequeueEnd ();
             break;
 
             default:

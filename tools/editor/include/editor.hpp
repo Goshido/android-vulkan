@@ -6,6 +6,7 @@
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
+#include "timer_manager.hpp"
 #include "ui_manager.hpp"
 
 
@@ -33,6 +34,7 @@ class Editor final
         android_vulkan::Renderer                _renderer {};
         UIManager                               _uiManager { _messageQueue };
         RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
+        TimerManager                            _timerManager { _messageQueue };
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;
         float                                   _uiZoom = DEFAULT_UI_ZOOM;

@@ -865,6 +865,8 @@
     <ClCompile Include="src\save_state.cpp" />
     <ClCompile Include="src\set_text_event.cpp" />
     <ClCompile Include="src\text_ui_element.cpp" />
+    <ClCompile Include="src\timer.cpp" />
+    <ClCompile Include="src\timer_manager.cpp" />
     <ClCompile Include="src\ui_checkbox.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
     <ClCompile Include="src\ui_combobox.cpp" />
@@ -977,6 +979,8 @@
     <ClInclude Include="include\set_text_event.hpp" />
     <ClInclude Include="include\text_ui_element.hpp" />
     <ClInclude Include="include\theme.hpp" />
+    <ClInclude Include="include\timer.hpp" />
+    <ClInclude Include="include\timer_manager.hpp" />
     <ClInclude Include="include\ui_checkbox.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
     <ClInclude Include="include\ui_combobox.hpp" />

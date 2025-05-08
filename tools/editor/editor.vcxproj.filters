@@ -288,6 +288,12 @@
     <ClCompile Include="src\append_ui_child_element_event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\timer_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -618,6 +624,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\prepend_ui_child_element_event.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\timer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\timer_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

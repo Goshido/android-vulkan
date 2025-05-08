@@ -21,8 +21,7 @@ void UIManager::Init () noexcept
     AV_TRACE ( "UI: init" )
 
     _thread = std::thread (
-        [ this ]() noexcept
-        {
+        [ this ]() noexcept {
             AV_THREAD_NAME ( "UI" )
             CreateWidgets ();
             EventLoop ();

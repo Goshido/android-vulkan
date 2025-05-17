@@ -3,22 +3,18 @@
 
 
 #include "message_queue.hpp"
-#include <div_ui_element.hpp>
-#include <text_ui_element.hpp>
+#include "div_ui_element.hpp"
+#include "text_ui_element.hpp"
 
 
 namespace editor {
 
-class UIManager;
-
 class UILabel final
 {
-    friend class UIManager;
-
     private:
-        MessageQueue        &_messageQueue;
         DIVUIElement        _div;
         TextUIElement       _text;
+        MessageQueue        &_messageQueue;
 
     public:
         UILabel () = delete;

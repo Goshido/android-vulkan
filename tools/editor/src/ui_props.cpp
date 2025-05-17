@@ -8,12 +8,12 @@ namespace editor {
 
 namespace {
 
-constexpr UICombobox::ID R1920x1080 = 0U;
-constexpr UICombobox::ID R1680x1050 = 1U;
-constexpr UICombobox::ID R1600x1024 = 2U;
-constexpr UICombobox::ID R1600x900 = 3U;
+constexpr UIComboBox::ID R1920x1080 = 0U;
+constexpr UIComboBox::ID R1680x1050 = 1U;
+constexpr UIComboBox::ID R1600x1024 = 2U;
+constexpr UIComboBox::ID R1600x900 = 3U;
 
-constexpr UICombobox::Item const RESOLUTIONS[] =
+constexpr UIComboBox::Item const RESOLUTIONS[] =
 {
     {
         ._caption = "1920x1080",
@@ -75,9 +75,10 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
 
     _headerText ( messageQueue, _headerLine, "Properties", "Header"),
     _closeButton ( messageQueue, _headerLine, "Close button" ),
-    _checkbox ( messageQueue, _div, "Shadows", "Checkbox" ),
-    _combobox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "Combobox" ),
-    _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" )
+    _checkBox ( messageQueue, _div, "Shadows", "CheckBox" ),
+    _comboBox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
+    _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
+    _editBox ( messageQueue, _div, "Name", "Sun", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -90,8 +91,8 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
     _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
-    _checkbox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
-    _combobox.Connect ( std::bind ( &UIProps::OnCombobox, this, std::placeholders::_1 ) );
+    _checkBox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
+    _comboBox.Connect ( std::bind ( &UIProps::OnComboBox, this, std::placeholders::_1 ) );
     _slider.Connect ( std::bind ( &UIProps::OnSlider, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
@@ -105,21 +106,27 @@ void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
         return;
     }
 
-    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    if ( _checkBox.IsOverlapped ( event._x, event._y ) )
     {
-        _checkbox.OnMouseKeyDown ( event );
+        _checkBox.OnMouseKeyDown ( event );
         return;
     }
 
-    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    if ( _comboBox.IsOverlapped ( event._x, event._y ) )
     {
-        _combobox.OnMouseKeyDown ( event );
+        _comboBox.OnMouseKeyDown ( event );
         return;
     }
 
     if ( _slider.IsOverlapped ( event._x, event._y ) )
     {
         _slider.OnMouseKeyDown ( event );
+        return;
+    }
+
+    if ( _editBox.IsOverlapped ( event._x, event._y ) )
+    {
+        _editBox.OnMouseKeyDown ( event );
         return;
     }
 
@@ -134,21 +141,27 @@ void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
         return;
     }
 
-    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    if ( _checkBox.IsOverlapped ( event._x, event._y ) )
     {
-        _checkbox.OnMouseKeyUp ( event );
+        _checkBox.OnMouseKeyUp ( event );
         return;
     }
 
-    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    if ( _comboBox.IsOverlapped ( event._x, event._y ) )
     {
-        _combobox.OnMouseKeyUp ( event );
+        _comboBox.OnMouseKeyUp ( event );
         return;
     }
 
     if ( _slider.IsOverlapped ( event._x, event._y ) )
     {
         _slider.OnMouseKeyUp ( event );
+        return;
+    }
+
+    if ( _editBox.IsOverlapped ( event._x, event._y ) )
+    {
+        _editBox.OnMouseKeyUp ( event );
         return;
     }
 
@@ -169,21 +182,27 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
-    if ( _checkbox.IsOverlapped ( event._x, event._y ) )
+    if ( _checkBox.IsOverlapped ( event._x, event._y ) )
     {
-        _checkbox.OnMouseMove ( event );
+        _checkBox.OnMouseMove ( event );
         return;
     }
 
-    if ( _combobox.IsOverlapped ( event._x, event._y ) )
+    if ( _comboBox.IsOverlapped ( event._x, event._y ) )
     {
-        _combobox.OnMouseMove ( event );
+        _comboBox.OnMouseMove ( event );
         return;
     }
 
     if ( _slider.IsOverlapped ( event._x, event._y ) )
     {
         _slider.OnMouseMove ( event );
+        return;
+    }
+
+    if ( _editBox.IsOverlapped ( event._x, event._y ) )
+    {
+        _editBox.OnMouseMove ( event );
         return;
     }
 
@@ -194,12 +213,13 @@ void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();
-    _checkbox.UpdatedRect ();
-    _combobox.UpdatedRect ();
+    _checkBox.UpdatedRect ();
+    _comboBox.UpdatedRect ();
     _slider.UpdatedRect ();
+    _editBox.UpdatedRect ();
 }
 
-void UIProps::OnCheckBox ( UICheckbox::eState state ) noexcept
+void UIProps::OnCheckBox ( UICheckBox::eState state ) noexcept
 {
     android_vulkan::LogDebug ( "OnCheckBox - %hhu", static_cast<uint8_t> ( state ) );
 }
@@ -209,9 +229,9 @@ void UIProps::OnClose () noexcept
     android_vulkan::LogDebug ( "OnClose" );
 }
 
-void UIProps::OnCombobox ( UICombobox::ID id ) noexcept
+void UIProps::OnComboBox ( UIComboBox::ID id ) noexcept
 {
-    android_vulkan::LogDebug ( "OnCombobox - %u", id );
+    android_vulkan::LogDebug ( "OnComboBox - %u", id );
 }
 
 void UIProps::OnSlider ( double value ) noexcept

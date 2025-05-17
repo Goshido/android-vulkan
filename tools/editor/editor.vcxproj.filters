@@ -261,10 +261,10 @@
     <ClCompile Include="src\ui_close_button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui_checkbox.cpp">
+    <ClCompile Include="src\ui_check_box.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui_combobox.cpp">
+    <ClCompile Include="src\ui_combo_box.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ui_slider.cpp">
@@ -292,6 +292,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\timer_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_edit_box.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -596,10 +599,10 @@
     <ClInclude Include="include\glyphs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ui_checkbox.hpp">
+    <ClInclude Include="include\ui_check_box.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ui_combobox.hpp">
+    <ClInclude Include="include\ui_combo_box.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ui_slider.hpp">
@@ -630,6 +633,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\timer_manager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_edit_box.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

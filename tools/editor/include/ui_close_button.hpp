@@ -14,8 +14,6 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
-class UIManager;
-
 class UICloseButton final : public Widget
 {
     public:

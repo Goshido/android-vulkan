@@ -1,15 +1,15 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
-#include <glyphs.hpp>
 #include <theme.hpp>
-#include <ui_checkbox.hpp>
+#include <ui_edit_box.hpp>
 
 
 namespace editor {
 
-UICheckbox::UICheckbox ( MessageQueue &messageQueue,
+UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     DIVUIElement &parent,
     std::string_view caption,
+    std::string_view value,
     std::string &&name
 ) noexcept:
     Widget ( messageQueue ),
@@ -33,7 +33,7 @@ UICheckbox::UICheckbox ( MessageQueue &messageQueue,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
+            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 9.0F ),
             ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
             ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
             ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
@@ -99,10 +99,10 @@ UICheckbox::UICheckbox ( MessageQueue &messageQueue,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._paddingLeft = theme::ZERO_LENGTH,
             ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
+            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
@@ -119,7 +119,7 @@ UICheckbox::UICheckbox ( MessageQueue &messageQueue,
         _columnDIV,
 
         {
-            ._backgroundColor = theme::TRANSPARENT_COLOR,
+            ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
             ._left = theme::AUTO_LENGTH,
@@ -127,76 +127,103 @@ UICheckbox::UICheckbox ( MessageQueue &messageQueue,
             ._top = theme::ZERO_LENGTH,
             ._color = theme::MAIN_COLOR,
             ._display = pbr::DisplayProperty::eValue::InlineBlock,
-            ._fontFile { glyph::FONT_FAMILY },
+            ._fontFile { theme::NORMAL_FONT_FAMILY },
             ._fontSize = theme::NORMAL_FONT_SIZE,
             ._lineHeight = theme::AUTO_LENGTH,
             ._marginBottom = theme::ZERO_LENGTH,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.5F ),
-            ._paddingBottom = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._paddingLeft = theme::ZERO_LENGTH,
             ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
+            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 0.0F ),
+            ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 65.0F ),
-            ._height = theme::AUTO_LENGTH
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
         },
 
         name + " (value)"
     ),
 
-    _valueIcon ( messageQueue, _valueDIV, glyph::CHECKBOX_CHECK, name + " (icon)" )
+    _textDIV ( messageQueue,
+        _valueDIV,
+
+        {
+            ._backgroundColor = theme::TRANSPARENT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
+            ._color = theme::MAIN_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+        },
+
+        name + " (value)"
+    ),
+
+    _text ( messageQueue, _textDIV, value, name + " (text)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );
 
-    _valueDIV.AppendChildElement ( _valueIcon );
+    _textDIV.AppendChildElement ( _text );
+    _valueDIV.AppendChildElement ( _textDIV );
+
     _columnDIV.AppendChildElement ( _valueDIV );
 
     _lineDIV.AppendChildElement ( _columnDIV );
     parent.AppendChildElement ( _lineDIV );
+
+    SwitchToNormalState ();
 }
 
-void UICheckbox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UIEditBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
-    if ( event._key == eKey::LeftMouseButton ) [[likely]]
-    {
-        _valueIcon.SetColor ( theme::PRESS_COLOR );
-    }
+    ( this->*_onMouseMove ) ( event );
 }
 
-void UICheckbox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIEditBox::UpdatedRect () noexcept
 {
-    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
-        return;
-
-    switch ( _state )
-    {
-        case editor::UICheckbox::eState::Check:
-            _state = eState::Unckeck;
-            _valueIcon.SetText ( glyph::CHECKBOX_UNCHECK );
-        break;
-
-        case editor::UICheckbox::eState::Unckeck:
-            [[fallthrough]];
-        case editor::UICheckbox::eState::Multi:
-            _state = eState::Check;
-            _valueIcon.SetText ( glyph::CHECKBOX_CHECK );
-        break;
-
-        default:
-            // IMPOSSIBLE
-        break;
-    }
-
-    _callback ( _state );
-    _valueIcon.SetColor ( theme::HOVER_COLOR );
+    ( this->*_updateRect ) ();
 }
 
-void UICheckbox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+void UIEditBox::OnMouseLeave () noexcept
+{
+    _text.SetColor ( theme::MAIN_COLOR );
+}
+
+void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
+{
+    Widget::OnMouseMove ( event );
+}
+
+void UIEditBox::UpdatedRectEdit () noexcept
+{
+    // FUCK
+    _rect.From ( _valueDIV.GetAbsoluteRect () );
+}
+
+void UIEditBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
 
@@ -206,27 +233,31 @@ void UICheckbox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
-            ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
+            ._params = reinterpret_cast<void*> ( eCursor::IBeam ),
             ._serialNumber = 0U
         }
     );
 
-    _valueIcon.SetColor ( theme::HOVER_COLOR );
+    _text.SetColor ( theme::HOVER_COLOR );
 }
 
-void UICheckbox::UpdatedRect () noexcept
+void UIEditBox::UpdatedRectNormal () noexcept
 {
     _rect.From ( _valueDIV.GetAbsoluteRect () );
 }
 
-void UICheckbox::Connect ( Callback &&callback ) noexcept
+void UIEditBox::SwitchToEditState () noexcept
 {
-    _callback = std::move ( callback );
+    _text.SetColor ( theme::PRESS_COLOR );
+    _onMouseMove = &UIEditBox::OnMouseMoveEdit;
+    _updateRect = &UIEditBox::UpdatedRectEdit;
 }
 
-void UICheckbox::OnMouseLeave () noexcept
+void UIEditBox::SwitchToNormalState () noexcept
 {
-    _valueIcon.SetColor ( theme::MAIN_COLOR );
+    _text.SetColor ( theme::MAIN_COLOR );
+    _onMouseMove = &UIEditBox::OnMouseMoveNormal;
+    _updateRect = &UIEditBox::UpdatedRectNormal;
 }
 
 } // namespace editor

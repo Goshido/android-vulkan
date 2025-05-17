@@ -2,10 +2,11 @@
 #define EDITOR_UI_PROPS_HPP
 
 
-#include "ui_checkbox.hpp"
+#include "ui_check_box.hpp"
 #include "ui_close_button.hpp"
-#include "ui_combobox.hpp"
+#include "ui_combo_box.hpp"
 #include "ui_dialog_box.hpp"
+#include "ui_edit_box.hpp"
 #include "ui_label.hpp"
 #include "ui_slider.hpp"
 
@@ -18,9 +19,10 @@ class UIProps final : public UIDialogBox
         DIVUIElement        _headerLine;
         UILabel             _headerText;
         UICloseButton       _closeButton;
-        UICheckbox          _checkbox;
-        UICombobox          _combobox;
+        UICheckBox          _checkBox;
+        UIComboBox          _comboBox;
         UISlider            _slider;
+        UIEditBox           _editBox;
 
     public:
         explicit UIProps ( MessageQueue &messageQueue ) noexcept;
@@ -39,8 +41,8 @@ class UIProps final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-        void OnCheckBox ( UICheckbox::eState state ) noexcept;
-        void OnCombobox ( UICombobox::ID id ) noexcept;
+        void OnCheckBox ( UICheckBox::eState state ) noexcept;
+        void OnComboBox ( UIComboBox::ID id ) noexcept;
         void OnClose () noexcept;
         void OnSlider ( double value ) noexcept;
 };

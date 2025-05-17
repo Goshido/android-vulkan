@@ -1,5 +1,5 @@
-#ifndef EDITOR_UI_CHECKBOX_HPP
-#define EDITOR_UI_CHECKBOX_HPP
+#ifndef EDITOR_UI_CHECK_BOX_HPP
+#define EDITOR_UI_CHECK_BOX_HPP
 
 
 #include "text_ui_element.hpp"
@@ -14,9 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
-class UIManager;
-
-class UICheckbox final : public Widget
+class UICheckBox final : public Widget
 {
     public:
         enum class eState : uint8_t
@@ -44,21 +42,21 @@ class UICheckbox final : public Widget
         eState              _state = eState::Check;
 
     public:
-        UICheckbox () = delete;
+        UICheckBox () = delete;
 
-        UICheckbox ( UICheckbox const & ) = delete;
-        UICheckbox &operator = ( UICheckbox const & ) = delete;
+        UICheckBox ( UICheckBox const & ) = delete;
+        UICheckBox &operator = ( UICheckBox const & ) = delete;
 
-        UICheckbox ( UICheckbox && ) = delete;
-        UICheckbox &operator = ( UICheckbox && ) = delete;
+        UICheckBox ( UICheckBox && ) = delete;
+        UICheckBox &operator = ( UICheckBox && ) = delete;
 
-        explicit UICheckbox ( MessageQueue &messageQueue,
+        explicit UICheckBox ( MessageQueue &messageQueue,
             DIVUIElement &parent,
             std::string_view caption,
             std::string &&name
         ) noexcept;
 
-        ~UICheckbox () override = default;
+        ~UICheckBox () override = default;
 
         void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
@@ -74,4 +72,4 @@ class UICheckbox final : public Widget
 } // namespace editor
 
 
-#endif // EDITOR_UI_CHECKBOX_HPP
+#endif // EDITOR_UI_CHECK_BOX_HPP

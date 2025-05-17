@@ -12,8 +12,6 @@ UILabel::UILabel ( MessageQueue &messageQueue,
     std::string_view text,
     std::string &&name
 ) noexcept:
-    _messageQueue ( messageQueue ),
-
     _div ( messageQueue,
         parent,
 
@@ -47,7 +45,8 @@ UILabel::UILabel ( MessageQueue &messageQueue,
         name + " (DIV)"
     ),
 
-    _text ( messageQueue, _div, text, name + " (text)" )
+    _text ( messageQueue, _div, text, name + " (text)" ),
+    _messageQueue ( messageQueue )
 {
     _div.AppendChildElement ( _text );
     parent.AppendChildElement ( _div );

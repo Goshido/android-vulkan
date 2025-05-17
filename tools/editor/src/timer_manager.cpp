@@ -78,7 +78,7 @@ void TimerManager::EventLoop () noexcept
 
         for ( auto it = _timers.begin (); it != _timers.end (); )
         {
-            if ( Timer* timer = *it; timer->Invoke ( now ) )
+            if ( Timer* timer = *it; timer->Invoke ( now ) ) [[unlikely]]
             {
                 delete timer;
                 it = _timers.erase ( it );

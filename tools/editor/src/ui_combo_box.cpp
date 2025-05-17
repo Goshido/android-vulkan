@@ -4,12 +4,20 @@
 #include <glyphs.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <theme.hpp>
-#include <ui_combobox.hpp>
+#include <ui_combo_box.hpp>
 
 
 namespace editor {
 
-UICombobox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
+namespace {
+
+constexpr pbr::ColorValue POPUP_BACKGROUND ( 0U, 0U, 0U, 191U );
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+UIComboBox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
     std::unique_ptr<TextUIElement> &&text
 ) noexcept:
     _div ( std::move ( div ) ),
@@ -20,7 +28,7 @@ UICombobox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UICombobox::Popup::Popup ( MessageQueue &messageQueue,
+UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
     DIVUIElement const &positionAnchor,
     DIVUIElement const &widthAnchor,
     Items items,
@@ -33,7 +41,7 @@ UICombobox::Popup::Popup ( MessageQueue &messageQueue,
 
     _div ( messageQueue,
         {
-            ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
+            ._backgroundColor = POPUP_BACKGROUND,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
             ._left = theme::ZERO_LENGTH,
@@ -146,7 +154,7 @@ UICombobox::Popup::Popup ( MessageQueue &messageQueue,
     _selected = item._id;
 }
 
-void UICombobox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+void UIComboBox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     MenuItem* menuItems = _menuItems.data ();
 
@@ -186,7 +194,7 @@ void UICombobox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     _isChanged = true;
 }
 
-Widget::LayoutStatus UICombobox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
+Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
     pbr::FontStorage &fontStorage
 ) noexcept
 {
@@ -217,12 +225,12 @@ Widget::LayoutStatus UICombobox::Popup::ApplyLayout ( android_vulkan::Renderer &
     };
 }
 
-void UICombobox::Popup::Submit ( pbr::UIElement::SubmitInfo& info ) noexcept
+void UIComboBox::Popup::Submit ( pbr::UIElement::SubmitInfo& info ) noexcept
 {
     _div.Submit ( info );
 }
 
-bool UICombobox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UIComboBox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     pbr::UIElement::UpdateInfo info
     {
@@ -237,7 +245,7 @@ bool UICombobox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D 
     return _div.UpdateCache ( info );
 }
 
-bool UICombobox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+bool UIComboBox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) ) [[unlikely]]
         return true;
@@ -248,7 +256,7 @@ bool UICombobox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexce
     return false;
 }
 
-bool UICombobox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+bool UIComboBox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton || _targeted == NO_INDEX ) [[unlikely]]
         return false;
@@ -263,7 +271,7 @@ bool UICombobox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
     return true;
 }
 
-Rect const &UICombobox::Popup::HandleUpdatedRect () noexcept
+Rect const &UIComboBox::Popup::HandleUpdatedRect () noexcept
 {
     _rect.From ( _div.GetAbsoluteRect () );
     return _rect;
@@ -271,7 +279,7 @@ Rect const &UICombobox::Popup::HandleUpdatedRect () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UICombobox::UICombobox ( MessageQueue &messageQueue,
+UIComboBox::UIComboBox ( MessageQueue &messageQueue,
     DIVUIElement &parent,
     std::string_view caption,
     Items items,
@@ -561,38 +569,38 @@ UICombobox::UICombobox ( MessageQueue &messageQueue,
     SwitchToNormalState ();
 }
 
-void UICombobox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );
 }
 
-void UICombobox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyUp ) ( event );
 }
 
-void UICombobox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
+void UIComboBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     ( this->*_onMouseMove ) ( event );
 }
 
-void UICombobox::UpdatedRect () noexcept
+void UIComboBox::UpdatedRect () noexcept
 {
     ( this->*_updateRect ) ();
 }
 
-void UICombobox::Connect ( Callback &&callback ) noexcept
+void UIComboBox::Connect ( Callback &&callback ) noexcept
 {
     _callback = std::move ( callback );
 }
 
-void UICombobox::OnMouseLeave () noexcept
+void UIComboBox::OnMouseLeave () noexcept
 {
     _text.SetColor ( theme::MAIN_COLOR );
     _icon.SetColor ( theme::MAIN_COLOR );
 }
 
-void UICombobox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
 {
     if ( !_popup->HandleMouseKeyDown ( event ) )
         return;
@@ -604,7 +612,7 @@ void UICombobox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
     --_eventID;
 }
 
-void UICombobox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
 {
     if ( _popup->HandleMouseKeyUp ( event ) )
     {
@@ -612,18 +620,18 @@ void UICombobox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
     }
 }
 
-void UICombobox::OnMouseMoveMenu ( MouseMoveEvent const &event ) noexcept
+void UIComboBox::OnMouseMoveMenu ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
     _popup->OnMouseMove ( event );
 }
 
-void UICombobox::UpdatedRectMenu () noexcept
+void UIComboBox::UpdatedRectMenu () noexcept
 {
     _rect = _popup->HandleUpdatedRect ();
 }
 
-void UICombobox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
@@ -632,7 +640,7 @@ void UICombobox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
     _icon.SetColor ( theme::PRESS_COLOR );
 }
 
-void UICombobox::OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton || std::exchange ( _cancelNextLeftMouseKeyDownEvent, false ) ) [[unlikely]]
         return;
@@ -642,7 +650,7 @@ void UICombobox::OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept
     SwitchToMenuState ();
 }
 
-void UICombobox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
+void UIComboBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
 
@@ -661,20 +669,22 @@ void UICombobox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
     _icon.SetColor ( theme::HOVER_COLOR );
 }
 
-void UICombobox::UpdatedRectNormal () noexcept
+void UIComboBox::UpdatedRectNormal () noexcept
 {
     _rect.From ( _valueDIV.GetAbsoluteRect () );
 }
 
-void UICombobox::SwitchToNormalState () noexcept
+void UIComboBox::SwitchToNormalState () noexcept
 {
     _icon.SetText ( glyph::COMBOBOX_DOWN );
+    _valueDIV.GetCSS ()._backgroundColor = theme::WIDGET_BACKGROUND_COLOR;
+
     UpdatedRectNormal ();
 
-    _onMouseKeyDown = &UICombobox::OnMouseKeyDownNormal;
-    _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
-    _onMouseMove = &UICombobox::OnMouseMoveNormal;
-    _updateRect = &UICombobox::UpdatedRectNormal;
+    _onMouseKeyDown = &UIComboBox::OnMouseKeyDownNormal;
+    _onMouseKeyUp = &UIComboBox::OnMouseKeyUpNormal;
+    _onMouseMove = &UIComboBox::OnMouseMoveNormal;
+    _updateRect = &UIComboBox::UpdatedRectNormal;
 
     if ( !_popup ) [[unlikely]]
         return;
@@ -696,11 +706,12 @@ void UICombobox::SwitchToNormalState () noexcept
     );
 }
 
-void UICombobox::SwitchToMenuState () noexcept
+void UIComboBox::SwitchToMenuState () noexcept
 {
     _icon.SetText ( glyph::COMBOBOX_UP );
     _text.SetColor ( theme::MAIN_COLOR );
     _icon.SetColor ( theme::MAIN_COLOR );
+    _valueDIV.GetCSS ()._backgroundColor = POPUP_BACKGROUND;
 
     _popup = new Popup ( _messageQueue,
         _menuAnchorDIV,
@@ -712,10 +723,10 @@ void UICombobox::SwitchToMenuState () noexcept
         _name
     );
 
-    _onMouseKeyDown = &UICombobox::OnMouseKeyDownMenu;
-    _onMouseKeyUp = &UICombobox::OnMouseKeyUpMenu;
-    _onMouseMove = &UICombobox::OnMouseMoveMenu;
-    _updateRect = &UICombobox::UpdatedRectMenu;
+    _onMouseKeyDown = &UIComboBox::OnMouseKeyDownMenu;
+    _onMouseKeyUp = &UIComboBox::OnMouseKeyUpMenu;
+    _onMouseMove = &UIComboBox::OnMouseMoveMenu;
+    _updateRect = &UIComboBox::UpdatedRectMenu;
 
     _messageQueue.EnqueueBack (
         {

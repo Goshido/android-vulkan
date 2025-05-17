@@ -385,6 +385,12 @@ void MainWindow::CreateCursors () noexcept
     );
 
     _cursors.insert (
+        std::make_pair ( eCursor::IBeam,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_IBEAM, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
         std::make_pair ( eCursor::NorthSouth,
             static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_SIZENS, IMAGE_CURSOR, 0, 0, flags ) )
         )

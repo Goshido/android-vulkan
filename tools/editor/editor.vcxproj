@@ -867,10 +867,11 @@
     <ClCompile Include="src\text_ui_element.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\timer_manager.cpp" />
-    <ClCompile Include="src\ui_checkbox.cpp" />
+    <ClCompile Include="src\ui_check_box.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
-    <ClCompile Include="src\ui_combobox.cpp" />
+    <ClCompile Include="src\ui_combo_box.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
+    <ClCompile Include="src\ui_edit_box.cpp" />
     <ClCompile Include="src\ui_element.cpp" />
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
@@ -981,10 +982,11 @@
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\timer.hpp" />
     <ClInclude Include="include\timer_manager.hpp" />
-    <ClInclude Include="include\ui_checkbox.hpp" />
+    <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
-    <ClInclude Include="include\ui_combobox.hpp" />
+    <ClInclude Include="include\ui_combo_box.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
+    <ClInclude Include="include\ui_edit_box.hpp" />
     <ClInclude Include="include\ui_element.hpp" />
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />

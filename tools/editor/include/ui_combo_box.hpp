@@ -1,5 +1,5 @@
-#ifndef EDITOR_UI_COMBOBOX_HPP
-#define EDITOR_UI_COMBOBOX_HPP
+#ifndef EDITOR_UI_COMBO_BOX_HPP
+#define EDITOR_UI_COMBO_BOX_HPP
 
 
 #include "text_ui_element.hpp"
@@ -14,9 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
-class UIManager;
-
-class UICombobox final : public Widget
+class UIComboBox final : public Widget
 {
     public:
         using ID = uint32_t;
@@ -33,9 +31,9 @@ class UICombobox final : public Widget
     private:
         constexpr static size_t NO_INDEX = std::numeric_limits<size_t>::max ();
 
-        using MouseKeyHandler = void ( UICombobox::* ) ( MouseKeyEvent const &event ) noexcept;
-        using MouseMoveHandler = void ( UICombobox::* ) ( MouseMoveEvent const &event ) noexcept;
-        using UpdateRectHandler = void ( UICombobox::* ) () noexcept;
+        using MouseKeyHandler = void ( UIComboBox::* ) ( MouseKeyEvent const &event ) noexcept;
+        using MouseMoveHandler = void ( UIComboBox::* ) ( MouseMoveEvent const &event ) noexcept;
+        using UpdateRectHandler = void ( UIComboBox::* ) () noexcept;
 
         class MenuItem final
         {
@@ -142,24 +140,24 @@ class UICombobox final : public Widget
         Items const                                 _items;
         size_t                                      _selected = NO_INDEX;
 
-        MouseKeyHandler                             _onMouseKeyDown = &UICombobox::OnMouseKeyDownNormal;
-        MouseKeyHandler                             _onMouseKeyUp = &UICombobox::OnMouseKeyUpNormal;
-        MouseMoveHandler                            _onMouseMove = &UICombobox::OnMouseMoveNormal;
-        UpdateRectHandler                           _updateRect = &UICombobox::UpdatedRectNormal;
+        MouseKeyHandler                             _onMouseKeyDown = &UIComboBox::OnMouseKeyDownNormal;
+        MouseKeyHandler                             _onMouseKeyUp = &UIComboBox::OnMouseKeyUpNormal;
+        MouseMoveHandler                            _onMouseMove = &UIComboBox::OnMouseMoveNormal;
+        UpdateRectHandler                           _updateRect = &UIComboBox::UpdatedRectNormal;
 
         Popup*                                      _popup = nullptr;
         bool                                        _cancelNextLeftMouseKeyDownEvent = false;
 
     public:
-        UICombobox () = delete;
+        UIComboBox () = delete;
 
-        UICombobox ( UICombobox const & ) = delete;
-        UICombobox &operator = ( UICombobox const & ) = delete;
+        UIComboBox ( UIComboBox const & ) = delete;
+        UIComboBox &operator = ( UIComboBox const & ) = delete;
 
-        UICombobox ( UICombobox && ) = delete;
-        UICombobox &operator = ( UICombobox && ) = delete;
+        UIComboBox ( UIComboBox && ) = delete;
+        UIComboBox &operator = ( UIComboBox && ) = delete;
 
-        explicit UICombobox ( MessageQueue &messageQueue,
+        explicit UIComboBox ( MessageQueue &messageQueue,
             DIVUIElement &parent,
             std::string_view caption,
             Items items,
@@ -167,7 +165,7 @@ class UICombobox final : public Widget
             std::string &&name
         ) noexcept;
 
-        ~UICombobox () override = default;
+        ~UIComboBox () override = default;
 
         void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
@@ -196,4 +194,4 @@ class UICombobox final : public Widget
 } // namespace editor
 
 
-#endif // EDITOR_UI_COMBOBOX_HPP
+#endif // EDITOR_UI_COMBO_BOX_HPP

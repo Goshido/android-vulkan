@@ -48,9 +48,11 @@ class UIManager final
     private:
         void CreateWidgets () noexcept;
         void EventLoop () noexcept;
+        void OnKeyboardKeyDown ( Message &&message ) noexcept;
+        void OnKeyboardKeyUp ( Message &&message ) noexcept;
         void OnMouseHover ( Message &&message ) noexcept;
-        void OnMouseKeyDown ( Message &&message ) noexcept;
-        void OnMouseKeyUp ( Message &&message ) noexcept;
+        void OnMouseButtonDown ( Message &&message ) noexcept;
+        void OnMouseButtonUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
         void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;

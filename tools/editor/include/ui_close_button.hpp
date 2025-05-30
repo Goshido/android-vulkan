@@ -47,8 +47,8 @@ class UICloseButton final : public Widget
 
         ~UICloseButton () override = default;
 
-        void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 

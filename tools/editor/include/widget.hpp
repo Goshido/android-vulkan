@@ -39,12 +39,12 @@ class Widget
 
         virtual ~Widget () = default;
 
-        virtual void OnKeyDown ( eKey key ) noexcept;
-        virtual void OnKeyUp ( eKey key ) noexcept;
+        virtual void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept;
+        virtual void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept;
 
         virtual void OnMouseLeave () noexcept;
-        virtual void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept;
-        virtual void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
+        virtual void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept;
+        virtual void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept;
 
         // Must be called by child classes.
         virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;

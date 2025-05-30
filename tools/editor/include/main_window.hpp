@@ -3,6 +3,7 @@
 
 
 #include "cursor.hpp"
+#include "keys.hpp"
 #include "message_queue.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -23,9 +24,10 @@ class MainWindow final
         HWND                                    _hwnd = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
         size_t                                  _mouseMoveEventID = 0U;
+        std::unordered_map<WPARAM, eKey>        _keyboardKeyMapper {};
 
     public:
-        MainWindow () = default;
+        explicit MainWindow () noexcept;
 
         MainWindow ( MainWindow const & ) = delete;
         MainWindow &operator = ( MainWindow const & ) = delete;
@@ -62,13 +64,9 @@ class MainWindow final
 
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
-        void OnLButtonDown ( LPARAM lParam ) noexcept;
-        void OnLButtonUp ( LPARAM lParam ) noexcept;
-        void OnMButtonDown ( LPARAM lParam ) noexcept;
-        void OnMButtonUp ( LPARAM lParam ) noexcept;
+        void OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept;
+        void OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept;
         void OnMouseMove ( LPARAM lParam ) noexcept;
-        void OnRButtonDown ( LPARAM lParam ) noexcept;
-        void OnRButtonUp ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;
 
         void CreateCursors () noexcept;

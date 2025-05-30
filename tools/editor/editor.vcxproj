@@ -855,6 +855,8 @@
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
+    <ClCompile Include="src\keyboard_key_event.cpp" />
+    <ClCompile Include="src\keys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
@@ -966,6 +968,7 @@
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
+    <ClInclude Include="include\keyboard_key_event.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />

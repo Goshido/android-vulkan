@@ -95,7 +95,7 @@ UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noex
     // NOTHING
 }
 
-void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UIDialogBox::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton )
         return;
@@ -182,7 +182,7 @@ void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
     }
 }
 
-void UIDialogBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIDialogBox::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 {
     if ( !_dragState | ( event._key != eKey::LeftMouseButton ) ) [[likely]]
         return;

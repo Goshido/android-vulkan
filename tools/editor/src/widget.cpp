@@ -4,12 +4,12 @@
 
 namespace editor {
 
-void Widget::OnKeyDown ( eKey /*key*/ ) noexcept
+void Widget::OnKeyboardKeyDown ( eKey /*key*/, KeyModifier /*modifier*/ ) noexcept
 {
     // NOTHING
 }
 
-void Widget::OnKeyUp ( eKey /*key*/ ) noexcept
+void Widget::OnKeyboardKeyUp ( eKey /*key*/, KeyModifier /*modifier*/ ) noexcept
 {
     // NOTHING
 }
@@ -19,12 +19,12 @@ void Widget::OnMouseLeave () noexcept
     // NOTHING
 }
 
-void Widget::OnMouseKeyDown ( MouseKeyEvent const &/*event*/ ) noexcept
+void Widget::OnMouseButtonDown ( MouseKeyEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }
 
-void Widget::OnMouseKeyUp ( MouseKeyEvent const &/*event*/ ) noexcept
+void Widget::OnMouseButtonUp ( MouseKeyEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }

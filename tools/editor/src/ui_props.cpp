@@ -98,74 +98,74 @@ UIProps::UIProps ( MessageQueue &messageQueue ) noexcept:
     _div.PrependChildElement ( _headerLine );
 }
 
-void UIProps::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UIProps::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 {
     if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
-        _closeButton.OnMouseKeyDown ( event );
+        _closeButton.OnMouseButtonDown ( event );
         return;
     }
 
     if ( _checkBox.IsOverlapped ( event._x, event._y ) )
     {
-        _checkBox.OnMouseKeyDown ( event );
+        _checkBox.OnMouseButtonDown ( event );
         return;
     }
 
     if ( _comboBox.IsOverlapped ( event._x, event._y ) )
     {
-        _comboBox.OnMouseKeyDown ( event );
+        _comboBox.OnMouseButtonDown ( event );
         return;
     }
 
     if ( _slider.IsOverlapped ( event._x, event._y ) )
     {
-        _slider.OnMouseKeyDown ( event );
+        _slider.OnMouseButtonDown ( event );
         return;
     }
 
     if ( _editBox.IsOverlapped ( event._x, event._y ) )
     {
-        _editBox.OnMouseKeyDown ( event );
+        _editBox.OnMouseButtonDown ( event );
         return;
     }
 
-    UIDialogBox::OnMouseKeyDown ( event );
+    UIDialogBox::OnMouseButtonDown ( event );
 }
 
-void UIProps::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIProps::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 {
     if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
-        _closeButton.OnMouseKeyUp ( event );
+        _closeButton.OnMouseButtonUp ( event );
         return;
     }
 
     if ( _checkBox.IsOverlapped ( event._x, event._y ) )
     {
-        _checkBox.OnMouseKeyUp ( event );
+        _checkBox.OnMouseButtonUp ( event );
         return;
     }
 
     if ( _comboBox.IsOverlapped ( event._x, event._y ) )
     {
-        _comboBox.OnMouseKeyUp ( event );
+        _comboBox.OnMouseButtonUp ( event );
         return;
     }
 
     if ( _slider.IsOverlapped ( event._x, event._y ) )
     {
-        _slider.OnMouseKeyUp ( event );
+        _slider.OnMouseButtonUp ( event );
         return;
     }
 
     if ( _editBox.IsOverlapped ( event._x, event._y ) )
     {
-        _editBox.OnMouseKeyUp ( event );
+        _editBox.OnMouseButtonUp ( event );
         return;
     }
 
-    UIDialogBox::OnMouseKeyUp ( event );
+    UIDialogBox::OnMouseButtonUp ( event );
 }
 
 void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept

@@ -569,12 +569,12 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
     SwitchToNormalState ();
 }
 
-void UIComboBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );
 }
 
-void UIComboBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyUp ) ( event );
 }

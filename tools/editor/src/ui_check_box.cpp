@@ -160,7 +160,7 @@ UICheckBox::UICheckBox ( MessageQueue &messageQueue,
     parent.AppendChildElement ( _lineDIV );
 }
 
-void UICheckBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UICheckBox::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key == eKey::LeftMouseButton ) [[likely]]
     {
@@ -168,7 +168,7 @@ void UICheckBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
     }
 }
 
-void UICheckBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UICheckBox::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;

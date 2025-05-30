@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
+#include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <main_window.hpp>
 #include <mouse_key_event.hpp>
@@ -40,9 +41,155 @@ constexpr POINT MINIMUM_WINDOW_SIZE
     .y = 175
 };
 
+// See https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+constexpr WPARAM VK_KEY_0 = 0x30U;
+constexpr WPARAM VK_KEY_1 = 0x31U;
+constexpr WPARAM VK_KEY_2 = 0x32U;
+constexpr WPARAM VK_KEY_3 = 0x33U;
+constexpr WPARAM VK_KEY_4 = 0x34U;
+constexpr WPARAM VK_KEY_5 = 0x35U;
+constexpr WPARAM VK_KEY_6 = 0x36U;
+constexpr WPARAM VK_KEY_7 = 0x37U;
+constexpr WPARAM VK_KEY_8 = 0x38U;
+constexpr WPARAM VK_KEY_9 = 0x39U;
+constexpr WPARAM VK_KEY_A = 0x41U;
+constexpr WPARAM VK_KEY_B = 0x42U;
+constexpr WPARAM VK_KEY_C = 0x43U;
+constexpr WPARAM VK_KEY_D = 0x44U;
+constexpr WPARAM VK_KEY_E = 0x45U;
+constexpr WPARAM VK_KEY_F = 0x46U;
+constexpr WPARAM VK_KEY_G = 0x47U;
+constexpr WPARAM VK_KEY_H = 0x48U;
+constexpr WPARAM VK_KEY_I = 0x49U;
+constexpr WPARAM VK_KEY_J = 0x4AU;
+constexpr WPARAM VK_KEY_K = 0x4BU;
+constexpr WPARAM VK_KEY_L = 0x4CU;
+constexpr WPARAM VK_KEY_M = 0x4DU;
+constexpr WPARAM VK_KEY_N = 0x4EU;
+constexpr WPARAM VK_KEY_O = 0x4FU;
+constexpr WPARAM VK_KEY_P = 0x50U;
+constexpr WPARAM VK_KEY_Q = 0x51U;
+constexpr WPARAM VK_KEY_R = 0x52U;
+constexpr WPARAM VK_KEY_S = 0x53U;
+constexpr WPARAM VK_KEY_T = 0x54U;
+constexpr WPARAM VK_KEY_U = 0x55U;
+constexpr WPARAM VK_KEY_V = 0x56U;
+constexpr WPARAM VK_KEY_W = 0x57U;
+constexpr WPARAM VK_KEY_X = 0x58U;
+constexpr WPARAM VK_KEY_Y = 0x59U;
+constexpr WPARAM VK_KEY_Z = 0x5AU;
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+MainWindow::MainWindow () noexcept
+{
+    _keyboardKeyMapper =
+    {
+        { VK_KEY_0, eKey::Key0 },
+        { VK_KEY_1, eKey::Key1 },
+        { VK_KEY_2, eKey::Key2 },
+        { VK_KEY_3, eKey::Key3 },
+        { VK_KEY_4, eKey::Key4 },
+        { VK_KEY_5, eKey::Key5 },
+        { VK_KEY_6, eKey::Key6 },
+        { VK_KEY_7, eKey::Key7 },
+        { VK_KEY_8, eKey::Key8 },
+        { VK_KEY_9, eKey::Key9 },
+
+        { VK_F1, eKey::KeyF1 },
+        { VK_F2, eKey::KeyF2 },
+        { VK_F3, eKey::KeyF3 },
+        { VK_F4, eKey::KeyF4 },
+        { VK_F5, eKey::KeyF5 },
+        { VK_F6, eKey::KeyF6 },
+        { VK_F7, eKey::KeyF7 },
+        { VK_F8, eKey::KeyF8 },
+        { VK_F9, eKey::KeyF9 },
+        { VK_F10, eKey::KeyF10 },
+        { VK_F11, eKey::KeyF11 },
+        { VK_F12, eKey::KeyF12 },
+
+        { VK_KEY_A, eKey::KeyA },
+        { VK_KEY_B, eKey::KeyB },
+        { VK_KEY_C, eKey::KeyC },
+        { VK_KEY_D, eKey::KeyD },
+        { VK_KEY_E, eKey::KeyE },
+        { VK_KEY_F, eKey::KeyF },
+        { VK_KEY_G, eKey::KeyG },
+        { VK_KEY_H, eKey::KeyH },
+        { VK_KEY_I, eKey::KeyI },
+        { VK_KEY_J, eKey::KeyJ },
+        { VK_KEY_K, eKey::KeyK },
+        { VK_KEY_L, eKey::KeyL },
+        { VK_KEY_M, eKey::KeyM },
+        { VK_KEY_N, eKey::KeyN },
+        { VK_KEY_O, eKey::KeyO },
+        { VK_KEY_P, eKey::KeyP },
+        { VK_KEY_Q, eKey::KeyQ },
+        { VK_KEY_R, eKey::KeyR },
+        { VK_KEY_S, eKey::KeyS },
+        { VK_KEY_T, eKey::KeyT },
+        { VK_KEY_U, eKey::KeyU },
+        { VK_KEY_V, eKey::KeyV },
+        { VK_KEY_W, eKey::KeyW },
+        { VK_KEY_X, eKey::KeyX },
+        { VK_KEY_Y, eKey::KeyY },
+        { VK_KEY_Z, eKey::KeyZ },
+
+        { VK_DOWN, eKey::KeyDown },
+        { VK_LEFT, eKey::KeyLeft },
+        { VK_RIGHT, eKey::KeyRight },
+        { VK_UP, eKey::KeyUp },
+
+        { VK_OEM_4, eKey::KeyLeftSquareBracket },
+        { VK_OEM_6, eKey::KeyRightSquareBracket },
+
+        { VK_NUMPAD0, eKey::KeyNumpad0 },
+        { VK_NUMPAD1, eKey::KeyNumpad1 },
+        { VK_NUMPAD2, eKey::KeyNumpad2 },
+        { VK_NUMPAD3, eKey::KeyNumpad3 },
+        { VK_NUMPAD4, eKey::KeyNumpad4 },
+        { VK_NUMPAD5, eKey::KeyNumpad5 },
+        { VK_NUMPAD6, eKey::KeyNumpad6 },
+        { VK_NUMPAD7, eKey::KeyNumpad7 },
+        { VK_NUMPAD8, eKey::KeyNumpad8 },
+        { VK_NUMPAD9, eKey::KeyNumpad9 },
+        { VK_ADD, eKey::KeyNumpadAdd },
+        { VK_DIVIDE, eKey::KeyNumpadDiv },
+        { VK_DECIMAL, eKey::KeyNumpadDot },
+        { VK_SUBTRACT, eKey::KeyNumpadMinus },
+        { VK_MULTIPLY, eKey::KeyNumpadMul },
+
+        { VK_MENU, eKey::KeyAlt },
+        { VK_OEM_7, eKey::KeyApostrophe },
+        { VK_OEM_5, eKey::KeyBackslash },
+        { VK_BACK, eKey::KeyBackspace },
+        { VK_CAPITAL, eKey::KeyCapsLock },
+        { VK_OEM_COMMA, eKey::KeyComma },
+        { VK_CONTROL, eKey::KeyCtrl },
+        { VK_DELETE, eKey::KeyDel },
+        { VK_END, eKey::KeyEnd },
+        { VK_RETURN, eKey::KeyEnter },
+        { VK_ESCAPE, eKey::KeyEsc },
+        { VK_HOME, eKey::KeyHome },
+        { VK_INSERT, eKey::KeyIns },
+        { VK_APPS, eKey::KeyMenu },
+        { VK_OEM_MINUS, eKey::KeyMinus },
+        { VK_PAUSE, eKey::KeyPause },
+        { VK_OEM_PERIOD, eKey::KeyPeriod },
+        { VK_NEXT, eKey::KeyPgDown },
+        { VK_PRIOR, eKey::KeyPgUp },
+        { VK_OEM_PLUS, eKey::KeyPlus },
+        { VK_OEM_1, eKey::KeySemicolon },
+        { VK_SHIFT, eKey::KeyShift },
+        { VK_OEM_2, eKey::KeySlash },
+        { VK_SPACE, eKey::KeySpace },
+        { VK_TAB, eKey::KeyTab },
+        { VK_OEM_3, eKey::KeyTilde }
+    };
+}
 
 bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 {
@@ -233,71 +380,44 @@ void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
-void MainWindow::OnLButtonDown ( LPARAM lParam ) noexcept
+void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept
 {
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
+    auto const key = _keyboardKeyMapper.find ( wParam );
 
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton
-            },
+    if ( key == _keyboardKeyMapper.cend () ) [[unlikely]]
+    {
+        android_vulkan::LogDebug ( ">>> 0x%04X", wParam );
+        return;
+    }
 
-            ._serialNumber = 0U
-        }
-    );
+    KeyboardKeyEvent event ( key->second );
+
+    constexpr uint16_t pressedMask = 0b1000'0000'0000'0000U;
+    KeyModifier &m = event._modifier;
+
+    m._leftAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LMENU ) );
+    m._rightAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RMENU ) );
+
+    m._leftCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LCONTROL ) );
+    m._rightCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RCONTROL ) );
+
+    m._leftShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LSHIFT ) );
+    m._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
+
+    _messageQueue->EnqueueBack ( event.Create ( messageType ) );
 }
 
-void MainWindow::OnLButtonUp ( LPARAM lParam ) noexcept
+void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
 {
     _messageQueue->EnqueueBack (
         {
-            ._type = eMessageType::MouseKeyUp,
+            ._type = messageType,
 
             ._params = new MouseKeyEvent
             {
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnMButtonDown ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::MiddleMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnMButtonUp ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyUp,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::MiddleMouseButton
+                ._key = key
             },
 
             ._serialNumber = 0U
@@ -316,42 +436,6 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
                 ._eventID = ++_mouseMoveEventID
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnRButtonDown ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::RightMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnRButtonUp ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyUp,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::RightMouseButton
             },
 
             ._serialNumber = 0U
@@ -567,21 +651,33 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
             mainWindow.OnGetMinMaxInfo ( lParam );
         return 0;
 
+        case WM_KEYDOWN:
+            [[fallthrough]];
+        case WM_SYSKEYDOWN:
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
+        return 0;
+
+        case WM_KEYUP:
+            [[fallthrough]];
+        case WM_SYSKEYUP:
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
+        return 0;
+
         case WM_LBUTTONDOWN:
-            mainWindow.OnLButtonDown ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_LBUTTONUP:
             // [2025/03/30] Win11 24H2 26100.3624 will send WM_MOUSEMOVE event right after WM_LBUTTONUP automatically.
-            mainWindow.OnLButtonUp ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MBUTTONDOWN:
-            mainWindow.OnMButtonDown ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_MBUTTONUP:
-            mainWindow.OnMButtonUp ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MOUSEMOVE:
@@ -589,11 +685,11 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         break;
 
         case WM_RBUTTONDOWN:
-            mainWindow.OnRButtonDown ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_RBUTTONUP:
-            mainWindow.OnRButtonUp ( lParam );
+            mainWindow.OnMouseKey ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_SIZE:

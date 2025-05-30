@@ -243,12 +243,12 @@ UISlider::UISlider ( MessageQueue &messageQueue,
     UpdateProgress ( value / _range );
 }
 
-void UISlider::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );
 }
 
-void UISlider::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyUp ) ( event );
 }

@@ -196,13 +196,14 @@ void Editor::EventLoop () noexcept
 
         switch ( message._type )
         {
-            case eMessageType::CaptureMouse:
-                OnCaptureMouse ();
-            break;
-
             case eMessageType::ChangeCursor:
                 OnChangeCursor ( std::move ( message ) );
             break;
+
+            case eMessageType::CaptureInput:
+                OnCaptureInput ();
+            break;
+
 
             case eMessageType::CloseEditor:
                 OnShutdown ();
@@ -224,8 +225,8 @@ void Editor::EventLoop () noexcept
                 OnRecreateSwapchain ();
             break;
 
-            case eMessageType::ReleaseMouse:
-                OnReleaseMouse ();
+            case eMessageType::ReleaseInput:
+                OnReleaseInput ();
             break;
 
             case eMessageType::RunEventLoop:
@@ -246,18 +247,18 @@ void Editor::EventLoop () noexcept
     }
 }
 
-void Editor::OnCaptureMouse () noexcept
+void Editor::OnCaptureInput () noexcept
 {
-    AV_TRACE ( "Capture mouse" )
+    AV_TRACE ( "Capture input" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.CaptureMouse ();
+    _mainWindow.CaptureInput ();
 }
 
-void Editor::OnReleaseMouse () noexcept
+void Editor::OnReleaseInput () noexcept
 {
-    AV_TRACE ( "Release mouse" )
+    AV_TRACE ( "Release input" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.ReleaseMouse ();
+    _mainWindow.ReleaseInput ();
 }
 
 void Editor::OnChangeCursor ( Message &&message ) noexcept

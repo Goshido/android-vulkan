@@ -151,11 +151,15 @@ void UIManager::EventLoop () noexcept
             return;
 
             case eMessageType::StartWidgetCaptureMouse:
-                OnStartWidgetCaptureMouse ( std::move ( message ) );
+                OnStartWidgetCaptureInput ( std::move ( message ) );
             break;
 
             case eMessageType::StopWidgetCaptureMouse:
-                OnStopWidgetCaptureMouse ();
+                OnStopWidgetCaptureInput ();
+            break;
+
+            case eMessageType::Typing:
+                OnTyping ( std::move ( message ) );
             break;
 
             case eMessageType::UIAddWidget:
@@ -176,156 +180,16 @@ void UIManager::EventLoop () noexcept
     }
 }
 
-static std::unordered_map<eKey, std::string_view> g_fuck =
-{
-    { eKey::LeftMouseButton, "LeftMouseButton" },
-    { eKey::MiddleMouseButton, "MiddleMouseButton" },
-    { eKey::RightMouseButton, "RightMouseButton" },
-
-    { eKey::Key0, "Key0" },
-    { eKey::Key1, "Key1" },
-    { eKey::Key2, "Key2" },
-    { eKey::Key3, "Key3" },
-    { eKey::Key4, "Key4" },
-    { eKey::Key5, "Key5" },
-    { eKey::Key6, "Key6" },
-    { eKey::Key7, "Key7" },
-    { eKey::Key8, "Key8" },
-    { eKey::Key9, "Key9" },
-
-    { eKey::KeyF1, "KeyF1" },
-    { eKey::KeyF2, "KeyF2" },
-    { eKey::KeyF3, "KeyF3" },
-    { eKey::KeyF4, "KeyF4" },
-    { eKey::KeyF5, "KeyF5" },
-    { eKey::KeyF6, "KeyF6" },
-    { eKey::KeyF7, "KeyF7" },
-    { eKey::KeyF8, "KeyF8" },
-    { eKey::KeyF9, "KeyF9" },
-    { eKey::KeyF10, "KeyF10" },
-    { eKey::KeyF11, "KeyF11" },
-    { eKey::KeyF12, "KeyF12" },
-
-    { eKey::KeyA, "KeyA" },
-    { eKey::KeyB, "KeyB" },
-    { eKey::KeyC, "KeyC" },
-    { eKey::KeyD, "KeyD" },
-    { eKey::KeyE, "KeyE" },
-    { eKey::KeyF, "KeyF" },
-    { eKey::KeyG, "KeyG" },
-    { eKey::KeyH, "KeyH" },
-    { eKey::KeyI, "KeyI" },
-    { eKey::KeyJ, "KeyJ" },
-    { eKey::KeyK, "KeyK" },
-    { eKey::KeyL, "KeyL" },
-    { eKey::KeyM, "KeyM" },
-    { eKey::KeyN, "KeyN" },
-    { eKey::KeyO, "KeyO" },
-    { eKey::KeyP, "KeyP" },
-    { eKey::KeyQ, "KeyQ" },
-    { eKey::KeyR, "KeyR" },
-    { eKey::KeyS, "KeyS" },
-    { eKey::KeyT, "KeyT" },
-    { eKey::KeyU, "KeyU" },
-    { eKey::KeyV, "KeyV" },
-    { eKey::KeyW, "KeyW" },
-    { eKey::KeyX, "KeyX" },
-    { eKey::KeyY, "KeyY" },
-    { eKey::KeyZ, "KeyZ" },
-
-    { eKey::KeyDown, "KeyDown" },
-    { eKey::KeyLeft, "KeyLeft" },
-    { eKey::KeyRight, "KeyRight" },
-    { eKey::KeyUp, "KeyUp" },
-
-    { eKey::KeyLeftSquareBracket, "KeyLeftSquareBracket" },
-    { eKey::KeyRightSquareBracket, "KeyRightSquareBracket" },
-
-    { eKey::KeyNumpad0, "KeyNumpad0" },
-    { eKey::KeyNumpad1, "KeyNumpad1" },
-    { eKey::KeyNumpad2, "KeyNumpad2" },
-    { eKey::KeyNumpad3, "KeyNumpad3" },
-    { eKey::KeyNumpad4, "KeyNumpad4" },
-    { eKey::KeyNumpad5, "KeyNumpad5" },
-    { eKey::KeyNumpad6, "KeyNumpad6" },
-    { eKey::KeyNumpad7, "KeyNumpad7" },
-    { eKey::KeyNumpad8, "KeyNumpad8" },
-    { eKey::KeyNumpad9, "KeyNumpad9" },
-    { eKey::KeyNumpadAdd, "KeyNumpadAdd" },
-    { eKey::KeyNumpadDiv, "KeyNumpadDiv" },
-    { eKey::KeyNumpadDot, "KeyNumpadDot" },
-    { eKey::KeyNumpadMinus, "KeyNumpadMinus" },
-    { eKey::KeyNumpadMul, "KeyNumpadMul" },
-
-    { eKey::KeyAlt, "KeyAlt" },
-    { eKey::KeyApostrophe, "KeyApostrophe" },
-    { eKey::KeyBackslash, "KeyBackslash" },
-    { eKey::KeyBackspace, "KeyBackspace" },
-    { eKey::KeyCapsLock, "KeyCapsLock" },
-    { eKey::KeyComma, "KeyComma" },
-    { eKey::KeyCtrl, "KeyCtrl" },
-    { eKey::KeyDel, "KeyDel" },
-    { eKey::KeyEnd, "KeyEnd" },
-    { eKey::KeyEnter, "KeyEnter" },
-    { eKey::KeyEsc, "KeyEsc" },
-    { eKey::KeyHome, "KeyHome" },
-    { eKey::KeyIns, "KeyIns" },
-    { eKey::KeyMenu, "KeyMenu" },
-    { eKey::KeyMinus, "KeyMinus" },
-    { eKey::KeyPause, "KeyPause" },
-    { eKey::KeyPeriod, "KeyPeriod" },
-    { eKey::KeyPgDown, "KeyPgDown" },
-    { eKey::KeyPgUp, "KeyPgUp" },
-    { eKey::KeyPlus, "KeyPlus" },
-    { eKey::KeySemicolon, "KeySemicolon" },
-    { eKey::KeyShift, "KeyShift" },
-    { eKey::KeySlash, "KeySlash" },
-    { eKey::KeySpace, "KeySpace" },
-    { eKey::KeyTab, "KeyTab" },
-    { eKey::KeyTilde, "KeyTilde" }
-};
-
 void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept
 {
     AV_TRACE ( "Keyboard key down" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - _mouseCapture and keyboard is same thing
-
-    //if ( !_mouseCapture ) [[unlikely]]
-    //    return;
+    if ( !_inputCapture ) [[unlikely]]
+        return;
 
     KeyboardKeyEvent const event ( message );
-    auto const key = g_fuck.find ( event._key );
-    AV_ASSERT ( key != g_fuck.cend () )
-
-    constexpr auto bbb = [] ( bool v ) noexcept -> char const* {
-        return v ? "true" : "false";
-    };
-
-    constexpr char const format[] = R"__(>>> DOWN: %s
-    Left Alt: %s,
-    Right Alt: %s,
-    Left Ctrl: %s,
-    Right Ctrl: %s,
-    Left Shift: %s,
-    Right Shift: %s,
-    Any Alt: %s,
-    Any Ctrl: %s,
-    Any Shift: %s)__";
-
-    android_vulkan::LogDebug ( format,
-        key->second.data (),
-        bbb ( event._modifier._leftAlt ),
-        bbb ( event._modifier._rightAlt ),
-        bbb ( event._modifier._leftCtrl ),
-        bbb ( event._modifier._rightCtrl ),
-        bbb ( event._modifier._leftShift ),
-        bbb ( event._modifier._rightShift ),
-        bbb ( event._modifier.AnyAltPressed () ),
-        bbb ( event._modifier.AnyCtrlPressed () ),
-        bbb ( event._modifier.AnyShiftPressed () )
-    );
+    _inputCapture->OnKeyboardKeyDown ( event._key, event._modifier );
 }
 
 void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
@@ -333,12 +197,11 @@ void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
     AV_TRACE ( "Keyboard key up" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - _mouseCapture and keyboard is same thing
-
-    /*if ( !_mouseCapture ) [[unlikely]]
-        return;*/
+    if ( !_inputCapture ) [[unlikely]]
+        return;
 
     KeyboardKeyEvent const event ( message );
+    _inputCapture->OnKeyboardKeyUp ( event._key, event._modifier );
 }
 
 void UIManager::OnMouseHover ( Message &&message ) noexcept
@@ -361,9 +224,9 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
-    if ( _mouseCapture ) [[unlikely]]
+    if ( _inputCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonDown ( *event );
+        _inputCapture->OnMouseButtonDown ( *event );
         delete event;
         return;
     }
@@ -396,9 +259,9 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
 
-    if ( _mouseCapture ) [[unlikely]]
+    if ( _inputCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonUp ( *event );
+        _inputCapture->OnMouseButtonUp ( *event );
         delete event;
         return;
     }
@@ -431,9 +294,9 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
 
-    if ( _mouseCapture ) [[unlikely]]
+    if ( _inputCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseMove ( *event );
+        _inputCapture->OnMouseMove ( *event );
         delete event;
         return;
     }
@@ -492,34 +355,46 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
     );
 }
 
-void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
+void UIManager::OnStartWidgetCaptureInput ( Message &&message ) noexcept
 {
-    AV_TRACE ( "Start widget capture mouse" )
+    AV_TRACE ( "Start widget capture input" )
     _messageQueue.DequeueEnd ();
-    _mouseCapture = static_cast<Widget*> ( message._params );
+    _inputCapture = static_cast<Widget*> ( message._params );
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::CaptureMouse,
+            ._type = eMessageType::CaptureInput,
             ._params = nullptr,
             ._serialNumber = 0U
         }
     );
 }
 
-void UIManager::OnStopWidgetCaptureMouse () noexcept
+void UIManager::OnStopWidgetCaptureInput () noexcept
 {
-    AV_TRACE ( "Stop widget capture mouse" )
+    AV_TRACE ( "Stop widget capture input" )
     _messageQueue.DequeueEnd ();
-    _mouseCapture = nullptr;
+    _inputCapture = nullptr;
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::ReleaseMouse,
+            ._type = eMessageType::ReleaseInput,
             ._params = nullptr,
             ._serialNumber = 0U
         }
     );
+}
+
+void UIManager::OnTyping ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Typing" )
+    _messageQueue.DequeueEnd ();
+
+    if ( !_inputCapture ) [[unlikely]]
+        return;
+
+    // FUCK
+    android_vulkan::LogDebug ( ">>> %llc", static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
 }
 
 void UIManager::OnUIAddWidget ( Message &&message ) noexcept

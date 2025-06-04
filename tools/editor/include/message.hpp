@@ -15,7 +15,7 @@ namespace editor {
 
 enum class eMessageType : uint32_t
 {
-    CaptureMouse,
+    CaptureInput,
     ChangeCursor,
     CloseEditor,
     DPIChanged,
@@ -29,7 +29,7 @@ enum class eMessageType : uint32_t
     MouseButtonUp,
     MouseMoved,
     RecreateSwapchain,
-    ReleaseMouse,
+    ReleaseInput,
     RenderFrame,
     RunEventLoop,
     Shutdown,
@@ -38,6 +38,7 @@ enum class eMessageType : uint32_t
     StopTimer,
     StopWidgetCaptureMouse,
     SwapchainCreated,
+    Typing,
     UIAddWidget,
     UIAppendChildElement,
     UIDeleteElement,

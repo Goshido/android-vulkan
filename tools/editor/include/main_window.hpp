@@ -21,6 +21,7 @@ class MainWindow final
     private:
         ATOM                                    _classID = 0;
         std::unordered_map<eCursor, HCURSOR>    _cursors {};
+        bool                                    _handleTyping = false;
         HWND                                    _hwnd = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
         size_t                                  _mouseMoveEventID = 0U;
@@ -42,8 +43,8 @@ class MainWindow final
 
         void Execute () noexcept;
 
-        void CaptureMouse () noexcept;
-        void ReleaseMouse () noexcept;
+        void CaptureInput () noexcept;
+        void ReleaseInput () noexcept;
 
         void ChangeCursor ( eCursor cursor ) noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
@@ -64,7 +65,7 @@ class MainWindow final
 
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
-        void OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept;
+        void OnKeyboardKey ( WPARAM wParam, LPARAM lParam, eMessageType messageType ) noexcept;
         void OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept;
         void OnMouseMove ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;

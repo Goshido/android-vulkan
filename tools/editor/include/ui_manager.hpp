@@ -22,7 +22,7 @@ class UIManager final
         size_t                                  _eventID = 0U;
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
-        Widget*                                 _mouseCapture = nullptr;
+        Widget*                                 _inputCapture = nullptr;
         std::shared_mutex                       _mutex {};
         std::thread                             _thread {};
         std::deque<std::unique_ptr<Widget>>     _widgets {};
@@ -55,8 +55,9 @@ class UIManager final
         void OnMouseButtonUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
-        void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
-        void OnStopWidgetCaptureMouse () noexcept;
+        void OnStartWidgetCaptureInput ( Message &&message ) noexcept;
+        void OnStopWidgetCaptureInput () noexcept;
+        void OnTyping ( Message &&message ) noexcept;
         void OnUIAddWidget ( Message &&message ) noexcept;
         void OnUIRemoveWidget ( Message &&message ) noexcept;
 };

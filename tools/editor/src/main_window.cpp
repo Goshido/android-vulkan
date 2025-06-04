@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <cursor.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
@@ -297,14 +298,16 @@ void MainWindow::Execute () noexcept
     }
 }
 
-void MainWindow::CaptureMouse () noexcept
+void MainWindow::CaptureInput () noexcept
 {
     SetCapture ( _hwnd );
+    _handleTyping = true;
 }
 
-void MainWindow::ReleaseMouse () noexcept
+void MainWindow::ReleaseInput () noexcept
 {
     ReleaseCapture ();
+    _handleTyping = false;
 }
 
 void MainWindow::ChangeCursor ( eCursor cursor ) noexcept
@@ -380,15 +383,12 @@ void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
-void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept
+void MainWindow::OnKeyboardKey ( WPARAM wParam, LPARAM lParam, eMessageType messageType ) noexcept
 {
     auto const key = _keyboardKeyMapper.find ( wParam );
 
     if ( key == _keyboardKeyMapper.cend () ) [[unlikely]]
-    {
-        android_vulkan::LogDebug ( ">>> 0x%04X", wParam );
         return;
-    }
 
     KeyboardKeyEvent event ( key->second );
 
@@ -405,6 +405,71 @@ void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexc
     m._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
 
     _messageQueue->EnqueueBack ( event.Create ( messageType ) );
+
+    if ( !_handleTyping | ( messageType != eMessageType::KeyboardKeyDown ) ) [[likely]]
+        return;
+
+    wchar_t utf16[ 2U ];
+
+    constexpr BYTE const onMask[] = { 0U, 0b1000'0000U };
+
+    // FUCK save as field
+    BYTE keys[ 256 ] = {};
+    keys[ static_cast<size_t> ( VK_CONTROL ) ] = onMask[ static_cast<size_t> ( m.AnyCtrlPressed () ) ];
+    keys[ static_cast<size_t> ( VK_SHIFT ) ] = onMask[ static_cast<size_t> ( m.AnyShiftPressed () ) ];
+
+    int const status = ToUnicode ( static_cast<UINT> ( wParam ),
+        static_cast<UINT> ( lParam ),
+        keys,
+        utf16,
+        static_cast<int> ( std::size ( utf16 ) ),
+        0U
+    );
+
+    if ( status < 1 ) [[unlikely]]
+        return;
+
+    // Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
+
+    size_t codepoint;
+    constexpr uint32_t surrogateMask = 0b0000'0011'1111'1111U;
+
+    switch ( status )
+    {
+        case 1:
+            codepoint = static_cast<size_t> ( utf16[ 0U ] );
+        break;
+
+        case 2:
+            /*
+            W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
+            W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
+            U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
+                 0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
+            U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
+            */
+            codepoint = static_cast<size_t> (
+                0b0000'0000'0000'0001'0000'0000'0000'0000U +
+                ( 
+                    ( static_cast<uint32_t> ( utf16[ 0U ] ) & surrogateMask ) |
+                    ( ( static_cast<uint32_t> ( utf16[ 1U ] ) & surrogateMask ) << 10U )
+                )
+            );
+        break;
+
+        default:
+            // unknown symbol
+            AV_ASSERT ( false )
+        return;
+    }
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::Typing,
+            ._params = std::bit_cast<void*> ( codepoint ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
@@ -654,13 +719,13 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         case WM_KEYDOWN:
             [[fallthrough]];
         case WM_SYSKEYDOWN:
-            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
+            mainWindow.OnKeyboardKey ( wParam, lParam, eMessageType::KeyboardKeyDown );
         return 0;
 
         case WM_KEYUP:
             [[fallthrough]];
         case WM_SYSKEYUP:
-            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
+            mainWindow.OnKeyboardKey ( wParam, lParam, eMessageType::KeyboardKeyUp );
         return 0;
 
         case WM_LBUTTONDOWN:

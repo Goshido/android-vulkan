@@ -197,26 +197,27 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
     AV_TRACE ( "Making OS window" )
 
     _messageQueue = &messageQueue;
-    HMODULE const module = GetModuleHandleA ( nullptr );
+    HMODULE const module = GetModuleHandleW ( nullptr );
     constexpr int exeIconResourceID = 1;
 
     CreateCursors ();
 
-    WNDCLASSA const wndClass
+    WNDCLASSW const wndClass
     {
         .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
         .lpfnWndProc = &MainWindow::WindowHandler,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = module,
-        .hIcon = LoadIconA ( module, MAKEINTRESOURCEA ( exeIconResourceID ) ),
+        .hIcon = LoadIconW ( module, MAKEINTRESOURCEW ( exeIconResourceID ) ),
         .hCursor = nullptr,
         .hbrBackground = CreateSolidBrush ( RGB ( 115, 185, 0 ) ),
         .lpszMenuName = nullptr,
-        .lpszClassName = "Android-Vulkan Editor-{8a3ef647-a264-4b1f-ae54-0d9856cf23e3}"
+        .lpszClassName = L"Android-Vulkan Editor-{8a3ef647-a264-4b1f-ae54-0d9856cf23e3}"
     };
 
-    _classID = RegisterClassA ( &wndClass );
+    // Using Unicode version in order to get UTF-16 codepoints in WM_CHAR/WM_SYSCHAR messages instead of codepage codes.
+    _classID = RegisterClassW ( &wndClass );
 
     if ( _classID == 0 ) [[unlikely]]
     {
@@ -229,9 +230,9 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
     //     WM_CREATE
     //         OnCreate: -> HWND is assigned to '_hwnd'
     // control returns to caller code
-    HWND const result = CreateWindowEx ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
+    HWND const result = CreateWindowExW ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
         MAKEINTATOM ( _classID ),
-        _T ( "Editor" ),
+        L"Editor",
         WS_VISIBLE | WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
         100,
         100,
@@ -277,7 +278,7 @@ bool MainWindow::Destroy () noexcept
     if ( _classID == 0 ) [[unlikely]]
         return true;
 
-    if ( BOOL const result = UnregisterClass ( MAKEINTATOM ( _classID ), GetModuleHandle ( nullptr ) ); result != 0 )
+    if ( BOOL const result = UnregisterClassW ( MAKEINTATOM ( _classID ), GetModuleHandleW ( nullptr ) ); result != 0 )
     {
         [[likely]]
         return true;
@@ -292,9 +293,14 @@ void MainWindow::Execute () noexcept
     AV_TRACE ( "Executing OS messages" )
     MSG msg {};
 
-    while ( PeekMessageA ( &msg, _hwnd, 0U, 0U, PM_REMOVE ) )
+    // [2025/06/05] HWND must be nullptr. Otherwise keyboard layout changing will not work.
+    // Win11 24H2, 26100.4202
+    while ( PeekMessageW ( &msg, nullptr, 0U, 0U, PM_REMOVE ) )
     {
-        DispatchMessageA ( &msg );
+        // TranslateMessage is needed to get ALT+Numpad codes and use WM_CHAR/WM_SYSCHAR messages
+        TranslateMessage ( &msg );
+
+        DispatchMessageW ( &msg );
     }
 }
 
@@ -323,6 +329,47 @@ float MainWindow::GetDPI () const noexcept
 HWND MainWindow::GetNativeWindow () const noexcept
 {
     return _hwnd;
+}
+
+void MainWindow::OnChar ( WPARAM wParam ) noexcept
+{
+    if ( !_handleTyping ) [[likely]]
+        return;
+
+    size_t codepoint = static_cast<size_t> ( wParam );
+
+    if ( wParam > 0xFFFF ) [[unlikely]]
+    {
+        /*
+        Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
+
+        W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
+        W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
+        U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
+             0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
+        U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
+        */
+        constexpr uint32_t surrogateMask = 0b0000'0011'1111'1111U;
+
+        uint16_t utf16[ 2U ];
+        std::memcpy ( utf16, &wParam, sizeof ( utf16 ) );
+
+        codepoint = static_cast<size_t> (
+            0b0000'0000'0000'0001'0000'0000'0000'0000U +
+            ( 
+                ( static_cast<uint32_t> ( utf16[ 1U ] ) & surrogateMask ) |
+                ( ( static_cast<uint32_t> ( utf16[ 0U ] ) & surrogateMask ) << 10U )
+            )
+        );
+    }
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::Typing,
+            ._params = std::bit_cast<void*> ( codepoint ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void MainWindow::OnClose () noexcept
@@ -383,7 +430,7 @@ void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
-void MainWindow::OnKeyboardKey ( WPARAM wParam, LPARAM lParam, eMessageType messageType ) noexcept
+void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexcept
 {
     auto const key = _keyboardKeyMapper.find ( wParam );
 
@@ -405,71 +452,6 @@ void MainWindow::OnKeyboardKey ( WPARAM wParam, LPARAM lParam, eMessageType mess
     m._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
 
     _messageQueue->EnqueueBack ( event.Create ( messageType ) );
-
-    if ( !_handleTyping | ( messageType != eMessageType::KeyboardKeyDown ) ) [[likely]]
-        return;
-
-    wchar_t utf16[ 2U ];
-
-    constexpr BYTE const onMask[] = { 0U, 0b1000'0000U };
-
-    // FUCK save as field
-    BYTE keys[ 256 ] = {};
-    keys[ static_cast<size_t> ( VK_CONTROL ) ] = onMask[ static_cast<size_t> ( m.AnyCtrlPressed () ) ];
-    keys[ static_cast<size_t> ( VK_SHIFT ) ] = onMask[ static_cast<size_t> ( m.AnyShiftPressed () ) ];
-
-    int const status = ToUnicode ( static_cast<UINT> ( wParam ),
-        static_cast<UINT> ( lParam ),
-        keys,
-        utf16,
-        static_cast<int> ( std::size ( utf16 ) ),
-        0U
-    );
-
-    if ( status < 1 ) [[unlikely]]
-        return;
-
-    // Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
-
-    size_t codepoint;
-    constexpr uint32_t surrogateMask = 0b0000'0011'1111'1111U;
-
-    switch ( status )
-    {
-        case 1:
-            codepoint = static_cast<size_t> ( utf16[ 0U ] );
-        break;
-
-        case 2:
-            /*
-            W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
-            W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
-            U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
-                 0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
-            U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
-            */
-            codepoint = static_cast<size_t> (
-                0b0000'0000'0000'0001'0000'0000'0000'0000U +
-                ( 
-                    ( static_cast<uint32_t> ( utf16[ 0U ] ) & surrogateMask ) |
-                    ( ( static_cast<uint32_t> ( utf16[ 1U ] ) & surrogateMask ) << 10U )
-                )
-            );
-        break;
-
-        default:
-            // unknown symbol
-            AV_ASSERT ( false )
-        return;
-    }
-
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::Typing,
-            ._params = std::bit_cast<void*> ( codepoint ),
-            ._serialNumber = 0U
-        }
-    );
 }
 
 void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
@@ -693,20 +675,30 @@ void MainWindow::Load () noexcept
 LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     AV_TRACE ( "OS window message" )
-    auto &mainWindow = *reinterpret_cast<MainWindow*> ( GetWindowLongPtrA ( hwnd, GWLP_USERDATA ) );
+    auto &mainWindow = *reinterpret_cast<MainWindow*> ( GetWindowLongPtrW ( hwnd, GWLP_USERDATA ) );
 
     switch ( msg )
     {
+        case WM_CHAR:
+            mainWindow.OnChar ( wParam );
+        return 0;
+
+        case WM_SYSCHAR:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnChar ( wParam );
+        break;
+
+        case WM_CLOSE:
+            mainWindow.OnClose ();
+        return 0;
+
         case WM_CREATE:
         {
             auto const &createInfo = *reinterpret_cast<LPCREATESTRUCT> ( lParam );
             reinterpret_cast<MainWindow*> ( createInfo.lpCreateParams )->OnCreate ( hwnd );
             break;
         }
-
-        case WM_CLOSE:
-            mainWindow.OnClose ();
-        return 0;
 
         case WM_DPICHANGED:
             mainWindow.OnDPIChanged ( wParam, lParam );
@@ -717,16 +709,24 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_KEYDOWN:
-            [[fallthrough]];
-        case WM_SYSKEYDOWN:
-            mainWindow.OnKeyboardKey ( wParam, lParam, eMessageType::KeyboardKeyDown );
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
         return 0;
 
+        case WM_SYSKEYDOWN:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
+        break;
+
         case WM_KEYUP:
-            [[fallthrough]];
-        case WM_SYSKEYUP:
-            mainWindow.OnKeyboardKey ( wParam, lParam, eMessageType::KeyboardKeyUp );
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
         return 0;
+
+        case WM_SYSKEYUP:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
+        break;
 
         case WM_LBUTTONDOWN:
             mainWindow.OnMouseKey ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonDown );
@@ -766,7 +766,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         break;
     }
 
-    return DefWindowProcA ( hwnd, msg, wParam, lParam );
+    return DefWindowProcW ( hwnd, msg, wParam, lParam );
 }
 
 } // namespace editor

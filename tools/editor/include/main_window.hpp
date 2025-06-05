@@ -51,6 +51,7 @@ class MainWindow final
         [[nodiscard]] HWND GetNativeWindow () const noexcept;
 
     private:
+        void OnChar ( WPARAM wParam ) noexcept;
         void OnClose () noexcept;
 
         // Note we can't use '_hwnd' at this point because CreateWindowEx did not finish yet.
@@ -65,7 +66,7 @@ class MainWindow final
 
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
-        void OnKeyboardKey ( WPARAM wParam, LPARAM lParam, eMessageType messageType ) noexcept;
+        void OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept;
         void OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept;
         void OnMouseMove ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;

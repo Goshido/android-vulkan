@@ -225,11 +225,13 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         return false;
     }
 
-    // Note '_hwnd' will be assigned in OnCreate method:
-    // CreateWindowEx
-    //     WM_CREATE
-    //         OnCreate: -> HWND is assigned to '_hwnd'
-    // control returns to caller code
+    /*
+    Note '_hwnd' will be assigned in OnCreate method:
+    CreateWindowEx
+        WM_CREATE
+            OnCreate: -> HWND is assigned to '_hwnd'
+    control returns to caller code
+    */
     HWND const result = CreateWindowExW ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
         MAKEINTATOM ( _classID ),
         L"Editor",
@@ -297,7 +299,7 @@ void MainWindow::Execute () noexcept
     // Win11 24H2, 26100.4202
     while ( PeekMessageW ( &msg, nullptr, 0U, 0U, PM_REMOVE ) )
     {
-        // TranslateMessage is needed to get ALT+Numpad codes and use WM_CHAR/WM_SYSCHAR messages
+        // TranslateMessage is needed to get ALT+Numpad codes and use WM_CHAR/WM_SYSCHAR messages.
         TranslateMessage ( &msg );
 
         DispatchMessageW ( &msg );
@@ -333,34 +335,57 @@ HWND MainWindow::GetNativeWindow () const noexcept
 
 void MainWindow::OnChar ( WPARAM wParam ) noexcept
 {
+    AV_TRACE ( "Main window: character" )
+
     if ( !_handleTyping ) [[likely]]
         return;
 
-    size_t codepoint = static_cast<size_t> ( wParam );
+    /*
+    Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
 
-    if ( wParam > 0xFFFF ) [[unlikely]]
-    {
-        /*
-        Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
+    W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
+    W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
+    U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
+         0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
+    U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
+    */
 
-        W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
-        W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
-        U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
-             0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
-        U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
-        */
-        constexpr uint32_t surrogateMask = 0b0000'0011'1111'1111U;
+    constexpr WPARAM extractSurrogateMask = 0b1111'1100'0000'0000U;
+    constexpr uint32_t extractCodepointMask = 0b0000'0011'1111'1111U;
+    constexpr WPARAM hiSurrogateMask = 0b1101'1000'0000'0000U;
+    constexpr WPARAM lowSurrogateMask = 0b1101'1100'0000'0000U;
 
-        uint16_t utf16[ 2U ];
-        std::memcpy ( utf16, &wParam, sizeof ( utf16 ) );
-
-        codepoint = static_cast<size_t> (
+    constexpr auto toCodepoint = [] ( uint32_t highSurrogate, WPARAM lowSurrogate ) noexcept -> size_t {
+        return static_cast<size_t> (
             0b0000'0000'0000'0001'0000'0000'0000'0000U +
             ( 
-                ( static_cast<uint32_t> ( utf16[ 1U ] ) & surrogateMask ) |
-                ( ( static_cast<uint32_t> ( utf16[ 0U ] ) & surrogateMask ) << 10U )
+                ( static_cast<uint32_t> ( lowSurrogate ) & extractCodepointMask ) |
+                ( ( highSurrogate & extractCodepointMask ) << 10U )
             )
         );
+    };
+
+    size_t codepoint;
+
+    switch ( wParam & extractSurrogateMask )
+    {
+        case hiSurrogateMask:
+            _highSurrogate = std::optional<uint32_t> { static_cast<uint32_t> ( wParam ) };
+        return;
+
+        case lowSurrogateMask:
+            if ( !_highSurrogate ) [[unlikely]]
+            {
+                AV_ASSERT ( false )
+                return;
+            }
+
+            codepoint = toCodepoint ( *std::exchange ( _highSurrogate, std::nullopt ), wParam );
+        break;
+
+        default:
+            codepoint = static_cast<size_t> ( wParam );
+        break;
     }
 
     _messageQueue->EnqueueBack (
@@ -427,11 +452,14 @@ void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
 
 void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
 {
+    AV_TRACE ( "Main window: min-max info" )
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
 void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexcept
 {
+    AV_TRACE ( "Main window: keyboard key" )
+
     auto const key = _keyboardKeyMapper.find ( wParam );
 
     if ( key == _keyboardKeyMapper.cend () ) [[unlikely]]
@@ -456,6 +484,8 @@ void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexce
 
 void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
 {
+    AV_TRACE ( "Main window: mouse key" )
+
     _messageQueue->EnqueueBack (
         {
             ._type = messageType,
@@ -474,6 +504,8 @@ void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType 
 
 void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
+    AV_TRACE ( "Main window: mouse move" )
+
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::MouseMoved,
@@ -599,17 +631,19 @@ void MainWindow::Save () noexcept
         static_cast<uint8_t> ( state == eWindowState::Minimized ? eWindowState::Normal : state )
     );
 
-    // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112]
-    // Issue with maximize. If window is maximized than x and y coordinates are incorrect. It's because
-    // OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
-    // windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
-    // We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
-    // screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
-    // left side of the screen.
-    //
-    // Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.
-    // But moving from minimized state to normal state does not sends anything. So it's needed to explicitly request
-    // window position back.
+    /*
+    [2024/08/31, Windows 11 Pro, 23H2, 22631.4112]
+    Issue with maximize. If window is maximized than x and y coordinates are incorrect. It's because
+    OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
+    windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
+    We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
+    screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
+    left side of the screen.
+
+    Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.
+    But moving from minimized state to normal state does not sends anything. So it's needed to explicitly request
+    window position back.
+    */
     if ( state != eWindowState::Normal )
         ShowWindow ( _hwnd, SW_NORMAL );
 

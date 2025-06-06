@@ -22,6 +22,7 @@ class MainWindow final
         ATOM                                    _classID = 0;
         std::unordered_map<eCursor, HCURSOR>    _cursors {};
         bool                                    _handleTyping = false;
+        std::optional<uint32_t>                 _highSurrogate = std::nullopt;
         HWND                                    _hwnd = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
         size_t                                  _mouseMoveEventID = 0U;
@@ -53,17 +54,7 @@ class MainWindow final
     private:
         void OnChar ( WPARAM wParam ) noexcept;
         void OnClose () noexcept;
-
-        // Note we can't use '_hwnd' at this point because CreateWindowEx did not finish yet.
-        // 'hwnd' should be used from WM_CREATE message. In reality 'hwnd' will be exactly the same as
-        // result of CreateWindowEx. Once again the call sequence is the following:
-        // MakeWindow
-        //      CreateWindowEx
-        //          WM_CREATE
-        //              OnCreate: -> HWND is connected to MainWindow object and assigned to '_hwnd'
-        // control returns to caller code
         void OnCreate ( HWND hwnd ) noexcept;
-
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
         void OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept;

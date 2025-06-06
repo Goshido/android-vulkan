@@ -394,7 +394,8 @@ void UIManager::OnTyping ( Message &&message ) noexcept
         return;
 
     // FUCK
-    android_vulkan::LogDebug ( ">>> %llc", static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
+    auto const fff = std::bit_cast<size_t> ( message._params );
+    android_vulkan::LogDebug ( ">>> %llc", static_cast<char32_t> ( fff ) );
 }
 
 void UIManager::OnUIAddWidget ( Message &&message ) noexcept

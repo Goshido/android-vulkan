@@ -380,13 +380,15 @@ void MainWindow::OnChar ( WPARAM wParam ) noexcept
                 return;
             }
 
-            codepoint = toCodepoint ( *std::exchange ( _highSurrogate, std::nullopt ), wParam );
+            codepoint = toCodepoint ( *_highSurrogate, wParam );
         break;
 
         default:
             codepoint = static_cast<size_t> ( wParam );
         break;
     }
+
+    _highSurrogate = std::nullopt;
 
     _messageQueue->EnqueueBack (
         {

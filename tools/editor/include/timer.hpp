@@ -20,7 +20,6 @@ class TimerManager;
 class Timer final
 {
     friend class TimerManager;
-
     public:
         enum class eType : uint8_t
         {
@@ -35,12 +34,35 @@ class Timer final
     private:
         using Timestamp = std::chrono::steady_clock::time_point;
 
+        class State final
+        {
+            public:
+                Callback const      _callback;
+                Interval const      _interval {};
+                Timestamp           _schedule {};
+                eType const         _type = eType::SingleShot;
+
+            public:
+                State () = delete;
+
+                State ( State const & ) = delete;
+                State &operator = ( State const & ) = delete;
+
+                State ( State && ) = delete;
+                State &operator = ( State && ) = delete;
+
+                explicit State ( eType type, Interval const &interval, Callback &&callback ) noexcept;
+
+                ~State () = default;
+
+                // Method returns true if this timer should be excluded from the scheduling process.
+                // Otherwise method returns false.
+                [[nodiscard]] bool Invoke ( Timestamp const &now ) noexcept;
+        };
+
     private:
-        Callback const      _callback;
-        Interval const      _interval {};
-        MessageQueue        &_messageQueue;
-        Timestamp           _schedule {};
-        eType const         _type = eType::SingleShot;
+        MessageQueue                &_messageQueue;
+        State*                      _state = nullptr;
 
     public:
         Timer () = delete;
@@ -57,14 +79,7 @@ class Timer final
             Callback &&callback
         ) noexcept;
 
-        void Destroy () noexcept;
-
-        // Method returns true if this timer should be excluded from the scheduling process.
-        // Otherwise method returns false.
-        [[nodiscard]] bool Invoke ( Timestamp const &now ) noexcept;
-
-    private:
-        ~Timer () = default;
+        ~Timer () noexcept;
 };
 
 } // namespace editor

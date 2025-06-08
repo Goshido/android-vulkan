@@ -201,7 +201,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     if ( !fontProbe ) [[unlikely]]
         return;
 
-    FontStorage::Font const font = *fontProbe;
+    FontStorage::Font const font = fontProbe->_font;
     constexpr size_t firstLineHeightIdx = 1U;
 
     std::vector<float> &divLineHeights = *info._lineHeights;

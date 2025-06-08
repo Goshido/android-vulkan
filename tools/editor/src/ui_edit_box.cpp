@@ -6,13 +6,23 @@
 
 namespace editor {
 
+namespace {
+
+constexpr auto BLINK_PEDIOD = std::chrono::milliseconds ( 500U );
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     DIVUIElement &parent,
+    pbr::FontStorage &fontStorage,
     std::string_view caption,
     std::string_view value,
     std::string &&name
 ) noexcept:
     Widget ( messageQueue ),
+    _fontStorage ( fontStorage ),
 
     _lineDIV ( messageQueue,
         parent,
@@ -148,6 +158,72 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
+    _cursorDIV ( messageQueue,
+        _valueDIV,
+
+        {
+            ._backgroundColor = theme::MAIN_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, 7.0F ),
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::MAIN_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile {},
+            ._fontSize = theme::INHERIT_LENGTH,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+        },
+
+        name + " (cursor)"
+    ),
+
+    _selectionDIV ( messageQueue,
+        _valueDIV,
+
+        {
+            ._backgroundColor = pbr::ColorValue ( 106U, 172U, 0U, 51U ),
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, 7.0F ),
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::MAIN_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile {},
+            ._fontSize = theme::INHERIT_LENGTH,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 8.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+        },
+
+        name + " (selection)"
+    ),
+
     _textDIV ( messageQueue,
         _valueDIV,
 
@@ -178,13 +254,16 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
         },
 
-        name + " (value)"
+        name + " (text)"
     ),
 
     _text ( messageQueue, _textDIV, value, name + " (text)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );
+
+    _valueDIV.AppendChildElement ( _cursorDIV );
+    _valueDIV.AppendChildElement ( _selectionDIV );
 
     _textDIV.AppendChildElement ( _text );
     _valueDIV.AppendChildElement ( _textDIV );
@@ -194,7 +273,9 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     _lineDIV.AppendChildElement ( _columnDIV );
     parent.AppendChildElement ( _lineDIV );
 
-    SwitchToNormalState ();
+    // FUCK
+    // SwitchToNormalState ();
+    SwitchToEditState ();
 }
 
 void UIEditBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -249,15 +330,41 @@ void UIEditBox::UpdatedRectNormal () noexcept
 void UIEditBox::SwitchToEditState () noexcept
 {
     _text.SetColor ( theme::PRESS_COLOR );
+    _cursorDIV.Show ();
+    _selectionDIV.Show ();
     _onMouseMove = &UIEditBox::OnMouseMoveEdit;
     _updateRect = &UIEditBox::UpdatedRectEdit;
+
+    _blink = std::make_unique<Timer> ( _messageQueue,
+        Timer::eType::Repeat,
+        BLINK_PEDIOD,
+
+        [ this ] ( Timer::ElapsedTime &&/*elapsedTime*/ ) noexcept {
+            if ( _cursorDIV.IsVisible () )
+            {
+                _cursorDIV.Hide ();
+                return;
+            }
+
+            _cursorDIV.Show ();
+        }
+    );
 }
 
 void UIEditBox::SwitchToNormalState () noexcept
 {
+    _blink.reset ();
+
     _text.SetColor ( theme::MAIN_COLOR );
+    _cursorDIV.Hide ();
+    _selectionDIV.Hide ();
     _onMouseMove = &UIEditBox::OnMouseMoveNormal;
     _updateRect = &UIEditBox::UpdatedRectNormal;
+}
+
+void UIEditBox::UpdateCursor () noexcept
+{
+    // FUCK
 }
 
 } // namespace editor

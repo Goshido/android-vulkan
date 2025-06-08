@@ -14,6 +14,15 @@ constexpr uint8_t TRANSPARENT_GLYPH_ATLAS_LAYER = 0U;
 
 } // end of anonymous namespace
 
+FontStorage::FontLock::FontLock ( Font font, std::shared_lock<std::shared_mutex> &&lock ) noexcept:
+    _font ( font ),
+    _lock ( std::move ( lock ) )
+{
+    // NOTHING
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept
 {
     auto const s = static_cast<VkDeviceSize> ( side );
@@ -520,60 +529,47 @@ VkImageView FontStorage::GetAtlasImageView () const noexcept
     return _atlas._resource._view;
 }
 
-std::optional<FontStorage::Font> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
+std::optional<FontStorage::FontLock> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
 {
-    auto fontResource = GetFontResource ( font );
-
-    if ( !fontResource )
-        return std::nullopt;
-
-    FontResource* f = *fontResource;
-    auto const s = static_cast<FT_UInt> ( size );
-
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( f->_face, s, s ), "pbr::FontStorage::GetFont", "Can't set size" ) )
-    {
-        [[unlikely]]
-        return std::nullopt;
-    }
-
     // Hash function is based on Boost implementation:
     // https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine.
     constexpr size_t magic = 0x9E3779B9U;
 
     static std::hash<uint32_t> const hashInteger {};
-    static std::hash<void*> const hashAddress {};
+    static std::hash<std::string_view> const hashString {};
 
     FontHash hash = 0U;
-    hash ^= hashAddress ( f ) + magic + ( hash << 6U ) + ( hash >> 2U );
+    hash ^= hashString ( font ) + magic + ( hash << 6U ) + ( hash >> 2U );
     hash ^= ( hashInteger ( size ) + magic + ( hash << 6U ) + ( hash >> 2U ) );
 
-    if ( auto findResult = _fonts.find ( hash ); findResult != _fonts.end () )
-        return findResult;
+    {
+        // Hoping for the best: the font already presents.
+        std::shared_lock sharedLock ( _mutex );
 
-    EMFontMetrics const &metrics = f->_metrics;
-    auto const sz = static_cast<double> ( size );
+        if ( auto const findResult = _fonts.find ( hash ); findResult != _fonts.end () ) [[likely]]
+        {
+            return std::optional<FontStorage::FontLock> { FontLock ( findResult, std::move ( sharedLock ) ) };
+        }
+    }
 
-    auto status = _fonts.insert (
-        std::make_pair (
-            hash,
+    {
+        // It's needed to create new font.
+        std::unique_lock const exclusiveLock ( _mutex );
 
-            FontData
+        // There is a chance that somebody created target font in other thread.
+        if ( !_fonts.contains ( hash ) )
+        {
+            // Nah. Nobody created the font.
+            if ( !MakeFont ( hash, font, size ) ) [[unlikely]]
             {
-                ._fontResource = f,
-                ._fontSize = size,
-                ._glyphs = {},
-
-                ._metrics
-                {
-                    ._ascend = static_cast<int32_t> ( sz * metrics._ascend ),
-                    ._baselineToBaseline = static_cast<int32_t> ( sz * metrics._baselineToBaseline ),
-                    ._contentAreaHeight = static_cast<int32_t> ( sz * metrics._contentAreaHeight )
-                }
+                return std::nullopt;
             }
-        )
-    );
+        }
+    }
 
-    return std::optional<FontStorage::Font> { status.first };
+    // There is a chance that other thread could insert items into '_fonts' storage. It's needed to find font again.
+    std::shared_lock sharedLock ( _mutex );
+    return std::optional<FontStorage::FontLock> { FontLock ( _fonts.find ( hash ), std::move ( sharedLock ) ) };
 }
 
 FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Renderer &renderer,
@@ -589,16 +585,28 @@ FontStorage::GlyphInfo const &FontStorage::GetGlyphInfo ( android_vulkan::Render
 
     return EmbedGlyph ( renderer,
         glyphs,
-        fontData._fontResource->_face,
+        fontData._face,
         fontData._fontSize,
         fontData._metrics._ascend,
         character
     );
 }
 
-FontStorage::PixelFontMetrics const &FontStorage::GetFontPixelMetrics ( Font font ) noexcept
+void FontStorage::GetStringMetrics ( StringMetrics &result,
+    std::string_view font,
+    uint32_t size,
+    std::u32string_view string
+) noexcept
 {
-    return font->second._metrics;
+    auto const fontInfo = GetFont ( font, size );
+
+    if ( !fontInfo ) [[unlikely]]
+        return;
+
+    result.resize ( string.size () );
+
+
+    // FUCK
 }
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
@@ -723,9 +731,14 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
+FontStorage::PixelFontMetrics const &FontStorage::GetFontPixelMetrics ( Font font ) noexcept
+{
+    return font->second._metrics;
+}
+
 int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noexcept
 {
-    FT_Face face = font->second._fontResource->_face;
+    FT_Face face = font->second._face;
 
     if ( !FT_HAS_KERNING ( face ) )
         return 0;
@@ -763,6 +776,7 @@ void FontStorage::DestroyAtlas ( android_vulkan::Renderer &renderer ) noexcept
     clear ( _freeStagingBuffers );
     clear ( _fullStagingBuffers );
 
+    std::lock_guard const lock ( _mutex );
     _fonts.clear ();
 }
 
@@ -936,112 +950,9 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     return status.first->second;
 }
 
-std::optional<FontStorage::FontResource*> FontStorage::GetFontResource ( std::string_view font ) noexcept
-{
-    if ( auto const findResult = _fontResources.find ( font ); findResult != _fontResources.cend () )
-        return &findResult->second;
-
-    android_vulkan::File fontAsset ( font );
-
-    if ( !fontAsset.LoadContent () ) [[unlikely]]
-        return std::nullopt;
-
-    auto status = _fontResources.emplace ( std::string_view ( _stringHeap.emplace_front ( font ) ),
-        FontResource
-        {
-            ._face = nullptr,
-            ._fontAsset = std::move ( fontAsset.GetContent () )
-        }
-    );
-
-    FontResource &resource = status.first->second;
-    FT_Face &face = resource._face;
-
-    bool result = CheckFTResult (
-        FT_New_Memory_Face ( _library,
-            resource._fontAsset.data (),
-            static_cast<FT_Long> ( resource._fontAsset.size () ),
-            0,
-            &face
-        ),
-
-        "pbr::FontStorage::GetFontResource",
-        "Can't load face"
-    );
-
-    if ( !result ) [[unlikely]]
-    {
-        _fontResources.erase ( status.first );
-        _stringHeap.pop_front ();
-        return std::nullopt;
-    }
-
-    // Based on ideas from Skia:
-    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/skia/src/ports/SkFontHost_FreeType.cpp;l=1559;drc=f39c57f31413abcb41d3068cfb2c7a1718003cc5;bpv=0;bpt=1
-
-    EMFontMetrics &metrics = resource._metrics;
-    auto const em = static_cast<FT_UInt> ( face->units_per_EM );
-    auto const invEM = 1.0 / static_cast<double> ( em );
-
-    metrics =
-    {
-        ._ascend = invEM * static_cast<double> ( face->ascender ),
-        ._baselineToBaseline = invEM * static_cast<double> ( face->height ),
-
-        // FreeType provides 'face->descender' as negative value.
-        ._contentAreaHeight = invEM * static_cast<double> ( face->ascender - face->descender )
-    };
-
-    if ( auto const* os2 = static_cast<TT_OS2 const*> ( FT_Get_Sfnt_Table ( face, ft_sfnt_os2 ) ); os2 )
-    {
-        if ( FT_Short const xHeight = os2->sxHeight; xHeight != 0 )
-        {
-            metrics._xHeight = invEM * static_cast<double> ( xHeight );
-            return &resource;
-        }
-    }
-
-    // Trying to use actual 'x' glyph to get metrics.
-
-    // Half of EM size. Blind guess. Better than nothing.
-    auto const defaultXHeight = invEM * static_cast<double> ( em >> 1U );
-
-    if ( !( face->face_flags & FT_FACE_FLAG_SCALABLE ) )
-    {
-        metrics._xHeight = defaultXHeight;
-        return &resource;
-    }
-
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ), "pbr::FontStorage::GetFontResource", "Can't set size" ) )
-    {
-        [[unlikely]]
-        _fontResources.erase ( status.first );
-        _stringHeap.pop_front ();
-        return std::nullopt;
-    }
-
-    result = FT_Load_Char ( face, static_cast<FT_ULong> ( U'x' ), FT_LOAD_BITMAP_METRICS_ONLY ) == FT_Err_Ok &&
-        face->glyph->format == FT_GLYPH_FORMAT_OUTLINE;
-
-    if ( !result )
-    {
-        metrics._xHeight = defaultXHeight;
-        return &resource;
-    }
-
-    FT_Pos maxY = 0;
-    FT_Outline const &outline = face->glyph->outline;
-
-    for ( FT_Vector const &p : std::span<FT_Vector const> ( outline.points, static_cast<size_t> ( outline.n_points ) ) )
-        maxY = std::max ( maxY, p.y );
-
-    double const cases[] = { defaultXHeight, invEM * static_cast<double> ( maxY >> 6 ) };
-    metrics._xHeight = cases[ static_cast<size_t> ( maxY > 0 ) ];
-    return &resource;
-}
-
 std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
-    android_vulkan::Renderer &renderer ) noexcept
+    android_vulkan::Renderer &renderer
+) noexcept
 {
     if ( !_activeStagingBuffer.empty () )
         return &_activeStagingBuffer.front ();
@@ -1062,6 +973,85 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
         return &stagingBuffer;
 
     return std::nullopt;
+}
+
+bool FontStorage::MakeFont ( FontHash hash, std::string_view font, uint32_t size ) noexcept
+{
+    FontResource* fontResource;
+
+    if ( auto const findResult = _fontResources.find ( font ); findResult != _fontResources.cend () ) [[likely]]
+    {
+        fontResource = &findResult->second;
+    }
+    else
+    {
+        android_vulkan::File fontAsset ( font );
+
+        if ( !fontAsset.LoadContent () ) [[unlikely]]
+            return false;
+
+        auto const status = _fontResources.emplace ( std::string_view ( _stringHeap.emplace_front ( font ) ),
+            FontResource
+            {
+                ._fontAsset = std::move ( fontAsset.GetContent () ),
+                ._metrics {}
+            }
+        );
+
+        fontResource = &status.first->second;
+    }
+
+    std::vector<uint8_t> const &fontAsset = fontResource->_fontAsset;
+    FT_Face face;
+
+    bool const result = CheckFTResult (
+        FT_New_Memory_Face ( _library, fontAsset.data (), static_cast<FT_Long> ( fontAsset.size () ), 0, &face ),
+        "pbr::FontStorage::MakeFont",
+        "Can't load face"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    EMFontMetrics &metrics = fontResource->_metrics;
+
+    if ( metrics._contentAreaHeight == 0.0 ) [[unlikely]]
+    {
+        auto emMetrics = ResolveEMFontMetrics ( face );
+
+        if ( !emMetrics ) [[unlikely]]
+            return false;
+
+        metrics = std::move ( *emMetrics );
+    }
+
+    auto const s = static_cast<FT_UInt> ( size );
+
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::MakeFont", "Can't set size" ) )
+    {
+        [[unlikely]]
+        return false;
+    }
+
+    auto const sz = static_cast<double> ( size );
+
+    _fonts.emplace ( hash,
+        FontData
+        {
+            ._face = face,
+            ._fontSize = size,
+            ._glyphs = {},
+
+            ._metrics
+            {
+                ._ascend = static_cast<int32_t> ( sz * metrics._ascend ),
+                ._baselineToBaseline = static_cast<int32_t> ( sz * metrics._baselineToBaseline ),
+                ._contentAreaHeight = static_cast<int32_t> ( sz * metrics._contentAreaHeight )
+            }
+        }
+    );
+
+    return true;
 }
 
 bool FontStorage::MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) noexcept
@@ -1377,6 +1367,73 @@ android_vulkan::Half2 FontStorage::PixToUV ( uint32_t x, uint32_t y ) noexcept
     a.Sum ( pointSamplerUVThreshold, pix2UV, GXVec2 ( static_cast<float> ( x ), static_cast<float> ( y ) ) );
 
     return android_vulkan::Half2 ( a );
+}
+
+std::optional<FontStorage::EMFontMetrics> FontStorage::ResolveEMFontMetrics ( FT_Face face ) noexcept
+{
+    // Based on ideas from Skia:
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/skia/src/ports/SkFontHost_FreeType.cpp;l=1559;drc=f39c57f31413abcb41d3068cfb2c7a1718003cc5;bpv=0;bpt=1
+
+    auto const em = static_cast<FT_UInt> ( face->units_per_EM );
+    auto const invEM = 1.0 / static_cast<double> ( em );
+
+    EMFontMetrics metrics
+    {
+        ._ascend = invEM * static_cast<double> ( face->ascender ),
+        ._baselineToBaseline = invEM * static_cast<double> ( face->height ),
+
+        // FreeType provides 'face->descender' as negative value.
+        ._contentAreaHeight = invEM * static_cast<double> ( face->ascender - face->descender )
+    };
+
+    if ( auto const* os2 = static_cast<TT_OS2 const*> ( FT_Get_Sfnt_Table ( face, ft_sfnt_os2 ) ); os2 )
+    {
+        if ( FT_Short const xHeight = os2->sxHeight; xHeight != 0 )
+        {
+            metrics._xHeight = invEM * static_cast<double> ( xHeight );
+            return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
+        }
+    }
+
+    // Trying to use actual 'x' glyph to get metrics.
+    // Half of EM size. Blind guess. Better than nothing.
+    auto const defaultXHeight = invEM * static_cast<double> ( em >> 1U );
+
+    if ( !( face->face_flags & FT_FACE_FLAG_SCALABLE ) )
+    {
+        metrics._xHeight = defaultXHeight;
+        return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
+    }
+
+    bool result = CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ), "pbr::FontStorage::ResolveEMFontMetrics",
+        "Can't set size"
+    );
+
+    if ( !result )
+    {
+        [[unlikely]]
+        return std::nullopt;
+    }
+
+    result = FT_Load_Char ( face, static_cast<FT_ULong> ( U'x' ), FT_LOAD_BITMAP_METRICS_ONLY ) == FT_Err_Ok &&
+        face->glyph->format == FT_GLYPH_FORMAT_OUTLINE;
+
+    if ( !result )
+    {
+        metrics._xHeight = defaultXHeight;
+        return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
+    }
+
+    FT_Pos maxY = 0;
+    FT_Outline const &outline = face->glyph->outline;
+
+    for ( FT_Vector const &p : std::span<FT_Vector const> ( outline.points, static_cast<size_t> ( outline.n_points ) ) )
+        maxY = std::max ( maxY, p.y );
+
+    double const cases[] = { defaultXHeight, invEM * static_cast<double> ( maxY >> 6 ) };
+    metrics._xHeight = cases[ static_cast<size_t> ( maxY > 0 ) ];
+
+    return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
 }
 
 } // namespace pbr

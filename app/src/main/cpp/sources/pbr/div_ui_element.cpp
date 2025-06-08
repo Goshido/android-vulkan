@@ -284,12 +284,6 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     if ( !_visible )
         return needRefill;
 
-    FontStorage &fontStorage = *info._fontStorage;
-    auto const fontProbe = fontStorage.GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
-
-    if ( !fontProbe ) [[unlikely]]
-        return needRefill;
-
     GXVec2 pen {};
     AlignHandler verticalAlign = &UIElement::AlignToStart;
     float parentHeight = 0.0F;
@@ -372,16 +366,23 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 topLeft {};
     topLeft.Sum ( pen, _canvasTopLeftOffset );
 
+    auto fontProbe = info._fontStorage->GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
+
+    if ( !fontProbe ) [[unlikely]]
+        return needRefill;
+
     UpdateInfo updateInfo
     {
         ._fontStorage = info._fontStorage,
         ._line = 0U,
-        ._lineHeight = ResolveLineHeight ( *fontProbe ),
+        ._lineHeight = ResolveLineHeight ( fontProbe->_font ),
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = _canvasSize,
         ._parentTopLeft = topLeft,
         ._pen = topLeft
     };
+
+    fontProbe = std::nullopt;
 
     for ( auto* child : _children )
         needRefill |= child->UpdateCache ( updateInfo );

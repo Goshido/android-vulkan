@@ -74,6 +74,8 @@ class RenderSession final
         void Init () noexcept;
         void Destroy () noexcept;
 
+        [[nodiscard]] pbr::FontStorage &GetFontStorage () noexcept;
+
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;
         void FreeCommandBuffers ( VkDevice device ) noexcept;

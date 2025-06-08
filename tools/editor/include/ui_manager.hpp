@@ -20,6 +20,7 @@ class UIManager final
 {
     private:
         size_t                                  _eventID = 0U;
+        pbr::FontStorage                        &_fontStorage;
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
         Widget*                                 _inputCapture = nullptr;
@@ -36,7 +37,7 @@ class UIManager final
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
 
-        explicit UIManager ( MessageQueue &messageQueue ) noexcept;
+        explicit UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 

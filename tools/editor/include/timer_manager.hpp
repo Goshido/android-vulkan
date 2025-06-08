@@ -16,9 +16,9 @@ namespace editor {
 class TimerManager final
 {
     private:
-        MessageQueue                    &_messageQueue;
-        std::thread                     _thread {};
-        std::unordered_set<Timer*>      _timers {};
+        MessageQueue                            &_messageQueue;
+        std::thread                             _thread {};
+        std::unordered_set<Timer::State*>       _timers {};
 
     public:
         TimerManager () = delete;

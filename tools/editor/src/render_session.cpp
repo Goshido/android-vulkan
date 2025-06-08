@@ -317,6 +317,11 @@ void RenderSession::Destroy () noexcept
     }
 }
 
+pbr::FontStorage &RenderSession::GetFontStorage () noexcept
+{
+    return _uiPass.GetFontStorage ();
+}
+
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
 {
     constexpr VkFenceCreateInfo fenceInfo

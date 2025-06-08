@@ -78,7 +78,7 @@ void TimerManager::EventLoop () noexcept
 
         for ( auto it = _timers.begin (); it != _timers.end (); )
         {
-            if ( Timer* timer = *it; timer->Invoke ( now ) ) [[unlikely]]
+            if ( Timer::State* timer = *it; timer->Invoke ( now ) ) [[unlikely]]
             {
                 delete timer;
                 it = _timers.erase ( it );
@@ -96,7 +96,7 @@ void TimerManager::OnStartTimer ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start timer" )
     _messageQueue.DequeueEnd ();
-    _timers.insert ( static_cast<Timer*> ( message._params ) );
+    _timers.insert ( static_cast<Timer::State*> ( message._params ) );
 }
 
 void TimerManager::OnStopTimer ( Message &&message ) noexcept
@@ -104,7 +104,7 @@ void TimerManager::OnStopTimer ( Message &&message ) noexcept
     AV_TRACE ( "Stop timer" )
     _messageQueue.DequeueEnd ();
 
-    auto* timer = static_cast<Timer*> ( message._params );
+    auto* timer = static_cast<Timer::State*> ( message._params );
     _timers.erase ( timer );
     delete timer;
 }
@@ -114,7 +114,7 @@ void TimerManager::OnShutdown ( Message &&refund ) noexcept
     AV_TRACE ( "Shutdown" )
     _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
 
-    for ( Timer* timer : _timers )
+    for ( Timer::State* timer : _timers )
         delete timer;
 
     _timers.clear ();

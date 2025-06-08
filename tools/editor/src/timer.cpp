@@ -4,34 +4,16 @@
 
 namespace editor {
 
-Timer::Timer ( MessageQueue &messageQueue, eType type, Interval const &interval, Callback &&callback ) noexcept:
+Timer::State::State ( eType type, Interval const &interval, Callback &&callback ) noexcept:
     _callback ( std::move ( callback ) ),
     _interval ( interval ),
-    _messageQueue ( messageQueue ),
     _schedule ( std::chrono::steady_clock::now () + interval ),
     _type ( type )
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StartTimer,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
+    // NOTHING
 }
 
-void Timer::Destroy () noexcept
-{
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopTimer,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
-}
-
-bool Timer::Invoke ( Timestamp const &now ) noexcept
+bool Timer::State::Invoke ( Timestamp const &now ) noexcept
 {
     if ( now < _schedule ) [[likely]]
         return false;
@@ -50,6 +32,32 @@ bool Timer::Invoke ( Timestamp const &now ) noexcept
             // IMPOSSIBLE
         return true;
     }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+Timer::Timer ( MessageQueue &messageQueue, eType type, Interval const &interval, Callback &&callback ) noexcept:
+    _messageQueue ( messageQueue ),
+    _state ( new State ( type, interval, std::move ( callback ) ) )
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StartTimer,
+            ._params = _state,
+            ._serialNumber = 0U
+        }
+    );
+}
+
+Timer::~Timer () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopTimer,
+            ._params = _state,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 } // namespace editor

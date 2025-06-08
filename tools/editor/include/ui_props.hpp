@@ -16,6 +16,8 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
+        pbr::FontStorage    &_fontStorage;
+
         DIVUIElement        _headerLine;
         UILabel             _headerText;
         UICloseButton       _closeButton;
@@ -25,7 +27,7 @@ class UIProps final : public UIDialogBox
         UIEditBox           _editBox;
 
     public:
-        explicit UIProps ( MessageQueue &messageQueue ) noexcept;
+        explicit UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
 
         UIProps ( UIProps const & ) = delete;
         UIProps &operator = ( UIProps const & ) = delete;

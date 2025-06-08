@@ -4,6 +4,8 @@
 
 #include "widget.hpp"
 #include "text_ui_element.hpp"
+#include <pbr/font_storage.hpp>
+#include "timer.hpp"
 
 
 namespace editor {
@@ -15,20 +17,32 @@ class UIEditBox final : public Widget
         using UpdateRectHandler = void ( UIEditBox::* ) () noexcept;
 
     private:
-        DIVUIElement            _lineDIV;
-        DIVUIElement            _columnDIV;
+        std::u32string              _content {};
+        pbr::FontStorage            &_fontStorage;
 
-        DIVUIElement            _captionDIV;
-        TextUIElement           _captionText;
+        DIVUIElement                _lineDIV;
+        DIVUIElement                _columnDIV;
 
-        DIVUIElement            _valueDIV;
+        DIVUIElement                _captionDIV;
+        TextUIElement               _captionText;
 
-        DIVUIElement            _textDIV;
-        TextUIElement           _text;
+        DIVUIElement                _valueDIV;
 
-        size_t                  _eventID = 0U;
-        MouseMoveHandler        _onMouseMove = &UIEditBox::OnMouseMoveNormal;
-        UpdateRectHandler       _updateRect = &UIEditBox::UpdatedRectNormal;
+        DIVUIElement                _cursorDIV;
+        DIVUIElement                _selectionDIV;
+
+        DIVUIElement                _textDIV;
+        TextUIElement               _text;
+
+        // rule: index before symbol
+        int32_t                     _cursor = 0;
+        int32_t                     _selection = 0;
+
+        size_t                      _eventID = 0U;
+        MouseMoveHandler            _onMouseMove = &UIEditBox::OnMouseMoveNormal;
+        UpdateRectHandler           _updateRect = &UIEditBox::UpdatedRectNormal;
+
+        std::unique_ptr<Timer>      _blink {};
 
     public:
         UIEditBox () = delete;
@@ -41,6 +55,7 @@ class UIEditBox final : public Widget
 
         explicit UIEditBox ( MessageQueue &messageQueue,
             DIVUIElement &parent,
+            pbr::FontStorage &fontStorage,
             std::string_view caption,
             std::string_view value,
             std::string &&name
@@ -62,6 +77,8 @@ class UIEditBox final : public Widget
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;
+
+        void UpdateCursor () noexcept;
 };
 
 } // namespace editor

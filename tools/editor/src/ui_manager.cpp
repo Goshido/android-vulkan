@@ -11,7 +11,8 @@
 
 namespace editor {
 
-UIManager::UIManager ( MessageQueue &messageQueue ) noexcept:
+UIManager::UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
+    _fontStorage ( fontStorage ),
     _messageQueue ( messageQueue )
 {
     // NOTHING
@@ -93,7 +94,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
 
 void UIManager::CreateWidgets () noexcept
 {
-    auto* dialogBox = new UIProps ( _messageQueue );
+    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
     dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),

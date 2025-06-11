@@ -94,8 +94,11 @@ class RenderSession final
         void OnUIAppendChildElement ( Message &&message ) noexcept;
         void OnUIDeleteElement ( Message &&message ) noexcept;
         void OnUIElementCreated () noexcept;
+        void OnUIHideElement ( Message &&message ) noexcept;
+        void OnUIShowElement ( Message &&message ) noexcept;
         void OnUIPrependChildElement ( Message &&message ) noexcept;
         void OnUISetText ( Message &&message ) noexcept;
+        void OnUIUpdateElement ( Message &&message ) noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
 

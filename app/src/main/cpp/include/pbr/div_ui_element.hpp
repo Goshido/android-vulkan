@@ -33,6 +33,7 @@ class DIVUIElement final : public UIElement
 
         std::deque<UIElement*>      _children {};
         bool                        _hasBackground = false;
+        bool                        _hasChanges = false;
         GXVec2                      _marginTopLeft {};
 
         std::vector<float>          _lineHeights {};
@@ -62,6 +63,7 @@ class DIVUIElement final : public UIElement
         void PrependChildElement ( UIElement &element ) noexcept;
 
         [[nodiscard]] Rect const &GetAbsoluteRect () const noexcept;
+        void Update () noexcept;
 };
 
 } // namespace pbr

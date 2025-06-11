@@ -17,32 +17,33 @@ class UIEditBox final : public Widget
         using UpdateRectHandler = void ( UIEditBox::* ) () noexcept;
 
     private:
-        std::u32string              _content {};
-        pbr::FontStorage            &_fontStorage;
+        std::u32string                      _content {};
+        pbr::FontStorage::StringMetrics     _metrics {};
+        pbr::FontStorage                    &_fontStorage;
 
-        DIVUIElement                _lineDIV;
-        DIVUIElement                _columnDIV;
+        DIVUIElement                        _lineDIV;
+        DIVUIElement                        _columnDIV;
 
-        DIVUIElement                _captionDIV;
-        TextUIElement               _captionText;
+        DIVUIElement                        _captionDIV;
+        TextUIElement                       _captionText;
 
-        DIVUIElement                _valueDIV;
+        DIVUIElement                        _valueDIV;
 
-        DIVUIElement                _cursorDIV;
-        DIVUIElement                _selectionDIV;
+        DIVUIElement                        _cursorDIV;
+        DIVUIElement                        _selectionDIV;
 
-        DIVUIElement                _textDIV;
-        TextUIElement               _text;
+        DIVUIElement                        _textDIV;
+        TextUIElement                       _text;
 
         // rule: index before symbol
-        int32_t                     _cursor = 0;
-        int32_t                     _selection = 0;
+        int32_t                             _cursor = 0;
+        int32_t                             _selection = 0;
 
-        size_t                      _eventID = 0U;
-        MouseMoveHandler            _onMouseMove = &UIEditBox::OnMouseMoveNormal;
-        UpdateRectHandler           _updateRect = &UIEditBox::UpdatedRectNormal;
+        size_t                              _eventID = 0U;
+        MouseMoveHandler                    _onMouseMove = &UIEditBox::OnMouseMoveNormal;
+        UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
 
-        std::unique_ptr<Timer>      _blink {};
+        std::unique_ptr<Timer>              _blink {};
 
     public:
         UIEditBox () = delete;
@@ -67,6 +68,7 @@ class UIEditBox final : public Widget
         void UpdatedRect () noexcept override;
 
     private:
+        void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnMouseLeave () noexcept override;
 
         void OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept;
@@ -74,6 +76,9 @@ class UIEditBox final : public Widget
 
         void OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectNormal () noexcept;
+
+        void MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept;
+        void ResetBlinkTimer () noexcept;
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;

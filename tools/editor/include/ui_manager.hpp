@@ -47,8 +47,8 @@ class UIManager final
         void RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
 
     private:
-        void CreateWidgets () noexcept;
         void EventLoop () noexcept;
+        void OnFontStorageReady () noexcept;
         void OnKeyboardKeyDown ( Message &&message ) noexcept;
         void OnKeyboardKeyUp ( Message &&message ) noexcept;
         void OnMouseHover ( Message &&message ) noexcept;

@@ -688,12 +688,24 @@ void RenderSession::EventLoop () noexcept
                 OnUIElementCreated ();
             break;
 
+            case eMessageType::UIShowElement:
+                OnUIShowElement ( std::move ( message ) );
+            break;
+
             case eMessageType::UIPrependChildElement:
                 OnUIPrependChildElement ( std::move ( message ) );
             break;
 
+            case eMessageType::UIHideElement:
+                OnUIHideElement ( std::move ( message ) );
+            break;
+
             case eMessageType::UISetText:
                 OnUISetText ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIUpdateElement:
+                OnUIUpdateElement ( std::move ( message ) );
             break;
 
             default:
@@ -739,8 +751,20 @@ bool RenderSession::InitiModules () noexcept
     constexpr uint32_t subpass = pbr::PresentRenderPass::GetSubpass ();
 
     result = _samplerManager.Init ( device ) &&
-        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
-        CreateRenderTarget () &&
+        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::FontStorageReady,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    result = CreateRenderTarget () &&
         _exposurePass.SetTarget ( renderer, _renderTarget ) &&
         _toneMapper.Init ( renderer ) &&
 
@@ -1151,6 +1175,20 @@ void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
     --_uiElements;
 }
 
+void RenderSession::OnUIHideElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI hide element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::UIElement*> ( message._params )->Hide ();
+}
+
+void RenderSession::OnUIShowElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI show element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::UIElement*> ( message._params )->Show ();
+}
+
 void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI prepend child element" )
@@ -1169,6 +1207,13 @@ void RenderSession::OnUISetText ( Message &&message ) noexcept
     auto &event = *static_cast<SetTextEvent*> ( message._params );
     event.Apply ();
     SetTextEvent::Destroy ( event );
+}
+
+void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI update element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept

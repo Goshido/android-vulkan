@@ -442,19 +442,22 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     auto const parentLeft = static_cast<int32_t> ( info._parentTopLeft._data[ 0U ] );
     auto const parentWidth =  static_cast<int32_t> ( info._parentSize._data[ 0U ] );
 
+    constexpr size_t firstSymbolOffsetX = 1U;
+    constexpr size_t notFirstSymbolOffsetX = 0U;
+
     for ( Line const &line : _lines )
     {
         x = textAlignment ( x, parentWidth, line._length, 0 );
         y = verticalAlignment ( y, static_cast<int32_t> ( *height ), _baselineToBaseline, halfLeading );
         limit += line._glyphs;
-        bool first = true;
+        size_t isFirst = firstSymbolOffsetX;
 
         for ( ; i < limit; ++i )
         {
             Glyph const &g = glyphs[ i ];
 
-            int32_t const cases[] = { 0, g._offsetX };
-            int32_t const penX = x + cases[ static_cast<size_t> ( std::exchange ( first, false ) ) ];
+            int32_t const offsetX[] = { 0, g._offsetX };
+            int32_t const penX = x + offsetX[ std::exchange ( isFirst, notFirstSymbolOffsetX ) ];
 
             int32_t const glyphTop = y + g._offsetY;
             int32_t const glyphBottom = glyphTop + g._height;

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <pbr/font_storage.hpp>
 #include <file.hpp>
 #include <logger.hpp>
@@ -598,15 +599,71 @@ void FontStorage::GetStringMetrics ( StringMetrics &result,
     std::u32string_view string
 ) noexcept
 {
+    result.clear ();
+
+    if ( string.empty () )
+        return;
+
     auto const fontInfo = GetFont ( font, size );
 
     if ( !fontInfo ) [[unlikely]]
         return;
 
-    result.resize ( string.size () );
+    result.reserve ( string.size () + 1U );
 
+    Font const f = fontInfo->_font;
+    int32_t p = 0U;
+    char32_t prevSymbol = 0;
 
-    // FUCK
+    constexpr size_t firstSymbolOffsetX = 1U;
+    constexpr size_t notFirstSymbolOffsetX = 0U;
+    int32_t offsetX[] = { 0, 0 };
+    size_t isFirst = firstSymbolOffsetX;
+
+    FontData const &fontData = f->second;
+    FT_Face face = fontData._face;
+
+    GlyphStorage const &glyphs = fontData._glyphs;
+    auto const end = glyphs.cend ();
+
+    for ( ; !string.empty (); string = string.substr ( 1U ) )
+    {
+        char32_t const symbol = string.front ();
+        [[maybe_unused]] int32_t const fuck = GetKerning ( f, prevSymbol, symbol );
+        p += GetKerning ( f, std::exchange ( prevSymbol, symbol ), symbol );
+
+        if ( auto const glyph = glyphs.find ( symbol ); glyph != end ) [[likely]]
+        {
+            GlyphInfo const& gi = glyph->second;
+            offsetX[ firstSymbolOffsetX ] = gi._offsetX;
+            p += offsetX[ std::exchange ( isFirst, notFirstSymbolOffsetX ) ];
+            result.push_back ( static_cast<float> ( std::exchange ( p, p + gi._advance ) ) );
+            continue;
+        }
+
+        bool const status = CheckFTResult (
+            FT_Load_Char ( face, static_cast<FT_ULong> ( symbol ), FT_LOAD_BITMAP_METRICS_ONLY ),
+            "pbr::FontStorage::GetStringMetrics",
+            "Can't get glyph metrics"
+        );
+
+        if ( !status ) [[unlikely]]
+        {
+            result.clear ();
+            AV_ASSERT ( false )
+            return;
+        }
+
+        FT_GlyphSlot const slot = face->glyph;
+        offsetX[ firstSymbolOffsetX ] = static_cast<int32_t> ( slot->metrics.horiBearingX ) >> 6U;
+        p += offsetX[ std::exchange ( isFirst, notFirstSymbolOffsetX ) ];
+
+        result.push_back (
+            static_cast<float> ( std::exchange ( p, p + ( static_cast<int32_t> ( slot->advance.x ) >> 6U ) ) )
+        );
+    }
+
+    result.push_back ( static_cast<float> ( p ) );
 }
 
 bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,

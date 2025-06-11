@@ -20,6 +20,8 @@ DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, s
 
 void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
+    info._hasChanges |= std::exchange ( _hasChanges, false );
+
     if ( !_visible )
         return;
 
@@ -189,7 +191,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _blockSize.Sum ( beta, gamma );
 
     if ( _css._position == PositionProperty::eValue::Absolute )
+    {
+        info._hasChanges |= childInfo._hasChanges;
         return;
+    }
 
     if ( !sizeCheck ( _blockSize ) )
         return;
@@ -278,8 +283,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 
 bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 {
-    bool needRefill = _visibilityChanged;
-    _visibilityChanged = false;
+    bool needRefill = std::exchange ( _visibilityChanged, false );
 
     if ( !_visible )
         return needRefill;
@@ -404,6 +408,11 @@ void DIVUIElement::PrependChildElement ( UIElement& element ) noexcept
 DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
 {
     return _absoluteRect;
+}
+
+void DIVUIElement::Update () noexcept
+{
+    _hasChanges = true;
 }
 
 } // namespace pbr

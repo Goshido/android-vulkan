@@ -1,5 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
+#include <pbr/utf8_parser.hpp>
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
@@ -165,7 +167,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
             ._backgroundColor = theme::MAIN_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
-            ._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, 7.0F ),
+            ._left = theme::ZERO_LENGTH,
             ._right = theme::AUTO_LENGTH,
             ._top = theme::ZERO_LENGTH,
             ._color = theme::MAIN_COLOR,
@@ -198,7 +200,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
             ._backgroundColor = pbr::ColorValue ( 106U, 172U, 0U, 51U ),
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
-            ._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, 7.0F ),
+            ._left = theme::ZERO_LENGTH,
             ._right = theme::AUTO_LENGTH,
             ._top = theme::ZERO_LENGTH,
             ._color = theme::MAIN_COLOR,
@@ -217,7 +219,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 8.0F ),
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
         },
 
@@ -273,8 +275,23 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     _lineDIV.AppendChildElement ( _columnDIV );
     parent.AppendChildElement ( _lineDIV );
 
+    if ( auto str = pbr::UTF8Parser::ToU32String ( value ); str ) [[likely]]
+        _content = std::move ( *str );
+
     // FUCK
     // SwitchToNormalState ();
+    _cursor = 2;
+    _selection = 1;
+
+    pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
+
+    fontStorage.GetStringMetrics ( _metrics,
+        css._fontFile,
+        static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
+        _content
+    );
+
+    UpdateCursor ();
     SwitchToEditState ();
 }
 
@@ -286,6 +303,28 @@ void UIEditBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 void UIEditBox::UpdatedRect () noexcept
 {
     ( this->*_updateRect ) ();
+}
+
+void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
+{
+    GX_DISABLE_WARNING ( 4061 )
+
+    switch ( key )
+    {
+        case eKey::KeyLeft:
+            MoveCursor ( -1, modifier );
+        break;
+
+        case eKey::KeyRight:
+            MoveCursor ( 1, modifier );
+        break;
+
+        default:
+            // NOTHING
+        break;
+    }
+
+    GX_ENABLE_WARNING ( 4061 )
 }
 
 void UIEditBox::OnMouseLeave () noexcept
@@ -300,7 +339,6 @@ void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 
 void UIEditBox::UpdatedRectEdit () noexcept
 {
-    // FUCK
     _rect.From ( _valueDIV.GetAbsoluteRect () );
 }
 
@@ -327,14 +365,62 @@ void UIEditBox::UpdatedRectNormal () noexcept
     _rect.From ( _valueDIV.GetAbsoluteRect () );
 }
 
-void UIEditBox::SwitchToEditState () noexcept
+void UIEditBox::MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept
 {
-    _text.SetColor ( theme::PRESS_COLOR );
-    _cursorDIV.Show ();
-    _selectionDIV.Show ();
-    _onMouseMove = &UIEditBox::OnMouseMoveEdit;
-    _updateRect = &UIEditBox::UpdatedRectEdit;
+    bool const shift = modifier.AnyShiftPressed ();
+    bool const ctrl = modifier.AnyCtrlPressed ();
 
+    int32_t const cursorLimitCases[] = { static_cast<int32_t> ( _metrics.size () - 1U ), 0 };
+    int32_t const cursorLimit = cursorLimitCases[ static_cast<size_t> ( _metrics.empty () ) ];
+
+    if ( shift )
+    {
+        if ( ctrl ) [[unlikely]]
+        {
+            // FUCK
+            return;
+        }
+
+        _cursor = std::clamp ( _cursor + offset, 0, cursorLimit );
+        _cursorDIV.Show ();
+
+        if ( _cursor == _selection ) [[unlikely]]
+            _selectionDIV.Hide ();
+        else
+            _selectionDIV.Show ();
+
+        UpdateCursor ();
+        ResetBlinkTimer ();
+        return;
+    }
+
+    if ( ctrl )
+    {
+        // FUCK
+        return;
+    }
+
+    int32_t const rangeCases[ 2U ][ 2U ] = { { _cursor, _selection }, { _selection, _cursor } };
+    auto const &[ from, to ] = rangeCases[ static_cast<size_t> ( _cursor > _selection ) ];
+    int32_t const borderCases[] = { from, to };
+
+    int32_t const cursorCases[] =
+    {
+        std::clamp ( _cursor + offset, 0, cursorLimit ),
+        borderCases[ static_cast<size_t> ( offset > 0 ) ]
+    };
+
+    _cursor = cursorCases[ static_cast<size_t> ( _cursor != _selection ) ];
+    _selection = _cursor;
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+void UIEditBox::ResetBlinkTimer () noexcept
+{
     _blink = std::make_unique<Timer> ( _messageQueue,
         Timer::eType::Repeat,
         BLINK_PEDIOD,
@@ -347,6 +433,25 @@ void UIEditBox::SwitchToEditState () noexcept
             }
 
             _cursorDIV.Show ();
+        }
+    );
+}
+
+void UIEditBox::SwitchToEditState () noexcept
+{
+    _text.SetColor ( theme::PRESS_COLOR );
+    _cursorDIV.Show ();
+    _selectionDIV.Show ();
+    _onMouseMove = &UIEditBox::OnMouseMoveEdit;
+    _updateRect = &UIEditBox::UpdatedRectEdit;
+
+    ResetBlinkTimer ();
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StartWidgetCaptureInput,
+            ._params = this,
+            ._serialNumber = 0U
         }
     );
 }
@@ -364,7 +469,22 @@ void UIEditBox::SwitchToNormalState () noexcept
 
 void UIEditBox::UpdateCursor () noexcept
 {
-    // FUCK
+    auto const c = _metrics[ static_cast<size_t> ( _cursor ) ];
+    auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
+
+    float const cases[ 2U ][ 2U ] = { { c, s }, { s, c } };
+    auto const &[ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+
+    GXVec3 offsets ( from, to - from, c );
+    offsets.Multiply ( offsets, pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX );
+
+    pbr::CSSComputedValues &selectionCSS = _selectionDIV.GetCSS ();
+    selectionCSS._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 0U ] );
+    selectionCSS._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 1U ] );
+    _selectionDIV.Update ();
+
+    _cursorDIV.GetCSS ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );
+    _cursorDIV.Update ();
 }
 
 } // namespace editor

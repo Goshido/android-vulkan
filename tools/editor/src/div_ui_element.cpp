@@ -90,17 +90,40 @@ void DIVUIElement::PrependChildElement ( TextUIElement &element ) noexcept
 
 void DIVUIElement::Hide () noexcept
 {
-    _div->Hide ();
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIHideElement,
+            ._params = _div,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void DIVUIElement::Show () noexcept
 {
-    _div->Show ();
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIShowElement,
+            ._params = _div,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 bool DIVUIElement::IsVisible () const noexcept
 {
     return _div->IsVisible ();
+}
+
+void DIVUIElement::Update () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIUpdateElement,
+            ._params = _div,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 pbr::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept

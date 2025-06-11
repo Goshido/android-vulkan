@@ -691,7 +691,7 @@ void UIComboBox::SwitchToNormalState () noexcept
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._type = eMessageType::StopWidgetCaptureInput,
             ._params = _popup,
             ._serialNumber = 0U
         }
@@ -738,7 +738,7 @@ void UIComboBox::SwitchToMenuState () noexcept
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::StartWidgetCaptureMouse,
+            ._type = eMessageType::StartWidgetCaptureInput,
             ._params = this,
             ._serialNumber = 0U
         }

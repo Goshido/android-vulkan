@@ -285,7 +285,7 @@ void UISlider::OnMouseKeyUpDrag ( MouseKeyEvent const &event ) noexcept
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._type = eMessageType::StopWidgetCaptureInput,
             ._params = this,
             ._serialNumber = 0U
         }
@@ -347,7 +347,7 @@ void UISlider::SwitchToDragState () noexcept
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::StartWidgetCaptureMouse,
+            ._type = eMessageType::StartWidgetCaptureInput,
             ._params = this,
             ._serialNumber = 0U
         }

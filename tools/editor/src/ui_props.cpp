@@ -79,7 +79,7 @@ UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) n
     _checkBox ( messageQueue, _div, "Shadows", "CheckBox" ),
     _comboBox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
     _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
-    _editBox ( messageQueue, _div, fontStorage, "Name", "Sun", "EditBox" )
+    _editBox ( messageQueue, _div, fontStorage, "Name", "Comparing string works better", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;

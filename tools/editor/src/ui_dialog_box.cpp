@@ -121,7 +121,7 @@ void UIDialogBox::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
 
         _messageQueue.EnqueueBack (
             {
-                ._type = eMessageType::StartWidgetCaptureMouse,
+                ._type = eMessageType::StartWidgetCaptureInput,
                 ._params = this,
                 ._serialNumber = 0U
             }
@@ -191,7 +191,7 @@ void UIDialogBox::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
 
     _messageQueue.EnqueueBack (
         {
-            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._type = eMessageType::StopWidgetCaptureInput,
             ._params = nullptr,
             ._serialNumber = 0U
         }

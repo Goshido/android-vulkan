@@ -48,6 +48,7 @@ class DIVUIElement final : public UIElement
         void Hide () noexcept;
         void Show () noexcept;
         [[nodiscard]] bool IsVisible () const noexcept;
+        void Update () noexcept;
 
         [[nodiscard]] pbr::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;

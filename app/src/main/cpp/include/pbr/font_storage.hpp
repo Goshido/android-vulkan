@@ -23,6 +23,11 @@ namespace pbr {
 class FontStorage final
 {
     public:
+        // Each element contains offset in native pixels from string start to according symbol start.
+        // Useful side effect: the last element is total string length in native pixels. The total amount of elements is
+        // target string length plus one. The font kerning is taking into account.
+        using StringMetrics = std::vector<float>;
+
         struct GlyphInfo final
         {
             android_vulkan::Half2                       _topLeft { 0.0F, 0.0F };
@@ -83,11 +88,6 @@ class FontStorage final
             private:
                 explicit FontLock ( Font font, std::shared_lock<std::shared_mutex> &&lock ) noexcept;
         };
-
-        // Each element contains offset in native pixels from string start to according symbol end.
-        // Useful side effect: the last element is total string length in native pixels.
-        // The font kerning is taking into account.
-        using StringMetrics = std::vector<size_t>;
 
     private:
         // Coefficients for getting pixel metrics of the font.

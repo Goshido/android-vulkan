@@ -25,7 +25,6 @@ void UIManager::Init () noexcept
     _thread = std::thread (
         [ this ]() noexcept {
             AV_THREAD_NAME ( "UI" )
-            CreateWidgets ();
             EventLoop ();
         }
     );
@@ -92,23 +91,6 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
     }
 }
 
-void UIManager::CreateWidgets () noexcept
-{
-    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
-    dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-    dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-        pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-            ._params = dialogBox,
-            ._serialNumber = 0U
-        }
-    );
-}
-
 void UIManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = _messageQueue;
@@ -123,6 +105,10 @@ void UIManager::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::FontStorageReady:
+                OnFontStorageReady ();
+            break;
+
             case eMessageType::KeyboardKeyDown:
                 OnKeyboardKeyDown ( std::move ( message ) );
             break;
@@ -151,11 +137,11 @@ void UIManager::EventLoop () noexcept
                 OnShutdown ( std::move ( message ) );
             return;
 
-            case eMessageType::StartWidgetCaptureMouse:
+            case eMessageType::StartWidgetCaptureInput:
                 OnStartWidgetCaptureInput ( std::move ( message ) );
             break;
 
-            case eMessageType::StopWidgetCaptureMouse:
+            case eMessageType::StopWidgetCaptureInput:
                 OnStopWidgetCaptureInput ();
             break;
 
@@ -179,6 +165,26 @@ void UIManager::EventLoop () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void UIManager::OnFontStorageReady () noexcept
+{
+    AV_TRACE ( "FontStorage ready" )
+    _messageQueue.DequeueEnd ();
+
+    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
+    dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+
+    dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+        pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+            ._params = dialogBox,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept

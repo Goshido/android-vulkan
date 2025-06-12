@@ -43,6 +43,11 @@ void Widget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     );
 }
 
+void Widget::OnTyping ( char32_t /*character*/ ) noexcept
+{
+    // NOTHING
+}
+
 Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
     pbr::FontStorage &/*fontStorage*/
 ) noexcept

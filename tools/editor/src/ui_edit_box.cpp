@@ -5,12 +5,20 @@
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
+// FUCK
+#include <logger.hpp>
+
 
 namespace editor {
 
 namespace {
 
 constexpr auto BLINK_PEDIOD = std::chrono::milliseconds ( 500U );
+
+constexpr char32_t CTRL_A = 0x01;
+constexpr char32_t CTRL_C = 0x03;
+constexpr char32_t CTRL_V = 0x16;
+constexpr char32_t CTRL_X = 0x18;
 
 } // end of anonymous namespace
 
@@ -311,12 +319,20 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 
     switch ( key )
     {
+        case eKey::KeyEnd:
+            MoveCursor ( static_cast<int32_t> ( _content.size () ), !modifier.AnyShiftPressed () );
+        break;
+
+        case eKey::KeyHome:
+            MoveCursor ( 0, !modifier.AnyShiftPressed () );
+        break;
+
         case eKey::KeyLeft:
-            MoveCursor ( -1, modifier );
+            OffsetCursor ( -1, modifier );
         break;
 
         case eKey::KeyRight:
-            MoveCursor ( 1, modifier );
+            OffsetCursor ( 1, modifier );
         break;
 
         default:
@@ -330,6 +346,38 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 void UIEditBox::OnMouseLeave () noexcept
 {
     _text.SetColor ( theme::MAIN_COLOR );
+}
+
+void UIEditBox::OnTyping ( char32_t character ) noexcept
+{
+    if ( character >= U' ' ) [[likely]]
+    {
+        Append ( character );
+        return;
+    }
+
+    switch ( character )
+    {
+        case CTRL_A:
+            SelectAll ();
+        break;
+
+        case CTRL_C:
+            Copy ();
+        break;
+
+        case CTRL_V:
+            Paste ();
+        break;
+
+        case CTRL_X:
+            Cut ();
+        break;
+
+        default:
+            // NOTHING
+        break;
+    }
 }
 
 void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
@@ -365,7 +413,61 @@ void UIEditBox::UpdatedRectNormal () noexcept
     _rect.From ( _valueDIV.GetAbsoluteRect () );
 }
 
-void UIEditBox::MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept
+void UIEditBox::Append ( char32_t character ) noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "Append: %llc", character );
+}
+
+void UIEditBox::Copy () noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "Copy" );
+}
+
+void UIEditBox::Cut () noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "Cut" );
+}
+
+void UIEditBox::Paste () noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "Paste" );
+}
+
+void UIEditBox::ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept
+{
+    _cursor = std::clamp ( _cursor + offset, 0, cursorLimit );
+    _cursorDIV.Show ();
+
+    if ( _cursor == _selection ) [[unlikely]]
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+void UIEditBox::MoveCursor ( int32_t cursor, bool cancelSelection ) noexcept
+{
+    _cursor = cursor;
+    int32_t const cases[] = { _selection, cursor };
+    _selection = cases[ static_cast<size_t> ( cancelSelection ) ];
+
+    if ( _cursor == _selection )
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    _cursorDIV.Show ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+void UIEditBox::OffsetCursor ( int32_t offset, KeyModifier modifier ) noexcept
 {
     bool const shift = modifier.AnyShiftPressed ();
     bool const ctrl = modifier.AnyCtrlPressed ();
@@ -406,20 +508,6 @@ void UIEditBox::MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
-    UpdateCursor ();
-    ResetBlinkTimer ();
-}
-
-void UIEditBox::ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept
-{
-    _cursor = std::clamp ( _cursor + offset, 0, cursorLimit );
-    _cursorDIV.Show ();
-
-    if ( _cursor == _selection ) [[unlikely]]
-        _selectionDIV.Hide ();
-    else
-        _selectionDIV.Show ();
-
     UpdateCursor ();
     ResetBlinkTimer ();
 }
@@ -515,6 +603,18 @@ void UIEditBox::ResetBlinkTimer () noexcept
             _cursorDIV.Show ();
         }
     );
+}
+
+void UIEditBox::SelectAll () noexcept
+{
+    _selection = 0;
+    _cursor = static_cast<int32_t> ( _content.size () );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::SwitchToEditState () noexcept

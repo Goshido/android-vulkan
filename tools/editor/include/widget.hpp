@@ -49,6 +49,8 @@ class Widget
         // Must be called by child classes.
         virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;
 
+        virtual void OnTyping ( char32_t character ) noexcept;
+
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
         ) noexcept;

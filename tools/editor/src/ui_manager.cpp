@@ -397,12 +397,10 @@ void UIManager::OnTyping ( Message &&message ) noexcept
     AV_TRACE ( "Typing" )
     _messageQueue.DequeueEnd ();
 
-    if ( !_inputCapture ) [[unlikely]]
-        return;
-
-    // FUCK
-    auto const fff = std::bit_cast<size_t> ( message._params );
-    android_vulkan::LogDebug ( ">>> %llc", static_cast<char32_t> ( fff ) );
+    if ( _inputCapture ) [[likely]]
+    {
+        _inputCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
+    }
 }
 
 void UIManager::OnUIAddWidget ( Message &&message ) noexcept

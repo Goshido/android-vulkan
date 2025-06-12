@@ -77,6 +77,7 @@ class UIEditBox final : public Widget
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnMouseLeave () noexcept override;
+        void OnTyping ( char32_t character ) noexcept override;
 
         void OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectEdit () noexcept;
@@ -84,14 +85,21 @@ class UIEditBox final : public Widget
         void OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectNormal () noexcept;
 
-        void MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept;
+        void Append ( char32_t character ) noexcept;
+        void Copy () noexcept;
+        void Cut () noexcept;
+        void Paste () noexcept;
+
         void ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept;
+        void MoveCursor ( int32_t cursor, bool cancelSelection ) noexcept;
+        void OffsetCursor ( int32_t offset, KeyModifier modifier ) noexcept;
 
         void JumpOverWord ( int32_t offset, bool cancelSelection ) noexcept;
         [[nodiscard]] int32_t JumpOverWordLeft ( int32_t limit ) const noexcept;
         [[nodiscard]] int32_t JumpOverWordRight ( int32_t limit ) const noexcept;
 
         void ResetBlinkTimer () noexcept;
+        void SelectAll () noexcept;
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;

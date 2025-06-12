@@ -375,28 +375,19 @@ void UIEditBox::MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept
 
     if ( shift )
     {
-        if ( ctrl ) [[unlikely]]
+        if ( ctrl )
         {
-            // FUCK
+            JumpOverWord ( offset, false );
             return;
         }
 
-        _cursor = std::clamp ( _cursor + offset, 0, cursorLimit );
-        _cursorDIV.Show ();
-
-        if ( _cursor == _selection ) [[unlikely]]
-            _selectionDIV.Hide ();
-        else
-            _selectionDIV.Show ();
-
-        UpdateCursor ();
-        ResetBlinkTimer ();
+        ModifySelection ( offset, cursorLimit );
         return;
     }
 
     if ( ctrl )
     {
-        // FUCK
+        JumpOverWord ( offset, true );
         return;
     }
 
@@ -417,6 +408,95 @@ void UIEditBox::MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept
     _selectionDIV.Hide ();
     UpdateCursor ();
     ResetBlinkTimer ();
+}
+
+void UIEditBox::ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept
+{
+    _cursor = std::clamp ( _cursor + offset, 0, cursorLimit );
+    _cursorDIV.Show ();
+
+    if ( _cursor == _selection ) [[unlikely]]
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+void UIEditBox::JumpOverWord ( int32_t offset, bool cancelSelection ) noexcept
+{
+    auto const limit = static_cast<int32_t> ( _content.size () );
+    _cursor = std::clamp ( offset < 0 ? JumpOverWordLeft ( limit ) : JumpOverWordRight ( limit ), 0, limit );
+    int32_t const cases[] = { _selection, _cursor };
+    _selection = cases[ static_cast<size_t> ( cancelSelection ) ];
+
+    if ( _cursor == _selection )
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    _cursorDIV.Show ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+int32_t UIEditBox::JumpOverWordLeft ( int32_t limit ) const noexcept
+{
+    if ( limit < 1 ) [[unlikely]]
+        return 0;
+
+    char32_t const* const content = _content.data ();
+    int32_t c = _cursor - 1;
+    eLetterType type = ResolveLetterType ( content[ static_cast<size_t> ( c ) ] );
+
+    while ( ( c >= 0 ) & ( type == eLetterType::Whitespace ) )
+        type = ResolveLetterType ( content[ static_cast<size_t> ( --c ) ] );
+
+    if ( type == eLetterType::Whitespace )
+        return c;
+
+    for ( --c; c >= 0; --c )
+    {
+        if ( type != ResolveLetterType ( content[ static_cast<size_t> ( c ) ] ) )
+        {
+            return ++c;
+        }
+    }
+
+    return c;
+}
+
+int32_t UIEditBox::JumpOverWordRight ( int32_t limit ) const noexcept
+{
+    if ( limit < 1 ) [[unlikely]]
+        return 0;
+
+    char32_t const* const content = _content.data ();
+    int32_t c = _cursor;
+    eLetterType const current = ResolveLetterType ( content[ static_cast<size_t> ( c ) ] );
+    eLetterType next = eLetterType::Whitespace;
+
+    for ( ++c; c < limit; ++c )
+    {
+        if ( next = ResolveLetterType ( content[ static_cast<size_t> ( c ) ] ); next != current )
+        {
+            break;
+        }
+    }
+
+    if ( next != eLetterType::Whitespace )
+        return c;
+
+    for ( ++c; c < limit; ++c )
+    {
+        if ( ResolveLetterType ( content[ static_cast<size_t> ( c ) ] ) != eLetterType::Whitespace )
+        {
+            break;
+        }
+    }
+
+    return c;
 }
 
 void UIEditBox::ResetBlinkTimer () noexcept
@@ -485,6 +565,79 @@ void UIEditBox::UpdateCursor () noexcept
 
     _cursorDIV.GetCSS ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );
     _cursorDIV.Update ();
+}
+
+UIEditBox::eLetterType UIEditBox::ResolveLetterType ( char32_t c ) noexcept
+{
+    switch ( c )
+    {
+        case U' ':
+        return eLetterType::Whitespace;
+
+        case U'-':
+            [[fallthrough]];
+        case U',':
+            [[fallthrough]];
+        case U';':
+            [[fallthrough]];
+        case U':':
+            [[fallthrough]];
+        case U'!':
+            [[fallthrough]];
+        case U'?':
+            [[fallthrough]];
+        case U'.':
+            [[fallthrough]];
+        case U'\'':
+            [[fallthrough]];
+        case U'"':
+            [[fallthrough]];
+        case U'(':
+            [[fallthrough]];
+        case U')':
+            [[fallthrough]];
+        case U'[':
+            [[fallthrough]];
+        case U']':
+            [[fallthrough]];
+        case U'{':
+            [[fallthrough]];
+        case U'}':
+            [[fallthrough]];
+        case U'@':
+            [[fallthrough]];
+        case U'*':
+            [[fallthrough]];
+        case U'/':
+            [[fallthrough]];
+        case U'\\':
+            [[fallthrough]];
+        case U'&':
+            [[fallthrough]];
+        case U'#':
+            [[fallthrough]];
+        case U'%':
+            [[fallthrough]];
+        case U'^':
+            [[fallthrough]];
+        case U'+':
+            [[fallthrough]];
+        case U'<':
+            [[fallthrough]];
+        case U'=':
+            [[fallthrough]];
+        case U'>':
+            [[fallthrough]];
+        case U'|':
+            [[fallthrough]];
+        case U'~':
+            [[fallthrough]];
+        case U'$':
+        return eLetterType::Punctuation;
+
+        default:
+        return eLetterType::AlphaNumeric;
+    }
 }
 
 } // namespace editor

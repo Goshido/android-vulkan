@@ -16,6 +16,13 @@ class UIEditBox final : public Widget
         using MouseMoveHandler = void ( UIEditBox::* ) ( MouseMoveEvent const &event ) noexcept;
         using UpdateRectHandler = void ( UIEditBox::* ) () noexcept;
 
+        enum class eLetterType : uint8_t
+        {
+            AlphaNumeric,
+            Punctuation,
+            Whitespace
+        };
+
     private:
         std::u32string                      _content {};
         pbr::FontStorage::StringMetrics     _metrics {};
@@ -78,12 +85,20 @@ class UIEditBox final : public Widget
         void UpdatedRectNormal () noexcept;
 
         void MoveCursor ( int32_t offset, KeyModifier modifier ) noexcept;
+        void ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept;
+
+        void JumpOverWord ( int32_t offset, bool cancelSelection ) noexcept;
+        [[nodiscard]] int32_t JumpOverWordLeft ( int32_t limit ) const noexcept;
+        [[nodiscard]] int32_t JumpOverWordRight ( int32_t limit ) const noexcept;
+
         void ResetBlinkTimer () noexcept;
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;
 
         void UpdateCursor () noexcept;
+
+        [[nodiscard]] static eLetterType ResolveLetterType ( char32_t c ) noexcept;
 };
 
 } // namespace editor

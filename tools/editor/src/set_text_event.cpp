@@ -4,24 +4,55 @@
 
 namespace editor {
 
-void SetTextEvent::Apply () noexcept
+void SetTextEvent::Execute () noexcept
 {
-    _element.SetText ( _text );
+    if ( std::holds_alternative<std::string_view> ( _text ) )
+    {
+        _element.SetText ( std::get<std::string_view> ( _text ) );
+        return;
+    }
+
+    _element.SetText ( std::get<std::u32string_view> ( _text ) );
 }
 
 SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::string_view text ) noexcept
 {
-    bool const isEmpty = text.empty ();
     size_t const symbols = text.size ();
-    size_t const cases[] = { symbols + 1U, 0U };
+    bool const isEmpty = symbols < 1U;
 
-    constexpr size_t offset = sizeof ( SetTextEvent );
-    auto* data = static_cast<uint8_t*> ( std::malloc ( offset + cases[ static_cast<size_t> ( isEmpty ) ] ) );
+    constexpr size_t eventSize = sizeof ( SetTextEvent );
+
+    size_t const contentSize = symbols + 1U;
+    size_t const cases[] = { eventSize + contentSize, eventSize };
+    auto* data = static_cast<uint8_t*> ( std::malloc ( cases[ static_cast<size_t> ( isEmpty ) ] ) );
+    auto* contentData = reinterpret_cast<char*> ( data + eventSize );
 
     if ( !isEmpty ) [[likely]]
-        std::memcpy ( data + offset, text.data (), cases[ 0U ] );
+        std::memcpy ( contentData, text.data (), contentSize );
 
-    return new ( data ) SetTextEvent ( element, { reinterpret_cast<char const*> ( data + offset ), symbols } );
+    return new ( data ) SetTextEvent ( element, { contentData, symbols } );
+}
+
+SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::u32string_view text ) noexcept
+{
+    size_t const symbols = text.size ();
+    bool const isEmpty = symbols < 1U;
+
+    constexpr size_t eventSize = sizeof ( SetTextEvent );
+
+    // Respect hardware natural alignment of the char32_t type.
+    constexpr size_t natural = sizeof ( char32_t );
+    constexpr size_t alighnedOffset = ( eventSize + natural - 1U ) / natural * natural;
+
+    size_t const contentSize = sizeof ( char32_t ) * ( symbols + 1U );
+    size_t const cases[] = { alighnedOffset + contentSize, eventSize };
+    auto* data = static_cast<uint8_t*> ( std::malloc ( cases[ static_cast<size_t> ( isEmpty ) ] ) );
+    auto* contentData = reinterpret_cast<char32_t*> ( data + alighnedOffset );
+
+    if ( !isEmpty ) [[likely]]
+        std::memcpy ( contentData, text.data (), contentSize );
+
+    return new ( data ) SetTextEvent ( element, { contentData, symbols } );
 }
 
 void SetTextEvent::Destroy ( SetTextEvent &event ) noexcept
@@ -30,6 +61,13 @@ void SetTextEvent::Destroy ( SetTextEvent &event ) noexcept
 }
 
 SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::string_view text ) noexcept:
+    _element ( element ),
+    _text ( text )
+{
+    // NOTHING
+}
+
+SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::u32string_view text ) noexcept:
     _element ( element ),
     _text ( text )
 {

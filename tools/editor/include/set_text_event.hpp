@@ -10,8 +10,8 @@ namespace editor {
 class SetTextEvent final
 {
     private:
-        pbr::TextUIElement      &_element;
-        std::string_view        _text {};
+        pbr::TextUIElement                                      &_element;
+        std::variant<std::string_view, std::u32string_view>     _text {};
 
     public:
         SetTextEvent () = delete;
@@ -24,13 +24,15 @@ class SetTextEvent final
 
         ~SetTextEvent () = delete;
 
-        void Apply () noexcept;
+        void Execute () noexcept;
 
         [[nodiscard]] static SetTextEvent* Create ( pbr::TextUIElement &element, std::string_view text ) noexcept;
+        [[nodiscard]] static SetTextEvent* Create ( pbr::TextUIElement &element, std::u32string_view text ) noexcept;
         static void Destroy ( SetTextEvent &event ) noexcept;
 
     private:
         explicit SetTextEvent ( pbr::TextUIElement &element, std::string_view text ) noexcept;
+        explicit SetTextEvent ( pbr::TextUIElement &element, std::u32string_view text ) noexcept;
 };
 
 } // namespace editor

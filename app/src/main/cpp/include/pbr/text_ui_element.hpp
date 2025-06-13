@@ -40,6 +40,7 @@ class TextUIElement final : public UIElement
             GXVec2                          _penOut {};
             size_t                          _vertices = 0U;
 
+            void Clear () noexcept;
             [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
         };
 
@@ -59,6 +60,8 @@ class TextUIElement final : public UIElement
 
             std::vector<UIVertex>           _vertices {};
             size_t                          _vertexBufferBytes = 0U;
+
+            void Clear () noexcept;
 
             [[nodiscard]] bool Run ( UpdateInfo &info,
                 TextAlignProperty::eValue horizontal,
@@ -118,6 +121,7 @@ class TextUIElement final : public UIElement
         void SetColor ( GXColorUNORM color ) noexcept;
         void SetText ( char const* text ) noexcept;
         void SetText ( std::string_view text ) noexcept;
+        void SetText ( std::u32string_view text ) noexcept;
 
     private:
         void ApplyLayout ( ApplyInfo &info ) noexcept override;

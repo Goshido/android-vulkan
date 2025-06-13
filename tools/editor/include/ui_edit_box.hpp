@@ -88,6 +88,7 @@ class UIEditBox final : public Widget
         void Append ( char32_t character ) noexcept;
         void Copy () noexcept;
         void Cut () noexcept;
+        void Erase ( int32_t offset ) noexcept;
         void Paste () noexcept;
 
         void ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept;
@@ -98,6 +99,9 @@ class UIEditBox final : public Widget
         [[nodiscard]] int32_t JumpOverWordLeft ( int32_t limit ) const noexcept;
         [[nodiscard]] int32_t JumpOverWordRight ( int32_t limit ) const noexcept;
 
+        // The method returns true if selected content presents. Otherwise the method returns false.
+        [[nodiscard]] bool RemoveSelectedContent () noexcept;
+
         void ResetBlinkTimer () noexcept;
         void SelectAll () noexcept;
 
@@ -105,6 +109,7 @@ class UIEditBox final : public Widget
         void SwitchToNormalState () noexcept;
 
         void UpdateCursor () noexcept;
+        void UpdateMetrics () noexcept;
 
         [[nodiscard]] static eLetterType ResolveLetterType ( char32_t c ) noexcept;
 };

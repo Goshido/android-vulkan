@@ -48,4 +48,15 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
     );
 }
 
+void TextUIElement::SetText ( std::u32string_view text ) noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UISetText,
+            ._params = SetTextEvent::Create ( *_text, text ),
+            ._serialNumber = 0U
+        }
+    );
+}
+
 } // namespace editor

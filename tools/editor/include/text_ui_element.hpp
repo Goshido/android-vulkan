@@ -34,6 +34,7 @@ class TextUIElement final : public UIElement
 
         void SetColor ( pbr::ColorValue const &color ) noexcept;
         void SetText ( std::string_view text ) noexcept;
+        void SetText ( std::u32string_view text ) noexcept;
 };
 
 } // namespace editor

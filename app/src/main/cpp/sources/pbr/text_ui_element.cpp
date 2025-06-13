@@ -18,6 +18,13 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
+void TextUIElement::ApplyLayoutCache::Clear () noexcept
+{
+    _isTextChanged = true;
+    _lineHeights.clear ();
+    _vertices = 0U;
+}
+
 bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 {
     if ( _lineHeights.empty () )
@@ -43,6 +50,18 @@ bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+void TextUIElement::SubmitCache::Clear () noexcept
+{
+    _isTextChanged = true;
+    _parentLineHeights.clear ();
+
+    _positions.clear ();
+    _positionBufferBytes = 0U;
+
+    _vertices.clear ();
+    _vertexBufferBytes = 0U;
+}
 
 bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
     TextAlignProperty::eValue horizontal,
@@ -174,6 +193,26 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
     _glyphs.resize ( _text.size () );
     _applyLayoutCache._isTextChanged = true;
     _submitCache._isTextChanged = true;
+
+    if ( !text.empty () ) [[likely]]
+        return;
+
+    _submitCache.Clear ();
+    _applyLayoutCache.Clear ();
+}
+
+void TextUIElement::SetText ( std::u32string_view text ) noexcept
+{
+    _text = text;
+    _glyphs.resize ( _text.size () );
+    _applyLayoutCache._isTextChanged = true;
+    _submitCache._isTextChanged = true;
+
+    if ( !text.empty () ) [[likely]]
+        return;
+
+    _submitCache.Clear ();
+    _applyLayoutCache.Clear ();
 }
 
 void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept

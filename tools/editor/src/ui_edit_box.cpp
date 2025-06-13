@@ -2,6 +2,7 @@
 #include <cursor.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
+#include <set_text_event.hpp>
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
@@ -291,14 +292,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     _cursor = 2;
     _selection = 1;
 
-    pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
-
-    fontStorage.GetStringMetrics ( _metrics,
-        css._fontFile,
-        static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
-        _content
-    );
-
+    UpdateMetrics ();
     UpdateCursor ();
     SwitchToEditState ();
 }
@@ -319,6 +313,14 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 
     switch ( key )
     {
+        case eKey::KeyBackspace:
+            Erase ( -1 );
+        break;
+
+        case eKey::KeyDel:
+            Erase ( 0 );
+        break;
+
         case eKey::KeyEnd:
             MoveCursor ( static_cast<int32_t> ( _content.size () ), !modifier.AnyShiftPressed () );
         break;
@@ -415,26 +417,93 @@ void UIEditBox::UpdatedRectNormal () noexcept
 
 void UIEditBox::Append ( char32_t character ) noexcept
 {
-    // FUCK
-    android_vulkan::LogDebug ( "Append: %llc", character );
+    std::ignore = RemoveSelectedContent ();
+
+    _content.insert ( static_cast<size_t> ( _cursor ), 1U, character );
+    _text.SetText ( _content );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+
+    ++_cursor;
+    _selection = _cursor;
+
+    UpdateMetrics ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::Copy () noexcept
 {
+    if ( _cursor == _selection ) [[unlikely]]
+        return;
+
     // FUCK
     android_vulkan::LogDebug ( "Copy" );
 }
 
 void UIEditBox::Cut () noexcept
 {
+    if ( !RemoveSelectedContent () ) [[unlikely]]
+        return;
+
+    _text.SetText ( _content );
+
     // FUCK
     android_vulkan::LogDebug ( "Cut" );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+
+    _selection = _cursor;
+
+    UpdateMetrics ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
+}
+
+void UIEditBox::Erase ( int32_t offset ) noexcept
+{
+    if ( !RemoveSelectedContent () ) [[likely]]
+    {
+        int32_t const c = _cursor + offset;
+
+        if ( ( c < 0 ) | ( c >= static_cast<int32_t> ( _content.size () ) ) ) [[unlikely]]
+            return;
+
+        _cursor = c;
+        _content.erase ( static_cast<size_t> ( c ), 1U );
+    }
+
+    _text.SetText ( _content );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+
+    _selection = _cursor;
+
+    UpdateMetrics ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::Paste () noexcept
 {
+    std::ignore = RemoveSelectedContent ();
+
     // FUCK
     android_vulkan::LogDebug ( "Paste" );
+
+    _text.SetText ( _content );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+
+    _selection = _cursor;
+
+    UpdateMetrics ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept
@@ -587,6 +656,21 @@ int32_t UIEditBox::JumpOverWordRight ( int32_t limit ) const noexcept
     return c;
 }
 
+bool UIEditBox::RemoveSelectedContent () noexcept
+{
+    if ( _cursor == _selection ) [[likely]]
+        return false;
+
+    int32_t const cases[ 2U ][ 2U ] = { { _cursor, _selection }, { _selection, _cursor } };
+    auto const [ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+    _cursor = from;
+
+    auto const begin = _content.cbegin ();
+    using Offset = decltype ( begin )::difference_type;
+    _content.erase ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) );
+    return true;
+}
+
 void UIEditBox::ResetBlinkTimer () noexcept
 {
     _blink = std::make_unique<Timer> ( _messageQueue,
@@ -649,14 +733,17 @@ void UIEditBox::SwitchToNormalState () noexcept
 
 void UIEditBox::UpdateCursor () noexcept
 {
-    auto const c = _metrics[ static_cast<size_t> ( _cursor ) ];
-    auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
+    GXVec3 offsets ( 0.0F, 0.0F, 0.0F );
 
-    float const cases[ 2U ][ 2U ] = { { c, s }, { s, c } };
-    auto const &[ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+    if ( !_content.empty () )
+    {
+        auto const c = _metrics[ static_cast<size_t> ( _cursor ) ];
+        auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
 
-    GXVec3 offsets ( from, to - from, c );
-    offsets.Multiply ( offsets, pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX );
+        float const cases[ 2U ][ 2U ] = { { c, s }, { s, c } };
+        auto const [ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+        offsets.Multiply ( GXVec3 ( from, to - from, c ), pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX );
+    }
 
     pbr::CSSComputedValues &selectionCSS = _selectionDIV.GetCSS ();
     selectionCSS._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 0U ] );
@@ -665,6 +752,17 @@ void UIEditBox::UpdateCursor () noexcept
 
     _cursorDIV.GetCSS ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );
     _cursorDIV.Update ();
+}
+
+void UIEditBox::UpdateMetrics () noexcept
+{
+    pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
+
+    _fontStorage.GetStringMetrics ( _metrics,
+        css._fontFile,
+        static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
+        _content
+    );
 }
 
 UIEditBox::eLetterType UIEditBox::ResolveLetterType ( char32_t c ) noexcept

@@ -1205,7 +1205,7 @@ void RenderSession::OnUISetText ( Message &&message ) noexcept
     _messageQueue.DequeueEnd ();
 
     auto &event = *static_cast<SetTextEvent*> ( message._params );
-    event.Apply ();
+    event.Execute ();
     SetTextEvent::Destroy ( event );
 }
 

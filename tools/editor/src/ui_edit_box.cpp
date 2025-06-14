@@ -438,19 +438,27 @@ void UIEditBox::Copy () noexcept
     if ( _cursor == _selection ) [[unlikely]]
         return;
 
-    // FUCK
-    android_vulkan::LogDebug ( "Copy" );
+    auto const [from, to] = GetSelection ();
+    auto const begin = _content.cbegin ();
+    using Offset = decltype ( begin )::difference_type;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::WriteClipboard,
+            ._params = new std::u32string ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void UIEditBox::Cut () noexcept
 {
+    Copy ();
+
     if ( !RemoveSelectedContent () ) [[unlikely]]
         return;
 
     _text.SetText ( _content );
-
-    // FUCK
-    android_vulkan::LogDebug ( "Cut" );
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -504,6 +512,13 @@ void UIEditBox::Paste () noexcept
     UpdateMetrics ();
     UpdateCursor ();
     ResetBlinkTimer ();
+}
+
+std::pair<int32_t, int32_t> UIEditBox::GetSelection () const noexcept
+{
+    int32_t const cases[ 2U ][ 2U ] = { { _cursor, _selection }, { _selection, _cursor } };
+    auto const [from, to] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+    return std::make_pair ( from, to );
 }
 
 void UIEditBox::ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept
@@ -562,8 +577,7 @@ void UIEditBox::OffsetCursor ( int32_t offset, KeyModifier modifier ) noexcept
         return;
     }
 
-    int32_t const rangeCases[ 2U ][ 2U ] = { { _cursor, _selection }, { _selection, _cursor } };
-    auto const &[ from, to ] = rangeCases[ static_cast<size_t> ( _cursor > _selection ) ];
+    auto const [from, to] = GetSelection ();
     int32_t const borderCases[] = { from, to };
 
     int32_t const cursorCases[] =
@@ -661,8 +675,7 @@ bool UIEditBox::RemoveSelectedContent () noexcept
     if ( _cursor == _selection ) [[likely]]
         return false;
 
-    int32_t const cases[ 2U ][ 2U ] = { { _cursor, _selection }, { _selection, _cursor } };
-    auto const [ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+    auto const [from, to] = GetSelection ();
     _cursor = from;
 
     auto const begin = _content.cbegin ();
@@ -741,7 +754,7 @@ void UIEditBox::UpdateCursor () noexcept
         auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
 
         float const cases[ 2U ][ 2U ] = { { c, s }, { s, c } };
-        auto const [ from, to ] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
+        auto const [from, to] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
         offsets.Multiply ( GXVec3 ( from, to - from, c ), pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX );
     }
 

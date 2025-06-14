@@ -237,6 +237,10 @@ void Editor::EventLoop () noexcept
                 OnWindowVisibilityChanged ( std::move ( message ) );
             break;
 
+            case eMessageType::WriteClipboard:
+                OnWriteClipboard ( std::move ( message ) );
+            break;
+
             default:
                 lastRefund = message._serialNumber;
                 _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
@@ -399,8 +403,19 @@ void Editor::OnShutdown () noexcept
 
 void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
 {
+    AV_TRACE ( "Main window visibility changed" )
     _messageQueue.DequeueEnd ();
     _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+}
+
+void Editor::OnWriteClipboard ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Write clipboard" )
+    _messageQueue.DequeueEnd ();
+
+    auto const* string = static_cast<std::u32string const*> ( message._params );
+    _mainWindow.WriteClipboard ( *string );
+    delete string;
 }
 
 void Editor::ScheduleEventLoop () noexcept

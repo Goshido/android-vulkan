@@ -7,6 +7,7 @@
 #include <mouse_key_event.hpp>
 #include <mouse_move_event.hpp>
 #include <os_utils.hpp>
+#include <pbr/utf16_parser.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -333,6 +334,22 @@ HWND MainWindow::GetNativeWindow () const noexcept
     return _hwnd;
 }
 
+void MainWindow::WriteClipboard ( std::u32string const &string ) const noexcept
+{
+    std::u16string const u16 = pbr::UTF16Parser::ToU16String ( string );
+    size_t const size = ( u16.size () + 1U ) * sizeof ( char16_t );
+
+    HGLOBAL block = GlobalAlloc ( GMEM_MOVEABLE, static_cast<SIZE_T> ( size ) );
+    auto clipData = static_cast<HANDLE> ( GlobalLock ( block ) );
+    std::memcpy ( clipData, u16.c_str (), size );
+    GlobalUnlock ( block );
+
+    OpenClipboard ( nullptr );
+    EmptyClipboard ();
+    SetClipboardData ( CF_UNICODETEXT, clipData );
+    CloseClipboard ();
+}
+
 void MainWindow::OnChar ( WPARAM wParam ) noexcept
 {
     AV_TRACE ( "Main window: character" )
@@ -340,51 +357,28 @@ void MainWindow::OnChar ( WPARAM wParam ) noexcept
     if ( !_handleTyping ) [[likely]]
         return;
 
-    /*
-    Based on https://en.wikipedia.org/wiki/UTF-16#U+0000_to_U+D7FF_and_U+E000_to_U+FFFF
-
-    W1 = 0000'0000'0000'0000'1101'10yy'yyyy'yyyy      0xD800 + yy'yyyy'yyyy
-    W2 = 0000'0000'0000'0000'1101'11xx'xxxx'xxxx      0xDC00 + xx'xxxx'xxxx
-    U' = 0000'0000'0000'yyyy'yyyy'yyxx'xxxx'xxxx      U - 0x1'0000
-         0000'0000'0000'0001'0000'0000'0000'0000      0x1'0000
-    U  = 0000'0000'000?'????'yyyy'yyxx'xxxx'xxxx      U' + 0x1'0000
-    */
-
-    constexpr WPARAM extractSurrogateMask = 0b1111'1100'0000'0000U;
-    constexpr uint32_t extractCodepointMask = 0b0000'0011'1111'1111U;
-    constexpr WPARAM hiSurrogateMask = 0b1101'1000'0000'0000U;
-    constexpr WPARAM lowSurrogateMask = 0b1101'1100'0000'0000U;
-
-    constexpr auto toCodepoint = [] ( uint32_t highSurrogate, WPARAM lowSurrogate ) noexcept -> size_t {
-        return static_cast<size_t> (
-            0b0000'0000'0000'0001'0000'0000'0000'0000U +
-            ( 
-                ( static_cast<uint32_t> ( lowSurrogate ) & extractCodepointMask ) |
-                ( ( highSurrogate & extractCodepointMask ) << 10U )
-            )
-        );
-    };
-
     size_t codepoint;
 
-    switch ( wParam & extractSurrogateMask )
+    switch ( auto const w = static_cast<char16_t> ( wParam ); pbr::UTF16Parser::Classify ( w ) )
     {
-        case hiSurrogateMask:
-            _highSurrogate = std::optional<uint32_t> { static_cast<uint32_t> ( wParam ) };
+        case pbr::UTF16Parser::eSurrogate::Hi:
+            _highSurrogate = std::optional<char16_t> { w };
         return;
 
-        case lowSurrogateMask:
+        case pbr::UTF16Parser::eSurrogate::Low:
             if ( !_highSurrogate ) [[unlikely]]
             {
                 AV_ASSERT ( false )
                 return;
             }
 
-            codepoint = toCodepoint ( *_highSurrogate, wParam );
+            codepoint = static_cast<size_t> ( pbr::UTF16Parser::ToChar32 ( *_highSurrogate, w ) );
         break;
 
+        case pbr::UTF16Parser::eSurrogate::None:
+            [[fallthrough]];
         default:
-            codepoint = static_cast<size_t> ( wParam );
+            codepoint = static_cast<size_t> ( w );
         break;
     }
 

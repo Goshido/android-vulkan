@@ -736,6 +736,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\uniform_pool.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\uniform_pool.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf16_parser.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\utf8_parser.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\utf8_parser.obj</ObjectFileName>
@@ -950,6 +958,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_pool.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf16_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />

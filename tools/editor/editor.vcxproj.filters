@@ -303,6 +303,9 @@
     <ClCompile Include="src\keyboard_key_event.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf16_parser.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -646,6 +649,9 @@
     </ClInclude>
     <ClInclude Include="include\keyboard_key_event.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf16_parser.hpp">
+      <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

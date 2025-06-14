@@ -29,6 +29,7 @@ enum class eMessageType : uint32_t
     MouseButtonDown,
     MouseButtonUp,
     MouseMoved,
+    ReadClipboard,
     RecreateSwapchain,
     ReleaseInput,
     RenderFrame,
@@ -52,6 +53,7 @@ enum class eMessageType : uint32_t
     UIUpdateElement,
     VulkanInitReport,
     WindowVisibilityChanged,
+    WriteClipboard,
     Unknown
 };
 

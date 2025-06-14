@@ -22,7 +22,7 @@ class MainWindow final
         ATOM                                    _classID = 0;
         std::unordered_map<eCursor, HCURSOR>    _cursors {};
         bool                                    _handleTyping = false;
-        std::optional<uint32_t>                 _highSurrogate = std::nullopt;
+        std::optional<char16_t>                 _highSurrogate = std::nullopt;
         HWND                                    _hwnd = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
         size_t                                  _mouseMoveEventID = 0U;
@@ -50,6 +50,7 @@ class MainWindow final
         void ChangeCursor ( eCursor cursor ) noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] HWND GetNativeWindow () const noexcept;
+        void WriteClipboard ( std::u32string const &string ) const noexcept;
 
     private:
         void OnChar ( WPARAM wParam ) noexcept;

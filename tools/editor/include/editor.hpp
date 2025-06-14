@@ -69,6 +69,7 @@ class Editor final
         void OnRunEvent () noexcept;
         void OnShutdown () noexcept;
         void OnWindowVisibilityChanged ( Message &&message ) noexcept;
+        void OnWriteClipboard ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;

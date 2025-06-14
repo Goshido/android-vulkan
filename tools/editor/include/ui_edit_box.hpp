@@ -91,6 +91,7 @@ class UIEditBox final : public Widget
         void Erase ( int32_t offset ) noexcept;
         void Paste () noexcept;
 
+        [[nodiscard]] std::pair<int32_t, int32_t> GetSelection () const noexcept;
         void ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept;
         void MoveCursor ( int32_t cursor, bool cancelSelection ) noexcept;
         void OffsetCursor ( int32_t offset, KeyModifier modifier ) noexcept;

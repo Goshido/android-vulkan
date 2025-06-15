@@ -37,6 +37,7 @@ class UTF16Parser final
         [[nodiscard]] static eSurrogate Classify ( char16_t c ) noexcept;
         [[nodiscard]] static char32_t ToChar32 ( char16_t highSurrogate, char16_t lowSurrogate ) noexcept;
         [[nodiscard]] static std::u16string ToU16String ( std::u32string_view string ) noexcept;
+        [[nodiscard]] static std::u32string ToU32String ( std::u16string_view string ) noexcept;
 };
 
 } // namespace pbr

@@ -206,7 +206,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         _valueDIV,
 
         {
-            ._backgroundColor = pbr::ColorValue ( 106U, 172U, 0U, 51U ),
+            ._backgroundColor = pbr::ColorValue ( 255U, 255U, 255U, 26U ),
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
             ._left = theme::ZERO_LENGTH,
@@ -273,11 +273,11 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );
 
-    _valueDIV.AppendChildElement ( _cursorDIV );
-    _valueDIV.AppendChildElement ( _selectionDIV );
-
     _textDIV.AppendChildElement ( _text );
     _valueDIV.AppendChildElement ( _textDIV );
+
+    _valueDIV.AppendChildElement ( _selectionDIV );
+    _valueDIV.AppendChildElement ( _cursorDIV );
 
     _columnDIV.AppendChildElement ( _valueDIV );
 
@@ -289,11 +289,8 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
 
     // FUCK
     // SwitchToNormalState ();
-    _cursor = 2;
-    _selection = 1;
 
     UpdateMetrics ();
-    UpdateCursor ();
     SwitchToEditState ();
 }
 
@@ -305,6 +302,24 @@ void UIEditBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 void UIEditBox::UpdatedRect () noexcept
 {
     ( this->*_updateRect ) ();
+}
+
+void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
+{
+    std::ignore = RemoveSelectedContent ();
+
+    _content.insert ( static_cast<size_t> ( _cursor ), text );
+    _cursor += static_cast<int32_t> ( text.size () );
+    _text.SetText ( _content );
+
+    _cursorDIV.Show ();
+    _selectionDIV.Hide ();
+
+    _selection = _cursor;
+
+    UpdateMetrics ();
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
@@ -497,21 +512,13 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
 
 void UIEditBox::Paste () noexcept
 {
-    std::ignore = RemoveSelectedContent ();
-
-    // FUCK
-    android_vulkan::LogDebug ( "Paste" );
-
-    _text.SetText ( _content );
-
-    _cursorDIV.Show ();
-    _selectionDIV.Hide ();
-
-    _selection = _cursor;
-
-    UpdateMetrics ();
-    UpdateCursor ();
-    ResetBlinkTimer ();
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ReadClipboardRequest,
+            ._params = this,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 std::pair<int32_t, int32_t> UIEditBox::GetSelection () const noexcept
@@ -722,6 +729,7 @@ void UIEditBox::SwitchToEditState () noexcept
     _onMouseMove = &UIEditBox::OnMouseMoveEdit;
     _updateRect = &UIEditBox::UpdatedRectEdit;
 
+    UpdateCursor ();
     ResetBlinkTimer ();
 
     _messageQueue.EnqueueBack (

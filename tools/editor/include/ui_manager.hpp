@@ -55,6 +55,7 @@ class UIManager final
         void OnMouseButtonDown ( Message &&message ) noexcept;
         void OnMouseButtonUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
+        void OnReadClipboardResponse ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
         void OnStartWidgetCaptureInput ( Message &&message ) noexcept;
         void OnStopWidgetCaptureInput () noexcept;

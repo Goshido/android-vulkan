@@ -50,6 +50,8 @@ class MainWindow final
         void ChangeCursor ( eCursor cursor ) noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] HWND GetNativeWindow () const noexcept;
+
+        void ReadClipboard () const noexcept;
         void WriteClipboard ( std::u32string const &string ) const noexcept;
 
     private:

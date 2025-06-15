@@ -75,6 +75,8 @@ class UIEditBox final : public Widget
         void UpdatedRect () noexcept override;
 
     private:
+        void ApplyClipboard ( std::u32string const &text ) noexcept override;
+
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnMouseLeave () noexcept override;
         void OnTyping ( char32_t character ) noexcept override;

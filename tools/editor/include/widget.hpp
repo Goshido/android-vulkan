@@ -39,6 +39,8 @@ class Widget
 
         virtual ~Widget () = default;
 
+        virtual void ApplyClipboard ( std::u32string const &text ) noexcept;
+
         virtual void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept;
         virtual void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept;
 

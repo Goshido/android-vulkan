@@ -221,6 +221,10 @@ void Editor::EventLoop () noexcept
                 OnModuleStopped ();
             break;
 
+            case eMessageType::ReadClipboardRequest:
+                OnReadClipboardRequest ();
+            break;
+
             case eMessageType::RecreateSwapchain:
                 OnRecreateSwapchain ();
             break;
@@ -290,6 +294,13 @@ void Editor::OnModuleStopped () noexcept
 {
     _messageQueue.DequeueEnd ();
     --_runningModules;
+}
+
+void Editor::OnReadClipboardRequest () noexcept
+{
+    AV_TRACE ( "Read clipboard request" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ReadClipboard ();
 }
 
 void Editor::OnRecreateSwapchain () noexcept

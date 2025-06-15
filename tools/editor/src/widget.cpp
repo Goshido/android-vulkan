@@ -4,6 +4,11 @@
 
 namespace editor {
 
+void Widget::ApplyClipboard ( std::u32string const &/*text*/ ) noexcept
+{
+    // NOTHING
+}
+
 void Widget::OnKeyboardKeyDown ( eKey /*key*/, KeyModifier /*modifier*/ ) noexcept
 {
     // NOTHING

@@ -334,6 +334,29 @@ HWND MainWindow::GetNativeWindow () const noexcept
     return _hwnd;
 }
 
+void MainWindow::ReadClipboard () const noexcept
+{
+    if ( !IsClipboardFormatAvailable ( CF_UNICODETEXT ) || !OpenClipboard ( nullptr ) )
+        return;
+
+    HGLOBAL data = GetClipboardData ( CF_UNICODETEXT );
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::ReadClipboardResponse,
+
+            ._params = new std::u32string (
+                pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) )
+            ),
+
+            ._serialNumber = 0U
+        }
+    );
+
+    GlobalUnlock ( data );
+    CloseClipboard ();
+}
+
 void MainWindow::WriteClipboard ( std::u32string const &string ) const noexcept
 {
     std::u16string const u16 = pbr::UTF16Parser::ToU16String ( string );

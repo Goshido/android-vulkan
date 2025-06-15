@@ -133,6 +133,10 @@ void UIManager::EventLoop () noexcept
                 OnMouseMoved ( std::move ( message ) );
             break;
 
+            case eMessageType::ReadClipboardResponse:
+                OnReadClipboardResponse ( std::move ( message ) );
+            break;
+
             case eMessageType::Shutdown:
                 OnShutdown ( std::move ( message ) );
             return;
@@ -341,6 +345,18 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     }
 
     delete event;
+}
+
+void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Read clipboard response" )
+    _messageQueue.DequeueEnd ();
+    auto const* text = static_cast<std::u32string const*> ( message._params );
+
+    if ( _inputCapture ) [[likely]]
+        _inputCapture->ApplyClipboard ( *text );
+
+    delete text;
 }
 
 void UIManager::OnShutdown ( Message &&refund ) noexcept

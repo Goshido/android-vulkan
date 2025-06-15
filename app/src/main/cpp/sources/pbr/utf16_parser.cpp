@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <pbr/utf16_parser.hpp>
 
 
@@ -93,6 +94,44 @@ std::u16string UTF16Parser::ToU16String ( std::u32string_view string ) noexcept
 
         auto const selector = static_cast<size_t> ( ( u >= SURROGATE_RANGE_FROM ) & ( u <= SURROGATE_RANGE_TO ) );
         result.append ( cases[ selector ], 1U + selector );
+    }
+
+    return result;
+}
+
+std::u32string UTF16Parser::ToU32String ( std::u16string_view string ) noexcept
+{
+    size_t const count = string.size ();
+
+    if ( count < 1U ) [[unlikely]]
+        return {};
+
+    std::u32string result {};
+
+    // Worst case estimation.
+    result.reserve ( count );
+
+    char16_t const* p = string.data ();
+    char16_t const* const end = p + count;
+
+    for ( ; p < end; ++p )
+    {
+        switch ( char16_t const u16 = *p; Classify ( u16 ) )
+        {
+            case eSurrogate::Hi:
+                result.append ( 1U, ToChar32 ( u16, *++p ) );
+            break;
+
+            case eSurrogate::None:
+                result.append ( 1U, static_cast<char32_t> ( u16 ) );
+            break;
+
+            case eSurrogate::Low:
+                [[fallthrough]];
+            default:
+                AV_ASSERT ( false )
+            return {};
+        }
     }
 
     return result;

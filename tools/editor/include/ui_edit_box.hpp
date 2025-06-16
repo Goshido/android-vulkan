@@ -13,6 +13,7 @@ namespace editor {
 class UIEditBox final : public Widget
 {
     private:
+        using MouseButtonHandler = void ( UIEditBox::* ) ( MouseButtonEvent const &event ) noexcept;
         using MouseMoveHandler = void ( UIEditBox::* ) ( MouseMoveEvent const &event ) noexcept;
         using UpdateRectHandler = void ( UIEditBox::* ) () noexcept;
 
@@ -47,6 +48,8 @@ class UIEditBox final : public Widget
         int32_t                             _selection = 0;
 
         size_t                              _eventID = 0U;
+        MouseButtonHandler                  _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
+        MouseButtonHandler                  _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
         MouseMoveHandler                    _onMouseMove = &UIEditBox::OnMouseMoveNormal;
         UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
 
@@ -71,19 +74,24 @@ class UIEditBox final : public Widget
 
         ~UIEditBox () = default;
 
+        void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
+        void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
     private:
         void ApplyClipboard ( std::u32string const &text ) noexcept override;
-
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnMouseLeave () noexcept override;
         void OnTyping ( char32_t character ) noexcept override;
 
+        void OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpEdit ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectEdit () noexcept;
 
+        void OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectNormal () noexcept;
 

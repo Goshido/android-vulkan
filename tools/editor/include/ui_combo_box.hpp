@@ -31,7 +31,7 @@ class UIComboBox final : public Widget
     private:
         constexpr static size_t NO_INDEX = std::numeric_limits<size_t>::max ();
 
-        using MouseKeyHandler = void ( UIComboBox::* ) ( MouseKeyEvent const &event ) noexcept;
+        using MouseButtonHandler = void ( UIComboBox::* ) ( MouseButtonEvent const &event ) noexcept;
         using MouseMoveHandler = void ( UIComboBox::* ) ( MouseMoveEvent const &event ) noexcept;
         using UpdateRectHandler = void ( UIComboBox::* ) () noexcept;
 
@@ -108,10 +108,10 @@ class UIComboBox final : public Widget
                     VkExtent2D const &viewport ) noexcept override;
 
                 // Returns true if popup menu should be closed. Otherwise the method returns false.
-                [[nodiscard]] bool HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept;
+                [[nodiscard]] bool HandleMouseButtonDown ( MouseButtonEvent const &event ) noexcept;
 
                 // Returns true if popup menu should be closed. Otherwise the method returns false.
-                [[nodiscard]] bool HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
+                [[nodiscard]] bool HandleMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
 
                 [[nodiscard]] Rect const &HandleUpdatedRect () noexcept;
         };
@@ -140,8 +140,8 @@ class UIComboBox final : public Widget
         Items const                                 _items;
         size_t                                      _selected = NO_INDEX;
 
-        MouseKeyHandler                             _onMouseKeyDown = &UIComboBox::OnMouseKeyDownNormal;
-        MouseKeyHandler                             _onMouseKeyUp = &UIComboBox::OnMouseKeyUpNormal;
+        MouseButtonHandler                          _onMouseKeyDown = &UIComboBox::OnMouseButtonDownNormal;
+        MouseButtonHandler                          _onMouseKeyUp = &UIComboBox::OnMouseButtonUpNormal;
         MouseMoveHandler                            _onMouseMove = &UIComboBox::OnMouseMoveNormal;
         UpdateRectHandler                           _updateRect = &UIComboBox::UpdatedRectNormal;
 
@@ -167,8 +167,8 @@ class UIComboBox final : public Widget
 
         ~UIComboBox () override = default;
 
-        void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
+        void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
@@ -177,13 +177,13 @@ class UIComboBox final : public Widget
     private:
         void OnMouseLeave () noexcept override;
 
-        void OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept;
-        void OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept;
+        void OnMouseButtonDownMenu ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpMenu ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveMenu ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectMenu () noexcept;
 
-        void OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept;
-        void OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept;
+        void OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectNormal () noexcept;
 

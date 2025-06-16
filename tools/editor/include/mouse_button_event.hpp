@@ -1,5 +1,5 @@
-#ifndef EDITOR_MOUSE_KEY_EVENT_HPP
-#define EDITOR_MOUSE_KEY_EVENT_HPP
+#ifndef EDITOR_MOUSE_BUTTON_EVENT_HPP
+#define EDITOR_MOUSE_BUTTON_EVENT_HPP
 
 
 #include "keys.hpp"
@@ -7,7 +7,7 @@
 
 namespace editor {
 
-struct MouseKeyEvent final
+struct MouseButtonEvent final
 {
     int32_t     _x = 0;
     int32_t     _y = 0;
@@ -17,4 +17,4 @@ struct MouseKeyEvent final
 } // namespace editor
 
 
-#endif // EDITOR_MOUSE_KEY_EVENT_HPP
+#endif // EDITOR_MOUSE_BUTTON_EVENT_HPP

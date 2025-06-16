@@ -161,7 +161,7 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent,
     parent.AppendChildElement ( _base );
 }
 
-void UICloseButton::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
+void UICloseButton::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key == eKey::LeftMouseButton ) [[likely]]
     {
@@ -169,7 +169,7 @@ void UICloseButton::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
     }
 }
 
-void UICloseButton::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
+void UICloseButton::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key == eKey::LeftMouseButton ) [[likely]]
     {

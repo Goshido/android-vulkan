@@ -243,12 +243,12 @@ UISlider::UISlider ( MessageQueue &messageQueue,
     UpdateProgress ( value / _range );
 }
 
-void UISlider::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );
 }
 
-void UISlider::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyUp ) ( event );
 }
@@ -273,12 +273,12 @@ void UISlider::OnMouseLeave () noexcept
     _number.SetColor ( theme::MAIN_COLOR );
 }
 
-void UISlider::OnMouseKeyDownDrag ( MouseKeyEvent const &/*event*/ ) noexcept
+void UISlider::OnMouseButtonDownDrag ( MouseButtonEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }
 
-void UISlider::OnMouseKeyUpDrag ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonUpDrag ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
@@ -300,7 +300,7 @@ void UISlider::OnMouseMoveDrag ( MouseMoveEvent const &event ) noexcept
     UpdateValue ( event._x );
 }
 
-void UISlider::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
+void UISlider::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key == eKey::RightMouseButton ) [[unlikely]]
     {
@@ -316,7 +316,7 @@ void UISlider::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
     SwitchToDragState ();
 }
 
-void UISlider::OnMouseKeyUpNormal ( MouseKeyEvent const &/*event*/ ) noexcept
+void UISlider::OnMouseButtonUpNormal ( MouseButtonEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }
@@ -341,8 +341,8 @@ void UISlider::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
 
 void UISlider::SwitchToDragState () noexcept
 {
-    _onMouseKeyDown = &UISlider::OnMouseKeyDownDrag;
-    _onMouseKeyUp = &UISlider::OnMouseKeyUpDrag;
+    _onMouseKeyDown = &UISlider::OnMouseButtonDownDrag;
+    _onMouseKeyUp = &UISlider::OnMouseButtonUpDrag;
     _onMouseMove = &UISlider::OnMouseMoveDrag;
 
     _messageQueue.EnqueueBack (
@@ -356,8 +356,8 @@ void UISlider::SwitchToDragState () noexcept
 
 void UISlider::SwitchToNormalState () noexcept
 {
-    _onMouseKeyDown = &UISlider::OnMouseKeyDownNormal;
-    _onMouseKeyUp = &UISlider::OnMouseKeyUpNormal;
+    _onMouseKeyDown = &UISlider::OnMouseButtonDownNormal;
+    _onMouseKeyUp = &UISlider::OnMouseButtonUpNormal;
     _onMouseMove = &UISlider::OnMouseMoveNormal;
 }
 

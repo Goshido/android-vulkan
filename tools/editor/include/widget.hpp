@@ -3,7 +3,7 @@
 
 
 #include "message_queue.hpp"
-#include "mouse_key_event.hpp"
+#include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
 #include <pbr/font_storage.hpp>
 #include <pbr/ui_element.hpp>
@@ -45,8 +45,8 @@ class Widget
         virtual void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept;
 
         virtual void OnMouseLeave () noexcept;
-        virtual void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept;
-        virtual void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept;
+        virtual void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept;
+        virtual void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
 
         // Must be called by child classes.
         virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;

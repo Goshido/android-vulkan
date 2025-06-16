@@ -524,7 +524,7 @@
     <ClInclude Include="include\mouse_move_event.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\mouse_key_event.hpp">
+    <ClInclude Include="include\mouse_button_event.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp">

@@ -58,8 +58,8 @@ class UICheckBox final : public Widget
 
         ~UICheckBox () override = default;
 
-        void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
+        void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 

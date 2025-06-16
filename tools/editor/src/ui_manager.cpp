@@ -2,8 +2,6 @@
 #include <av_assert.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
-#include <mouse_key_event.hpp>
-#include <mouse_move_event.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
 #include <ui_props.hpp>
@@ -233,7 +231,7 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
     AV_TRACE ( "Mouse button down" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
+    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
 
     if ( _inputCapture ) [[unlikely]]
     {
@@ -268,7 +266,7 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
     AV_TRACE ( "Mouse button up" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseKeyEvent const*> ( message._params );
+    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
 
     if ( _inputCapture ) [[unlikely]]
     {

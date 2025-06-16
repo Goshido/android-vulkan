@@ -20,34 +20,34 @@ class UISlider final : public Widget
         using Callback = std::function<void ( double )>;
 
     private:
-        using MouseKeyHandler = void ( UISlider::* ) ( MouseKeyEvent const &event ) noexcept;
+        using MouseButtonHandler = void ( UISlider::* ) ( MouseButtonEvent const &event ) noexcept;
         using MouseMoveHandler = void ( UISlider::* ) ( MouseMoveEvent const &event ) noexcept;
 
     private:
-        DIVUIElement        _lineDIV;
-        DIVUIElement        _columnDIV;
+        DIVUIElement            _lineDIV;
+        DIVUIElement            _columnDIV;
 
-        DIVUIElement        _captionDIV;
-        TextUIElement       _captionText;
+        DIVUIElement            _captionDIV;
+        TextUIElement           _captionText;
 
-        DIVUIElement        _valueDIV;
-        DIVUIElement        _progressDIV;
+        DIVUIElement            _valueDIV;
+        DIVUIElement            _progressDIV;
 
-        DIVUIElement        _numberDIV;
-        TextUIElement       _number;
+        DIVUIElement            _numberDIV;
+        TextUIElement           _number;
 
-        Callback            _callback {};
-        size_t              _eventID = 0U;
+        Callback                _callback {};
+        size_t                  _eventID = 0U;
 
-        double              _minValue = 0.0;
-        double              _maxValue = 1.0;
-        double              _range = 1.0;
-        double              _value = 0.0;
-        double              _defaultValue = 0.0;
+        double                  _minValue = 0.0;
+        double                  _maxValue = 1.0;
+        double                  _range = 1.0;
+        double                  _value = 0.0;
+        double                  _defaultValue = 0.0;
 
-        MouseKeyHandler     _onMouseKeyDown = &UISlider::OnMouseKeyDownNormal;
-        MouseKeyHandler     _onMouseKeyUp = &UISlider::OnMouseKeyUpNormal;
-        MouseMoveHandler    _onMouseMove = &UISlider::OnMouseMoveNormal;
+        MouseButtonHandler      _onMouseKeyDown = &UISlider::OnMouseButtonDownNormal;
+        MouseButtonHandler      _onMouseKeyUp = &UISlider::OnMouseButtonUpNormal;
+        MouseMoveHandler        _onMouseMove = &UISlider::OnMouseMoveNormal;
 
     public:
         UISlider () = delete;
@@ -70,8 +70,8 @@ class UISlider final : public Widget
 
         ~UISlider () override = default;
 
-        void OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept override;
-        void OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept override;
+        void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
+        void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
@@ -80,12 +80,12 @@ class UISlider final : public Widget
     private:
         void OnMouseLeave () noexcept override;
 
-        void OnMouseKeyDownDrag ( MouseKeyEvent const &event ) noexcept;
-        void OnMouseKeyUpDrag ( MouseKeyEvent const &event ) noexcept;
+        void OnMouseButtonDownDrag ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpDrag ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveDrag ( MouseMoveEvent const &event ) noexcept;
 
-        void OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept;
-        void OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept;
+        void OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept;
+        void OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept;
 
         void SwitchToDragState () noexcept;

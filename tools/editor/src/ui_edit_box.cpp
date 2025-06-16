@@ -6,9 +6,6 @@
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
-// FUCK
-#include <logger.hpp>
-
 
 namespace editor {
 
@@ -287,11 +284,18 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     if ( auto str = pbr::UTF8Parser::ToU32String ( value ); str ) [[likely]]
         _content = std::move ( *str );
 
-    // FUCK
-    // SwitchToNormalState ();
-
     UpdateMetrics ();
-    SwitchToEditState ();
+    SwitchToNormalState ();
+}
+
+void UIEditBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
+{
+    ( this->*_onMouseKeyDown ) ( event );
+}
+
+void UIEditBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
+{
+    ( this->*_onMouseKeyUp ) ( event );
 }
 
 void UIEditBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -397,6 +401,16 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
     }
 }
 
+void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+{
+    // FUCK
+}
+
+void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+{
+    // FUCK
+}
+
 void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
@@ -405,6 +419,19 @@ void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 void UIEditBox::UpdatedRectEdit () noexcept
 {
     _rect.From ( _valueDIV.GetAbsoluteRect () );
+}
+
+void UIEditBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept
+{
+    if ( event._key == eKey::LeftMouseButton ) [[likely]]
+    {
+        SwitchToEditState ();
+    }
+}
+
+void UIEditBox::OnMouseButtonUpNormal ( MouseButtonEvent const &/*event*/ ) noexcept
+{
+    // NOTHING
 }
 
 void UIEditBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
@@ -726,6 +753,9 @@ void UIEditBox::SwitchToEditState () noexcept
     _text.SetColor ( theme::PRESS_COLOR );
     _cursorDIV.Show ();
     _selectionDIV.Show ();
+
+    _onMouseKeyDown = &UIEditBox::OnMouseButtonDownEdit;
+    _onMouseKeyUp = &UIEditBox::OnMouseButtonUpEdit;
     _onMouseMove = &UIEditBox::OnMouseMoveEdit;
     _updateRect = &UIEditBox::UpdatedRectEdit;
 
@@ -748,6 +778,9 @@ void UIEditBox::SwitchToNormalState () noexcept
     _text.SetColor ( theme::MAIN_COLOR );
     _cursorDIV.Hide ();
     _selectionDIV.Hide ();
+
+    _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
+    _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
     _onMouseMove = &UIEditBox::OnMouseMoveNormal;
     _updateRect = &UIEditBox::UpdatedRectNormal;
 }

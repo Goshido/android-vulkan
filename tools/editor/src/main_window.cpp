@@ -4,7 +4,7 @@
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <main_window.hpp>
-#include <mouse_key_event.hpp>
+#include <mouse_button_event.hpp>
 #include <mouse_move_event.hpp>
 #include <os_utils.hpp>
 #include <pbr/utf16_parser.hpp>
@@ -509,7 +509,7 @@ void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType 
         {
             ._type = messageType,
 
-            ._params = new MouseKeyEvent
+            ._params = new MouseButtonEvent
             {
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),

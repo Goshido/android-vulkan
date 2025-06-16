@@ -99,7 +99,7 @@ UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) n
     _div.PrependChildElement ( _headerLine );
 }
 
-void UIProps::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
+void UIProps::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {
@@ -134,7 +134,7 @@ void UIProps::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
     UIDialogBox::OnMouseButtonDown ( event );
 }
 
-void UIProps::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
+void UIProps::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     if ( _closeButton.IsOverlapped ( event._x, event._y ) )
     {

@@ -245,7 +245,7 @@ bool UIComboBox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D 
     return _div.UpdateCache ( info );
 }
 
-bool UIComboBox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+bool UIComboBox::Popup::HandleMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) ) [[unlikely]]
         return true;
@@ -256,7 +256,7 @@ bool UIComboBox::Popup::HandleMouseKeyDown ( MouseKeyEvent const &event ) noexce
     return false;
 }
 
-bool UIComboBox::Popup::HandleMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+bool UIComboBox::Popup::HandleMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton || _targeted == NO_INDEX ) [[unlikely]]
         return false;
@@ -569,12 +569,12 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
     SwitchToNormalState ();
 }
 
-void UIComboBox::OnMouseButtonDown ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );
 }
 
-void UIComboBox::OnMouseButtonUp ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyUp ) ( event );
 }
@@ -600,9 +600,9 @@ void UIComboBox::OnMouseLeave () noexcept
     _icon.SetColor ( theme::MAIN_COLOR );
 }
 
-void UIComboBox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonDownMenu ( MouseButtonEvent const &event ) noexcept
 {
-    if ( !_popup->HandleMouseKeyDown ( event ) )
+    if ( !_popup->HandleMouseButtonDown ( event ) )
         return;
 
     if ( event._key == eKey::LeftMouseButton )
@@ -612,9 +612,9 @@ void UIComboBox::OnMouseKeyDownMenu ( MouseKeyEvent const &event ) noexcept
     --_eventID;
 }
 
-void UIComboBox::OnMouseKeyUpMenu ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonUpMenu ( MouseButtonEvent const &event ) noexcept
 {
-    if ( _popup->HandleMouseKeyUp ( event ) )
+    if ( _popup->HandleMouseButtonUp ( event ) )
     {
         SwitchToNormalState ();
     }
@@ -631,7 +631,7 @@ void UIComboBox::UpdatedRectMenu () noexcept
     _rect = _popup->HandleUpdatedRect ();
 }
 
-void UIComboBox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
@@ -640,7 +640,7 @@ void UIComboBox::OnMouseKeyDownNormal ( MouseKeyEvent const &event ) noexcept
     _icon.SetColor ( theme::PRESS_COLOR );
 }
 
-void UIComboBox::OnMouseKeyUpNormal ( MouseKeyEvent const &event ) noexcept
+void UIComboBox::OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton || std::exchange ( _cancelNextLeftMouseKeyDownEvent, false ) ) [[unlikely]]
         return;
@@ -681,8 +681,8 @@ void UIComboBox::SwitchToNormalState () noexcept
 
     UpdatedRectNormal ();
 
-    _onMouseKeyDown = &UIComboBox::OnMouseKeyDownNormal;
-    _onMouseKeyUp = &UIComboBox::OnMouseKeyUpNormal;
+    _onMouseKeyDown = &UIComboBox::OnMouseButtonDownNormal;
+    _onMouseKeyUp = &UIComboBox::OnMouseButtonUpNormal;
     _onMouseMove = &UIComboBox::OnMouseMoveNormal;
     _updateRect = &UIComboBox::UpdatedRectNormal;
 
@@ -723,8 +723,8 @@ void UIComboBox::SwitchToMenuState () noexcept
         _name
     );
 
-    _onMouseKeyDown = &UIComboBox::OnMouseKeyDownMenu;
-    _onMouseKeyUp = &UIComboBox::OnMouseKeyUpMenu;
+    _onMouseKeyDown = &UIComboBox::OnMouseButtonDownMenu;
+    _onMouseKeyUp = &UIComboBox::OnMouseButtonUpMenu;
     _onMouseMove = &UIComboBox::OnMouseMoveMenu;
     _updateRect = &UIComboBox::UpdatedRectMenu;
 

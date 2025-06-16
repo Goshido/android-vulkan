@@ -24,12 +24,12 @@ void Widget::OnMouseLeave () noexcept
     // NOTHING
 }
 
-void Widget::OnMouseButtonDown ( MouseKeyEvent const &/*event*/ ) noexcept
+void Widget::OnMouseButtonDown ( MouseButtonEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }
 
-void Widget::OnMouseButtonUp ( MouseKeyEvent const &/*event*/ ) noexcept
+void Widget::OnMouseButtonUp ( MouseButtonEvent const &/*event*/ ) noexcept
 {
     // NOTHING
 }

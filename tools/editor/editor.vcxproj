@@ -982,7 +982,7 @@
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
-    <ClInclude Include="include\mouse_key_event.hpp" />
+    <ClInclude Include="include\mouse_button_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
     <ClInclude Include="include\prepend_ui_child_element_event.hpp" />

@@ -692,7 +692,7 @@ void UIComboBox::SwitchToNormalState () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = _popup,
+            ._params = nullptr,
             ._serialNumber = 0U
         }
     );

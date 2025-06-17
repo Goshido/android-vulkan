@@ -401,19 +401,56 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
     }
 }
 
-void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
 {
-    // FUCK
+    if ( !_rect.IsOverlapped ( event._x, event._y ) )
+    {
+        SwitchToNormalState ();
+
+        _messageQueue.EnqueueBack (
+            {
+                ._type = eMessageType::MouseButtonDown,
+                ._params = new MouseButtonEvent ( event ),
+                ._serialNumber = 0U
+            }
+        );
+
+        return;
+    }
+
+    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+        return;
+
+    _leftMouseButtonPressed = true;
+    _cursor = FindClosestSymbol ( event._x );
+
+    // FUCK - check Shift
+    _selection = _cursor;
+
+    _cursorDIV.Show ();
+
+    if ( _cursor == _selection )
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
-void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const& event ) noexcept
 {
-    // FUCK
+    if ( event._key == eKey::LeftMouseButton ) [[likely]]
+    {
+        _leftMouseButtonPressed = false;
+    }
 }
 
 void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
+
+    // FUCK
 }
 
 void UIEditBox::UpdatedRectEdit () noexcept
@@ -423,10 +460,13 @@ void UIEditBox::UpdatedRectEdit () noexcept
 
 void UIEditBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept
 {
-    if ( event._key == eKey::LeftMouseButton ) [[likely]]
-    {
-        SwitchToEditState ();
-    }
+    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+        return;
+
+    _cursor = FindClosestSymbol ( event._x );
+    _selection = _cursor;
+    _leftMouseButtonPressed = true;
+    SwitchToEditState ();
 }
 
 void UIEditBox::OnMouseButtonUpNormal ( MouseButtonEvent const &/*event*/ ) noexcept
@@ -546,6 +586,23 @@ void UIEditBox::Paste () noexcept
             ._serialNumber = 0U
         }
     );
+}
+
+int32_t UIEditBox::FindClosestSymbol ( int32_t x ) const noexcept
+{
+    auto const rawOffset = static_cast<float> ( x - _rect._left );
+    float closest = std::numeric_limits<float>::max ();
+    int32_t c = -1;
+
+    for ( float const offset : _metrics )
+    {
+        if ( float const len = std::abs ( rawOffset - offset ); len > std::exchange ( closest, len ) ) [[unlikely]]
+            break;
+
+        ++c;
+    }
+
+    return std::clamp ( c, 0, static_cast<int32_t> ( _content.size () ) );
 }
 
 std::pair<int32_t, int32_t> UIEditBox::GetSelection () const noexcept
@@ -773,6 +830,14 @@ void UIEditBox::SwitchToEditState () noexcept
 
 void UIEditBox::SwitchToNormalState () noexcept
 {
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopWidgetCaptureInput,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
     _blink.reset ();
 
     _text.SetColor ( theme::MAIN_COLOR );

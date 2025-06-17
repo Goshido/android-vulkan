@@ -286,7 +286,7 @@ void UISlider::OnMouseButtonUpDrag ( MouseButtonEvent const &event ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = this,
+            ._params = nullptr,
             ._serialNumber = 0U
         }
     );

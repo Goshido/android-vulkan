@@ -46,6 +46,7 @@ class UIEditBox final : public Widget
         // rule: index before symbol
         int32_t                             _cursor = 0;
         int32_t                             _selection = 0;
+        bool                                _leftMouseButtonPressed = false;
 
         size_t                              _eventID = 0U;
         MouseButtonHandler                  _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
@@ -101,6 +102,7 @@ class UIEditBox final : public Widget
         void Erase ( int32_t offset ) noexcept;
         void Paste () noexcept;
 
+        [[nodiscard]] int32_t FindClosestSymbol ( int32_t x ) const noexcept;
         [[nodiscard]] std::pair<int32_t, int32_t> GetSelection () const noexcept;
         void ModifySelection ( int32_t offset, int32_t cursorLimit ) noexcept;
         void MoveCursor ( int32_t cursor, bool cancelSelection ) noexcept;

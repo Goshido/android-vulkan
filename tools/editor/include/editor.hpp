@@ -59,8 +59,11 @@ class Editor final
         void DestroyModules () noexcept;
 
         void EventLoop () noexcept;
-        void OnCaptureInput () noexcept;
-        void OnReleaseInput () noexcept;
+
+        void OnCaptureKeyboard () noexcept;
+        void OnReleaseKeyboard () noexcept;
+        void OnCaptureMouse () noexcept;
+        void OnReleaseMouse () noexcept;
         void OnChangeCursor ( Message &&message ) noexcept;
         void OnDPIChanged ( Message &&message ) noexcept;
         void OnFrameComplete () noexcept;

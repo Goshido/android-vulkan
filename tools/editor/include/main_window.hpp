@@ -44,8 +44,11 @@ class MainWindow final
 
         void Execute () noexcept;
 
-        void CaptureInput () noexcept;
-        void ReleaseInput () noexcept;
+        void CaptureMouse () noexcept;
+        void ReleaseMouse () noexcept;
+
+        void CaptureKeyboard () noexcept;
+        void ReleaseKeyboard () noexcept;
 
         void ChangeCursor ( eCursor cursor ) noexcept;
         [[nodiscard]] float GetDPI () const noexcept;

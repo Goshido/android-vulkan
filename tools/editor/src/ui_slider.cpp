@@ -283,13 +283,7 @@ void UISlider::OnMouseButtonUpDrag ( MouseButtonEvent const &event ) noexcept
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    ReleaseMouse ();
 
     --_eventID;
     SwitchToNormalState ();
@@ -345,13 +339,7 @@ void UISlider::SwitchToDragState () noexcept
     _onMouseKeyUp = &UISlider::OnMouseButtonUpDrag;
     _onMouseMove = &UISlider::OnMouseMoveDrag;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StartWidgetCaptureInput,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
+    CaptureMouse ();
 }
 
 void UISlider::SwitchToNormalState () noexcept

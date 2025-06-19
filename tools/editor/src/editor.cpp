@@ -200,10 +200,13 @@ void Editor::EventLoop () noexcept
                 OnChangeCursor ( std::move ( message ) );
             break;
 
-            case eMessageType::CaptureInput:
-                OnCaptureInput ();
+            case eMessageType::CaptureKeyboard:
+                OnCaptureKeyboard ();
             break;
 
+            case eMessageType::CaptureMouse:
+                OnCaptureMouse ();
+            break;
 
             case eMessageType::CloseEditor:
                 OnShutdown ();
@@ -229,8 +232,12 @@ void Editor::EventLoop () noexcept
                 OnRecreateSwapchain ();
             break;
 
-            case eMessageType::ReleaseInput:
-                OnReleaseInput ();
+            case eMessageType::ReleaseKeyboard:
+                OnReleaseKeyboard ();
+            break;
+
+            case eMessageType::ReleaseMouse:
+                OnReleaseMouse ();
             break;
 
             case eMessageType::RunEventLoop:
@@ -255,18 +262,32 @@ void Editor::EventLoop () noexcept
     }
 }
 
-void Editor::OnCaptureInput () noexcept
+void Editor::OnCaptureKeyboard () noexcept
+{
+    AV_TRACE ( "Capture keyboard" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.CaptureKeyboard ();
+}
+
+void Editor::OnReleaseKeyboard () noexcept
+{
+    AV_TRACE ( "Release keyboard" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ReleaseKeyboard ();
+}
+
+void Editor::OnCaptureMouse () noexcept
 {
     AV_TRACE ( "Capture input" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.CaptureInput ();
+    _mainWindow.CaptureMouse ();
 }
 
-void Editor::OnReleaseInput () noexcept
+void Editor::OnReleaseMouse () noexcept
 {
     AV_TRACE ( "Release input" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.ReleaseInput ();
+    _mainWindow.ReleaseMouse ();
 }
 
 void Editor::OnChangeCursor ( Message &&message ) noexcept

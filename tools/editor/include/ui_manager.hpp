@@ -23,9 +23,10 @@ class UIManager final
         pbr::FontStorage                        &_fontStorage;
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
-        Widget*                                 _inputCapture = nullptr;
+        Widget*                                 _mouseCapture = nullptr;
         std::shared_mutex                       _mutex {};
         std::thread                             _thread {};
+        Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
     public:
@@ -51,14 +52,16 @@ class UIManager final
         void OnFontStorageReady () noexcept;
         void OnKeyboardKeyDown ( Message &&message ) noexcept;
         void OnKeyboardKeyUp ( Message &&message ) noexcept;
+        void OnKillFocus () noexcept;
+        void OnSetFocus ( Message &&message ) noexcept;
         void OnMouseHover ( Message &&message ) noexcept;
         void OnMouseButtonDown ( Message &&message ) noexcept;
         void OnMouseButtonUp ( Message &&message ) noexcept;
         void OnMouseMoved ( Message &&message ) noexcept;
         void OnReadClipboardResponse ( Message &&message ) noexcept;
         void OnShutdown ( Message &&refund ) noexcept;
-        void OnStartWidgetCaptureInput ( Message &&message ) noexcept;
-        void OnStopWidgetCaptureInput () noexcept;
+        void OnStartWidgetCaptureMouse ( Message &&message ) noexcept;
+        void OnStopWidgetCaptureMouse () noexcept;
         void OnTyping ( Message &&message ) noexcept;
         void OnUIAddWidget ( Message &&message ) noexcept;
         void OnUIRemoveWidget ( Message &&message ) noexcept;

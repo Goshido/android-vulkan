@@ -119,13 +119,7 @@ void UIDialogBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
         _safeDX = _rect.GetWidth () - _minWidth;
         _safeDY = _rect.GetHeight () - _minHeight;
 
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::StartWidgetCaptureInput,
-                ._params = this,
-                ._serialNumber = 0U
-            }
-        );
+        CaptureMouse ();
     };
 
     if ( _dragArea._rect.IsOverlapped ( x, y ) )
@@ -188,14 +182,7 @@ void UIDialogBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
         return;
 
     _dragState = false;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    ReleaseMouse ();
 }
 
 void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept

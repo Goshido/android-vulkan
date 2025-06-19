@@ -307,15 +307,23 @@ void MainWindow::Execute () noexcept
     }
 }
 
-void MainWindow::CaptureInput () noexcept
+void MainWindow::CaptureMouse () noexcept
 {
     SetCapture ( _hwnd );
+}
+
+void MainWindow::ReleaseMouse () noexcept
+{
+    ReleaseCapture ();
+}
+
+void MainWindow::CaptureKeyboard () noexcept
+{
     _handleTyping = true;
 }
 
-void MainWindow::ReleaseInput () noexcept
+void MainWindow::ReleaseKeyboard () noexcept
 {
-    ReleaseCapture ();
     _handleTyping = false;
 }
 

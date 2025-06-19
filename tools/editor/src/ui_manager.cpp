@@ -115,6 +115,10 @@ void UIManager::EventLoop () noexcept
                 OnKeyboardKeyUp ( std::move ( message ) );
             break;
 
+            case eMessageType::KillFocus:
+                OnKillFocus ();
+            break;
+
             case eMessageType::MouseHover:
                 OnMouseHover ( std::move ( message ) );
             break;
@@ -135,16 +139,20 @@ void UIManager::EventLoop () noexcept
                 OnReadClipboardResponse ( std::move ( message ) );
             break;
 
+            case eMessageType::SetFocus:
+                OnSetFocus ( std::move ( message ) );
+            break;
+
             case eMessageType::Shutdown:
                 OnShutdown ( std::move ( message ) );
             return;
 
-            case eMessageType::StartWidgetCaptureInput:
-                OnStartWidgetCaptureInput ( std::move ( message ) );
+            case eMessageType::StartWidgetCaptureMouse:
+                OnStartWidgetCaptureMouse ( std::move ( message ) );
             break;
 
-            case eMessageType::StopWidgetCaptureInput:
-                OnStopWidgetCaptureInput ();
+            case eMessageType::StopWidgetCaptureMouse:
+                OnStopWidgetCaptureMouse ();
             break;
 
             case eMessageType::Typing:
@@ -194,11 +202,11 @@ void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept
     AV_TRACE ( "Keyboard key down" )
     _messageQueue.DequeueEnd ();
 
-    if ( !_inputCapture ) [[unlikely]]
+    if ( !_typingCapture ) [[unlikely]]
         return;
 
     KeyboardKeyEvent const event ( message );
-    _inputCapture->OnKeyboardKeyDown ( event._key, event._modifier );
+    _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
 }
 
 void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
@@ -206,11 +214,25 @@ void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
     AV_TRACE ( "Keyboard key up" )
     _messageQueue.DequeueEnd ();
 
-    if ( !_inputCapture ) [[unlikely]]
+    if ( !_typingCapture ) [[unlikely]]
         return;
 
     KeyboardKeyEvent const event ( message );
-    _inputCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+    _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+}
+
+void UIManager::OnKillFocus () noexcept
+{
+    AV_TRACE ( "Kill focus" )
+    _messageQueue.DequeueEnd ();
+    _typingCapture = nullptr;
+}
+
+void UIManager::OnSetFocus ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Set focus" )
+    _messageQueue.DequeueEnd ();
+    _typingCapture = static_cast<Widget*> ( message._params );
 }
 
 void UIManager::OnMouseHover ( Message &&message ) noexcept
@@ -233,9 +255,16 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
 
-    if ( _inputCapture ) [[unlikely]]
+    if ( _typingCapture ) [[unlikely]]
     {
-        _inputCapture->OnMouseButtonDown ( *event );
+        _typingCapture->OnMouseButtonDown ( *event );
+        delete event;
+        return;
+    }
+
+    if ( _mouseCapture ) [[unlikely]]
+    {
+        _mouseCapture->OnMouseButtonDown ( *event );
         delete event;
         return;
     }
@@ -268,9 +297,16 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
 
-    if ( _inputCapture ) [[unlikely]]
+    if ( _typingCapture ) [[unlikely]]
     {
-        _inputCapture->OnMouseButtonUp ( *event );
+        _typingCapture->OnMouseButtonUp ( *event );
+        delete event;
+        return;
+    }
+
+    if ( _mouseCapture ) [[unlikely]]
+    {
+        _mouseCapture->OnMouseButtonUp ( *event );
         delete event;
         return;
     }
@@ -303,9 +339,16 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
 
-    if ( _inputCapture ) [[unlikely]]
+    if ( _typingCapture ) [[unlikely]]
     {
-        _inputCapture->OnMouseMove ( *event );
+        _typingCapture->OnMouseMove ( *event );
+        delete event;
+        return;
+    }
+
+    if ( _mouseCapture ) [[unlikely]]
+    {
+        _mouseCapture->OnMouseMove ( *event );
         delete event;
         return;
     }
@@ -351,8 +394,8 @@ void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
     _messageQueue.DequeueEnd ();
     auto const* text = static_cast<std::u32string const*> ( message._params );
 
-    if ( _inputCapture ) [[likely]]
-        _inputCapture->ApplyClipboard ( *text );
+    if ( _typingCapture ) [[likely]]
+        _typingCapture->ApplyClipboard ( *text );
 
     delete text;
 }
@@ -376,34 +419,18 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
     );
 }
 
-void UIManager::OnStartWidgetCaptureInput ( Message &&message ) noexcept
+void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start widget capture input" )
     _messageQueue.DequeueEnd ();
-    _inputCapture = static_cast<Widget*> ( message._params );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::CaptureInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _mouseCapture = static_cast<Widget*> ( message._params );
 }
 
-void UIManager::OnStopWidgetCaptureInput () noexcept
+void UIManager::OnStopWidgetCaptureMouse () noexcept
 {
     AV_TRACE ( "Stop widget capture input" )
     _messageQueue.DequeueEnd ();
-    _inputCapture = nullptr;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ReleaseInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _mouseCapture = nullptr;
 }
 
 void UIManager::OnTyping ( Message &&message ) noexcept
@@ -411,9 +438,9 @@ void UIManager::OnTyping ( Message &&message ) noexcept
     AV_TRACE ( "Typing" )
     _messageQueue.DequeueEnd ();
 
-    if ( _inputCapture ) [[likely]]
+    if ( _typingCapture ) [[likely]]
     {
-        _inputCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
+        _typingCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
     }
 }
 

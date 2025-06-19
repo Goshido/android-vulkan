@@ -818,26 +818,12 @@ void UIEditBox::SwitchToEditState () noexcept
 
     UpdateCursor ();
     ResetBlinkTimer ();
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StartWidgetCaptureInput,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
+    SetFocus ();
 }
 
 void UIEditBox::SwitchToNormalState () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
+    KillFocus ();
     _blink.reset ();
 
     _text.SetColor ( theme::MAIN_COLOR );

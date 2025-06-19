@@ -65,6 +65,12 @@ class Widget
 
     protected:
         explicit Widget ( MessageQueue &messageQueue ) noexcept;
+
+        void CaptureMouse () noexcept;
+        void ReleaseMouse () noexcept;
+
+        void KillFocus () noexcept;
+        void SetFocus () noexcept;
 };
 
 } // namespace editor

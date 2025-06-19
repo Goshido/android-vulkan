@@ -86,4 +86,80 @@ Widget::Widget ( MessageQueue &messageQueue ) noexcept:
     // NOTHING
 }
 
+void Widget::CaptureMouse () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StartWidgetCaptureMouse,
+            ._params = this,
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::CaptureMouse,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void Widget::ReleaseMouse () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopWidgetCaptureMouse,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ReleaseMouse,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void Widget::KillFocus () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::KillFocus,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ReleaseKeyboard,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+}
+
+void Widget::SetFocus () noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::SetFocus,
+            ._params = this,
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::CaptureKeyboard,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+}
+
 } // namespace editor

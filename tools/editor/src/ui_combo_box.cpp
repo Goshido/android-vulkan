@@ -689,13 +689,7 @@ void UIComboBox::SwitchToNormalState () noexcept
     if ( !_popup ) [[unlikely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureInput,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    ReleaseMouse ();
 
     _messageQueue.EnqueueBack (
         {
@@ -736,13 +730,7 @@ void UIComboBox::SwitchToMenuState () noexcept
         }
     );
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StartWidgetCaptureInput,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
+    CaptureMouse ();
 }
 
 } // namespace editor

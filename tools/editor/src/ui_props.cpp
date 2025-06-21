@@ -79,7 +79,7 @@ UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) n
     _checkBox ( messageQueue, _div, "Shadows", "CheckBox" ),
     _comboBox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
     _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
-    _editBox ( messageQueue, _div, fontStorage, "Name", "Y g t  pow jam!@#!red can!@#!sad", "EditBox" )
+    _editBox ( messageQueue, _div, fontStorage, "Name", "YEY VA", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -94,6 +94,7 @@ UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) n
     _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
     _checkBox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
     _comboBox.Connect ( std::bind ( &UIProps::OnComboBox, this, std::placeholders::_1 ) );
+    _editBox.Connect ( std::bind ( &UIProps::OnEditBox, this, std::placeholders::_1 ) );
     _slider.Connect ( std::bind ( &UIProps::OnSlider, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
@@ -233,6 +234,11 @@ void UIProps::OnClose () noexcept
 void UIProps::OnComboBox ( UIComboBox::ID id ) noexcept
 {
     android_vulkan::LogDebug ( "OnComboBox - %u", id );
+}
+
+void UIProps::OnEditBox ( std::string const &value ) noexcept
+{
+    android_vulkan::LogDebug ( "OnEditBox - %s", value.c_str () );
 }
 
 void UIProps::OnSlider ( double value ) noexcept

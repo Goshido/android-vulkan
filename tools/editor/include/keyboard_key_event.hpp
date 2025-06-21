@@ -23,12 +23,11 @@ class KeyboardKeyEvent final
         KeyboardKeyEvent ( KeyboardKeyEvent && ) = delete;
         KeyboardKeyEvent &operator = ( KeyboardKeyEvent && ) = delete;
 
-        explicit KeyboardKeyEvent ( eKey key ) noexcept;
         explicit KeyboardKeyEvent ( Message const &message ) noexcept;
 
         ~KeyboardKeyEvent () = default;
 
-        [[nodiscard]] Message Create ( eMessageType messageType ) const noexcept;
+        [[nodiscard]] static Message Create ( eMessageType messageType, eKey key, KeyModifier modifier ) noexcept;
 };
 
 } // namespace editor

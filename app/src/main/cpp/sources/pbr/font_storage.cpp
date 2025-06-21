@@ -629,7 +629,6 @@ void FontStorage::GetStringMetrics ( StringMetrics &result,
     for ( ; !string.empty (); string = string.substr ( 1U ) )
     {
         char32_t const symbol = string.front ();
-        [[maybe_unused]] int32_t const fuck = GetKerning ( f, prevSymbol, symbol );
         p += GetKerning ( f, std::exchange ( prevSymbol, symbol ), symbol );
 
         if ( auto const glyph = glyphs.find ( symbol ); glyph != end ) [[likely]]

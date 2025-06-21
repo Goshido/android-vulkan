@@ -46,6 +46,7 @@ class UIProps final : public UIDialogBox
         void OnCheckBox ( UICheckBox::eState state ) noexcept;
         void OnComboBox ( UIComboBox::ID id ) noexcept;
         void OnClose () noexcept;
+        void OnEditBox ( std::string const &value ) noexcept;
         void OnSlider ( double value ) noexcept;
 };
 

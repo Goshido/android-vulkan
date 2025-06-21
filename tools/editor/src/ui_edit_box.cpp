@@ -30,6 +30,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     Widget ( messageQueue ),
+    _committed ( value ),
     _fontStorage ( fontStorage ),
 
     _lineDIV ( messageQueue,
@@ -308,6 +309,11 @@ void UIEditBox::UpdatedRect () noexcept
     ( this->*_updateRect ) ();
 }
 
+void UIEditBox::Connect ( Callback &&callback ) noexcept
+{
+    _callback = std::move ( callback );
+}
+
 void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
 {
     std::ignore = RemoveSelectedContent ();
@@ -342,6 +348,10 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 
         case eKey::KeyEnd:
             MoveCursor ( static_cast<int32_t> ( _content.size () ), !modifier.AnyShiftPressed () );
+        break;
+
+        case eKey::KeyEnter:
+            Commit ();
         break;
 
         case eKey::KeyHome:
@@ -409,6 +419,21 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
 
         _messageQueue.EnqueueBack (
             {
+                ._type = eMessageType::MouseMoved,
+
+                ._params = new MouseMoveEvent
+                {
+                    ._x = event._x,
+                    ._y = event._y,
+                    ._eventID = _eventID - 1U
+                },
+
+                ._serialNumber = 0U
+            }
+        );
+
+        _messageQueue.EnqueueBack (
+            {
                 ._type = eMessageType::MouseButtonDown,
                 ._params = new MouseButtonEvent ( event ),
                 ._serialNumber = 0U
@@ -424,8 +449,8 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
     _leftMouseButtonPressed = true;
     _cursor = FindClosestSymbol ( event._x );
 
-    // FUCK - check Shift
-    _selection = _cursor;
+    int32_t const cases[] = { _cursor, _selection };
+    _selection = cases[ static_cast<size_t> ( event._modifier.AnyShiftPressed () ) ];
 
     _cursorDIV.Show ();
 
@@ -438,7 +463,7 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
     ResetBlinkTimer ();
 }
 
-void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const& event ) noexcept
+void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key == eKey::LeftMouseButton ) [[likely]]
     {
@@ -513,6 +538,17 @@ void UIEditBox::Append ( char32_t character ) noexcept
     UpdateMetrics ();
     UpdateCursor ();
     ResetBlinkTimer ();
+}
+
+void UIEditBox::Commit () noexcept
+{
+    if ( auto v = pbr::UTF8Parser::ToUTF8 ( _content ); *v != _committed ) [[likely]]
+    {
+        _committed = std::move ( *v );
+        _callback ( _committed );
+    }
+
+    SwitchToNormalState ();
 }
 
 void UIEditBox::Copy () noexcept

@@ -9,9 +9,10 @@ namespace editor {
 
 struct MouseButtonEvent final
 {
-    int32_t     _x = 0;
-    int32_t     _y = 0;
-    eKey        _key = eKey::LeftMouseButton;
+    int32_t         _x = 0;
+    int32_t         _y = 0;
+    eKey            _key = eKey::LeftMouseButton;
+    KeyModifier     _modifier {};
 };
 
 } // namespace editor

@@ -487,26 +487,10 @@ void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexce
 {
     AV_TRACE ( "Main window: keyboard key" )
 
-    auto const key = _keyboardKeyMapper.find ( wParam );
-
-    if ( key == _keyboardKeyMapper.cend () ) [[unlikely]]
-        return;
-
-    KeyboardKeyEvent event ( key->second );
-
-    constexpr uint16_t pressedMask = 0b1000'0000'0000'0000U;
-    KeyModifier &m = event._modifier;
-
-    m._leftAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LMENU ) );
-    m._rightAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RMENU ) );
-
-    m._leftCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LCONTROL ) );
-    m._rightCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RCONTROL ) );
-
-    m._leftShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LSHIFT ) );
-    m._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
-
-    _messageQueue->EnqueueBack ( event.Create ( messageType ) );
+    if ( auto const key = _keyboardKeyMapper.find ( wParam );  key != _keyboardKeyMapper.cend () ) [[likely]]
+    {
+        _messageQueue->EnqueueBack ( KeyboardKeyEvent::Create ( messageType, key->second, MakeKeyModifier () ) );
+    }
 }
 
 void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
@@ -521,7 +505,8 @@ void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType 
             {
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = key
+                ._key = key,
+                ._modifier = MakeKeyModifier ()
             },
 
             ._serialNumber = 0U
@@ -731,6 +716,23 @@ void MainWindow::Load () noexcept
             // NOTHING
         break;
     }
+}
+
+KeyModifier MainWindow::MakeKeyModifier () noexcept
+{
+    KeyModifier result {};
+    constexpr uint16_t pressedMask = 0b1000'0000'0000'0000U;
+
+    result._leftAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LMENU ) );
+    result._rightAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RMENU ) );
+
+    result._leftCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LCONTROL ) );
+    result._rightCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RCONTROL ) );
+
+    result._leftShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LSHIFT ) );
+    result._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
+
+    return result;
 }
 
 LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )

@@ -72,7 +72,8 @@ class MainWindow final
         void Save () noexcept;
         void Load () noexcept;
 
-        static LRESULT CALLBACK WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+        [[nodiscard]] static KeyModifier MakeKeyModifier () noexcept;
+        [[nodiscard]] static LRESULT CALLBACK WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
 };
 
 } // namespace editor

@@ -2,16 +2,25 @@
 #define EDITOR_UI_EDIT_BOX_HPP
 
 
-#include "widget.hpp"
-#include "text_ui_element.hpp"
 #include <pbr/font_storage.hpp>
+#include "text_ui_element.hpp"
 #include "timer.hpp"
+#include "widget.hpp"
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <functional>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
 
 class UIEditBox final : public Widget
 {
+    public:
+        using Callback = std::function<void ( std::string const &value )>;
+
     private:
         using MouseButtonHandler = void ( UIEditBox::* ) ( MouseButtonEvent const &event ) noexcept;
         using MouseMoveHandler = void ( UIEditBox::* ) ( MouseMoveEvent const &event ) noexcept;
@@ -25,6 +34,7 @@ class UIEditBox final : public Widget
         };
 
     private:
+        std::string                         _committed {};
         std::u32string                      _content {};
         pbr::FontStorage::StringMetrics     _metrics {};
         pbr::FontStorage                    &_fontStorage;
@@ -55,6 +65,7 @@ class UIEditBox final : public Widget
         UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
 
         std::unique_ptr<Timer>              _blink {};
+        Callback                            _callback {};
 
     public:
         UIEditBox () = delete;
@@ -80,6 +91,8 @@ class UIEditBox final : public Widget
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
+        void Connect ( Callback &&callback ) noexcept;
+
     private:
         void ApplyClipboard ( std::u32string const &text ) noexcept override;
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
@@ -97,6 +110,7 @@ class UIEditBox final : public Widget
         void UpdatedRectNormal () noexcept;
 
         void Append ( char32_t character ) noexcept;
+        void Commit () noexcept;
         void Copy () noexcept;
         void Cut () noexcept;
         void Erase ( int32_t offset ) noexcept;

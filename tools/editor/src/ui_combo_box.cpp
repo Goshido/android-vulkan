@@ -261,7 +261,7 @@ bool UIComboBox::Popup::HandleMouseButtonUp ( MouseButtonEvent const &event ) no
     if ( event._key != eKey::LeftMouseButton || _targeted == NO_INDEX ) [[unlikely]]
         return false;
 
-    if ( ( _targeted != std::exchange ( _selected, _targeted ) ) & static_cast<bool> ( _callback ) ) [[likely]]
+    if ( _targeted != std::exchange ( _selected, _targeted ) ) [[likely]]
     {
         Item const &item = _items[ _targeted ];
         _text.SetText ( item._caption );

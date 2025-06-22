@@ -2,6 +2,7 @@
 #define EDITOR_WIDGET_HPP
 
 
+#include "cursor.hpp"
 #include "message_queue.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
@@ -68,6 +69,8 @@ class Widget
 
         void CaptureMouse () noexcept;
         void ReleaseMouse () noexcept;
+
+        void ChangeCursor ( eCursor cursor ) noexcept;
 
         void KillFocus () noexcept;
         void SetFocus () noexcept;

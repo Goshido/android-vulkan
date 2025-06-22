@@ -124,6 +124,17 @@ void Widget::ReleaseMouse () noexcept
     );
 }
 
+void Widget::ChangeCursor ( eCursor cursor ) noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ChangeCursor,
+            ._params = std::bit_cast<void*> ( cursor ),
+            ._serialNumber = 0U
+        }
+    );
+}
+
 void Widget::KillFocus () noexcept
 {
     _messageQueue.EnqueueBack (

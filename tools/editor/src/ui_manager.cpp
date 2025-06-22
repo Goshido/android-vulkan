@@ -339,13 +339,6 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
     auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
 
-    if ( _typingCapture ) [[unlikely]]
-    {
-        _typingCapture->OnMouseMove ( *event );
-        delete event;
-        return;
-    }
-
     if ( _mouseCapture ) [[unlikely]]
     {
         _mouseCapture->OnMouseMove ( *event );
@@ -373,19 +366,18 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     }
 
     size_t const eventID = event->_eventID;
-
-    if ( eventID - std::exchange( _eventID, eventID ) > 1U ) [[unlikely]]
-    {
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::ChangeCursor,
-                ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
-                ._serialNumber = 0U
-            }
-        );
-    }
-
     delete event;
+
+    if ( eventID - std::exchange ( _eventID, eventID ) <= 1U ) [[likely]]
+        return;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ChangeCursor,
+            ._params = std::bit_cast<void*> ( eCursor::Arrow ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept

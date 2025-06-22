@@ -294,7 +294,7 @@ void Editor::OnChangeCursor ( Message &&message ) noexcept
 {
     AV_TRACE ( "Change cursor" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.ChangeCursor ( static_cast<eCursor> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
+    _mainWindow.ChangeCursor ( std::bit_cast<eCursor> ( message._params ) );
 }
 
 void Editor::OnDPIChanged ( Message &&message ) noexcept

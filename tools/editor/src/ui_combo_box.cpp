@@ -657,13 +657,7 @@ void UIComboBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
     if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-            ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
-            ._serialNumber = 0U
-        }
-    );
+    ChangeCursor ( eCursor::Arrow );
 
     _text.SetColor ( theme::HOVER_COLOR );
     _icon.SetColor ( theme::HOVER_COLOR );

@@ -23,7 +23,7 @@ UIDialogBox::Gizmo::Gizmo ( eCursor cursor ) noexcept:
     // NOTHING
 }
 
-bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue& messageQueue, MouseMoveEvent const& event ) noexcept
+bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) )
         return false;
@@ -34,7 +34,7 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue& messageQueue, MouseMoveEven
     messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
-            ._params = reinterpret_cast<void*> ( _cursor ),
+            ._params = std::bit_cast<void*> ( _cursor ),
             ._serialNumber = 0U
         }
     );
@@ -309,18 +309,10 @@ void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
 
     size_t const eventID = event._eventID;
 
-    if ( eventID - _eventID > 1U )
+    if ( eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
     {
-        queue.EnqueueBack (
-            {
-                ._type = eMessageType::ChangeCursor,
-                ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
-                ._serialNumber = 0U
-            }
-        );
+        ChangeCursor ( eCursor::Arrow );
     }
-
-    _eventID = eventID;
 }
 
 void UIDialogBox::UpdateAreas () noexcept

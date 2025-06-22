@@ -200,18 +200,11 @@ void UICheckBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
 
-    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
-        return;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-            ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
-            ._serialNumber = 0U
-        }
-    );
-
-    _valueIcon.SetColor ( theme::HOVER_COLOR );
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) >= 2U ) [[unlikely]]
+    {
+        ChangeCursor ( eCursor::Arrow );
+        _valueIcon.SetColor ( theme::HOVER_COLOR );
+    }
 }
 
 void UICheckBox::UpdatedRect () noexcept

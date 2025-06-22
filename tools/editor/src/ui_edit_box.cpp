@@ -376,7 +376,7 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 
 void UIEditBox::OnMouseLeave () noexcept
 {
-    _text.SetColor ( theme::MAIN_COLOR );
+    ( this->*_onMouseLeave ) ();
 }
 
 void UIEditBox::OnTyping ( char32_t character ) noexcept
@@ -474,9 +474,17 @@ void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const &event ) noexcept
     }
 }
 
+void UIEditBox::OnMouseLeaveEdit () noexcept
+{
+    // NOTHING
+}
+
 void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
+
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) >= 2U ) [[unlikely]]
+        ChangeCursor ( eCursor::IBeam );
 
     if ( !_leftMouseButtonPressed ) [[likely]]
         return;
@@ -514,6 +522,11 @@ void UIEditBox::OnMouseButtonUpNormal ( MouseButtonEvent const &/*event*/ ) noex
     // NOTHING
 }
 
+void UIEditBox::OnMouseLeaveNormal () noexcept
+{
+    _text.SetColor ( theme::MAIN_COLOR );
+}
+
 void UIEditBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
@@ -521,14 +534,7 @@ void UIEditBox::OnMouseMoveNormal ( MouseMoveEvent const &event ) noexcept
     if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-            ._params = reinterpret_cast<void*> ( eCursor::IBeam ),
-            ._serialNumber = 0U
-        }
-    );
-
+    ChangeCursor ( eCursor::IBeam );
     _text.SetColor ( theme::HOVER_COLOR );
 }
 
@@ -864,6 +870,7 @@ void UIEditBox::SwitchToEditState () noexcept
 
     _onMouseKeyDown = &UIEditBox::OnMouseButtonDownEdit;
     _onMouseKeyUp = &UIEditBox::OnMouseButtonUpEdit;
+    _onMouseLeave = &UIEditBox::OnMouseLeaveEdit;
     _onMouseMove = &UIEditBox::OnMouseMoveEdit;
     _updateRect = &UIEditBox::UpdatedRectEdit;
 
@@ -883,6 +890,7 @@ void UIEditBox::SwitchToNormalState () noexcept
 
     _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
     _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
+    _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
     _onMouseMove = &UIEditBox::OnMouseMoveNormal;
     _updateRect = &UIEditBox::UpdatedRectNormal;
 }

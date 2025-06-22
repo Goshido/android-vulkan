@@ -446,6 +446,8 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
 
+    CaptureMouse ();
+
     _leftMouseButtonPressed = true;
     _cursor = FindClosestSymbol ( event._x );
 
@@ -467,6 +469,7 @@ void UIEditBox::OnMouseButtonUpEdit ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key == eKey::LeftMouseButton ) [[likely]]
     {
+        ReleaseMouse ();
         _leftMouseButtonPressed = false;
     }
 }
@@ -475,7 +478,19 @@ void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
 
-    // FUCK
+    if ( !_leftMouseButtonPressed ) [[likely]]
+        return;
+
+    _cursor = FindClosestSymbol ( event._x );
+    _cursorDIV.Show ();
+
+    if ( _cursor == _selection )
+        _selectionDIV.Hide ();
+    else
+        _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::UpdatedRectEdit () noexcept

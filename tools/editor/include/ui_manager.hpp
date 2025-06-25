@@ -49,6 +49,7 @@ class UIManager final
 
     private:
         void EventLoop () noexcept;
+        void OnDoubleClick ( Message &&message ) noexcept;
         void OnFontStorageReady () noexcept;
         void OnKeyboardKeyDown ( Message &&message ) noexcept;
         void OnKeyboardKeyUp ( Message &&message ) noexcept;

@@ -103,6 +103,10 @@ void UIManager::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::DoubleClick:
+                OnDoubleClick ( std::move ( message ) );
+            break;
+
             case eMessageType::FontStorageReady:
                 OnFontStorageReady ();
             break;
@@ -175,6 +179,46 @@ void UIManager::EventLoop () noexcept
 
         GX_ENABLE_WARNING ( 4061 )
     }
+}
+
+void UIManager::OnDoubleClick ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Double click" )
+    _messageQueue.DequeueEnd ();
+
+    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+
+    if ( _typingCapture ) [[unlikely]]
+    {
+        _typingCapture->OnDoubleClick ( *event );
+        delete event;
+        return;
+    }
+
+    if ( _mouseCapture ) [[unlikely]]
+    {
+        _mouseCapture->OnDoubleClick ( *event );
+        delete event;
+        return;
+    }
+
+    int32_t const x = event->_x;
+    int32_t const y = event->_y;
+
+    {
+        std::shared_lock const lock ( _mutex );
+
+        for ( auto &widget : _widgets )
+        {
+            if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
+            {
+                w.OnDoubleClick ( *event );
+                break;
+            }
+        }
+    }
+
+    delete event;
 }
 
 void UIManager::OnFontStorageReady () noexcept
@@ -275,11 +319,9 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
     {
         std::shared_lock const lock ( _mutex );
 
-        for ( auto& widget : _widgets )
+        for ( auto &widget : _widgets )
         {
-            Widget &w = *widget;
-
-            if ( w.IsOverlapped ( x, y ) )
+            if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
             {
                 w.OnMouseButtonDown ( *event );
                 break;

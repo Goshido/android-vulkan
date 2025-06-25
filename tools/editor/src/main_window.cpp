@@ -205,7 +205,7 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 
     WNDCLASSW const wndClass
     {
-        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
         .lpfnWndProc = &MainWindow::WindowHandler,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
@@ -445,13 +445,34 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
     // To destinguish error it's needed to preset 0 as last error. Trick is described on MSDN:
     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra#return-value
     SetLastError ( 0U );
-    LONG_PTR const result = SetWindowLongPtrA ( hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
+    LONG_PTR const result = SetWindowLongPtrW ( hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
 
     if ( ( result == 0 ) && ( GetLastError () == 0U ) ) [[likely]]
         return;
 
     android_vulkan::LogError ( "MainWindow: Can't connect MainWindow onject to HWND handle." );
     DestroyWindow ( hwnd );
+}
+
+void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
+{
+    AV_TRACE ( "Main window: double click" )
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::DoubleClick,
+
+            ._params = new MouseButtonEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::LeftMouseButton,
+                ._modifier = MakeKeyModifier ()
+            },
+
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
@@ -493,9 +514,9 @@ void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexce
     }
 }
 
-void MainWindow::OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
+void MainWindow::OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
 {
-    AV_TRACE ( "Main window: mouse key" )
+    AV_TRACE ( "Main window: mouse button" )
 
     _messageQueue->EnqueueBack (
         {
@@ -791,21 +812,25 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
             mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
         break;
 
+        case WM_LBUTTONDBLCLK:
+            mainWindow.OnDoubleClick ( lParam );
+        break;
+
         case WM_LBUTTONDOWN:
-            mainWindow.OnMouseKey ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonDown );
+            mainWindow.OnMouseButton ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_LBUTTONUP:
             // [2025/03/30] Win11 24H2 26100.3624 will send WM_MOUSEMOVE event right after WM_LBUTTONUP automatically.
-            mainWindow.OnMouseKey ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonUp );
+            mainWindow.OnMouseButton ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MBUTTONDOWN:
-            mainWindow.OnMouseKey ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonDown );
+            mainWindow.OnMouseButton ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_MBUTTONUP:
-            mainWindow.OnMouseKey ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonUp );
+            mainWindow.OnMouseButton ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MOUSEMOVE:
@@ -813,11 +838,11 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         break;
 
         case WM_RBUTTONDOWN:
-            mainWindow.OnMouseKey ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonDown );
+            mainWindow.OnMouseButton ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_RBUTTONUP:
-            mainWindow.OnMouseKey ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonUp );
+            mainWindow.OnMouseButton ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_SIZE:

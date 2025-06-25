@@ -60,6 +60,7 @@ class UIEditBox final : public Widget
         bool                                _leftMouseButtonPressed = false;
 
         size_t                              _eventID = 0U;
+        MouseButtonHandler                  _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
         MouseButtonHandler                  _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
         MouseButtonHandler                  _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
         MouseLeaveHandler                   _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
@@ -97,16 +98,19 @@ class UIEditBox final : public Widget
 
     private:
         void ApplyClipboard ( std::u32string const &text ) noexcept override;
+        void OnDoubleClick ( MouseButtonEvent const &event ) noexcept override;
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnMouseLeave () noexcept override;
         void OnTyping ( char32_t character ) noexcept override;
 
+        void OnDoubleClickEdit ( MouseButtonEvent const &event ) noexcept;
         void OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept;
         void OnMouseButtonUpEdit ( MouseButtonEvent const &event ) noexcept;
         void OnMouseLeaveEdit () noexcept;
         void OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept;
         void UpdatedRectEdit () noexcept;
 
+        void OnDoubleClickNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept;
         void OnMouseLeaveNormal () noexcept;

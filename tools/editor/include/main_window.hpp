@@ -61,10 +61,11 @@ class MainWindow final
         void OnChar ( WPARAM wParam ) noexcept;
         void OnClose () noexcept;
         void OnCreate ( HWND hwnd ) noexcept;
+        void OnDoubleClick ( LPARAM lParam ) noexcept;
         void OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept;
         void OnGetMinMaxInfo ( LPARAM lParam ) noexcept;
         void OnKeyboardKey ( WPARAM wParam, eMessageType messageType ) noexcept;
-        void OnMouseKey ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept;
+        void OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept;
         void OnMouseMove ( LPARAM lParam ) noexcept;
         void OnSize ( WPARAM wParam ) noexcept;
 

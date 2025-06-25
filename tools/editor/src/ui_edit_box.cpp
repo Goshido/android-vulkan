@@ -6,6 +6,9 @@
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
+// FUCK
+#include <logger.hpp>
+
 
 namespace editor {
 
@@ -332,6 +335,11 @@ void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
     ResetBlinkTimer ();
 }
 
+void UIEditBox::OnDoubleClick ( MouseButtonEvent const &event ) noexcept
+{
+    ( this->*_onDoubleClick ) ( event );
+}
+
 void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
     GX_DISABLE_WARNING ( 4061 )
@@ -409,6 +417,12 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
             // NOTHING
         break;
     }
+}
+
+void UIEditBox::OnDoubleClickEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "OnDoubleClickEdit" );
 }
 
 void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
@@ -504,6 +518,11 @@ void UIEditBox::OnMouseMoveEdit ( MouseMoveEvent const &event ) noexcept
 void UIEditBox::UpdatedRectEdit () noexcept
 {
     _rect.From ( _valueDIV.GetAbsoluteRect () );
+}
+
+void UIEditBox::OnDoubleClickNormal ( MouseButtonEvent const &/*event*/ ) noexcept
+{
+    // NOTHING
 }
 
 void UIEditBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexcept
@@ -868,6 +887,7 @@ void UIEditBox::SwitchToEditState () noexcept
     _cursorDIV.Show ();
     _selectionDIV.Show ();
 
+    _onDoubleClick = &UIEditBox::OnDoubleClickEdit;
     _onMouseKeyDown = &UIEditBox::OnMouseButtonDownEdit;
     _onMouseKeyUp = &UIEditBox::OnMouseButtonUpEdit;
     _onMouseLeave = &UIEditBox::OnMouseLeaveEdit;
@@ -888,6 +908,7 @@ void UIEditBox::SwitchToNormalState () noexcept
     _cursorDIV.Hide ();
     _selectionDIV.Hide ();
 
+    _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
     _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
     _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
     _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;

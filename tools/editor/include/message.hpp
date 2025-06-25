@@ -15,10 +15,11 @@ namespace editor {
 
 enum class eMessageType : uint32_t
 {
-    CaptureMouse,
     CaptureKeyboard,
+    CaptureMouse,
     ChangeCursor,
     CloseEditor,
+    DoubleClick,
     DPIChanged,
     FontStorageReady,
     FrameComplete,
@@ -34,8 +35,8 @@ enum class eMessageType : uint32_t
     ReadClipboardRequest,
     ReadClipboardResponse,
     RecreateSwapchain,
-    ReleaseMouse,
     ReleaseKeyboard,
+    ReleaseMouse,
     RenderFrame,
     RunEventLoop,
     SetFocus,

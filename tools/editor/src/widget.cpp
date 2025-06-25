@@ -9,6 +9,11 @@ void Widget::ApplyClipboard ( std::u32string const &/*text*/ ) noexcept
     // NOTHING
 }
 
+void Widget::OnDoubleClick ( MouseButtonEvent const &event ) noexcept
+{
+    OnMouseButtonDown ( event );
+}
+
 void Widget::OnKeyboardKeyDown ( eKey /*key*/, KeyModifier /*modifier*/ ) noexcept
 {
     // NOTHING

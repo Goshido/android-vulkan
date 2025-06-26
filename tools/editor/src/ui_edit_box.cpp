@@ -419,17 +419,55 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
     }
 }
 
-void UIEditBox::OnDoubleClickEdit ( MouseButtonEvent const &/*event*/ ) noexcept
+void UIEditBox::OnDoubleClickEdit ( MouseButtonEvent const &event ) noexcept
 {
-    // FUCK
-    android_vulkan::LogDebug ( "OnDoubleClickEdit" );
+    auto const limit = static_cast<int32_t> ( _content.size () );
+
+    if ( limit < 1 ) [[unlikely]]
+        return;
+
+    int32_t c = FindClosestSymbol ( event._x );
+    eLetterType const type = ResolveLetterType ( _content[ static_cast<size_t> ( c ) ] );
+
+    int32_t s = c;
+    char32_t const* const content = _content.data ();
+    int32_t const last = limit - 1;
+
+    for ( ; ; )
+    {
+        int32_t const sCases[] = { s, std::max ( 0, s - 1 ) };
+        bool const sFactor = type == ResolveLetterType ( content[ static_cast<size_t> ( sCases[ 1U ] ) ] );
+
+        int32_t const cCases[] = { c, std::min ( c + 1, limit ) };
+
+        bool const cFactor = type == ResolveLetterType (
+            content[ static_cast<size_t> ( std::min ( cCases[ 1U ], last ) ) ]
+        );
+
+        int32_t const sLast = std::exchange ( s, sCases[ static_cast<size_t> ( sFactor ) ] );
+        int32_t const cLast = std::exchange ( c, cCases[ static_cast<size_t> ( cFactor ) ] );
+
+        if ( ( c == cLast ) & ( s == sLast ) ) [[unlikely]]
+        {
+            break;
+        }
+    }
+
+    _cursor = std::min ( c + 1, limit );
+    _selection = s;
+
+    _cursorDIV.Show ();
+    _selectionDIV.Show ();
+
+    UpdateCursor ();
+    ResetBlinkTimer ();
 }
 
 void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) )
     {
-        SwitchToNormalState ();
+        Commit ();
 
         _messageQueue.EnqueueBack (
             {
@@ -534,6 +572,7 @@ void UIEditBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexce
     _selection = _cursor;
     _leftMouseButtonPressed = true;
     SwitchToEditState ();
+    CaptureMouse ();
 }
 
 void UIEditBox::OnMouseButtonUpNormal ( MouseButtonEvent const &/*event*/ ) noexcept

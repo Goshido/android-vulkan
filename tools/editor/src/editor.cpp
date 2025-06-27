@@ -417,6 +417,8 @@ void Editor::OnShutdown () noexcept
                 OnModuleStopped ();
             break;
 
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
             case eMessageType::StartTimer:
                 [[fallthrough]];
             case eMessageType::StopTimer:
@@ -437,7 +439,7 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
 {
     AV_TRACE ( "Main window visibility changed" )
     _messageQueue.DequeueEnd ();
-    _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+    _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) );
 }
 
 void Editor::OnWriteClipboard ( Message &&message ) noexcept

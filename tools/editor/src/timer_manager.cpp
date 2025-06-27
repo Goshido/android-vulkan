@@ -36,9 +36,12 @@ void TimerManager::Destroy () noexcept
     AV_TRACE ( "Timer manager: destroy" )
 
     if ( _thread.joinable () ) [[likely]]
-    {
         _thread.join ();
-    }
+
+    for ( Timer::State* timer : _timers )
+        delete timer;
+
+    _timers.clear ();
 }
 
 void TimerManager::EventLoop () noexcept
@@ -112,12 +115,7 @@ void TimerManager::OnStopTimer ( Message &&message ) noexcept
 void TimerManager::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
-
-    for ( Timer::State* timer : _timers )
-        delete timer;
-
-    _timers.clear ();
+    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
     _messageQueue.EnqueueFront (
         {

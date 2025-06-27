@@ -6,9 +6,6 @@
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
-// FUCK
-#include <logger.hpp>
-
 
 namespace editor {
 

@@ -32,7 +32,7 @@ Pay attention that all 3<sup>rd</sup> party libraries already prebuild and proje
 * _Android Studio Gradle Plugin 8.11.0_
 * _Android NDK 28.1.13356709 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
-* _Compile _Android SDK_ version: Android 15 (API level 36)_
+* _Compile _Android SDK_ version: Android 16 (API level 36)_
 * _Android SDK Build-Tools 36.0.0_
 * _Android SDK Platform-Tools 36.0.0_
 * _Kotlin 2.2.0_

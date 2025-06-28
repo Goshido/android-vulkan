@@ -9,7 +9,7 @@ $embedSources = $args[ 0 ]
 [string] $MOBILE_SHADER_DIRECTORY = "$mobileDirectory\assets\shaders"
 
 [string] $DXC = "$Env:ANDROID_VULKAN_DXC_ROOT\dxc.exe"
-[string] $HLSL_PROFILE = "6_8"
+[string] $HLSL_PROFILE = "6_9"
 
 $global:FLAGS =
     "-HV", "2021",

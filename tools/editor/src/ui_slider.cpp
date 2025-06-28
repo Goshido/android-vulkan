@@ -347,7 +347,7 @@ void UISlider::UpdateProgress ( double progress ) noexcept
     if ( double const old = std::exchange ( _value, _minValue + _range * progress ); old == _value ) [[unlikely]]
         return;
 
-    // It's needed to check callback presense because this method could be called before 'Connect'.
+    // It's needed to check callback presence because this method could be called before 'Connect'.
     if ( _callback ) [[likely]]
         _callback ( _value );
 

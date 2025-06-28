@@ -19,13 +19,13 @@ constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
 
-// It prevents buzy loop.
+// It prevents busy loop.
 // [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
 constexpr std::chrono::milliseconds IDLE ( 1U );
 
 constexpr float COMFORTABLE_VIEW_DISTANCE_METERS = 8.0e-1F;
 
-} // end of anonumous namespace
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

@@ -315,7 +315,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
         for ( UIElement const* p = _parent; p; p = p->_parent )
         {
-            // According to CSS calculations shoud be done relative Nearest Positioned Ancestor.
+            // According to CSS calculations should be done relative Nearest Positioned Ancestor.
             // Long story short: it's needed to work relative closest 'position: absolute or relative' element.
             if ( p->GetCSS ()._position == PositionProperty::eValue::Static )
                 continue;

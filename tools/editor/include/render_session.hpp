@@ -85,7 +85,7 @@ class RenderSession final
         [[nodiscard]] bool CreateRenderTarget () noexcept;
         [[nodiscard]] bool CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept;
         void EventLoop () noexcept;
-        [[nodiscard]] bool InitiModules () noexcept;
+        [[nodiscard]] bool InitModules () noexcept;
 
         void OnHelloTriangleReady ( void* params ) noexcept;
         void OnRenderFrame () noexcept;

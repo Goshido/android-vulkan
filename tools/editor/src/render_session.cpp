@@ -153,14 +153,15 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     if ( !result ) [[unlikely]]
         return;
 
-    AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
-
-    constexpr HelloTriangleVertex const data[] =
     {
+        AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
+
+        constexpr HelloTriangleVertex const data[] =
         {
-            ._vertex = GXVec2 ( -0.75F, 0.75F ),
-            ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
-        },
+            {
+                ._vertex = GXVec2 ( -0.75F, 0.75F ),
+                ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
+            },
 
         {
             ._vertex = GXVec2 ( 0.0F, -0.75F ),
@@ -171,23 +172,25 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
             ._vertex = GXVec2 ( 0.75F, 0.75F ),
             ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
         }
-    };
+        };
 
-    _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
+        _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
 
-    result = _geometry->LoadMesh ( _renderer,
-        commandBuffer,
-        true,
-        VK_NULL_HANDLE,
-        { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
-        static_cast<uint32_t> ( std::size ( data ) )
-    );
+        result = _geometry->LoadMesh ( _renderer,
+            commandBuffer,
+            true,
+            VK_NULL_HANDLE,
+            { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
+            static_cast<uint32_t> ( std::size ( data ) )
+        );
 
-    if ( !result ) [[unlikely]]
-    {
-        _geometry->FreeResources ( _renderer );
-        _geometry.reset ();
-        return;
+        if ( !result ) [[unlikely]]
+        {
+            _geometry->FreeResources ( _renderer );
+            _geometry.reset ();
+            return;
+        }
+
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -633,7 +636,7 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
 
 void RenderSession::EventLoop () noexcept
 {
-    if ( !InitiModules () ) [[unlikely]]
+    if ( !InitModules () ) [[unlikely]]
         _broken = true;
 
     MessageQueue &messageQueue = _messageQueue;
@@ -718,7 +721,7 @@ void RenderSession::EventLoop () noexcept
     }
 }
 
-bool RenderSession::InitiModules () noexcept
+bool RenderSession::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
     android_vulkan::Renderer &renderer = _renderer;
@@ -781,7 +784,7 @@ bool RenderSession::InitiModules () noexcept
         _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
-            "editor::RenderSession::InitiModules",
+            "editor::RenderSession::InitModules",
             "Can't run upload commands"
         );
 

@@ -20,7 +20,7 @@ class UICheckBox final : public Widget
         enum class eState : uint8_t
         {
             Check,
-            Unckeck,
+            Uncheck,
             Multi
         };
 

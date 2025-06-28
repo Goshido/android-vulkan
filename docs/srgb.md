@@ -8,7 +8,7 @@
 
 ## <a id="srgb-to-linear">_sRGB_ to _Linear_</a>
 
-Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
+According to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 
 $$
 C_{linear}=
@@ -34,7 +34,7 @@ $$
 
 ## <a id="linear-to-srgb">_Linear_ to _sRGB_</a>
 
-Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
+According to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 
 $$
 C_{srgb}=
@@ -66,7 +66,7 @@ Note if original color is in _sRGB_ space it's needed to move it into _Linear_ s
 
 It was decided to use power ($P$) which lies in range $[0.2, 5]$.
 
-From user perspective it is contolled by brightness balance ($B$) which lies in range $[-1, 1]$.
+From user perspective it is controlled by brightness balance ($B$) which lies in range $[-1, 1]$.
 
 Value | Meaning
 --- | ---

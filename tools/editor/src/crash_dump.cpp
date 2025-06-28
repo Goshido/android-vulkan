@@ -25,7 +25,7 @@ bool CrashDump::Install () noexcept
 LONG CALLBACK CrashDump::CrashHandler ( EXCEPTION_POINTERS* exceptionPointers )
 {
     // Note code here is executed in very unstable environment: stack corruption, heap corruption.
-    // Note all valiables are allocated in global memory (not stack) by design to successfully generate crash dump file.
+    // Note all variables are allocated in global memory (not stack) by design to successfully generate crash dump file.
     // see https://stackoverflow.com/questions/5028781/how-to-write-a-sample-code-that-will-crash-and-produce-dump-file
     static FILETIME utcFileTime {};
     GetSystemTimeAsFileTime ( &utcFileTime );

@@ -176,11 +176,11 @@ void UICheckBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
     switch ( _state )
     {
         case editor::UICheckBox::eState::Check:
-            _state = eState::Unckeck;
+            _state = eState::Uncheck;
             _valueIcon.SetText ( glyph::CHECKBOX_UNCHECK );
         break;
 
-        case editor::UICheckBox::eState::Unckeck:
+        case editor::UICheckBox::eState::Uncheck:
             [[fallthrough]];
         case editor::UICheckBox::eState::Multi:
             _state = eState::Check;

@@ -42,12 +42,12 @@ SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::u32string
 
     // Respect hardware natural alignment of the char32_t type.
     constexpr size_t natural = sizeof ( char32_t );
-    constexpr size_t alighnedOffset = ( eventSize + natural - 1U ) / natural * natural;
+    constexpr size_t alignedOffset = ( eventSize + natural - 1U ) / natural * natural;
 
     size_t const contentSize = sizeof ( char32_t ) * ( symbols + 1U );
-    size_t const cases[] = { alighnedOffset + contentSize, eventSize };
+    size_t const cases[] = { alignedOffset + contentSize, eventSize };
     auto* data = static_cast<uint8_t*> ( std::malloc ( cases[ static_cast<size_t> ( isEmpty ) ] ) );
-    auto* contentData = reinterpret_cast<char32_t*> ( data + alighnedOffset );
+    auto* contentData = reinterpret_cast<char32_t*> ( data + alignedOffset );
 
     if ( !isEmpty ) [[likely]]
         std::memcpy ( contentData, text.data (), contentSize );

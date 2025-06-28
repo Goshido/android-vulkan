@@ -20,8 +20,8 @@ struct BufferInfo final
 };
 
 // Note if index buffer is present '_indexType' should be not VK_INDEX_TYPE_MAX_ENUM.
-// Index data ofset is implicitly 0. Vertex data could contain:
-// - single stream of arbitary data
+// Index data offset is implicitly 0. Vertex data could contain:
+// - single stream of arbitrary data
 // - two streams: vertex positions, rest data
 struct MeshBufferInfo final
 {

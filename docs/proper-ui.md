@@ -18,7 +18,7 @@ Let's start from the issue. Please open this image in `new tab` and look at it i
 
 <img src="./images/ui-wrong-blending.png"/>
 
-You could notice than _Google Chrome_ much darker that _Android-Vulkan_. Caption area is a good example that blending looks different. Same time any opaque area has exactly the same color in both impementations. For example close button color is 1 to 1 match. Accoriding to [_CSS_](https://www.w3.org/TR/SVG11/masking.html#SimpleAlphaBlending) it should be used _premultiplied alpha_ or classic alpha blending. One blending could be transformed into another. _Premultiplied alpha_ has advantages in image filtering and it allows to separate blending areas for later compositing.
+You could notice than _Google Chrome_ much darker that _Android-Vulkan_. Caption area is a good example that blending looks different. Same time any opaque area has exactly the same color in both implementations. For example close button color is 1 to 1 match. According to [_CSS_](https://www.w3.org/TR/SVG11/masking.html#SimpleAlphaBlending) it should be used _premultiplied alpha_ or classic alpha blending. One blending could be transformed into another. _Premultiplied alpha_ has advantages in image filtering and it allows to separate blending areas for later compositing.
 
 It turns out that the answer is `UNORM` format for render target. Hardware produces slightly different results for `UNORM` and `sRGB` during blending. In the case above the render target format was `sRGB`. After changing it to `UNORM` the blending starts to match. Please open this image in `new tab` and look at it in `100% zoom`:
 
@@ -131,7 +131,7 @@ $$
     \end{array}
 $$
 
-Equation above is usefull for computing $P_y$ component.
+Equation above is useful for computing $P_y$ component.
 
 For computing $P_x$ component let's rearrange equation to general form.
 
@@ -271,11 +271,11 @@ $$
 
 The difference with ground truth looks like this:
 
-<img src="./images/ui-exact-vs-polymonial.png"/>
+<img src="./images/ui-exact-vs-polynomial.png"/>
 
 And this solution do have small impact on quality. Please open this image in `new tab` and look at it in `100% zoom`:
 
-<img src="./images/ui-polymonial-artifacts.png"/>
+<img src="./images/ui-polynomial-artifacts.png"/>
 
 [↬ table of content ⇧](#table-of-content)
 

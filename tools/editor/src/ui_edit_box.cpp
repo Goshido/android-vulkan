@@ -11,7 +11,7 @@ namespace editor {
 
 namespace {
 
-constexpr auto BLINK_PEDIOD = std::chrono::milliseconds ( 500U );
+constexpr auto BLINK_PERIOD = std::chrono::milliseconds ( 500U );
 
 constexpr char32_t CTRL_A = 0x01;
 constexpr char32_t CTRL_C = 0x03;
@@ -891,7 +891,7 @@ void UIEditBox::ResetBlinkTimer () noexcept
 {
     _blink = std::make_unique<Timer> ( _messageQueue,
         Timer::eType::Repeat,
-        BLINK_PEDIOD,
+        BLINK_PERIOD,
 
         [ this ] ( Timer::ElapsedTime &&/*elapsedTime*/ ) noexcept {
             if ( _cursorDIV.IsVisible () )

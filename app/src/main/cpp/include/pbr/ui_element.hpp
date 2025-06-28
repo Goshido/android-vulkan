@@ -17,6 +17,7 @@ class UIElement
             FontStorage*                    _fontStorage = nullptr;
             bool                            _hasChanges = false;
             std::vector<float>*             _lineHeights = nullptr;
+            GXVec2                          _parentPaddingExtent {};
             GXVec2                          _pen {};
             android_vulkan::Renderer*       _renderer = nullptr;
             size_t                          _vertices = 0U;
@@ -32,6 +33,7 @@ class UIElement
         {
             FontStorage*                    _fontStorage = nullptr;
             size_t                          _line = 0U;
+            float                           _lineHeight = 0.0F;
             float const*                    _parentLineHeights = nullptr;
             GXVec2                          _parentSize {};
             GXVec2                          _parentTopLeft {};
@@ -43,6 +45,7 @@ class UIElement
 
     protected:
         CSSComputedValues                   _css {};
+        std::string                         _name {};
 
         bool                                _visible = false;
         bool                                _visibilityChanged = true;
@@ -78,16 +81,26 @@ class UIElement
         [[nodiscard]] CSSComputedValues &GetCSS () noexcept;
         [[nodiscard]] CSSComputedValues const &GetCSS () const noexcept;
 
+        [[nodiscard]] std::string_view ResolveFont () const noexcept;
+        [[nodiscard]] float ResolveFontSize () const noexcept;
+        [[nodiscard]] float ResolveLineHeight ( FontStorage::Font font ) const noexcept;
+
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
+        explicit UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept;
         explicit UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css ) noexcept;
 
+        explicit UIElement ( bool visible,
+            UIElement const* parent,
+            CSSComputedValues &&css,
+            std::string &&name
+        ) noexcept;
+
         [[nodiscard]] float ResolvePixelLength ( LengthValue const &length,
-            float parentLength,
+            float referenceLength,
             bool isHeight
         ) const noexcept;
 
-        [[nodiscard]] static float ResolveFontSize ( UIElement const &startTraverseElement ) noexcept;
         [[nodiscard]] static AlignHandler ResolveTextAlignment ( UIElement const &parent ) noexcept;
         [[nodiscard]] static AlignHandler ResolveVerticalAlignment ( UIElement const &parent ) noexcept;
 

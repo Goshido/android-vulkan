@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug - GPU select|x64">
@@ -157,7 +157,7 @@
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;AV_ENABLE_VVL;AV_DEBUG;AV_STRICT_MODE;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_DEBUG;AV_ENABLE_VVL;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;AV_STRICT_MODE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -201,7 +201,7 @@
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;AV_ENABLE_VVL;AV_DEBUG;AV_STRICT_MODE;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_DEBUG;AV_ENABLE_VVL;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;AV_STRICT_MODE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -245,7 +245,7 @@
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;AV_ENABLE_RENDERDOC;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_ENABLE_RENDERDOC;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -291,7 +291,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -335,7 +335,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -379,7 +379,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;USE_PIX;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_NATIVE_MODE_LANDSCAPE;AV_ENABLE_TRACE;AV_PIX;VK_USE_PLATFORM_WIN32_KHR;VK_NO_PROTOTYPES;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;USE_PIX;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_ENABLE_TRACE;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;AV_PIX;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -736,6 +736,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\uniform_pool.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\uniform_pool.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf16_parser.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\utf16_parser.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\utf8_parser.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\utf8_parser.obj</ObjectFileName>
@@ -850,18 +858,35 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="src\append_ui_child_element_event.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
+    <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
+    <ClCompile Include="src\keyboard_key_event.cpp" />
+    <ClCompile Include="src\keys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
+    <ClCompile Include="src\prepend_ui_child_element_event.cpp" />
     <ClCompile Include="src\rect.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\save_state.cpp" />
+    <ClCompile Include="src\set_text_event.cpp" />
+    <ClCompile Include="src\text_ui_element.cpp" />
+    <ClCompile Include="src\timer.cpp" />
+    <ClCompile Include="src\timer_manager.cpp" />
+    <ClCompile Include="src\ui_check_box.cpp" />
+    <ClCompile Include="src\ui_close_button.cpp" />
+    <ClCompile Include="src\ui_combo_box.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
+    <ClCompile Include="src\ui_edit_box.cpp" />
+    <ClCompile Include="src\ui_element.cpp" />
+    <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
+    <ClCompile Include="src\ui_props.cpp" />
+    <ClCompile Include="src\ui_slider.cpp" />
     <ClCompile Include="src\widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -911,7 +936,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\light.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\material.hpp" />
@@ -934,6 +958,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_pool.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf16_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
@@ -943,24 +968,42 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
+    <ClInclude Include="include\append_ui_child_element_event.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
+    <ClInclude Include="include\div_ui_element.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
+    <ClInclude Include="include\image_ui_element.hpp" />
+    <ClInclude Include="include\keyboard_key_event.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
-    <ClInclude Include="include\mouse_key_event.hpp" />
+    <ClInclude Include="include\mouse_button_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\prepend_ui_child_element_event.hpp" />
     <ClInclude Include="include\rect.hpp" />
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\save_state.hpp" />
+    <ClInclude Include="include\set_text_event.hpp" />
+    <ClInclude Include="include\text_ui_element.hpp" />
     <ClInclude Include="include\theme.hpp" />
+    <ClInclude Include="include\timer.hpp" />
+    <ClInclude Include="include\timer_manager.hpp" />
+    <ClInclude Include="include\ui_check_box.hpp" />
+    <ClInclude Include="include\ui_close_button.hpp" />
+    <ClInclude Include="include\ui_combo_box.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
+    <ClInclude Include="include\ui_edit_box.hpp" />
+    <ClInclude Include="include\ui_element.hpp" />
+    <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
+    <ClInclude Include="include\ui_props.hpp" />
+    <ClInclude Include="include\ui_slider.hpp" />
     <ClInclude Include="include\widget.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -975,6 +1018,7 @@
     <None Include="..\..\app\src\main\cpp\include\pbr\exposure.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc" />
+    <None Include="..\..\app\src\main\cpp\include\pbr\ui_primitive_type.inc" />
     <None Include="..\..\app\src\main\cpp\include\pbr\ui_program.inc" />
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in" />
     <None Include="..\..\app\src\main\cpp\include\vulkan_bootstrap.in">

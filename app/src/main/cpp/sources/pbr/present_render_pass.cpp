@@ -41,11 +41,10 @@ void PresentRenderPass::OnDestroyDevice ( VkDevice device ) noexcept
         .height = 0U
     };
 
-    if ( _renderInfo.renderPass == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyRenderPass ( device, _renderInfo.renderPass, nullptr );
-    _renderInfo.renderPass = VK_NULL_HANDLE;
+    if ( _renderInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyRenderPass ( device, std::exchange ( _renderInfo.renderPass, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 bool PresentRenderPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept

@@ -28,7 +28,7 @@ float16_t4 RecoverTBN ( in float16_t3 imaginaryTBN )
     // By convention xyz contains imaginary part of quaternion. The w component contains mirroring information.
     // Real part of quaternion must be restored. By convention it's used unit quaternions to represent TBN.
     // So the real component will be restored using this property.
-    // Note dot product could be a little bit bigger than 1.0H due to float16_t inaccurency. Fixing it with abs.
+    // Note dot product could be a little bit bigger than 1.0H due to float16_t inaccuracy. Fixing it with abs.
     return float16_t4 ( sqrt ( abs ( 1.0H - dot ( imaginaryTBN, imaginaryTBN ) ) ), imaginaryTBN );
 }
 

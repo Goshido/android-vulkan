@@ -7,20 +7,21 @@
 namespace pbr {
 
 DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) ),
-    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
-    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
-    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock ),
+    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
+{
+    _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
+}
 
-    _widthSelectorBase (
-        ( static_cast<size_t> ( _isInlineBlock ) << 2U ) | ( static_cast<size_t> ( _isAutoWidth ) << 1U )
-    )
+DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
+    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ), std::move ( name ) )
 {
     _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
 }
 
 void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 {
+    info._hasChanges |= std::exchange ( _hasChanges, false );
+
     if ( !_visible )
         return;
 
@@ -57,14 +58,22 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     };
 
     GXVec2 &penOut = info._pen;
+    bool const isInlineBlock = _css._display == DisplayProperty::eValue::InlineBlock;
+    GXVec2 referenceSize = canvasSize;
 
     switch ( _css._position )
     {
         case PositionProperty::eValue::Absolute:
             pen = _canvasTopLeftOffset;
             _parentLine = std::numeric_limits<size_t>::max ();
+
+            // Reference size should include parent padding for absolute positioned elements.
+            // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_display/Containing_block#identifying_the_containing_block
+            referenceSize.Sum ( referenceSize, info._parentPaddingExtent );
         break;
 
+        case PositionProperty::eValue::Relative:
+            [[fallthrough]];
         case PositionProperty::eValue::Static:
         {
             if ( penOut._data[ 0U ] == 0.0F )
@@ -73,7 +82,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
                 break;
             }
 
-            if ( !_isInlineBlock )
+            if ( !isInlineBlock )
             {
                 newLine ();
                 break;
@@ -88,7 +97,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         return;
     }
 
-    float const &parentWidth = canvasSize._data[ 0U ];
+    float const &parentWidth = referenceSize._data[ 0U ];
     float const &paddingRight = paddingBottomRight._data[ 0U ];
     float const &marginRight = marginBottomRight._data[ 0U ];
 
@@ -98,8 +107,11 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         parentWidth - ( pen._data[ 0U ] + paddingRight + marginRight )
     };
 
-    _canvasSize = GXVec2 ( widthCases[ static_cast<size_t> ( _isAutoWidth | !_isInlineBlock ) ],
-        ResolvePixelLength ( _css._height, canvasSize._data[ 1U ], true )
+    bool const isAutoWidth = _css._width.GetType () == LengthValue::eType::Auto;
+    auto selector = static_cast<size_t> ( isAutoWidth | ( _css._display == DisplayProperty::eValue::None ) );
+
+    _canvasSize = GXVec2 ( widthCases[ selector ],
+        ResolvePixelLength ( _css._height, referenceSize._data[ 1U ], true )
     );
 
     if ( _canvasSize._data[ 0U ] == 0.0F )
@@ -107,11 +119,14 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         // Trying to resolve recursion with 'auto' width from parent and 'percentage' width from child.
         bool const isPercent = _css._width.GetType () == LengthValue::eType::Percent;
         float const cases[] = { 0.0F, 1.0e-2F * parentWidth * _css._width.GetValue () };
-        _canvasSize._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !_isInlineBlock ) ];
+        _canvasSize._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !isInlineBlock ) ];
     }
 
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
+
+    GXVec2 parentPaddingExtent ( paddingTopLeft );
+    parentPaddingExtent.Sum ( parentPaddingExtent, paddingBottomRight );
 
     ApplyInfo childInfo
     {
@@ -119,6 +134,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         ._fontStorage = info._fontStorage,
         ._hasChanges = false,
         ._lineHeights = &_lineHeights,
+        ._parentPaddingExtent = parentPaddingExtent,
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = info._renderer,
         ._vertices = 0U
@@ -129,7 +145,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     bool const hasLines = !_lineHeights.empty ();
 
-    if ( _isAutoHeight & hasLines )
+    if ( ( _css._height.GetType () == LengthValue::eType::Auto ) & hasLines )
         _canvasSize._data[ 1U ] = childInfo._pen._data[ 1U ] + _lineHeights.back ();
 
     float const finalWidth[] =
@@ -144,8 +160,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         widthCases[ 1U ]
     };
 
-    bool const isFullLine = _lineHeights.size () > 1U;
-    size_t const selector = _widthSelectorBase | static_cast<size_t> ( isFullLine );
+    selector = ( static_cast<size_t> ( isInlineBlock ) << 2U ) |
+        ( static_cast<size_t> ( isAutoWidth ) << 1U ) |
+        static_cast<size_t> ( _lineHeights.size () > 1U );
+
     _canvasSize._data[ 0U ] = finalWidth[ selector ];
 
     GXVec2 padding {};
@@ -173,7 +191,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _blockSize.Sum ( beta, gamma );
 
     if ( _css._position == PositionProperty::eValue::Absolute )
+    {
+        info._hasChanges |= childInfo._hasChanges;
         return;
+    }
 
     if ( !sizeCheck ( _blockSize ) )
         return;
@@ -196,6 +217,16 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     }
 
     // 'inline-block' territory.
+    // Based on ideas from https://iamvdo.me/en/blog/css-font-metrics-line-height-and-vertical-align
+    // The most significant feature - adding implicit spaces between blocks in horizontal and vertical direction.
+    // [2025-01-06] It was discovered that Google Chrome v131.0.6778.205 is using actual space (U+0020) character
+    // of current font family and current font size to get horizontal spacing value. The kerning is ignored.
+    // For vertical spacing the following properties must be considered:
+    //  - current font family
+    //  - current font size
+    //  - current line-height
+
+    // FUCK needed to implement
 
     constexpr GXVec2 zero ( 0.0F, 0.0F );
     bool const firstBlock = penOut.IsEqual ( zero );
@@ -252,8 +283,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 
 bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 {
-    bool needRefill = _visibilityChanged;
-    _visibilityChanged = false;
+    bool needRefill = std::exchange ( _visibilityChanged, false );
 
     if ( !_visible )
         return needRefill;
@@ -261,8 +291,9 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 pen {};
     AlignHandler verticalAlign = &UIElement::AlignToStart;
     float parentHeight = 0.0F;
+    PositionProperty::eValue const position = _css._position;
 
-    if ( _css._position == PositionProperty::eValue::Static )
+    if ( ( position == PositionProperty::eValue::Static ) | ( position == PositionProperty::eValue::Relative ) )
     {
         pen = info._pen;
         verticalAlign = ResolveVerticalAlignment ( *this );
@@ -281,6 +312,18 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     {
         // 'absolute' block territory.
         pen = info._parentTopLeft;
+
+        for ( UIElement const* p = _parent; p; p = p->_parent )
+        {
+            // According to CSS calculations should be done relative Nearest Positioned Ancestor.
+            // Long story short: it's needed to work relative closest 'position: absolute or relative' element.
+            if ( p->GetCSS ()._position == PositionProperty::eValue::Static )
+                continue;
+
+            // NOLINTNEXTLINE - downcast
+            pen = static_cast<DIVUIElement const*> ( p )->_absoluteRect._topLeft;
+            break;
+        }
 
         if ( _css._top.GetType () != LengthValue::eType::Auto )
             pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true );
@@ -311,42 +354,39 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], parentHeight, _blockSize._data[ 1U ] );
 
+    _absoluteRect._topLeft.Sum ( pen, _marginTopLeft );
+    _absoluteRect._bottomRight.Sum ( _absoluteRect._topLeft, _borderSize );
+
     if ( _hasBackground )
     {
-        constexpr GXVec2 imageUV ( 0.5F, 0.5F );
-
-        GXVec2 topLeft {};
-        topLeft.Sum ( pen, _marginTopLeft );
-
-        GXVec2 bottomRight {};
-        bottomRight.Sum ( topLeft, _borderSize );
-
-        FontStorage::GlyphInfo const &glyphInfo = info._fontStorage->GetOpaqueGlyphInfo ();
-
         UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
-            topLeft,
-            bottomRight,
-            glyphInfo._topLeft,
-            glyphInfo._bottomRight,
-            imageUV,
-            imageUV
+            _absoluteRect._topLeft,
+            _absoluteRect._bottomRight
         );
     }
 
     GXVec2 topLeft {};
     topLeft.Sum ( pen, _canvasTopLeftOffset );
 
+    auto fontProbe = info._fontStorage->GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
+
+    if ( !fontProbe ) [[unlikely]]
+        return needRefill;
+
     UpdateInfo updateInfo
     {
         ._fontStorage = info._fontStorage,
         ._line = 0U,
+        ._lineHeight = ResolveLineHeight ( fontProbe->_font ),
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = _canvasSize,
         ._parentTopLeft = topLeft,
         ._pen = topLeft
     };
+
+    fontProbe = std::nullopt;
 
     for ( auto* child : _children )
         needRefill |= child->UpdateCache ( updateInfo );
@@ -358,6 +398,21 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
 {
     _children.emplace_back ( &element );
+}
+
+void DIVUIElement::PrependChildElement ( UIElement& element ) noexcept
+{
+    _children.emplace_front ( &element );
+}
+
+DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
+{
+    return _absoluteRect;
+}
+
+void DIVUIElement::Update () noexcept
+{
+    _hasChanges = true;
 }
 
 } // namespace pbr

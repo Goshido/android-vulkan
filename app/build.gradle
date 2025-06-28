@@ -9,14 +9,14 @@ plugins {
 android {
     // It's deprecated now. But I have no clue how to specify explicit build tool version.
     // noinspection GrDeprecatedAPIUsage
-    buildToolsVersion "35.0.0"
+    buildToolsVersion "36.0.0"
 
-    ndkVersion "27.2.12479018"
+    ndkVersion "28.1.13356709"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
-        compileSdk 35
+        compileSdk 36
         minSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -56,7 +56,7 @@ android {
     externalNativeBuild {
         cmake {
             path file('../CMakeLists.txt')
-            version "3.31.1"
+            version "4.0.2"
         }
     }
 

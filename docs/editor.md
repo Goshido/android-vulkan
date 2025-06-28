@@ -6,7 +6,7 @@
   - [_Requirements_](#requirements)
   - [_Building_](#building)
 - [_Configurations_](#configurations)
-  - [_RendeDoc integration_](#renderdoc-integration)
+  - [_RenderDoc integration_](#renderdoc-integration)
   - [_PIX integration_](#pix-integration)
   - [_ASAN integration_](#asan-integration)
   - [_Debug build_](#debug-build)
@@ -27,10 +27,10 @@
     - Windows 11 SDK (10.0.26100.0)
     - Windows Universal C Runtime
 * [_PIX 2409.23 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
-* [_DirectX Shader Compiler 1.8.2407.10120_](https://github.com/microsoft/DirectXShaderCompiler) `d39324e0635130e834a68e33b0c603cf5fc9fb4f`
-* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `59320b2d3c2584ac01914ed0deff64bcc8fb23b2`
-* [_stb_image 2.30_](https://github.com/nothings/stb) `5c205738c191bcb0abc65c4febfa9bd25ff35234`
-* [_Vulkan Validation Layers 1.4.303_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f`
+* [_DirectX Shader Compiler 1.8.2505.10062_](https://github.com/microsoft/DirectXShaderCompiler) `94abfe972ad839185965f670329bcf33cd7bccbd`
+* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `58be4879c5d3840315f037dca44e92384113f8f9`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `f58f558c120e9b32c217290b80bad1a0729fbb2c`
+* [_Vulkan Validation Layers 1.4.320_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `7d29258f5e5bb765057929b217d9a9662315e610`
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -52,7 +52,7 @@ Next step is to compile project via _Visual Studio_ as usual.
 
 ## <a id="configurations">Configurations</a>
 
-### <a id="renderdoc-integration">_RendeDoc_ integration</a>
+### <a id="renderdoc-integration">_RenderDoc_ integration</a>
 
 First step is to select _RenderDoc_ build configuration:
 

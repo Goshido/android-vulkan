@@ -1,10 +1,13 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <cursor.hpp>
+#include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <main_window.hpp>
-#include <mouse_key_event.hpp>
+#include <mouse_button_event.hpp>
 #include <mouse_move_event.hpp>
 #include <os_utils.hpp>
+#include <pbr/utf16_parser.hpp>
 #include <save_state.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -40,35 +43,182 @@ constexpr POINT MINIMUM_WINDOW_SIZE
     .y = 175
 };
 
+// See https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+constexpr WPARAM VK_KEY_0 = 0x30U;
+constexpr WPARAM VK_KEY_1 = 0x31U;
+constexpr WPARAM VK_KEY_2 = 0x32U;
+constexpr WPARAM VK_KEY_3 = 0x33U;
+constexpr WPARAM VK_KEY_4 = 0x34U;
+constexpr WPARAM VK_KEY_5 = 0x35U;
+constexpr WPARAM VK_KEY_6 = 0x36U;
+constexpr WPARAM VK_KEY_7 = 0x37U;
+constexpr WPARAM VK_KEY_8 = 0x38U;
+constexpr WPARAM VK_KEY_9 = 0x39U;
+constexpr WPARAM VK_KEY_A = 0x41U;
+constexpr WPARAM VK_KEY_B = 0x42U;
+constexpr WPARAM VK_KEY_C = 0x43U;
+constexpr WPARAM VK_KEY_D = 0x44U;
+constexpr WPARAM VK_KEY_E = 0x45U;
+constexpr WPARAM VK_KEY_F = 0x46U;
+constexpr WPARAM VK_KEY_G = 0x47U;
+constexpr WPARAM VK_KEY_H = 0x48U;
+constexpr WPARAM VK_KEY_I = 0x49U;
+constexpr WPARAM VK_KEY_J = 0x4AU;
+constexpr WPARAM VK_KEY_K = 0x4BU;
+constexpr WPARAM VK_KEY_L = 0x4CU;
+constexpr WPARAM VK_KEY_M = 0x4DU;
+constexpr WPARAM VK_KEY_N = 0x4EU;
+constexpr WPARAM VK_KEY_O = 0x4FU;
+constexpr WPARAM VK_KEY_P = 0x50U;
+constexpr WPARAM VK_KEY_Q = 0x51U;
+constexpr WPARAM VK_KEY_R = 0x52U;
+constexpr WPARAM VK_KEY_S = 0x53U;
+constexpr WPARAM VK_KEY_T = 0x54U;
+constexpr WPARAM VK_KEY_U = 0x55U;
+constexpr WPARAM VK_KEY_V = 0x56U;
+constexpr WPARAM VK_KEY_W = 0x57U;
+constexpr WPARAM VK_KEY_X = 0x58U;
+constexpr WPARAM VK_KEY_Y = 0x59U;
+constexpr WPARAM VK_KEY_Z = 0x5AU;
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+MainWindow::MainWindow () noexcept
+{
+    _keyboardKeyMapper =
+    {
+        { VK_KEY_0, eKey::Key0 },
+        { VK_KEY_1, eKey::Key1 },
+        { VK_KEY_2, eKey::Key2 },
+        { VK_KEY_3, eKey::Key3 },
+        { VK_KEY_4, eKey::Key4 },
+        { VK_KEY_5, eKey::Key5 },
+        { VK_KEY_6, eKey::Key6 },
+        { VK_KEY_7, eKey::Key7 },
+        { VK_KEY_8, eKey::Key8 },
+        { VK_KEY_9, eKey::Key9 },
+
+        { VK_F1, eKey::KeyF1 },
+        { VK_F2, eKey::KeyF2 },
+        { VK_F3, eKey::KeyF3 },
+        { VK_F4, eKey::KeyF4 },
+        { VK_F5, eKey::KeyF5 },
+        { VK_F6, eKey::KeyF6 },
+        { VK_F7, eKey::KeyF7 },
+        { VK_F8, eKey::KeyF8 },
+        { VK_F9, eKey::KeyF9 },
+        { VK_F10, eKey::KeyF10 },
+        { VK_F11, eKey::KeyF11 },
+        { VK_F12, eKey::KeyF12 },
+
+        { VK_KEY_A, eKey::KeyA },
+        { VK_KEY_B, eKey::KeyB },
+        { VK_KEY_C, eKey::KeyC },
+        { VK_KEY_D, eKey::KeyD },
+        { VK_KEY_E, eKey::KeyE },
+        { VK_KEY_F, eKey::KeyF },
+        { VK_KEY_G, eKey::KeyG },
+        { VK_KEY_H, eKey::KeyH },
+        { VK_KEY_I, eKey::KeyI },
+        { VK_KEY_J, eKey::KeyJ },
+        { VK_KEY_K, eKey::KeyK },
+        { VK_KEY_L, eKey::KeyL },
+        { VK_KEY_M, eKey::KeyM },
+        { VK_KEY_N, eKey::KeyN },
+        { VK_KEY_O, eKey::KeyO },
+        { VK_KEY_P, eKey::KeyP },
+        { VK_KEY_Q, eKey::KeyQ },
+        { VK_KEY_R, eKey::KeyR },
+        { VK_KEY_S, eKey::KeyS },
+        { VK_KEY_T, eKey::KeyT },
+        { VK_KEY_U, eKey::KeyU },
+        { VK_KEY_V, eKey::KeyV },
+        { VK_KEY_W, eKey::KeyW },
+        { VK_KEY_X, eKey::KeyX },
+        { VK_KEY_Y, eKey::KeyY },
+        { VK_KEY_Z, eKey::KeyZ },
+
+        { VK_DOWN, eKey::KeyDown },
+        { VK_LEFT, eKey::KeyLeft },
+        { VK_RIGHT, eKey::KeyRight },
+        { VK_UP, eKey::KeyUp },
+
+        { VK_OEM_4, eKey::KeyLeftSquareBracket },
+        { VK_OEM_6, eKey::KeyRightSquareBracket },
+
+        { VK_NUMPAD0, eKey::KeyNumpad0 },
+        { VK_NUMPAD1, eKey::KeyNumpad1 },
+        { VK_NUMPAD2, eKey::KeyNumpad2 },
+        { VK_NUMPAD3, eKey::KeyNumpad3 },
+        { VK_NUMPAD4, eKey::KeyNumpad4 },
+        { VK_NUMPAD5, eKey::KeyNumpad5 },
+        { VK_NUMPAD6, eKey::KeyNumpad6 },
+        { VK_NUMPAD7, eKey::KeyNumpad7 },
+        { VK_NUMPAD8, eKey::KeyNumpad8 },
+        { VK_NUMPAD9, eKey::KeyNumpad9 },
+        { VK_ADD, eKey::KeyNumpadAdd },
+        { VK_DIVIDE, eKey::KeyNumpadDiv },
+        { VK_DECIMAL, eKey::KeyNumpadDot },
+        { VK_SUBTRACT, eKey::KeyNumpadMinus },
+        { VK_MULTIPLY, eKey::KeyNumpadMul },
+
+        { VK_MENU, eKey::KeyAlt },
+        { VK_OEM_7, eKey::KeyApostrophe },
+        { VK_OEM_5, eKey::KeyBackslash },
+        { VK_BACK, eKey::KeyBackspace },
+        { VK_CAPITAL, eKey::KeyCapsLock },
+        { VK_OEM_COMMA, eKey::KeyComma },
+        { VK_CONTROL, eKey::KeyCtrl },
+        { VK_DELETE, eKey::KeyDel },
+        { VK_END, eKey::KeyEnd },
+        { VK_RETURN, eKey::KeyEnter },
+        { VK_ESCAPE, eKey::KeyEsc },
+        { VK_HOME, eKey::KeyHome },
+        { VK_INSERT, eKey::KeyIns },
+        { VK_APPS, eKey::KeyMenu },
+        { VK_OEM_MINUS, eKey::KeyMinus },
+        { VK_PAUSE, eKey::KeyPause },
+        { VK_OEM_PERIOD, eKey::KeyPeriod },
+        { VK_NEXT, eKey::KeyPgDown },
+        { VK_PRIOR, eKey::KeyPgUp },
+        { VK_OEM_PLUS, eKey::KeyPlus },
+        { VK_OEM_1, eKey::KeySemicolon },
+        { VK_SHIFT, eKey::KeyShift },
+        { VK_OEM_2, eKey::KeySlash },
+        { VK_SPACE, eKey::KeySpace },
+        { VK_TAB, eKey::KeyTab },
+        { VK_OEM_3, eKey::KeyTilde }
+    };
+}
 
 bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Making OS window" )
 
     _messageQueue = &messageQueue;
-    HMODULE const module = GetModuleHandleA ( nullptr );
+    HMODULE const module = GetModuleHandleW ( nullptr );
     constexpr int exeIconResourceID = 1;
 
     CreateCursors ();
 
-    WNDCLASSA const wndClass
+    WNDCLASSW const wndClass
     {
-        .style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+        .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
         .lpfnWndProc = &MainWindow::WindowHandler,
         .cbClsExtra = 0,
         .cbWndExtra = 0,
         .hInstance = module,
-        .hIcon = LoadIconA ( module, MAKEINTRESOURCEA ( exeIconResourceID ) ),
+        .hIcon = LoadIconW ( module, MAKEINTRESOURCEW ( exeIconResourceID ) ),
         .hCursor = nullptr,
         .hbrBackground = CreateSolidBrush ( RGB ( 115, 185, 0 ) ),
         .lpszMenuName = nullptr,
-        .lpszClassName = "Android-Vulkan Editor-{8a3ef647-a264-4b1f-ae54-0d9856cf23e3}"
+        .lpszClassName = L"Android-Vulkan Editor-{8a3ef647-a264-4b1f-ae54-0d9856cf23e3}"
     };
 
-    _classID = RegisterClassA ( &wndClass );
+    // Using Unicode version in order to get UTF-16 codepoints in WM_CHAR/WM_SYSCHAR messages instead of codepage codes.
+    _classID = RegisterClassW ( &wndClass );
 
     if ( _classID == 0 ) [[unlikely]]
     {
@@ -76,14 +226,16 @@ bool MainWindow::MakeWindow ( MessageQueue &messageQueue ) noexcept
         return false;
     }
 
-    // Note '_hwnd' will be assigned in OnCreate method:
-    // CreateWindowEx
-    //     WM_CREATE
-    //         OnCreate: -> HWND is assigned to '_hwnd'
-    // control returns to caller code
-    HWND const result = CreateWindowEx ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
+    /*
+    Note '_hwnd' will be assigned in OnCreate method:
+    CreateWindowEx
+        WM_CREATE
+            OnCreate: -> HWND is assigned to '_hwnd'
+    control returns to caller code
+    */
+    HWND const result = CreateWindowExW ( WS_EX_ACCEPTFILES | WS_EX_APPWINDOW | WS_EX_OVERLAPPEDWINDOW,
         MAKEINTATOM ( _classID ),
-        _T ( "Editor" ),
+        L"Editor",
         WS_VISIBLE | WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX,
         100,
         100,
@@ -129,7 +281,7 @@ bool MainWindow::Destroy () noexcept
     if ( _classID == 0 ) [[unlikely]]
         return true;
 
-    if ( BOOL const result = UnregisterClass ( MAKEINTATOM ( _classID ), GetModuleHandle ( nullptr ) ); result != 0 )
+    if ( BOOL const result = UnregisterClassW ( MAKEINTATOM ( _classID ), GetModuleHandleW ( nullptr ) ); result != 0 )
     {
         [[likely]]
         return true;
@@ -144,9 +296,14 @@ void MainWindow::Execute () noexcept
     AV_TRACE ( "Executing OS messages" )
     MSG msg {};
 
-    while ( PeekMessageA ( &msg, _hwnd, 0U, 0U, PM_REMOVE ) )
+    // [2025/06/05] HWND must be nullptr. Otherwise keyboard layout changing will not work.
+    // Win11 24H2, 26100.4202
+    while ( PeekMessageW ( &msg, nullptr, 0U, 0U, PM_REMOVE ) )
     {
-        DispatchMessageA ( &msg );
+        // TranslateMessage is needed to get ALT+Numpad codes and use WM_CHAR/WM_SYSCHAR messages.
+        TranslateMessage ( &msg );
+
+        DispatchMessageW ( &msg );
     }
 }
 
@@ -158,6 +315,16 @@ void MainWindow::CaptureMouse () noexcept
 void MainWindow::ReleaseMouse () noexcept
 {
     ReleaseCapture ();
+}
+
+void MainWindow::CaptureKeyboard () noexcept
+{
+    _handleTyping = true;
+}
+
+void MainWindow::ReleaseKeyboard () noexcept
+{
+    _handleTyping = false;
 }
 
 void MainWindow::ChangeCursor ( eCursor cursor ) noexcept
@@ -173,6 +340,88 @@ float MainWindow::GetDPI () const noexcept
 HWND MainWindow::GetNativeWindow () const noexcept
 {
     return _hwnd;
+}
+
+void MainWindow::ReadClipboard () const noexcept
+{
+    if ( !IsClipboardFormatAvailable ( CF_UNICODETEXT ) || !OpenClipboard ( nullptr ) )
+        return;
+
+    HGLOBAL data = GetClipboardData ( CF_UNICODETEXT );
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::ReadClipboardResponse,
+
+            ._params = new std::u32string (
+                pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) )
+            ),
+
+            ._serialNumber = 0U
+        }
+    );
+
+    GlobalUnlock ( data );
+    CloseClipboard ();
+}
+
+void MainWindow::WriteClipboard ( std::u32string const &string ) const noexcept
+{
+    std::u16string const u16 = pbr::UTF16Parser::ToU16String ( string );
+    size_t const size = ( u16.size () + 1U ) * sizeof ( char16_t );
+
+    HGLOBAL block = GlobalAlloc ( GMEM_MOVEABLE, static_cast<SIZE_T> ( size ) );
+    auto clipData = static_cast<HANDLE> ( GlobalLock ( block ) );
+    std::memcpy ( clipData, u16.c_str (), size );
+    GlobalUnlock ( block );
+
+    OpenClipboard ( nullptr );
+    EmptyClipboard ();
+    SetClipboardData ( CF_UNICODETEXT, clipData );
+    CloseClipboard ();
+}
+
+void MainWindow::OnChar ( WPARAM wParam ) noexcept
+{
+    AV_TRACE ( "Main window: character" )
+
+    if ( !_handleTyping ) [[likely]]
+        return;
+
+    size_t codepoint;
+
+    switch ( auto const w = static_cast<char16_t> ( wParam ); pbr::UTF16Parser::Classify ( w ) )
+    {
+        case pbr::UTF16Parser::eSurrogate::Hi:
+            _highSurrogate = std::optional<char16_t> { w };
+        return;
+
+        case pbr::UTF16Parser::eSurrogate::Low:
+            if ( !_highSurrogate ) [[unlikely]]
+            {
+                AV_ASSERT ( false )
+                return;
+            }
+
+            codepoint = static_cast<size_t> ( pbr::UTF16Parser::ToChar32 ( *_highSurrogate, w ) );
+        break;
+
+        case pbr::UTF16Parser::eSurrogate::None:
+            [[fallthrough]];
+        default:
+            codepoint = static_cast<size_t> ( w );
+        break;
+    }
+
+    _highSurrogate = std::nullopt;
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::Typing,
+            ._params = std::bit_cast<void*> ( codepoint ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void MainWindow::OnClose () noexcept
@@ -196,13 +445,34 @@ void MainWindow::OnCreate ( HWND hwnd ) noexcept
     // To destinguish error it's needed to preset 0 as last error. Trick is described on MSDN:
     // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra#return-value
     SetLastError ( 0U );
-    LONG_PTR const result = SetWindowLongPtrA ( hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
+    LONG_PTR const result = SetWindowLongPtrW ( hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR> ( this ) );
 
     if ( ( result == 0 ) && ( GetLastError () == 0U ) ) [[likely]]
         return;
 
     android_vulkan::LogError ( "MainWindow: Can't connect MainWindow onject to HWND handle." );
     DestroyWindow ( hwnd );
+}
+
+void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
+{
+    AV_TRACE ( "Main window: double click" )
+
+    _messageQueue->EnqueueBack (
+        {
+            ._type = eMessageType::DoubleClick,
+
+            ._params = new MouseButtonEvent
+            {
+                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                ._key = eKey::LeftMouseButton,
+                ._modifier = MakeKeyModifier ()
+            },
+
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
@@ -230,74 +500,34 @@ void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
 
 void MainWindow::OnGetMinMaxInfo ( LPARAM lParam ) noexcept
 {
+    AV_TRACE ( "Main window: min-max info" )
     reinterpret_cast<MINMAXINFO*> ( lParam )->ptMinTrackSize = MINIMUM_WINDOW_SIZE;
 }
 
-void MainWindow::OnLButtonDown ( LPARAM lParam ) noexcept
+void MainWindow::OnKeyboardKey ( WPARAM wParam, eMessageType messageType) noexcept
 {
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
+    AV_TRACE ( "Main window: keyboard key" )
 
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
+    if ( auto const key = _keyboardKeyMapper.find ( wParam );  key != _keyboardKeyMapper.cend () ) [[likely]]
+    {
+        _messageQueue->EnqueueBack ( KeyboardKeyEvent::Create ( messageType, key->second, MakeKeyModifier () ) );
+    }
 }
 
-void MainWindow::OnLButtonUp ( LPARAM lParam ) noexcept
+void MainWindow::OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageType ) noexcept
 {
+    AV_TRACE ( "Main window: mouse button" )
+
     _messageQueue->EnqueueBack (
         {
-            ._type = eMessageType::MouseKeyUp,
+            ._type = messageType,
 
-            ._params = new MouseKeyEvent
+            ._params = new MouseButtonEvent
             {
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnMButtonDown ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::MiddleMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnMButtonUp ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyUp,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::MiddleMouseButton
+                ._key = key,
+                ._modifier = MakeKeyModifier ()
             },
 
             ._serialNumber = 0U
@@ -307,6 +537,8 @@ void MainWindow::OnMButtonUp ( LPARAM lParam ) noexcept
 
 void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
+    AV_TRACE ( "Main window: mouse move" )
+
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::MouseMoved,
@@ -316,42 +548,6 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
                 ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
                 ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
                 ._eventID = ++_mouseMoveEventID
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnRButtonDown ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyDown,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::RightMouseButton
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void MainWindow::OnRButtonUp ( LPARAM lParam ) noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseKeyUp,
-
-            ._params = new MouseKeyEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::RightMouseButton
             },
 
             ._serialNumber = 0U
@@ -381,6 +577,12 @@ void MainWindow::CreateCursors () noexcept
     _cursors.insert (
         std::make_pair ( eCursor::Arrow,
             static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_ARROW, IMAGE_CURSOR, 0, 0, flags ) )
+        )
+    );
+
+    _cursors.insert (
+        std::make_pair ( eCursor::IBeam,
+            static_cast<HCURSOR> ( LoadImageW ( nullptr, IDC_IBEAM, IMAGE_CURSOR, 0, 0, flags ) )
         )
     );
 
@@ -462,17 +664,19 @@ void MainWindow::Save () noexcept
         static_cast<uint8_t> ( state == eWindowState::Minimized ? eWindowState::Normal : state )
     );
 
-    // [2024/08/31, Windows 11 Pro, 23H2, 22631.4112]
-    // Issue with maximize. If window is maximized than x and y coordinates are incorrect. It's because
-    // OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
-    // windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
-    // We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
-    // screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
-    // left side of the screen.
-    //
-    // Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.
-    // But moving from minimized state to normal state does not sends anything. So it's needed to explicitly request
-    // window position back.
+    /*
+    [2024/08/31, Windows 11 Pro, 23H2, 22631.4112]
+    Issue with maximize. If window is maximized than x and y coordinates are incorrect. It's because
+    OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
+    windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
+    We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
+    screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
+    left side of the screen.
+
+    Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.
+    But moving from minimized state to normal state does not sends anything. So it's needed to explicitly request
+    window position back.
+    */
     if ( state != eWindowState::Normal )
         ShowWindow ( _hwnd, SW_NORMAL );
 
@@ -535,23 +739,50 @@ void MainWindow::Load () noexcept
     }
 }
 
+KeyModifier MainWindow::MakeKeyModifier () noexcept
+{
+    KeyModifier result {};
+    constexpr uint16_t pressedMask = 0b1000'0000'0000'0000U;
+
+    result._leftAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LMENU ) );
+    result._rightAlt = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RMENU ) );
+
+    result._leftCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LCONTROL ) );
+    result._rightCtrl = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RCONTROL ) );
+
+    result._leftShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_LSHIFT ) );
+    result._rightShift = pressedMask & static_cast<uint16_t> ( GetKeyState ( VK_RSHIFT ) );
+
+    return result;
+}
+
 LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     AV_TRACE ( "OS window message" )
-    auto &mainWindow = *reinterpret_cast<MainWindow*> ( GetWindowLongPtrA ( hwnd, GWLP_USERDATA ) );
+    auto &mainWindow = *reinterpret_cast<MainWindow*> ( GetWindowLongPtrW ( hwnd, GWLP_USERDATA ) );
 
     switch ( msg )
     {
+        case WM_CHAR:
+            mainWindow.OnChar ( wParam );
+        return 0;
+
+        case WM_SYSCHAR:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnChar ( wParam );
+        break;
+
+        case WM_CLOSE:
+            mainWindow.OnClose ();
+        return 0;
+
         case WM_CREATE:
         {
             auto const &createInfo = *reinterpret_cast<LPCREATESTRUCT> ( lParam );
             reinterpret_cast<MainWindow*> ( createInfo.lpCreateParams )->OnCreate ( hwnd );
             break;
         }
-
-        case WM_CLOSE:
-            mainWindow.OnClose ();
-        return 0;
 
         case WM_DPICHANGED:
             mainWindow.OnDPIChanged ( wParam, lParam );
@@ -561,20 +792,45 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
             mainWindow.OnGetMinMaxInfo ( lParam );
         return 0;
 
+        case WM_KEYDOWN:
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
+        return 0;
+
+        case WM_SYSKEYDOWN:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
+        break;
+
+        case WM_KEYUP:
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
+        return 0;
+
+        case WM_SYSKEYUP:
+            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
+            mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
+        break;
+
+        case WM_LBUTTONDBLCLK:
+            mainWindow.OnDoubleClick ( lParam );
+        break;
+
         case WM_LBUTTONDOWN:
-            mainWindow.OnLButtonDown ( lParam );
+            mainWindow.OnMouseButton ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_LBUTTONUP:
-            mainWindow.OnLButtonUp ( lParam );
+            // [2025/03/30] Win11 24H2 26100.3624 will send WM_MOUSEMOVE event right after WM_LBUTTONUP automatically.
+            mainWindow.OnMouseButton ( lParam, eKey::LeftMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MBUTTONDOWN:
-            mainWindow.OnMButtonDown ( lParam );
+            mainWindow.OnMouseButton ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_MBUTTONUP:
-            mainWindow.OnMButtonUp ( lParam );
+            mainWindow.OnMouseButton ( lParam, eKey::MiddleMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_MOUSEMOVE:
@@ -582,11 +838,11 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         break;
 
         case WM_RBUTTONDOWN:
-            mainWindow.OnRButtonDown ( lParam );
+            mainWindow.OnMouseButton ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonDown );
         return 0;
 
         case WM_RBUTTONUP:
-            mainWindow.OnRButtonUp ( lParam );
+            mainWindow.OnMouseButton ( lParam, eKey::RightMouseButton, eMessageType::MouseButtonUp );
         return 0;
 
         case WM_SIZE:
@@ -598,7 +854,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         break;
     }
 
-    return DefWindowProcA ( hwnd, msg, wParam, lParam );
+    return DefWindowProcW ( hwnd, msg, wParam, lParam );
 }
 
 } // namespace editor

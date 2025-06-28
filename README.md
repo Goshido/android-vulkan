@@ -28,25 +28,26 @@ The canonical way is to use real _Android_ device via _USB_ connection. _Android
 Pay attention that all 3<sup>rd</sup> party libraries already prebuild and project has all needed header files. You **_do not need_** to build them by yourself. Same applies to _SPIR-V_ shader blobs and game assets.
 
 * _Windows 10+_ or _Monjaro KDE_
-* [_Android Studio Ladybug | 2024.2.1 Patch 3_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.7.3_
-* _Android NDK 27.2.12479018 (side by side)_
+* [_Android Studio Narwhal | 2025.1.1_](https://developer.android.com/studio)
+* _Android Studio Gradle Plugin 8.11.0_
+* _Android NDK 28.1.13356709 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
-* _Compile _Android SDK_ version: Android 15 (API level 35)_
-* _Android SDK Build-Tools 35.0.0_
-* _Android SDK Platform-Tools 35.0.2_
-* _Kotlin 2.1.0_
-* _Kotlin Gradle plugin 2.1.0_
-* _CMake 3.31.1_
-* [_Gradle 8.12-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler 1.8.2407.10120_](https://github.com/microsoft/DirectXShaderCompiler) `d39324e0635130e834a68e33b0c603cf5fc9fb4f`
-* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `59320b2d3c2584ac01914ed0deff64bcc8fb23b2`
-* [_libogg 1.3.5_](https://gitlab.xiph.org/xiph/ogg) `7cf42ea17aef7bc1b7b21af70724840a96c2e7d0`
-* [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
-* [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `bb4047de4c05712bf1fd49b9584c360b8e4e0adf`
-* [_stb_image 2.30_](https://github.com/nothings/stb) `5c205738c191bcb0abc65c4febfa9bd25ff35234`
-* [_Vulkan Validation Layers 1.4.303_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `e1b6492a0b1491f82f3f6c5a2054b7bdc711ad5f`
-* [_Lua 5.5.0_](https://github.com/lua/lua) `2fccd3c4b9043a77b0be2da74c8c7ffe31ce28c7`
+* _Compile _Android SDK_ version: Android 15 (API level 36)_
+* _Android SDK Build-Tools 36.0.0_
+* _Android SDK Platform-Tools 36.0.0_
+* _Kotlin 2.2.0_
+* _Kotlin Gradle plugin 2.2.0_
+* _CMake 4.0.2_
+* [_PowerShell 7.5.2_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.2)
+* [_Gradle 8.14.2-bin_](https://services.gradle.org/distributions/)
+* [_DirectX Shader Compiler 1.8.2505.10062_](https://github.com/microsoft/DirectXShaderCompiler) `94abfe972ad839185965f670329bcf33cd7bccbd`
+* [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `58be4879c5d3840315f037dca44e92384113f8f9`
+* [_libogg 1.3.6_](https://gitlab.xiph.org/xiph/ogg) `fe20a3ed04b9e4de8d2b4c753077d9a7c2a7e588`
+* [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `43bbff0141028e58d476c1d5fd45dd5573db576d`
+* [_libvorbisfile 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `43bbff0141028e58d476c1d5fd45dd5573db576d`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `f58f558c120e9b32c217290b80bad1a0729fbb2c`
+* [_Vulkan Validation Layers 1.4.320_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `7d29258f5e5bb765057929b217d9a9662315e610`
+* [_Lua 5.5.0_](https://github.com/lua/lua) `cfce6f4b20afe85ede2182b3df3ab2bfcdb0e692`
 * Real _Android 11_ device with _Vulkan 1.1.131_ support
 * [_ARM Neon A64_](https://developer.arm.com/architectures/instruction-sets/simd-isas/neon/neon-programmers-guide-for-armv8-a/introducing-neon-for-armv8-a) native support
 

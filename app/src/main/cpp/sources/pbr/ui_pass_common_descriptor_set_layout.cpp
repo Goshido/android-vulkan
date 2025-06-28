@@ -70,6 +70,20 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
             .pImmutableSamplers = nullptr
         },
         {
+            .binding = BIND_TEXT_LUT_SAMPLER,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
+            .binding = BIND_TEXT_LUT_TEXTURE,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .descriptorCount = 1U,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr
+        },
+        {
             .binding = BIND_IMAGE_SAMPLER,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = 1U,

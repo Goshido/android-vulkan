@@ -21,7 +21,7 @@ namespace pbr {
 
 CSSComputedValues &HTML5Parser::GetBodyCSS () noexcept
 {
-    return _cssComputedValues;
+    return _bodyCSS;
 }
 
 std::u32string &HTML5Parser::GetBodyID () noexcept
@@ -129,40 +129,6 @@ bool HTML5Parser::Parse ( char const* html, Stream stream, char const* assetRoot
     );
 
     return false;
-}
-
-void HTML5Parser::ApplyDefaultCSS () noexcept
-{
-    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
-    _cssComputedValues._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F );
-
-    _cssComputedValues._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._left = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._right = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._top = LengthValue ( LengthValue::eType::Auto, 0.0F );
-
-    _cssComputedValues._color = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0xFFU ) );
-    _cssComputedValues._display = DisplayProperty::eValue::Block;
-
-    _cssComputedValues._fontFile.clear ();
-    _cssComputedValues._fontSize = LengthValue ( LengthValue::eType::PX, 16.0F );
-
-    _cssComputedValues._marginBottom = LengthValue ( LengthValue::eType::PX, 8.0F );
-    _cssComputedValues._marginLeft = LengthValue ( LengthValue::eType::PX, 8.0F );
-    _cssComputedValues._marginRight = LengthValue ( LengthValue::eType::PX, 8.0F );
-    _cssComputedValues._marginTop = LengthValue ( LengthValue::eType::PX, 8.0F );
-
-    _cssComputedValues._paddingBottom = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingLeft = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingRight = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingTop = LengthValue ( LengthValue::eType::PX, 0.0F );
-
-    _cssComputedValues._position = PositionProperty::eValue::Static;
-    _cssComputedValues._textAlign = TextAlignProperty::eValue::Left;
-    _cssComputedValues._verticalAlign = VerticalAlignProperty::eValue::Top;
-
-    _cssComputedValues._width = LengthValue ( LengthValue::eType::Percent, 100.0F );
-    _cssComputedValues._height = LengthValue ( LengthValue::eType::Percent, 100.0F );
 }
 
 ParseResult HTML5Parser::ParseBodyElement ( char const* html, Stream stream, char const* assetRoot ) noexcept
@@ -453,9 +419,7 @@ bool HTML5Parser::ParseHTMLElement ( char const* html, Stream stream, char const
         return false;
     }
 
-    ApplyDefaultCSS ();
-
-    if ( !_cssComputedValues.ApplyCSS ( html, _css, _bodyClasses, _bodyID ) )
+    if ( !_bodyCSS.ApplyCSS ( html, _css, _bodyClasses, _bodyID ) )
         return false;
 
     for ( auto &element : _bodyChildren )

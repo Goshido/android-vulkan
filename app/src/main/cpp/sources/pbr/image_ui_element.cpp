@@ -81,6 +81,26 @@ ImageUIElement::ImageUIElement ( bool &success,
     }
 }
 
+ImageUIElement::ImageUIElement ( bool &success,
+    UIElement const* parent,
+    std::string &&asset,
+    CSSComputedValues &&css,
+    std::string &&name
+) noexcept:
+    UIElement ( true, parent, std::move ( css ), std::move ( name ) ),
+    _asset ( std::move ( android_vulkan::File ( std::move ( asset ) ).GetPath () ) ),
+    _isAutoWidth ( _css._width.GetType () == LengthValue::eType::Auto ),
+    _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
+    _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
+{
+    auto const texture = UIPass::RequestImage ( _asset );
+
+    if ( success = texture.has_value (); success )
+    {
+        _submitCache._texture = *texture;
+    }
+}
+
 ImageUIElement::~ImageUIElement () noexcept
 {
     if ( _submitCache._texture )
@@ -139,6 +159,8 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
             _parentLine = 0U;
         break;
 
+        case PositionProperty::eValue::Relative:
+            [[fallthrough]];
         case PositionProperty::eValue::Static:
         {
             if ( penOut._data[ 0U ] == 0.0F )
@@ -292,21 +314,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     bottomRight.Sum ( topLeft, _borderSize );
 
     constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
-    constexpr GXVec2 imageTopLeft ( 0.0F, 0.0F );
-    constexpr GXVec2 imageBottomRight ( 1.0F, 1.0F );
-
-    FontStorage::GlyphInfo const &g = info._fontStorage->GetTransparentGlyphInfo ();
-
-    UIPass::AppendRectangle ( _submitCache._positions,
-        _submitCache._vertices,
-        white,
-        topLeft,
-        bottomRight,
-        g._topLeft,
-        g._bottomRight,
-        imageTopLeft,
-        imageBottomRight
-    );
+    UIPass::AppendImage ( _submitCache._positions, _submitCache._vertices, white, topLeft, bottomRight );
 
     pen._data[ 0U ] += blockWidth;
     _submitCache._penOut = pen;

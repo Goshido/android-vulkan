@@ -34,7 +34,147 @@ CSSComputedValues const& UIElement::GetCSS () const noexcept
     return _css;
 }
 
+std::string_view UIElement::ResolveFont () const noexcept
+{
+    for ( UIElement const* p = this; p; p = p->_parent )
+    {
+        if ( std::string const &fontFile = p->GetCSS ()._fontFile; !fontFile.empty () )
+        {
+            return std::string_view ( fontFile );
+        }
+    }
+
+    AV_ASSERT ( false )
+    return {};
+}
+
+float UIElement::ResolveFontSize () const noexcept
+{
+    LengthValue const* target = nullptr;
+    float relativeScale = 1.0F;
+    LengthValue::eType type = LengthValue::eType::Auto;
+
+    for ( UIElement const* p = this; ( p != nullptr ) & ( target == nullptr ); p = p->_parent )
+    {
+        LengthValue const &size = p->_css._fontSize;
+
+        switch ( type = size.GetType (); type )
+        {
+            case LengthValue::eType::EM:
+                relativeScale *= size.GetValue ();
+            break;
+
+            case LengthValue::eType::Percent:
+                relativeScale *= 1.0e-2F * size.GetValue ();
+            break;
+
+            case LengthValue::eType::Inherit:
+                [[fallthrough]];
+            case LengthValue::eType::Auto:
+                // NOTHING
+            break;
+
+            case LengthValue::eType::MM:
+                [[fallthrough]];
+            case LengthValue::eType::PT:
+                [[fallthrough]];
+            case LengthValue::eType::PX:
+                target = &size;
+            break;
+
+            case LengthValue::eType::Unitless:
+                // IMPOSSIBLE
+                AV_ASSERT ( false )
+            return 0.0F;
+        }
+    }
+
+    if ( !target ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::UIElement::ResolveFontSize - Everything is inherit." );
+        AV_ASSERT ( false )
+        return 0.0F;
+    }
+
+    CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
+
+    switch ( type )
+    {
+        case LengthValue::eType::MM:
+        return relativeScale * target->GetValue () * cssUnits._fromMM;
+
+        case LengthValue::eType::PT:
+        return relativeScale * target->GetValue () * cssUnits._fromPT;
+
+        case LengthValue::eType::PX:
+        return relativeScale * target->GetValue () * cssUnits._fromPX;
+
+        case LengthValue::eType::Auto:
+            [[fallthrough]];
+        case LengthValue::eType::EM:
+            [[fallthrough]];
+        case LengthValue::eType::Inherit:
+            [[fallthrough]];
+        case LengthValue::eType::Percent:
+            [[fallthrough]];
+        case LengthValue::eType::Unitless:
+            [[fallthrough]];
+        default:
+            // IMPOSSIBLE
+            AV_ASSERT ( false )
+        return 0.0F;
+    }
+}
+
+float UIElement::ResolveLineHeight ( FontStorage::Font font ) const noexcept
+{
+    CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
+    float const rootValue = _css._lineHeight.GetValue ();
+
+    for ( UIElement const* p = this; p; p = p->_parent )
+    {
+        switch ( LengthValue const &lineHeight = p->_css._lineHeight; lineHeight.GetType () )
+        {
+            case LengthValue::eType::Auto:
+            return static_cast<float> ( FontStorage::GetFontPixelMetrics ( font )._baselineToBaseline );
+
+            case LengthValue::eType::EM:
+                [[fallthrough]];
+            case LengthValue::eType::Unitless:
+            return rootValue * ResolveFontSize ();
+
+            case LengthValue::eType::Percent:
+            return 1.0e-2F * rootValue * ResolveFontSize ();
+
+            case LengthValue::eType::Inherit:
+                // NOTHING
+            break;
+
+            case LengthValue::eType::MM:
+            return lineHeight.GetValue () * cssUnits._fromMM;
+
+            case LengthValue::eType::PT:
+            return lineHeight.GetValue () * cssUnits._fromPT;
+
+            case LengthValue::eType::PX:
+            return lineHeight.GetValue () * cssUnits._fromPX;
+        }
+    }
+
+    android_vulkan::LogError ( "pbr::UIElement::ResolveLineHeight - Everything is inherit." );
+    AV_ASSERT ( false )
+    return 0.0F;
+}
+
 UIElement::UIElement ( bool visible, UIElement const* parent ) noexcept:
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
+UIElement::UIElement ( bool visible, UIElement const* parent, std::string &&name ) noexcept:
+    _name ( std::move ( name ) ),
     _visible ( visible ),
     _parent ( parent )
 {
@@ -49,8 +189,17 @@ UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues 
     // NOTHING
 }
 
+UIElement::UIElement ( bool visible, UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
+    _css ( std::move ( css ) ),
+    _name ( std::move ( name ) ),
+    _visible ( visible ),
+    _parent ( parent )
+{
+    // NOTHING
+}
+
 float UIElement::ResolvePixelLength ( LengthValue const &length,
-    float parentLength,
+    float referenceLength,
     bool isHeight
 ) const noexcept
 {
@@ -59,7 +208,7 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
     switch ( length.GetType () )
     {
         case LengthValue::eType::EM:
-        return static_cast<float> ( ResolveFontSize ( *this ) );
+        return ResolveFontSize () * length.GetValue ();
 
         case LengthValue::eType::MM:
         return units._fromMM * length.GetValue ();
@@ -86,75 +235,18 @@ float UIElement::ResolvePixelLength ( LengthValue const &length,
                 }
             }
 
-            return 1.0e-2F * parentLength * length.GetValue ();
+            return 1.0e-2F * referenceLength * length.GetValue ();
         }
+
+        case LengthValue::eType::Unitless:
+        return referenceLength * length.GetValue ();
 
         case LengthValue::eType::Auto:
         return 0.0F;
 
+        case LengthValue::eType::Inherit:
+            [[fallthrough]];
         default:
-            AV_ASSERT ( false )
-        return 0.0F;
-    }
-}
-
-float UIElement::ResolveFontSize ( UIElement const &startTraverseElement ) noexcept
-{
-    LengthValue const* target = nullptr;
-    float relativeScale = 1.0F;
-    LengthValue::eType type = LengthValue::eType::Auto;
-
-    for ( UIElement const* p = &startTraverseElement; p; p = p->_parent )
-    {
-        UIElement const &div = *p;
-        LengthValue const &size = div._css._fontSize;
-        type = size.GetType ();
-
-        if ( type == LengthValue::eType::EM )
-        {
-            relativeScale *= size.GetValue ();
-            continue;
-        }
-
-        if ( type == LengthValue::eType::Percent )
-        {
-            relativeScale *= 1.0e-2F * size.GetValue ();
-            continue;
-        }
-
-        if ( type == LengthValue::eType::Auto )
-            continue;
-
-        target = &size;
-        break;
-    }
-
-    AV_ASSERT ( target )
-
-    CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
-
-    switch ( type )
-    {
-        case LengthValue::eType::MM:
-        return relativeScale * target->GetValue () * cssUnits._fromMM;
-
-        case LengthValue::eType::PT:
-        return relativeScale * target->GetValue () * cssUnits._fromPT;
-
-        case LengthValue::eType::PX:
-        return relativeScale * target->GetValue () * cssUnits._fromPX;
-
-        case LengthValue::eType::Percent:
-            [[fallthrough]];
-
-        case LengthValue::eType::EM:
-            [[fallthrough]];
-
-        case LengthValue::eType::Auto:
-            [[fallthrough]];
-
-        default:
-            // IMPOSSIBLE
             AV_ASSERT ( false )
         return 0.0F;
     }

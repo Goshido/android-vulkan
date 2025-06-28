@@ -33,7 +33,7 @@ BEGIN
             VALUE "FileDescription", "Editor"
             VALUE "FileVersion", VERSION_STRING
             VALUE "InternalName", "editor.exe"
-            VALUE "LegalCopyright", "2024 - 2024. Goshido Inc. All rights reserved."
+            VALUE "LegalCopyright", "2024 - 2025. Goshido Inc. All rights reserved."
             VALUE "OriginalFilename", "editor.exe"
             VALUE "ProductName", "Editor"
             VALUE "ProductVersion", VERSION_STRING

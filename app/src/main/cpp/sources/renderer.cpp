@@ -353,7 +353,11 @@ std::unordered_set<uint32_t> g_validationFilter =
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
-    0x675DC32EU
+    0x675DC32EU,
+
+    // Using debug builds of the validation layers *will* adversely affect performance.
+    // [2025/01/30] Yeah. I'm pretty aware about that. Thank you.
+    0x6CDE89AEU
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -1612,7 +1616,7 @@ bool Renderer::DeployInstance () noexcept
 #endif // AV_ENABLE_VVL
 
     std::span<char const* const> extensions = GetInstanceExtensions ();
-    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t const> ( extensions.size () );
+    instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensions.size () );
     instanceCreateInfo.ppEnabledExtensionNames = extensions.data ();
 
     result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
@@ -1637,8 +1641,7 @@ void Renderer::DestroyInstance () noexcept
 
 bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 {
-    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const *>
-    {
+    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const*> {
         VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
         bool const result = CheckVkResult (
@@ -2437,7 +2440,11 @@ bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) n
     {
         VkFormat const format = item.format;
 
-        if ( ( format != VK_FORMAT_R8G8B8A8_SRGB ) & ( format != VK_FORMAT_B8G8R8A8_SRGB ) )
+        // [2025/02/08] - Google Chrome and Ultralight browsers make final alpha blending in UNORM color space
+        // Using SRGB produce slightly different results. It's not acceptable for artists. That's why UNORM swapchain
+        // format has been selected.
+
+        if ( ( format != VK_FORMAT_R8G8B8A8_UNORM ) & ( format != VK_FORMAT_B8G8R8A8_UNORM ) )
             continue;
 
         _surfaceFormat = format;

@@ -20,10 +20,12 @@ class LengthValue final
         {
             Auto,
             EM,
+            Inherit,
             MM,
             PT,
             PX,
-            Percent
+            Percent,
+            Unitless
         };
 
     private:
@@ -39,7 +41,12 @@ class LengthValue final
         LengthValue ( LengthValue && ) = default;
         LengthValue &operator = ( LengthValue && ) = default;
 
-        explicit LengthValue ( eType type, float value ) noexcept;
+        constexpr explicit LengthValue ( eType type, float value ) noexcept:
+            _type ( type ),
+            _value ( value )
+        {
+            // NOTHING
+        }
 
         ~LengthValue () = default;
 

@@ -67,6 +67,13 @@ class ImageUIElement final : public UIElement
             CSSComputedValues &&css
         ) noexcept;
 
+        explicit ImageUIElement ( bool &success,
+            UIElement const* parent,
+            std::string &&asset,
+            CSSComputedValues &&css,
+            std::string &&name
+        ) noexcept;
+
         ~ImageUIElement () noexcept override;
 
     private:

@@ -2,7 +2,9 @@
 #define EDITOR_WIDGET_HPP
 
 
-#include "mouse_key_event.hpp"
+#include "cursor.hpp"
+#include "message_queue.hpp"
+#include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
 #include <pbr/font_storage.hpp>
 #include <pbr/ui_element.hpp>
@@ -21,9 +23,15 @@ class Widget
         };
 
     protected:
+        MessageQueue    &_messageQueue;
         Rect            _rect {};
 
+    private:
+        size_t          _hoverEventID = 0U;
+
     public:
+        Widget () = delete;
+
         Widget ( Widget const & ) = delete;
         Widget &operator = ( Widget const & ) = delete;
 
@@ -32,27 +40,42 @@ class Widget
 
         virtual ~Widget () = default;
 
-        virtual void OnKeyDown ( eKey key ) noexcept;
-        virtual void OnKeyUp ( eKey key ) noexcept;
+        virtual void ApplyClipboard ( std::u32string const &text ) noexcept;
 
-        virtual void OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept;
-        virtual void OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept;
+        virtual void OnDoubleClick ( MouseButtonEvent const &event ) noexcept;
+
+        virtual void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept;
+        virtual void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept;
+
+        virtual void OnMouseLeave () noexcept;
+        virtual void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept;
+        virtual void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
+
+        // Must be called by child classes.
         virtual void OnMouseMove ( MouseMoveEvent const &event ) noexcept;
+
+        virtual void OnTyping ( char32_t character ) noexcept;
 
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
-        ) noexcept = 0;
+        ) noexcept;
 
-        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept = 0;
-
-        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage,
-            VkExtent2D const &viewport
-        ) noexcept = 0;
+        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
+        virtual void UpdatedRect () noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;
 
     protected:
-        explicit Widget () = default;
+        explicit Widget ( MessageQueue &messageQueue ) noexcept;
+
+        void CaptureMouse () noexcept;
+        void ReleaseMouse () noexcept;
+
+        void ChangeCursor ( eCursor cursor ) noexcept;
+
+        void KillFocus () noexcept;
+        void SetFocus () noexcept;
 };
 
 } // namespace editor

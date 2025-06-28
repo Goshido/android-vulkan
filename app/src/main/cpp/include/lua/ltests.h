@@ -14,6 +14,7 @@
 /* test Lua with compatibility code */
 #define LUA_COMPAT_MATHLIB
 #define LUA_COMPAT_LT_LE
+#undef LUA_COMPAT_GLOBAL
 
 
 #define LUA_DEBUG
@@ -42,6 +43,10 @@
 
 /* use 32-bit integers in random generator */
 #define LUA_RAND32
+
+
+/* test stack reallocation without strict address use */
+#define LUAI_STRICT_ADDRESS	0
 
 
 /* memory-allocator control variables */
@@ -90,6 +95,7 @@ LUAI_FUNC void lua_printvalue (struct TValue *v);
 ** Function to print the stack
 */
 LUAI_FUNC void lua_printstack (lua_State *L);
+LUAI_FUNC int lua_printallstack (lua_State *L);
 
 
 /* test for lock/unlock */
@@ -137,9 +143,6 @@ LUA_API void *debug_realloc (void *ud, void *block,
 #define STRCACHE_N	23
 #define STRCACHE_M	5
 
-#undef LUAI_USER_ALIGNMENT_T
-#define LUAI_USER_ALIGNMENT_T   union { char b[sizeof(void*) * 8]; }
-
 
 /*
 ** This one is not compatible with tests for opcode optimizations,
@@ -148,9 +151,12 @@ LUA_API void *debug_realloc (void *ud, void *block,
 */
 
 
-/* make stack-overflow tests run faster */
+/*
+** Reduce maximum stack size to make stack-overflow tests run faster.
+** (But value is still large enough to overflow smaller integers.)
+*/
 #undef LUAI_MAXSTACK
-#define LUAI_MAXSTACK   50000
+#define LUAI_MAXSTACK   68000
 
 
 /* test mode uses more stack space */

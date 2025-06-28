@@ -20,7 +20,7 @@ void MessageQueue::EnqueueBack ( Message &&message ) noexcept
     std::lock_guard const lock ( _mutex );
     message._serialNumber = ++_serialNumber;
 
-    // Main thread has to sleep in order to avoid buzy loop. Same time having pending operation in message queue is
+    // Main thread has to sleep in order to avoid busy loop. Same time having pending operation in message queue is
     // suboptimal for throughput. The solution is to move eMessageType::RunEventLoop to the end of the queue.
 
     if ( _queue.empty () || _queue.back ()._type != eMessageType::RunEventLoop )
@@ -67,10 +67,26 @@ void MessageQueue::DequeueEnd () noexcept
     _mutex.unlock ();
 }
 
-void MessageQueue::DequeueEnd ( Message &&refund ) noexcept
+void MessageQueue::DequeueEnd ( Message &&refund, eRefundLocation location ) noexcept
 {
     AV_TRACE ( "Dequeue message end" )
-    _queue.push_front ( std::move ( refund ) );
+
+    switch ( location )
+    {
+        case eRefundLocation::Front:
+            _queue.push_front ( std::move ( refund ) );
+        break;
+
+        case eRefundLocation::Back:
+            _queue.push_back ( std::move ( refund ) );
+            _isQueueChanged.notify_all ();
+        break;
+
+        default:
+            // IMPOSSIBLE
+        break;
+    }
+
     _mutex.unlock ();
 }
 

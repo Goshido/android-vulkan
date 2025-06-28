@@ -67,8 +67,11 @@ class Texture2D final
         [[nodiscard]] uint8_t GetMipLevelCount () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] VkExtent2D const &GetResolution () const noexcept;
+        [[nodiscard]] bool IsInit () const noexcept;
 
-        // Supported formats: PNG.
+        // Supported media containers:
+        // - PNG
+        // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( Renderer &renderer,
             std::string const &fileName,
             eColorSpace space,

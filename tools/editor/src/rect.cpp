@@ -35,6 +35,14 @@ int32_t Rect::GetHeight () const noexcept
     return _bottom - _top;
 }
 
+void Rect::From ( pbr::DIVUIElement::Rect const& rect ) noexcept
+{
+    _left = static_cast<int32_t> ( rect._topLeft._data[ 0U ] );
+    _top = static_cast<int32_t> ( rect._topLeft._data[ 1U ] );
+    _right = static_cast<int32_t> ( rect._bottomRight._data[ 0U ] );
+    _bottom = static_cast<int32_t> ( rect._bottomRight._data[ 1U ] );
+}
+
 void Rect::From ( GXVec2 const &topLeft, GXVec2 const &bottomRight ) noexcept
 {
     _left = static_cast<int32_t> ( topLeft._data[ 0U ] );

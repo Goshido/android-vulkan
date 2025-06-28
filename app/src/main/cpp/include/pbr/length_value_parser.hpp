@@ -17,9 +17,6 @@ namespace pbr {
 
 class LengthValueParser final
 {
-    private:
-        static std::unordered_map<std::u32string_view, LengthValue::eType>      _types;
-
     public:
         LengthValueParser () = delete;
 

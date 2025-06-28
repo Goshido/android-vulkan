@@ -30,6 +30,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <float.h>
 #include <forward_list>
 #include <fstream>
+#include <functional>
 #include <list>
 #include <locale>
 #include <map>
@@ -41,6 +42,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <random>
 #include <regex>
 #include <set>
+#include <shared_mutex>
 #include <span>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,6 +110,14 @@ GX_DISABLE_COMMON_WARNINGS
 #include <WinPixEventRuntime/pix3.h>
 
 #endif // AV_PIX
+
+#ifdef AV_FREETYPE
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <freetype/tttables.h>
+
+#endif // AV_FREETYPE
 
 GX_RESTORE_WARNING_STATE
 

@@ -1,8 +1,11 @@
 #include <precompiled_headers.hpp>
+#include <append_ui_child_element_event.hpp>
 #include <av_assert.hpp>
 #include <hello_triangle_vertex.hpp>
-#include <render_session.hpp>
 #include <logger.hpp>
+#include <prepend_ui_child_element_event.hpp>
+#include <render_session.hpp>
+#include <set_text_event.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
@@ -150,14 +153,15 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     if ( !result ) [[unlikely]]
         return;
 
-    AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
-
-    constexpr HelloTriangleVertex const data[] =
     {
+        AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
+
+        constexpr HelloTriangleVertex const data[] =
         {
-            ._vertex = GXVec2 ( -0.75F, 0.75F ),
-            ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
-        },
+            {
+                ._vertex = GXVec2 ( -0.75F, 0.75F ),
+                ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
+            },
 
         {
             ._vertex = GXVec2 ( 0.0F, -0.75F ),
@@ -168,23 +172,25 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
             ._vertex = GXVec2 ( 0.75F, 0.75F ),
             ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
         }
-    };
+        };
 
-    _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
+        _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
 
-    result = _geometry->LoadMesh ( _renderer,
-        commandBuffer,
-        true,
-        VK_NULL_HANDLE,
-        { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
-        static_cast<uint32_t> ( std::size ( data ) )
-    );
+        result = _geometry->LoadMesh ( _renderer,
+            commandBuffer,
+            true,
+            VK_NULL_HANDLE,
+            { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
+            static_cast<uint32_t> ( std::size ( data ) )
+        );
 
-    if ( !result ) [[unlikely]]
-    {
-        _geometry->FreeResources ( _renderer );
-        _geometry.reset ();
-        return;
+        if ( !result ) [[unlikely]]
+        {
+            _geometry->FreeResources ( _renderer );
+            _geometry.reset ();
+            return;
+        }
+
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -280,16 +286,20 @@ void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool RenderSession::Init ( MessageQueue &messageQueue,
+RenderSession::RenderSession ( MessageQueue &messageQueue,
     android_vulkan::Renderer &renderer,
     UIManager &uiManager
-) noexcept
+) noexcept:
+    _messageQueue ( messageQueue ),
+    _renderer ( renderer ),
+    _uiManager ( uiManager )
+{
+   // NOTHING
+}
+
+void RenderSession::Init () noexcept
 {
     AV_TRACE ( "RenderSession: init" )
-
-    _messageQueue = &messageQueue;
-    _uiManager = &uiManager;
-    _renderer = &renderer;
 
     _thread = std::thread (
         [ this ]() noexcept
@@ -298,8 +308,6 @@ bool RenderSession::Init ( MessageQueue &messageQueue,
             EventLoop ();
         }
     );
-
-    return true;
 }
 
 void RenderSession::Destroy () noexcept
@@ -307,10 +315,14 @@ void RenderSession::Destroy () noexcept
     AV_TRACE ( "RenderSession: destroy" )
 
     if ( _thread.joinable () ) [[likely]]
+    {
         _thread.join ();
+    }
+}
 
-    _messageQueue = nullptr;
-    _renderer = nullptr;
+pbr::FontStorage &RenderSession::GetFontStorage () noexcept
+{
+    return _uiPass.GetFontStorage ();
 }
 
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
@@ -334,7 +346,7 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = _renderer->GetQueueFamilyIndex ()
+        .queueFamilyIndex = _renderer.GetQueueFamilyIndex ()
     };
 
     VkCommandBufferAllocateInfo bufferAllocateInfo
@@ -556,7 +568,7 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
     {
         .color
         {
-            .float32 = { 0.0F, 0.0F, 0.0F, 1.0F }
+            .float32 = { 0.5F, 0.5F, 0.5F, 1.0F }
         }
     };
 
@@ -577,8 +589,8 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
 bool RenderSession::CreateRenderTarget () noexcept
 {
     VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
-    resolution = _renderer->GetSurfaceSize ();
-    VkDevice device = _renderer->GetDevice ();
+    resolution = _renderer.GetSurfaceSize ();
+    VkDevice device = _renderer.GetDevice ();
 
     if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
         return false;
@@ -601,19 +613,19 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
     bool const result = _renderTarget.CreateRenderTarget ( resolution,
         RENDER_TARGET_FORMAT,
         AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
-        *_renderer
+        _renderer
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( _renderer->GetDevice (),
+    AV_SET_VULKAN_OBJECT_NAME ( _renderer.GetDevice (),
         _renderTarget.GetImage (),
         VK_OBJECT_TYPE_IMAGE,
         "Render target"
     )
 
-    AV_SET_VULKAN_OBJECT_NAME ( _renderer->GetDevice (),
+    AV_SET_VULKAN_OBJECT_NAME ( _renderer.GetDevice (),
         _renderTarget.GetImageView (),
         VK_OBJECT_TYPE_IMAGE_VIEW,
         "Render target"
@@ -624,10 +636,10 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
 
 void RenderSession::EventLoop () noexcept
 {
-    if ( !InitiModules () ) [[unlikely]]
+    if ( !InitModules () ) [[unlikely]]
         _broken = true;
 
-    MessageQueue &messageQueue = *_messageQueue;
+    MessageQueue &messageQueue = _messageQueue;
 
     if ( _broken )
     {
@@ -667,9 +679,41 @@ void RenderSession::EventLoop () noexcept
                 OnSwapchainCreated ();
             break;
 
+            case eMessageType::UIAppendChildElement:
+                OnUIAppendChildElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIDeleteElement:
+                OnUIDeleteElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIElementCreated:
+                OnUIElementCreated ();
+            break;
+
+            case eMessageType::UIShowElement:
+                OnUIShowElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIPrependChildElement:
+                OnUIPrependChildElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIHideElement:
+                OnUIHideElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UISetText:
+                OnUISetText ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIUpdateElement:
+                OnUIUpdateElement ( std::move ( message ) );
+            break;
+
             default:
                 lastRefund = message._serialNumber;
-                messageQueue.DequeueEnd ( std::move ( message ) );
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -677,16 +721,16 @@ void RenderSession::EventLoop () noexcept
     }
 }
 
-bool RenderSession::InitiModules () noexcept
+bool RenderSession::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
-    android_vulkan::Renderer &renderer = *_renderer;
+    android_vulkan::Renderer &renderer = _renderer;
     VkDevice device = renderer.GetDevice ();
 
     if ( !CreateRenderPass ( device ) ) [[unlikely]]
         return false;
 
-    new HelloTriangleJob ( *_messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
+    new HelloTriangleJob ( _messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
 
     bool result = AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
@@ -710,8 +754,20 @@ bool RenderSession::InitiModules () noexcept
     constexpr uint32_t subpass = pbr::PresentRenderPass::GetSubpass ();
 
     result = _samplerManager.Init ( device ) &&
-        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
-        CreateRenderTarget () &&
+        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::FontStorageReady,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    result = CreateRenderTarget () &&
         _exposurePass.SetTarget ( renderer, _renderTarget ) &&
         _toneMapper.Init ( renderer ) &&
 
@@ -727,8 +783,8 @@ bool RenderSession::InitiModules () noexcept
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
-        android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
-            "editor::RenderSession::InitiModules",
+        android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+            "editor::RenderSession::InitModules",
             "Can't run upload commands"
         );
 
@@ -743,7 +799,7 @@ bool RenderSession::InitiModules () noexcept
 
 void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 {
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
     _helloTriangleProgram = std::move ( job->_program );
     _helloTriangleGeometry = std::move ( job->_geometry );
@@ -753,7 +809,7 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 void RenderSession::OnRenderFrame () noexcept
 {
     AV_TRACE ( "Render frame" )
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
     if ( _broken ) [[unlikely]]
         return;
@@ -767,9 +823,9 @@ void RenderSession::OnRenderFrame () noexcept
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
 
-    _uiManager->RenderUI ( *_renderer, _uiPass );
+    android_vulkan::Renderer &renderer = _renderer;
+    _uiManager.RenderUI ( renderer, _uiPass );
 
-    android_vulkan::Renderer &renderer = *_renderer;
     VkDevice device = renderer.GetDevice ();
 
     if ( !PrepareCommandBuffer ( device, commandInfo ) ) [[unlikely]]
@@ -918,7 +974,7 @@ void RenderSession::OnRenderFrame () noexcept
 
     GX_ENABLE_WARNING ( 4061 )
 
-    _messageQueue->EnqueueBack (
+    _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::FrameComplete,
             ._params = nullptr,
@@ -930,9 +986,57 @@ void RenderSession::OnRenderFrame () noexcept
 void RenderSession::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue->DequeueEnd ( std::move ( refund ) );
 
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer->GetQueue () ),
+    // All existing events should be processed first.
+    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+
+    std::optional<Message::SerialNumber> lastRefund {};
+
+    while ( _uiElements )
+    {
+        AV_TRACE ( "Event loop" )
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::RunEventLoop:
+            case eMessageType::Shutdown:
+                // All existing events should be processed first.
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
+            break;
+
+            case eMessageType::UIAppendChildElement:
+                OnUIAppendChildElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIDeleteElement:
+                OnUIDeleteElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIElementCreated:
+                OnUIElementCreated ();
+            break;
+
+            case eMessageType::UIPrependChildElement:
+                OnUIPrependChildElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UISetText:
+                OnUISetText ( std::move ( message ) );
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
         "editor::RenderSession::OnShutdown",
         "Can't wait queue idle"
     );
@@ -940,15 +1044,12 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     if ( !result ) [[unlikely]]
         android_vulkan::LogError ( "Render session error. Can't stop." );
 
-    android_vulkan::Renderer &renderer = *_renderer;
+    android_vulkan::Renderer &renderer = _renderer;
     VkDevice device = renderer.GetDevice ();
     FreeCommandBuffers ( device );
 
     if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
-        _renderPassInfo.framebuffer = VK_NULL_HANDLE;
-    }
+        vkDestroyFramebuffer ( device, std::exchange ( _renderPassInfo.framebuffer, VK_NULL_HANDLE ), nullptr );
 
     if ( _helloTriangleProgram ) [[likely]]
     {
@@ -965,10 +1066,7 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _renderTarget.FreeResources ( renderer );
 
     if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyRenderPass ( device, _renderPassInfo.renderPass, VK_NULL_HANDLE );
-        _renderPassInfo.renderPass = VK_NULL_HANDLE;
-    }
+        vkDestroyRenderPass ( device, std::exchange ( _renderPassInfo.renderPass, VK_NULL_HANDLE ), nullptr );
 
     _uiPass.OnSwapchainDestroyed ();
     _uiPass.OnDestroyDevice ( renderer );
@@ -982,7 +1080,7 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _defaultTextureManager.Destroy ( renderer );
     _samplerManager.Destroy ( device );
 
-    _messageQueue->EnqueueFront (
+    _messageQueue.EnqueueFront (
         Message
         {
             ._type = eMessageType::ModuleStopped,
@@ -994,9 +1092,9 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
 
 void RenderSession::OnSwapchainCreated () noexcept
 {
-    _messageQueue->DequeueEnd ();
+    _messageQueue.DequeueEnd ();
 
-    android_vulkan::Renderer &renderer = *_renderer;
+    android_vulkan::Renderer &renderer = _renderer;
     VkDevice device = renderer.GetDevice ();
     _presentRenderPass.OnSwapchainDestroyed ( device );
 
@@ -1054,6 +1152,92 @@ void RenderSession::OnSwapchainCreated () noexcept
     AV_ASSERT ( false )
 }
 
+void RenderSession::OnUIAppendChildElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI append child element" )
+    _messageQueue.DequeueEnd ();
+
+
+    auto* event = static_cast<AppendUIChildElementEvent*> ( message._params );
+    event->Action ();
+    delete event;
+}
+
+void RenderSession::OnUIElementCreated () noexcept
+{
+    AV_TRACE ( "UI element created" )
+    _messageQueue.DequeueEnd ();
+    ++_uiElements;
+}
+
+void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI delete element" )
+    _messageQueue.DequeueEnd ();
+    delete static_cast<pbr::UIElement*> ( message._params );
+    --_uiElements;
+}
+
+void RenderSession::OnUIHideElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI hide element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::UIElement*> ( message._params )->Hide ();
+}
+
+void RenderSession::OnUIShowElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI show element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::UIElement*> ( message._params )->Show ();
+}
+
+void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI prepend child element" )
+    _messageQueue.DequeueEnd ();
+
+    auto* event = static_cast<PrependUIChildElementEvent*> ( message._params );
+    event->Action ();
+    delete event;
+}
+
+void RenderSession::OnUISetText ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI set text" )
+    _messageQueue.DequeueEnd ();
+
+    auto &event = *static_cast<SetTextEvent*> ( message._params );
+    event.Execute ();
+    SetTextEvent::Destroy ( event );
+}
+
+void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI update element" )
+    _messageQueue.DequeueEnd ();
+    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
+}
+
+void RenderSession::NotifyRecreateSwapchain () const noexcept
+{
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::RecreateSwapchain,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::FrameComplete,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+}
+
 bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept
 {
     if ( !info._inUse ) [[unlikely]]
@@ -1077,25 +1261,6 @@ bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) 
             "editor::RenderSession::PrepareCommandBuffer",
             "Can't reset command pool"
         );
-}
-
-void RenderSession::NotifyRecreateSwapchain () const noexcept
-{
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::RecreateSwapchain,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::FrameComplete,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
 }
 
 } // namespace editor

@@ -5,7 +5,7 @@
 struct InputData
 {
     [[vk::location ( IN_SLOT_POSITION )]]
-    float32_t3                      _postion:           POSITION;
+    float32_t3                      _position:          POSITION;
 
     [[vk::location ( IN_SLOT_UV )]]
     float32_t2                      _uv:                UV;
@@ -46,7 +46,7 @@ OutputData VS ( in InputData inputData )
 
     OutputData result;
 
-    result._vertexH = mul ( g_localViewProj[ inputData._instanceIndex ], float32_t4 ( inputData._postion, 1.0F ) );
+    result._vertexH = mul ( g_localViewProj[ inputData._instanceIndex ], float32_t4 ( inputData._position, 1.0F ) );
     result._uv = inputData._uv;
     result._instanceIndex = inputData._instanceIndex;
 

@@ -6,6 +6,7 @@
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
+#include "timer_manager.hpp"
 #include "ui_manager.hpp"
 
 
@@ -15,7 +16,7 @@ class Editor final
 {
     private:
         constexpr static std::string_view       DEFAULT_GPU = "";
-        constexpr static float                  DEFAULT_UI_ZOOM = 1.0F;
+        constexpr static float                  DEFAULT_UI_ZOOM = 0.9F;
         constexpr static bool                   DEFAULT_VSYNC = true;
 
         struct Config final
@@ -30,11 +31,12 @@ class Editor final
         bool                                    _frameComplete = true;
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
-        RenderSession                           _renderSession {};
         android_vulkan::Renderer                _renderer {};
+        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
+        UIManager                               _uiManager { _messageQueue, _renderSession.GetFontStorage () };
+        TimerManager                            _timerManager { _messageQueue };
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;
-        UIManager                               _uiManager {};
         float                                   _uiZoom = DEFAULT_UI_ZOOM;
 
     public:
@@ -57,16 +59,21 @@ class Editor final
         void DestroyModules () noexcept;
 
         void EventLoop () noexcept;
+
+        void OnCaptureKeyboard () noexcept;
+        void OnReleaseKeyboard () noexcept;
         void OnCaptureMouse () noexcept;
         void OnReleaseMouse () noexcept;
         void OnChangeCursor ( Message &&message ) noexcept;
         void OnDPIChanged ( Message &&message ) noexcept;
         void OnFrameComplete () noexcept;
         void OnModuleStopped () noexcept;
+        void OnReadClipboardRequest () noexcept;
         void OnRecreateSwapchain () noexcept;
         void OnRunEvent () noexcept;
         void OnShutdown () noexcept;
         void OnWindowVisibilityChanged ( Message &&message ) noexcept;
+        void OnWriteClipboard ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;

@@ -39,11 +39,11 @@
 ** Computes the minimum between 'n' and 'MAX_SIZET/sizeof(t)', so that
 ** the result is not larger than 'n' and cannot overflow a 'size_t'
 ** when multiplied by the size of type 't'. (Assumes that 'n' is an
-** 'int' or 'unsigned int' and that 'int' is not larger than 'size_t'.)
+** 'int' and that 'int' is not larger than 'size_t'.)
 */
 #define luaM_limitN(n,t)  \
   ((cast_sizet(n) <= MAX_SIZET/sizeof(t)) ? (n) :  \
-     cast_uint((MAX_SIZET/sizeof(t))))
+     cast_int((MAX_SIZET/sizeof(t))))
 
 
 /*
@@ -57,7 +57,8 @@
 #define luaM_freearray(L, b, n)   luaM_free_(L, (b), (n)*sizeof(*(b)))
 
 #define luaM_new(L,t)		cast(t*, luaM_malloc_(L, sizeof(t), 0))
-#define luaM_newvector(L,n,t)	cast(t*, luaM_malloc_(L, (n)*sizeof(t), 0))
+#define luaM_newvector(L,n,t)  \
+	cast(t*, luaM_malloc_(L, cast_sizet(n)*sizeof(t), 0))
 #define luaM_newvectorchecked(L,n,t) \
   (luaM_checksize(L,n,sizeof(t)), luaM_newvector(L,n,t))
 

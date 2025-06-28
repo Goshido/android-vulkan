@@ -149,7 +149,7 @@ SaveState::Container &SaveState::Container::WriteContainer ( std::string_view co
     if ( _type != eType::Container ) [[unlikely]]
     {
         AV_ASSERT ( false )
-        android_vulkan::LogWarning ( "SaveState: Expected conteiner type. Skipping operation..." );
+        android_vulkan::LogWarning ( "SaveState: Expected container type. Skipping operation..." );
         static Container null {};
         return null;
     }

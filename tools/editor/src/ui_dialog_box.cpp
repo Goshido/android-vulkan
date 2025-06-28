@@ -11,7 +11,7 @@ namespace editor {
 namespace {
 
 constexpr float RESIZE_THICKNESS = 2.0F;
-constexpr float DRAG_THICKNESS = 3.5F;
+constexpr float DRAG_THICKNESS = 5.5F;
 
 } // end of anonymous namespace
 
@@ -23,48 +23,26 @@ UIDialogBox::Gizmo::Gizmo ( eCursor cursor ) noexcept:
     // NOTHING
 }
 
-bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue& messageQueue, MouseMoveEvent const& event ) noexcept
+bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) )
         return false;
 
-    if ( event._eventID - _eventID > 1U )
-    {
-        messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::ChangeCursor,
-                ._params = reinterpret_cast<void*> ( _cursor ),
-                ._serialNumber = 0U
-            }
-        );
-    }
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
+        return true;
 
-    _eventID = event._eventID;
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ChangeCursor,
+            ._params = std::bit_cast<void*> ( _cursor ),
+            ._serialNumber = 0U
+        }
+    );
+
     return true;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-UIDialogBox::UIDialogBox ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    pbr::CSSComputedValues &css = _div.GetCSS ();
-    css._position = pbr::PositionProperty::eValue::Absolute;
-    css._backgroundColor = theme::BACKGROUND_COLOR;
-    css._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
-
-    pbr::LengthValue const zero ( pbr::LengthValue::eType::PX, 0.0F );
-    css._marginBottom = zero;
-    css._marginLeft = zero;
-    css._marginRight = zero;
-    css._marginTop = zero;
-    css._paddingBottom = zero;
-    css._paddingLeft = zero;
-    css._paddingRight = zero;
-    css._paddingTop = zero;
-    css._right = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
-    css._bottom = pbr::LengthValue ( pbr::LengthValue::eType::Auto, 0.0F );
-}
 
 void UIDialogBox::SetRect ( Rect const &rect ) noexcept
 {
@@ -80,7 +58,44 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
     UpdateMinSize ();
 }
 
-void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
+UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept:
+    Widget ( messageQueue ),
+    _div ( messageQueue,
+
+        {
+            ._backgroundColor = theme::BACKGROUND_COLOR,
+            ._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TEXT_COLOR_NORMAL,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::NORMAL_LINE_HEIGHT,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = theme::SMALL_BUTTON_HEIGHT,
+            ._height = theme::SMALL_BUTTON_HEIGHT
+        },
+
+        std::move ( name )
+    )
+{
+    // NOTHING
+}
+
+void UIDialogBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     if ( event._key != eKey::LeftMouseButton )
         return;
@@ -104,13 +119,7 @@ void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
         _safeDX = _rect.GetWidth () - _minWidth;
         _safeDY = _rect.GetHeight () - _minHeight;
 
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::StartWidgetCaptureMouse,
-                ._params = this,
-                ._serialNumber = 0U
-            }
-        );
+        CaptureMouse ();
     };
 
     if ( _dragArea._rect.IsOverlapped ( x, y ) )
@@ -167,20 +176,13 @@ void UIDialogBox::OnMouseKeyDown ( MouseKeyEvent const &event ) noexcept
     }
 }
 
-void UIDialogBox::OnMouseKeyUp ( MouseKeyEvent const &event ) noexcept
+void UIDialogBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     if ( !_dragState | ( event._key != eKey::LeftMouseButton ) ) [[likely]]
         return;
 
     _dragState = false;
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureMouse,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    ReleaseMouse ();
 }
 
 void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -192,6 +194,12 @@ void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     }
 
     DoHover ( event );
+    Widget::OnMouseMove ( event );
+}
+
+void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+{
+    _div.Submit ( info );
 }
 
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -209,6 +217,7 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
         ._fontStorage = &fontStorage,
         ._hasChanges = _isChanged,
         ._lineHeights = &_lineHeights,
+        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
         ._pen = GXVec2 ( 0.0F, 0.0F ),
         ._renderer = &renderer,
         ._vertices = 0U
@@ -222,11 +231,6 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
         ._hasChanges = info._hasChanges,
         ._neededUIVertices = info._vertices
     };
-}
-
-void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
-{
-    _div.Submit ( info );
 }
 
 bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
@@ -305,18 +309,10 @@ void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
 
     size_t const eventID = event._eventID;
 
-    if ( eventID - _eventID > 1U )
+    if ( eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
     {
-        queue.EnqueueBack (
-            {
-                ._type = eMessageType::ChangeCursor,
-                ._params = reinterpret_cast<void*> ( eCursor::Arrow ),
-                ._serialNumber = 0U
-            }
-        );
+        ChangeCursor ( eCursor::Arrow );
     }
-
-    _eventID = eventID;
 }
 
 void UIDialogBox::UpdateAreas () noexcept
@@ -368,11 +364,15 @@ void UIDialogBox::UpdateMinSize () noexcept
                 dst = static_cast<int32_t> ( units._fromPX * src.GetValue () );
             break;
 
-            case pbr::LengthValue::eType::EM:
-                [[fallthrough]];
             case pbr::LengthValue::eType::Auto:
                 [[fallthrough]];
+            case pbr::LengthValue::eType::EM:
+                [[fallthrough]];
+            case pbr::LengthValue::eType::Inherit:
+                [[fallthrough]];
             case pbr::LengthValue::eType::Percent:
+                [[fallthrough]];
+            case pbr::LengthValue::eType::Unitless:
                 [[fallthrough]];
             default:
                 android_vulkan::LogWarning ( "UIDialogBox::UpdateMinSize - Only MM, PT and PX units are supported. "

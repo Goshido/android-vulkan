@@ -6,7 +6,7 @@
 
 struct Mesh2Vertex
 {
-    // Comressed form of float16_t2
+    // Compressed form of float16_t2
     uint32_t                        _uv;
 
     uint32_t                        _tbn;
@@ -103,7 +103,7 @@ float32_t4x3 ExtractBoneTransform ( in uint32_t boneIdx )
 float32_t4x3 ComputeSkinTransform ( in uint32_t vertexIndex )
 {
     // [2024/11/16] Note it could be assumed that it's correct that weighted sum trick could work for quaternions.
-    // Unfortunatelly it does not. The math breaks because of quaternion duality. Summing quaternions like that
+    // Unfortunately it does not. The math breaks because of quaternion duality. Summing quaternions like that
     // will produce incorrect result. That's why converting quaternions to 3x3 matrix is required to
     // perform weighted sum later.
     SkinVertex const skin = g_skinVertices[ vertexIndex ];

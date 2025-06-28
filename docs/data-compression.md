@@ -14,10 +14,12 @@
   - [_Using `uint16_t` index buffers_](#opt-2-using-uint16-indices)
   - [_Further vertex data compression_](#opt-2-further-compression)
 - [_Optimization #3_](#optimization-3)
-  - [_UV coordinates as `float16_t2_](#opt-3-uv-as-float16)
+  - [_UV coordinates as `float16_t2`_](#opt-3-uv-as-float16)
 - [_Optimizations #4_](#optimizations-4)
   - [_Using UMA_](#opt-4-uma)
   - [_Further UI vertex compression_](#opt-4-ui-compression)
+- [_Optimization #5_](#optimization-5)
+  - [_Proper UI_](#opt-5-proper-ui)
 
 ## <a id="brief">Brief</a>
 
@@ -33,9 +35,9 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.645 ms | -1.2 ms🟢 | -6.7%🟢 | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.07 ms | -2.273 ms🟢 | -13.1%🟢 | <img src="./images/compression-skeletal.png" width="100">
-_World 1-1_ | 9.477 ms | 9.576 ms | +0.099 ms🔺 | +1.05%🔺 | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 17.846 ms | 16.911 ms | -0.934 ms🟢 | -5.2%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.301 ms | -2.043 ms🟢 | -11.8%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.477 ms | 11.152 ms | +1.675 ms🔺 | +17.7%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
 
@@ -53,7 +55,7 @@ _World 1-1_ | 9.477 ms | 9.576 ms | +0.099 ms🔺 | +1.05%🔺 | <img src="./ima
 
 **Stock** | **Optimized** | **Absolute difference** | **Relative difference**
 --- | --- | --- | ---
-50 | 22 | -28🟢 | -56%🟢
+50 | 18 | -32🟢 | -64%🟢
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -161,7 +163,7 @@ Quaternion could represent local-view rotation and composite orientation for inf
 
 ### <a id="opt-1-separate-positions">Separate position data</a>
 
-Separate position data utilizes tile _GPU_ specifics: every vertex shader is implicily cut into two versions:
+Separate position data utilizes tile _GPU_ specifics: every vertex shader is implicitly cut into two versions:
 
 - only computations which affect output vertex position
 - rest computations
@@ -443,7 +445,7 @@ struct UIVertexInfo
 };                                          };
 ```
 
-**Note:** 2024 November 30<sup>th</sup>. According to _Vertex Input Extraction_ from _Vulkan_ spec vertex exlement must be aligned by 4 bytes. Having vertex element non-multiple of 4 bytes causes runtime artefacts on [_XIAOMI Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030) looking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on [_NVIDIA RTX 4080_](https://vulkan.gpuinfo.org/displayreport.php?id=34593) does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
+**Note:** 2024 November 30<sup>th</sup>. According to _Vertex Input Extraction_ from _Vulkan_ spec vertex element must be aligned by 4 bytes. Having vertex element non-multiple of 4 bytes causes runtime artefacts on [_XIAOMI Redmi Note 8 Pro_](https://vulkan.gpuinfo.org/displayreport.php?id=12030) looking like data race or missing barrier or so. _VVL 1.3.299_ does not detect any core or sync validation issues. Running same code on [_NVIDIA RTX 4080_](https://vulkan.gpuinfo.org/displayreport.php?id=34593) does not have any artifacts. To solve the issue it was added 3 byte padding after `UIAtlas::_layer` field.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -701,6 +703,92 @@ struct UIVertexInfo
     float32_t4      _color;                     float16_t2      _image;
     float32_t3      _atlas;                     UIAtlas         _atlas;
     float32_t2      _imageUV;                   uint32_t        _color;
+};                                          };
+```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="optimization-5">Optimization #5</a>
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.911 ms | -0.934 ms🟢 | -5.2%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.301 ms | -2.043 ms🟢 | -11.8%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 11.152 ms | +1.675 ms🔺 | +17.7%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+⁘ Frame time comparison with _Optimization #4_:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.911 ms ms | +0.267 ms🔺 | +1.6%🔺 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.301 ms | +0.231 ms🔺 | +1.5%🔺 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 11.152 ms | +1.576 ms🔺 | +16.5%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+---
+
+⁘ Maximum instances comparison with stock version:
+
+**Optimizations #5** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | +42🟢 | +100%🟢
+
+⁘ Maximum instances comparison with _Optimization #4_:
+
+**Optimizations #5** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | 0 | 0%
+
+---
+
+⁘ Bytes per scene vertex comparison with stock version:
+
+**Optimizations #5** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -140🟢 | -56.5%🟢
+
+⁘ Bytes per scene vertex comparison with _Optimization #4_:
+
+**Optimizations #5** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | 0 | 0%
+
+---
+
+⁘ Bytes per _UI_ vertex comparison with stock version:
+
+**Optimizations #5** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | -32🟢 | -64%🟢
+
+⁘ Bytes per _UI_ vertex comparison with _Optimization #4_:
+
+**Optimizations #4** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | -4🟢 | -18.2%🟢
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-5-proper-ui">Proper _UI_</a>
+
+Proper _UI_ implementation required some refactoring. The changes are described [here](./proper-ui.md) in more details.
+
+⁘ **_UI_ workflow**
+
+Vertex buffer layout:
+
+```cpp
+// Vertex buffer #0
+struct UIVertexInfo
+{                                           // Vertex buffer #0
+    float32_t2      _vertex;                float32_t2          _position;
+
+                                            // Vertex buffer #1
+                                ------->    struct UIVertex
+                                            {
+    float32_t4      _color;                     float16_t2      _uv;
+    float32_t3      _atlas;                     uint8_t         _atlasLayer;
+    float32_t2      _imageUV;                   uint8_t         _primitiveType;
+                                                uint32_t        _color;
 };                                          };
 ```
 

@@ -9,6 +9,7 @@
 #include <pbr/length_property.hpp>
 #include <pbr/length_property_checker.hpp>
 #include <pbr/length_shorthand_property_checker.hpp>
+#include <pbr/line_height_property_checker.hpp>
 #include <pbr/position_property.hpp>
 #include <pbr/position_property_checker.hpp>
 #include <pbr/text_align_property_checker.hpp>
@@ -226,6 +227,10 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
     TextAlignPropertyChecker textAlignChecker ( css, textAlign );
     checkers[ static_cast<size_t> ( Property::eType::TextAlign ) ] = &textAlignChecker;
 
+    LengthValue lineHeight {};
+    LineHeightPropertyChecker lineHeightChecker ( css, lineHeight );
+    checkers[ static_cast<size_t> ( Property::eType::LineHeight ) ] = &lineHeightChecker;
+
     bool hasProps = false;
 
     for ( ; ; )
@@ -344,6 +349,9 @@ ParseResult CommonCSSRule::Parse ( char const* css, Stream stream, eType type, C
 
     if ( textAlignChecker.IsDetected () )
         props.emplace_back ( std::make_unique<TextAlignProperty> ( textAlign ) );
+
+    if ( lineHeightChecker.IsDetected () )
+        props.emplace_back ( std::make_unique<LengthProperty> ( Property::eType::LineHeight, lineHeight ) );
 
     cssRules.emplace ( std::move ( name ), std::move ( props ) );
     return stream;

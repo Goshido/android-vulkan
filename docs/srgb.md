@@ -2,13 +2,13 @@
 
 ## <a id="table-of-content">Table of content</a>
 
-- [_Linear to sRGB_](#linear-to-srgb)
 - [_sRGB to Linear_](#srgb-to-linear)
+- [_Linear to sRGB_](#linear-to-srgb)
 - [_Brightness for sRGB_](#new-gamma)
 
-## <a id="linear-to-srgb">_Linear_ to _sRGB_</a>
+## <a id="srgb-to-linear">_sRGB_ to _Linear_</a>
 
-Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
+According to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 
 $$
 C_{linear}=
@@ -32,9 +32,9 @@ $$
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="srgb-to-linear">_sRGB_ to _Linear_</a>
+## <a id="linear-to-srgb">_Linear_ to _sRGB_</a>
 
-Accoring to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
+According to this [source](https://entropymine.com/imageworsener/srgbformula/) we have this equation:
 
 $$
 C_{srgb}=
@@ -66,7 +66,7 @@ Note if original color is in _sRGB_ space it's needed to move it into _Linear_ s
 
 It was decided to use power ($P$) which lies in range $[0.2, 5]$.
 
-From user perspective it is contolled by brightness balance ($B$) which lies in range $[-1, 1]$.
+From user perspective it is controlled by brightness balance ($B$) which lies in range $[-1, 1]$.
 
 Value | Meaning
 --- | ---
@@ -76,7 +76,5 @@ Value | Meaning
 This formula describes connection between power and brightness balance:
 
 $$P = 5^{-B}$$
-
-Take into account that swapchain image has _sRGB_ native format. That means it's expected output in _Linear_ space from pixel shaders. Conversion to _sRGB_ will be done in hardware.
 
 [↬ table of content ⇧](#table-of-content)

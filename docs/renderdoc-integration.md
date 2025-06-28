@@ -7,7 +7,7 @@
 
 ## <a id="brief">Brief</a>
 
-The project supports integration with [_RenderDoc v1.35_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
+The project supports integration with [_RenderDoc v1.39_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
 
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
 - `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT`

@@ -15,40 +15,40 @@ IMGHTML5Element::IMGHTML5Element ( std::u32string &&id,
     std::string &&assetPath
 ) noexcept:
     HTML5Element ( HTML5Tag::eTag::IMG ),
+
+    _cssComputedValues
+    {
+        ._backgroundColor = ColorValue ( 0U, 0U, 0U, 0U ),
+        ._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F ),
+        ._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F ),
+        ._left = LengthValue ( LengthValue::eType::Auto, 0.0F ),
+        ._right = LengthValue ( LengthValue::eType::Auto, 0.0F ),
+        ._top = LengthValue ( LengthValue::eType::Auto, 0.0F ),
+        ._color {},
+        ._display = DisplayProperty::eValue::InlineBlock,
+        ._fontFile {},
+        ._fontSize = LengthValue ( LengthValue::eType::EM, 1.0F ),
+        ._lineHeight = LengthValue ( LengthValue::eType::Inherit, 42.0F ),
+        ._marginBottom = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._marginLeft = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._marginRight = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._marginTop = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._paddingBottom = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._paddingLeft = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._paddingRight = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._paddingTop = LengthValue ( LengthValue::eType::PX, 0.0F ),
+        ._position = PositionProperty::eValue::Static,
+        ._textAlign = TextAlignProperty::eValue::Left,
+        ._verticalAlign = VerticalAlignProperty::eValue::Top,
+        ._width = LengthValue ( LengthValue::eType::Auto, 0.0F ),
+        ._height = LengthValue ( LengthValue::eType::Auto, 0.0F )
+    },
+
     _assetPath ( std::move ( assetPath ) ),
     _classes ( std::move ( classes ) ),
     _id ( std::move ( id ) )
 {
-    _cssComputedValues._backgroundColor = ColorValue ( false, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
-    _cssComputedValues._backgroundSize = LengthValue ( LengthValue::eType::Percent, 100.0F );
-
-    _cssComputedValues._bottom = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._left = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._right = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._top = LengthValue ( LengthValue::eType::Auto, 0.0F );
-
-    _cssComputedValues._color = ColorValue ( true, GXColorUNORM ( 0U, 0U, 0U, 0U ) );
-    _cssComputedValues._display = DisplayProperty::eValue::InlineBlock;
-
-    _cssComputedValues._fontFile.clear ();
-    _cssComputedValues._fontSize = LengthValue ( LengthValue::eType::EM, 1.0F );
-
-    _cssComputedValues._marginBottom = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._marginLeft = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._marginRight = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._marginTop = LengthValue ( LengthValue::eType::PX, 0.0F );
-
-    _cssComputedValues._paddingBottom = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingLeft = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingRight = LengthValue ( LengthValue::eType::PX, 0.0F );
-    _cssComputedValues._paddingTop = LengthValue ( LengthValue::eType::PX, 0.0F );
-
-    _cssComputedValues._position = PositionProperty::eValue::Static;
-    _cssComputedValues._textAlign = TextAlignProperty::eValue::Left;
-    _cssComputedValues._verticalAlign = VerticalAlignProperty::eValue::Top;
-
-    _cssComputedValues._width = LengthValue ( LengthValue::eType::Auto, 0.0F );
-    _cssComputedValues._height = LengthValue ( LengthValue::eType::Auto, 0.0F );
+    // NOTHING
 }
 
 std::string &IMGHTML5Element::GetAssetPath () noexcept

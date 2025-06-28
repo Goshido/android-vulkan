@@ -15,7 +15,16 @@ namespace pbr {
 
 class DIVUIElement final : public UIElement
 {
+    public:
+        struct Rect final
+        {
+            GXVec2                  _topLeft {};
+            GXVec2                  _bottomRight {};
+        };
+
     private:
+        Rect                        _absoluteRect {};
+
         GXVec2                      _blockSize {};
         GXVec2                      _borderSize {};
 
@@ -24,17 +33,13 @@ class DIVUIElement final : public UIElement
 
         std::deque<UIElement*>      _children {};
         bool                        _hasBackground = false;
+        bool                        _hasChanges = false;
         GXVec2                      _marginTopLeft {};
-
-        bool                        _isAutoWidth;
-        bool                        _isAutoHeight;
-        bool                        _isInlineBlock;
 
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
         GXVec2                      _positions[ UIPass::GetVerticesPerRectangle() ] {};
         UIVertex                    _vertices[ UIPass::GetVerticesPerRectangle() ] {};
-        size_t const                _widthSelectorBase;
 
     public:
         DIVUIElement () = delete;
@@ -46,6 +51,7 @@ class DIVUIElement final : public UIElement
         DIVUIElement &operator = ( DIVUIElement && ) = delete;
 
         explicit DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept;
+        explicit DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept;
 
         ~DIVUIElement () override = default;
 
@@ -54,6 +60,10 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
 
         void AppendChildElement ( UIElement &element ) noexcept;
+        void PrependChildElement ( UIElement &element ) noexcept;
+
+        [[nodiscard]] Rect const &GetAbsoluteRect () const noexcept;
+        void Update () noexcept;
 };
 
 } // namespace pbr

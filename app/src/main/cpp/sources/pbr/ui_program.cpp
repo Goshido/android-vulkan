@@ -15,7 +15,7 @@ constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_default_b
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 5U;
+constexpr size_t VERTEX_ATTRIBUTE_COUNT = 4U;
 constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 
 } // end of anonymous namespace
@@ -460,23 +460,15 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_IMAGE_UV,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R16G16_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _image ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _uv ) )
     };
 
-    attributes[ IN_SLOT_ATLAS_UV ] =
+    attributes[ IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE ] =
     {
-        .location = IN_SLOT_ATLAS_UV,
+        .location = IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE,
         .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R16G16_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._uv ) )
-    };
-
-    attributes[ IN_SLOT_ATLAS_LAYER ] =
-    {
-        .location = IN_SLOT_ATLAS_LAYER,
-        .binding = IN_BUFFER_REST,
-        .format = VK_FORMAT_R16_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlas._layer ) )
+        .format = VK_FORMAT_R8G8_UNORM,
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlasLayer ) )
     };
 
     attributes[ IN_SLOT_COLOR ] =

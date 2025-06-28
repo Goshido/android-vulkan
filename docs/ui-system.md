@@ -23,6 +23,7 @@
   - [`display`](#display)
   - [`font-family`](#font-family)
   - [`font-size`](#font-size)
+  - [`line-height`](#line-height)
   - [`margin-bottom`](#margin-bottom)
   - [`margin-left`](#margin-left)
   - [`margin-right`](#margin-right)
@@ -170,6 +171,7 @@ Property | Value
 [`display`](#display) | `block`
 [`font-family`](#font-family) | `inherit`
 [`font-size`](#font-size) | `16px`
+[`line-height`](#line-height) | `normal`
 [`margin-bottom`](#margin-bottom) | `8px`
 [`margin-left`](#margin-left) | `8px`
 [`margin-right`](#margin-right) | `8px`
@@ -211,6 +213,7 @@ Property | Value
 [`display`](#display) | `block`
 [`font-family`](#font-family) | `inherit`
 [`font-size`](#font-size) | `1em`
+[`line-height`](#line-height) | `inherit`
 [`margin-bottom`](#margin-bottom) | `0px`
 [`margin-left`](#margin-left) | `0px`
 [`margin-right`](#margin-right) | `0px`
@@ -253,6 +256,7 @@ Property | Value
 [`display`](#color) | `inline-block`
 [`font-family`](#font-family) | `inherit`
 [`font-size`](#font-size) | `1em`
+[`line-height`](#line-height) | `inherit`
 [`margin-bottom`](#margin-bottom) | `0px`
 [`margin-left`](#margin-left) | `0px`
 [`margin-right`](#margin-right) | `0px`
@@ -352,6 +356,12 @@ Supported values: `em`, `px`, `pt`, `mm` and `%`.
 
 [↬ table of content ⇧](#table-of-content)
 
+### <a id="line-height">`line-height`</a>
+
+Supported values: `normal`, `inherit`, `em`, `px`, `pt`, `mm`, `%`, `<unitless number>`.
+
+[↬ table of content ⇧](#table-of-content)
+
 ### <a id="margin-bottom">`margin-bottom`</a>
 
 Supported values: `em`, `px`, `pt`, `mm` and `%`.
@@ -414,7 +424,7 @@ Supported values: From 1 to 4 values according to [_CSS_ specification](https://
 
 ### <a id="position">`position`</a>
 
-Supported values: `absolute` and `static`.
+Supported values: `absolute`, `relative` and `static`.
 
 [↬ table of content ⇧](#table-of-content)
 

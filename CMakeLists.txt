@@ -127,6 +127,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/light_volume_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set.cpp
     app/src/main/cpp/sources/pbr/lightup_common_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/pbr/line_height_property_checker.cpp
     app/src/main/cpp/sources/pbr/link_html5_element.cpp
     app/src/main/cpp/sources/pbr/material.cpp
     app/src/main/cpp/sources/pbr/material_manager.cpp
@@ -278,13 +279,14 @@ target_compile_options ( android-vulkan PRIVATE
 
 # See docs/preprocessor-macros.md
 target_compile_definitions ( android-vulkan PRIVATE
-#    AV_ENABLE_TRACE
-    AV_NATIVE_MODE_PORTRAIT
+    AV_ARM_NEON
     AV_DEBUG
 #    AV_ENABLE_RENDERDOC
+#    AV_ENABLE_TRACE
     AV_ENABLE_VVL
+    AV_FREETYPE
+    AV_NATIVE_MODE_PORTRAIT
     AV_STRICT_MODE
-    AV_ARM_NEON
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR
 )

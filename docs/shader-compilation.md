@@ -14,7 +14,7 @@
 
 ## <a id="compile-tool">Compile tool</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2407.10120_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10062_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -63,7 +63,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T vs_6_8                                                   ^
+    -T vs_6_9                                                   ^
     -E VS                                                       ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
@@ -86,7 +86,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T ps_6_8                                                   ^
+    -T ps_6_9                                                   ^
     -E PS                                                       ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
@@ -109,7 +109,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T cs_6_8                                                   ^
+    -T cs_6_9                                                   ^
     -E CS                                                       ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
@@ -154,7 +154,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2024-12-12\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2025-06-28\bin`
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -168,5 +168,6 @@ SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://gi
 Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShaderCompiler/issues/5608) | ✔️ Fixed
 [SPIR-V] Define-only include files are missing in `-fspv-debug=vulkan-with-source` | [#6907](https://github.com/microsoft/DirectXShaderCompiler/issues/6907) | ✔️ Fixed
 [SPIR-V] Non semantic shader information issue (-fspv-debug=vulkan-with-source) | [#6939](https://github.com/microsoft/DirectXShaderCompiler/issues/6939) | ✔️ Fixed
+[SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

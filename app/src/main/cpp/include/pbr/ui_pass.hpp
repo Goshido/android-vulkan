@@ -31,6 +31,9 @@ class UIPass final
                 VkDescriptorImageInfo                   _imageInfo {};
                 UIPassCommonDescriptorSetLayout         _layout {};
                 VkWriteDescriptorSet                    _write {};
+                VkCommandPool                           _pool = VK_NULL_HANDLE;
+                VkFence                                 _fence = VK_NULL_HANDLE;
+                android_vulkan::Texture2D               _textLUT {};
 
             public:
                 CommonDescriptorSet () = default;
@@ -43,13 +46,16 @@ class UIPass final
 
                 ~CommonDescriptorSet () = default;
 
-                [[nodiscard]] bool Init ( VkDevice device,
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                     VkDescriptorPool descriptorPool,
                     SamplerManager const &samplerManager
                 ) noexcept;
 
-                void Destroy ( VkDevice device ) noexcept;
-                void Update ( VkDevice device, VkImageView currentAtlas ) noexcept;
+                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+                [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer, VkImageView currentAtlas ) noexcept;
+
+            private:
+                [[nodiscard]] bool FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
         struct Buffer final
@@ -221,7 +227,6 @@ class UIPass final
         ~UIPass () = default;
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
-
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
@@ -262,15 +267,28 @@ class UIPass final
             return 6U;
         }
 
+        static void AppendImage ( GXVec2* targetPositions,
+            UIVertex* targetVertices,
+            GXColorUNORM color,
+            GXVec2 const &topLeft,
+            GXVec2 const &bottomRight
+        ) noexcept;
+
         static void AppendRectangle ( GXVec2* targetPositions,
             UIVertex* targetVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
+            GXVec2 const &bottomRight
+        ) noexcept;
+
+        static void AppendText ( GXVec2* targetPositions,
+            UIVertex* targetVertices,
+            GXColorUNORM color,
+            GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
-            UIAtlas const &glyphTopLeft,
-            UIAtlas const &glyphBottomRight,
-            GXVec2 const &imageTopLeft,
-            GXVec2 const &imageBottomRight
+            android_vulkan::Half2 const &glyphTopLeft,
+            android_vulkan::Half2 const &glyphBottomRight,
+            uint8_t atlasLayer
         ) noexcept;
 
         static void ReleaseImage ( Texture2DRef const &image ) noexcept;

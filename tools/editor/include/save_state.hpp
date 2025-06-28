@@ -69,7 +69,7 @@ class SaveState final
                 eType                                           _type = eType::Null;
 
             public:
-                Container () = default;
+                explicit Container () = default;
 
                 Container ( Container const & ) = delete;
                 Container &operator = ( Container const & ) = delete;

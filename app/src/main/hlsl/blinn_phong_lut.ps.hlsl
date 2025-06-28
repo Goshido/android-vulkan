@@ -1,5 +1,5 @@
+#include "color_space.hlsl"
 #include "rotating_mesh/bindings.inc"
-#include "blinn_phong_gamma.ps.hlsl"
 
 
 // Main reference is Source Engine
@@ -89,5 +89,5 @@ float32_t4 PS ( in InputData inputData ): SV_Target0
     float32_t3 const specularFactor = (float32_t3)GetSpecular ( normalView, toView, toLight, TARGET_SHININESS );
 
     float32_t3 const color = mad ( diffuseData, (float32_t3)lambertian, specularFactor );
-    return float32_t4 ( color, 1.0F );
+    return float32_t4 ( (float32_t3)LinearToSRGB ( (float16_t3)color ), 1.0F );
 }

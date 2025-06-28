@@ -19,13 +19,13 @@ constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
 
-// It prevents buzy loop.
+// It prevents busy loop.
 // [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
 constexpr std::chrono::milliseconds IDLE ( 1U );
 
 constexpr float COMFORTABLE_VIEW_DISTANCE_METERS = 8.0e-1F;
 
-} // end of anonumous namespace
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ bool Editor::InitModules () noexcept
 
             default:
                 knownSerialNumber = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -124,13 +124,11 @@ bool Editor::InitModules () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    _uiManager.Init ( _messageQueue );
-    _runningModules = 1U;
+    _uiManager.Init ();
+    _timerManager.Init ();
+    _renderSession.Init ();
+    _runningModules = 3U;
 
-    if ( !result || !_renderSession.Init ( _messageQueue, _renderer, _uiManager ) ) [[unlikely]]
-        return false;
-
-    ++_runningModules;
     return true;
 }
 
@@ -157,7 +155,7 @@ void Editor::DestroyModules () noexcept
 
             default:
                 knownSerialNumber = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -176,6 +174,7 @@ void Editor::DestroyModules () noexcept
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
 
+    _timerManager.Destroy ();
     _renderSession.Destroy ();
     _uiManager.Destroy ();
     _renderer.OnDestroySwapchain ( false );
@@ -197,12 +196,16 @@ void Editor::EventLoop () noexcept
 
         switch ( message._type )
         {
-            case eMessageType::CaptureMouse:
-                OnCaptureMouse ();
-            break;
-
             case eMessageType::ChangeCursor:
                 OnChangeCursor ( std::move ( message ) );
+            break;
+
+            case eMessageType::CaptureKeyboard:
+                OnCaptureKeyboard ();
+            break;
+
+            case eMessageType::CaptureMouse:
+                OnCaptureMouse ();
             break;
 
             case eMessageType::CloseEditor:
@@ -221,8 +224,16 @@ void Editor::EventLoop () noexcept
                 OnModuleStopped ();
             break;
 
+            case eMessageType::ReadClipboardRequest:
+                OnReadClipboardRequest ();
+            break;
+
             case eMessageType::RecreateSwapchain:
                 OnRecreateSwapchain ();
+            break;
+
+            case eMessageType::ReleaseKeyboard:
+                OnReleaseKeyboard ();
             break;
 
             case eMessageType::ReleaseMouse:
@@ -237,9 +248,13 @@ void Editor::EventLoop () noexcept
                 OnWindowVisibilityChanged ( std::move ( message ) );
             break;
 
+            case eMessageType::WriteClipboard:
+                OnWriteClipboard ( std::move ( message ) );
+            break;
+
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -247,16 +262,30 @@ void Editor::EventLoop () noexcept
     }
 }
 
+void Editor::OnCaptureKeyboard () noexcept
+{
+    AV_TRACE ( "Capture keyboard" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.CaptureKeyboard ();
+}
+
+void Editor::OnReleaseKeyboard () noexcept
+{
+    AV_TRACE ( "Release keyboard" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ReleaseKeyboard ();
+}
+
 void Editor::OnCaptureMouse () noexcept
 {
-    AV_TRACE ( "Capture mouse" )
+    AV_TRACE ( "Capture input" )
     _messageQueue.DequeueEnd ();
     _mainWindow.CaptureMouse ();
 }
 
 void Editor::OnReleaseMouse () noexcept
 {
-    AV_TRACE ( "Release mouse" )
+    AV_TRACE ( "Release input" )
     _messageQueue.DequeueEnd ();
     _mainWindow.ReleaseMouse ();
 }
@@ -265,11 +294,12 @@ void Editor::OnChangeCursor ( Message &&message ) noexcept
 {
     AV_TRACE ( "Change cursor" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.ChangeCursor ( static_cast<eCursor> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
+    _mainWindow.ChangeCursor ( std::bit_cast<eCursor> ( message._params ) );
 }
 
 void Editor::OnDPIChanged ( Message &&message ) noexcept
 {
+    AV_TRACE ( "DPI changed" )
     _messageQueue.DequeueEnd ();
     _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
     // FUCK
@@ -285,6 +315,13 @@ void Editor::OnModuleStopped () noexcept
 {
     _messageQueue.DequeueEnd ();
     --_runningModules;
+}
+
+void Editor::OnReadClipboardRequest () noexcept
+{
+    AV_TRACE ( "Read clipboard request" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.ReadClipboard ();
 }
 
 void Editor::OnRecreateSwapchain () noexcept
@@ -380,9 +417,17 @@ void Editor::OnShutdown () noexcept
                 OnModuleStopped ();
             break;
 
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::StartTimer:
+                [[fallthrough]];
+            case eMessageType::StopTimer:
+                _messageQueue.DequeueEnd ();
+            break;
+
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ) );
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -392,8 +437,19 @@ void Editor::OnShutdown () noexcept
 
 void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
 {
+    AV_TRACE ( "Main window visibility changed" )
     _messageQueue.DequeueEnd ();
-    _stopRendering = static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+    _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) );
+}
+
+void Editor::OnWriteClipboard ( Message &&message ) noexcept
+{
+    AV_TRACE ( "Write clipboard" )
+    _messageQueue.DequeueEnd ();
+
+    auto const* string = static_cast<std::u32string const*> ( message._params );
+    _mainWindow.WriteClipboard ( *string );
+    delete string;
 }
 
 void Editor::ScheduleEventLoop () noexcept

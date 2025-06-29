@@ -43,6 +43,7 @@ PushConstants                                       g_exposureInfo;
 Texture2D<float32_t4>                               g_hdrImage:         register ( t0 );
 
 [[vk::binding ( BIND_SYNC_MIP_5, SET_RESOURCE )]]
+[[vk::image_format ( "r16f" )]]
 globallycoherent RWTexture2D<float32_t>             g_syncMip5:         register ( u0 );
 
 [[vk::binding ( BIND_EXPOSURE, SET_RESOURCE )]]

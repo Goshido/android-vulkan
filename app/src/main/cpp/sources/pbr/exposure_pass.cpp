@@ -837,10 +837,7 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .imageType = VK_IMAGE_TYPE_2D,
-
-        // [2025/06/28] Can't use float16_t format because of DXC issue.
-        // See https://github.com/microsoft/DirectXShaderCompiler/issues/7595
-        .format = VK_FORMAT_R32_SFLOAT,
+        .format = VK_FORMAT_R16_SFLOAT,
 
         .extent
         {

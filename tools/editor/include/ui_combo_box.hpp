@@ -146,7 +146,7 @@ class UIComboBox final : public Widget
         UpdateRectHandler                           _updateRect = &UIComboBox::UpdatedRectNormal;
 
         Popup*                                      _popup = nullptr;
-        bool                                        _cancelNextLeftMouseKeyDownEvent = false;
+        bool                                        _cancelNextLeftMouseButtonDownEvent = false;
 
     public:
         UIComboBox () = delete;

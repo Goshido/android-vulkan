@@ -606,7 +606,7 @@ void UIComboBox::OnMouseButtonDownMenu ( MouseButtonEvent const &event ) noexcep
         return;
 
     if ( event._key == eKey::LeftMouseButton )
-        _cancelNextLeftMouseKeyDownEvent = Rect ( _valueDIV.GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
+        _cancelNextLeftMouseButtonDownEvent = Rect ( _valueDIV.GetAbsoluteRect () ).IsOverlapped ( event._x, event._y );
 
     SwitchToNormalState ();
     --_eventID;
@@ -642,8 +642,11 @@ void UIComboBox::OnMouseButtonDownNormal ( MouseButtonEvent const &event ) noexc
 
 void UIComboBox::OnMouseButtonUpNormal ( MouseButtonEvent const &event ) noexcept
 {
-    if ( event._key != eKey::LeftMouseButton || std::exchange ( _cancelNextLeftMouseKeyDownEvent, false ) ) [[unlikely]]
+    if ( event._key != eKey::LeftMouseButton || std::exchange ( _cancelNextLeftMouseButtonDownEvent, false ) )
+    {
+        [[unlikely]]
         return;
+    }
 
     _text.SetColor ( theme::HOVER_COLOR );
     _icon.SetColor ( theme::HOVER_COLOR );

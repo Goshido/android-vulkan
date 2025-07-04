@@ -40,6 +40,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <numeric>
 #include <optional>
 #include <random>
+#include <ranges>
 #include <regex>
 #include <set>
 #include <shared_mutex>

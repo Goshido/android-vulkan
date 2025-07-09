@@ -105,7 +105,7 @@ size_t SaveState::Container::GetArraySize () const noexcept
     return _arrayData.size ();
 }
 
-SaveState::Container &SaveState::Container::WriteArray ( std::string_view const &key ) noexcept
+SaveState::Container &SaveState::Container::WriteArray ( std::string_view key ) noexcept
 {
     if ( _type == eType::Array ) [[unlikely]]
     {
@@ -144,7 +144,7 @@ SaveState::Container &SaveState::Container::WriteContainer () noexcept
     return _arrayData.back ();
 }
 
-SaveState::Container &SaveState::Container::WriteContainer ( std::string_view const &key ) noexcept
+SaveState::Container &SaveState::Container::WriteContainer ( std::string_view key ) noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
     {
@@ -370,7 +370,7 @@ void SaveState::Container::Write ( bool value ) noexcept
     android_vulkan::LogWarning ( "SaveState: Changing array type. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &value ) noexcept
+void SaveState::Container::Write ( std::string_view value ) noexcept
 {
     if ( _type != eType::Array ) [[unlikely]]
     {
@@ -389,7 +389,7 @@ void SaveState::Container::Write ( std::string_view const &value ) noexcept
     android_vulkan::LogWarning ( "SaveState: Changing array type. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, int8_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, int8_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -401,7 +401,7 @@ void SaveState::Container::Write ( std::string_view const &key, int8_t value ) n
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, uint8_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, uint8_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -413,7 +413,7 @@ void SaveState::Container::Write ( std::string_view const &key, uint8_t value ) 
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, int16_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, int16_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -425,7 +425,7 @@ void SaveState::Container::Write ( std::string_view const &key, int16_t value ) 
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, uint16_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, uint16_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -437,7 +437,7 @@ void SaveState::Container::Write ( std::string_view const &key, uint16_t value )
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, int32_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, int32_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -449,7 +449,7 @@ void SaveState::Container::Write ( std::string_view const &key, int32_t value ) 
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, uint32_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, uint32_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -461,7 +461,7 @@ void SaveState::Container::Write ( std::string_view const &key, uint32_t value )
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, int64_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, int64_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -473,7 +473,7 @@ void SaveState::Container::Write ( std::string_view const &key, int64_t value ) 
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, uint64_t value ) noexcept
+void SaveState::Container::Write ( std::string_view key, uint64_t value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -485,7 +485,7 @@ void SaveState::Container::Write ( std::string_view const &key, uint64_t value )
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, float value ) noexcept
+void SaveState::Container::Write ( std::string_view key, float value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -497,7 +497,7 @@ void SaveState::Container::Write ( std::string_view const &key, float value ) no
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, double value ) noexcept
+void SaveState::Container::Write ( std::string_view key, double value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -509,7 +509,7 @@ void SaveState::Container::Write ( std::string_view const &key, double value ) n
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const& key, bool value ) noexcept
+void SaveState::Container::Write ( std::string_view key, bool value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -521,7 +521,7 @@ void SaveState::Container::Write ( std::string_view const& key, bool value ) noe
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-void SaveState::Container::Write ( std::string_view const &key, std::string_view const &value ) noexcept
+void SaveState::Container::Write ( std::string_view key, std::string_view value ) noexcept
 {
     if ( _type == eType::Container ) [[likely]]
     {
@@ -533,7 +533,7 @@ void SaveState::Container::Write ( std::string_view const &key, std::string_view
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
-SaveState::Container const &SaveState::Container::ReadArray ( std::string_view const &key ) const noexcept
+SaveState::Container const &SaveState::Container::ReadArray ( std::string_view key ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
     {
@@ -569,7 +569,7 @@ SaveState::Container const &SaveState::Container::ReadContainer () const noexcep
     return null;
 }
 
-SaveState::Container const &SaveState::Container::ReadContainer ( std::string_view const &key ) const noexcept
+SaveState::Container const &SaveState::Container::ReadContainer ( std::string_view key ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
     {
@@ -705,7 +705,7 @@ bool SaveState::Container::Read ( bool defaultValue ) const noexcept
     return defaultValue;
 }
 
-std::string_view SaveState::Container::Read ( std::string_view const &defaultValue ) const noexcept
+std::string_view SaveState::Container::Read ( std::string_view defaultValue ) const noexcept
 {
     if ( ( _type != eType::Array ) | ( _arrayData.size () <= _idx ) ) [[unlikely]]
         return defaultValue;
@@ -716,7 +716,7 @@ std::string_view SaveState::Container::Read ( std::string_view const &defaultVal
     return defaultValue;
 }
 
-int8_t SaveState::Container::Read ( std::string_view const &key, int8_t defaultValue ) const noexcept
+int8_t SaveState::Container::Read ( std::string_view key, int8_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -729,7 +729,7 @@ int8_t SaveState::Container::Read ( std::string_view const &key, int8_t defaultV
     return std::get<int8_t> ( findResult->second._data );
 }
 
-uint8_t SaveState::Container::Read ( std::string_view const &key, uint8_t defaultValue ) const noexcept
+uint8_t SaveState::Container::Read ( std::string_view key, uint8_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -742,7 +742,7 @@ uint8_t SaveState::Container::Read ( std::string_view const &key, uint8_t defaul
     return std::get<uint8_t> ( findResult->second._data );
 }
 
-int16_t SaveState::Container::Read ( std::string_view const &key, int16_t defaultValue ) const noexcept
+int16_t SaveState::Container::Read ( std::string_view key, int16_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -755,7 +755,7 @@ int16_t SaveState::Container::Read ( std::string_view const &key, int16_t defaul
     return std::get<int16_t> ( findResult->second._data );
 }
 
-uint16_t SaveState::Container::Read ( std::string_view const &key, uint16_t defaultValue ) const noexcept
+uint16_t SaveState::Container::Read ( std::string_view key, uint16_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -768,7 +768,7 @@ uint16_t SaveState::Container::Read ( std::string_view const &key, uint16_t defa
     return std::get<uint16_t> ( findResult->second._data );
 }
 
-int32_t SaveState::Container::Read ( std::string_view const &key, int32_t defaultValue ) const noexcept
+int32_t SaveState::Container::Read ( std::string_view key, int32_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -781,7 +781,7 @@ int32_t SaveState::Container::Read ( std::string_view const &key, int32_t defaul
     return std::get<int32_t> ( findResult->second._data );
 }
 
-uint32_t SaveState::Container::Read ( std::string_view const &key, uint32_t defaultValue ) const noexcept
+uint32_t SaveState::Container::Read ( std::string_view key, uint32_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -794,7 +794,7 @@ uint32_t SaveState::Container::Read ( std::string_view const &key, uint32_t defa
     return std::get<uint32_t> ( findResult->second._data );
 }
 
-int64_t SaveState::Container::Read ( std::string_view const &key, int64_t defaultValue ) const noexcept
+int64_t SaveState::Container::Read ( std::string_view key, int64_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -807,7 +807,7 @@ int64_t SaveState::Container::Read ( std::string_view const &key, int64_t defaul
     return std::get<int64_t> ( findResult->second._data );
 }
 
-uint64_t SaveState::Container::Read ( std::string_view const &key, uint64_t defaultValue ) const noexcept
+uint64_t SaveState::Container::Read ( std::string_view key, uint64_t defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -820,7 +820,7 @@ uint64_t SaveState::Container::Read ( std::string_view const &key, uint64_t defa
     return std::get<uint64_t> ( findResult->second._data );
 }
 
-float SaveState::Container::Read ( std::string_view const &key, float defaultValue ) const noexcept
+float SaveState::Container::Read ( std::string_view key, float defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -833,7 +833,7 @@ float SaveState::Container::Read ( std::string_view const &key, float defaultVal
     return std::get<float> ( findResult->second._data );
 }
 
-double SaveState::Container::Read ( std::string_view const &key, double defaultValue ) const noexcept
+double SaveState::Container::Read ( std::string_view key, double defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -846,7 +846,7 @@ double SaveState::Container::Read ( std::string_view const &key, double defaultV
     return std::get<double> ( findResult->second._data );
 }
 
-bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue ) const noexcept
+bool SaveState::Container::Read ( std::string_view key, bool defaultValue ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
         return defaultValue;
@@ -859,8 +859,8 @@ bool SaveState::Container::Read ( std::string_view const &key, bool defaultValue
     return std::get<bool> ( findResult->second._data );
 }
 
-std::string_view SaveState::Container::Read ( std::string_view const &key,
-    std::string_view const &defaultValue
+std::string_view SaveState::Container::Read ( std::string_view key,
+    std::string_view defaultValue
 ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
@@ -957,7 +957,7 @@ SaveState::Container::Container ( bool value ) noexcept:
     // NOTHING
 }
 
-SaveState::Container::Container ( std::string_view const &value ) noexcept:
+SaveState::Container::Container ( std::string_view value ) noexcept:
     _string ( value ),
     _type ( eType::String )
 {
@@ -966,7 +966,7 @@ SaveState::Container::Container ( std::string_view const &value ) noexcept:
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool SaveState::Load ( std::string_view const &file, bool silent ) noexcept
+bool SaveState::Load ( std::string_view file, bool silent ) noexcept
 {
     AV_TRACE ( "Loading state" )
     std::ifstream stream ( OSUtils::ResolvePath ( file ), std::ios::binary | std::ios::ate | std::ios::in );
@@ -997,7 +997,7 @@ bool SaveState::Load ( std::string_view const &file, bool silent ) noexcept
     return true;
 }
 
-bool SaveState::Save ( std::string_view const &file ) noexcept
+bool SaveState::Save ( std::string_view file ) noexcept
 {
     AV_TRACE ( "Saving state" )
     Binary aData {};

@@ -312,6 +312,12 @@
     <ClCompile Include="src\action.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\actor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\component.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -663,6 +669,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\history.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\actor.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

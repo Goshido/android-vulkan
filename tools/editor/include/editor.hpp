@@ -3,6 +3,7 @@
 
 
 #include "command_line.hpp"
+#include "history.hpp"
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
@@ -29,6 +30,7 @@ class Editor final
     private:
         CommandLine                             _commandLine {};
         bool                                    _frameComplete = true;
+        History                                 _history {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};

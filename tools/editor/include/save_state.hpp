@@ -82,10 +82,10 @@ class SaveState final
                 [[nodiscard]] eType GetType () const noexcept;
                 [[nodiscard]] size_t GetArraySize () const noexcept;
 
-                [[nodiscard]] Container &WriteArray ( std::string_view const &key ) noexcept;
+                [[nodiscard]] Container &WriteArray ( std::string_view key ) noexcept;
 
                 [[nodiscard]] Container &WriteContainer () noexcept;
-                [[nodiscard]] Container &WriteContainer ( std::string_view const &key ) noexcept;
+                [[nodiscard]] Container &WriteContainer ( std::string_view key ) noexcept;
 
                 void Write ( int8_t value ) noexcept;
                 void Write ( uint8_t value ) noexcept;
@@ -98,25 +98,25 @@ class SaveState final
                 void Write ( float value ) noexcept;
                 void Write ( double value ) noexcept;
                 void Write ( bool value ) noexcept;
-                void Write ( std::string_view const &value ) noexcept;
+                void Write ( std::string_view value ) noexcept;
 
-                void Write ( std::string_view const &key, int8_t value ) noexcept;
-                void Write ( std::string_view const &key, uint8_t value ) noexcept;
-                void Write ( std::string_view const &key, int16_t value ) noexcept;
-                void Write ( std::string_view const &key, uint16_t value ) noexcept;
-                void Write ( std::string_view const &key, int32_t value ) noexcept;
-                void Write ( std::string_view const &key, uint32_t value ) noexcept;
-                void Write ( std::string_view const &key, int64_t value ) noexcept;
-                void Write ( std::string_view const &key, uint64_t value ) noexcept;
-                void Write ( std::string_view const &key, float value ) noexcept;
-                void Write ( std::string_view const &key, double value ) noexcept;
-                void Write ( std::string_view const &key, bool value ) noexcept;
-                void Write ( std::string_view const &key, std::string_view const &value ) noexcept;
+                void Write ( std::string_view key, int8_t value ) noexcept;
+                void Write ( std::string_view key, uint8_t value ) noexcept;
+                void Write ( std::string_view key, int16_t value ) noexcept;
+                void Write ( std::string_view key, uint16_t value ) noexcept;
+                void Write ( std::string_view key, int32_t value ) noexcept;
+                void Write ( std::string_view key, uint32_t value ) noexcept;
+                void Write ( std::string_view key, int64_t value ) noexcept;
+                void Write ( std::string_view key, uint64_t value ) noexcept;
+                void Write ( std::string_view key, float value ) noexcept;
+                void Write ( std::string_view key, double value ) noexcept;
+                void Write ( std::string_view key, bool value ) noexcept;
+                void Write ( std::string_view key, std::string_view value ) noexcept;
 
-                [[nodiscard]] Container const &ReadArray ( std::string_view const &key ) const noexcept;
+                [[nodiscard]] Container const &ReadArray ( std::string_view key ) const noexcept;
 
                 [[nodiscard]] Container const &ReadContainer () const noexcept;
-                [[nodiscard]] Container const &ReadContainer ( std::string_view const &key ) const noexcept;
+                [[nodiscard]] Container const &ReadContainer ( std::string_view key ) const noexcept;
 
                 [[nodiscard]] int8_t Read ( int8_t defaultValue ) const noexcept;
                 [[nodiscard]] uint8_t Read ( uint8_t defaultValue ) const noexcept;
@@ -129,22 +129,22 @@ class SaveState final
                 [[nodiscard]] float Read ( float defaultValue ) const noexcept;
                 [[nodiscard]] double Read ( double defaultValue ) const noexcept;
                 [[nodiscard]] bool Read ( bool defaultValue ) const noexcept;
-                [[nodiscard]] std::string_view Read ( std::string_view const &defaultValue ) const noexcept;
+                [[nodiscard]] std::string_view Read ( std::string_view defaultValue ) const noexcept;
 
-                [[nodiscard]] int8_t Read ( std::string_view const &key, int8_t defaultValue ) const noexcept;
-                [[nodiscard]] uint8_t Read ( std::string_view const &key, uint8_t defaultValue ) const noexcept;
-                [[nodiscard]] int16_t Read ( std::string_view const &key, int16_t defaultValue ) const noexcept;
-                [[nodiscard]] uint16_t Read ( std::string_view const &key, uint16_t defaultValue ) const noexcept;
-                [[nodiscard]] int32_t Read ( std::string_view const &key, int32_t defaultValue ) const noexcept;
-                [[nodiscard]] uint32_t Read ( std::string_view const &key, uint32_t defaultValue ) const noexcept;
-                [[nodiscard]] int64_t Read ( std::string_view const &key, int64_t defaultValue ) const noexcept;
-                [[nodiscard]] uint64_t Read ( std::string_view const &key, uint64_t defaultValue ) const noexcept;
-                [[nodiscard]] float Read ( std::string_view const &key, float defaultValue ) const noexcept;
-                [[nodiscard]] double Read ( std::string_view const &key, double defaultValue ) const noexcept;
-                [[nodiscard]] bool Read ( std::string_view const &key, bool defaultValue ) const noexcept;
+                [[nodiscard]] int8_t Read ( std::string_view key, int8_t defaultValue ) const noexcept;
+                [[nodiscard]] uint8_t Read ( std::string_view key, uint8_t defaultValue ) const noexcept;
+                [[nodiscard]] int16_t Read ( std::string_view key, int16_t defaultValue ) const noexcept;
+                [[nodiscard]] uint16_t Read ( std::string_view key, uint16_t defaultValue ) const noexcept;
+                [[nodiscard]] int32_t Read ( std::string_view key, int32_t defaultValue ) const noexcept;
+                [[nodiscard]] uint32_t Read ( std::string_view key, uint32_t defaultValue ) const noexcept;
+                [[nodiscard]] int64_t Read ( std::string_view key, int64_t defaultValue ) const noexcept;
+                [[nodiscard]] uint64_t Read ( std::string_view key, uint64_t defaultValue ) const noexcept;
+                [[nodiscard]] float Read ( std::string_view key, float defaultValue ) const noexcept;
+                [[nodiscard]] double Read ( std::string_view key, double defaultValue ) const noexcept;
+                [[nodiscard]] bool Read ( std::string_view key, bool defaultValue ) const noexcept;
 
-                [[nodiscard]] std::string_view Read ( std::string_view const &key,
-                    std::string_view const &defaultValue
+                [[nodiscard]] std::string_view Read ( std::string_view key,
+                    std::string_view defaultValue
                 ) const noexcept;
 
             private:
@@ -160,7 +160,7 @@ class SaveState final
                 explicit Container ( float value ) noexcept;
                 explicit Container ( double value ) noexcept;
                 explicit Container ( bool value ) noexcept;
-                explicit Container ( std::string_view const &value ) noexcept;
+                explicit Container ( std::string_view value ) noexcept;
         };
 
     private:
@@ -180,8 +180,8 @@ class SaveState final
 
         ~SaveState () = default;
 
-        [[nodiscard]] bool Load ( std::string_view const &file, bool silent ) noexcept;
-        [[nodiscard]] bool Save ( std::string_view const &file ) noexcept;
+        [[nodiscard]] bool Load ( std::string_view file, bool silent ) noexcept;
+        [[nodiscard]] bool Save ( std::string_view file ) noexcept;
 
         [[nodiscard]] Container &GetContainer () noexcept;
         [[nodiscard]] Container const &GetContainer () const noexcept;

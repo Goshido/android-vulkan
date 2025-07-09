@@ -859,7 +859,9 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="src\action.cpp" />
+    <ClCompile Include="src\actor.cpp" />
     <ClCompile Include="src\append_ui_child_element_event.cpp" />
+    <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
@@ -971,7 +973,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
     <ClInclude Include="include\action.hpp" />
+    <ClInclude Include="include\actor.hpp" />
     <ClInclude Include="include\append_ui_child_element_event.hpp" />
+    <ClInclude Include="include\component.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
     <ClInclude Include="include\div_ui_element.hpp" />

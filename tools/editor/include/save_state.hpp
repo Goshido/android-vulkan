@@ -2,7 +2,7 @@
 #define EDITOR_SAVE_STATE_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include <GXCommon/GXMath.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -112,6 +112,7 @@ class SaveState final
                 void Write ( std::string_view key, double value ) noexcept;
                 void Write ( std::string_view key, bool value ) noexcept;
                 void Write ( std::string_view key, std::string_view value ) noexcept;
+                void Write ( std::string_view key, GXMat4 const &value ) noexcept;
 
                 [[nodiscard]] Container const &ReadArray ( std::string_view key ) const noexcept;
 
@@ -146,6 +147,8 @@ class SaveState final
                 [[nodiscard]] std::string_view Read ( std::string_view key,
                     std::string_view defaultValue
                 ) const noexcept;
+
+                [[nodiscard]] GXMat4 Read ( std::string_view key, GXMat4 const &defaultValue ) const noexcept;
 
             private:
                 explicit Container ( eType type ) noexcept;

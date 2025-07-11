@@ -1,4 +1,4 @@
-// version 1.94
+// version 1.95
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -1493,6 +1493,27 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
+    0.0F,
+    0.0F,
+    0.0F,
+
+    0.0F,
+    1.0F,
+    0.0F,
+    0.0F,
+
+    0.0F,
+    0.0F,
+    1.0F,
+    0.0F,
+
+    0.0F,
+    0.0F,
+    0.0F,
+    1.0F
+);
 
 [[maybe_unused]] GXVoid GXMat4::SetRotation ( GXQuat const &quaternion ) noexcept
 {

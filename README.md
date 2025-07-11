@@ -29,7 +29,7 @@ Pay attention that all 3<sup>rd</sup> party libraries are prebuilt already and p
 
 * _Windows 10+_ or _Monjaro KDE_
 * [_Android Studio Narwhal | 2025.1.1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.11.0_
+* _Android Studio Gradle Plugin 8.11.1_
 * _Android NDK 28.1.13356709 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 16 (API level 36)_

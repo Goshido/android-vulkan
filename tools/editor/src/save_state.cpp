@@ -11,6 +11,8 @@ namespace editor {
 
 namespace {
 
+constexpr size_t MATRIX_ITEMS = 16U;
+
 #pragma pack ( push, 1 )
 
 struct SaveStateInfo final
@@ -533,6 +535,24 @@ void SaveState::Container::Write ( std::string_view key, std::string_view value 
     android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
 }
 
+void SaveState::Container::Write ( std::string_view key, GXMat4 const &value ) noexcept
+{
+    if ( _type != eType::Container ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
+        return;
+    }
+
+    Container &matrix = WriteArray ( key );
+    float const* src = value._data[ 0U ];
+
+    for ( size_t i = 0U; i < MATRIX_ITEMS; ++i )
+    {
+        matrix.Write ( src[ i ] );
+    }
+}
+
 SaveState::Container const &SaveState::Container::ReadArray ( std::string_view key ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
@@ -872,6 +892,29 @@ std::string_view SaveState::Container::Read ( std::string_view key,
         return defaultValue;
 
     return findResult->second._string;
+}
+
+GXMat4 SaveState::Container::Read ( std::string_view key, GXMat4 const &defaultValue ) const noexcept
+{
+    if ( _type != eType::Array ) [[unlikely]]
+        return defaultValue;
+
+    GXMat4 result {};
+    float* dst = result._data[ 0U ];
+
+    Container const &matrix = ReadArray ( key );
+    size_t const items = matrix.GetArraySize ();
+
+    if ( items != MATRIX_ITEMS )
+    {
+        AV_ASSERT ( false )
+        return defaultValue;
+    }
+
+    for ( size_t i = 0U; i < MATRIX_ITEMS; ++i )
+        dst[ i ] = matrix.Read ( 0.0F );
+
+    return result;
 }
 
 SaveState::Container::Container ( eType type ) noexcept:

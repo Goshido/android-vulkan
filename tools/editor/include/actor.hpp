@@ -16,15 +16,17 @@ namespace editor {
 class Actor final
 {
     private:
+        constexpr static std::string_view       DEFAULT_NAME = "actor";
+
         using Components = std::deque<Component::Ref>;
 
     private:
-        Components      _components {};
-        GXMat4          _local {};
-        std::string     _name {};
+        Components                              _components {};
+        GXMat4                                  _local = GXMat4::IDENTITY;
+        std::string                             _name = std::string ( DEFAULT_NAME );
 
     public:
-        explicit Actor () noexcept;
+        explicit Actor () = default;
 
         Actor ( Actor const & ) = delete;
         Actor &operator = ( Actor const & ) = delete;

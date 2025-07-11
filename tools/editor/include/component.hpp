@@ -20,14 +20,56 @@ class Component
     public:
         using Ref = std::unique_ptr<Component>;
 
-    private:
-        GXMat4          _local {};
-        GXMat4          _parent {};
+    protected:
+        template<typename T>
+        class Factory final
+        {
+            public:
+                Factory () = delete;
 
-        std::string     _name {};
+                Factory ( Factory const & ) = delete;
+                Factory &operator = ( Factory const & ) = delete;
+
+                Factory ( Factory && ) = delete;
+                Factory &operator = ( Factory && ) = delete;
+
+                explicit Factory ( std::string_view type ) noexcept
+                {
+                    if ( !_spawnerRegistry ) [[unlikely]]
+                        _spawnerRegistry = SpawnerRegistry { Spawners {} };
+
+                    _spawnerRegistry->insert (
+                        std::pair (
+                            type,
+
+                            [] ( SaveState::Container const &info ) noexcept -> Ref {
+                                return std::make_unique<T> ( info );
+                            }
+                        )
+                    );
+                }
+
+                ~Factory () = default;
+        };
+
+    private:
+        using Spawner = Ref ( * ) ( SaveState::Container const &info ) noexcept;
+
+        // Note std::optional is needed to avoid static initialization order fiasco (SIOF)
+        // https://en.cppreference.com/w/cpp/language/siof.html
+        using Spawners = std::unordered_map<std::string_view, Spawner>;
+        using SpawnerRegistry = std::optional<Spawners>;
+
+    private:
+        GXMat4                      _local = GXMat4::IDENTITY;
+        GXMat4                      _parent = GXMat4::IDENTITY;
+
+        std::string                 _name {};
+
+        static SpawnerRegistry      _spawnerRegistry;
 
     public:
-        explicit Component () noexcept;
+        Component () = delete;
 
         Component ( Component const & ) = delete;
         Component &operator = ( Component const & ) = delete;
@@ -35,6 +77,7 @@ class Component
         Component ( Component && ) = delete;
         Component &operator = ( Component && ) = delete;
 
+        explicit Component ( std::string &&name ) noexcept;
         explicit Component ( SaveState::Container const &info ) noexcept;
 
         virtual ~Component () = default;

@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<StaticMeshComponent> const StaticMeshComponent::_factory ( "StaticMeshComponent" );
-
 StaticMeshComponent::StaticMeshComponent () noexcept:
     Component ( "static mesh" )
 {

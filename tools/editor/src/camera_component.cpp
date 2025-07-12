@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<CameraComponent> const CameraComponent::_factory ( "CameraComponent" );
-
 CameraComponent::CameraComponent () noexcept:
     Component ( "camera" )
 {

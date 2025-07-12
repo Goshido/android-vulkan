@@ -16,8 +16,6 @@ constexpr std::string_view PARENT_KEY = "parent";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::SpawnerRegistry Component::_spawnerRegistry = std::nullopt;
-
 Component::Component ( std::string &&name ) noexcept:
     _name ( std::move ( name ) )
 {
@@ -39,9 +37,7 @@ void Component::Save ( SaveState::Container &root ) const noexcept
 
 std::optional<Component::Ref> Component::Spawn ( SaveState::Container const &info ) noexcept
 {
-    Spawners &spawners = *_spawnerRegistry;
-
-    if ( auto const spawn = spawners.find ( info.Read ( TYPE_KEY, std::string_view {} ) ); spawn != spawners.cend () )
+    if ( auto const spawn = _spawners.find ( info.Read ( TYPE_KEY, std::string_view {} ) ); spawn != _spawners.cend () )
     {
         [[likely]]
         return spawn->second ( info );

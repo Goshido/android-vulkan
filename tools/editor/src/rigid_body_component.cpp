@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<RigidBodyComponent> const RigidBodyComponent::_factory ( "RigidBodyComponent" );
-
 RigidBodyComponent::RigidBodyComponent () noexcept:
     Component ( "rigid body" )
 {

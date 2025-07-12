@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<SoundEmitterComponent> const SoundEmitterComponent::_factory ( "SoundEmitterComponent" );
-
 SoundEmitterComponent::SoundEmitterComponent () noexcept:
     Component ( "sound emitter" )
 {

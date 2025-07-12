@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<ScriptComponent> const ScriptComponent::_factory ( "ScriptComponent" );
-
 ScriptComponent::ScriptComponent () noexcept:
     Component ( "script" )
 {

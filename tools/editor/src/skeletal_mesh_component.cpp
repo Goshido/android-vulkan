@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<SkeletalMeshComponent> const SkeletalMeshComponent::_factory ( "SkeletalMeshComponent" );
-
 SkeletalMeshComponent::SkeletalMeshComponent () noexcept:
     Component ( "skeletal mesh" )
 {

@@ -35,10 +35,7 @@ class Component
 
                 explicit Factory ( std::string_view type ) noexcept
                 {
-                    if ( !_spawnerRegistry ) [[unlikely]]
-                        _spawnerRegistry = SpawnerRegistry { Spawners {} };
-
-                    _spawnerRegistry->insert (
+                    _spawners.insert (
                         std::pair (
                             type,
 
@@ -54,19 +51,14 @@ class Component
 
     private:
         using Spawner = Ref ( * ) ( SaveState::Container const &info ) noexcept;
-
-        // Note std::optional is needed to avoid static initialization order fiasco (SIOF)
-        // https://en.cppreference.com/w/cpp/language/siof.html
         using Spawners = std::unordered_map<std::string_view, Spawner>;
-        using SpawnerRegistry = std::optional<Spawners>;
 
     private:
         GXMat4                      _local = GXMat4::IDENTITY;
         GXMat4                      _parent = GXMat4::IDENTITY;
-
         std::string                 _name {};
 
-        static SpawnerRegistry      _spawnerRegistry;
+        static Spawners             _spawners;
 
     public:
         Component () = delete;

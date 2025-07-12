@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<TransformComponent> const TransformComponent::_factory ( "TransformComponent" );
-
 TransformComponent::TransformComponent () noexcept:
     Component ( "transform" )
 {

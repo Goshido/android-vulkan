@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<PointLightComponent> const PointLightComponent::_factory ( "PointLightComponent" );
-
 PointLightComponent::PointLightComponent () noexcept:
     Component ( "point light" )
 {

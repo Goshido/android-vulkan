@@ -13,8 +13,6 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Component::Factory<ReflectionComponent> const ReflectionComponent::_factory ( "ReflectionComponent" );
-
 ReflectionComponent::ReflectionComponent () noexcept:
     Component ( "reflection" )
 {

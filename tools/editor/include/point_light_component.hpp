@@ -9,8 +9,8 @@ namespace editor {
 
 class PointLightComponent final : public Component
 {
-    private:
-        static Factory<PointLightComponent> const       _factory;
+    public:
+        constexpr static std::string_view       TYPE = "PointLight";
 
     public:
         explicit PointLightComponent () noexcept;

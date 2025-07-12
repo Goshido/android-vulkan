@@ -9,8 +9,8 @@ namespace editor {
 
 class RigidBodyComponent final : public Component
 {
-    private:
-        static Factory<RigidBodyComponent> const    _factory;
+    public:
+        constexpr static std::string_view       TYPE = "RigidBody";
 
     public:
         explicit RigidBodyComponent () noexcept;

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <rigid_body_component.hpp>
 
 
@@ -6,7 +7,6 @@ namespace editor {
 
 namespace {
 
-constexpr std::string_view VERSION_KEY = "version";
 constexpr uint32_t VERSION = 1U;
 
 } // end of anonymous namespace
@@ -14,7 +14,7 @@ constexpr uint32_t VERSION = 1U;
 //----------------------------------------------------------------------------------------------------------------------
 
 RigidBodyComponent::RigidBodyComponent () noexcept:
-    Component ( "rigid body" )
+    Component ( VERSION, "rigid body" )
 {
     // NOTHING
 }
@@ -22,13 +22,14 @@ RigidBodyComponent::RigidBodyComponent () noexcept:
 RigidBodyComponent::RigidBodyComponent ( SaveState::Container const &info ) noexcept:
     Component ( info )
 {
+    AV_ASSERT ( _version == VERSION )
     // FUCK
 }
 
 void RigidBodyComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );
-    root.Write ( VERSION_KEY, VERSION );
+    root.Write ( TYPE_KEY, TYPE );
     // FUCK
 }
 

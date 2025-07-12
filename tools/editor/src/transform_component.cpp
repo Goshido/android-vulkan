@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <transform_component.hpp>
 
 
@@ -6,7 +7,6 @@ namespace editor {
 
 namespace {
 
-constexpr std::string_view VERSION_KEY = "version";
 constexpr uint32_t VERSION = 1U;
 
 } // end of anonymous namespace
@@ -14,7 +14,7 @@ constexpr uint32_t VERSION = 1U;
 //----------------------------------------------------------------------------------------------------------------------
 
 TransformComponent::TransformComponent () noexcept:
-    Component ( "transform" )
+    Component ( VERSION, "transform" )
 {
     // NOTHING
 }
@@ -22,13 +22,14 @@ TransformComponent::TransformComponent () noexcept:
 TransformComponent::TransformComponent ( SaveState::Container const &info ) noexcept:
     Component ( info )
 {
+    AV_ASSERT ( _version == VERSION )
     // FUCK
 }
 
 void TransformComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );
-    root.Write ( VERSION_KEY, VERSION );
+    root.Write ( TYPE_KEY, TYPE );
     // FUCK
 }
 

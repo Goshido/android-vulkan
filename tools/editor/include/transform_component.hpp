@@ -9,8 +9,8 @@ namespace editor {
 
 class TransformComponent final : public Component
 {
-    private:
-        static Factory<TransformComponent> const    _factory;
+    public:
+        constexpr static std::string_view       TYPE = "Transform";
 
     public:
         explicit TransformComponent () noexcept;

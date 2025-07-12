@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <component.hpp>
 #include <editor.hpp>
 #include <logger.hpp>
 #include <save_state.hpp>
@@ -43,6 +44,7 @@ bool Editor::Run () noexcept
     if ( !InitModules () ) [[unlikely]]
         return false;
 
+    Component::InitSpawners ();
     EventLoop ();
     DestroyModules ();
     return true;

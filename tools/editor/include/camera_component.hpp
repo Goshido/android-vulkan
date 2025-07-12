@@ -9,8 +9,8 @@ namespace editor {
 
 class CameraComponent final : public Component
 {
-    private:
-        static Factory<CameraComponent> const       _factory;
+    public:
+        constexpr static std::string_view       TYPE = "Camera";
 
     public:
         explicit CameraComponent () noexcept;

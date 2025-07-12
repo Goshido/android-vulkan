@@ -863,7 +863,6 @@
     <ClCompile Include="src\append_ui_child_element_event.cpp" />
     <ClCompile Include="src\camera_component.cpp" />
     <ClCompile Include="src\component.cpp" />
-    <ClCompile Include="src\component_registry.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />

@@ -9,8 +9,8 @@ namespace editor {
 
 class StaticMeshComponent final : public Component
 {
-    private:
-        static Factory<StaticMeshComponent> const       _factory;
+    public:
+        constexpr static std::string_view       TYPE = "StaticMesh";
 
     public:
         explicit StaticMeshComponent () noexcept;

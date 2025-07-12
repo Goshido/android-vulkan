@@ -9,8 +9,8 @@ namespace editor {
 
 class SoundEmitterComponent final : public Component
 {
-    private:
-        static Factory<SoundEmitterComponent> const     _factory;
+    public:
+        constexpr static std::string_view       TYPE = "SoundEmitter";
 
     public:
         explicit SoundEmitterComponent () noexcept;

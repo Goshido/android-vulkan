@@ -9,8 +9,8 @@ namespace editor {
 
 class ReflectionComponent final : public Component
 {
-    private:
-        static Factory<ReflectionComponent> const       _factory;
+    public:
+        constexpr static std::string_view       TYPE = "Reflection";
 
     public:
         explicit ReflectionComponent () noexcept;

@@ -9,8 +9,8 @@ namespace editor {
 
 class ScriptComponent final : public Component
 {
-    private:
-        static Factory<ScriptComponent> const       _factory;
+    public:
+        constexpr static std::string_view       TYPE = "Script";
 
     public:
         explicit ScriptComponent () noexcept;

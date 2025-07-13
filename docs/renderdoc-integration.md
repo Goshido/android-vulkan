@@ -53,6 +53,6 @@ Name | Link | Status
 spirv-cross.exe error when editing shaders | [#3353](https://github.com/baldurk/renderdoc/issues/3353) | ✔️ Fixed
 _Vulkan HLSL_ with source edit issue | [#3425](https://github.com/baldurk/renderdoc/issues/3425) | 🛡️ _DXC_ issue
 Can't compile shaders in Edit mode | [#3448](https://github.com/baldurk/renderdoc/issues/3448) | 🛡️ _DXC_ issue
-_RenderDoc 1.39_ crash during _Vulkan_ capture inspection | [#3643](https://github.com/baldurk/renderdoc/issues/3643) | ⚠️ Submitted
+_RenderDoc 1.39_ closing connection during _Vulkan_ capture inspection | [#3643](https://github.com/baldurk/renderdoc/issues/3643) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

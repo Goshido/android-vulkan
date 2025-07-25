@@ -6,7 +6,7 @@
   - [_Requirements_](#requirements)
   - [_Building_](#building)
 - [_Configurations_](#configurations)
-  - [_RenderDoc integration_](#renderdoc-integration)
+  - [_NVIDIA Nsight Graphics integration_](#nsight-integration)
   - [_PIX integration_](#pix-integration)
   - [_ASAN integration_](#asan-integration)
   - [_Debug build_](#debug-build)
@@ -26,6 +26,7 @@
     - C++ core features
     - Windows 11 SDK (10.0.26100.0)
     - Windows Universal C Runtime
+* [_NVIDIA Nsight Graphics 2025.3.0.0 (build 36048000) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2409.23 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
 * [_DirectX Shader Compiler 1.8.2505.10062_](https://github.com/microsoft/DirectXShaderCompiler) `94abfe972ad839185965f670329bcf33cd7bccbd`
 * [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `58be4879c5d3840315f037dca44e92384113f8f9`
@@ -52,31 +53,29 @@ Next step is to compile project via _Visual Studio_ as usual.
 
 ## <a id="configurations">Configurations</a>
 
-### <a id="renderdoc-integration">_RenderDoc_ integration</a>
+### <a id="nsight-integration">_NVIDIA Nsight Graphics_ integration</a>
 
-First step is to select _RenderDoc_ build configuration:
+First step is to select _Nsight_ build configuration:
 
-<img src="./images/editor-renderdoc-config.png">
+<img src="./images/editor-nsight-config.png">
 
 Next step is to [compile _HLSL_ code into _SPIR-V_ with shader sources](./shader-compilation.md##spirv-sources).
 
-Under the hood it's used [_RenderDoc_ compatibility compile options](./renderdoc-integration.md).
+The build artifacts will be located in directory:
 
-The build artefacts will be located in directory:
+`<repo>\tools\editor\bin\Nsight`
 
-`<repo>\tools\editor\bin\RenderDoc`
+Now you will be able to use [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics) for debugging:
 
-Now you will be able to use [_RenderDoc_](https://renderdoc.org/) for debugging:
+<img src="./images/editor-nsight.png">
 
-<img src="./images/editor-renderdoc.png">
-
-**Note:** It's expected that application will crash in case of running without _RenderDoc_. For performance reasons internal implementation does not check that the following debug functions are not `nullptr`.
+**Note:** It's expected that application could crash in case of running outside _NVIDIA Nsight Graphics_. For performance reasons internal implementation does not check that the following debug functions are not `nullptr`.
 
 - `vkCmdBeginDebugUtilsLabelEXT`
 - `vkCmdEndDebugUtilsLabelEXT`
 - `vkSetDebugUtilsObjectNameEXT`
 
-The _RenderDoc Vulkan_ layer provides those functions.
+The _NVIDIA Nsight Graphics Vulkan_ layer provides those functions.
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -86,7 +85,7 @@ First step is to select _Profile_ build configuration:
 
 <img src="./images/editor-profile-config.png">
 
-The build artefacts will be located in directory:
+The build artifacts will be located in directory:
 
 `<repo>\tools\editor\bin\Profile`
 
@@ -102,7 +101,7 @@ First step is to select _Release + ASAN_ build configuration:
 
 <img src="./images/editor-asan-config.png">
 
-The build artefacts will be located in directory:
+The build artifacts will be located in directory:
 
 `<repo>\tools\editor\bin\Release + ASAN`
 
@@ -116,7 +115,7 @@ First step is to select _Debug_ build configuration:
 
 <img src="./images/editor-debug-config.png">
 
-The build artefacts will be located in directory:
+The build artifacts will be located in directory:
 
 `<repo>\tools\editor\bin\Debug`
 
@@ -130,7 +129,7 @@ First step is to select _Release_ build configuration:
 
 <img src="./images/editor-release-config.png">
 
-The build artefacts will be located in directory:
+The build artifacts will be located in directory:
 
 `<repo>\tools\editor\bin\Release`
 

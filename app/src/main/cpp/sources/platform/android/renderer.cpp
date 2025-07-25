@@ -9,6 +9,16 @@
 
 namespace android_vulkan {
 
+namespace {
+
+constexpr uint32_t MAJOR = 1U;
+constexpr uint32_t MINOR = 1U;
+constexpr uint32_t PATCH = 0U;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 [[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     AV_TRACE ( "Vulkan memory snapshot" )
@@ -51,7 +61,9 @@ bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/ ) noex
             if ( ( queueFamilyFlags & target ) != target )
                 continue;
 
-            _physicalDevice = device.first;
+            VkPhysicalDevice physicalDevice = device.first;
+            _physicalDevice = physicalDevice;
+            vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &_physicalDeviceMemoryProperties );
             _queueFamilyIndex = static_cast<uint32_t> ( i );
             return true;
         }
@@ -91,7 +103,7 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
         VK_KHR_SURFACE_EXTENSION_NAME
     };
 
-    return { extensions, std::size ( extensions ) };
+    return extensions;
 }
 
 std::span<size_t const> Renderer::GetRequiredFeatures () noexcept
@@ -101,7 +113,7 @@ std::span<size_t const> Renderer::GetRequiredFeatures () noexcept
         offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
     };
 
-    return { features, std::size ( features ) };
+    return features;
 }
 
 bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept
@@ -140,7 +152,116 @@ std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFor
         { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
     };
 
-    return { formats, std::size ( formats ) };
+    return formats;
+}
+
+VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcept
+{
+    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
+        .pNext = nullptr,
+        .separateDepthStencilLayouts = VK_TRUE
+    };
+
+    constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
+        .multiview = VK_TRUE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE
+    };
+
+    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
+        .shaderFloat16 = VK_TRUE,
+        .shaderInt8 = VK_FALSE
+    };
+
+    constexpr static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
+        .pNext = const_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*> ( &float16Int8Features ),
+        .scalarBlockLayout = VK_TRUE
+    };
+
+    return
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = const_cast<VkPhysicalDeviceScalarBlockLayoutFeaturesEXT*> ( &scalarBlockFeatures ),
+
+        .features
+        {
+            .robustBufferAccess = VK_FALSE,
+            .fullDrawIndexUint32 = VK_TRUE,
+            .imageCubeArray = VK_FALSE,
+            .independentBlend = VK_FALSE,
+            .geometryShader = VK_FALSE,
+            .tessellationShader = VK_FALSE,
+            .sampleRateShading = VK_FALSE,
+            .dualSrcBlend = VK_FALSE,
+            .logicOp = VK_FALSE,
+            .multiDrawIndirect = VK_FALSE,
+            .drawIndirectFirstInstance = VK_FALSE,
+            .depthClamp = VK_FALSE,
+            .depthBiasClamp = VK_FALSE,
+            .fillModeNonSolid = VK_FALSE,
+            .depthBounds = VK_FALSE,
+            .wideLines = VK_FALSE,
+            .largePoints = VK_FALSE,
+            .alphaToOne = VK_FALSE,
+            .multiViewport = VK_FALSE,
+            .samplerAnisotropy = VK_FALSE,
+            .textureCompressionETC2 = VK_FALSE,
+            .textureCompressionASTC_LDR = VK_TRUE,
+            .textureCompressionBC = VK_FALSE,
+            .occlusionQueryPrecise = VK_FALSE,
+            .pipelineStatisticsQuery = VK_FALSE,
+            .vertexPipelineStoresAndAtomics = VK_FALSE,
+            .fragmentStoresAndAtomics = VK_FALSE,
+            .shaderTessellationAndGeometryPointSize = VK_FALSE,
+            .shaderImageGatherExtended = VK_FALSE,
+            .shaderStorageImageExtendedFormats = VK_FALSE,
+            .shaderStorageImageMultisample = VK_FALSE,
+            .shaderStorageImageReadWithoutFormat = VK_FALSE,
+            .shaderStorageImageWriteWithoutFormat = VK_FALSE,
+            .shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
+            .shaderSampledImageArrayDynamicIndexing = VK_FALSE,
+            .shaderStorageBufferArrayDynamicIndexing = VK_FALSE,
+            .shaderStorageImageArrayDynamicIndexing = VK_FALSE,
+            .shaderClipDistance = VK_FALSE,
+            .shaderCullDistance = VK_FALSE,
+            .shaderFloat64 = VK_FALSE,
+            .shaderInt64 = VK_FALSE,
+            .shaderInt16 = VK_TRUE,
+            .shaderResourceResidency = VK_FALSE,
+            .shaderResourceMinLod = VK_FALSE,
+            .sparseBinding = VK_FALSE,
+            .sparseResidencyBuffer = VK_FALSE,
+            .sparseResidencyImage2D = VK_FALSE,
+            .sparseResidencyImage3D = VK_FALSE,
+            .sparseResidency2Samples = VK_FALSE,
+            .sparseResidency4Samples = VK_FALSE,
+            .sparseResidency8Samples = VK_FALSE,
+            .sparseResidency16Samples = VK_FALSE,
+            .sparseResidencyAliased = VK_FALSE,
+            .variableMultisampleRate = VK_FALSE,
+            .inheritedQueries = VK_FALSE
+        }
+    };
+}
+
+Renderer::Version Renderer::GetRequiredVulkanVersion () noexcept
+{
+    return
+    {
+        ._major = MAJOR,
+        ._minor = MINOR,
+        ._patch = PATCH
+    };
 }
 
 } // namespace android_vulkan

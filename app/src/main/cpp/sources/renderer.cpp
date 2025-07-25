@@ -18,14 +18,6 @@ constexpr char const INDENT_1[] = "    ";
 constexpr char const INDENT_2[] = "        ";
 constexpr char const INDENT_3[] = "            ";
 
-constexpr uint32_t MAJOR = 1U;
-constexpr uint32_t MINOR = 1U;
-constexpr uint32_t PATCH = 131U;
-
-// Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
-// So suppress this third-party mess via "NOLINT" control comment.
-constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH ); // NOLINT
-
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
 constexpr auto ANTISPAM_DELAY = std::chrono::milliseconds ( 1U );
@@ -1364,12 +1356,11 @@ bool Renderer::DeployDebugFeatures () noexcept
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" ) )
     );
 
-    AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
-
     vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" ) )
     );
 
+    AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
     return CheckVkResult (
@@ -1386,11 +1377,10 @@ bool Renderer::DeployDebugFeatures () noexcept
 
 void Renderer::DestroyDebugFeatures () noexcept
 {
-    if ( _debugUtilsMessenger == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDebugUtilsMessengerEXT ( _instance, _debugUtilsMessenger, nullptr );
-    _debugUtilsMessenger = VK_NULL_HANDLE;
+    if ( _debugUtilsMessenger != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyDebugUtilsMessengerEXT ( _instance, std::exchange ( _debugUtilsMessenger, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 #endif // AV_ENABLE_VVL
@@ -1399,12 +1389,15 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
 {
     constexpr float priorities = 1.0F;
 
-    VkDeviceQueueCreateInfo deviceQueueCreateInfo;
-    deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    deviceQueueCreateInfo.pNext = nullptr;
-    deviceQueueCreateInfo.flags = 0U;
-    deviceQueueCreateInfo.queueCount = 1U;
-    deviceQueueCreateInfo.pQueuePriorities = &priorities;
+    VkDeviceQueueCreateInfo deviceQueueCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = std::numeric_limits<uint32_t>::max (),
+        .queueCount = 1U,
+        .pQueuePriorities = &priorities
+    };
 
     if ( !SelectTargetHardware ( userGPU ) ) [[unlikely]]
         return false;
@@ -1423,52 +1416,20 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
 
-    if ( !CheckRequiredDeviceExtensions ( caps._extensions ) ) [[unlikely]]
+    bool result = CheckRequiredDeviceExtensions ( caps._extensions ) &&
+        CheckRequiredFeatures ( _physicalDevice, GetRequiredFeatures () ) &&
+        CheckRequiredFormats ();
+
+    if ( !result ) [[unlikely]]
         return false;
 
-    if ( !CheckRequiredFeatures ( _physicalDevice, GetRequiredFeatures () ) ) [[unlikely]]
-        return false;
-
-    if ( !CheckRequiredFormats () ) [[unlikely]]
-        return false;
-
-    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
-        .pNext = nullptr,
-        .separateDepthStencilLayouts = VK_TRUE
-    };
-
-    constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
-        .multiview = VK_TRUE,
-        .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
-    };
-
-    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
-        .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_FALSE
-    };
-
-    constexpr static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-        .pNext = const_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*> ( &float16Int8Features ),
-        .scalarBlockLayout = VK_TRUE
-    };
-
+    VkPhysicalDeviceFeatures2 const physicalDeviceFeatures = GetRequiredPhysicalDeviceFeatures ();
     std::span<char const* const> const extensions = GetDeviceExtensions ();
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &scalarBlockFeatures,
+        .pNext = &physicalDeviceFeatures,
         .flags = 0U,
         .queueCreateInfoCount = 1U,
         .pQueueCreateInfos = &deviceQueueCreateInfo,
@@ -1476,10 +1437,10 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = static_cast<uint32_t> ( extensions.size () ),
         .ppEnabledExtensionNames = extensions.data (),
-        .pEnabledFeatures = &caps._features
+        .pEnabledFeatures = nullptr
     };
 
-    bool const result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
+    result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
         "Renderer::DeployDevice",
         "Can't create device"
     );
@@ -1487,12 +1448,12 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     InitVulkanDebugUtils ( _instance );
     AV_SET_VULKAN_OBJECT_NAME ( _device, _device, VK_OBJECT_TYPE_DEVICE, "Main device" )
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
         return false;
@@ -1527,16 +1488,19 @@ bool Renderer::DeployInstance () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    //                                                                            major      minor      patch
-    constexpr uint32_t const targetVersion = TARGET_VULKAN_VERSION & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+    Version const v = GetRequiredVulkanVersion ();
+    uint32_t const version = VK_MAKE_VERSION ( v._major, v._minor, v._patch );
 
-    if ( targetVersion > supportedVersion )
+    //                                                    major      minor      patch
+    uint32_t const targetVersion = version & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+
+    if ( targetVersion > supportedVersion ) [[unlikely]]
     {
         LogError ( "Renderer::DeployInstance - Requested Vulkan version %u.%u.%u is not supported by hardware "
             "which is capable of only %u.%u.xxx.",
-            MAJOR,
-            MINOR,
-            PATCH,
+            v._major,
+            v._minor,
+            v._patch,
             ( supportedVersion & UINT32_C ( 0b1111111111'0000000000'000000000000 ) ) >> 22U,
             ( supportedVersion & UINT32_C ( 0b0000000000'1111111111'000000000000 ) ) >> 12U
         );
@@ -1544,7 +1508,7 @@ bool Renderer::DeployInstance () noexcept
         return false;
     }
 
-    constexpr VkApplicationInfo const applicationInfo
+    VkApplicationInfo const applicationInfo
     {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext = nullptr,
@@ -1552,7 +1516,7 @@ bool Renderer::DeployInstance () noexcept
         .applicationVersion = 1U,
         .pEngineName = ENGINE_NAME,
         .engineVersion = 1U,
-        .apiVersion = TARGET_VULKAN_VERSION
+        .apiVersion = version
     };
 
     VkInstanceCreateInfo instanceCreateInfo {};
@@ -2260,25 +2224,26 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
 void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept
 {
-    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &_physicalDeviceMemoryProperties );
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &memProps );
 
     LogInfo ( ">>> Memory properties:" );
-    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", _physicalDeviceMemoryProperties.memoryTypeCount );
+    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", memProps.memoryTypeCount );
 
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    for ( uint32_t i = 0U; i < memProps.memoryTypeCount; ++i )
     {
-        VkMemoryType const &type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+        VkMemoryType const &type = memProps.memoryTypes[ i ];
         LogInfo ( "%smemoryType: #%u", INDENT_2, i );
 
         PrintVkFlagsProp ( INDENT_3, "memoryTypes", type.propertyFlags, g_vkMemoryPropertyFlagBitsMapper );
         PrintUINT32Prop ( INDENT_3, "heapIndex", type.heapIndex );
     }
 
-    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", _physicalDeviceMemoryProperties.memoryHeapCount );
+    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", memProps.memoryHeapCount );
 
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryHeapCount; ++i )
+    for ( uint32_t i = 0U; i < memProps.memoryHeapCount; ++i )
     {
-        VkMemoryHeap const &heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
+        VkMemoryHeap const &heap = memProps.memoryHeaps[ i ];
 
         LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
         PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );

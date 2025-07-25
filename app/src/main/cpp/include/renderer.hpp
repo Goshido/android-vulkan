@@ -21,104 +21,111 @@ namespace android_vulkan {
 
 VK_DEFINE_HANDLE ( WindowHandle )
 
-struct VulkanPhysicalDeviceInfo final
-{
-    std::vector<std::string>                        _extensions {};
-
-    VkPhysicalDeviceFeatures                        _features {};
-    std::string                                     _deviceName {};
-    VkPhysicalDeviceType                            _deviceType = VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM;
-
-    std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo {};
-    VkSurfaceCapabilitiesKHR                        _surfaceCapabilities {};
-
-    explicit VulkanPhysicalDeviceInfo () = default;
-
-    VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
-    VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
-
-    VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo && ) = delete;
-    VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo && ) = delete;
-
-    ~VulkanPhysicalDeviceInfo () = default;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 
 class Renderer final
 {
     private:
+        struct Version final
+        {
+            uint32_t                                        _major = 1U;
+            uint32_t                                        _minor = 1U;
+            uint32_t                                        _patch = 0U;
+        };
+
+        struct VulkanPhysicalDeviceInfo final
+        {
+            std::vector<std::string>                        _extensions {};
+
+            VkPhysicalDeviceFeatures                        _features {};
+            std::string                                     _deviceName {};
+            VkPhysicalDeviceType                            _deviceType = VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM;
+
+            std::vector<std::pair<VkFlags, uint32_t>>       _queueFamilyInfo {};
+            VkSurfaceCapabilitiesKHR                        _surfaceCapabilities {};
+
+            explicit VulkanPhysicalDeviceInfo () = default;
+
+            VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo const & ) = delete;
+            VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo const & ) = delete;
+
+            VulkanPhysicalDeviceInfo ( VulkanPhysicalDeviceInfo && ) = delete;
+            VulkanPhysicalDeviceInfo &operator = ( VulkanPhysicalDeviceInfo && ) = delete;
+
+            ~VulkanPhysicalDeviceInfo () = default;
+        };
+
         using PhysicalDevices = std::map<VkPhysicalDevice, VulkanPhysicalDeviceInfo>;
 
     private:
-        VkFormat                                        _depthImageFormat = VK_FORMAT_UNDEFINED;
-        VkFormat                                        _depthStencilImageFormat = VK_FORMAT_UNDEFINED;
+        VkFormat                                            _depthImageFormat = VK_FORMAT_UNDEFINED;
+        VkFormat                                            _depthStencilImageFormat = VK_FORMAT_UNDEFINED;
 
-        VkDevice                                        _device = VK_NULL_HANDLE;
-        std::string_view                                _deviceName {};
-        float                                           _dpi = 96.0F;
-        VkInstance                                      _instance = VK_NULL_HANDLE;
+        VkDevice                                            _device = VK_NULL_HANDLE;
+        std::string_view                                    _deviceName {};
+        float                                               _dpi = 96.0F;
+        VkInstance                                          _instance = VK_NULL_HANDLE;
 
         // Minimum supported value from Vulkan spec 1.3.227
-        VkExtent3D                                      _maxComputeDispatchSize
+        VkExtent3D                                          _maxComputeDispatchSize
         {
             .width = 65535U,
             .height = 65535U,
             .depth = 65535U
         };
 
-        size_t                                          _maxUniformBufferRange = 0U;
-        size_t                                          _minStorageBufferOffsetAlignment = 0U;
-        size_t                                          _minUniformBufferOffsetAlignment = 0U;
-        size_t                                          _nonCoherentAtomSize = 0U;
+        size_t                                              _maxUniformBufferRange = 0U;
+        size_t                                              _minStorageBufferOffsetAlignment = 0U;
+        size_t                                              _minUniformBufferOffsetAlignment = 0U;
+        size_t                                              _nonCoherentAtomSize = 0U;
 
-        MemoryAllocator                                 _memoryAllocator {};
+        MemoryAllocator                                     _memoryAllocator {};
 
-        VkPhysicalDevice                                _physicalDevice = VK_NULL_HANDLE;
+        VkPhysicalDevice                                    _physicalDevice = VK_NULL_HANDLE;
 
-        VkQueue                                         _queue = VK_NULL_HANDLE;
-        uint32_t                                        _queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        VkQueue                                             _queue = VK_NULL_HANDLE;
+        uint32_t                                            _queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-        VkSurfaceKHR                                    _surface = VK_NULL_HANDLE;
-        VkFormat                                        _surfaceFormat = VK_FORMAT_UNDEFINED;
+        VkSurfaceKHR                                        _surface = VK_NULL_HANDLE;
+        VkFormat                                            _surfaceFormat = VK_FORMAT_UNDEFINED;
 
-        VkExtent2D                                      _surfaceSize
+        VkExtent2D                                          _surfaceSize
         {
             .width = 0U,
             .height = 0U
         };
 
-        VkSurfaceTransformFlagBitsKHR                   _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-        VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
-        VkSwapchainKHR                                  _oldSwapchain = VK_NULL_HANDLE;
+        VkSurfaceTransformFlagBitsKHR                       _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+        VkSwapchainKHR                                      _swapchain = VK_NULL_HANDLE;
+        VkSwapchainKHR                                      _oldSwapchain = VK_NULL_HANDLE;
 
 #ifdef AV_ENABLE_VVL
 
-        PFN_vkCreateDebugUtilsMessengerEXT              vkCreateDebugUtilsMessengerEXT = nullptr;
-        PFN_vkDestroyDebugUtilsMessengerEXT             vkDestroyDebugUtilsMessengerEXT = nullptr;
+        PFN_vkCreateDebugUtilsMessengerEXT                  vkCreateDebugUtilsMessengerEXT = nullptr;
+        PFN_vkDestroyDebugUtilsMessengerEXT                 vkDestroyDebugUtilsMessengerEXT = nullptr;
 
-        VkDebugUtilsMessengerEXT                        _debugUtilsMessenger = VK_NULL_HANDLE;
+        VkDebugUtilsMessengerEXT                            _debugUtilsMessenger = VK_NULL_HANDLE;
 
 #endif // AV_ENABLE_VVL
 
-        VkExtent2D                                      _viewportResolution
+        VkExtent2D                                          _viewportResolution
         {
             .width = 0U,
             .height = 0U
         };
 
-        std::vector<VkPhysicalDeviceGroupProperties>    _physicalDeviceGroups {};
-        PhysicalDevices                                 _physicalDeviceInfo {};
-        VkPhysicalDeviceMemoryProperties                _physicalDeviceMemoryProperties {};
+        std::vector<VkPhysicalDeviceGroupProperties>        _physicalDeviceGroups {};
+        PhysicalDevices                                     _physicalDeviceInfo {};
+        VkPhysicalDeviceMemoryProperties                    _physicalDeviceMemoryProperties {};
 
-        std::vector<VkSurfaceFormatKHR>                 _surfaceFormats {};
+        std::vector<VkSurfaceFormatKHR>                     _surfaceFormats {};
 
-        std::vector<VkImage>                            _swapchainImages {};
-        std::vector<VkImageView>                        _swapchainImageViews {};
+        std::vector<VkImage>                                _swapchainImages {};
+        std::vector<VkImageView>                            _swapchainImageViews {};
 
-        GXMat4                                          _presentationEngineTransform {};
-        bool                                            _vSync = true;
-        VulkanLoader                                    _vulkanLoader {};
+        GXMat4                                              _presentationEngineTransform {};
+        bool                                                _vSync = true;
+        VulkanLoader                                        _vulkanLoader {};
 
     public:
         explicit Renderer () = default;
@@ -275,6 +282,8 @@ class Renderer final
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
         [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
+        [[nodiscard]] static VkPhysicalDeviceFeatures2 GetRequiredPhysicalDeviceFeatures () noexcept;
+        [[nodiscard]] static Version GetRequiredVulkanVersion () noexcept;
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;

@@ -89,6 +89,7 @@
     - ❌ Editor page
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
+- ❌ Update NVIDIA Nsight Graphics version in documentation
 - ❌ Set starting project as PBR
 - ❌ Set VSYNC on
 - ❌ Remove old binaries

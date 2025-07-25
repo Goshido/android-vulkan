@@ -57,6 +57,7 @@ if ( $embedSources )
 {
     $FLAGS +=
         "-Od",
+        "-Zi",
         "-fspv-debug=vulkan-with-source"
 
     return

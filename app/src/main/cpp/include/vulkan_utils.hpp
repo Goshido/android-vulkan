@@ -3,12 +3,12 @@
 
 
 // Sanity check
-#if defined ( AV_ENABLE_VVL ) && defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) && ( defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT ) )
 
-#error AV_ENABLE_VVL and AV_ENABLE_RENDERDOC \
+#error AV_ENABLE_VVL and ( AV_ENABLE_RENDERDOC or AV_ENABLE_NSIGHT ) \
 macro are mutually exclusive. Please check build configuration in the CMakeLists.txt file.
 
-#endif // AV_ENABLE_VVL && AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL && ( AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT )
 
 #include <GXCommon/GXWarning.hpp>
 
@@ -23,7 +23,7 @@ GX_RESTORE_WARNING_STATE
 
 #define AV_VK_FLAG(x) ( static_cast<uint32_t> ( x ) )
 
-#if !defined ( AV_ENABLE_VVL ) && !defined ( AV_ENABLE_RENDERDOC )
+#if !defined ( AV_ENABLE_VVL ) && !defined ( AV_ENABLE_RENDERDOC ) && !defined ( AV_ENABLE_NSIGHT )
 
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)
 #define AV_VULKAN_GROUP(commandBuffer, ...)
@@ -81,7 +81,7 @@ class VulkanGroup final
 
 } // namespace android_vulkan
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // !AV_ENABLE_VVL && !AV_ENABLE_RENDERDOC && !AV_ENABLE_NSIGHT
 
 
 #endif // VULKAN_UTILS_HPP

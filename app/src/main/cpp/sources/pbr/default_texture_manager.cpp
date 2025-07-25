@@ -62,7 +62,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
     constexpr size_t paramIdx = 4U;
     constexpr size_t transparentIdx = 5U;
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     VkDevice device = renderer.GetDevice ();
 
@@ -102,7 +102,7 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
         "Default transparent image"
     )
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     auto const textureLoader = [ &renderer ] ( Texture2DRef &texture,
         uint8_t const* data,

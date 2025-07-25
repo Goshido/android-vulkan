@@ -17,6 +17,9 @@
 /app/src/main/hlsl/disassm/blob.spvasm
 /app/src/main/hlsl/validation/blob.spv
 
+# NVIDIA Nsight Graphics config
+/app/src/main/assets/imgui.ini
+
 # Tools
 /tools/html-validator/.vscode/
 /tools/html-validator/build/

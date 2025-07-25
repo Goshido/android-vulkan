@@ -282,14 +282,14 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
         AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "UI #%zu", i )
     }
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     VkCommandBuffer* const buffers = _commandBuffers.data ();
 
     for ( size_t i = current; i < size; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, buffers[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "UI #%zu", i )
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     return true;
 }
@@ -741,12 +741,12 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     for ( size_t i = 0U; i < count; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, ds[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI image #%zu", i )
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     _transparent = _descriptorSets.back ();
     _descriptorSets.pop_back ();

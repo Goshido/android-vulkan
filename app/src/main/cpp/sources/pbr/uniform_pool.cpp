@@ -142,7 +142,7 @@ bool UniformPool::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     for ( size_t i = 0U; i < setCount; ++i )
     {
@@ -155,7 +155,7 @@ bool UniformPool::Init ( android_vulkan::Renderer &renderer,
         )
     }
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     // Initialize all immutable constant fields.
 

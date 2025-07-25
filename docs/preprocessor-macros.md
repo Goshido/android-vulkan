@@ -7,6 +7,7 @@ _android-vulkan_ project is using the following preprocessor macros for compilat
 * [`AV_ENABLE_TRACE`](#macro-av-enable-trace)
 * [`AV_NATIVE_MODE_PORTRAIT` or `AV_NATIVE_MODE_LANDSCAPE`](#macro-av-native-mode)
 * [`AV_DEBUG`](#macro-av-debug)
+* [`AV_ENABLE_NSIGHT`](#macro-av-enable-nsight)
 * [`AV_ENABLE_RENDERDOC`](#macro-av-enable-renderdoc)
 * [`AV_ENABLE_VVL`](#macro-av-enable-vvl)
 * [`AV_STRICT_MODE`](#macro-av-strict-mode)
@@ -85,9 +86,13 @@ This macro also reports about:
 
 Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
+## <a id="macro-av-enable-nsight">`AV_ENABLE_NSIGHT`</a>
+
+This macro enables integration with [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics). Note that macro is not compatible with [`AV_ENABLE_VVL`](#macro-av-enable-vvl) and [`AV_ENABLE_RENDERDOC`](#macro-av-enable-renderdoc) macro.
+
 ## <a id="macro-av-enable-renderdoc">`AV_ENABLE_RENDERDOC`</a>
 
-This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note that macro is not compatible with [`AV_ENABLE_VVL`](#macro-av-enable-vvl) macro.
+This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note that macro is not compatible with [`AV_ENABLE_VVL`](#macro-av-enable-vvl) and [`AV_ENABLE_NSIGHT`](#macro-av-enable-nsight) macro.
 
 **Note:** it's expected that application could work only from [_RenderDoc_](https://renderdoc.org/). Running application outside [_RenderDoc_](https://renderdoc.org/) could produce crash. For more information look [_RenderDoc_ integration](./renderdoc-integration.md).
 
@@ -95,7 +100,7 @@ This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note 
 
 This macro enables [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). This introduces additional overhead in terms of execution. Macro is useful in the develop time. Also validation layer can be disabled if current layer implementation contains unavoidable bugs and interferes with some features of the framework.
 
-Note that macro is not compatible with [`AV_ENABLE_RENDERDOC`](#macro-av-enable-vvl) macro.
+Note that macro is not compatible with [`AV_ENABLE_RENDERDOC`](#macro-av-enable-vvl) and [`AV_ENABLE_NSIGHT`](#macro-av-enable-nsight) macro.
 
 ## <a id="macro-av-strict-mode">`AV_STRICT_MODE`</a>
 

@@ -25,14 +25,15 @@ VK_DEFINE_HANDLE ( WindowHandle )
 
 class Renderer final
 {
-    private:
-        struct Version final
+    public:
+        struct VulkanVersion final
         {
             uint32_t                                        _major = 1U;
             uint32_t                                        _minor = 1U;
             uint32_t                                        _patch = 0U;
         };
 
+    private:
         struct VulkanPhysicalDeviceInfo final
         {
             std::vector<std::string>                        _extensions {};
@@ -74,6 +75,7 @@ class Renderer final
             .depth = 65535U
         };
 
+        float                                               _maxSamplerAnisotropy = 1.0F;
         size_t                                              _maxUniformBufferRange = 0U;
         size_t                                              _minStorageBufferOffsetAlignment = 0U;
         size_t                                              _minUniformBufferOffsetAlignment = 0U;
@@ -155,6 +157,7 @@ class Renderer final
         [[nodiscard]] std::string_view GetDeviceName () const noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
+        [[nodiscard]] float GetMaxSamplerAnisotropy () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
         [[nodiscard]] size_t GetMinStorageBufferOffsetAlignment () const noexcept;
         [[nodiscard]] size_t GetMinUniformBufferOffsetAlignment () const noexcept;
@@ -210,6 +213,10 @@ class Renderer final
         // See docs/vulkan-memory-view.md
         [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
+        [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
+            char const* extension
+        ) noexcept;
+
         // Method returns true if "result" equals VK_SUCCESS. Otherwise method returns false.
         [[nodiscard]] static bool CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept;
 
@@ -228,15 +235,7 @@ class Renderer final
 #endif // AV_ENABLE_VVL
 
     private:
-        [[nodiscard]] bool CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept;
-        [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept;
-        [[nodiscard]] bool CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept;
-
-        // "features" is an array of offsets inside VkPhysicalDeviceFeatures structure.
-        [[nodiscard]] bool CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
-            std::span<size_t const> const &features
-        ) noexcept;
-
+        [[nodiscard]] bool CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept;
         [[nodiscard]] bool CheckRequiredFormats () noexcept;
 
 #ifdef AV_ENABLE_VVL
@@ -274,16 +273,12 @@ class Renderer final
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept;
 
-        [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
-            char const* extension
-        ) noexcept;
-
+        [[nodiscard]] static bool CheckFeature ( VkBool32 feature, char const* name ) noexcept;
         [[nodiscard]] static std::span<char const* const> GetDeviceExtensions () noexcept;
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
-        [[nodiscard]] static std::span<size_t const> GetRequiredFeatures () noexcept;
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
         [[nodiscard]] static VkPhysicalDeviceFeatures2 GetRequiredPhysicalDeviceFeatures () noexcept;
-        [[nodiscard]] static Version GetRequiredVulkanVersion () noexcept;
+        [[nodiscard]] static VulkanVersion GetRequiredVulkanVersion () noexcept;
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;

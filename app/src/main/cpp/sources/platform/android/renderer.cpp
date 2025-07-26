@@ -11,15 +11,89 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr uint32_t MAJOR = 1U;
-constexpr uint32_t MINOR = 1U;
-constexpr uint32_t PATCH = 0U;
+constexpr Renderer::VulkanVersion VERSION
+{
+    ._major = 1U,
+    ._minor = 1U,
+    ._patch = 0U,
+};
+
+constexpr char const INDENT_2[] = "        ";
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[nodiscard]] bool CheckExtensionScalarBlockLayout ( VkPhysicalDevice physicalDevice,
+    std::set<std::string> const &allExtensions
+) noexcept
+{
+    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
+        return false;
+
+    VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
+        .pNext = nullptr,
+        .scalarBlockLayout = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+
+    if ( hardwareSupport.scalarBlockLayout ) [[likely]]
+    {
+        LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: scalarBlockLayout", INDENT_2 );
+    return false;
+}
+
+[[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( VkPhysicalDevice physicalDevice,
+    std::set<std::string> const &allExtensions
+) noexcept
+{
+    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) ) [[unlikely]]
+        return false;
+
+    VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
+        .pNext = nullptr,
+        .shaderFloat16 = VK_FALSE,
+        .shaderInt8 = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+
+    if ( hardwareSupport.shaderFloat16 ) [[likely]]
+    {
+        LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
+    return false;
+}
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
+void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     AV_TRACE ( "Vulkan memory snapshot" )
     _memoryAllocator.MakeSnapshot ( Core::GetCacheDirectory ().c_str () );
@@ -84,7 +158,7 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    return { extensions, std::size ( extensions ) };
+    return extensions;
 }
 
 std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
@@ -106,30 +180,48 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
     return extensions;
 }
 
-std::span<size_t const> Renderer::GetRequiredFeatures () noexcept
+bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-    constexpr static size_t const features[] =
+    LogInfo ( ">>> Checking required device features..." );
+
+    VkPhysicalDeviceVulkan11Features features11
     {
-        offsetof ( VkPhysicalDeviceFeatures, textureCompressionASTC_LDR )
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = nullptr,
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_FALSE,
+        .multiview = VK_FALSE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE,
+        .variablePointersStorageBuffer = VK_FALSE,
+        .variablePointers = VK_FALSE,
+        .protectedMemory = VK_FALSE,
+        .samplerYcbcrConversion = VK_FALSE,
+        .shaderDrawParameters = VK_FALSE
     };
 
-    return features;
-}
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &features11,
+        .features {}
+    };
 
-bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept
-{
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
-    LogInfo ( ">>> Checking required device extensions..." );
-
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) );
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept
@@ -164,19 +256,10 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .separateDepthStencilLayouts = VK_TRUE
     };
 
-    constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
-        .multiview = VK_TRUE,
-        .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
-    };
-
     constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
+        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE
     };
@@ -188,10 +271,28 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .scalarBlockLayout = VK_TRUE
     };
 
+    constexpr static VkPhysicalDeviceVulkan11Features features11
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceScalarBlockLayoutFeaturesEXT*> ( &scalarBlockFeatures ),
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_FALSE,
+        .multiview = VK_TRUE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE,
+        .variablePointersStorageBuffer = VK_FALSE,
+        .variablePointers = VK_FALSE,
+        .protectedMemory = VK_FALSE,
+        .samplerYcbcrConversion = VK_FALSE,
+        .shaderDrawParameters = VK_FALSE
+    };
+
     return
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = const_cast<VkPhysicalDeviceScalarBlockLayoutFeaturesEXT*> ( &scalarBlockFeatures ),
+        .pNext = const_cast<VkPhysicalDeviceVulkan11Features*> ( &features11 ),
 
         .features
         {
@@ -254,14 +355,9 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
     };
 }
 
-Renderer::Version Renderer::GetRequiredVulkanVersion () noexcept
+Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
 {
-    return
-    {
-        ._major = MAJOR,
-        ._minor = MINOR,
-        ._patch = PATCH
-    };
+    return VERSION;
 }
 
 } // namespace android_vulkan

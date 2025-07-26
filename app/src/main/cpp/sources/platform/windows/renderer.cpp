@@ -13,15 +13,18 @@ namespace {
 
 constexpr char const SNAPSHOT_DIRECTORY[] = R"__(%APPDATA%\Goshido Inc\Editor\Vulkan Memory)__";
 
-constexpr uint32_t MAJOR = 1U;
-constexpr uint32_t MINOR = 4U;
-constexpr uint32_t PATCH = 0U;
+constexpr Renderer::VulkanVersion VERSION
+{
+    ._major = 1U,
+    ._minor = 4U,
+    ._patch = 0U,
+};
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] void Renderer::MakeVulkanMemorySnapshot () noexcept
+void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     AV_TRACE ( "Vulkan memory snapshot" )
     std::filesystem::path const directory = editor::OSUtils::ResolvePath ( SNAPSHOT_DIRECTORY );
@@ -190,27 +193,118 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
     return extensions;
 }
 
-std::span<size_t const> Renderer::GetRequiredFeatures () noexcept
+bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-     constexpr static size_t const features[] =
+    LogInfo ( ">>> Checking required device features..." );
+
+    VkPhysicalDeviceVulkan11Features features11
     {
-        offsetof ( VkPhysicalDeviceFeatures, textureCompressionBC )
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = nullptr,
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_FALSE,
+        .multiview = VK_FALSE,
+        .multiviewGeometryShader = VK_FALSE,
+        .multiviewTessellationShader = VK_FALSE,
+        .variablePointersStorageBuffer = VK_FALSE,
+        .variablePointers = VK_FALSE,
+        .protectedMemory = VK_FALSE,
+        .samplerYcbcrConversion = VK_FALSE,
+        .shaderDrawParameters = VK_FALSE
     };
 
-    return { features, std::size ( features ) };
-}
+    VkPhysicalDeviceVulkan12Features features12
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceVulkan11Features*> ( &features11 ),
+        .samplerMirrorClampToEdge = VK_FALSE,
+        .drawIndirectCount = VK_FALSE,
+        .storageBuffer8BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer8BitAccess = VK_FALSE,
+        .storagePushConstant8 = VK_FALSE,
+        .shaderBufferInt64Atomics = VK_FALSE,
+        .shaderSharedInt64Atomics = VK_FALSE,
+        .shaderFloat16 = VK_FALSE,
+        .shaderInt8 = VK_FALSE,
+        .descriptorIndexing = VK_FALSE,
+        .shaderInputAttachmentArrayDynamicIndexing = VK_FALSE,
+        .shaderUniformTexelBufferArrayDynamicIndexing = VK_FALSE,
+        .shaderStorageTexelBufferArrayDynamicIndexing = VK_FALSE,
+        .shaderUniformBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderSampledImageArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageImageArrayNonUniformIndexing = VK_FALSE,
+        .shaderInputAttachmentArrayNonUniformIndexing = VK_FALSE,
+        .shaderUniformTexelBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageTexelBufferArrayNonUniformIndexing = VK_FALSE,
+        .descriptorBindingUniformBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingSampledImageUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageImageUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingUniformTexelBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageTexelBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingUpdateUnusedWhilePending = VK_FALSE,
+        .descriptorBindingPartiallyBound = VK_FALSE,
+        .descriptorBindingVariableDescriptorCount = VK_FALSE,
+        .runtimeDescriptorArray = VK_FALSE,
+        .samplerFilterMinmax = VK_FALSE,
+        .scalarBlockLayout = VK_FALSE,
+        .imagelessFramebuffer = VK_FALSE,
+        .uniformBufferStandardLayout = VK_FALSE,
+        .shaderSubgroupExtendedTypes = VK_FALSE,
+        .separateDepthStencilLayouts = VK_FALSE,
+        .hostQueryReset = VK_FALSE,
+        .timelineSemaphore = VK_FALSE,
+        .bufferDeviceAddress = VK_FALSE,
+        .bufferDeviceAddressCaptureReplay = VK_FALSE,
+        .bufferDeviceAddressMultiDevice = VK_FALSE,
+        .vulkanMemoryModel = VK_FALSE,
+        .vulkanMemoryModelDeviceScope = VK_FALSE,
+        .vulkanMemoryModelAvailabilityVisibilityChains = VK_FALSE,
+        .shaderOutputViewportIndex = VK_FALSE,
+        .shaderOutputLayer = VK_FALSE,
+        .subgroupBroadcastDynamicId = VK_FALSE
+    };
 
-bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &deviceExtensions ) noexcept
-{
+    VkPhysicalDeviceVulkan13Features features13
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &features12,
+        .robustImageAccess = VK_FALSE,
+        .inlineUniformBlock = VK_FALSE,
+        .descriptorBindingInlineUniformBlockUpdateAfterBind = VK_FALSE,
+        .pipelineCreationCacheControl = VK_FALSE,
+        .privateData = VK_FALSE,
+        .shaderDemoteToHelperInvocation = VK_FALSE,
+        .shaderTerminateInvocation = VK_FALSE,
+        .subgroupSizeControl = VK_FALSE,
+        .computeFullSubgroups = VK_FALSE,
+        .synchronization2 = VK_FALSE,
+        .textureCompressionASTC_HDR = VK_FALSE,
+        .shaderZeroInitializeWorkgroupMemory = VK_FALSE,
+        .dynamicRendering = VK_FALSE,
+        .shaderIntegerDotProduct = VK_FALSE,
+        .maintenance4 = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &features13,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+    VkPhysicalDeviceFeatures const &features = probe.features;
+
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
-    LogInfo ( ">>> Checking required device extensions..." );
-
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( allExtensions ) ) &
+    return AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
 
 #ifdef AV_ENABLE_NSIGHT
 
@@ -218,9 +312,13 @@ bool Renderer::CheckRequiredDeviceExtensions ( std::vector<std::string> const &d
 
 #endif // AV_ENABLE_NSIGHT
 
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) );
+        AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy" ) ) &
+        AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC" ) ) &
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.separateDepthStencilLayouts, "separateDepthStencilLayouts" ) ) &
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) );
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept
@@ -257,46 +355,107 @@ std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFor
         { VK_FORMAT_X8_D24_UNORM_PACK32, "VK_FORMAT_X8_D24_UNORM_PACK32" }
     };
 
-    return { formats, std::size ( formats ) };
+    return formats;
 }
 
 VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcept
 {
-    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
+    constexpr static VkPhysicalDeviceVulkan11Features features11
     {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
         .pNext = nullptr,
-        .separateDepthStencilLayouts = VK_TRUE
-    };
-
-    constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
+        .storageBuffer16BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer16BitAccess = VK_FALSE,
+        .storagePushConstant16 = VK_FALSE,
+        .storageInputOutput16 = VK_FALSE,
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
+        .multiviewTessellationShader = VK_FALSE,
+        .variablePointersStorageBuffer = VK_FALSE,
+        .variablePointers = VK_FALSE,
+        .protectedMemory = VK_FALSE,
+        .samplerYcbcrConversion = VK_FALSE,
+        .shaderDrawParameters = VK_FALSE
     };
 
-    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features
+    constexpr static VkPhysicalDeviceVulkan12Features features12
     {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceVulkan11Features*> ( &features11 ),
+        .samplerMirrorClampToEdge = VK_FALSE,
+        .drawIndirectCount = VK_FALSE,
+        .storageBuffer8BitAccess = VK_FALSE,
+        .uniformAndStorageBuffer8BitAccess = VK_FALSE,
+        .storagePushConstant8 = VK_FALSE,
+        .shaderBufferInt64Atomics = VK_FALSE,
+        .shaderSharedInt64Atomics = VK_FALSE,
         .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_FALSE
+        .shaderInt8 = VK_FALSE,
+        .descriptorIndexing = VK_FALSE,
+        .shaderInputAttachmentArrayDynamicIndexing = VK_FALSE,
+        .shaderUniformTexelBufferArrayDynamicIndexing = VK_FALSE,
+        .shaderStorageTexelBufferArrayDynamicIndexing = VK_FALSE,
+        .shaderUniformBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderSampledImageArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageImageArrayNonUniformIndexing = VK_FALSE,
+        .shaderInputAttachmentArrayNonUniformIndexing = VK_FALSE,
+        .shaderUniformTexelBufferArrayNonUniformIndexing = VK_FALSE,
+        .shaderStorageTexelBufferArrayNonUniformIndexing = VK_FALSE,
+        .descriptorBindingUniformBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingSampledImageUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageImageUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingUniformTexelBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingStorageTexelBufferUpdateAfterBind = VK_FALSE,
+        .descriptorBindingUpdateUnusedWhilePending = VK_FALSE,
+        .descriptorBindingPartiallyBound = VK_FALSE,
+        .descriptorBindingVariableDescriptorCount = VK_FALSE,
+        .runtimeDescriptorArray = VK_FALSE,
+        .samplerFilterMinmax = VK_FALSE,
+        .scalarBlockLayout = VK_TRUE,
+        .imagelessFramebuffer = VK_FALSE,
+        .uniformBufferStandardLayout = VK_FALSE,
+        .shaderSubgroupExtendedTypes = VK_FALSE,
+        .separateDepthStencilLayouts = VK_TRUE,
+        .hostQueryReset = VK_FALSE,
+        .timelineSemaphore = VK_FALSE,
+        .bufferDeviceAddress = VK_FALSE,
+        .bufferDeviceAddressCaptureReplay = VK_FALSE,
+        .bufferDeviceAddressMultiDevice = VK_FALSE,
+        .vulkanMemoryModel = VK_FALSE,
+        .vulkanMemoryModelDeviceScope = VK_FALSE,
+        .vulkanMemoryModelAvailabilityVisibilityChains = VK_FALSE,
+        .shaderOutputViewportIndex = VK_FALSE,
+        .shaderOutputLayer = VK_FALSE,
+        .subgroupBroadcastDynamicId = VK_FALSE
     };
 
-    constexpr static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures
+    constexpr static VkPhysicalDeviceVulkan13Features features13
     {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-        .pNext = const_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*> ( &float16Int8Features ),
-        .scalarBlockLayout = VK_TRUE
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceVulkan12Features*> ( &features12 ),
+        .robustImageAccess = VK_FALSE,
+        .inlineUniformBlock = VK_FALSE,
+        .descriptorBindingInlineUniformBlockUpdateAfterBind = VK_FALSE,
+        .pipelineCreationCacheControl = VK_FALSE,
+        .privateData = VK_FALSE,
+        .shaderDemoteToHelperInvocation = VK_FALSE,
+        .shaderTerminateInvocation = VK_FALSE,
+        .subgroupSizeControl = VK_FALSE,
+        .computeFullSubgroups = VK_FALSE,
+        .synchronization2 = VK_FALSE,
+        .textureCompressionASTC_HDR = VK_FALSE,
+        .shaderZeroInitializeWorkgroupMemory = VK_FALSE,
+        .dynamicRendering = VK_TRUE,
+        .shaderIntegerDotProduct = VK_FALSE,
+        .maintenance4 = VK_FALSE
     };
 
     return
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = const_cast<VkPhysicalDeviceScalarBlockLayoutFeaturesEXT*> ( &scalarBlockFeatures ),
+        .pNext = const_cast<VkPhysicalDeviceVulkan13Features*> ( &features13 ),
 
         .features
         {
@@ -319,7 +478,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .largePoints = VK_FALSE,
             .alphaToOne = VK_FALSE,
             .multiViewport = VK_FALSE,
-            .samplerAnisotropy = VK_FALSE,
+            .samplerAnisotropy = VK_TRUE,
             .textureCompressionETC2 = VK_FALSE,
             .textureCompressionASTC_LDR = VK_FALSE,
             .textureCompressionBC = VK_TRUE,
@@ -359,14 +518,9 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
     };
 }
 
-Renderer::Version Renderer::GetRequiredVulkanVersion () noexcept
+Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
 {
-    return
-    {
-        ._major = MAJOR,
-        ._minor = MINOR,
-        ._patch = PATCH
-    };
+    return VERSION;
 }
 
 } // namespace android_vulkan

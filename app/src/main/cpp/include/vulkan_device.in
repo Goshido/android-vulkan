@@ -76,3 +76,10 @@ X ( vkResetFences )
 X ( vkUnmapMemory )
 X ( vkUpdateDescriptorSets )
 X ( vkWaitForFences )
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+
+X ( vkCmdBeginRendering )
+X ( vkCmdEndRendering )
+
+#endif // VK_USE_PLATFORM_WIN32_KHR

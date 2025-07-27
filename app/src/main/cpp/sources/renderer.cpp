@@ -798,6 +798,11 @@ VkFormat Renderer::GetDefaultDepthStencilFormat () const noexcept
     return _depthStencilImageFormat;
 }
 
+size_t Renderer::GetDescriptorBufferOffsetAlignment () const noexcept
+{
+    return _descriptorBufferOffsetAlignment;
+}
+
 VkDevice Renderer::GetDevice () const noexcept
 {
     return _device;
@@ -818,9 +823,29 @@ VkExtent3D const &Renderer::GetMaxComputeDispatchSize () const noexcept
     return _maxComputeDispatchSize;
 }
 
+size_t Renderer::GetMaxDescriptorSetSampledImages () const noexcept
+{
+    return _maxDescriptorSetSampledImages;
+}
+
+size_t Renderer::GetMaxDescriptorSetStorageBuffers () const noexcept
+{
+    return _maxDescriptorSetStorageBuffers;
+}
+
+size_t Renderer::GetMaxDescriptorSetStorageImages () const noexcept
+{
+    return _maxDescriptorSetStorageImages;
+}
+
 float Renderer::GetMaxSamplerAnisotropy () const noexcept
 {
     return _maxSamplerAnisotropy;
+}
+
+size_t Renderer::GetMaxPerStageResources () const noexcept
+{
+    return _maxPerStageResources;
 }
 
 size_t Renderer::GetMaxUniformBufferRange () const noexcept
@@ -866,6 +891,26 @@ VkQueue Renderer::GetQueue () const noexcept
 uint32_t Renderer::GetQueueFamilyIndex () const noexcept
 {
     return _queueFamilyIndex;
+}
+
+size_t Renderer::GetSamplerDescriptorSize () const noexcept
+{
+    return _samplerDescriptorSize;
+}
+
+size_t Renderer::GetSampledImageDescriptorSize () const noexcept
+{
+    return _sampledImageDescriptorSize;
+}
+
+size_t Renderer::GetStorageBufferDescriptorSize () const noexcept
+{
+    return _storageBufferDescriptorSize;
+}
+
+size_t Renderer::GetStorageImageDescriptorSize () const noexcept
+{
+    return _storageImageDescriptorSize;
 }
 
 VkFormat Renderer::GetSurfaceFormat () const noexcept
@@ -1341,7 +1386,17 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .depth = maxComputeWorkGroupCount[ 2U ]
     };
 
+    _maxDescriptorSetSampledImages = static_cast<size_t> ( limits.maxDescriptorSetSampledImages );
+    _maxDescriptorSetStorageBuffers = static_cast<size_t> ( limits.maxDescriptorSetStorageBuffers );
+    _maxDescriptorSetStorageImages = static_cast<size_t> ( limits.maxDescriptorSetStorageImages );
     _maxSamplerAnisotropy = limits.maxSamplerAnisotropy;
+    _maxPerStageResources = static_cast<size_t> ( limits.maxPerStageResources );
+    _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
+    _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
+    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
+    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
+
+    GetPlatformFeatureProperties ();
 
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
@@ -1942,8 +1997,6 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxImageDimensionCube", limits.maxImageDimensionCube );
     PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", limits.maxImageArrayLayers );
     PrintUINT32Prop ( INDENT_1, "maxTexelBufferElements", limits.maxTexelBufferElements );
-
-    _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
     std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
@@ -2051,10 +2104,6 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minUniformBufferOffsetAlignment",
         static_cast<size_t> ( limits.minUniformBufferOffsetAlignment )
     );
-
-    _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
-    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
-    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
 
     PrintSizeProp ( INDENT_1,
         "minStorageBufferOffsetAlignment",

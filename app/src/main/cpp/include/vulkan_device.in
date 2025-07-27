@@ -79,7 +79,6 @@ X ( vkWaitForFences )
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 
-X ( vkCmdBeginRendering )
-X ( vkCmdEndRendering )
+#include "platform/windows/vulkan_device.in"
 
 #endif // VK_USE_PLATFORM_WIN32_KHR

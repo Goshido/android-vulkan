@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <bitwise.hpp>
 #include <core.hpp>
 #include <logger.hpp>
@@ -210,6 +211,7 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
     };
 
     vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
+    VkPhysicalDeviceFeatures const &features = probe.features;
 
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
@@ -221,7 +223,15 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32" ) );
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) );
+        AV_BITWISE ( CheckFeature ( features.textureCompressionASTC_LDR, "textureCompressionASTC_LDR" ) );
         AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) );
+}
+
+void Renderer::GetPlatformFeatureProperties () noexcept
+{
+    // NOTHING
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept

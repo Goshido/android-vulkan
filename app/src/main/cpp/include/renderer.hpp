@@ -67,7 +67,9 @@ class Renderer final
         float                                               _dpi = 96.0F;
         VkInstance                                          _instance = VK_NULL_HANDLE;
 
-        // Minimum supported value from Vulkan spec 1.3.227
+        // Note: all resonable default limits are taken from Vulkan Core spec.
+        size_t                                              _descriptorBufferOffsetAlignment = 0U;
+
         VkExtent3D                                          _maxComputeDispatchSize
         {
             .width = 65535U,
@@ -75,11 +77,19 @@ class Renderer final
             .depth = 65535U
         };
 
+        size_t                                              _maxDescriptorSetSampledImages = 96U;
+        size_t                                              _maxDescriptorSetStorageBuffers = 24U;
+        size_t                                              _maxDescriptorSetStorageImages = 24U;
         float                                               _maxSamplerAnisotropy = 1.0F;
-        size_t                                              _maxUniformBufferRange = 0U;
+        size_t                                              _maxPerStageResources = 128U;
+        size_t                                              _maxUniformBufferRange = 16384U;
         size_t                                              _minStorageBufferOffsetAlignment = 0U;
         size_t                                              _minUniformBufferOffsetAlignment = 0U;
         size_t                                              _nonCoherentAtomSize = 0U;
+        size_t                                              _samplerDescriptorSize = 0U;
+        size_t                                              _sampledImageDescriptorSize = 0U;
+        size_t                                              _storageBufferDescriptorSize = 0U;
+        size_t                                              _storageImageDescriptorSize = 0U;
 
         MemoryAllocator                                     _memoryAllocator {};
 
@@ -153,11 +163,16 @@ class Renderer final
 
         [[nodiscard]] VkFormat GetDefaultDepthFormat () const noexcept;
         [[nodiscard]] VkFormat GetDefaultDepthStencilFormat () const noexcept;
+        [[nodiscard]] size_t GetDescriptorBufferOffsetAlignment () const noexcept;
         [[nodiscard]] VkDevice GetDevice () const noexcept;
         [[nodiscard]] std::string_view GetDeviceName () const noexcept;
         [[nodiscard]] float GetDPI () const noexcept;
         [[nodiscard]] VkExtent3D const &GetMaxComputeDispatchSize () const noexcept;
+        [[nodiscard]] size_t GetMaxDescriptorSetSampledImages () const noexcept;
+        [[nodiscard]] size_t GetMaxDescriptorSetStorageBuffers () const noexcept;
+        [[nodiscard]] size_t GetMaxDescriptorSetStorageImages () const noexcept;
         [[nodiscard]] float GetMaxSamplerAnisotropy () const noexcept;
+        [[nodiscard]] size_t GetMaxPerStageResources () const noexcept;
         [[nodiscard]] size_t GetMaxUniformBufferRange () const noexcept;
         [[nodiscard]] size_t GetMinStorageBufferOffsetAlignment () const noexcept;
         [[nodiscard]] size_t GetMinUniformBufferOffsetAlignment () const noexcept;
@@ -173,6 +188,10 @@ class Renderer final
 
         [[nodiscard]] VkQueue GetQueue () const noexcept;
         [[nodiscard]] uint32_t GetQueueFamilyIndex () const noexcept;
+        [[nodiscard]] size_t GetSamplerDescriptorSize () const noexcept;
+        [[nodiscard]] size_t GetSampledImageDescriptorSize () const noexcept;
+        [[nodiscard]] size_t GetStorageBufferDescriptorSize () const noexcept;
+        [[nodiscard]] size_t GetStorageImageDescriptorSize () const noexcept;
         [[nodiscard]] VkFormat GetSurfaceFormat () const noexcept;
         [[nodiscard]] VkExtent2D const &GetSurfaceSize () const noexcept;
         [[nodiscard]] VkSwapchainKHR &GetSwapchain () noexcept;
@@ -257,6 +276,8 @@ class Renderer final
 
         [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
         void DestroySwapchain ( bool preserveSurface ) noexcept;
+
+        void GetPlatformFeatureProperties () noexcept;
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
         void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;

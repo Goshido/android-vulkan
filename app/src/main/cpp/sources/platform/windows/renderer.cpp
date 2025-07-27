@@ -20,6 +20,79 @@ constexpr Renderer::VulkanVersion VERSION
     ._patch = 0U,
 };
 
+constexpr char const INDENT_2[] = "        ";
+
+//----------------------------------------------------------------------------------------------------------------------
+
+[[nodiscard]] bool CheckExtensionDescriptorBuffer ( VkPhysicalDevice physicalDevice,
+    std::set<std::string> const &allExtensions
+) noexcept
+{
+    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME ) ) [[unlikely]]
+        return false;
+
+    VkPhysicalDeviceDescriptorBufferFeaturesEXT hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+        .pNext = nullptr,
+        .descriptorBuffer = VK_FALSE,
+        .descriptorBufferCaptureReplay = VK_FALSE,
+        .descriptorBufferImageLayoutIgnored = VK_FALSE,
+        .descriptorBufferPushDescriptors = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+
+    if ( hardwareSupport.descriptorBuffer ) [[likely]]
+    {
+        LogInfo ( "%sOK: descriptorBuffer", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: descriptorBuffer", INDENT_2 );
+    return false;
+}
+
+[[nodiscard]] bool CheckExtensionMutableDescriptorType ( VkPhysicalDevice physicalDevice,
+    std::set<std::string> const &allExtensions
+) noexcept
+{
+    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME ) ) [[unlikely]]
+        return false;
+
+    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT hardwareSupport
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
+        .pNext = nullptr,
+        .mutableDescriptorType = VK_FALSE
+    };
+
+    VkPhysicalDeviceFeatures2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &hardwareSupport,
+        .features {}
+    };
+
+    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+
+    if ( hardwareSupport.mutableDescriptorType ) [[likely]]
+    {
+        LogInfo ( "%sOK: mutableDescriptorType", INDENT_2 );
+        return true;
+    }
+
+    LogError ( "%sFAIL: mutableDescriptorType", INDENT_2 );
+    return false;
+}
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -169,6 +242,8 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 
 #endif // AV_ENABLE_NSIGHT
 
+        VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+        VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
@@ -186,8 +261,8 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_NSIGHT
 
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        VK_KHR_SURFACE_EXTENSION_NAME
+        VK_KHR_SURFACE_EXTENSION_NAME,
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
     };
 
     return extensions;
@@ -304,7 +379,9 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
+    return AV_BITWISE ( CheckExtensionDescriptorBuffer ( _physicalDevice, allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionMutableDescriptorType ( _physicalDevice, allExtensions ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
 
 #ifdef AV_ENABLE_NSIGHT
 
@@ -313,12 +390,96 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 #endif // AV_ENABLE_NSIGHT
 
         AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy" ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
+            "shaderSampledImageArrayDynamicIndexing" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features.shaderStorageBufferArrayDynamicIndexing,
+            "shaderStorageBufferArrayDynamicIndexing" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features.shaderStorageImageArrayDynamicIndexing,
+            "shaderStorageImageArrayDynamicIndexing" ) ) &
+
         AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC" ) ) &
+
         AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.descriptorBindingPartiallyBound, "descriptorBindingPartiallyBound" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.descriptorIndexing, "descriptorIndexing" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.runtimeDescriptorArray, "runtimeDescriptorArray" ) ) &
         AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout" ) ) &
         AV_BITWISE ( CheckFeature ( features12.separateDepthStencilLayouts, "separateDepthStencilLayouts" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features12.shaderSampledImageArrayNonUniformIndexing,
+            "shaderSampledImageArrayNonUniformIndexing" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features12.shaderStorageBufferArrayNonUniformIndexing,
+            "shaderStorageBufferArrayNonUniformIndexing" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
+            "shaderStorageImageArrayNonUniformIndexing" ) ) &
+
         AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) );
+}
+
+void Renderer::GetPlatformFeatureProperties () noexcept
+{
+    VkPhysicalDeviceDescriptorBufferPropertiesEXT props
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT,
+        .pNext = nullptr,
+        .combinedImageSamplerDescriptorSingleArray = VK_FALSE,
+        .bufferlessPushDescriptors = VK_FALSE,
+        .allowSamplerImageViewPostSubmitCreation = VK_FALSE,
+        .descriptorBufferOffsetAlignment = 0U,
+        .maxDescriptorBufferBindings = 0U,
+        .maxResourceDescriptorBufferBindings = 0U,
+        .maxSamplerDescriptorBufferBindings = 0U,
+        .maxEmbeddedImmutableSamplerBindings = 0U,
+        .maxEmbeddedImmutableSamplers = 0U,
+        .bufferCaptureReplayDescriptorDataSize = 0U,
+        .imageCaptureReplayDescriptorDataSize = 0U,
+        .imageViewCaptureReplayDescriptorDataSize = 0U,
+        .samplerCaptureReplayDescriptorDataSize = 0U,
+        .accelerationStructureCaptureReplayDescriptorDataSize = 0U,
+        .samplerDescriptorSize = 0U,
+        .combinedImageSamplerDescriptorSize = 0U,
+        .sampledImageDescriptorSize = 0U,
+        .storageImageDescriptorSize = 0U,
+        .uniformTexelBufferDescriptorSize = 0U,
+        .robustUniformTexelBufferDescriptorSize = 0U,
+        .storageTexelBufferDescriptorSize = 0U,
+        .robustStorageTexelBufferDescriptorSize = 0U,
+        .uniformBufferDescriptorSize = 0U,
+        .robustUniformBufferDescriptorSize = 0U,
+        .storageBufferDescriptorSize = 0U,
+        .robustStorageBufferDescriptorSize = 0U,
+        .inputAttachmentDescriptorSize = 0U,
+        .accelerationStructureDescriptorSize = 0U,
+        .maxSamplerDescriptorBufferRange = 0U,
+        .maxResourceDescriptorBufferRange = 0U,
+        .samplerDescriptorBufferAddressSpaceSize = 0U,
+        .resourceDescriptorBufferAddressSpaceSize = 0U,
+        .descriptorBufferAddressSpaceSize = 0U
+    };
+
+    VkPhysicalDeviceProperties2 probe
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        .pNext = &props,
+        .properties {}
+    };
+
+    vkGetPhysicalDeviceProperties2 ( _physicalDevice, &probe );
+    _descriptorBufferOffsetAlignment = static_cast<size_t> ( props.descriptorBufferOffsetAlignment );
+    _samplerDescriptorSize = props.samplerDescriptorSize;
+    _sampledImageDescriptorSize = props.sampledImageDescriptorSize;
+    _storageBufferDescriptorSize = props.storageBufferDescriptorSize;
+    _storageImageDescriptorSize = props.storageImageDescriptorSize;
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept
@@ -360,10 +521,27 @@ std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFor
 
 VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcept
 {
+    constexpr static VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT mutableDescriptorTypeFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
+        .pNext = nullptr,
+        .mutableDescriptorType = VK_TRUE
+    };
+
+    constexpr static VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferFeatures
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+        .pNext = const_cast<VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT*> ( &mutableDescriptorTypeFeatures ),
+        .descriptorBuffer = VK_TRUE,
+        .descriptorBufferCaptureReplay = VK_FALSE,
+        .descriptorBufferImageLayoutIgnored = VK_FALSE,
+        .descriptorBufferPushDescriptors = VK_FALSE
+    };
+
     constexpr static VkPhysicalDeviceVulkan11Features features11
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
-        .pNext = nullptr,
+        .pNext = const_cast<VkPhysicalDeviceDescriptorBufferFeaturesEXT*> ( &descriptorBufferFeatures ),
         .storageBuffer16BitAccess = VK_FALSE,
         .uniformAndStorageBuffer16BitAccess = VK_FALSE,
         .storagePushConstant16 = VK_FALSE,
@@ -391,14 +569,14 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .shaderSharedInt64Atomics = VK_FALSE,
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE,
-        .descriptorIndexing = VK_FALSE,
+        .descriptorIndexing = VK_TRUE,
         .shaderInputAttachmentArrayDynamicIndexing = VK_FALSE,
         .shaderUniformTexelBufferArrayDynamicIndexing = VK_FALSE,
         .shaderStorageTexelBufferArrayDynamicIndexing = VK_FALSE,
         .shaderUniformBufferArrayNonUniformIndexing = VK_FALSE,
-        .shaderSampledImageArrayNonUniformIndexing = VK_FALSE,
-        .shaderStorageBufferArrayNonUniformIndexing = VK_FALSE,
-        .shaderStorageImageArrayNonUniformIndexing = VK_FALSE,
+        .shaderSampledImageArrayNonUniformIndexing = VK_TRUE,
+        .shaderStorageBufferArrayNonUniformIndexing = VK_TRUE,
+        .shaderStorageImageArrayNonUniformIndexing = VK_TRUE,
         .shaderInputAttachmentArrayNonUniformIndexing = VK_FALSE,
         .shaderUniformTexelBufferArrayNonUniformIndexing = VK_FALSE,
         .shaderStorageTexelBufferArrayNonUniformIndexing = VK_FALSE,
@@ -409,9 +587,9 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .descriptorBindingUniformTexelBufferUpdateAfterBind = VK_FALSE,
         .descriptorBindingStorageTexelBufferUpdateAfterBind = VK_FALSE,
         .descriptorBindingUpdateUnusedWhilePending = VK_FALSE,
-        .descriptorBindingPartiallyBound = VK_FALSE,
+        .descriptorBindingPartiallyBound = VK_TRUE,
         .descriptorBindingVariableDescriptorCount = VK_FALSE,
-        .runtimeDescriptorArray = VK_FALSE,
+        .runtimeDescriptorArray = VK_TRUE,
         .samplerFilterMinmax = VK_FALSE,
         .scalarBlockLayout = VK_TRUE,
         .imagelessFramebuffer = VK_FALSE,
@@ -420,7 +598,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .separateDepthStencilLayouts = VK_TRUE,
         .hostQueryReset = VK_FALSE,
         .timelineSemaphore = VK_FALSE,
-        .bufferDeviceAddress = VK_FALSE,
+        .bufferDeviceAddress = VK_TRUE,
         .bufferDeviceAddressCaptureReplay = VK_FALSE,
         .bufferDeviceAddressMultiDevice = VK_FALSE,
         .vulkanMemoryModel = VK_FALSE,
@@ -493,13 +671,13 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .shaderStorageImageReadWithoutFormat = VK_FALSE,
             .shaderStorageImageWriteWithoutFormat = VK_FALSE,
             .shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
-            .shaderSampledImageArrayDynamicIndexing = VK_FALSE,
-            .shaderStorageBufferArrayDynamicIndexing = VK_FALSE,
-            .shaderStorageImageArrayDynamicIndexing = VK_FALSE,
+            .shaderSampledImageArrayDynamicIndexing = VK_TRUE,
+            .shaderStorageBufferArrayDynamicIndexing = VK_TRUE,
+            .shaderStorageImageArrayDynamicIndexing = VK_TRUE,
             .shaderClipDistance = VK_FALSE,
             .shaderCullDistance = VK_FALSE,
             .shaderFloat64 = VK_FALSE,
-            .shaderInt64 = VK_FALSE,
+            .shaderInt64 = VK_TRUE,
             .shaderInt16 = VK_TRUE,
             .shaderResourceResidency = VK_FALSE,
             .shaderResourceMinLod = VK_FALSE,

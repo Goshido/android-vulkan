@@ -3,14 +3,14 @@
 
 
 #include "gpgpu_limits.inc"
-#include "graphics_program.hpp"
+#include <platform/android/pbr/graphics_program.hpp>
 #include "point_light_shadowmap_generator_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class PointLightShadowmapGeneratorProgram final : public GraphicsProgram
+class PointLightShadowmapGeneratorProgram final : public android::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

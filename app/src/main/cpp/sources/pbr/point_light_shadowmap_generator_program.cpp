@@ -27,7 +27,7 @@ PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noex
 
 void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
 {
-    GraphicsProgram::Destroy ( device );
+    android::GraphicsProgram::Destroy ( device );
     _instanceLayout.Destroy ( device );
 }
 

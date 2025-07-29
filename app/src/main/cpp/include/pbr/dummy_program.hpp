@@ -2,12 +2,12 @@
 #define PBR_DUMMY_PROGRAM_HPP
 
 
-#include "graphics_program.hpp"
+#include <platform/android/pbr/graphics_program.hpp>
 
 
 namespace pbr {
 
-class DummyProgram : public GraphicsProgram
+class DummyProgram : public android::GraphicsProgram
 {
     private:
         std::string_view const      _fragmentShaderSource;

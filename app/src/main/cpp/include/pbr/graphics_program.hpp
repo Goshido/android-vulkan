@@ -2,11 +2,12 @@
 #define PBR_PROGRAM_HPP
 
 
-#include <renderer.hpp>
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <string>
+#include <string_view>
+#include <vulkan/vulkan_core.h>
 
 GX_RESTORE_WARNING_STATE
 
@@ -23,14 +24,7 @@ class GraphicsProgram
     protected:
         using SpecializationData = void const*;
 
-    public:
-        using SetItem = std::vector<VkDescriptorPoolSize>;
-        using DescriptorSetInfo = std::vector<SetItem>;
-
     protected:
-        VkShaderModule                              _fragmentShader = VK_NULL_HANDLE;
-        VkShaderModule                              _vertexShader = VK_NULL_HANDLE;
-
         [[maybe_unused]] std::string_view const     _name;
         VkPipeline                                  _pipeline = VK_NULL_HANDLE;
         VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
@@ -81,27 +75,12 @@ class GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
-            SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo
-        ) noexcept = 0;
-
         [[nodiscard]] virtual VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,
             VkViewport* viewportInfo,
             VkExtent2D const* viewport
         ) const noexcept = 0;
-
-        [[nodiscard]] virtual VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
-            VkPipelineVertexInputStateCreateInfo &info,
-            VkVertexInputAttributeDescription* attributes,
-            VkVertexInputBindingDescription* binds
-        ) const noexcept = 0;
-
-        void DestroyShaderModules ( VkDevice device ) noexcept;
 };
 
 } // namespace pbr

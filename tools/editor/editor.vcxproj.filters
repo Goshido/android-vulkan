@@ -58,6 +58,24 @@
     <Filter Include="Header Files\core\android_vulkan_sdk\include">
       <UniqueIdentifier>{95a78a49-7ee9-4d68-8fa5-9b6ac6f75d33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\core\platform\FUCK android">
+      <UniqueIdentifier>{38bbbd9c-a777-4b6f-816b-4bf2c232411c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\platform\FUCK android\pbr">
+      <UniqueIdentifier>{54dc883e-d5d5-4ce1-8413-31ff006dbf61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform\FUCK android">
+      <UniqueIdentifier>{70e193d5-0a6d-4944-8f94-4238efe73d1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform\FUCK android\pbr">
+      <UniqueIdentifier>{983cb18d-81cc-40af-b081-0cbbf0af149c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\platform\windows\pbr">
+      <UniqueIdentifier>{dc4d7cbf-3195-4544-a302-97b91e23db85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\platform\window\pbr">
+      <UniqueIdentifier>{5a490ce3-25de-4ab1-95ae-2cda9717a719}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -344,6 +362,12 @@
     </ClCompile>
     <ClCompile Include="src\skeletal_mesh_component.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\graphics_program.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\graphics_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -730,6 +754,12 @@
     </ClInclude>
     <ClInclude Include="include\skeletal_mesh_component.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\graphics_program.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\graphics_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

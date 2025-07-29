@@ -2,12 +2,12 @@
 #define PBR_SRGB_PROGRAM_HPP
 
 
-#include "graphics_program.hpp"
+#include <platform/android/pbr/graphics_program.hpp>
 
 
 namespace pbr {
 
-class BrightnessProgram : public GraphicsProgram
+class BrightnessProgram : public android::GraphicsProgram
 {
     public:
         struct BrightnessInfo final

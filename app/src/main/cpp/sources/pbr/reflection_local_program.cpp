@@ -31,7 +31,7 @@ ReflectionLocalProgram::ReflectionLocalProgram () noexcept:
 
 void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
 {
-    GraphicsProgram::Destroy ( device );
+    android::GraphicsProgram::Destroy ( device );
 
     _reflectionLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );

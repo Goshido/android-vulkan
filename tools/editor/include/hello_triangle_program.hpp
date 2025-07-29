@@ -2,12 +2,13 @@
 #define EDITOR_HELLO_TRIANGLE_PROGRAM_HPP
 
 
-#include <pbr/graphics_program.hpp>
+// FUCK
+#include <platform/android/pbr/graphics_program.hpp>
 
 
 namespace editor {
 
-class HelloTriangleProgram final : public pbr::GraphicsProgram
+class HelloTriangleProgram final : public pbr::android::GraphicsProgram
 {
     public:
         explicit HelloTriangleProgram () noexcept;

@@ -30,7 +30,7 @@ UIProgram::UIProgram () noexcept:
 
 void UIProgram::Destroy ( VkDevice device ) noexcept
 {
-    GraphicsProgram::Destroy ( device );
+    android::GraphicsProgram::Destroy ( device );
 
     _imageLayout.Destroy ( device );
     _commonLayout.Destroy ( device );

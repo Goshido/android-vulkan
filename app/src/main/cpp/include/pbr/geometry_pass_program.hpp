@@ -6,13 +6,13 @@
 #include "geometry_pass_sampler_descriptor_set_layout.hpp"
 #include "geometry_pass_texture_descriptor_set_layout.hpp"
 #include "gpgpu_limits.inc"
-#include "graphics_program.hpp"
+#include <platform/android/pbr/graphics_program.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class GeometryPassProgram : public GraphicsProgram
+class GeometryPassProgram : public android::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

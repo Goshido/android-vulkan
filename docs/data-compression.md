@@ -762,7 +762,7 @@ _World 1-1_ | 11.152 ms | +1.576 ms🔺 | +16.5%🔺 | <img src="./images/compre
 
 ⁘ Bytes per _UI_ vertex comparison with _Optimization #4_:
 
-**Optimizations #4** | **Absolute difference** | **Relative difference**
+**Optimizations #5** | **Absolute difference** | **Relative difference**
 --- | --- | ---
 18 | -4🟢 | -18.2%🟢
 

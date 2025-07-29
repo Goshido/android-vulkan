@@ -21,7 +21,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 HelloTriangleProgram::HelloTriangleProgram () noexcept:
-    pbr::GraphicsProgram ( "editor::HelloTriangleProgram" )
+    pbr::android::GraphicsProgram ( "editor::HelloTriangleProgram" )
 {
     // NOTHING
 }

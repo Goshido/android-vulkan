@@ -26,7 +26,7 @@ ToneMapperProgram::ToneMapperProgram () noexcept:
 
 void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 {
-    GraphicsProgram::Destroy ( device );
+    android::GraphicsProgram::Destroy ( device );
 
     _fullScreenTriangleLayout.Destroy ( device );
     _toneMapperLayout.Destroy ( device );

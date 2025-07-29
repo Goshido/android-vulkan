@@ -2,13 +2,13 @@
 #define PBR_LIGHT_LIGHTUP_BASE_PROGRAM_HPP
 
 
+#include <platform/android/pbr/graphics_program.hpp>
 #include <vulkan_utils.hpp>
-#include "graphics_program.hpp"
 
 
 namespace pbr {
 
-class LightLightupBaseProgram : public GraphicsProgram
+class LightLightupBaseProgram : public android::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

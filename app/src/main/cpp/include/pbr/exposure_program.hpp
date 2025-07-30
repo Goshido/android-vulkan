@@ -2,14 +2,14 @@
 #define PBR_EXPOSURE_PROGRAM_HPP
 
 
-#include "compute_program.hpp"
 #include "exposure_descriptor_set_layout.hpp"
+#include <platform/android/pbr/compute_program.hpp>
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class ExposureProgram final : public ComputeProgram
+class ExposureProgram final : public android::ComputeProgram
 {
     public:
         struct SpecializationInfo final

@@ -1,5 +1,5 @@
-#ifndef PBR_ANDROID_PROGRAM_HPP
-#define PBR_ANDROID_PROGRAM_HPP
+#ifndef PBR_ANDROID_GRAPHICS_PROGRAM_HPP
+#define PBR_ANDROID_GRAPHICS_PROGRAM_HPP
 
 
 #include <pbr/graphics_program.hpp>
@@ -49,4 +49,4 @@ class GraphicsProgram : public pbr::GraphicsProgram
 } // namespace pbr::android
 
 
-#endif // PBR_ANDROID_PROGRAM_HPP
+#endif // PBR_ANDROID_GRAPHICS_PROGRAM_HPP

@@ -1,5 +1,5 @@
-#ifndef PBR_WINDOWS_PROGRAM_HPP
-#define PBR_WINDOWS_PROGRAM_HPP
+#ifndef PBR_WINDOWS_GRAPHICS_PROGRAM_HPP
+#define PBR_WINDOWS_GRAPHICS_PROGRAM_HPP
 
 
 #include <pbr/graphics_program.hpp>
@@ -33,4 +33,4 @@ class GraphicsProgram : public pbr::GraphicsProgram
 } // namespace pbr::windows
 
 
-#endif // PBR_WINDOWS_PROGRAM_HPP
+#endif // PBR_WINDOWS_GRAPHICS_PROGRAM_HPP

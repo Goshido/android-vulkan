@@ -2,14 +2,14 @@
 #define PBR_SKIN_PROGRAM_HPP
 
 
-#include "compute_program.hpp"
+#include <platform/android/pbr/compute_program.hpp>
 #include "skin_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class SkinProgram : public ComputeProgram
+class SkinProgram final : public android::ComputeProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -37,20 +37,20 @@ class SkinProgram : public ComputeProgram
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData
-        ) noexcept override final;
+        ) noexcept override;
 
-        void Destroy ( VkDevice device ) noexcept override final;
+        void Destroy ( VkDevice device ) noexcept override;
 
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
     private:
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override final;
+        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
         [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo
-        ) noexcept override final;
+        ) noexcept override;
 };
 
 } // namespace pbr

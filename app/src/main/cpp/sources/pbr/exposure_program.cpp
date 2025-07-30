@@ -56,7 +56,7 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
 
 void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
-    ComputeProgram::Destroy ( device );
+    android::ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 

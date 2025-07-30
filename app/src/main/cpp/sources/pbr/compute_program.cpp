@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <pbr/compute_program.hpp>
+#include <vulkan_api.hpp>
 
 
 namespace pbr {
@@ -30,27 +31,12 @@ ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize 
 void ComputeProgram::Destroy ( VkDevice device ) noexcept
 {
     if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyPipelineLayout ( device, _pipelineLayout, nullptr );
-        _pipelineLayout = VK_NULL_HANDLE;
-    }
+        vkDestroyPipelineLayout ( device, std::exchange ( _pipelineLayout, VK_NULL_HANDLE ), nullptr );
 
     if ( _pipeline != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyPipeline ( device, _pipeline, nullptr );
-        _pipeline = VK_NULL_HANDLE;
+        vkDestroyPipeline ( device, std::exchange ( _pipeline, VK_NULL_HANDLE ), nullptr );
     }
-
-    DestroyShaderModule ( device );
-}
-
-void ComputeProgram::DestroyShaderModule ( VkDevice device ) noexcept
-{
-    if ( _computeShader == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyShaderModule ( device, _computeShader, nullptr );
-    _computeShader = VK_NULL_HANDLE;
 }
 
 } // namespace pbr

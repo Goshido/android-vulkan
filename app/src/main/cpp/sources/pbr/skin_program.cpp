@@ -55,7 +55,7 @@ bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
 
 void SkinProgram::Destroy ( VkDevice device ) noexcept
 {
-    ComputeProgram::Destroy ( device );
+    android::ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 

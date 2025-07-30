@@ -1,5 +1,5 @@
-#ifndef PBR_PROGRAM_HPP
-#define PBR_PROGRAM_HPP
+#ifndef PBR_GRAPHICS_PROGRAM_HPP
+#define PBR_GRAPHICS_PROGRAM_HPP
 
 
 #include <GXCommon/GXWarning.hpp>
@@ -86,4 +86,4 @@ class GraphicsProgram
 } // namespace pbr
 
 
-#endif // PBR_PROGRAM_HPP
+#endif // PBR_GRAPHICS_PROGRAM_HPP

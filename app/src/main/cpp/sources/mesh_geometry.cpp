@@ -14,38 +14,6 @@ namespace {
 constexpr size_t INDEX16_LIMIT = 1U << 16U;
 constexpr size_t const INDEX_SIZES[] = { sizeof ( uint16_t ), sizeof ( uint32_t ) };
 
-constexpr struct BufferSyncItem final
-{
-    constexpr static size_t NO_INDEX_INFO = 0U;
-    constexpr static size_t WITH_INDEX_INFO = 1U;
-
-    VkAccessFlags           _dstAccessMask = VK_IMAGE_ASPECT_NONE;
-    VkBufferUsageFlags      _usage = VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
-} const BUFFER_SYNC[]
-{
-    // Index data does not present.
-    {
-        ._dstAccessMask = AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) |
-            AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
-
-        ._usage = AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT )
-    },
-
-    // Data contains index information.
-    {
-        ._dstAccessMask = AV_VK_FLAG ( VK_ACCESS_INDEX_READ_BIT ) |
-            AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) |
-            AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
-
-        ._usage = AV_VK_FLAG ( VK_BUFFER_USAGE_INDEX_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT )
-    }
-};
-
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -78,11 +46,6 @@ void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
 GXAABB const &MeshGeometry::GetBounds () const noexcept
 {
     return _bounds;
-}
-
-MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
-{
-    return _meshBufferInfo;
 }
 
 uint32_t MeshGeometry::GetVertexBufferVertexCount () const noexcept
@@ -151,14 +114,14 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size =  static_cast<VkDeviceSize> ( data.size () ),
-        .usage = BUFFER_SYNC[ BufferSyncItem::NO_INDEX_INFO ]._usage,
+        .usage = GetBufferSync ( BufferSyncItem::eType::NoIndexInfo )._usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
     bool result = CreateBuffer ( renderer,
-        _meshBufferInfo._buffer,
+        GetDeviceBuffer (),
         _gpuAllocation,
         bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -180,15 +143,20 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
         externalCommandBuffer,
         fence,
         { &job, 1U },
-        false
+        BufferSyncItem::eType::NoIndexInfo
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    _meshBufferInfo._indexType = VK_INDEX_TYPE_MAX_ENUM;
-    _meshBufferInfo._vertexDataOffsets[ 0U ] = 0U;
-    _meshBufferInfo._vertexDataRanges[ 0U ] = _gpuAllocation._range;
+    CommitMeshInfo ( VK_INDEX_TYPE_NONE_KHR,
+        {
+            ._offset = 0U,
+            ._range = static_cast<size_t> ( _gpuAllocation._range )
+        },
+
+        std::nullopt
+    );
 
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
@@ -386,17 +354,13 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
     _vertexCount = 0U;
 
-    if ( _meshBufferInfo._buffer != VK_NULL_HANDLE )
-    {
-        vkDestroyBuffer ( renderer.GetDevice (), _meshBufferInfo._buffer, nullptr );
-        _meshBufferInfo._buffer = VK_NULL_HANDLE;
-    }
+    if ( VkBuffer &buffer = GetDeviceBuffer (); buffer != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
 
     if ( _gpuAllocation._memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    renderer.FreeMemory ( _gpuAllocation._memory, _gpuAllocation._offset );
-    _gpuAllocation._memory = VK_NULL_HANDLE;
+    renderer.FreeMemory ( std::exchange ( _gpuAllocation._memory, VK_NULL_HANDLE ), _gpuAllocation._offset );
     _gpuAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
@@ -405,7 +369,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     bool externalCommandBuffer,
     VkFence fence,
     UploadJobs jobs,
-    bool hasIndexData
+    BufferSyncItem::eType bufferSyncType
 ) noexcept
 {
     size_t const dataSize = [ &jobs ] () -> size_t {
@@ -507,7 +471,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         offset += size;
     }
 
-    VkBuffer buffer = _meshBufferInfo._buffer;
+    VkBuffer buffer = GetDeviceBuffer ();
     vkCmdCopyBuffer ( commandBuffer, _transferBuffer, buffer, static_cast<uint32_t> ( jobCount ), bufferCopy );
     UploadJob const &last = jobs.back ();
 
@@ -516,7 +480,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
         .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = BUFFER_SYNC[ static_cast<size_t> ( hasIndexData ) ]._dstAccessMask,
+        .dstAccessMask = GetBufferSync ( bufferSyncType )._dstAccessMask,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = buffer,
@@ -671,14 +635,14 @@ bool MeshGeometry::Upload ( Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = static_cast<VkDeviceSize> ( restOffset + restSize ),
-        .usage = BUFFER_SYNC[ BufferSyncItem::WITH_INDEX_INFO ]._usage,
+        .usage = GetBufferSync ( BufferSyncItem::eType::WithIndexInfo )._usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
     bool result = CreateBuffer ( renderer,
-        _meshBufferInfo._buffer,
+        GetDeviceBuffer (),
         _gpuAllocation,
         bufferInfo,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -709,15 +673,21 @@ bool MeshGeometry::Upload ( Renderer &renderer,
             externalCommandBuffer,
             fence,
             { jobs, std::size ( jobs ) },
-            true
+            BufferSyncItem::eType::WithIndexInfo
         );
 
         if ( !result ) [[unlikely]]
             return false;
 
-        _meshBufferInfo._indexType = indexType;
-        _meshBufferInfo._vertexDataOffsets[ 0U ] = static_cast<VkDeviceSize> ( posOffset );
-        _meshBufferInfo._vertexDataRanges[ 0U ] = static_cast<VkDeviceSize> ( posSize );
+        CommitMeshInfo ( indexType,
+            {
+                ._offset = posOffset,
+                ._range = posSize
+            },
+
+            std::nullopt
+        );
+
         return true;
     }
 
@@ -740,19 +710,30 @@ bool MeshGeometry::Upload ( Renderer &renderer,
         }
     };
 
-    if ( !GPUTransfer ( renderer, commandBuffer, externalCommandBuffer, fence, { jobs, std::size ( jobs ) }, true ) )
-    {
-        [[unlikely]]
+    result = GPUTransfer ( renderer,
+        commandBuffer,
+        externalCommandBuffer,
+        fence,
+        { jobs, std::size ( jobs ) },
+        BufferSyncItem::eType::WithIndexInfo
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
-    }
 
-    _meshBufferInfo._indexType = indexType;
+    CommitMeshInfo ( indexType,
+        {
+            ._offset = posOffset,
+            ._range = posSize
+        },
 
-    _meshBufferInfo._vertexDataOffsets[ 0U ] = static_cast<VkDeviceSize> ( posOffset );
-    _meshBufferInfo._vertexDataOffsets[ 1U ] = static_cast<VkDeviceSize> ( restOffset );
-
-    _meshBufferInfo._vertexDataRanges[ 0U ] = static_cast<VkDeviceSize> ( posSize );
-    _meshBufferInfo._vertexDataRanges[ 1U ] = static_cast<VkDeviceSize> ( restSize );
+        std::optional<StreamInfo> {
+            {
+                ._offset = restOffset,
+                ._range = restSize
+            }
+        }
+    );
 
     return true;
 }

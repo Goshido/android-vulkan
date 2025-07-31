@@ -48,7 +48,10 @@ class PointLightPass final
 
         ~PointLightPass () = default;
 
-        void ExecuteLightupPhase ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube ) noexcept;
+        void ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
+            android_vulkan::android::MeshGeometry &unitCube
+        ) noexcept;
+
         [[nodiscard]] bool ExecuteShadowPhase ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

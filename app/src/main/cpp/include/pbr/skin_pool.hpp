@@ -2,8 +2,9 @@
 #define PBR_SKIN_POOL_HPP
 
 
-#include "skin_descriptor_set_layout.hpp"
 #include <buffer_info.hpp>
+#include <platform/android/mesh_buffer_info.hpp>
+#include "skin_descriptor_set_layout.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -46,9 +47,9 @@ class SkinPool final
         [[nodiscard]] bool Init ( VkDevice device ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
-        void Push ( android_vulkan::BufferInfo pose,
-            android_vulkan::BufferInfo skin,
-            android_vulkan::MeshBufferInfo referenceMesh,
+        void Push ( android_vulkan::BufferInfo const &pose,
+            android_vulkan::BufferInfo const &skin,
+            android_vulkan::android::MeshBufferInfo const &referenceMesh,
             VkBuffer skinMeshBuffer
         ) noexcept;
 

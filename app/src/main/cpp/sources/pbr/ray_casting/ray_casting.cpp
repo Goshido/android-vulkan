@@ -353,8 +353,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     bounds.AddVertex ( -0.502F, -0.866F, 0.0F );
     bounds.AddVertex ( 0.998F, 0.866F, 1.0F );
 
-    _lineMesh = std::make_shared<android_vulkan::MeshGeometry> ();
-    android_vulkan::MeshGeometry &lineMesh = *_lineMesh.get ();
+    _lineMesh = std::make_shared<android_vulkan::android::MeshGeometry> ();
+    android_vulkan::android::MeshGeometry &lineMesh = *_lineMesh.get ();
 
     result = lineMesh.LoadMesh ( renderer,
         *cb,

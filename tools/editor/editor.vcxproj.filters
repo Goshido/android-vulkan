@@ -375,6 +375,12 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\compute_program.cpp">
       <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\mesh_geometry.cpp">
+      <Filter>Source Files\core\platform\FUCK android</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\mesh_geometry.cpp">
+      <Filter>Source Files\core\platform\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -773,6 +779,18 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\compute_program.hpp">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\mesh_buffer_info.hpp">
+      <Filter>Header Files\core\platform\FUCK android</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_buffer_info.hpp">
+      <Filter>Header Files\core\platform\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\mesh_geometry.hpp">
+      <Filter>Header Files\core\platform\FUCK android</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_geometry.hpp">
+      <Filter>Header Files\core\platform\window</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -823,6 +841,9 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\pbr\ui_primitive_type.inc">
       <Filter>Header Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_device.in">
+      <Filter>Header Files\core\platform\window</Filter>
     </None>
   </ItemGroup>
 </Project>

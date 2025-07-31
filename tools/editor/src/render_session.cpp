@@ -22,13 +22,14 @@ constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 class HelloTriangleJob final
 {
     public:
-        std::unique_ptr<android_vulkan::MeshGeometry>       _geometry {};
-        std::unique_ptr<HelloTriangleProgram>               _program {};
+        // FUCK
+        std::unique_ptr<android_vulkan::android::MeshGeometry>      _geometry {};
+        std::unique_ptr<HelloTriangleProgram>                       _program {};
 
     private:
-        VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
-        VkFence                                             _complete = VK_NULL_HANDLE;
-        android_vulkan::Renderer                            &_renderer;
+        VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
+        VkFence                                                     _complete = VK_NULL_HANDLE;
+        android_vulkan::Renderer                                    &_renderer;
 
     public:
         HelloTriangleJob () = delete;
@@ -174,7 +175,8 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
         }
         };
 
-        _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
+        // FUCK
+        _geometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
 
         result = _geometry->LoadMesh ( _renderer,
             commandBuffer,

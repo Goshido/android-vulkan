@@ -3,11 +3,13 @@
 
 
 #include "buffer_info.hpp"
+
 #include "renderer.hpp"
 #include "vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <optional>
 #include <span>
 #include <string>
 
@@ -16,7 +18,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class MeshGeometry final
+class MeshGeometry
 {
     public:
         using AbstractData = std::span<uint8_t const>;
@@ -25,10 +27,23 @@ class MeshGeometry final
         using Positions = std::span<GXVec3 const>;
         using Vertices = std::span<VertexInfo const>;
 
-        struct IndexBuffer final
+        struct BufferSyncItem final
         {
-            VkBuffer                _buffer = VK_NULL_HANDLE;
-            VkIndexType             _type = VK_INDEX_TYPE_UINT16;
+            enum class eType : size_t
+            {
+                NoIndexInfo = 0U,
+                WithIndexInfo = 1U
+            };
+
+            VkAccessFlags           _dstAccessMask = VK_IMAGE_ASPECT_NONE;
+            VkBufferUsageFlags      _usage = VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
+        };
+
+    protected:
+        struct StreamInfo final
+        {
+            size_t                  _offset = 0U;
+            size_t                  _range = 0U;
         };
 
     private:
@@ -50,8 +65,6 @@ class MeshGeometry final
 
     private:
         GXAABB                      _bounds {};
-
-        MeshBufferInfo              _meshBufferInfo{};
         Allocation                  _gpuAllocation {};
 
         VkBuffer                    _transferBuffer = VK_NULL_HANDLE;
@@ -62,21 +75,16 @@ class MeshGeometry final
         std::string                 _fileName {};
 
     public:
-        MeshGeometry () = default;
-
         MeshGeometry ( MeshGeometry const & ) = delete;
         MeshGeometry &operator = ( MeshGeometry const & ) = delete;
 
         MeshGeometry ( MeshGeometry && ) = delete;
         MeshGeometry &operator = ( MeshGeometry && ) = delete;
 
-        ~MeshGeometry () = default;
-
         void FreeResources ( Renderer &renderer ) noexcept;
         void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
-        [[nodiscard]] MeshBufferInfo const &GetMeshBufferInfo () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;
         [[nodiscard]] std::string const &GetName () const noexcept;
         [[nodiscard]] uint32_t GetVertexCount () const noexcept;
@@ -139,6 +147,19 @@ class MeshGeometry final
             GXAABB const &bounds
         ) noexcept;
 
+    protected:
+        MeshGeometry () = default;
+        virtual ~MeshGeometry () = default;
+
+        [[nodiscard]] virtual BufferSyncItem const &GetBufferSync ( BufferSyncItem::eType type ) const noexcept = 0;
+
+        virtual void CommitMeshInfo ( VkIndexType indexType,
+            StreamInfo &&stream0,
+            std::optional<StreamInfo> &&stream1
+        ) noexcept = 0;
+
+        [[nodiscard]] virtual VkBuffer &GetDeviceBuffer () noexcept = 0;
+
     private:
         [[nodiscard]] bool static CreateBuffer ( Renderer &renderer,
             VkBuffer &buffer,
@@ -155,7 +176,7 @@ class MeshGeometry final
             bool externalCommandBuffer,
             VkFence fence,
             UploadJobs jobs,
-            bool hasIndexData
+            BufferSyncItem::eType bufferSyncType
         ) noexcept;
 
         [[nodiscard]] bool LoadFromMesh2 ( Renderer &renderer,

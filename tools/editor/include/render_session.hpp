@@ -19,41 +19,43 @@ class RenderSession final
     private:
         struct CommandInfo final
         {
-            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
-            VkCommandBuffer                                 _buffer = VK_NULL_HANDLE;
-            VkFence                                         _fence = VK_NULL_HANDLE;
-            bool                                            _inUse = false;
-            VkCommandPool                                   _pool = VK_NULL_HANDLE;
+            VkSemaphore                                             _acquire = VK_NULL_HANDLE;
+            VkCommandBuffer                                         _buffer = VK_NULL_HANDLE;
+            VkFence                                                 _fence = VK_NULL_HANDLE;
+            bool                                                    _inUse = false;
+            VkCommandPool                                           _pool = VK_NULL_HANDLE;
         };
 
         using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
 
     private:
-        bool                                                _broken = false;
+        bool                                                        _broken = false;
 
-        CommandInfo                                         _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
-        size_t                                              _writingCommandInfo = 0U;
+        CommandInfo                                                 _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
+        size_t                                                      _writingCommandInfo = 0U;
 
-        pbr::DefaultTextureManager                          _defaultTextureManager {};
-        pbr::ExposurePass                                   _exposurePass {};
+        pbr::DefaultTextureManager                                  _defaultTextureManager {};
+        pbr::ExposurePass                                           _exposurePass {};
 
-        std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
-        std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
+        std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
 
-        MessageQueue                                        &_messageQueue;
-        android_vulkan::Renderer                            &_renderer;
-        pbr::PresentRenderPass                              _presentRenderPass {};
-        VkRenderPassBeginInfo                               _renderPassInfo {};
-        android_vulkan::Texture2D                           _renderTarget {};
-        pbr::SamplerManager                                 _samplerManager {};
-        std::mutex                                          _submitMutex {};
-        std::thread                                         _thread {};
-        Timestamp                                           _timestamp {};
-        pbr::ToneMapperPass                                 _toneMapper {};
-        size_t                                              _uiElements = 0U;
-        pbr::UIPass                                         _uiPass {};
-        UIManager                                           &_uiManager;
-        VkViewport                                          _viewport {};
+        // FUCK
+        std::unique_ptr<android_vulkan::android::MeshGeometry>      _helloTriangleGeometry {};
+
+        MessageQueue                                                &_messageQueue;
+        android_vulkan::Renderer                                    &_renderer;
+        pbr::PresentRenderPass                                      _presentRenderPass {};
+        VkRenderPassBeginInfo                                       _renderPassInfo {};
+        android_vulkan::Texture2D                                   _renderTarget {};
+        pbr::SamplerManager                                         _samplerManager {};
+        std::mutex                                                  _submitMutex {};
+        std::thread                                                 _thread {};
+        Timestamp                                                   _timestamp {};
+        pbr::ToneMapperPass                                         _toneMapper {};
+        size_t                                                      _uiElements = 0U;
+        pbr::UIPass                                                 _uiPass {};
+        UIManager                                                   &_uiManager;
+        VkViewport                                                  _viewport {};
 
     public:
         RenderSession () = delete;

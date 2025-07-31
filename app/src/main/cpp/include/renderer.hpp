@@ -67,7 +67,7 @@ class Renderer final
         float                                               _dpi = 96.0F;
         VkInstance                                          _instance = VK_NULL_HANDLE;
 
-        // Note: all resonable default limits are taken from Vulkan Core spec.
+        // Note: all reasonable default limits are taken from Vulkan Core spec.
         size_t                                              _descriptorBufferOffsetAlignment = 0U;
 
         VkExtent3D                                          _maxComputeDispatchSize

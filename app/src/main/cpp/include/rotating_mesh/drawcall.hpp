@@ -2,7 +2,7 @@
 #define ROTATING_MESH_DRAWCALL_HPP
 
 
-#include "mesh_geometry.hpp"
+#include <platform/android/mesh_geometry.hpp>
 #include <texture2D.hpp>
 
 
@@ -10,11 +10,11 @@ namespace rotating_mesh {
 
 struct Drawcall final
 {
-    VkDescriptorSet                 _descriptorSet;
+    VkDescriptorSet                             _descriptorSet;
 
-    android_vulkan::Texture2D       _diffuse;
-    android_vulkan::Texture2D       _normal;
-    android_vulkan::MeshGeometry    _mesh;
+    android_vulkan::Texture2D                   _diffuse;
+    android_vulkan::Texture2D                   _normal;
+    android_vulkan::android::MeshGeometry       _mesh;
 };
 
 } // namespace rotating_mesh

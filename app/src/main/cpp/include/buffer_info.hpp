@@ -19,18 +19,6 @@ struct BufferInfo final
     VkDeviceSize    _range = 0U;
 };
 
-// Note if index buffer is present '_indexType' should be not VK_INDEX_TYPE_MAX_ENUM.
-// Index data offset is implicitly 0. Vertex data could contain:
-// - single stream of arbitrary data
-// - two streams: vertex positions, rest data
-struct MeshBufferInfo final
-{
-    VkBuffer        _buffer = VK_NULL_HANDLE;
-    VkIndexType     _indexType = VK_INDEX_TYPE_MAX_ENUM;
-    VkDeviceSize    _vertexDataOffsets[ 2U ]{};
-    VkDeviceSize    _vertexDataRanges[ 2U ]{};
-};
-
 } // namespace android_vulkan
 
 

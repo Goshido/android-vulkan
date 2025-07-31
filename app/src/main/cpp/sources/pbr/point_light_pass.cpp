@@ -21,7 +21,7 @@ PointLightPass::PointLightPass ( UMAUniformPool &volumeDataPool ) noexcept:
 }
 
 void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
-    android_vulkan::MeshGeometry &unitCube
+    android_vulkan::android::MeshGeometry &unitCube
 ) noexcept
 {
     if ( _interacts.empty () )
@@ -29,7 +29,7 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
 
     _lightup.BindProgram ( commandBuffer );
 
-    android_vulkan::MeshBufferInfo const &bufferInfo = unitCube.GetMeshBufferInfo ();
+    android_vulkan::android::MeshBufferInfo const &bufferInfo = unitCube.GetMeshBufferInfo ();
     VkBuffer buffer = bufferInfo._buffer;
     vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &bufferInfo._buffer, bufferInfo._vertexDataOffsets );
     vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
@@ -296,7 +296,7 @@ bool PointLightPass::GenerateShadowmaps ( VkCommandBuffer commandBuffer) noexcep
 
         for ( auto const &unique : casters._uniques )
         {
-            android_vulkan::MeshBufferInfo const &bufferInfo = unique->GetMeshBufferInfo ();
+            android_vulkan::android::MeshBufferInfo const &bufferInfo = unique->GetMeshBufferInfo ();
             VkBuffer buffer = bufferInfo._buffer;
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
@@ -308,7 +308,7 @@ bool PointLightPass::GenerateShadowmaps ( VkCommandBuffer commandBuffer) noexcep
         for ( auto const &casterInfo : casters._batches )
         {
             auto const &[mesh, transforms] = casterInfo.second;
-            android_vulkan::MeshBufferInfo const &bufferInfo = mesh->GetMeshBufferInfo ();
+            android_vulkan::android::MeshBufferInfo const &bufferInfo = mesh->GetMeshBufferInfo ();
             VkBuffer buffer = bufferInfo._buffer;
             vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );

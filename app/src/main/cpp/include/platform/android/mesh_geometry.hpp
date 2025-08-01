@@ -29,7 +29,8 @@ class MeshGeometry final : public android_vulkan::MeshGeometry
     private:
         [[nodiscard]] BufferSyncItem const &GetBufferSync ( BufferSyncItem::eType type ) const noexcept override;
 
-        void CommitMeshInfo ( VkIndexType indexType,
+        void CommitMeshInfo ( VkDevice device,
+            VkIndexType indexType,
             StreamInfo &&stream0,
             std::optional<StreamInfo> &&stream1
         ) noexcept override;

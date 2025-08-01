@@ -149,7 +149,8 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    CommitMeshInfo ( VK_INDEX_TYPE_NONE_KHR,
+    CommitMeshInfo ( renderer.GetDevice (),
+        VK_INDEX_TYPE_NONE_KHR,
         {
             ._offset = 0U,
             ._range = static_cast<size_t> ( _gpuAllocation._range )
@@ -679,7 +680,8 @@ bool MeshGeometry::Upload ( Renderer &renderer,
         if ( !result ) [[unlikely]]
             return false;
 
-        CommitMeshInfo ( indexType,
+        CommitMeshInfo ( renderer.GetDevice (),
+            indexType,
             {
                 ._offset = posOffset,
                 ._range = posSize
@@ -721,7 +723,8 @@ bool MeshGeometry::Upload ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    CommitMeshInfo ( indexType,
+    CommitMeshInfo ( renderer.GetDevice (),
+        indexType,
         {
             ._offset = posOffset,
             ._range = posSize

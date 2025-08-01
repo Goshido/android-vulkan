@@ -11,7 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace android_vulkan::android {
+namespace android_vulkan::windows {
 
 // Note if index buffer is present '_indexType' must not be VK_INDEX_TYPE_NONE_KHR.
 // Index data offset is implicitly 0. Vertex data could contain:
@@ -30,7 +30,7 @@ struct MeshBufferInfo final
     VkIndexType         _indexType = VK_INDEX_TYPE_NONE_KHR;
 };
 
-} // namespace android_vulkan::android
+} // namespace android_vulkan::windows
 
 
 #endif // ANDROID_VULKAN_WINDOWS_MESH_BUFFER_INFO_HPP

@@ -153,7 +153,8 @@ class MeshGeometry
 
         [[nodiscard]] virtual BufferSyncItem const &GetBufferSync ( BufferSyncItem::eType type ) const noexcept = 0;
 
-        virtual void CommitMeshInfo ( VkIndexType indexType,
+        virtual void CommitMeshInfo ( VkDevice device,
+            VkIndexType indexType,
             StreamInfo &&stream0,
             std::optional<StreamInfo> &&stream1
         ) noexcept = 0;

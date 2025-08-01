@@ -11,7 +11,8 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     return _meshBufferInfo;
 }
 
-void MeshGeometry::CommitMeshInfo ( VkIndexType indexType,
+void MeshGeometry::CommitMeshInfo ( VkDevice /*device*/,
+    VkIndexType indexType,
     StreamInfo &&stream0,
     std::optional<StreamInfo> &&stream1
 ) noexcept

@@ -72,25 +72,10 @@ void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
     LinkFreeBlock ( *block );
 }
 
-bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) noexcept
+bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex, VkMemoryPropertyFlags properties ) noexcept
 {
-    VkMemoryAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = BYTES_PER_CHUNK,
-        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
-    };
-
-    bool const result = Renderer::CheckVkResult ( vkAllocateMemory ( device, &allocateInfo, nullptr, &_memory ),
-        "MemoryAllocator::Chunk::Init",
-        "Can't allocate memory"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !Allocate ( device, memoryTypeIndex, properties ) ) [[unlikely]]
         return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _memory, VK_OBJECT_TYPE_DEVICE_MEMORY, "Device memory" )
 
     _blockChain = new Block
     {
@@ -110,11 +95,10 @@ bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) no
 
 void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
 {
-    if ( _memory == VK_NULL_HANDLE )
+    if ( _memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    vkFreeMemory ( device, _memory, nullptr );
-    _memory = VK_NULL_HANDLE;
+    vkFreeMemory ( device, std::exchange ( _memory, VK_NULL_HANDLE ), nullptr );
     Block* b = _blockChain;
 
     while ( b )
@@ -323,6 +307,56 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
     }
 
     return false;
+}
+
+bool MemoryAllocator::Chunk::Allocate ( VkDevice device,
+    size_t memoryTypeIndex,
+    [[maybe_unused]] VkMemoryPropertyFlags properties
+) noexcept
+{
+    // FUCK - refactor this when Windows/Android separation will be finished
+#ifndef VK_USE_PLATFORM_WIN32_KHR
+
+    VkMemoryAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .allocationSize = BYTES_PER_CHUNK,
+        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
+    };
+
+#else
+
+    constexpr static VkMemoryAllocateFlagsInfo bda
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+        .pNext = nullptr,
+        .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
+        .deviceMask = 0U
+    };
+
+    constexpr void const* const cases[] = { nullptr, &bda };
+
+    VkMemoryAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext = cases[ static_cast<size_t> ( properties & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) ],
+        .allocationSize = BYTES_PER_CHUNK,
+        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
+    };
+
+#endif // VK_USE_PLATFORM_WIN32_KHR
+
+    bool const result = Renderer::CheckVkResult ( vkAllocateMemory ( device, &allocateInfo, nullptr, &_memory ),
+        "MemoryAllocator::Chunk::Allocate",
+        "Can't allocate memory"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _memory, VK_OBJECT_TYPE_DEVICE_MEMORY, "Device memory" )
+    return true;
 }
 
 MemoryAllocator::Chunk::Block* MemoryAllocator::Chunk::AppendFreeBlock ( Offset offset, VkDeviceSize size ) noexcept
@@ -644,7 +678,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
 
     Chunk &chunk = chunks.emplace_front ();
 
-    bool const result = chunk.Init ( device, memoryTypeIndex ) &&
+    bool const result = chunk.Init ( device, memoryTypeIndex, properties ) &&
         chunk.TryAllocateMemory ( memory, offset, requirements );
 
     if ( !result ) [[unlikely]]

@@ -21,9 +21,9 @@ struct MeshBufferInfo final
 {
     VkBuffer            _buffer = VK_NULL_HANDLE;
 
-    VkDeviceAddress     _indexBDA = 0U;
-    VkDeviceAddress     _positionBDA = 0U;
-    VkDeviceAddress     _restBDA = 0U;
+    VkDeviceAddress     _bdaIndex = 0U;
+    VkDeviceAddress     _bdaStream0 = 0U;
+    VkDeviceAddress     _bdaStream1 = 0U;
 
     VkDeviceSize        _vertexDataOffsets[ 2U ]{};
     VkDeviceSize        _vertexDataRanges[ 2U ]{};

@@ -26,14 +26,14 @@ class MemoryAllocator final
 
                 struct Block final
                 {
-                    Block*                                  _blockChainPrevious;
-                    Block*                                  _blockChainNext;
+                    Block*                                  _blockChainPrevious = nullptr;
+                    Block*                                  _blockChainNext = nullptr;
 
-                    Block*                                  _freePrevious;
-                    Block*                                  _freeNext;
+                    Block*                                  _freePrevious = nullptr;
+                    Block*                                  _freeNext = nullptr;
 
-                    Offset                                  _offset;
-                    VkDeviceSize                            _size;
+                    Offset                                  _offset = 0U;
+                    VkDeviceSize                            _size = 0U;
                 };
 
                 struct Blocks final
@@ -61,7 +61,11 @@ class MemoryAllocator final
 
                 void FreeMemory ( VkDeviceSize offset ) noexcept;
 
-                [[nodiscard]] bool Init ( VkDevice device, size_t memoryTypeIndex ) noexcept;
+                [[nodiscard]] bool Init ( VkDevice device,
+                    size_t memoryTypeIndex,
+                    VkMemoryPropertyFlags properties
+                ) noexcept;
+
                 void Destroy ( VkDevice device ) noexcept;
 
                 [[nodiscard]] bool IsUsed () const noexcept;
@@ -73,6 +77,11 @@ class MemoryAllocator final
                 ) noexcept;
 
             private:
+                [[nodiscard]] bool Allocate ( VkDevice device,
+                    size_t memoryTypeIndex,
+                    VkMemoryPropertyFlags properties
+                ) noexcept;
+
                 [[nodiscard]] Block* AppendFreeBlock ( Offset offset, VkDeviceSize size ) noexcept;
                 void RemoveFreeBlock ( Block &block ) noexcept;
 

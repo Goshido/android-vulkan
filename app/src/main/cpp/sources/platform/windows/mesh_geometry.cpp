@@ -45,23 +45,23 @@ void MeshGeometry::CommitMeshInfo ( VkDevice device,
     switch ( indexType )
     {
         case VK_INDEX_TYPE_NONE_KHR:
-            _meshBufferInfo._positionBDA = address;
+            _meshBufferInfo._bdaStream0 = address;
 
             if ( hasStream1 )
             {
-                _meshBufferInfo._restBDA = address + static_cast<VkDeviceAddress> ( stream1->_offset );
+                _meshBufferInfo._bdaStream1 = address + static_cast<VkDeviceAddress> ( stream1->_offset );
             }
         break;
 
         case VK_INDEX_TYPE_UINT16:
             [[fallthrough]];
         case VK_INDEX_TYPE_UINT32:
-            _meshBufferInfo._indexBDA = address;
-            _meshBufferInfo._positionBDA = address + static_cast<VkDeviceAddress> ( stream0._offset );
+            _meshBufferInfo._bdaIndex = address;
+            _meshBufferInfo._bdaStream0 = address + static_cast<VkDeviceAddress> ( stream0._offset );
 
             if ( hasStream1 )
             {
-                _meshBufferInfo._restBDA = address + static_cast<VkDeviceAddress> ( stream1->_offset );
+                _meshBufferInfo._bdaStream1 = address + static_cast<VkDeviceAddress> ( stream1->_offset );
             }
         break;
 

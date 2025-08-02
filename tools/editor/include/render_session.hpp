@@ -9,6 +9,7 @@
 #include <pbr/present_render_pass.hpp>
 #include <pbr/tone_mapper_pass.hpp>
 #include <pbr/ui_pass.hpp>
+#include <platform/windows/mesh_geometry.hpp>
 #include "ui_manager.hpp"
 
 
@@ -40,7 +41,8 @@ class RenderSession final
         std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
 
         // FUCK
-        std::unique_ptr<android_vulkan::android::MeshGeometry>      _helloTriangleGeometry {};
+        std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
+        std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;

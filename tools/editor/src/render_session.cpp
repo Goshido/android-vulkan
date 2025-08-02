@@ -23,7 +23,9 @@ class HelloTriangleJob final
 {
     public:
         // FUCK
-        std::unique_ptr<android_vulkan::android::MeshGeometry>      _geometry {};
+        std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckGeometry {};
+
+        std::unique_ptr<android_vulkan::windows::MeshGeometry>      _geometry {};
         std::unique_ptr<HelloTriangleProgram>                       _program {};
 
     private:
@@ -164,19 +166,18 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
                 ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
             },
 
-        {
-            ._vertex = GXVec2 ( 0.0F, -0.75F ),
-            ._color = GXVec3 ( 1.0F, 0.0F, 0.0F )
-        },
+            {
+                ._vertex = GXVec2 ( 0.0F, -0.75F ),
+                ._color = GXVec3 ( 1.0F, 0.0F, 0.0F )
+            },
 
-        {
-            ._vertex = GXVec2 ( 0.75F, 0.75F ),
-            ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
-        }
+            {
+                ._vertex = GXVec2 ( 0.75F, 0.75F ),
+                ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
+            }
         };
 
-        // FUCK
-        _geometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
+        _geometry = std::make_unique<android_vulkan::windows::MeshGeometry> ();
 
         result = _geometry->LoadMesh ( _renderer,
             commandBuffer,
@@ -193,6 +194,26 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
             return;
         }
 
+        // FUCK
+        _fuckGeometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
+
+        result = _fuckGeometry->LoadMesh ( _renderer,
+            commandBuffer,
+            true,
+            VK_NULL_HANDLE,
+            { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
+            static_cast<uint32_t> ( std::size ( data ) )
+        );
+
+        if ( !result ) [[unlikely]]
+        {
+            _geometry->FreeResources ( _renderer );
+            _geometry.reset ();
+
+            _fuckGeometry->FreeResources ( _renderer );
+            _fuckGeometry.reset ();
+            return;
+        }
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -204,6 +225,9 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     {
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
+
+        _fuckGeometry->FreeResources ( _renderer );
+        _fuckGeometry.reset ();
         return;
     }
 
@@ -252,6 +276,9 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     {
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
+
+        _fuckGeometry->FreeResources ( _renderer );
+        _fuckGeometry.reset ();
         return;
     }
 
@@ -264,11 +291,15 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     if ( result ) [[likely]]
     {
         _geometry->FreeTransferResources ( _renderer );
+        _fuckGeometry->FreeTransferResources ( _renderer );
         return;
     }
 
     _geometry->FreeResources ( _renderer );
     _geometry.reset ();
+
+    _fuckGeometry->FreeResources ( _renderer );
+    _fuckGeometry.reset ();
 }
 
 void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
@@ -804,6 +835,7 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
     _messageQueue.DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
     _helloTriangleProgram = std::move ( job->_program );
+    _fuckHelloTriangleGeometry = std::move ( job->_fuckGeometry );
     _helloTriangleGeometry = std::move ( job->_geometry );
     delete job;
 }
@@ -899,20 +931,21 @@ void RenderSession::OnRenderFrame () noexcept
 
         vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
         vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
+        result = static_cast<bool> ( _fuckHelloTriangleGeometry ) & static_cast<bool> ( _fuckHelloTriangleGeometry );
 
-        if ( static_cast<bool> ( _helloTriangleGeometry ) & static_cast<bool> ( _helloTriangleGeometry ) ) [[likely]]
+        if ( result ) [[likely]]
         {
             constexpr VkDeviceSize const offsets = 0U;
 
             vkCmdBindVertexBuffers ( commandBuffer,
                 0U,
                 1U,
-                &_helloTriangleGeometry->GetMeshBufferInfo ()._buffer,
+                &_fuckHelloTriangleGeometry->GetMeshBufferInfo ()._buffer,
                 &offsets
             );
 
             _helloTriangleProgram->Bind ( commandBuffer );
-            vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
+            vkCmdDraw ( commandBuffer, _fuckHelloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
         }
 
         vkCmdEndRenderPass ( commandBuffer );
@@ -1063,6 +1096,12 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     {
         _helloTriangleGeometry->FreeResources ( renderer );
         _helloTriangleGeometry.reset ();
+    }
+
+    if ( _fuckHelloTriangleGeometry ) [[likely]]
+    {
+        _fuckHelloTriangleGeometry->FreeResources ( renderer );
+        _fuckHelloTriangleGeometry.reset ();
     }
 
     _renderTarget.FreeResources ( renderer );

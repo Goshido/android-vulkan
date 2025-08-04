@@ -1,4 +1,4 @@
-// version 1.9
+// version 1.10
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -15,15 +15,15 @@
 
     GXFloat const halfFovy = fieldOfViewYRadians * 0.5F;
     GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
-    GXFloat const invRange = 1.0F / ( zNear - zFar );
+    GXFloat const alpha = zNear / ( zNear - zFar );
 
     auto &m = _data;
 
     m[ 0U ][ 0U ] = ctan / aspectRatio;
     m[ 1U ][ 1U ] = -ctan;
-    m[ 2U ][ 2U ] = invRange * zNear;
+    m[ 2U ][ 2U ] = alpha;
     m[ 2U ][ 3U ] = 1.0F;
-    m[ 3U ][ 2U ] = -invRange * zFar * zNear;
+    m[ 3U ][ 2U ] = -alpha * zFar;
 
     m[ 0U ][ 1U ] = 0.0F;
     m[ 0U ][ 2U ] = 0.0F;

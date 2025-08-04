@@ -381,6 +381,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\mesh_geometry.cpp">
       <Filter>Source Files\core\platform\windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -790,6 +793,9 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_geometry.hpp">
       <Filter>Header Files\core\platform\window</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

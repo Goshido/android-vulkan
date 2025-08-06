@@ -86,10 +86,10 @@ class Renderer final
         size_t                                              _minStorageBufferOffsetAlignment = 0U;
         size_t                                              _minUniformBufferOffsetAlignment = 0U;
         size_t                                              _nonCoherentAtomSize = 0U;
-        size_t                                              _samplerDescriptorSize = 0U;
-        size_t                                              _sampledImageDescriptorSize = 0U;
-        size_t                                              _storageBufferDescriptorSize = 0U;
-        size_t                                              _storageImageDescriptorSize = 0U;
+        VkDeviceSize                                        _samplerDescriptorSize = 0U;
+        VkDeviceSize                                        _sampledImageDescriptorSize = 0U;
+        VkDeviceSize                                        _storageBufferDescriptorSize = 0U;
+        VkDeviceSize                                        _storageImageDescriptorSize = 0U;
 
         MemoryAllocator                                     _memoryAllocator {};
 
@@ -188,10 +188,10 @@ class Renderer final
 
         [[nodiscard]] VkQueue GetQueue () const noexcept;
         [[nodiscard]] uint32_t GetQueueFamilyIndex () const noexcept;
-        [[nodiscard]] size_t GetSamplerDescriptorSize () const noexcept;
-        [[nodiscard]] size_t GetSampledImageDescriptorSize () const noexcept;
-        [[nodiscard]] size_t GetStorageBufferDescriptorSize () const noexcept;
-        [[nodiscard]] size_t GetStorageImageDescriptorSize () const noexcept;
+        [[nodiscard]] VkDeviceSize GetSamplerDescriptorSize () const noexcept;
+        [[nodiscard]] VkDeviceSize GetSampledImageDescriptorSize () const noexcept;
+        [[nodiscard]] VkDeviceSize GetStorageBufferDescriptorSize () const noexcept;
+        [[nodiscard]] VkDeviceSize GetStorageImageDescriptorSize () const noexcept;
         [[nodiscard]] VkFormat GetSurfaceFormat () const noexcept;
         [[nodiscard]] VkExtent2D const &GetSurfaceSize () const noexcept;
         [[nodiscard]] VkSwapchainKHR &GetSwapchain () noexcept;

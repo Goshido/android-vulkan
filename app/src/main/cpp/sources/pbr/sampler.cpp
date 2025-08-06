@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <pbr/sampler.hpp>
 #include <av_assert.hpp>
+#include <renderer.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -25,11 +26,10 @@ bool Sampler::Init ( VkDevice device, VkSamplerCreateInfo const &info, [[maybe_u
 
 void Sampler::Destroy ( VkDevice device ) noexcept
 {
-    if ( _sampler == VK_NULL_HANDLE )
-        return;
-
-    vkDestroySampler ( device, _sampler, nullptr );
-    _sampler = VK_NULL_HANDLE;
+    if ( _sampler != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroySampler ( device, std::exchange ( _sampler, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 VkSampler Sampler::GetSampler () const noexcept

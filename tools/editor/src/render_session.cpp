@@ -777,7 +777,13 @@ bool RenderSession::InitModules () noexcept
     {
         std::lock_guard const lock ( _submitMutex );
 
-        if ( !_defaultTextureManager.Init ( renderer, pool ) || !_exposurePass.Init ( renderer, pool ) ) [[unlikely]]
+        result = _defaultTextureManager.Init ( renderer, pool ) &&
+            _exposurePass.Init ( renderer, pool ) &&
+
+            // FUCK - provide correct VkCommandBuffer
+            _resourceHeap.Init ( renderer, VK_NULL_HANDLE );
+
+        if ( !result ) [[unlikely]]
         {
             return false;
         }
@@ -1120,6 +1126,8 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
 
     _defaultTextureManager.Destroy ( renderer );
     _samplerManager.Destroy ( device );
+
+    _resourceHeap.Destroy ( renderer );
 
     _messageQueue.EnqueueFront (
         Message

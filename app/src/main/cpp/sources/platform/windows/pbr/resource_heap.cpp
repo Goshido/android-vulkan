@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <logger.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>
@@ -6,11 +7,20 @@
 
 namespace pbr::windows {
 
+namespace {
+
+constexpr VkDeviceSize RESOURCE_CAPACITY = 1'000'000U;
+constexpr VkDeviceSize SAMPLER_CAPACITY = 8U;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool ResourceHeap::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDeviceSize size,
     VkBufferUsageFlags usage,
     VkMemoryPropertyFlags memProps,
-    [[maybe_unused]] char const *name
+    [[maybe_unused]] char const* name
 ) noexcept
 {
     VkBufferCreateInfo const bufferInfo
@@ -36,7 +46,7 @@ bool ResourceHeap::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", name)
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", name )
 
     VkMemoryRequirements memoryRequirements {};
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
@@ -52,7 +62,7 @@ bool ResourceHeap::Buffer::Init ( android_vulkan::Renderer &renderer,
         android_vulkan::Renderer::CheckVkResult (
             vkBindBufferMemory ( device, _buffer, _memory, _offset ),
             "pbr::windows::ResourceHeap::Buffer::Init",
-            "Can't memory"
+            "Can't bind memory"
         );
 }
 
@@ -69,69 +79,136 @@ void ResourceHeap::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexce
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool ResourceHeap::Init ( android_vulkan::Renderer &renderer ) noexcept
+bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    // FUCK
-    VkDeviceSize const imageAndBufferSize = 42U;
-    VkDeviceSize const samplerSize = 42U;
+    auto const perStage = static_cast<VkDeviceSize> ( renderer.GetMaxPerStageResources () );
 
-    bool result =
-        _imageAndBufferDescriptors.Init ( renderer,
-            imageAndBufferSize,
+    if ( perStage <= SAMPLER_CAPACITY ) [[unlikely]]
+    {
+        android_vulkan::LogError (
+            "pbr::windows::ResourceHeap::Init - Hardware supports too little per stage resources."
+        );
+
+        return false;
+    }
+
+    constexpr size_t optimal = RESOURCE_CAPACITY + SAMPLER_CAPACITY;
+    VkDeviceSize const cases[] = { perStage - SAMPLER_CAPACITY, RESOURCE_CAPACITY };
+    VkDeviceSize const samplerSize = SAMPLER_CAPACITY * renderer.GetSamplerDescriptorSize ();
+
+    /*
+    From Vulkan spec 1.4.320, "14.1.16. Mutable":
+    The intention of a mutable descriptor type is that implementations allocate N bytes per descriptor, where N is
+    determined by the maximum descriptor size for a given descriptor binding. Implementations are not expected
+    to keep track of the active descriptor type, and it should be considered a C-like union type.
+
+    From Vulkan spec 1.4.320, "VkPhysicalDeviceDescriptorBufferPropertiesEXT", description:
+    A descriptor binding with type VK_DESCRIPTOR_TYPE_MUTABLE_VALVE has a descriptor size which is implied by
+    the descriptor types included in the VkMutableDescriptorTypeCreateInfoVALVE::pDescriptorTypes list.
+    The descriptor size is equal to the maximum size of any descriptor type included in the pDescriptorTypes list.
+
+    From Vulkan spec 1.4.320, "vkGetDescriptorSetLayoutBindingOffsetEXT"
+    The precise location accessed by a shader for a given descriptor is as follows:
+
+    location = bufferAddress + setOffset + descriptorOffset + (arrayElement x descriptorSize)
+
+    where bufferAddress and setOffset are the base address and offset for the identified descriptor set as specified
+    by vkCmdBindDescriptorBuffersEXT and vkCmdSetDescriptorBufferOffsetsEXT, descriptorOffset is the offset for
+    the binding returned by this command, arrayElement is the index into the array specified in the shader, and
+    descriptorSize is the size of the relevant descriptor as obtained from
+    VkPhysicalDeviceDescriptorBufferPropertiesEXT.
+    */
+
+    VkDeviceSize const resourceSize = cases[ static_cast<size_t> ( optimal <= perStage ) ] * std::max (
+        {
+            renderer.GetSampledImageDescriptorSize (),
+            renderer.GetStorageImageDescriptorSize (),
+            renderer.GetStorageBufferDescriptorSize ()
+        }
+    );
+
+    return
+        _resourceDescriptors.Init ( renderer,
+            resourceSize,
 
             AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
                 AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            "Image & buffer descriptors"
-        ) &&
-
-        _imageAndBufferStagingBuffer.Init ( renderer,
-            imageAndBufferSize,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
-            "Images & buffers (staging)"
+            "Resource descriptors"
         ) &&
 
         _samplerDescriptors.Init ( renderer,
             samplerSize,
 
-            AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
                 AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
             "Sampler descriptors"
         ) &&
 
-        _samplerStagingBuffer.Init ( renderer,
-            samplerSize,
+        _stagingBuffer.Init ( renderer,
+            resourceSize * 2U,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
-            "Samplers (staging)"
-        );
+            "Descriptor buffer (staging)"
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
+        renderer.MapMemory ( reinterpret_cast<void* &> ( _stagingMemory ),
+            _stagingBuffer._memory,
+            _stagingBuffer._offset,
+            "pbr::windows::ResourceHeap::Init",
+            "Can't map memory"
+        ) &&
 
-    // FUCK
-    return true;
+        InitSamplers ( renderer, commandBuffer );
 }
 
 void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _imageAndBufferDescriptors.Destroy ( renderer );
-    _imageAndBufferStagingBuffer.Destroy ( renderer );
+    VkDevice device = renderer.GetDevice ();
+
+    _clampToEdgeSampler.Destroy ( device );
+    _cubemapSampler.Destroy ( device );
+    _materialSampler.Destroy ( device );
+    _pointSampler.Destroy ( device );
+    _shadowSampler.Destroy ( device );
+
+    if ( std::exchange ( _stagingMemory, nullptr ) ) [[likely]]
+        renderer.UnmapMemory ( _stagingBuffer._memory );
+
+    _resourceDescriptors.Destroy ( renderer );
     _samplerDescriptors.Destroy ( renderer );
-    _samplerStagingBuffer.Destroy ( renderer );
-    // FUCK
+    _stagingBuffer.Destroy ( renderer );
 }
 
-void ResourceHeap::RegisterImage ( VkImageView /*view*/ ) noexcept
+void ResourceHeap::RegisterBuffer () noexcept
 {
     // FUCK
 }
 
-void ResourceHeap::UnregisterImage () noexcept
+void ResourceHeap::UnregisterBuffer () noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::RegisterSampledImage ( VkImageView /*view*/ ) noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::UnregisterSampledImage () noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::RegisterStorageImage ( VkImageView /*view*/ ) noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::UnregisterStorageImage () noexcept
 {
     // FUCK
 }
@@ -146,14 +223,125 @@ void ResourceHeap::UnregisterSampler () noexcept
     // FUCK
 }
 
-void ResourceHeap::RegisterBuffer () noexcept
+bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer /*commandBuffer*/ ) noexcept
 {
-    // FUCK
-}
+    constexpr VkSamplerCreateInfo clampToEdgeSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
 
-void ResourceHeap::UnregisterBuffer () noexcept
-{
-    // FUCK
+    constexpr VkSamplerCreateInfo cubemapSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = VK_LOD_CLAMP_NONE,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    VkSamplerCreateInfo const materialSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_TRUE,
+        .maxAnisotropy = renderer.GetMaxSamplerAnisotropy (),
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = VK_LOD_CLAMP_NONE,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    constexpr VkSamplerCreateInfo pointSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    constexpr VkSamplerCreateInfo shadowSamplerInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = 0.0F,
+        .anisotropyEnable = VK_FALSE,
+        .maxAnisotropy = 1.0F,
+        .compareEnable = VK_TRUE,
+        .compareOp = VK_COMPARE_OP_GREATER,
+        .minLod = 0.0F,
+        .maxLod = 0.0F,
+        .borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK,
+        .unnormalizedCoordinates = VK_FALSE
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    return _clampToEdgeSampler.Init ( device, clampToEdgeSamplerInfo, "Clamp to edge" ) &&
+        _cubemapSampler.Init ( device, cubemapSamplerInfo, "Cubemap" ) &&
+        _materialSampler.Init ( device, materialSamplerInfo, "Material" ) &&
+        _pointSampler.Init ( device, pointSamplerInfo, "Point" ) &&
+        _shadowSampler.Init ( device, shadowSamplerInfo, "Shadow" );
 }
 
 } // namespace pbr::windows

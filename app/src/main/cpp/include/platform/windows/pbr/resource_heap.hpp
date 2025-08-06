@@ -2,6 +2,7 @@
 #define PBR_WINDOWS_RESOURCE_HEAP_HPP
 
 
+#include <pbr/sampler.hpp>
 #include <renderer.hpp>
 
 
@@ -14,8 +15,6 @@ class ResourceHeap final
         {
             public:
                 VkBuffer            _buffer = VK_NULL_HANDLE;
-
-            private:
                 VkDeviceMemory      _memory = VK_NULL_HANDLE;
                 VkDeviceSize        _offset = 0U;
 
@@ -41,11 +40,17 @@ class ResourceHeap final
         };
 
     private:
-        Buffer                      _imageAndBufferDescriptors {};
-        Buffer                      _imageAndBufferStagingBuffer {};
+        Sampler                     _clampToEdgeSampler {};
+        Sampler                     _cubemapSampler {};
+        Sampler                     _materialSampler {};
+        Sampler                     _pointSampler {};
+        Sampler                     _shadowSampler {};
 
+        Buffer                      _resourceDescriptors {};
         Buffer                      _samplerDescriptors {};
-        Buffer                      _samplerStagingBuffer {};
+
+        Buffer                      _stagingBuffer {};
+        uint8_t*                    _stagingMemory = nullptr;
 
     public:
         ResourceHeap () = default;
@@ -58,17 +63,23 @@ class ResourceHeap final
 
         ~ResourceHeap () = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
+        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void RegisterImage ( VkImageView view ) noexcept;
-        void UnregisterImage () noexcept;
+        void RegisterBuffer () noexcept;
+        void UnregisterBuffer () noexcept;
+
+        void RegisterSampledImage ( VkImageView view ) noexcept;
+        void UnregisterSampledImage () noexcept;
+
+        void RegisterStorageImage ( VkImageView view ) noexcept;
+        void UnregisterStorageImage () noexcept;
 
         void RegisterSampler () noexcept;
         void UnregisterSampler () noexcept;
 
-        void RegisterBuffer () noexcept;
-        void UnregisterBuffer () noexcept;
+    private:
+        [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
 } // namespace pbr::windows

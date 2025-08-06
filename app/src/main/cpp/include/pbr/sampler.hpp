@@ -2,7 +2,13 @@
 #define PBR_SAMPLER_HPP
 
 
-#include <renderer.hpp>
+#include <GXCommon/GXWarning.hpp>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <vulkan/vulkan_core.h>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {

@@ -10,6 +10,7 @@
 #include <pbr/tone_mapper_pass.hpp>
 #include <pbr/ui_pass.hpp>
 #include <platform/windows/mesh_geometry.hpp>
+#include <platform/windows/pbr/resource_heap.hpp>
 #include "ui_manager.hpp"
 
 
@@ -49,6 +50,7 @@ class RenderSession final
         pbr::PresentRenderPass                                      _presentRenderPass {};
         VkRenderPassBeginInfo                                       _renderPassInfo {};
         android_vulkan::Texture2D                                   _renderTarget {};
+        pbr::windows::ResourceHeap                                  _resourceHeap {};
         pbr::SamplerManager                                         _samplerManager {};
         std::mutex                                                  _submitMutex {};
         std::thread                                                 _thread {};

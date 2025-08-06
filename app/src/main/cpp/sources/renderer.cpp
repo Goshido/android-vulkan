@@ -893,22 +893,22 @@ uint32_t Renderer::GetQueueFamilyIndex () const noexcept
     return _queueFamilyIndex;
 }
 
-size_t Renderer::GetSamplerDescriptorSize () const noexcept
+VkDeviceSize Renderer::GetSamplerDescriptorSize () const noexcept
 {
     return _samplerDescriptorSize;
 }
 
-size_t Renderer::GetSampledImageDescriptorSize () const noexcept
+VkDeviceSize Renderer::GetSampledImageDescriptorSize () const noexcept
 {
     return _sampledImageDescriptorSize;
 }
 
-size_t Renderer::GetStorageBufferDescriptorSize () const noexcept
+VkDeviceSize Renderer::GetStorageBufferDescriptorSize () const noexcept
 {
     return _storageBufferDescriptorSize;
 }
 
-size_t Renderer::GetStorageImageDescriptorSize () const noexcept
+VkDeviceSize Renderer::GetStorageImageDescriptorSize () const noexcept
 {
     return _storageImageDescriptorSize;
 }

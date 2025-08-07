@@ -32,7 +32,7 @@ void Sampler::Destroy ( VkDevice device ) noexcept
     }
 }
 
-VkSampler Sampler::GetSampler () const noexcept
+VkSampler const &Sampler::GetSampler () const noexcept
 {
     return _sampler;
 }

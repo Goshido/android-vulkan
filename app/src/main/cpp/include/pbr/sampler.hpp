@@ -32,7 +32,7 @@ class Sampler final
         [[nodiscard]] bool Init ( VkDevice device, VkSamplerCreateInfo const &info, char const* name ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkSampler GetSampler () const noexcept;
+        [[nodiscard]] VkSampler const &GetSampler () const noexcept;
 };
 
 } // namespace pbr

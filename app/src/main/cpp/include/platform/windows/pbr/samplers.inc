@@ -8,5 +8,7 @@
 #define POINT_SAMPLER               3
 #define SHADOW_SAMPLER              4
 
+#define TOTAL_SAMPLERS              5
+
 
 #endif // SAMPLERS_INC

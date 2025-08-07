@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <logger.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>
 
@@ -10,7 +11,6 @@ namespace pbr::windows {
 namespace {
 
 constexpr VkDeviceSize RESOURCE_CAPACITY = 1'000'000U;
-constexpr VkDeviceSize SAMPLER_CAPACITY = 8U;
 
 } // end of anonymous namespace
 
@@ -83,7 +83,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
 {
     auto const perStage = static_cast<VkDeviceSize> ( renderer.GetMaxPerStageResources () );
 
-    if ( perStage <= SAMPLER_CAPACITY ) [[unlikely]]
+    if ( perStage <= TOTAL_SAMPLERS ) [[unlikely]]
     {
         android_vulkan::LogError (
             "pbr::windows::ResourceHeap::Init - Hardware supports too little per stage resources."
@@ -92,9 +92,9 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         return false;
     }
 
-    constexpr size_t optimal = RESOURCE_CAPACITY + SAMPLER_CAPACITY;
-    VkDeviceSize const cases[] = { perStage - SAMPLER_CAPACITY, RESOURCE_CAPACITY };
-    VkDeviceSize const samplerSize = SAMPLER_CAPACITY * renderer.GetSamplerDescriptorSize ();
+    constexpr size_t optimal = RESOURCE_CAPACITY + TOTAL_SAMPLERS;
+    VkDeviceSize const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
+    VkDeviceSize const samplerSize = TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize ();
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -337,11 +337,47 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
 
     VkDevice device = renderer.GetDevice ();
 
-    return _clampToEdgeSampler.Init ( device, clampToEdgeSamplerInfo, "Clamp to edge" ) &&
+    bool const result = _clampToEdgeSampler.Init ( device, clampToEdgeSamplerInfo, "Clamp to edge" ) &&
         _cubemapSampler.Init ( device, cubemapSamplerInfo, "Cubemap" ) &&
         _materialSampler.Init ( device, materialSamplerInfo, "Material" ) &&
         _pointSampler.Init ( device, pointSamplerInfo, "Point" ) &&
         _shadowSampler.Init ( device, shadowSamplerInfo, "Shadow" );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    auto const samplerSize = static_cast<size_t> ( renderer.GetSamplerDescriptorSize () );
+
+    VkDescriptorGetInfoEXT getInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+
+        .data
+        {
+            .pSampler = &_clampToEdgeSampler.GetSampler ()
+        }
+    };
+
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * CLAMP_TO_EDGE_SAMPLER );
+
+    VkDescriptorDataEXT &data = getInfo.data;
+    data.pSampler = &_cubemapSampler.GetSampler ();
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * CUBEMAP_SAMPLER );
+
+    data.pSampler = &_materialSampler.GetSampler ();
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * MATERIAL_SAMPLER );
+
+    data.pSampler = &_pointSampler.GetSampler ();
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * POINT_SAMPLER );
+
+    data.pSampler = &_shadowSampler.GetSampler ();
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * SHADOW_SAMPLER );
+
+    // FUCK
+
+    return true;
 }
 
 } // namespace pbr::windows

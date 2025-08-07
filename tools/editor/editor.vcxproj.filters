@@ -851,5 +851,8 @@
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_device.in">
       <Filter>Header Files\core\platform\window</Filter>
     </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\samplers.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
   </ItemGroup>
 </Project>

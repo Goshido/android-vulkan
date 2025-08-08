@@ -33,6 +33,13 @@ class Renderer final
             uint32_t                                        _patch = 0U;
         };
 
+        struct PresentationEngine final
+        {
+            WindowHandle                                    _window = VK_NULL_HANDLE;
+            VkSurfaceKHR                                    _surface = VK_NULL_HANDLE;
+            VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
+        };
+
     private:
         struct VulkanPhysicalDeviceInfo final
         {
@@ -95,11 +102,20 @@ class Renderer final
 
         VkPhysicalDevice                                    _physicalDevice = VK_NULL_HANDLE;
 
+        std::vector<VkPhysicalDeviceGroupProperties>        _physicalDeviceGroups {};
+        PhysicalDevices                                     _physicalDeviceInfo {};
+        VkPhysicalDeviceMemoryProperties                    _physicalDeviceMemoryProperties {};
+
+        PresentationEngine                                  _presentationEngine {};
+        PresentationEngine                                  _oldPresentationEngine {};
+
+        GXMat4                                              _presentationEngineTransform {};
+
         VkQueue                                             _queue = VK_NULL_HANDLE;
         uint32_t                                            _queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-        VkSurfaceKHR                                        _surface = VK_NULL_HANDLE;
         VkFormat                                            _surfaceFormat = VK_FORMAT_UNDEFINED;
+        std::vector<VkSurfaceFormatKHR>                     _surfaceFormats {};
 
         VkExtent2D                                          _surfaceSize
         {
@@ -108,17 +124,19 @@ class Renderer final
         };
 
         VkSurfaceTransformFlagBitsKHR                       _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-        VkSwapchainKHR                                      _swapchain = VK_NULL_HANDLE;
-        VkSwapchainKHR                                      _oldSwapchain = VK_NULL_HANDLE;
+
+        std::vector<VkImage>                                _swapchainImages {};
+        std::vector<VkImageView>                            _swapchainImageViews {};
 
 #ifdef AV_ENABLE_VVL
 
+        VkDebugUtilsMessengerEXT                            _debugUtilsMessenger = VK_NULL_HANDLE;
         PFN_vkCreateDebugUtilsMessengerEXT                  vkCreateDebugUtilsMessengerEXT = nullptr;
         PFN_vkDestroyDebugUtilsMessengerEXT                 vkDestroyDebugUtilsMessengerEXT = nullptr;
 
-        VkDebugUtilsMessengerEXT                            _debugUtilsMessenger = VK_NULL_HANDLE;
-
 #endif // AV_ENABLE_VVL
+
+        bool                                                _vSync = true;
 
         VkExtent2D                                          _viewportResolution
         {
@@ -126,17 +144,6 @@ class Renderer final
             .height = 0U
         };
 
-        std::vector<VkPhysicalDeviceGroupProperties>        _physicalDeviceGroups {};
-        PhysicalDevices                                     _physicalDeviceInfo {};
-        VkPhysicalDeviceMemoryProperties                    _physicalDeviceMemoryProperties {};
-
-        std::vector<VkSurfaceFormatKHR>                     _surfaceFormats {};
-
-        std::vector<VkImage>                                _swapchainImages {};
-        std::vector<VkImageView>                            _swapchainImageViews {};
-
-        GXMat4                                              _presentationEngineTransform {};
-        bool                                                _vSync = true;
         VulkanLoader                                        _vulkanLoader {};
 
     public:
@@ -272,10 +279,8 @@ class Renderer final
 
         [[nodiscard]] bool DeploySurface ( WindowHandle nativeWindow ) noexcept;
         [[nodiscard]] bool DeployNativeSurface ( WindowHandle nativeWindow ) noexcept;
-        void DestroySurface () noexcept;
 
         [[nodiscard]] bool DeploySwapchain ( bool vSync ) noexcept;
-        void DestroySwapchain ( bool preserveSurface ) noexcept;
 
         void GetPlatformFeatureProperties () noexcept;
 

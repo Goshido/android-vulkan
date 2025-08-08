@@ -1,10 +1,9 @@
 #include <precompiled_headers.hpp>
-#include <pbr/geometry_pass_binds.inc>
-#include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
+#include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+namespace pbr::windows {
 
 namespace {
 
@@ -41,44 +40,17 @@ void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    if ( ++_references != 1U )
+    if ( ++_references != 1U ) [[likely]]
         return true;
 
     constexpr static VkDescriptorSetLayoutBinding const bindings[] =
     {
         {
-            .binding = BIND_DIFFUSE_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            // FUCK
+            .binding = 42U,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
             .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_EMISSION_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_MASK_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_NORMAL_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = BIND_PARAMS_TEXTURE,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = 1U,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             .pImmutableSamplers = nullptr
         }
     };
@@ -94,14 +66,14 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::GeometryPassTextureDescriptorSetLayout::Init",
+        "pbr::windows::ResourceHeapDescriptorSetLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Geometry pass texture" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Skin" )
     return true;
 }
 
@@ -111,19 +83,19 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void GeometryPassTextureDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void ResourceHeapDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     g_descriptorSetLayout.Destroy ( device );
 }
 
-bool GeometryPassTextureDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool ResourceHeapDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
     return g_descriptorSetLayout.Init ( device );
 }
 
-VkDescriptorSetLayout &GeometryPassTextureDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ResourceHeapDescriptorSetLayout::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

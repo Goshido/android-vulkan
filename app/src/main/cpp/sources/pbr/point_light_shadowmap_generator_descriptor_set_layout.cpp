@@ -33,25 +33,16 @@ class DescriptorSetLayout final
 
 void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    if ( !_references )
-        return;
-
-    --_references;
-
-    if ( _references )
-        return;
-
-    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
-    _layout = VK_NULL_HANDLE;
+    if ( _references > 0U && --_references == 0U )
+    {
+        vkDestroyDescriptorSetLayout ( device, std::exchange ( _layout, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    if ( _references )
-    {
-        ++_references;
+    if ( ++_references != 1U )
         return true;
-    }
 
     constexpr static VkDescriptorSetLayoutBinding binding
     {
@@ -86,7 +77,6 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         "Point light shadowmap generator"
     )
 
-    ++_references;
     return true;
 }
 

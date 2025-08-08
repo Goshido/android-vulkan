@@ -110,7 +110,8 @@ bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
         .window = reinterpret_cast<ANativeWindow*> ( nativeWindow )
     };
 
-    return CheckVkResult ( vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_surface ),
+    return CheckVkResult (
+        vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_presentationEngine._surface ),
         "Renderer::DeployNativeSurface",
         "Can't create Vulkan surface"
     );

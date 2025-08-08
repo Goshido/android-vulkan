@@ -32,25 +32,16 @@ class DescriptorSetLayout final
 
 void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    if ( !_references )
-        return;
-
-    --_references;
-
-    if ( _references )
-        return;
-
-    vkDestroyDescriptorSetLayout ( device, _layout, nullptr );
-    _layout = VK_NULL_HANDLE;
+    if ( _references > 0U && --_references == 0U )
+    {
+        vkDestroyDescriptorSetLayout ( device, std::exchange ( _layout, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
-    if ( _references )
-    {
-        ++_references;
+    if ( ++_references != 1U )
         return true;
-    }
 
     constexpr VkDescriptorSetLayoutCreateInfo const descriptorSetLayoutInfo
     {
@@ -71,8 +62,6 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Stub" )
-
-    ++_references;
     return true;
 }
 

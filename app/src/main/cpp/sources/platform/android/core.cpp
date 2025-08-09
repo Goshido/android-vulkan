@@ -1,10 +1,10 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <core.hpp>
 #include <bitwise.hpp>
 #include <logger.hpp>
 #include <mandelbrot/mandelbrot_analytic_color.hpp>
 #include <mandelbrot/mandelbrot_lut_color.hpp>
+#include <platform/android/core.hpp>
 #include <pbr/pbr_game.hpp>
 #include <pbr/box_stack/box_stack.hpp>
 #include <pbr/collision/collision.hpp>
@@ -17,7 +17,7 @@
 #include <rotating_mesh/game_lut.hpp>
 
 
-namespace android_vulkan {
+namespace android_vulkan::android {
 
 namespace {
 
@@ -67,38 +67,43 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     InitCommandHandlers ();
 
-    static std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    static std::map<android_vulkan::android::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         {
-            android_vulkan::eGame::CharacterSandbox,
+            android_vulkan::android::eGame::CharacterSandbox,
             std::make_shared<pbr::UniversalGame> ( "pbr/assets/character-sandbox.scene" )
         },
 
-        { android_vulkan::eGame::Collision, std::make_shared<pbr::collision::Collision> () },
-        { android_vulkan::eGame::BoxStack, std::make_shared<pbr::box_stack::BoxStack> () },
-        { android_vulkan::eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
-        { android_vulkan::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
-        { android_vulkan::eGame::PBR, std::make_shared<pbr::PBRGame> () },
-        { android_vulkan::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
-        { android_vulkan::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
-        { android_vulkan::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
-        { android_vulkan::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+        { android_vulkan::android::eGame::Collision, std::make_shared<pbr::collision::Collision> () },
+        { android_vulkan::android::eGame::BoxStack, std::make_shared<pbr::box_stack::BoxStack> () },
 
         {
-            android_vulkan::eGame::SkeletalMeshSandbox,
+            android_vulkan::android::eGame::MandelbrotAnalyticColor,
+            std::make_shared<mandelbrot::MandelbrotAnalyticColor> ()
+        },
+
+        { android_vulkan::android::eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
+        { android_vulkan::android::eGame::PBR, std::make_shared<pbr::PBRGame> () },
+        { android_vulkan::android::eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
+        { android_vulkan::android::eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
+        { android_vulkan::android::eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
+        { android_vulkan::android::eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+
+        {
+            android_vulkan::android::eGame::SkeletalMeshSandbox,
             std::make_shared<pbr::UniversalGame> ( "pbr/assets/skeletal-mesh-sandbox.scene" )
         },
 
-        { android_vulkan::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
-        { android_vulkan::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
+        { android_vulkan::android::eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
+        { android_vulkan::android::eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
 
         {
-            android_vulkan::eGame::World1x1,
+            android_vulkan::android::eGame::World1x1,
             std::make_shared<pbr::UniversalGame> ( "pbr/assets/world-1-1.scene" )
         }
     };
 
-    _game = games.find ( android_vulkan::eGame::PBR )->second.get ();
+    _game = games.find ( android_vulkan::android::eGame::PBR )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {
@@ -302,7 +307,12 @@ bool Core::OnQuitRequest () noexcept
 
 bool Core::OnSwapchainCreated () noexcept
 {
-    if ( !_renderer.OnCreateSwapchain ( reinterpret_cast<WindowHandle> ( _nativeWindow ), VSYNC ) ) [[unlikely]]
+    Renderer::eSwapchainResult const result = _renderer.OnCreateSwapchain ( false,
+        reinterpret_cast<WindowHandle> ( _nativeWindow ),
+        VSYNC
+    );
+
+    if ( result != Renderer::eSwapchainResult::Success ) [[unlikely]]
     {
         _renderer.OnDestroySwapchain ( false );
         return false;
@@ -468,4 +478,4 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( J
 
 } // extern "C"
 
-} // namespace android_vulkan
+} // namespace android_vulkan::android

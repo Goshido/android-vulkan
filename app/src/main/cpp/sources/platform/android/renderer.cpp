@@ -1,8 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <bitwise.hpp>
-#include <core.hpp>
 #include <logger.hpp>
+#include <platform/android/core.hpp>
 #include <renderer.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -97,7 +97,7 @@ constexpr char const INDENT_2[] = "        ";
 void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     AV_TRACE ( "Vulkan memory snapshot" )
-    _memoryAllocator.MakeSnapshot ( Core::GetCacheDirectory ().c_str () );
+    _memoryAllocator.MakeSnapshot ( android::Core::GetCacheDirectory ().c_str () );
 }
 
 bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
@@ -111,7 +111,7 @@ bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
     };
 
     return CheckVkResult (
-        vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_presentationEngine._surface ),
+        vkCreateAndroidSurfaceKHR ( _instance, &androidSurfaceCreateInfoKHR, nullptr, &_surface ),
         "Renderer::DeployNativeSurface",
         "Can't create Vulkan surface"
     );

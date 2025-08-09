@@ -562,7 +562,7 @@ void MainWindow::OnSize ( WPARAM wParam ) noexcept
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::WindowVisibilityChanged,
-            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
+            ._params = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
             ._serialNumber = 0U
         }
     );

@@ -30,7 +30,15 @@ namespace {
 
 } // end of anonymous namespace
 
+//----------------------------------------------------------------------------------------------------------------------
+
+namespace android {
+
 extern AAssetManager* g_AssetManager;
+
+} // namespace android
+
+//----------------------------------------------------------------------------------------------------------------------
 
 File::File ( std::string &&filePath ) noexcept:
     _filePath ( NormalizeAssetPath ( std::move ( filePath ) ) )
@@ -77,7 +85,7 @@ bool File::IsContentLoaded () const noexcept
 
 bool File::IsExist () const noexcept
 {
-    AAsset* asset = AAssetManager_open ( g_AssetManager, _filePath.c_str (), AASSET_MODE_STREAMING );
+    AAsset* asset = AAssetManager_open ( android::g_AssetManager, _filePath.c_str (), AASSET_MODE_STREAMING );
 
     if ( !asset )
         return false;
@@ -94,7 +102,7 @@ bool File::LoadContent () noexcept
         return true;
     }
 
-    AAsset* asset = AAssetManager_open ( g_AssetManager, _filePath.c_str (), AASSET_MODE_BUFFER );
+    AAsset* asset = AAssetManager_open ( android::g_AssetManager, _filePath.c_str (), AASSET_MODE_BUFFER );
 
     if ( !asset )
     {

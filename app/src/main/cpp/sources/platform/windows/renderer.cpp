@@ -116,8 +116,7 @@ bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept
         .hwnd = reinterpret_cast<HWND> ( nativeWindow )
     };
 
-    return CheckVkResult (
-        vkCreateWin32SurfaceKHR ( _instance, &win32SurfaceCreateInfoKHR, nullptr, &_presentationEngine._surface ),
+    return CheckVkResult ( vkCreateWin32SurfaceKHR ( _instance, &win32SurfaceCreateInfoKHR, nullptr, &_surface ),
         "Renderer::DeployNativeSurface",
         "Can't create Vulkan surface"
     );

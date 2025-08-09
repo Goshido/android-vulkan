@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <android_vulkan_sdk/pbr/scene_desc.hpp>
 #include <av_assert.hpp>
-#include <core.hpp>
 #include <file.hpp>
 #include <logger.hpp>
+#include <platform/android/core.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/bit_field.hpp>
 #include <pbr/coordinate_system.hpp>
@@ -846,7 +846,7 @@ int Scene::OnOverlapTestBoxBox ( lua_State* state )
 
 int Scene::OnQuit ( lua_State* /*state*/ )
 {
-    android_vulkan::Core::Quit ();
+    android_vulkan::android::Core::Quit ();
     return 0;
 }
 

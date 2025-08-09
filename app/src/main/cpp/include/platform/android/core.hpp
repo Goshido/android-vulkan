@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_CORE_HPP
-#define ANDROID_VULKAN_CORE_HPP
+#ifndef ANDROID_VULKAN_ANDROID_CORE_HPP
+#define ANDROID_VULKAN_ANDROID_CORE_HPP
 
 
 #include "game.hpp"
@@ -16,7 +16,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace android_vulkan {
+namespace android_vulkan::android {
 
 class Core final
 {
@@ -113,7 +113,7 @@ class Core final
         static void OnHomeUp ( void* context ) noexcept;
 };
 
-} // namespace android_vulkan
+} // namespace android_vulkan::android
 
 
-#endif // ANDROID_VULKAN_CORE_HPP
+#endif // ANDROID_VULKAN_ANDROID_CORE_HPP

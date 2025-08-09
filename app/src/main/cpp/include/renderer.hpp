@@ -33,11 +33,11 @@ class Renderer final
             uint32_t                                        _patch = 0U;
         };
 
-        struct PresentationEngine final
+        enum class eSwapchainResult: uint8_t
         {
-            WindowHandle                                    _window = VK_NULL_HANDLE;
-            VkSurfaceKHR                                    _surface = VK_NULL_HANDLE;
-            VkSwapchainKHR                                  _swapchain = VK_NULL_HANDLE;
+            Fail,
+            Success,
+            ZeroExtend
         };
 
     private:
@@ -106,14 +106,12 @@ class Renderer final
         PhysicalDevices                                     _physicalDeviceInfo {};
         VkPhysicalDeviceMemoryProperties                    _physicalDeviceMemoryProperties {};
 
-        PresentationEngine                                  _presentationEngine {};
-        PresentationEngine                                  _oldPresentationEngine {};
-
         GXMat4                                              _presentationEngineTransform {};
 
         VkQueue                                             _queue = VK_NULL_HANDLE;
         uint32_t                                            _queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
+        VkSurfaceKHR                                        _surface = VK_NULL_HANDLE;
         VkFormat                                            _surfaceFormat = VK_FORMAT_UNDEFINED;
         std::vector<VkSurfaceFormatKHR>                     _surfaceFormats {};
 
@@ -124,6 +122,9 @@ class Renderer final
         };
 
         VkSurfaceTransformFlagBitsKHR                       _surfaceTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+
+        VkSwapchainKHR                                      _swapchain = VK_NULL_HANDLE;
+        VkSwapchainKHR                                      _oldSwapchain = VK_NULL_HANDLE;
 
         std::vector<VkImage>                                _swapchainImages {};
         std::vector<VkImageView>                            _swapchainImageViews {};
@@ -210,7 +211,11 @@ class Renderer final
 
         [[nodiscard]] bool GetVSync () const noexcept;
 
-        [[nodiscard]] bool OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept;
+        [[nodiscard]] eSwapchainResult OnCreateSwapchain ( bool preserveSurface,
+            WindowHandle nativeWindow,
+            bool vSync
+        ) noexcept;
+
         void OnDestroySwapchain ( bool preserveSurface ) noexcept;
 
         [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU ) noexcept;

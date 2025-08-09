@@ -15,7 +15,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/animation_track.cpp
     app/src/main/cpp/sources/contact_detector.cpp
     app/src/main/cpp/sources/contact_manager.cpp
-    app/src/main/cpp/sources/core.cpp
     app/src/main/cpp/sources/css_unit_to_device_pixel.cpp
     app/src/main/cpp/sources/cyrus_beck.cpp
     app/src/main/cpp/sources/epa.cpp
@@ -238,6 +237,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
     app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
+    app/src/main/cpp/sources/platform/android/core.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp

@@ -735,22 +735,16 @@ bool Renderer::CheckSwapchainStatus () noexcept
 {
     VkSurfaceCapabilitiesKHR caps {};
 
-    bool tmp = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _presentationEngine._surface, &caps ),
+    bool const status = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
         "Renderer::CheckSwapchainStatus",
         "Can't get Vulkan surface capabilities"
     );
 
-    if ( !tmp )
-        return false;
-
-    if ( _surfaceTransform != caps.currentTransform )
-        tmp = false;
-
-    if ( std::memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
-        tmp = false;
-
-    return tmp;
+    return status &
+        ( _surfaceTransform == caps.currentTransform ) &
+        ( _surfaceSize.width == caps.currentExtent.width ) &
+        ( _surfaceSize.height == caps.currentExtent.height );
 }
 
 bool Renderer::CreateShader ( VkShaderModule &shader,
@@ -925,7 +919,7 @@ VkExtent2D const &Renderer::GetSurfaceSize () const noexcept
 
 VkSwapchainKHR &Renderer::GetSwapchain () noexcept
 {
-    return _presentationEngine._swapchain;
+    return _swapchain;
 }
 
 VkExtent2D const &Renderer::GetViewportResolution () const noexcept
@@ -938,10 +932,31 @@ bool Renderer::GetVSync () const noexcept
     return _vSync;
 }
 
-bool Renderer::OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept
+Renderer::eSwapchainResult Renderer::OnCreateSwapchain ( bool preserveSurface, WindowHandle nativeWindow, bool vSync ) noexcept
 {
     AV_TRACE ( "Creating swapchain" )
-    return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
+    constexpr eSwapchainResult const cases[] = { eSwapchainResult::Fail, eSwapchainResult::Success };
+
+    if ( ( !preserveSurface ) | ( _surface == VK_NULL_HANDLE ) )
+        return cases[ static_cast<size_t> ( DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync ) ) ];
+
+    VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+
+    bool result = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+        "Renderer::OnCreateSwapchain",
+        "Can't get Vulkan surface capabilities"
+    );
+
+    if ( !result ) [[unlikely]]
+        return eSwapchainResult::Fail;
+
+    _surfaceSize = caps.currentExtent;
+
+    if ( _surfaceSize.width * _surfaceSize.height == 0U ) [[unlikely]]
+        return eSwapchainResult::ZeroExtend;
+
+    return cases[ static_cast<size_t> ( DeploySwapchain ( vSync ) ) ];
 }
 
 void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
@@ -951,29 +966,19 @@ void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
     for ( size_t i = 0U; i < count; ++i )
         vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
 
-    if ( _presentationEngine._swapchain == VK_NULL_HANDLE ) [[unlikely]]
+    if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    if ( !preserveSurface ) [[unlikely]]
+    if ( preserveSurface ) [[unlikely]]
     {
-        // FUCK - surface could be the same
-        vkDestroySwapchainKHR ( _device, std::exchange ( _presentationEngine._swapchain, VK_NULL_HANDLE ), nullptr );
-        vkDestroySurfaceKHR ( _instance, std::exchange ( _presentationEngine._surface, VK_NULL_HANDLE ), nullptr );
-        _oldPresentationEngine._surface = VK_NULL_HANDLE;
-        _oldPresentationEngine._swapchain = VK_NULL_HANDLE;
+        _oldSwapchain = std::exchange ( _swapchain, VK_NULL_HANDLE );
+        AV_SET_VULKAN_OBJECT_NAME ( _device, _oldSwapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Old swapchain" )
         return;
     }
 
-    _oldPresentationEngine._surface = std::exchange ( _presentationEngine._surface, VK_NULL_HANDLE );
-    _oldPresentationEngine._swapchain = std::exchange ( _presentationEngine._swapchain, VK_NULL_HANDLE );
-
-    AV_SET_VULKAN_OBJECT_NAME ( _device, _oldPresentationEngine._surface, VK_OBJECT_TYPE_SURFACE_KHR, "Old surface" )
-
-    AV_SET_VULKAN_OBJECT_NAME ( _device,
-        _oldPresentationEngine._swapchain,
-        VK_OBJECT_TYPE_SWAPCHAIN_KHR,
-        "Old swapchain"
-    )
+    vkDestroySwapchainKHR ( _device, std::exchange ( _swapchain, VK_NULL_HANDLE ), nullptr );
+    vkDestroySurfaceKHR ( _instance, std::exchange ( _surface, VK_NULL_HANDLE ), nullptr );
+    _oldSwapchain = VK_NULL_HANDLE;
 }
 
 bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
@@ -1626,12 +1631,11 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     if ( !DeployNativeSurface ( nativeWindow ) ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( _device, _presentationEngine._surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
     VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
-    bool result = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _presentationEngine._surface, &caps ),
+    bool result = CheckVkResult ( vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
         "Renderer::DeploySurface",
         "Can't get Vulkan surface capabilities"
     );
@@ -1652,29 +1656,12 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
         return false;
     }
 
-#ifdef AV_NATIVE_MODE_PORTRAIT
-
-    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
-    _viewportResolution.width = _surfaceSize.height;
-    _viewportResolution.height = _surfaceSize.width;
-
-#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
-
-    _presentationEngineTransform.Identity ();
-    _viewportResolution = _surfaceSize;
-
-#else
-
-#error Please specify AV_NATIVE_MODE_PORTRAIT or AV_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
-
-#endif // AV_NATIVE_MODE_PORTRAIT | AV_NATIVE_MODE_LANDSCAPE
-
     VkBool32 isSupported = VK_FALSE;
 
     result = CheckVkResult (
         vkGetPhysicalDeviceSurfaceSupportKHR ( _physicalDevice,
             _queueFamilyIndex,
-            _presentationEngine._surface,
+            _surface,
             &isSupported
         ),
 
@@ -1692,7 +1679,7 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     }
 
     uint32_t formatCount = 0U;
-    vkGetPhysicalDeviceSurfaceFormatsKHR ( _physicalDevice, _presentationEngine._surface, &formatCount, nullptr );
+    vkGetPhysicalDeviceSurfaceFormatsKHR ( _physicalDevice, _surface, &formatCount, nullptr );
 
     if ( !formatCount ) [[unlikely]]
     {
@@ -1706,7 +1693,7 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     VkSurfaceFormatKHR* formatList = _surfaceFormats.data ();
 
     result = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceFormatsKHR ( _physicalDevice, _presentationEngine._surface, &formatCount, formatList ),
+        vkGetPhysicalDeviceSurfaceFormatsKHR ( _physicalDevice, _surface, &formatCount, formatList ),
         "Renderer::DeploySurface",
         "Can't get Vulkan surface formats"
     );
@@ -1751,7 +1738,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .pNext = nullptr,
         .flags = 0U,
-        .surface = _presentationEngine._surface,
+        .surface = _surface,
         .minImageCount = 3U,
         .imageFormat = _surfaceFormat,
         .imageColorSpace = colorSpace,
@@ -1770,11 +1757,11 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .compositeAlpha = compositeAlpha,
         .presentMode = presentMode,
         .clipped = VK_TRUE,
-        .oldSwapchain = _oldPresentationEngine._swapchain
+        .oldSwapchain = _oldSwapchain
     };
 
     bool result = CheckVkResult (
-        vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_presentationEngine._swapchain ),
+        vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
@@ -1782,25 +1769,30 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( _device,
-        _presentationEngine._swapchain,
-        VK_OBJECT_TYPE_SWAPCHAIN_KHR,
-        "Main swapchain"
-    )
+    AV_SET_VULKAN_OBJECT_NAME ( _device, _swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Main swapchain" )
 
-    if ( _oldPresentationEngine._swapchain != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroySwapchainKHR ( _device,
-            std::exchange ( _oldPresentationEngine._swapchain, VK_NULL_HANDLE ),
-            nullptr
-        );
-    }
+    if ( _oldSwapchain != VK_NULL_HANDLE ) [[likely]]
+        vkDestroySwapchainKHR ( _device, std::exchange ( _oldSwapchain, VK_NULL_HANDLE ), nullptr );
 
-    if ( _oldPresentationEngine._surface != VK_NULL_HANDLE ) [[likely]]
-        vkDestroySurfaceKHR ( _instance, std::exchange ( _oldPresentationEngine._surface, VK_NULL_HANDLE ), nullptr );
+#ifdef AV_NATIVE_MODE_PORTRAIT
+
+    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
+    _viewportResolution.width = _surfaceSize.height;
+    _viewportResolution.height = _surfaceSize.width;
+
+#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
+
+    _presentationEngineTransform.Identity ();
+    _viewportResolution = _surfaceSize;
+
+#else
+
+#error Please specify AV_NATIVE_MODE_PORTRAIT or AV_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif // AV_NATIVE_MODE_PORTRAIT | AV_NATIVE_MODE_LANDSCAPE
 
     uint32_t imageCount = 0U;
-    vkGetSwapchainImagesKHR ( _device, _presentationEngine._swapchain, &imageCount, nullptr );
+    vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, nullptr );
 
     if ( !imageCount ) [[unlikely]]
     {
@@ -1813,7 +1805,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     _swapchainImages.resize ( static_cast<size_t> ( imageCount ) );
 
     result = CheckVkResult (
-        vkGetSwapchainImagesKHR ( _device, _presentationEngine._swapchain, &imageCount, _swapchainImages.data () ),
+        vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, _swapchainImages.data () ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
@@ -2311,7 +2303,7 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
     bool const result = CheckVkResult (
         vkGetPhysicalDeviceSurfacePresentModesKHR ( _physicalDevice,
-            _presentationEngine._surface,
+            _surface,
             &modeCount,
             nullptr
         ),
@@ -2327,19 +2319,16 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
     std::vector<VkPresentModeKHR> modes ( static_cast<size_t> ( modeCount ) );
     VkPresentModeKHR* modeList = modes.data ();
-    vkGetPhysicalDeviceSurfacePresentModesKHR ( _physicalDevice, _presentationEngine._surface, &modeCount, modeList );
+    vkGetPhysicalDeviceSurfacePresentModesKHR ( _physicalDevice, _surface, &modeCount, modeList );
 
     targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
     for ( uint32_t i = 0U; i < modeCount; ++i )
     {
-        VkPresentModeKHR const mode = modeList[ i ];
-        PrintVkPresentModeProp ( i, mode );
-
-        if ( mode != desirableMode )
-            continue;
-
-        targetPresentMode = mode;
+        VkPresentModeKHR const m = modeList[ i ];
+        PrintVkPresentModeProp ( i, m );
+        VkPresentModeKHR const cases[] = { targetPresentMode, m };
+        targetPresentMode = cases[ static_cast<size_t> ( m == desirableMode ) ];
     }
 
     LogInfo ( "Renderer::SelectTargetPresentMode - Presented mode selected: %s.",

@@ -4,6 +4,7 @@
 
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
+#include "resource_heap_descriptor_set_layout.hpp"
 
 
 namespace pbr::windows {
@@ -40,17 +41,19 @@ class ResourceHeap final
         };
 
     private:
-        Sampler                     _clampToEdgeSampler {};
-        Sampler                     _cubemapSampler {};
-        Sampler                     _materialSampler {};
-        Sampler                     _pointSampler {};
-        Sampler                     _shadowSampler {};
+        Sampler                             _clampToEdgeSampler {};
+        Sampler                             _cubemapSampler {};
+        Sampler                             _materialSampler {};
+        Sampler                             _pointSampler {};
+        Sampler                             _shadowSampler {};
 
-        Buffer                      _resourceDescriptors {};
-        Buffer                      _samplerDescriptors {};
+        ResourceHeapDescriptorSetLayout     _layout {};
 
-        Buffer                      _stagingBuffer {};
-        uint8_t*                    _stagingMemory = nullptr;
+        Buffer                              _resourceDescriptors {};
+        Buffer                              _samplerDescriptors {};
+
+        Buffer                              _stagingBuffer {};
+        uint8_t*                            _stagingMemory = nullptr;
 
     public:
         ResourceHeap () = default;

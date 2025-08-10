@@ -94,6 +94,9 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
 
     constexpr size_t optimal = RESOURCE_CAPACITY + TOTAL_SAMPLERS;
     VkDeviceSize const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
+    VkDeviceSize const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
+    ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+
     VkDeviceSize const samplerSize = TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize ();
 
     /*
@@ -119,7 +122,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     VkPhysicalDeviceDescriptorBufferPropertiesEXT.
     */
 
-    VkDeviceSize const resourceSize = cases[ static_cast<size_t> ( optimal <= perStage ) ] * std::max (
+    VkDeviceSize const resourceSize = resourceCapacity * std::max (
         {
             renderer.GetSampledImageDescriptorSize (),
             renderer.GetStorageImageDescriptorSize (),
@@ -162,6 +165,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
             "Can't map memory"
         ) &&
 
+        _layout.Init ( renderer.GetDevice () ) &&
         InitSamplers ( renderer, commandBuffer );
 }
 
@@ -174,6 +178,8 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _materialSampler.Destroy ( device );
     _pointSampler.Destroy ( device );
     _shadowSampler.Destroy ( device );
+
+    _layout.Destroy ( device );
 
     if ( std::exchange ( _stagingMemory, nullptr ) ) [[likely]]
         renderer.UnmapMemory ( _stagingBuffer._memory );

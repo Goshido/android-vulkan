@@ -9,6 +9,9 @@ namespace pbr::windows {
 
 class ResourceHeapDescriptorSetLayout final : public pbr::DescriptorSetLayout
 {
+    private:
+        static uint32_t     _resourceCapacity;
+
     public:
         ResourceHeapDescriptorSetLayout () = default;
 
@@ -24,6 +27,8 @@ class ResourceHeapDescriptorSetLayout final : public pbr::DescriptorSetLayout
         [[nodiscard]] bool Init ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkDescriptorSetLayout &GetLayout () const noexcept override;
+
+        static void SetResourceCapacity ( uint32_t capacity ) noexcept;
 };
 
 } // namespace pbr::windows

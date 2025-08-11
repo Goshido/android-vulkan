@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <logger.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/samplers.inc>
@@ -11,6 +12,7 @@ namespace pbr::windows {
 namespace {
 
 constexpr VkDeviceSize RESOURCE_CAPACITY = 1'000'000U;
+constexpr auto UI_SLOTS = static_cast<uint32_t> ( std::numeric_limits<uint16_t>::max () + 1U );
 
 } // end of anonymous namespace
 
@@ -79,6 +81,28 @@ void ResourceHeap::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexce
 
 //----------------------------------------------------------------------------------------------------------------------
 
+void ResourceHeap::Slots::Init ( uint32_t first, uint32_t count ) noexcept
+{
+    for ( ; first < count; ++first )
+    {
+        _free.push_back ( first );
+    }
+}
+
+uint32_t ResourceHeap::Slots::Allocate () noexcept
+{
+    AV_ASSERT ( !_free.empty () )
+    _used.splice ( _used.cbegin (), _free, _free.cbegin () );
+    return _used.front ();
+}
+
+bool ResourceHeap::Slots::IsFull () const noexcept
+{
+    return _free.empty ();
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     auto const perStage = static_cast<VkDeviceSize> ( renderer.GetMaxPerStageResources () );
@@ -96,8 +120,6 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     VkDeviceSize const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     VkDeviceSize const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
     ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
-
-    VkDeviceSize const samplerSize = TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize ();
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -130,11 +152,14 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         }
     );
 
+    VkDevice device = renderer.GetDevice ();
+
     return
         _resourceDescriptors.Init ( renderer,
             resourceSize,
 
             AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
                 AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -142,9 +167,10 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         ) &&
 
         _samplerDescriptors.Init ( renderer,
-            samplerSize,
+            TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize (),
 
             AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
                 AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
 
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -152,7 +178,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         ) &&
 
         _stagingBuffer.Init ( renderer,
-            resourceSize * 2U,
+            resourceSize  * 2U,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
             "Descriptor buffer (staging)"
@@ -165,7 +191,8 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
             "Can't map memory"
         ) &&
 
-        _layout.Init ( renderer.GetDevice () ) &&
+        InitInternalStructures ( device, resourceSize, resourceCapacity ) &&
+        _layout.Init ( device ) &&
         InitSamplers ( renderer, commandBuffer );
 }
 
@@ -199,12 +226,22 @@ void ResourceHeap::UnregisterBuffer () noexcept
     // FUCK
 }
 
-void ResourceHeap::RegisterSampledImage ( VkImageView /*view*/ ) noexcept
+void ResourceHeap::RegisterNonUISampledImage ( VkImageView /*view*/ ) noexcept
 {
     // FUCK
 }
 
-void ResourceHeap::UnregisterSampledImage () noexcept
+void ResourceHeap::UnregisterNonUISampledImage () noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::RegisterUISampledImage ( VkImageView /*view*/ ) noexcept
+{
+    // FUCK
+}
+
+void ResourceHeap::UnregisterUISampledImage () noexcept
 {
     // FUCK
 }
@@ -219,14 +256,37 @@ void ResourceHeap::UnregisterStorageImage () noexcept
     // FUCK
 }
 
-void ResourceHeap::RegisterSampler () noexcept
+bool ResourceHeap::InitInternalStructures ( VkDevice device,
+    VkDeviceSize /*resourceSize*/,
+    VkDeviceSize resourceCapacity
+) noexcept
 {
-    // FUCK
-}
+    auto const cap = static_cast<uint32_t> ( resourceCapacity );
 
-void ResourceHeap::UnregisterSampler () noexcept
-{
-    // FUCK
+    if ( cap <= UI_SLOTS ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::windows::ResourceHeap::InitInternalStructures - No room for UI slots." );
+        return false;
+    }
+
+    VkDescriptorBufferBindingInfoEXT &resources = _bindingInfo[ 0U ];
+    VkDescriptorBufferBindingInfoEXT &samplers = _bindingInfo[ 1U ];
+
+    VkBufferDeviceAddressInfo info
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .pNext = nullptr,
+        .buffer = _resourceDescriptors._buffer
+    };
+
+    resources.address = vkGetBufferDeviceAddress ( device, &info );
+
+    info.buffer = _samplerDescriptors._buffer;
+    samplers.address = vkGetBufferDeviceAddress ( device, &info );
+
+    _uiSlots.Init ( 0U, UI_SLOTS );
+    _nonUISlots.Init ( UI_SLOTS, cap - UI_SLOTS );
+    return true;
 }
 
 bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer /*commandBuffer*/ ) noexcept

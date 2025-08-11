@@ -15,12 +15,12 @@ class ResourceHeap final
         class Buffer final
         {
             public:
-                VkBuffer            _buffer = VK_NULL_HANDLE;
-                VkDeviceMemory      _memory = VK_NULL_HANDLE;
-                VkDeviceSize        _offset = 0U;
+                VkBuffer                    _buffer = VK_NULL_HANDLE;
+                VkDeviceMemory              _memory = VK_NULL_HANDLE;
+                VkDeviceSize                _offset = 0U;
 
             public:
-                Buffer () = default;
+                explicit Buffer () = default;
 
                 Buffer ( Buffer const & ) = delete;
                 Buffer &operator = ( Buffer const & ) = delete;
@@ -40,6 +40,28 @@ class ResourceHeap final
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
+        class Slots final
+        {
+            private:
+                std::list<uint32_t>         _free {};
+                std::list<uint32_t>         _used {};
+
+            public:
+                explicit Slots () = default;
+
+                Slots ( Slots const & ) = delete;
+                Slots &operator = ( Slots const & ) = delete;
+
+                Slots ( Slots && ) = delete;
+                Slots &operator = ( Slots && ) = delete;
+
+                ~Slots () = default;
+
+                void Init ( uint32_t first, uint32_t count ) noexcept;
+                [[nodiscard]] uint32_t Allocate () noexcept;
+                [[nodiscard]] bool IsFull () const noexcept;
+        };
+
     private:
         Sampler                             _clampToEdgeSampler {};
         Sampler                             _cubemapSampler {};
@@ -49,11 +71,31 @@ class ResourceHeap final
 
         ResourceHeapDescriptorSetLayout     _layout {};
 
+        // Can't use single descriptor buffer because of limit: samplerDescriptorBufferAddressSpaceSize
         Buffer                              _resourceDescriptors {};
         Buffer                              _samplerDescriptors {};
 
         Buffer                              _stagingBuffer {};
         uint8_t*                            _stagingMemory = nullptr;
+
+        Slots                               _nonUISlots {};
+        Slots                               _uiSlots {};
+
+        VkDescriptorBufferBindingInfoEXT    _bindingInfo[ 2U ] =
+        {
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
+                .pNext = nullptr,
+                .address = 0U,
+                .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
+            },
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
+                .pNext = nullptr,
+                .address = 0U,
+                .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
+            }
+        };
 
     public:
         ResourceHeap () = default;
@@ -72,16 +114,21 @@ class ResourceHeap final
         void RegisterBuffer () noexcept;
         void UnregisterBuffer () noexcept;
 
-        void RegisterSampledImage ( VkImageView view ) noexcept;
-        void UnregisterSampledImage () noexcept;
+        void RegisterNonUISampledImage ( VkImageView view ) noexcept;
+        void UnregisterNonUISampledImage () noexcept;
+
+        void RegisterUISampledImage ( VkImageView view ) noexcept;
+        void UnregisterUISampledImage () noexcept;
 
         void RegisterStorageImage ( VkImageView view ) noexcept;
         void UnregisterStorageImage () noexcept;
 
-        void RegisterSampler () noexcept;
-        void UnregisterSampler () noexcept;
-
     private:
+        [[nodiscard]] bool InitInternalStructures ( VkDevice device,
+            VkDeviceSize resourceSize,
+            VkDeviceSize resourceCapacity
+        ) noexcept;
+
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

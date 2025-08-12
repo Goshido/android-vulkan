@@ -6,6 +6,12 @@
 #include <renderer.hpp>
 #include "resource_heap_descriptor_set_layout.hpp"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <optional>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace pbr::windows {
 
@@ -58,8 +64,36 @@ class ResourceHeap final
                 ~Slots () = default;
 
                 void Init ( uint32_t first, uint32_t count ) noexcept;
+
                 [[nodiscard]] uint32_t Allocate () noexcept;
+                void Free ( uint32_t index ) noexcept;
                 [[nodiscard]] bool IsFull () const noexcept;
+        };
+
+        using DescriptorBlob = std::span<uint8_t const>;
+
+        class Write final
+        {
+            private:
+                std::vector<VkBufferCopy>       _copy {};
+                size_t                          _readIndex = 0U;
+                size_t                          _writeIndex = 0U;
+                size_t                          _written = 0U;
+
+            public:
+                explicit Write () = default;
+
+                Write ( Write const & ) = delete;
+                Write &operator = ( Write const & ) = delete;
+
+                Write ( Write && ) = delete;
+                Write &operator = ( Write && ) = delete;
+
+                ~Write () = default;
+
+                void Init ( VkDeviceSize resourceCapacity, VkDeviceSize resourceSize ) noexcept;
+                void Upload ( VkCommandBuffer commandBuffer, VkBuffer stagingBuffer, VkBuffer descriptorBuffer ) noexcept;
+                void Push ( VkDeviceSize srcOffset, VkDeviceSize dstOffset, DescriptorBlob descriptorBlob ) noexcept;
         };
 
     private:
@@ -71,15 +105,17 @@ class ResourceHeap final
 
         ResourceHeapDescriptorSetLayout     _layout {};
 
-        // Can't use single descriptor buffer because of limit: samplerDescriptorBufferAddressSpaceSize
-        Buffer                              _resourceDescriptors {};
-        Buffer                              _samplerDescriptors {};
-
+        Buffer                              _descriptorBuffer {};
         Buffer                              _stagingBuffer {};
         uint8_t*                            _stagingMemory = nullptr;
 
         Slots                               _nonUISlots {};
         Slots                               _uiSlots {};
+
+        VkDeviceSize                        _resourceOffset = 0U;
+        VkDeviceSize                        _resourceSize = 0U;
+
+        Write                               _write {};
 
         VkDescriptorBufferBindingInfoEXT    _bindingInfo[ 2U ] =
         {
@@ -109,26 +145,18 @@ class ResourceHeap final
         ~ResourceHeap () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
-        void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
 
-        void RegisterBuffer () noexcept;
-        void UnregisterBuffer () noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkBuffer buffer ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterNonUISampledImage ( VkImageView view ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterUISampledImage ( VkImageView view ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterStorageImage ( VkImageView view ) noexcept;
 
-        void RegisterNonUISampledImage ( VkImageView view ) noexcept;
-        void UnregisterNonUISampledImage () noexcept;
-
-        void RegisterUISampledImage ( VkImageView view ) noexcept;
-        void UnregisterUISampledImage () noexcept;
-
-        void RegisterStorageImage ( VkImageView view ) noexcept;
-        void UnregisterStorageImage () noexcept;
+        void UnregisterResource ( uint32_t index ) noexcept;
+        void UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept;
 
     private:
-        [[nodiscard]] bool InitInternalStructures ( VkDevice device,
-            VkDeviceSize resourceSize,
-            VkDeviceSize resourceCapacity
-        ) noexcept;
-
+        [[nodiscard]] bool InitInternalStructures ( VkDevice device, VkDeviceSize resourceCapacity ) noexcept;
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

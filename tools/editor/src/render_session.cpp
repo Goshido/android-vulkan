@@ -774,14 +774,48 @@ bool RenderSession::InitModules () noexcept
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
 
+    VkCommandBufferAllocateInfo const allocateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .pNext = nullptr,
+        .commandPool = pool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U
+    };
+
+    constexpr VkCommandBufferBeginInfo beginCommandBuffer
+    {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .pNext = nullptr,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        .pInheritanceInfo = nullptr
+    };
+
+    VkCommandBuffer commandBuffer;
+
+    result =
+        android_vulkan::Renderer::CheckVkResult (
+            vkAllocateCommandBuffers ( device, &allocateInfo, &commandBuffer ),
+            "editor::RenderSession::InitModules",
+            "Can't allocate command buffer"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginCommandBuffer ),
+            "editor::RenderSession::InitModules",
+            "Can't begin command buffer"
+        );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Engine init" )
+
     {
         std::lock_guard const lock ( _submitMutex );
 
         result = _defaultTextureManager.Init ( renderer, pool ) &&
             _exposurePass.Init ( renderer, pool ) &&
-
-            // FUCK - provide correct VkCommandBuffer
-            _resourceHeap.Init ( renderer, VK_NULL_HANDLE );
+            _resourceHeap.Init ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
         {
@@ -793,10 +827,44 @@ bool RenderSession::InitModules () noexcept
     constexpr uint32_t subpass = pbr::PresentRenderPass::GetSubpass ();
 
     result = _samplerManager.Init ( device ) &&
-        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
+        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
+
+        android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+            "editor::RenderSession::InitModules",
+            "Can't end command buffer"
+        );
 
     if ( !result ) [[unlikely]]
         return false;
+
+    VkSubmitInfo const submit
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
+
+    VkQueue queue = renderer.GetQueue ();
+
+    {
+        std::lock_guard const lock ( _submitMutex );
+
+        result = android_vulkan::Renderer::CheckVkResult ( vkQueueSubmit ( queue, 1U, &submit, VK_NULL_HANDLE ),
+            "editor::RenderSession::InitModules",
+            "Can't submit command buffer"
+        );
+
+        if ( !result ) [[unlikely]]
+        {
+            return false;
+        }
+    }
 
     _messageQueue.EnqueueBack (
         {
@@ -822,14 +890,15 @@ bool RenderSession::InitModules () noexcept
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
-        android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+        android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
-            "Can't run upload commands"
+            "Can't wait queue idle"
         );
 
     if ( !result ) [[unlikely]]
         return false;
 
+    vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
     _timestamp = std::chrono::system_clock::now ();

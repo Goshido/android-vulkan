@@ -21,9 +21,9 @@ class ResourceHeap final
         class Buffer final
         {
             public:
-                VkBuffer                    _buffer = VK_NULL_HANDLE;
-                VkDeviceMemory              _memory = VK_NULL_HANDLE;
-                VkDeviceSize                _offset = 0U;
+                VkBuffer                        _buffer = VK_NULL_HANDLE;
+                VkDeviceMemory                  _memory = VK_NULL_HANDLE;
+                VkDeviceSize                    _offset = 0U;
 
             public:
                 explicit Buffer () = default;
@@ -49,8 +49,8 @@ class ResourceHeap final
         class Slots final
         {
             private:
-                std::list<uint32_t>         _free {};
-                std::list<uint32_t>         _used {};
+                std::list<uint32_t>             _free {};
+                std::list<uint32_t>             _used {};
 
             public:
                 explicit Slots () = default;
@@ -70,8 +70,6 @@ class ResourceHeap final
                 [[nodiscard]] bool IsFull () const noexcept;
         };
 
-        using DescriptorBlob = std::span<uint8_t const>;
-
         class Write final
         {
             private:
@@ -79,6 +77,12 @@ class ResourceHeap final
                 size_t                          _readIndex = 0U;
                 size_t                          _writeIndex = 0U;
                 size_t                          _written = 0U;
+
+                VkDeviceSize                    _resourceOffset = 0U;
+                VkDeviceSize                    _resourceSize = 0U;
+
+                Buffer                          _stagingBuffer {};
+                uint8_t*                        _stagingMemory = nullptr;
 
             public:
                 explicit Write () = default;
@@ -91,33 +95,43 @@ class ResourceHeap final
 
                 ~Write () = default;
 
-                void Init ( VkDeviceSize resourceCapacity, VkDeviceSize resourceSize ) noexcept;
-                void Upload ( VkCommandBuffer commandBuffer, VkBuffer stagingBuffer, VkBuffer descriptorBuffer ) noexcept;
-                void Push ( VkDeviceSize srcOffset, VkDeviceSize dstOffset, DescriptorBlob descriptorBlob ) noexcept;
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+                    VkDeviceSize bufferSize,
+                    VkDeviceSize resourceCapacity,
+                    VkDeviceSize resourceOffset,
+                    VkDeviceSize resourceSize
+                ) noexcept;
+
+                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+
+                [[nodiscard]] VkBuffer GetStagingBuffer () const noexcept;
+                [[nodiscard]] uint8_t* GetStagingMemory () const noexcept;
+
+                void Upload ( VkCommandBuffer commandBuffer, VkBuffer descriptorBuffer ) noexcept;
+                [[nodiscard]] void* Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept;
         };
 
     private:
-        Sampler                             _clampToEdgeSampler {};
-        Sampler                             _cubemapSampler {};
-        Sampler                             _materialSampler {};
-        Sampler                             _pointSampler {};
-        Sampler                             _shadowSampler {};
+        Sampler                                 _clampToEdgeSampler {};
+        Sampler                                 _cubemapSampler {};
+        Sampler                                 _materialSampler {};
+        Sampler                                 _pointSampler {};
+        Sampler                                 _shadowSampler {};
 
-        ResourceHeapDescriptorSetLayout     _layout {};
+        ResourceHeapDescriptorSetLayout         _layout {};
 
-        Buffer                              _descriptorBuffer {};
-        Buffer                              _stagingBuffer {};
-        uint8_t*                            _stagingMemory = nullptr;
+        Buffer                                  _descriptorBuffer {};
 
-        Slots                               _nonUISlots {};
-        Slots                               _uiSlots {};
+        Slots                                   _nonUISlots {};
+        Slots                                   _uiSlots {};
 
-        VkDeviceSize                        _resourceOffset = 0U;
-        VkDeviceSize                        _resourceSize = 0U;
+        size_t                                  _storageBufferDescriptorSize = 0U;
+        size_t                                  _sampledImageDescriptorSize = 0U;
+        size_t                                  _storageImageDescriptorSize = 0U;
 
-        Write                               _write {};
+        Write                                   _write {};
 
-        VkDescriptorBufferBindingInfoEXT    _bindingInfo[ 2U ] =
+        VkDescriptorBufferBindingInfoEXT        _bindingInfo[ 2U ] =
         {
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
@@ -147,16 +161,24 @@ class ResourceHeap final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
 
-        [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkBuffer buffer ) noexcept;
-        [[nodiscard]] std::optional<uint32_t> RegisterNonUISampledImage ( VkImageView view ) noexcept;
-        [[nodiscard]] std::optional<uint32_t> RegisterUISampledImage ( VkImageView view ) noexcept;
-        [[nodiscard]] std::optional<uint32_t> RegisterStorageImage ( VkImageView view ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
+            VkDeviceAddress bufferAddress,
+            VkDeviceSize range
+        ) noexcept;
+
+        [[nodiscard]] std::optional<uint32_t> RegisterNonUISampledImage ( VkDevice device, VkImageView view ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterUISampledImage ( VkDevice device, VkImageView view ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> RegisterStorageImage ( VkDevice device, VkImageView view ) noexcept;
 
         void UnregisterResource ( uint32_t index ) noexcept;
         void UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept;
 
     private:
-        [[nodiscard]] bool InitInternalStructures ( VkDevice device, VkDeviceSize resourceCapacity ) noexcept;
+        [[nodiscard]] bool InitInternalStructures ( VkDevice device,
+            VkDeviceSize resourceCapacity,
+            VkDeviceSize resourceOffset
+        ) noexcept;
+
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

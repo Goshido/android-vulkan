@@ -114,21 +114,53 @@ bool ResourceHeap::Slots::IsFull () const noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void ResourceHeap::Write::Init ( VkDeviceSize resourceCapacity, VkDeviceSize resourceSize ) noexcept
+bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
+    VkDeviceSize bufferSize,
+    VkDeviceSize resourceCapacity,
+    VkDeviceSize resourceOffset,
+    VkDeviceSize resourceSize
+) noexcept
 {
-    _copy.resize ( 2U * resourceCapacity,
-        {
-            .srcOffset = 0U,
-            .dstOffset = 0U,
-            .size = resourceSize
-        }
-    );
+    _resourceOffset = resourceOffset;
+    _resourceSize = resourceSize;
+
+    _copy.resize ( 2U * resourceCapacity );
+
+    return
+        _stagingBuffer.Init ( renderer,
+            static_cast<size_t> ( 2U * bufferSize ),
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
+            "Descriptor buffer (staging)"
+        ) &&
+
+        renderer.MapMemory ( reinterpret_cast<void* &> ( _stagingMemory ),
+            _stagingBuffer._memory,
+            _stagingBuffer._offset,
+            "pbr::windows::ResourceHeap::Write::Init",
+            "Can't map memory"
+        );
 }
 
-void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer,
-    VkBuffer stagingBuffer,
-    VkBuffer descriptorBuffer
-) noexcept
+void ResourceHeap::Write::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+{
+    if ( std::exchange ( _stagingMemory, nullptr ) ) [[likely]]
+        renderer.UnmapMemory ( _stagingBuffer._memory );
+
+    _stagingBuffer.Destroy ( renderer );
+}
+
+VkBuffer ResourceHeap::Write::GetStagingBuffer () const noexcept
+{
+    return _stagingBuffer._buffer;
+}
+
+uint8_t* ResourceHeap::Write::GetStagingMemory () const noexcept
+{
+    return _stagingMemory;
+}
+
+void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descriptorBuffer ) noexcept
 {
     if ( _written == 0U ) [[likely]]
         return;
@@ -139,36 +171,34 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer,
     size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
 
     VkBufferCopy const* copy = _copy.data ();
+    VkBuffer buffer = _stagingBuffer._buffer;
 
     vkCmdCopyBuffer ( commandBuffer,
-        stagingBuffer,
+        buffer,
         descriptorBuffer,
         static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
-        copy + _readIndex
+        copy + std::exchange ( _readIndex, _writeIndex )
     );
 
-    if ( more < 1U ) [[likely]]
-        return;
-
-    vkCmdCopyBuffer ( commandBuffer,
-        stagingBuffer,
-        descriptorBuffer,
-        static_cast<uint32_t> ( more ),
-        copy
-    );
+    if ( more >= 1U ) [[unlikely]]
+    {
+        vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, static_cast<uint32_t> ( more ), copy );
+    }
 }
 
-void ResourceHeap::Write::Push ( VkDeviceSize srcOffset,
-    VkDeviceSize dstOffset,
-    DescriptorBlob /*descriptorBlob*/
-) noexcept
+void* ResourceHeap::Write::Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept
 {
-    // FUCK
+    VkDeviceSize const offset = _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
 
-    VkBufferCopy &copy = _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ];
-    copy.srcOffset = srcOffset;
-    copy.dstOffset = dstOffset;
+    _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ] =
+    {
+        .srcOffset = offset,
+        .dstOffset = _resourceOffset + _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
+        .size = static_cast<VkDeviceSize> ( descriptorSize )
+    };
+
     ++_written;
+    return _stagingMemory + static_cast<size_t> ( offset );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -194,18 +224,24 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
 
     auto const alignment = static_cast<VkDeviceSize> ( renderer.GetDescriptorBufferOffsetAlignment () );
 
-    _resourceOffset =
+    VkDeviceSize const resourceOffset =
         ( TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize () + alignment - 1U ) / alignment * alignment;
 
-    _resourceSize = resourceCapacity * std::max (
-        {
-            renderer.GetSampledImageDescriptorSize (),
-            renderer.GetStorageImageDescriptorSize (),
-            renderer.GetStorageBufferDescriptorSize ()
-        }
+    _sampledImageDescriptorSize = static_cast<size_t> ( renderer.GetSampledImageDescriptorSize () );
+    _storageImageDescriptorSize = static_cast<size_t> ( renderer.GetStorageImageDescriptorSize () );
+    _storageBufferDescriptorSize = static_cast<size_t> ( renderer.GetStorageBufferDescriptorSize () );
+
+    VkDeviceSize const resourceSize = resourceCapacity * static_cast<VkDeviceSize> (
+        std::max (
+            {
+                _sampledImageDescriptorSize,
+                _storageImageDescriptorSize,
+                _storageBufferDescriptorSize
+            }
+        )
     );
 
-    VkDeviceSize const bufferSize = _resourceOffset + _resourceSize;
+    VkDeviceSize const bufferSize = resourceOffset + resourceSize;
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -245,21 +281,8 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
             "Descriptor buffer"
         ) &&
 
-        _stagingBuffer.Init ( renderer,
-            static_cast<size_t> ( bufferSize  * 2U ),
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
-            "Descriptor buffer (staging)"
-        ) &&
-
-        renderer.MapMemory ( reinterpret_cast<void* &> ( _stagingMemory ),
-            _stagingBuffer._memory,
-            _stagingBuffer._offset,
-            "pbr::windows::ResourceHeap::Init",
-            "Can't map memory"
-        ) &&
-
-        InitInternalStructures ( device, resourceCapacity ) &&
+        _write.Init ( renderer, bufferSize, resourceCapacity, resourceOffset, resourceSize ) &&
+        InitInternalStructures ( device, resourceCapacity, resourceOffset ) &&
         _layout.Init ( device ) &&
         InitSamplers ( renderer, commandBuffer );
 }
@@ -275,17 +298,17 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _shadowSampler.Destroy ( device );
 
     _layout.Destroy ( device );
-
-    if ( std::exchange ( _stagingMemory, nullptr ) ) [[likely]]
-        renderer.UnmapMemory ( _stagingBuffer._memory );
+    _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
-    _stagingBuffer.Destroy ( renderer );
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkBuffer /*buffer*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
+    VkDeviceAddress bufferAddress,
+    VkDeviceSize range
+) noexcept
 {
-    if ( _nonUISlots.IsFull () )
+    if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterBuffer - Heap is full." );
         return std::nullopt;
@@ -293,19 +316,39 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkBuffer /*buffer*/ ) noe
 
     uint32_t const index = _nonUISlots.Allocate ();
 
-    // FUCK
-    DescriptorBlob const descriptorBlob ( static_cast<uint8_t const*> ( nullptr ), 0U );
-    VkDeviceSize const stagingBufferOffset = 0U;
+    VkDescriptorAddressInfoEXT const buffer
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
+        .pNext = nullptr,
+        .address = bufferAddress,
+        .range = range,
+        .format = VK_FORMAT_UNDEFINED
+    };
 
-    VkDeviceSize const descriptorBufferOffset = _resourceOffset + _resourceSize * static_cast<VkDeviceSize> ( index );
-    _write.Push ( stagingBufferOffset, descriptorBufferOffset, descriptorBlob );
+    VkDescriptorGetInfoEXT const getInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+
+        .data
+        {
+            .pStorageBuffer = &buffer
+        }
+    };
+
+    vkGetDescriptorEXT ( device,
+        &getInfo,
+        _storageBufferDescriptorSize,
+        _write.Push ( index, _storageBufferDescriptorSize )
+    );
 
     return std::optional<uint32_t> { index };
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkImageView /*view*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkDevice /*device*/, VkImageView /*view*/) noexcept
 {
-    if ( _nonUISlots.IsFull () )
+    if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterNonUISampledImage - Heap is full." );
         return std::nullopt;
@@ -315,9 +358,9 @@ std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkImageView /*
     return std::nullopt;
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkImageView /*view*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkDevice /*device*/, VkImageView /*view*/ ) noexcept
 {
-    if ( _uiSlots.IsFull () )
+    if ( _uiSlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterUISampledImage - Heap is full." );
         return std::nullopt;
@@ -327,9 +370,9 @@ std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkImageView /*vie
     return std::nullopt;
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkImageView /*view*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice /*device*/, VkImageView /*view*/ ) noexcept
 {
-    if ( _nonUISlots.IsFull () )
+    if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterStorageImage - Heap is full." );
         return std::nullopt;
@@ -352,10 +395,13 @@ void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
 
 void ResourceHeap::UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept
 {
-    _write.Upload ( commandBuffer, _stagingBuffer._buffer, _descriptorBuffer._buffer );
+    _write.Upload ( commandBuffer, _descriptorBuffer._buffer );
 }
 
-bool ResourceHeap::InitInternalStructures ( VkDevice device, VkDeviceSize resourceCapacity ) noexcept
+bool ResourceHeap::InitInternalStructures ( VkDevice device,
+    VkDeviceSize resourceCapacity,
+    VkDeviceSize resourceOffset
+) noexcept
 {
     auto const cap = static_cast<uint32_t> ( resourceCapacity );
 
@@ -376,12 +422,10 @@ bool ResourceHeap::InitInternalStructures ( VkDevice device, VkDeviceSize resour
     };
 
     samplers.address = vkGetBufferDeviceAddress ( device, &info );
-    resources.address = samplers.address + static_cast<VkDeviceAddress> ( _resourceOffset );
+    resources.address = samplers.address + static_cast<VkDeviceAddress> ( resourceOffset );
 
     _uiSlots.Init ( 0U, UI_SLOTS );
     _nonUISlots.Init ( UI_SLOTS, cap - UI_SLOTS );
-    _write.Init ( resourceCapacity, _resourceSize );
-
     return true;
 }
 
@@ -522,20 +566,21 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
         }
     };
 
-    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * CLAMP_TO_EDGE_SAMPLER );
+    uint8_t* stagingMemory = _write.GetStagingMemory ();
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * CLAMP_TO_EDGE_SAMPLER );
 
     VkDescriptorDataEXT &data = getInfo.data;
     data.pSampler = &_cubemapSampler.GetSampler ();
-    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * CUBEMAP_SAMPLER );
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * CUBEMAP_SAMPLER );
 
     data.pSampler = &_materialSampler.GetSampler ();
-    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * MATERIAL_SAMPLER );
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * MATERIAL_SAMPLER );
 
     data.pSampler = &_pointSampler.GetSampler ();
-    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * POINT_SAMPLER );
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * POINT_SAMPLER );
 
     data.pSampler = &_shadowSampler.GetSampler ();
-    vkGetDescriptorEXT ( device, &getInfo, samplerSize, _stagingMemory + samplerSize * SHADOW_SAMPLER );
+    vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * SHADOW_SAMPLER );
 
     VkBufferCopy const copy
     {
@@ -544,7 +589,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
         .size = static_cast<VkDeviceSize> ( samplerSize * TOTAL_SAMPLERS )
     };
 
-    vkCmdCopyBuffer ( commandBuffer, _stagingBuffer._buffer, _descriptorBuffer._buffer, 1U, &copy );
+    vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
     return true;
 }
 

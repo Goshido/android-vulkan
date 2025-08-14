@@ -180,6 +180,13 @@ class ResourceHeap final
         ) noexcept;
 
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+
+        [[nodiscard]] std::optional<uint32_t> RegisterImage ( Slots &slots,
+            char const* heap,
+            VkDevice device,
+            VkImageView view,
+            VkImageLayout layout
+        ) noexcept;
 };
 
 } // namespace pbr::windows

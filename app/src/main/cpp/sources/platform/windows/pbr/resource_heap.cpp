@@ -310,7 +310,7 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
 {
     if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterBuffer - Heap is full." );
+        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterBuffer - Non UI heap is full." );
         return std::nullopt;
     }
 
@@ -346,40 +346,19 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
     return std::optional<uint32_t> { index };
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkDevice /*device*/, VkImageView /*view*/) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkDevice device, VkImageView view ) noexcept
 {
-    if ( _nonUISlots.IsFull () ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterNonUISampledImage - Heap is full." );
-        return std::nullopt;
-    }
-
-    // FUCK
-    return std::nullopt;
+    return RegisterImage ( _nonUISlots, "Non UI heap", device, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkDevice /*device*/, VkImageView /*view*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkDevice device, VkImageView view ) noexcept
 {
-    if ( _uiSlots.IsFull () ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterUISampledImage - Heap is full." );
-        return std::nullopt;
-    }
-
-    // FUCK
-    return std::nullopt;
+    return RegisterImage ( _uiSlots, "UI heap", device, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 }
 
-std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice /*device*/, VkImageView /*view*/ ) noexcept
+std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice device, VkImageView view ) noexcept
 {
-    if ( _nonUISlots.IsFull () ) [[unlikely]]
-    {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterStorageImage - Heap is full." );
-        return std::nullopt;
-    }
-
-    // FUCK
-    return std::nullopt;
+    return RegisterImage ( _nonUISlots, "Non UI heap", device, view, VK_IMAGE_LAYOUT_GENERAL );
 }
 
 void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
@@ -591,6 +570,50 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
 
     vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
     return true;
+}
+
+std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
+    char const* heap,
+    VkDevice device,
+    VkImageView view,
+    VkImageLayout layout
+) noexcept
+{
+    if ( slots.IsFull () ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterImage - %s is full.", heap );
+        AV_ASSERT ( false )
+        return std::nullopt;
+    }
+
+    uint32_t const index = slots.Allocate ();
+
+    VkDescriptorImageInfo const image
+    {
+        .sampler = VK_NULL_HANDLE,
+        .imageView = view,
+        .imageLayout = layout,
+    };
+
+    VkDescriptorGetInfoEXT const getInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+
+        .data
+        {
+            .pSampledImage = &image
+        }
+    };
+
+    vkGetDescriptorEXT ( device,
+        &getInfo,
+        _storageBufferDescriptorSize,
+        _write.Push ( index, _sampledImageDescriptorSize )
+    );
+
+    return std::optional<uint32_t> { index };
 }
 
 } // namespace pbr::windows

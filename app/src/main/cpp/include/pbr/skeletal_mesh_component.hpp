@@ -4,7 +4,7 @@
 
 #include "actor.hpp"
 #include "animation_graph.hpp"
-#include "command_buffer_count.hpp"
+#include "fif_count.hpp"
 #include "renderable_component.hpp"
 #include "skin_pool.hpp"
 #include "skin_program.hpp"
@@ -59,7 +59,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         static android_vulkan::Renderer*                    _renderer;
         static SkeletalMeshes                               _skeletalMeshes;
         static SkinPool                                     _skinPool;
-        static std::list<Usage>                             _toDelete[ DUAL_COMMAND_BUFFER ];
+        static std::list<Usage>                             _toDelete[ FIF_COUNT ];
         static std::deque<Usage*>                           _transferQueue;
 
     public:

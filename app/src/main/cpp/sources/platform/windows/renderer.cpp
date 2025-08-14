@@ -479,10 +479,10 @@ void Renderer::GetPlatformFeatureProperties () noexcept
 
     vkGetPhysicalDeviceProperties2 ( _physicalDevice, &probe );
     _descriptorBufferOffsetAlignment = static_cast<size_t> ( props.descriptorBufferOffsetAlignment );
-    _samplerDescriptorSize = static_cast<VkDeviceSize> ( props.samplerDescriptorSize );
-    _sampledImageDescriptorSize = static_cast<VkDeviceSize> ( props.sampledImageDescriptorSize );
-    _storageBufferDescriptorSize = static_cast<VkDeviceSize> ( props.storageBufferDescriptorSize );
-    _storageImageDescriptorSize = static_cast<VkDeviceSize> ( props.storageImageDescriptorSize );
+    _samplerDescriptorSize = props.samplerDescriptorSize;
+    _sampledImageDescriptorSize = props.sampledImageDescriptorSize;
+    _storageBufferDescriptorSize = props.storageBufferDescriptorSize;
+    _storageImageDescriptorSize = props.storageImageDescriptorSize;
 }
 
 std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFormats () noexcept

@@ -31,10 +31,7 @@ bool RenderSession::End ( android_vulkan::Renderer &renderer, double deltaTime )
 {
     AV_TRACE ( "End render session" )
 
-    size_t const commandBufferIndex = std::exchange ( _writingCommandInfo,
-        ( _writingCommandInfo + 1U ) % DUAL_COMMAND_BUFFER
-    );
-
+    size_t const commandBufferIndex = std::exchange ( _writingCommandInfo, ( _writingCommandInfo + 1U ) % FIF_COUNT );
     CommandInfo &commandInfo = _commandInfo[ commandBufferIndex ];
     VkFence &fence = commandInfo._fence;
     VkCommandBuffer commandBuffer = commandInfo._buffer;
@@ -259,7 +256,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
     uint32_t const queueIndex = renderer.GetQueueFamilyIndex ();
 
-    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < FIF_COUNT; ++i )
     {
         CommandInfo &commandInfo = _commandInfo[ i ];
 

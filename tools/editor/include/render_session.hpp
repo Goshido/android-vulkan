@@ -33,7 +33,7 @@ class RenderSession final
     private:
         bool                                                        _broken = false;
 
-        CommandInfo                                                 _commandInfo[ pbr::DUAL_COMMAND_BUFFER ];
+        CommandInfo                                                 _commandInfo[ pbr::FIF_COUNT ];
         size_t                                                      _writingCommandInfo = 0U;
 
         pbr::DefaultTextureManager                                  _defaultTextureManager {};

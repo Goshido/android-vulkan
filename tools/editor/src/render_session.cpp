@@ -391,7 +391,7 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
         .commandBufferCount = 1U
     };
 
-    for ( size_t i = 0U; i < pbr::DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < pbr::FIF_COUNT; ++i )
     {
         CommandInfo &info = _commandInfo[ i ];
         info._inUse = false;
@@ -930,7 +930,7 @@ void RenderSession::OnRenderFrame () noexcept
 
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
-    _writingCommandInfo = ++_writingCommandInfo % pbr::DUAL_COMMAND_BUFFER;
+    _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
     android_vulkan::Renderer &renderer = _renderer;
     _uiManager.RenderUI ( renderer, _uiPass );

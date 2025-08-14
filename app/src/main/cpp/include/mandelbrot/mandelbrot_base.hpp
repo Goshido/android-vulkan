@@ -24,7 +24,7 @@ class MandelbrotBase : public android_vulkan::Game
             VkSemaphore                 _renderEnd = VK_NULL_HANDLE;
         };
 
-        constexpr static size_t         DUAL_COMMAND_BUFFER = 2U;
+        constexpr static size_t         FIF_COUNT = 2U;
 
         std::vector<CommandInfo>        _commandInfo {};
         size_t                          _writeCommandInfoIndex = 0U;

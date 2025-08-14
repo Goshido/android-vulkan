@@ -52,7 +52,7 @@ SkinProgram SkeletalMeshComponent::_program {};
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
 SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
 SkinPool SkeletalMeshComponent::_skinPool {};
-std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete[ DUAL_COMMAND_BUFFER ] {};
+std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete[ FIF_COUNT ] {};
 std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
 // NOLINTNEXTLINE - no initialization for some fields

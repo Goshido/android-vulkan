@@ -125,7 +125,7 @@ size_t AnimationGraph::_changedGraphCount = 0U;
 AnimationGraph::Graphs AnimationGraph::_graphs {};
 size_t AnimationGraph::_lastCommandBufferIndex = 0U;
 android_vulkan::Renderer* AnimationGraph::_renderer = nullptr;
-std::list<AnimationGraph::Reference> AnimationGraph::_toDelete[ DUAL_COMMAND_BUFFER ] {};
+std::list<AnimationGraph::Reference> AnimationGraph::_toDelete[ FIF_COUNT ] {};
 
 AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noexcept
 {
@@ -165,7 +165,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
 
     size_t init = 0U;
 
-    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < FIF_COUNT; ++i )
     {
         if ( !_buffers[ i ].Init ( _jointSize, i ) ) [[unlikely]]
             break;
@@ -173,9 +173,7 @@ AnimationGraph::AnimationGraph ( bool &success, std::string &&skeletonFile ) noe
         ++init;
     }
 
-    success = init == DUAL_COMMAND_BUFFER;
-
-    if ( !success ) [[unlikely]]
+    if ( success = init == FIF_COUNT; !success ) [[unlikely]]
     {
         for ( size_t i = 0U; i < init; ++i )
             _buffers[ i ].Destroy ();

@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <pbr/command_buffer_count.hpp>
+#include <pbr/fif_count.hpp>
 #include <pbr/skin.inc>
 #include <pbr/skin_pool.hpp>
 #include <renderer.hpp>
@@ -14,7 +14,7 @@ constexpr size_t BARRIER_PER_SET = 2U;
 constexpr size_t BIND_PER_SET = 6U;
 
 constexpr size_t MAX_SKIN_MESHES_PER_FRAME = 8096U;
-constexpr size_t SKIN_MESHES = DUAL_COMMAND_BUFFER * MAX_SKIN_MESHES_PER_FRAME;
+constexpr size_t SKIN_MESHES = FIF_COUNT * MAX_SKIN_MESHES_PER_FRAME;
 
 } // end of anonymous namespace
 

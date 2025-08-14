@@ -2,7 +2,7 @@
 #define PBR_ANIMATION_GRAPH_HPP
 
 
-#include "command_buffer_count.hpp"
+#include "fif_count.hpp"
 #include "joint_provider_node.hpp"
 #include "node_link.hpp"
 #include <buffer_info.hpp>
@@ -78,14 +78,14 @@ class AnimationGraph final : public NodeLink
         Joints                                          _poseLocal {};
         Joints                                          _poseGlobal {};
 
-        Buffer                                          _buffers[ DUAL_COMMAND_BUFFER ];
+        Buffer                                          _buffers[ FIF_COUNT ];
         std::string                                     _skeletonName {};
 
         static size_t                                   _changedGraphCount;
         static Graphs                                   _graphs;
         static size_t                                   _lastCommandBufferIndex;
         static android_vulkan::Renderer*                _renderer;
-        static std::list<Reference>                     _toDelete[ DUAL_COMMAND_BUFFER ];
+        static std::list<Reference>                     _toDelete[ FIF_COUNT ];
 
     public:
         AnimationGraph () = delete;

@@ -2,7 +2,7 @@
 #define PBR_FONT_STORAGE_HPP
 
 
-#include "command_buffer_count.hpp"
+#include "fif_count.hpp"
 #include <renderer.hpp>
 #include "ui_vertex_info.hpp"
 
@@ -147,7 +147,7 @@ class FontStorage final
         class Atlas final
         {
             private:
-                ImageResource                           _dyingResources[ DUAL_COMMAND_BUFFER ];
+                ImageResource                           _dyingResources[ FIF_COUNT ];
 
             public:
                 ImageResource                           _resource {};

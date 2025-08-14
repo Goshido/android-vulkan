@@ -43,9 +43,9 @@ class Game : public android_vulkan::Game
         };
 
     protected:
-        constexpr static size_t             DUAL_COMMAND_BUFFER = 2U;
+        constexpr static size_t             FIF_COUNT = 2U;
 
-        CommandInfo                         _commandInfo[ DUAL_COMMAND_BUFFER ];
+        CommandInfo                         _commandInfo[ FIF_COUNT ];
         size_t                              _writingCommandInfo = 0U;
 
         VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
@@ -55,7 +55,7 @@ class Game : public android_vulkan::Game
 
         VkDescriptorSet                     _fixedDS = VK_NULL_HANDLE;
         VkDescriptorSet                     _materialDS[ MATERIAL_COUNT ] {};
-        VkDescriptorSet                     _onceDS[ DUAL_COMMAND_BUFFER ] {};
+        VkDescriptorSet                     _onceDS[ FIF_COUNT ] {};
 
         Drawcall                            _drawcalls[ MATERIAL_COUNT ] {};
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;

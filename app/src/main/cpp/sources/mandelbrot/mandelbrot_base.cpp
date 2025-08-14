@@ -26,7 +26,7 @@ MandelbrotBase::MandelbrotBase ( char const* fragmentShaderSpirV ) noexcept:
 bool MandelbrotBase::OnFrame ( android_vulkan::Renderer &renderer, double /*deltaTime*/ ) noexcept
 {
     CommandInfo &commandInfo = _commandInfo[ _writeCommandInfoIndex ];
-    _writeCommandInfoIndex = ++_writeCommandInfoIndex % DUAL_COMMAND_BUFFER;
+    _writeCommandInfoIndex = ++_writeCommandInfoIndex % FIF_COUNT;
 
     VkDevice device = renderer.GetDevice ();
 
@@ -172,7 +172,7 @@ bool MandelbrotBase::EndFrame ( android_vulkan::Renderer &renderer, uint32_t pre
 
 bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _commandInfo.resize ( DUAL_COMMAND_BUFFER );
+    _commandInfo.resize ( FIF_COUNT );
 
     VkCommandPoolCreateInfo const commandPoolInfo
     {
@@ -193,7 +193,7 @@ bool MandelbrotBase::CreateCommandBuffers ( android_vulkan::Renderer &renderer )
 
     VkDevice device = renderer.GetDevice ();
 
-    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < FIF_COUNT; ++i )
     {
         CommandInfo &commandInfo = _commandInfo[ i ];
 

@@ -76,7 +76,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
     VkDescriptorPoolSize const poolSizes[] = {
         {
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = DUAL_COMMAND_BUFFER
+            .descriptorCount = FIF_COUNT
         },
         {
             .type = VK_DESCRIPTOR_TYPE_SAMPLER,
@@ -93,7 +93,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ) + DUAL_COMMAND_BUFFER + 1U,
+        .maxSets = static_cast<uint32_t> ( MATERIAL_COUNT ) + FIF_COUNT + 1U,
         .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
         .pPoolSizes = poolSizes
     };
@@ -225,8 +225,8 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
     vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( materialEntries ), writes.data (), 0U, nullptr );
 
-    std::vector<VkDescriptorSetLayout> onceLayouts ( DUAL_COMMAND_BUFFER, _onceDSLayout );
-    setAllocateInfo.descriptorSetCount = static_cast<uint32_t> ( DUAL_COMMAND_BUFFER );
+    std::vector<VkDescriptorSetLayout> onceLayouts ( FIF_COUNT, _onceDSLayout );
+    setAllocateInfo.descriptorSetCount = static_cast<uint32_t> ( FIF_COUNT );
     setAllocateInfo.pSetLayouts = onceLayouts.data ();
 
     result =  android_vulkan::Renderer::CheckVkResult (
@@ -240,7 +240,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 
 #if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
 
-    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < FIF_COUNT; ++i )
         AV_SET_VULKAN_OBJECT_NAME ( device, _onceDS[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "Once [FIF #%zu]", i )
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC

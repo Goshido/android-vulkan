@@ -2,7 +2,7 @@
 #define PBR_RENDER_SESSION_HPP
 
 
-#include "command_buffer_count.hpp"
+#include "fif_count.hpp"
 #include "default_texture_manager.hpp"
 #include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
@@ -41,7 +41,7 @@ class RenderSession final
         float                       _brightnessBalance = 0.0F;
         bool                        _brightnessChanged = false;
 
-        CommandInfo                 _commandInfo[ DUAL_COMMAND_BUFFER ];
+        CommandInfo                 _commandInfo[ FIF_COUNT ];
         size_t                      _writingCommandInfo = 0U;
 
         GXMat4                      _cvvToView {};

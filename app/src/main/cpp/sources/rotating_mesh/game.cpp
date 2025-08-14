@@ -195,7 +195,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
 
     size_t const commandBufferIndex = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
-    _writingCommandInfo = ++_writingCommandInfo % DUAL_COMMAND_BUFFER;
+    _writingCommandInfo = ++_writingCommandInfo % FIF_COUNT;
 
     VkFence &fence = commandInfo._fence;
     VkDevice device = renderer.GetDevice ();
@@ -426,7 +426,7 @@ bool Game::CreateCommandPool ( android_vulkan::Renderer &renderer ) noexcept
         .commandBufferCount = 1U
     };
 
-    for ( size_t i = 0U; i < DUAL_COMMAND_BUFFER; ++i )
+    for ( size_t i = 0U; i < FIF_COUNT; ++i )
     {
         CommandInfo &info = _commandInfo[ i ];
 
@@ -1190,7 +1190,7 @@ void Game::DestroyShaderModules ( VkDevice device ) noexcept
 
 bool Game::CreateUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return _transformBuffer.Init ( renderer, sizeof ( Transform ), DUAL_COMMAND_BUFFER );
+    return _transformBuffer.Init ( renderer, sizeof ( Transform ), FIF_COUNT );
 }
 
 void Game::DestroyUniformBuffer ( android_vulkan::Renderer &renderer ) noexcept

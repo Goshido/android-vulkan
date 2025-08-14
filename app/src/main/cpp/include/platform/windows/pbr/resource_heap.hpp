@@ -37,7 +37,7 @@ class ResourceHeap final
                 ~Buffer () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    VkDeviceSize size,
+                    size_t size,
                     VkBufferUsageFlags usage,
                     VkMemoryPropertyFlags memProps,
                     char const *name
@@ -96,10 +96,10 @@ class ResourceHeap final
                 ~Write () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    VkDeviceSize bufferSize,
-                    VkDeviceSize resourceCapacity,
-                    VkDeviceSize resourceOffset,
-                    VkDeviceSize resourceSize
+                    size_t bufferSize,
+                    size_t resourceCapacity,
+                    size_t resourceOffset,
+                    size_t resourceSize
                 ) noexcept;
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -125,9 +125,9 @@ class ResourceHeap final
         Slots                                   _nonUISlots {};
         Slots                                   _uiSlots {};
 
-        size_t                                  _storageBufferDescriptorSize = 0U;
-        size_t                                  _sampledImageDescriptorSize = 0U;
-        size_t                                  _storageImageDescriptorSize = 0U;
+        size_t                                  _bufferSize = 0U;
+        size_t                                  _sampledImageSize = 0U;
+        size_t                                  _storageImageSize = 0U;
 
         Write                                   _write {};
 
@@ -175,8 +175,8 @@ class ResourceHeap final
 
     private:
         [[nodiscard]] bool InitInternalStructures ( VkDevice device,
-            VkDeviceSize resourceCapacity,
-            VkDeviceSize resourceOffset
+            size_t resourceCapacity,
+            size_t resourceOffset
         ) noexcept;
 
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;

@@ -2,7 +2,7 @@
 #define PBR_LIGHTUP_COMMON_DESCRIPTOR_SET_HPP
 
 
-#include "command_buffer_count.hpp"
+#include "fif_count.hpp"
 #include "gbuffer.hpp"
 #include "lightup_common_descriptor_set_layout.hpp"
 #include "sampler.hpp"
@@ -22,9 +22,9 @@ class LightupCommonDescriptorSet final
         VkPipelineLayout                    _pipelineLayout = VK_NULL_HANDLE;
         Sampler                             _prefilterSampler {};
         Sampler                             _shadowSampler {};
-        VkDescriptorSet                     _sets[ DUAL_COMMAND_BUFFER ]{};
+        VkDescriptorSet                     _sets[ FIF_COUNT ]{};
         UMAUniformBuffer                    _uniforms{};
-        VkMappedMemoryRange                 _uniformRanges[ DUAL_COMMAND_BUFFER ]{};
+        VkMappedMemoryRange                 _uniformRanges[ FIF_COUNT ]{};
 
     public:
         explicit LightupCommonDescriptorSet () = default;

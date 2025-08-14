@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <pbr/command_buffer_count.hpp>
+#include <pbr/fif_count.hpp>
 #include <pbr/geometry_pass_binds.inc>
 #include <pbr/geometry_pass_texture_descriptor_set_layout.hpp>
 #include <pbr/material_pool.hpp>
@@ -12,7 +12,7 @@ namespace {
 
 constexpr size_t MAX_MATERIALS_PER_FRAME = 16384U;
 constexpr size_t BIND_PER_SET = 5U;
-constexpr size_t MATERIALS = DUAL_COMMAND_BUFFER * MAX_MATERIALS_PER_FRAME;
+constexpr size_t MATERIALS = FIF_COUNT * MAX_MATERIALS_PER_FRAME;
 
 } // end of anonymous namespace
 

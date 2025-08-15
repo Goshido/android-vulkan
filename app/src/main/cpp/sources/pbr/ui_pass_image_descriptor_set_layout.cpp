@@ -1,6 +1,8 @@
 #include <precompiled_headers.hpp>
+
+// FUCK - move to android platform
 #include <pbr/ui_pass_image_descriptor_set_layout.hpp>
-#include <pbr/ui_program.inc>
+#include <platform/android/pbr/ui_program.inc>
 #include <vulkan_utils.hpp>
 
 

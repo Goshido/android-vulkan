@@ -159,9 +159,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_program.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="src\rect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -202,9 +199,6 @@
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass_transform_descriptor_set_layout.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_program.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\default_texture_manager.cpp">
@@ -387,6 +381,12 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_info.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\ui_program.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -482,9 +482,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_program.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="include\rect.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -528,9 +525,6 @@
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_transform_descriptor_set_layout.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_program.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp">
@@ -803,6 +797,12 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_info.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -836,9 +836,6 @@
     <None Include="include\blit_program.inc">
       <Filter>Header Files\core</Filter>
     </None>
-    <None Include="..\..\app\src\main\cpp\include\pbr\ui_program.inc">
-      <Filter>Header Files\core\pbr</Filter>
-    </None>
     <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
@@ -859,6 +856,9 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\samplers.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.inc">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/ui_pass.hpp>
-#include <pbr/ui_program.inc>
+#include <platform/android/pbr/ui_program.inc>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
@@ -1010,7 +1010,15 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
         _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
         _transformLayout.Init ( device ) &&
         ImageStorage::OnInitDevice ( renderer ) &&
-        _uniformPool.Init ( renderer, _transformLayout, sizeof ( UIProgram::Transform ), BIND_TRANSFORM, "UI pass" );
+
+        _uniformPool.Init ( renderer,
+            _transformLayout,
+
+            // FUCK - remove namespace, one liner
+            sizeof ( android::UIProgram::Transform ),
+            BIND_TRANSFORM,
+            "UI pass"
+        );
 }
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -1061,7 +1069,7 @@ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
+        BrightnessInfo ( _brightnessBalance ),
         resolution
     );
 
@@ -1129,7 +1137,7 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        BrightnessProgram::GetBrightnessInfo ( brightnessBalance ),
+        BrightnessInfo ( brightnessBalance ),
         _currentResolution
     );
 
@@ -1404,7 +1412,8 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    UIProgram::Transform transform {};
+    // FUCK - remove namespace
+    android::UIProgram::Transform transform {};
     transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
     transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
     transform._offset.Multiply ( _bottomRight, -0.5F );

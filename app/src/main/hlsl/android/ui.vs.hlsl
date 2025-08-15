@@ -1,4 +1,4 @@
-#include "pbr/ui_program.inc"
+#include "platform/android/pbr/ui_program.inc"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_TRANSFORM )]]

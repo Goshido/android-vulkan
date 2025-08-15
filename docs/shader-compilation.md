@@ -65,6 +65,7 @@ dxc.exe                                                         ^
     -O3                                                         ^
     -T vs_6_9                                                   ^
     -E VS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.vs.spv    ^
@@ -88,6 +89,7 @@ dxc.exe                                                         ^
     -O3                                                         ^
     -T ps_6_9                                                   ^
     -E PS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.ps.spv    ^
@@ -111,6 +113,7 @@ dxc.exe                                                         ^
     -O3                                                         ^
     -T cs_6_9                                                   ^
     -E CS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.cs.spv    ^

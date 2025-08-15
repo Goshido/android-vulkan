@@ -5,7 +5,10 @@
 #include "font_storage.hpp"
 #include "sampler_manager.hpp"
 #include "types.hpp"
-#include "ui_program.hpp"
+
+// FUCK - use relative path
+#include <platform/android/pbr/ui_program.hpp>
+
 #include "ui_vertex_info.hpp"
 #include "uniform_pool.hpp"
 
@@ -205,7 +208,9 @@ class UIPass final
 
         BufferStream                                    _positions { sizeof ( GXVec2 ) };
         BufferStream                                    _rest { sizeof ( UIVertex ) };
-        UIProgram                                       _program {};
+
+        // FUCK - remove namespace
+        android::UIProgram                              _program {};
 
         VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
 

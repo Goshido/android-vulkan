@@ -1,3 +1,5 @@
+// FUCK - separate to windows and android
+
 #include "ui_common.ps.hlsl"
 
 

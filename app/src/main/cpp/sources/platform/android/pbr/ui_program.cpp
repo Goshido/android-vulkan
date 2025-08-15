@@ -1,17 +1,17 @@
 #include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
-#include <pbr/ui_program.hpp>
-#include <pbr/ui_program.inc>
 #include <pbr/ui_vertex_info.hpp>
+#include <platform/android/pbr/ui_program.hpp>
+#include <platform/android/pbr/ui_program.inc>
 
 
-namespace pbr {
+namespace pbr::android {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/ui.vs.spv";
-constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_custom_brightness.ps.spv";
-constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/ui_default_brightness.ps.spv";
+constexpr char const* VERTEX_SHADER = "shaders/android/ui.vs.spv";
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/android/ui_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/android/ui_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -23,7 +23,7 @@ constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    BrightnessProgram ( "pbr::UIProgram" )
+    android::GraphicsProgram ( "UI" )
 {
     // NOTHING
 }
@@ -100,7 +100,7 @@ bool UIProgram::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::UIProgram::Init",
+        "pbr::android::UIProgram::Init",
         "Can't create pipeline"
     );
 
@@ -261,7 +261,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::UIProgram::InitLayout",
+        "pbr::android::UIProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
@@ -326,7 +326,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-        "Can't create vertex shader (pbr::UIProgram)"
+        "Can't create vertex shader (pbr::android::UIProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -337,7 +337,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
     auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
     char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
-    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::android::UIProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;

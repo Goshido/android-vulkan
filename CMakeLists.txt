@@ -67,7 +67,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
     app/src/main/cpp/sources/pbr/bit_field.cpp
-    app/src/main/cpp/sources/pbr/brightness_program.cpp
+    app/src/main/cpp/sources/pbr/brightness_info.cpp
     app/src/main/cpp/sources/pbr/camera.cpp
     app/src/main/cpp/sources/pbr/camera_component.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp
@@ -218,7 +218,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/ui_pass_common_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_image_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_transform_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/ui_program.cpp
     app/src/main/cpp/sources/pbr/uma_uniform_buffer.cpp
     app/src/main/cpp/sources/pbr/uma_uniform_pool.cpp
     app/src/main/cpp/sources/pbr/uniform_buffer.cpp
@@ -243,6 +242,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/ui_program.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp
     app/src/main/cpp/sources/platform/android/trace.cpp
     app/src/main/cpp/sources/platform/android/vulkan_loader.cpp

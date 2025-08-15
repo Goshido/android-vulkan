@@ -2,16 +2,17 @@
 #define PBR_UI_PROGRAM_HPP
 
 
-#include "brightness_program.hpp"
-#include "ui_pass_common_descriptor_set_layout.hpp"
-#include "ui_pass_image_descriptor_set_layout.hpp"
-#include "ui_pass_transform_descriptor_set_layout.hpp"
+#include "graphics_program.hpp"
+#include <pbr/brightness_info.hpp>
+#include <pbr/ui_pass_common_descriptor_set_layout.hpp>
+#include <pbr/ui_pass_image_descriptor_set_layout.hpp>
+#include <pbr/ui_pass_transform_descriptor_set_layout.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+namespace pbr::android {
 
-class UIProgram final : public BrightnessProgram
+class UIProgram final : public android::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

@@ -1,3 +1,5 @@
+// FUCK - separate to windows and android
+
 #include "brightness_factor.ps.hlsl"
 #include "color_space.hlsl"
 #include "ui_common.ps.hlsl"

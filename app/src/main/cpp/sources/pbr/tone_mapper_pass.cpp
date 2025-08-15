@@ -119,7 +119,7 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        BrightnessProgram::GetBrightnessInfo ( brightnessBalance ),
+        BrightnessInfo ( brightnessBalance ),
         renderer.GetSurfaceSize ()
     );
 
@@ -144,7 +144,7 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     bool const result = _program.Init ( renderer,
         renderPass,
         subpass,
-        BrightnessProgram::GetBrightnessInfo ( _brightnessBalance ),
+        BrightnessInfo ( _brightnessBalance ),
         renderer.GetSurfaceSize ()
     );
 

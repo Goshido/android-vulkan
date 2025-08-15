@@ -2,15 +2,18 @@
 #define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
-#include "brightness_program.hpp"
+#include "brightness_info.hpp"
 #include "full_screen_triangle_descriptor_set_layout.hpp"
+
+// FUCK - use relative path
+#include <platform/android/pbr/graphics_program.hpp>
 #include "tone_mapper_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class ToneMapperProgram final : public BrightnessProgram
+class ToneMapperProgram final : public android::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

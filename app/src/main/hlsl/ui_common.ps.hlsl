@@ -2,8 +2,9 @@
 #define UI_COMMON_PS_HLSL
 
 
+// FUCK - separate to windows nad android
 #include "pbr/ui_primitive_type.inc"
-#include "pbr/ui_program.inc"
+#include "platform/android/pbr/ui_program.inc"
 
 
 [[vk::binding ( BIND_ATLAS_SAMPLER, SET_COMMON )]]

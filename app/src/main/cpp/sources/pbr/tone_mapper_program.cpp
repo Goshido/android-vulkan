@@ -19,7 +19,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    BrightnessProgram ( "pbr::ToneMapperProgram" )
+    android::GraphicsProgram ( "pbr::ToneMapperProgram" )
 {
     // NOTHING
 }

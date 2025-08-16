@@ -48,6 +48,10 @@ scripts\windows\make-spv.ps1                                                    
     "$ANDROID_HLSL_DIRECTORY\ui.vs.hlsl"                                                                               `
     "$ANDROID_SHADER_DIRECTORY\ui.vs.spv"
 
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\ui.vs.hlsl"                                                                               `
+    "$WINDOWS_SHADER_DIRECTORY\ui.vs.spv"
+
 # pixel shaders
 scripts\windows\make-spv.ps1                                                                                           `
     "$EDITOR_HLSL_DIRECTORY\hello_triangle.ps.hlsl"                                                                    `
@@ -114,8 +118,16 @@ scripts\windows\make-spv.ps1                                                    
     "$ANDROID_SHADER_DIRECTORY\ui_custom_brightness.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\ui_custom_brightness.ps.hlsl"                                                             `
+    "$WINDOWS_SHADER_DIRECTORY\ui_custom_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$ANDROID_HLSL_DIRECTORY\ui_default_brightness.ps.hlsl"                                                            `
     "$ANDROID_SHADER_DIRECTORY\ui_default_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\ui_default_brightness.ps.hlsl"                                                            `
+    "$WINDOWS_SHADER_DIRECTORY\ui_default_brightness.ps.spv"
 
 # compute shaders
 scripts\windows\make-spv.ps1                                                                                           `

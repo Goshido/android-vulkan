@@ -2,12 +2,9 @@
 #define GEOMETRY_PASS_PS_HLSL
 
 
+#include "color_packing.hlsl"
 #include "gbuffer_render_targets.ps.hlsl"
 #include "object_data.hlsl"
-
-
-// 1.0 / 255.0
-#define UNORM_FACTOR        3.9216e-3H
 
 
 // Intensity should take range from 0 to 6000.0H
@@ -56,12 +53,6 @@ struct InputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float16_t3 UnpackColor ( in uint32_t packedColor )
-{
-    uint32_t3 const segmented = ( ( (uint32_t3)packedColor ) & uint32_t3 ( 0x0000FF00U, 0x00FF0000U, 0xFF000000U ) );
-    return (float16_t3)( segmented >> uint32_t3 ( 8U, 16U, 24U ) ) * UNORM_FACTOR;
-}
-
 float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_t3 diffuseSample )
 {
     float16_t3 maskSample = (float16_t3)g_maskTexture.Sample ( g_sampler, uv ).xyz;
@@ -71,9 +62,9 @@ float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_
         maskSample *= 1.0H / maskSum;
 
     float16_t3 albedoOverlay = (float16_t3)max ( 1.0H - maskSum, 0.0H );
-    albedoOverlay = mad ( UnpackColor ( colorData._emiRcol0rgb ), maskSample.x, albedoOverlay );
-    albedoOverlay = mad ( UnpackColor ( colorData._emiGcol1rgb ), maskSample.y, albedoOverlay );
-    albedoOverlay = mad ( UnpackColor ( colorData._emiBcol2rgb ), maskSample.z, albedoOverlay );
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiRcol0rgb ), maskSample.x, albedoOverlay );
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiGcol1rgb ), maskSample.y, albedoOverlay );
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiBcol2rgb ), maskSample.z, albedoOverlay );
 
     return float32_t4 ( (float32_t3)( albedoOverlay * diffuseSample ), 1.0F );
 }
@@ -85,7 +76,7 @@ float32_t4 ComputeEmission ( in float32_t2 uv, in ColorData colorData )
     uint32_t3 const emission = uint32_t3 ( colorData._emiRcol0rgb, colorData._emiGcol1rgb, colorData._emiBcol2rgb ) &
         0x000000FFU;
 
-    float16_t3 const alpha = (float16_t3)emission * UNORM_FACTOR;
+    float16_t3 const alpha = (float16_t3)emission * UNORM_FACTOR_F16;
     float32_t const intensity = INTENSITY_FACTOR * (float32_t)( colorData._col0aEmiIntens >> 8U );
     return float32_t4 ( (float32_t3)( emissionSample * alpha * (float16_t)intensity ), 1.0F );
 }

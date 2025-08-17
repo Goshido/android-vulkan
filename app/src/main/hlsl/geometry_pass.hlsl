@@ -1,9 +1,9 @@
-#ifndef GEOMETRY_PASS_PS_HLSL
-#define GEOMETRY_PASS_PS_HLSL
+#ifndef GEOMETRY_PASS_HLSL
+#define GEOMETRY_PASS_HLSL
 
 
 #include "color_packing.hlsl"
-#include "gbuffer_render_targets.ps.hlsl"
+#include "gbuffer_render_targets.hlsl"
 #include "object_data.hlsl"
 
 
@@ -62,9 +62,21 @@ float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_
         maskSample *= 1.0H / maskSum;
 
     float16_t3 albedoOverlay = (float16_t3)max ( 1.0H - maskSum, 0.0H );
-    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiRcol0rgb ), maskSample.x, albedoOverlay );
-    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiGcol1rgb ), maskSample.y, albedoOverlay );
-    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._emiBcol2rgb ), maskSample.z, albedoOverlay );
+
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._col0R, colorData._col0G, colorData._col0B ),
+        maskSample.x,
+        albedoOverlay
+    );
+
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._col1R, colorData._col1G, colorData._col1B ),
+        maskSample.y,
+        albedoOverlay
+    );
+
+    albedoOverlay = mad ( UnpackColorF16x3 ( colorData._col2R, colorData._col2G, colorData._col2B ),
+        maskSample.z,
+        albedoOverlay
+    );
 
     return float32_t4 ( (float32_t3)( albedoOverlay * diffuseSample ), 1.0F );
 }
@@ -72,12 +84,8 @@ float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_
 float32_t4 ComputeEmission ( in float32_t2 uv, in ColorData colorData )
 {
     float16_t3 const emissionSample = (float16_t3)g_emissionTexture.Sample ( g_sampler, uv ).xyz;
-
-    uint32_t3 const emission = uint32_t3 ( colorData._emiRcol0rgb, colorData._emiGcol1rgb, colorData._emiBcol2rgb ) &
-        0x000000FFU;
-
-    float16_t3 const alpha = (float16_t3)emission * UNORM_FACTOR_F16;
-    float32_t const intensity = INTENSITY_FACTOR * (float32_t)( colorData._col0aEmiIntens >> 8U );
+    float16_t3 const alpha = UnpackColorF16x3 ( colorData._emiR, colorData._emiG, colorData._emiB );
+    float32_t const intensity = INTENSITY_FACTOR * (float32_t)colorData._emiIntens;
     return float32_t4 ( (float32_t3)( emissionSample * alpha * (float16_t)intensity ), 1.0F );
 }
 
@@ -120,4 +128,4 @@ OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in floa
 }
 
 
-#endif // GEOMETRY_PASS_PS_HLSL
+#endif // GEOMETRY_PASS_HLSL

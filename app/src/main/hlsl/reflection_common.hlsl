@@ -1,8 +1,8 @@
-#ifndef REFLECTION_COMMON_PS_HLSL
-#define REFLECTION_COMMON_PS_HLSL
+#ifndef REFLECTION_COMMON_HLSL
+#define REFLECTION_COMMON_HLSL
 
 
-#include "lightup_common.ps.hlsl"
+#include "lightup_common.hlsl"
 
 
 #define PREFILTER_MAX_MIP_LEVEL     8.0H
@@ -52,4 +52,4 @@ float16_t3 GetReflection ( in float16_t3 toFragmentView, in TextureCube<float32_
 }
 
 
-#endif // REFLECTION_COMMON_PS_HLSL
+#endif // REFLECTION_COMMON_HLSL

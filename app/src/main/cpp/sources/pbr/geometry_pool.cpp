@@ -282,7 +282,7 @@ bool GeometryPool::Init ( android_vulkan::Renderer &renderer ) noexcept
 
         VkWriteDescriptorSet &positionWrite = *writeSet++;
         positionWrite.dstSet = descriptorSet;
-        positionWrite.dstBinding = BIND_INSTANCE_POSITON_DATA;
+        positionWrite.dstBinding = BIND_INSTANCE_POSITION_DATA;
         positionWrite.pBufferInfo = bufferInfo++;
 
         vertexRange->memory = normalInfo._memory;

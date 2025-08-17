@@ -47,7 +47,7 @@ bool DescriptorSetLayout::Init ( VkDevice device ) noexcept
     constexpr static VkDescriptorSetLayoutBinding bindings[] =
     {
         {
-            .binding = BIND_INSTANCE_POSITON_DATA,
+            .binding = BIND_INSTANCE_POSITION_DATA,
             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .descriptorCount = 1U,
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,

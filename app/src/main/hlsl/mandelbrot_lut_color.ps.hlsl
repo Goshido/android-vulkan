@@ -1,4 +1,4 @@
-#include "mandelbrot.ps.hlsl"
+#include "mandelbrot.hlsl"
 
 
 Texture1D<float32_t4>       lutTexture:     register ( t0 );

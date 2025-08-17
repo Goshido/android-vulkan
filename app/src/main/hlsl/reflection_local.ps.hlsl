@@ -1,5 +1,5 @@
 #include "pbr/reflection_local.inc"
-#include "reflection_common.ps.hlsl"
+#include "reflection_common.hlsl"
 
 
 [[vk::binding ( BIND_PREFILTER_TEXTURE, SET_REFLECTION )]]

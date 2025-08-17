@@ -1,6 +1,6 @@
-#include "brightness_factor.ps.hlsl"
+#include "brightness_factor.hlsl"
 #include "color_space.hlsl"
-#include "ui_common.ps.hlsl"
+#include "ui_common.hlsl"
 
 
 //----------------------------------------------------------------------------------------------------------------------

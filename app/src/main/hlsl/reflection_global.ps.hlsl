@@ -1,5 +1,5 @@
 #include "pbr/reflection_global.inc"
-#include "reflection_common.ps.hlsl"
+#include "reflection_common.hlsl"
 
 
 #define VOID_SPACE_DEPTH    0.0F

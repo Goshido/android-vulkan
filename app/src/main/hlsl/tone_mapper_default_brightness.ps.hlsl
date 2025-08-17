@@ -1,5 +1,5 @@
 #include "color_space.hlsl"
-#include "tone_mapper_common.ps.hlsl"
+#include "tone_mapper_common.hlsl"
 
 
 //----------------------------------------------------------------------------------------------------------------------

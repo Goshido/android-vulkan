@@ -18,7 +18,10 @@ using Position = float32_t2;
 struct UIVertex
 {
     float16_t2                      _uv;
-    uint32_t                        _color;
+    uint32_t                        _colorR: 8;
+    uint32_t                        _colorG: 8;
+    uint32_t                        _colorB: 8;
+    uint32_t                        _colorA: 8;
     uint16_t                        _image: 14;
     uint16_t                        _uiPrimitiveType: 2;
 };
@@ -59,7 +62,7 @@ OutputData VS ( in uint32_t vertexID: SV_VertexID )
     result._uv = (float32_t2)rest._uv;
     result._image = (uint32_t)rest._image;
     result._uiPrimitiveType = (uint32_t)rest._uiPrimitiveType;
-    result._color = UnpackColorF32x4 ( rest._color );
+    result._color = UnpackColorF32x4 ( rest._colorR, rest._colorG, rest._colorB, rest._colorA );
 
     return result;
 }

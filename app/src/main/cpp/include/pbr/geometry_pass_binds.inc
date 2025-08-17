@@ -26,7 +26,7 @@
 #define BIND_PARAMS_TEXTURE             4
 
 #define SET_INSTANCE_DATA               2
-#define BIND_INSTANCE_POSITON_DATA      0
+#define BIND_INSTANCE_POSITION_DATA     0
 #define BIND_INSTANCE_NORMAL_DATA       1
 #define BIND_INSTANCE_COLOR_DATA        2
 

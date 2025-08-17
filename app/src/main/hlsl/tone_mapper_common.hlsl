@@ -1,5 +1,5 @@
-#ifndef TONE_MAPPER_COMMON_PS_HLSL
-#define TONE_MAPPER_COMMON_PS_HLSL
+#ifndef TONE_MAPPER_COMMON_HLSL
+#define TONE_MAPPER_COMMON_HLSL
 
 
 #include "pbr/full_screen_triangle.inc"
@@ -38,4 +38,4 @@ float16_t3 ApplyACES ( in float32_t2 uv )
 }
 
 
-#endif // TONE_MAPPER_COMMON_PS_HLSL
+#endif // TONE_MAPPER_COMMON_HLSL

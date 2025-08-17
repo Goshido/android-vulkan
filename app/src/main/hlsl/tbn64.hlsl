@@ -1,5 +1,5 @@
-#ifndef TBN_64_INC_HLSL
-#define TBN_64_INC_HLSL
+#ifndef TBN_64_HLSL
+#define TBN_64_HLSL
 
 
 struct TBN64
@@ -11,4 +11,4 @@ struct TBN64
 };
 
 
-#endif // TBN_64_INC_HLSL
+#endif // TBN_64_HLSL

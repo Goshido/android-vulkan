@@ -1,5 +1,5 @@
-#ifndef BRIGHTNESS_FACTOR_PS_HLSL
-#define BRIGHTNESS_FACTOR_PS_HLSL
+#ifndef BRIGHTNESS_FACTOR_HLSL
+#define BRIGHTNESS_FACTOR_HLSL
 
 
 #include "pbr/brightness_factor.inc"
@@ -9,4 +9,4 @@
 float const     g_brightnessFactor = 1.0F;
 
 
-#endif // BRIGHTNESS_FACTOR_PS_HLSL
+#endif // BRIGHTNESS_FACTOR_HLSL

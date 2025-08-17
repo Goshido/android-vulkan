@@ -1,6 +1,6 @@
-#include "brightness_factor.ps.hlsl"
+#include "brightness_factor.hlsl"
 #include "color_space.hlsl"
-#include "tone_mapper_common.ps.hlsl"
+#include "tone_mapper_common.hlsl"
 
 
 //----------------------------------------------------------------------------------------------------------------------

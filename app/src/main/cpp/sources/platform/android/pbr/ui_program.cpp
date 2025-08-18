@@ -1,8 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
-#include <pbr/ui_vertex_info.hpp>
 #include <platform/android/pbr/ui_program.hpp>
 #include <platform/android/pbr/ui_program.inc>
+#include <platform/android/pbr/ui_vertex_info.hpp>
 
 
 namespace pbr::android {
@@ -443,7 +443,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     binds[ IN_BUFFER_REST ] =
     {
         .binding = IN_BUFFER_REST,
-        .stride = static_cast<uint32_t> ( sizeof ( UIVertex ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( android::UIVertex ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
@@ -460,7 +460,9 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_IMAGE_UV,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R16G16_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _uv ) )
+
+        // FUCK - remove namespace
+        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _uv ) )
     };
 
     attributes[ IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE ] =
@@ -468,7 +470,9 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8_UNORM,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlasLayer ) )
+
+        // FUCK - remove namespace
+        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _atlasLayer ) )
     };
 
     attributes[ IN_SLOT_COLOR ] =
@@ -476,7 +480,9 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_COLOR,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8B8A8_UNORM,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _color ) )
+
+        // FUCK - remove namespace
+        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _color ) )
     };
 
     info =

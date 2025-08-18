@@ -3,6 +3,7 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/resource_heap.inc>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>
@@ -13,7 +14,7 @@ namespace pbr::windows {
 namespace {
 
 constexpr size_t RESOURCE_CAPACITY = 1'000'000U;
-constexpr auto UI_SLOTS = static_cast<uint32_t> ( std::numeric_limits<uint16_t>::max () + 1U );
+constexpr auto UI_SLOTS = static_cast<uint32_t> ( 1U << UI_IMAGE_BITS );
 
 } // end of anonymous namespace
 

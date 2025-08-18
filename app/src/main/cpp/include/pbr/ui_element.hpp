@@ -1,8 +1,14 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_UI_ELEMENT_HPP
 #define PBR_UI_ELEMENT_HPP
 
 
 #include "css_computed_values.hpp"
+
+// FUCK - use relative path
+#include <platform/android/pbr/ui_vertex_info.hpp>
+
 #include "ui_pass.hpp"
 
 
@@ -26,7 +32,7 @@ class UIElement
         struct SubmitInfo final
         {
             UIPass*                         _uiPass = 0U;
-            UIVertexBuffer                  _vertexBuffer {};
+            android::UIVertexBuffer         _vertexBuffer {};
         };
 
         struct UpdateInfo final

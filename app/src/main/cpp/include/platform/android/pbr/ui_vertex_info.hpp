@@ -1,9 +1,9 @@
-#ifndef PBR_UI_VERTEX_INFO_HPP
-#define PBR_UI_VERTEX_INFO_HPP
+#ifndef PBR_ANDROID_UI_VERTEX_INFO_HPP
+#define PBR_ANDROID_UI_VERTEX_INFO_HPP
 
 
 #include <half_types.hpp>
-#include "ui_primitive_type.inc"
+#include <pbr/ui_primitive_type.inc>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,7 +12,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr {
+namespace pbr::android {
 
 #pragma pack ( push, 1 )
 
@@ -32,7 +32,7 @@ struct UIVertexBuffer final
     std::span<UIVertex>     _vertices {};
 };
 
-} // namespace pbr
+} // namespace pbr::android
 
 
-#endif // PBR_UI_VERTEX_INFO_HPP
+#endif // PBR_ANDROID_UI_VERTEX_INFO_HPP

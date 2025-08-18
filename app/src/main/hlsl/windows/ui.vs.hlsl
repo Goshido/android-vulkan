@@ -1,4 +1,5 @@
 #include "color_packing.hlsl"
+#include "platform/windows/pbr/resource_heap.inc"
 #include "ui_bindings.hlsl"
 
 
@@ -22,8 +23,8 @@ struct UIVertex
     uint32_t                        _colorG: 8;
     uint32_t                        _colorB: 8;
     uint32_t                        _colorA: 8;
-    uint16_t                        _image: 14;
-    uint16_t                        _uiPrimitiveType: 2;
+    uint16_t                        _image: UI_IMAGE_BITS;
+    uint16_t                        _uiPrimitiveType: ( 16 - UI_IMAGE_BITS );
 };
 
 struct OutputData

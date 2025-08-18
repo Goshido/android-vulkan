@@ -527,9 +527,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_transform_descriptor_set_layout.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\default_texture_manager.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
@@ -803,6 +800,12 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.hpp">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_vertex_info.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_vertex_info.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -859,6 +862,9 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.inc">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

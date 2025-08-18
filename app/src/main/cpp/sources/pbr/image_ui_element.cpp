@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
@@ -261,11 +263,16 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
 
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
     constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
-    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
-    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+    // FUCK - remove namespace
+    constexpr size_t verticesBytes = vertices * sizeof ( android::UIVertex);
+
+    // FUCK - remove namespace
+    android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    // FUCK - remove namespace
+    std::span<android::UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );

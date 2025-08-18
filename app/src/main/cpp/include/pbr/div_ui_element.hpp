@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_DIV_UI_ELEMENT_HPP
 #define PBR_DIV_UI_ELEMENT_HPP
 
@@ -39,7 +41,7 @@ class DIVUIElement final : public UIElement
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
         GXVec2                      _positions[ UIPass::GetVerticesPerRectangle() ] {};
-        UIVertex                    _vertices[ UIPass::GetVerticesPerRectangle() ] {};
+        android::UIVertex           _vertices[ UIPass::GetVerticesPerRectangle() ] {};
 
     public:
         DIVUIElement () = delete;

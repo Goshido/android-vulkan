@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_UI_PASS_HPP
 #define PBR_UI_PASS_HPP
 
@@ -8,8 +10,8 @@
 
 // FUCK - use relative path
 #include <platform/android/pbr/ui_program.hpp>
+#include <platform/android/pbr/ui_vertex_info.hpp>
 
-#include "ui_vertex_info.hpp"
 #include "uniform_pool.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -24,7 +26,8 @@ namespace pbr {
 class UIPass final
 {
     public:
-        using UIBufferResponse = std::optional<UIVertexBuffer>;
+        // FUCK - remove namespace
+        using UIBufferResponse = std::optional<android::UIVertexBuffer>;
 
     private:
         class CommonDescriptorSet final
@@ -207,7 +210,9 @@ class UIPass final
         std::vector<Job>                                _jobs {};
 
         BufferStream                                    _positions { sizeof ( GXVec2 ) };
-        BufferStream                                    _rest { sizeof ( UIVertex ) };
+
+        // FUCK - remove namespace
+        BufferStream                                    _rest { sizeof ( android::UIVertex ) };
 
         // FUCK - remove namespace
         android::UIProgram                              _program {};
@@ -273,21 +278,30 @@ class UIPass final
         }
 
         static void AppendImage ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+
+            // FUCK - remove namespace
+            android::UIVertex* targetVertices,
+
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
         static void AppendRectangle ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+
+            // FUCK - remove namespace
+            android::UIVertex* targetVertices,
+
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
         static void AppendText ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+
+            // FUCK - remove namespace
+            android::UIVertex* targetVertices,
+
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,

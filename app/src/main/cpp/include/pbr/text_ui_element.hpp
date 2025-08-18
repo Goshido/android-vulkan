@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_TEXT_UI_ELEMENT_HPP
 #define PBR_TEXT_UI_ELEMENT_HPP
 
@@ -12,33 +14,33 @@ class TextUIElement final : public UIElement
     private:
         struct Glyph final
         {
-            int32_t                         _advance;
+            int32_t                             _advance;
 
-            android_vulkan::Half2           _atlasTopLeft;
-            android_vulkan::Half2           _atlasBottomRight;
-            uint8_t                         _atlasLayer;
+            android_vulkan::Half2               _atlasTopLeft;
+            android_vulkan::Half2               _atlasBottomRight;
+            uint8_t                             _atlasLayer;
 
-            int32_t                         _offsetX;
-            int32_t                         _offsetY;
-            size_t                          _parentLine;
+            int32_t                             _offsetX;
+            int32_t                             _offsetY;
+            size_t                              _parentLine;
 
-            int32_t                         _width;
-            int32_t                         _height;
+            int32_t                             _width;
+            int32_t                             _height;
         };
 
         struct Line final
         {
-            size_t                          _glyphs = 0U;
-            int32_t                         _length = 0;
+            size_t                              _glyphs = 0U;
+            int32_t                             _length = 0;
         };
 
         struct ApplyLayoutCache final
         {
-            bool                            _isTextChanged = true;
-            std::vector<float>              _lineHeights {};
-            GXVec2                          _penIn {};
-            GXVec2                          _penOut {};
-            size_t                          _vertices = 0U;
+            bool                                _isTextChanged = true;
+            std::vector<float>                  _lineHeights {};
+            GXVec2                              _penIn {};
+            GXVec2                              _penOut {};
+            size_t                              _vertices = 0U;
 
             void Clear () noexcept;
             [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
@@ -46,20 +48,21 @@ class TextUIElement final : public UIElement
 
         struct SubmitCache final
         {
-            bool                            _isColorChanged = true;
-            bool                            _isTextChanged = true;
+            bool                                _isColorChanged = true;
+            bool                                _isTextChanged = true;
 
-            GXVec2                          _penIn {};
-            GXVec2                          _penOut {};
+            GXVec2                              _penIn {};
+            GXVec2                              _penOut {};
 
-            std::vector<float>              _parentLineHeights {};
-            GXVec2                          _parenSize {};
+            std::vector<float>                  _parentLineHeights {};
+            GXVec2                              _parenSize {};
 
-            std::vector<GXVec2>             _positions {};
-            size_t                          _positionBufferBytes = 0U;
+            std::vector<GXVec2>                 _positions {};
+            size_t                              _positionBufferBytes = 0U;
 
-            std::vector<UIVertex>           _vertices {};
-            size_t                          _vertexBufferBytes = 0U;
+            // FUCK - remove namespace
+            std::vector<android::UIVertex>      _vertices {};
+            size_t                              _vertexBufferBytes = 0U;
 
             void Clear () noexcept;
 
@@ -77,18 +80,18 @@ class TextUIElement final : public UIElement
         ) noexcept;
 
     private:
-        ApplyLayoutCache                    _applyLayoutCache {};
-        SubmitCache                         _submitCache {};
+        ApplyLayoutCache                        _applyLayoutCache {};
+        SubmitCache                             _submitCache {};
 
         // Way the user could override color which arrived from CSS.
-        std::optional<GXColorUNORM>         _color {};
+        std::optional<GXColorUNORM>             _color {};
 
-        int32_t                             _baselineToBaseline = 0;
-        int32_t                             _contentAreaHeight = 0;
-        std::vector<Glyph>                  _glyphs {};
+        int32_t                                 _baselineToBaseline = 0;
+        int32_t                                 _contentAreaHeight = 0;
+        std::vector<Glyph>                      _glyphs {};
 
-        std::vector<Line>                   _lines {};
-        std::u32string                      _text {};
+        std::vector<Line>                       _lines {};
+        std::u32string                          _text {};
 
     public:
         TextUIElement () = delete;

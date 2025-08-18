@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
@@ -1121,7 +1123,9 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     {
         {
             ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-            ._vertices { static_cast<UIVertex*> ( _rest.GetData ( nextIdx ) ), neededVertices }
+
+            // FUCK - remove namespace
+            ._vertices { static_cast<android::UIVertex*> ( _rest.GetData (nextIdx) ), neededVertices}
         }
     };
 }
@@ -1201,7 +1205,10 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 }
 
 void UIPass::AppendImage ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+
+    // FUCK - remove namespace
+    android::UIVertex* targetVertices,
+
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
@@ -1209,49 +1216,58 @@ void UIPass::AppendImage ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
+    // FUCK - remove namespace
+    android::UIVertex &v0 = targetVertices[ 0U ];
     v0._uv = IMAGE_TOP_LEFT;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v0._color = color;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
+    // FUCK - remove namespace
+    android::UIVertex &v1 = targetVertices[ 1U ];
     v1._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] );
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v1._color = color;
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
+    // FUCK - remove namespace
+    android::UIVertex &v2 = targetVertices[ 2U ];
     v2._uv = IMAGE_BOTTOM_RIGHT;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v2._color = color;
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
+    // FUCK - remove namespace
+    android::UIVertex &v3 = targetVertices[ 3U ];
     v3._uv = IMAGE_BOTTOM_RIGHT;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v3._color = color;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
+    // FUCK - remove namespace
+    android::UIVertex &v4 = targetVertices[ 4U ];
     v4._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] );
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v4._color = color;
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
+    // FUCK - remove namespace
+    android::UIVertex &v5 = targetVertices[ 5U ];
     v5._uv = IMAGE_TOP_LEFT;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v5._color = color;
 }
 
 void UIPass::AppendRectangle ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+
+    // FUCK - remove namespace
+    android::UIVertex* targetVertices,
+
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
@@ -1259,43 +1275,52 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
+    // FUCK - remove namespace
+    android::UIVertex &v0 = targetVertices[ 0U ];
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v0._color = color;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
+    // FUCK - remove namespace
+    android::UIVertex &v1 = targetVertices[ 1U ];
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v1._color = color;
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
+    // FUCK - remove namespace
+    android::UIVertex &v2 = targetVertices[ 2U ];
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v2._color = color;
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
+    // FUCK - remove namespace
+    android::UIVertex &v3 = targetVertices[ 3U ];
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v3._color = color;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
+    // FUCK - remove namespace
+    android::UIVertex &v4 = targetVertices[ 4U ];
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v4._color = color;
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
+    // FUCK - remove namespace
+    android::UIVertex &v5 = targetVertices[ 5U ];
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v5._color = color;
 }
 
 void UIPass::AppendText ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+
+    // FUCK - remove namespace
+    android::UIVertex* targetVertices,
+
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
@@ -1306,7 +1331,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
+    // FUCK - remove namespace
+    android::UIVertex &v0 = targetVertices[ 0U ];
     v0._uv = glyphTopLeft;
     v0._atlasLayer = atlasLayer;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1314,7 +1340,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
+    // FUCK - remove namespace
+    android::UIVertex &v1 = targetVertices[ 1U ];
 
     v1._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] );
     v1._atlasLayer = atlasLayer;
@@ -1323,7 +1350,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
+    // FUCK - remove namespace
+    android::UIVertex &v2 = targetVertices[ 2U ];
     v2._uv = glyphBottomRight;
     v2._atlasLayer = atlasLayer;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1331,7 +1359,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
+    // FUCK - remove namespace
+    android::UIVertex &v3 = targetVertices[ 3U ];
     v3._uv = glyphBottomRight;
     v3._atlasLayer = atlasLayer;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1339,7 +1368,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
+    // FUCK - remove namespace
+    android::UIVertex &v4 = targetVertices[ 4U ];
 
     v4._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] );
     v4._atlasLayer = atlasLayer;
@@ -1348,7 +1378,8 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
+    // FUCK - remove namespace
+    android::UIVertex &v5 = targetVertices[ 5U ];
     v5._uv = glyphTopLeft;
     v5._atlasLayer = atlasLayer;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;

@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_IMAGE_UI_ELEMENT_HPP
 #define PBR_IMAGE_UI_ELEMENT_HPP
 
@@ -30,7 +32,9 @@ class ImageUIElement final : public UIElement
             Texture2DRef            _texture {};
 
             GXVec2                  _positions[ UIPass::GetVerticesPerRectangle() ] {};
-            UIVertex                _vertices[ UIPass::GetVerticesPerRectangle() ] {};
+
+            // FUCK - remove namespace
+            android::UIVertex       _vertices[ UIPass::GetVerticesPerRectangle() ] {};
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };

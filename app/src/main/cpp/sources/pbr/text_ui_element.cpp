@@ -1,3 +1,5 @@
+// FUCK - windows and android separation
+
 #include <precompiled_headers.hpp>
 #include <pbr/div_ui_element.hpp>
 #include <pbr/text_ui_element.hpp>
@@ -408,9 +410,13 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     size_t const vertices = _submitCache._positions.size ();
-    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+
+    // FUCK - remove namespace
+    android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+
+    // FUCK - remove namespace
+    std::span<android::UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
@@ -439,7 +445,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     std::vector<GXVec2> &positionBuffer = _submitCache._positions;
     positionBuffer.clear ();
 
-    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
+    // FUCK - remove namespace
+    std::vector<android::UIVertex> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
@@ -448,7 +455,9 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     vertexBuffer.resize ( vertexCount );
 
     GXVec2* p = positionBuffer.data ();
-    UIVertex* v = vertexBuffer.data ();
+
+    // FUCK - remove namespace
+    android::UIVertex* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorUNORM const color = ResolveColor ();
@@ -530,7 +539,9 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     info._pen = penOut;
 
     _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
+
+    // FUCK - remove namespace
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( android::UIVertex );
     return true;
 }
 

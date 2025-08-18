@@ -1032,7 +1032,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_common_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_image_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_transform_descriptor_set_layout.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_buffer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\uniform_pool.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf16_parser.hpp" />
@@ -1042,12 +1041,14 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\compute_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\graphics_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_buffer_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\compute_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\graphics_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp" />
@@ -1156,6 +1157,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.inc" />
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\samplers.inc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -1,0 +1,8 @@
+#ifndef RESOURCE_HEAP_INC
+#define RESOURCE_HEAP_INC
+
+
+#define UI_IMAGE_BITS       14
+
+
+#endif // RESOURCE_HEAP_INC

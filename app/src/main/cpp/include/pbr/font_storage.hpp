@@ -1,10 +1,12 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_FONT_STORAGE_HPP
 #define PBR_FONT_STORAGE_HPP
 
 
 #include "fif_count.hpp"
+#include <half_types.hpp>
 #include <renderer.hpp>
-#include "ui_vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

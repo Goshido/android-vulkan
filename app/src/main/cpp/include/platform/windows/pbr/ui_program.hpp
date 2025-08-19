@@ -1,25 +1,26 @@
-#ifndef PBR_UI_PROGRAM_HPP
-#define PBR_UI_PROGRAM_HPP
+#ifndef PBR_WINDOWS_UI_PROGRAM_HPP
+#define PBR_WINDOWS_UI_PROGRAM_HPP
 
 
 #include "graphics_program.hpp"
+#include <GXCommon/GXMath.hpp>
 #include <pbr/brightness_info.hpp>
-#include <pbr/ui_pass_common_descriptor_set_layout.hpp>
-#include <pbr/ui_pass_image_descriptor_set_layout.hpp>
-#include <pbr/ui_pass_transform_descriptor_set_layout.hpp>
+#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 // FUCK - remove namespace
-namespace pbr::android {
+namespace pbr::windows {
 
-class UIProgram final : public android::GraphicsProgram
+class UIProgram final : public windows::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
-        struct Transform final
+        struct UIInfo final
         {
+            VkDeviceAddress                     _positionBDA;
+            VkDeviceAddress                     _restBDA;
             GXVec2                              _rotateScaleRow0;
             GXVec2                              _padding0;
             GXVec2                              _rotateScaleRow1;
@@ -29,9 +30,7 @@ class UIProgram final : public android::GraphicsProgram
         AV_DX_ALIGNMENT_END
 
     private:
-        UIPassCommonDescriptorSetLayout         _commonLayout {};
-        UIPassImageDescriptorSetLayout          _imageLayout {};
-        UIPassTransformDescriptorSetLayout      _transformLayout {};
+        ResourceHeapDescriptorSetLayout         _layout {};
 
     public:
         UIProgram () noexcept;
@@ -46,18 +45,11 @@ class UIProgram final : public android::GraphicsProgram
 
         void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            VkRenderPass renderPass,
-            uint32_t subpass,
+        [[nodiscard]] bool Init ( VkDevice device,
+            VkFormat swapchainFormat,
             BrightnessInfo const &brightnessInfo,
             VkExtent2D const &viewport
         ) noexcept;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer,
-            VkDescriptorSet const* sets,
-            uint32_t startIndex,
-            uint32_t count
-        ) const noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -87,13 +79,6 @@ class UIProgram final : public android::GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
-            SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo
-        ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,
@@ -101,14 +86,25 @@ class UIProgram final : public android::GraphicsProgram
             VkExtent2D const* viewport
         ) const noexcept override;
 
-        [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
-            VkPipelineVertexInputStateCreateInfo &info,
-            VkVertexInputAttributeDescription* attributes,
-            VkVertexInputBindingDescription* binds
+        [[nodiscard]] VkPipelineRenderingCreateInfo const* InitRenderingInfo ( VkFormat nativeColor,
+            VkFormat nativeDepth,
+            VkFormat nativeStencil,
+            VkFormat nativeDepthStencil,
+            VkFormat* colorAttachments,
+            VkPipelineRenderingCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+            std::vector<uint8_t> &vs,
+            std::vector<uint8_t> &fs,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkShaderModuleCreateInfo* moduleInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) const noexcept override;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif // PBR_UI_PROGRAM_HPP
+#endif // PBR_WINDOWS_UI_PROGRAM_HPP

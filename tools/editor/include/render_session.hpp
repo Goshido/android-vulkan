@@ -11,6 +11,7 @@
 #include <pbr/ui_pass.hpp>
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/ui_program.hpp>
 #include "ui_manager.hpp"
 
 
@@ -44,6 +45,7 @@ class RenderSession final
         // FUCK
         std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
+        pbr::windows::UIProgram                                     _fuckUIProgram {};
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;

@@ -767,7 +767,14 @@ bool RenderSession::InitModules () noexcept
 
     bool result = AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
-        _presentRenderPass.OnSwapchainCreated ( renderer );
+        _presentRenderPass.OnSwapchainCreated ( renderer ) &&
+
+        // FUCK
+        _fuckUIProgram.Init ( device,
+            renderer.GetSurfaceFormat (),
+            pbr::BrightnessInfo::BrightnessInfo ( 0.0F ),
+            renderer.GetViewportResolution ()
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -1197,6 +1204,9 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _samplerManager.Destroy ( device );
 
     _resourceHeap.Destroy ( renderer );
+
+    // FUCK
+    _fuckUIProgram.Destroy ( device );
 
     _messageQueue.EnqueueFront (
         Message

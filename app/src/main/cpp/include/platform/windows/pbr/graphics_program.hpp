@@ -4,7 +4,14 @@
 
 #include <pbr/graphics_program.hpp>
 
+GX_DISABLE_COMMON_WARNINGS
 
+#include <vector>
+
+GX_RESTORE_WARNING_STATE
+
+
+// FUCK - remove namespace
 namespace pbr::windows {
 
 class GraphicsProgram : public pbr::GraphicsProgram
@@ -22,12 +29,26 @@ class GraphicsProgram : public pbr::GraphicsProgram
         explicit GraphicsProgram ( std::string_view name ) noexcept;
         ~GraphicsProgram () override = default;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( VkDevice device,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
+        // 'nativeXXX' are needed when format is OS/platform specific and could be known in runtime only.
+        // For example swapchain related pipelines or pipelines with depth/stencil features.
+        [[nodiscard]] virtual VkPipelineRenderingCreateInfo const* InitRenderingInfo ( VkFormat nativeColor,
+            VkFormat nativeDepth,
+            VkFormat nativeStencil,
+            VkFormat nativeDepthStencil,
+            VkFormat* colorAttachments,
+            VkPipelineRenderingCreateInfo &info
+        ) const noexcept = 0;
+
+        [[nodiscard]] virtual bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+            std::vector<uint8_t> &vs,
+            std::vector<uint8_t> &fs,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
+            VkShaderModuleCreateInfo* moduleInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
-        ) noexcept = 0;
+        ) const noexcept = 0;
+
+        [[nodiscard]] static VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo () noexcept;
 };
 
 } // namespace pbr::windows

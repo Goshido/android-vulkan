@@ -767,14 +767,7 @@ bool RenderSession::InitModules () noexcept
 
     bool result = AllocateCommandBuffers ( device ) &&
         _presentRenderPass.OnInitDevice () &&
-        _presentRenderPass.OnSwapchainCreated ( renderer ) &&
-
-        // FUCK
-        _fuckUIProgram.Init ( device,
-            renderer.GetSurfaceFormat (),
-            pbr::BrightnessInfo::BrightnessInfo ( 0.0F ),
-            renderer.GetViewportResolution ()
-        );
+        _presentRenderPass.OnSwapchainCreated ( renderer );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -839,6 +832,13 @@ bool RenderSession::InitModules () noexcept
         android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "editor::RenderSession::InitModules",
             "Can't end command buffer"
+        ) &&
+
+      // FUCK
+        _fuckUIProgram.Init ( device,
+            renderer.GetSurfaceFormat (),
+            pbr::BrightnessInfo::BrightnessInfo ( 0.0F ),
+            renderer.GetViewportResolution ()
         );
 
     if ( !result ) [[unlikely]]

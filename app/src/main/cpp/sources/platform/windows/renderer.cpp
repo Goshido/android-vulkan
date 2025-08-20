@@ -364,10 +364,37 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         .maintenance4 = VK_FALSE
     };
 
+    VkPhysicalDeviceVulkan14Features features14
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pNext = &features13,
+        .globalPriorityQuery = VK_FALSE,
+        .shaderSubgroupRotate = VK_FALSE,
+        .shaderSubgroupRotateClustered = VK_FALSE,
+        .shaderFloatControls2 = VK_FALSE,
+        .shaderExpectAssume = VK_FALSE,
+        .rectangularLines = VK_FALSE,
+        .bresenhamLines = VK_FALSE,
+        .smoothLines = VK_FALSE,
+        .stippledRectangularLines = VK_FALSE,
+        .stippledBresenhamLines = VK_FALSE,
+        .stippledSmoothLines = VK_FALSE,
+        .vertexAttributeInstanceRateDivisor = VK_FALSE,
+        .vertexAttributeInstanceRateZeroDivisor = VK_FALSE,
+        .indexTypeUint8 = VK_FALSE,
+        .dynamicRenderingLocalRead = VK_FALSE,
+        .maintenance5 = VK_FALSE,
+        .maintenance6 = VK_FALSE,
+        .pipelineProtectedAccess = VK_FALSE,
+        .pipelineRobustness = VK_FALSE,
+        .hostImageCopy = VK_FALSE,
+        .pushDescriptor = VK_FALSE
+    };
+
     VkPhysicalDeviceFeatures2 probe
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &features13,
+        .pNext = &features14,
         .features {}
     };
 
@@ -426,7 +453,9 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         AV_BITWISE ( CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
             "shaderStorageImageArrayNonUniformIndexing" ) ) &
 
-        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) );
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) ) &
+
+        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5" ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept
@@ -633,10 +662,40 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .maintenance4 = VK_FALSE
     };
 
+    constexpr static VkPhysicalDeviceVulkan14Features features14
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pNext = const_cast<VkPhysicalDeviceVulkan13Features*> ( &features13 ),
+        .globalPriorityQuery = VK_FALSE,
+        .shaderSubgroupRotate = VK_FALSE,
+        .shaderSubgroupRotateClustered = VK_FALSE,
+        .shaderFloatControls2 = VK_FALSE,
+        .shaderExpectAssume = VK_FALSE,
+        .rectangularLines = VK_FALSE,
+        .bresenhamLines = VK_FALSE,
+        .smoothLines = VK_FALSE,
+        .stippledRectangularLines = VK_FALSE,
+        .stippledBresenhamLines = VK_FALSE,
+        .stippledSmoothLines = VK_FALSE,
+        .vertexAttributeInstanceRateDivisor = VK_FALSE,
+        .vertexAttributeInstanceRateZeroDivisor = VK_FALSE,
+        .indexTypeUint8 = VK_FALSE,
+        .dynamicRenderingLocalRead = VK_FALSE,
+
+        // It's needed to remove VkShaderModule.
+        .maintenance5 = VK_TRUE,
+
+        .maintenance6 = VK_FALSE,
+        .pipelineProtectedAccess = VK_FALSE,
+        .pipelineRobustness = VK_FALSE,
+        .hostImageCopy = VK_FALSE,
+        .pushDescriptor = VK_FALSE
+    };
+
     return
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = const_cast<VkPhysicalDeviceVulkan13Features*> ( &features13 ),
+        .pNext = const_cast<VkPhysicalDeviceVulkan14Features*> ( &features14 ),
 
         .features
         {

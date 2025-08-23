@@ -46,11 +46,14 @@ class UILayer final
         ~UILayer () = default;
 
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            FontStorage &fontStorage
+            // FUCK - remove namespace
+            android::FontStorage &fontStorage
         ) noexcept;
 
         void Submit ( UIElement::SubmitInfo &info ) noexcept;
-        [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] bool UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
 
         static void InitLuaFrontend ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;

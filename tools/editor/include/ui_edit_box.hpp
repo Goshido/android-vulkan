@@ -2,7 +2,6 @@
 #define EDITOR_UI_EDIT_BOX_HPP
 
 
-#include <pbr/font_storage.hpp>
 #include "text_ui_element.hpp"
 #include "timer.hpp"
 #include "widget.hpp"
@@ -35,40 +34,42 @@ class UIEditBox final : public Widget
         };
 
     private:
-        std::string                         _committed {};
-        std::u32string                      _content {};
-        pbr::FontStorage::StringMetrics     _metrics {};
-        pbr::FontStorage                    &_fontStorage;
+        std::string                                 _committed {};
+        std::u32string                              _content {};
 
-        DIVUIElement                        _lineDIV;
-        DIVUIElement                        _columnDIV;
+        // FUCK - remove namespace
+        pbr::android::FontStorage::StringMetrics    _metrics {};
+        pbr::android::FontStorage                   &_fontStorage;
 
-        DIVUIElement                        _captionDIV;
-        TextUIElement                       _captionText;
+        DIVUIElement                                _lineDIV;
+        DIVUIElement                                _columnDIV;
 
-        DIVUIElement                        _valueDIV;
+        DIVUIElement                                _captionDIV;
+        TextUIElement                               _captionText;
 
-        DIVUIElement                        _cursorDIV;
-        DIVUIElement                        _selectionDIV;
+        DIVUIElement                                _valueDIV;
 
-        DIVUIElement                        _textDIV;
-        TextUIElement                       _text;
+        DIVUIElement                                _cursorDIV;
+        DIVUIElement                                _selectionDIV;
+
+        DIVUIElement                                _textDIV;
+        TextUIElement                               _text;
 
         // rule: index before symbol
-        int32_t                             _cursor = 0;
-        int32_t                             _selection = 0;
-        bool                                _leftMouseButtonPressed = false;
+        int32_t                                     _cursor = 0;
+        int32_t                                     _selection = 0;
+        bool                                        _leftMouseButtonPressed = false;
 
-        size_t                              _eventID = 0U;
-        MouseButtonHandler                  _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
-        MouseButtonHandler                  _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
-        MouseButtonHandler                  _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
-        MouseLeaveHandler                   _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
-        MouseMoveHandler                    _onMouseMove = &UIEditBox::OnMouseMoveNormal;
-        UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
+        size_t                                      _eventID = 0U;
+        MouseButtonHandler                          _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
+        MouseButtonHandler                          _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
+        MouseButtonHandler                          _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
+        MouseLeaveHandler                           _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
+        MouseMoveHandler                            _onMouseMove = &UIEditBox::OnMouseMoveNormal;
+        UpdateRectHandler                           _updateRect = &UIEditBox::UpdatedRectNormal;
 
-        std::unique_ptr<Timer>              _blink {};
-        Callback                            _callback {};
+        std::unique_ptr<Timer>                      _blink {};
+        Callback                                    _callback {};
 
     public:
         UIEditBox () = delete;
@@ -81,7 +82,10 @@ class UIEditBox final : public Widget
 
         explicit UIEditBox ( MessageQueue &messageQueue,
             DIVUIElement &parent,
-            pbr::FontStorage &fontStorage,
+
+            // FUCK - remove namespace
+            pbr::android::FontStorage &fontStorage,
+
             std::string_view caption,
             std::string_view value,
             std::string &&name

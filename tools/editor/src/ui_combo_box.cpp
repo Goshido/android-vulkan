@@ -194,8 +194,9 @@ void UIComboBox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     _isChanged = true;
 }
 
+// FUCK - remove namespace
 Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::FontStorage &fontStorage
+    pbr::android::FontStorage &fontStorage
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -230,7 +231,8 @@ void UIComboBox::Popup::Submit ( pbr::UIElement::SubmitInfo& info ) noexcept
     _div.Submit ( info );
 }
 
-bool UIComboBox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+// FUCK - remove namespace
+bool UIComboBox::Popup::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     pbr::UIElement::UpdateInfo info
     {

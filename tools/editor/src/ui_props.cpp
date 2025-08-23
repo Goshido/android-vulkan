@@ -37,7 +37,8 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
+// FUCK - remove namespace
+UIProps::UIProps ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
     _fontStorage ( fontStorage ),
 

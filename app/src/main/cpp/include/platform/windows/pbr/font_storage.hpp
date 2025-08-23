@@ -1,12 +1,13 @@
 // FUCK - windows and android separation
 
-#ifndef PBR_FONT_STORAGE_HPP
-#define PBR_FONT_STORAGE_HPP
+#ifndef PBR_WINDOWS_FONT_STORAGE_HPP
+#define PBR_WINDOWS_FONT_STORAGE_HPP
 
 
-#include "fif_count.hpp"
 #include <half_types.hpp>
+#include <pbr/fif_count.hpp>
 #include <renderer.hpp>
+#include "resource_heap.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -20,7 +21,8 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::windows {
 
 class FontStorage final
 {
@@ -34,7 +36,7 @@ class FontStorage final
         {
             android_vulkan::Half2                       _topLeft { 0.0F, 0.0F };
             android_vulkan::Half2                       _bottomRight { 0.0F, 0.0F };
-            uint8_t                                     _layer = 0U;
+            uint16_t                                    _atlas = 0U;
 
             int32_t                                     _width = 0;
             int32_t                                     _height = 0;
@@ -111,9 +113,9 @@ class FontStorage final
 
         struct Line final
         {
-            uint32_t                                    _height = 0U;
-            uint32_t                                    _x = 0U;
-            uint32_t                                    _y = 0U;
+            uint16_t                                    _height = 0U;
+            uint16_t                                    _x = 0U;
+            uint16_t                                    _y = 0U;
         };
 
         struct StagingBuffer final
@@ -148,13 +150,8 @@ class FontStorage final
 
         class Atlas final
         {
-            private:
-                ImageResource                           _dyingResources[ FIF_COUNT ];
-
             public:
-                ImageResource                           _resource {};
-
-                uint32_t                                _layers = 0U;
+                std::vector<ImageResource>              _pages {};
                 Line                                    _line {};
 
             public:
@@ -168,17 +165,16 @@ class FontStorage final
 
                 ~Atlas () = default;
 
-                [[nodiscard]] bool AddLayers ( android_vulkan::Renderer &renderer,
+                [[nodiscard]] bool AddPages ( android_vulkan::Renderer &renderer,
                     VkCommandBuffer commandBuffer,
                     size_t commandBufferIndex,
-                    uint32_t layers
+                    uint32_t pages
                 ) noexcept;
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
                 void Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept;
 
             private:
-                void Copy ( VkCommandBuffer commandBuffer, ImageResource &oldResource, uint32_t newLayers ) noexcept;
                 static void FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept;
         };
 
@@ -191,8 +187,12 @@ class FontStorage final
         std::list<StagingBuffer>                        _freeStagingBuffers {};
         std::list<StagingBuffer>                        _fullStagingBuffers {};
 
+        std::vector<VkImageMemoryBarrier>               _barriers {};
+
         FT_Library                                      _library = nullptr;
         std::forward_list<std::string>                  _stringHeap {};
+
+        ResourceHeap                                    &_resourceHeap;
 
         GlyphInfo                                       _transparentGlyph {};
         std::shared_mutex                               _mutex {};
@@ -206,12 +206,13 @@ class FontStorage final
         FontStorage ( FontStorage && ) = delete;
         FontStorage &operator = ( FontStorage && ) = delete;
 
+        explicit FontStorage ( ResourceHeap &resourceHeap ) noexcept;
+
         ~FontStorage () = default;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
         void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] VkImageView GetAtlasImageView () const noexcept;
         [[nodiscard]] std::optional<FontLock> GetFont ( std::string_view font, uint32_t size ) noexcept;
 
         [[nodiscard]] GlyphInfo const &GetGlyphInfo ( android_vulkan::Renderer &renderer,
@@ -254,7 +255,7 @@ class FontStorage final
         [[nodiscard]] static std::optional<EMFontMetrics> ResolveEMFontMetrics ( FT_Face face ) noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif // PBR_FONT_STORAGE_HPP
+#endif // PBR_WINDOWS_FONT_STORAGE_HPP

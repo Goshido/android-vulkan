@@ -662,7 +662,9 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     AV_TRACE ( "UI" )
 
     UIPass &uiPass = renderSession.GetUIPass ();
-    FontStorage &fontStorage = uiPass.GetFontStorage ();
+
+    // FUCK - remove namespace
+    android::FontStorage &fontStorage = uiPass.GetFontStorage ();
 
     bool needRefill = false;
     size_t neededUIVertices = 0U;

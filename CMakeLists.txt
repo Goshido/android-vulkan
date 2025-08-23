@@ -95,7 +95,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp
     app/src/main/cpp/sources/pbr/font_family_property_checker.cpp
-    app/src/main/cpp/sources/pbr/font_storage.cpp
     app/src/main/cpp/sources/pbr/full_screen_triangle_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_call.cpp
@@ -241,6 +240,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_program.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp

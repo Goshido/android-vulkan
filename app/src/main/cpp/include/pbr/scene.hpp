@@ -4,7 +4,7 @@
 
 #include "actor.hpp"
 #include "camera_component.hpp"
-#include "font_storage.hpp"
+#include <platform/android/pbr/font_storage.hpp>
 #include "render_session.hpp"
 #include "renderable_component.hpp"
 #include "scriptable_gamepad.hpp"

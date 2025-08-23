@@ -94,11 +94,15 @@ class UIDialogBox : public Widget
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
     private:
+        // FUCK - remove namespace
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            pbr::FontStorage &fontStorage
+            pbr::android::FontStorage &fontStorage
         ) noexcept override;
 
-        [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] bool UpdateCache ( pbr::android::FontStorage &fontStorage,
+            VkExtent2D const &viewport
+        ) noexcept override;
 
         void DoDrag ( MouseMoveEvent const &event ) noexcept;
         void DoHover ( MouseMoveEvent const &event ) noexcept;

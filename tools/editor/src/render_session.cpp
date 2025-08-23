@@ -353,7 +353,8 @@ void RenderSession::Destroy () noexcept
     }
 }
 
-pbr::FontStorage &RenderSession::GetFontStorage () noexcept
+// FUCK - remove namespace
+pbr::android::FontStorage &RenderSession::GetFontStorage () noexcept
 {
     return _uiPass.GetFontStorage ();
 }

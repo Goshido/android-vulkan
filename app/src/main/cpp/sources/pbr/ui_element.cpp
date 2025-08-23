@@ -126,7 +126,8 @@ float UIElement::ResolveFontSize () const noexcept
     }
 }
 
-float UIElement::ResolveLineHeight ( FontStorage::Font font ) const noexcept
+// FUCK - remove namespace
+float UIElement::ResolveLineHeight ( android::FontStorage::Font font) const noexcept
 {
     CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
     float const rootValue = _css._lineHeight.GetValue ();
@@ -136,7 +137,8 @@ float UIElement::ResolveLineHeight ( FontStorage::Font font ) const noexcept
         switch ( LengthValue const &lineHeight = p->_css._lineHeight; lineHeight.GetType () )
         {
             case LengthValue::eType::Auto:
-            return static_cast<float> ( FontStorage::GetFontPixelMetrics ( font )._baselineToBaseline );
+            // FUCK - remove namespace
+            return static_cast<float> ( android::FontStorage::GetFontPixelMetrics ( font )._baselineToBaseline );
 
             case LengthValue::eType::EM:
                 [[fallthrough]];

@@ -4,11 +4,11 @@
 #define PBR_UI_PASS_HPP
 
 
-#include "font_storage.hpp"
 #include "sampler_manager.hpp"
 #include "types.hpp"
 
 // FUCK - use relative path
+#include <platform/android/pbr/font_storage.hpp>
 #include <platform/android/pbr/ui_program.hpp>
 #include <platform/android/pbr/ui_vertex_info.hpp>
 
@@ -203,7 +203,8 @@ class UIPass final
         size_t                                          _readVertexIndex = 0U;
         size_t                                          _writeVertexIndex = 0U;
 
-        FontStorage                                     _fontStorage {};
+        // FUCK - remove namespace
+        android::FontStorage                            _fontStorage {};
 
         bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
@@ -237,7 +238,9 @@ class UIPass final
         ~UIPass () = default;
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
-        [[nodiscard]] FontStorage &GetFontStorage () noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] android::FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,

@@ -236,13 +236,17 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _glyphs.clear ();
     _glyphs.reserve ( glyphCount );
 
-    FontStorage &fontStorage = *info._fontStorage;
-    auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (), static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
+    // FUCK - remove namespace
+    android::FontStorage &fontStorage = *info._fontStorage;
+
+    auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (),
+        static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
 
     if ( !fontProbe ) [[unlikely]]
         return;
 
-    FontStorage::Font const font = fontProbe->_font;
+    // FUCK - remove namespace
+    android::FontStorage::Font const font = fontProbe->_font;
     constexpr size_t firstLineHeightIdx = 1U;
 
     std::vector<float> &divLineHeights = *info._lineHeights;
@@ -254,7 +258,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
 
-    FontStorage::PixelFontMetrics const &metrics = FontStorage::GetFontPixelMetrics ( font );
+    // FUCK - remove namespace
+    android::FontStorage::PixelFontMetrics const &metrics = android::FontStorage::GetFontPixelMetrics ( font );
     _baselineToBaseline = metrics._baselineToBaseline;
     _contentAreaHeight = metrics._contentAreaHeight;
     auto const baselineToBaselineF = static_cast<float> ( _baselineToBaseline );
@@ -282,7 +287,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     char32_t leftCharacter = 0;
     android_vulkan::Renderer &renderer = *info._renderer;
 
-    auto const appendGlyph = [ this ] ( size_t line, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
+    // FUCK - remove namespace
+    auto const appendGlyph = [ this ] ( size_t line, android::FontStorage::GlyphInfo const &glyphInfo ) noexcept {
         _glyphs.emplace_back (
             Glyph
             {
@@ -299,7 +305,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         );
     };
 
-    FontStorage::GlyphInfo const* gi;
+    // FUCK - remove namespace
+    android::FontStorage::GlyphInfo const* gi;
     int32_t previousX;
 
     {
@@ -309,7 +316,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         previousX = x;
-        x += gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+
+        // FUCK - remove namespace
+        x += gi->_advance + android::FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
         ++glyphsPerLine;
 
@@ -342,7 +351,9 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     {
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         int32_t const baseX = x;
-        int32_t const advance = gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+
+        // FUCK - remove namespace
+        int32_t const advance = gi->_advance + android::FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         x += advance;
         leftCharacter = rightCharacter;
 

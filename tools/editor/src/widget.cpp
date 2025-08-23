@@ -58,8 +58,9 @@ void Widget::OnTyping ( char32_t /*character*/ ) noexcept
     // NOTHING
 }
 
+// FUCK - remove namespace
 Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
-    pbr::FontStorage &/*fontStorage*/
+    pbr::android::FontStorage &/*fontStorage*/
 ) noexcept
 {
     return {};
@@ -70,7 +71,8 @@ void Widget::Submit ( pbr::UIElement::SubmitInfo &/*info*/ ) noexcept
     // NOTHING
 }
 
-bool Widget::UpdateCache ( pbr::FontStorage &/*fontStorage*/, VkExtent2D const &/*viewport*/ ) noexcept
+// FUCK - remove namespace
+bool Widget::UpdateCache ( pbr::android::FontStorage &/*fontStorage*/, VkExtent2D const &/*viewport*/ ) noexcept
 {
     return false;
 }

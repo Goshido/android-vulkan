@@ -133,7 +133,10 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pop ( &vm, 4 );
 }
 
-UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer, FontStorage &fontStorage ) noexcept
+// FUCK - remove namespace
+UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
+    android::FontStorage &fontStorage
+) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
 
@@ -166,7 +169,8 @@ void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
     _body->GetElement ().Submit ( info );
 }
 
-bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+// FUCK - remove namespace
+bool UILayer::UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     UIElement::UpdateInfo info
     {

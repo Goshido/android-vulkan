@@ -1,12 +1,13 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <pbr/font_storage.hpp>
 #include <file.hpp>
 #include <logger.hpp>
+#include <platform/windows/pbr/font_storage.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::windows {
 
 namespace {
 
@@ -43,7 +44,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "pbr::FontStorage::StagingBuffer::Init",
+        "pbr::windows::FontStorage::StagingBuffer::Init",
         "Can't create buffer"
     );
 
@@ -59,14 +60,14 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
         _memoryOffset,
         memoryRequirements,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
-        "Can't allocate device memory (pbr::FontStorage::StagingBuffer::Init)"
+        "Can't allocate device memory (pbr::windows::FontStorage::StagingBuffer::Init)"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-        "pbr::FontStorage::StagingBuffer",
+        "pbr::windows::FontStorage::StagingBuffer",
         "Can't bind memory"
     );
 
@@ -78,7 +79,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint
     result = renderer.MapMemory ( data,
         _memory,
         _memoryOffset,
-        "pbr::FontStorage::StagingBuffer::Init",
+        "pbr::windows::FontStorage::StagingBuffer::Init",
         "Can't map memory"
     );
 
@@ -175,7 +176,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImage ( device, &imageInfo, nullptr, &_resource._image ),
-        "pbr::FontStorage::Atlas::AddLayer",
+        "pbr::windows::FontStorage::Atlas::AddLayer",
         "Can't create image"
     );
 
@@ -191,7 +192,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         _resource._memoryOffset,
         memoryRequirements,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate image memory (pbr::FontStorage::Atlas::AddLayer)"
+        "Can't allocate image memory (pbr::windows::FontStorage::Atlas::AddLayer)"
     );
 
     if ( !result ) [[unlikely]]
@@ -199,7 +200,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
-        "pbr::FontStorage::Atlas::AddLayer",
+        "pbr::windows::FontStorage::Atlas::AddLayer",
         "Can't bind image memory"
     );
 
@@ -235,7 +236,7 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
-        "pbr::FontStorage::Atlas::AddLayer",
+        "pbr::windows::FontStorage::Atlas::AddLayer",
         "Can't create image view"
     );
 
@@ -499,9 +500,15 @@ void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &ol
 
 //----------------------------------------------------------------------------------------------------------------------
 
+FontStorage::FontStorage ( ResourceHeap& resourceHeap ) noexcept:
+    _resourceHeap ( resourceHeap )
+{
+    // NOTHING
+}
+
 bool FontStorage::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" ) &&
+    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::windows::FontStorage::Init", "Can't init FreeType" ) &&
         MakeTransparentGlyph ( renderer );
 }
 
@@ -513,7 +520,7 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         return;
 
     bool const result = CheckFTResult ( FT_Done_FreeType ( _library ),
-        "pbr::FontStorage::Destroy",
+        "pbr::windows::FontStorage::Destroy",
         "Can't close FreeType"
     );
 
@@ -523,11 +530,6 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _library = nullptr;
     _fontResources.clear ();
     _stringHeap.clear ();
-}
-
-VkImageView FontStorage::GetAtlasImageView () const noexcept
-{
-    return _atlas._resource._view;
 }
 
 std::optional<FontStorage::FontLock> FontStorage::GetFont ( std::string_view font, uint32_t size ) noexcept
@@ -642,7 +644,7 @@ void FontStorage::GetStringMetrics ( StringMetrics &result,
 
         bool const status = CheckFTResult (
             FT_Load_Char ( face, static_cast<FT_ULong> ( symbol ), FT_LOAD_BITMAP_METRICS_ONLY ),
-            "pbr::FontStorage::GetStringMetrics",
+            "pbr::windows::FontStorage::GetStringMetrics",
             "Can't get glyph metrics"
         );
 
@@ -675,7 +677,8 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     if ( _activeStagingBuffer.empty () )
         return true;
 
-    bool const isEmptyAtlas = _atlas._layers == 0U;
+    size_t const wasPages = _atlas._pages.size ();
+    bool const isEmptyAtlas = wasPages == 0U;
     size_t newLayers = 0U;
 
     if ( _fullStagingBuffers.empty () )
@@ -693,28 +696,31 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
 
     if ( newLayers )
     {
-        if ( !_atlas.AddLayers ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
+        if ( !_atlas.AddPages ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
         {
             [[unlikely]]
             return false;
         }
     }
 
-    uint32_t affectedLayers = _atlas._layers;
+    size_t const barrierCount = _barriers.size ();
 
-    if ( ( newLayers == 0U ) | isEmptyAtlas )
+    // FUCK - clarify needed logic
+    size_t const needed = newLayers + 1U;
+
+    if ( barrierCount < needed ) [[unlikely]]
     {
-        VkImageMemoryBarrier barrier
+        constexpr VkImageMemoryBarrier reference
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             .pNext = nullptr,
             .srcAccessMask = VK_ACCESS_NONE,
-            .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_NONE,
             .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = _atlas._resource._image,
+            .image = VK_NULL_HANDLE,
 
             .subresourceRange
             {
@@ -722,67 +728,46 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
                 .baseMipLevel = 0U,
                 .levelCount = 1U,
                 .baseArrayLayer = 0U,
-                .layerCount = affectedLayers
+                .layerCount = 1U
             }
         };
 
-        if ( !isEmptyAtlas )
-        {
-            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            barrier.subresourceRange.baseArrayLayer = _atlas._layers - 1U;
-            barrier.subresourceRange.layerCount = 1U;
-            affectedLayers = 1U;
-        }
+        _barriers.reserve ( needed );
+        size_t const count = needed - barrierCount;
 
-        vkCmdPipelineBarrier ( commandBuffer,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-            VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_DEPENDENCY_BY_REGION_BIT,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            1U,
-            &barrier
-        );
+        for ( size_t i = 0U; i < count; ++i )
+        {
+            _barriers.push_back ( reference );
+        }
     }
 
-    TransferPixels ( commandBuffer );
+    ImageResource const* images = _atlas._pages.data ();
+    VkImageMemoryBarrier* barriers = _barriers.data ();
 
-    VkImageMemoryBarrier const barrier
+    constexpr VkAccessFlagBits accessCases[] = { VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_NONE };
+    constexpr VkImageLayout layoutCases[] = { VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED };
+
+    // FUCK - clarify selector logic
+    auto const selector = static_cast<size_t> ( isEmptyAtlas );
+
+    VkImageMemoryBarrier &first = *barriers;
+    first.srcAccessMask = accessCases[ selector ];
+    first.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    first.oldLayout = layoutCases[ selector ];
+    first.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    first.image = images->_image;
+
+    for ( size_t i = 1U; i < needed; ++i )
     {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = _atlas._resource._image,
+        VkImageMemoryBarrier &barrier = barriers[ i ];
+        barrier.srcAccessMask = VK_ACCESS_NONE;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.image = images[ i ]._image;
+    }
 
-        .subresourceRange
-        {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0U,
-            .levelCount = 1U,
-            .baseArrayLayer = _atlas._layers - affectedLayers,
-            .layerCount = affectedLayers
-        }
-    };
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &barrier
-    );
+    // TODO
 
     return true;
 }
@@ -809,7 +794,7 @@ int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noe
             &delta
         ),
 
-        "pbr::FontStorage::GetKerning",
+        "pbr::windows::FontStorage::GetKerning",
         "Can't resolve kerning"
     );
 
@@ -853,7 +838,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     StagingBuffer* stagingBuffer = query.value ();
 
     bool const result = CheckFTResult ( FT_Load_Char ( face, static_cast<FT_ULong> ( character ), FT_LOAD_RENDER ),
-        "pbr::FontStorage::EmbedGlyph",
+        "pbr::windows::FontStorage::EmbedGlyph",
         "Can't get glyph bitmap"
     );
 
@@ -1062,7 +1047,7 @@ bool FontStorage::MakeFont ( FontHash hash, std::string_view font, uint32_t size
 
     bool const result = CheckFTResult (
         FT_New_Memory_Face ( _library, fontAsset.data (), static_cast<FT_Long> ( fontAsset.size () ), 0, &face ),
-        "pbr::FontStorage::MakeFont",
+        "pbr::windows::FontStorage::MakeFont",
         "Can't load face"
     );
 
@@ -1083,7 +1068,7 @@ bool FontStorage::MakeFont ( FontHash hash, std::string_view font, uint32_t size
 
     auto const s = static_cast<FT_UInt> ( size );
 
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::MakeFont", "Can't set size" ) )
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::windows::FontStorage::MakeFont", "Can't set size" ) )
     {
         [[unlikely]]
         return false;
@@ -1308,7 +1293,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
     if ( !_fullStagingBuffers.empty () )
     {
-        // First full buffer is special is could have one, two or three areas.
+        // First full buffer is special: it is could have one, two or three areas.
         StagingBuffer &b = _fullStagingBuffers.front ();
         transferComplex ( b );
         b.Reset ();
@@ -1461,7 +1446,8 @@ std::optional<FontStorage::EMFontMetrics> FontStorage::ResolveEMFontMetrics ( FT
         return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
     }
 
-    bool result = CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ), "pbr::FontStorage::ResolveEMFontMetrics",
+    bool result = CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ),
+        "pbr::windows::FontStorage::ResolveEMFontMetrics",
         "Can't set size"
     );
 
@@ -1492,4 +1478,4 @@ std::optional<FontStorage::EMFontMetrics> FontStorage::ResolveEMFontMetrics ( FT
     return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
 }
 
-} // namespace pbr
+} // namespace pbr::windows

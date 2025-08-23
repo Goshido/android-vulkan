@@ -20,7 +20,10 @@ class UIManager final
 {
     private:
         size_t                                  _eventID = 0U;
-        pbr::FontStorage                        &_fontStorage;
+
+        // FUCK - remove namespace
+        pbr::android::FontStorage               &_fontStorage;
+
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
         Widget*                                 _mouseCapture = nullptr;
@@ -38,7 +41,8 @@ class UIManager final
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
 
-        explicit UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
+        // FUCK - remove namespace
+        explicit UIManager ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 

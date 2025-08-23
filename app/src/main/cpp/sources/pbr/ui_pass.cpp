@@ -944,7 +944,8 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     return true;
 }
 
-FontStorage &UIPass::GetFontStorage () noexcept
+// FUCK - remove namespace
+android::FontStorage &UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
 }

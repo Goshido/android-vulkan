@@ -202,8 +202,9 @@ void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _div.Submit ( info );
 }
 
+// FUCK - remove namespace
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::FontStorage &fontStorage
+    pbr::android::FontStorage &fontStorage
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -233,7 +234,8 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     };
 }
 
-bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+// FUCK - remove namespace
+bool UIDialogBox::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
     pbr::UIElement::UpdateInfo info
     {

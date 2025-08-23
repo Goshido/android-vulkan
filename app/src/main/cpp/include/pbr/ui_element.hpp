@@ -20,7 +20,10 @@ class UIElement
         struct ApplyInfo final
         {
             GXVec2                          _canvasSize {};
-            FontStorage*                    _fontStorage = nullptr;
+
+            // FUCK - remove namespace
+            android::FontStorage*           _fontStorage = nullptr;
+
             bool                            _hasChanges = false;
             std::vector<float>*             _lineHeights = nullptr;
             GXVec2                          _parentPaddingExtent {};
@@ -37,7 +40,9 @@ class UIElement
 
         struct UpdateInfo final
         {
-            FontStorage*                    _fontStorage = nullptr;
+            // FUCK - remove namespace
+            android::FontStorage*           _fontStorage = nullptr;
+
             size_t                          _line = 0U;
             float                           _lineHeight = 0.0F;
             float const*                    _parentLineHeights = nullptr;
@@ -89,7 +94,9 @@ class UIElement
 
         [[nodiscard]] std::string_view ResolveFont () const noexcept;
         [[nodiscard]] float ResolveFontSize () const noexcept;
-        [[nodiscard]] float ResolveLineHeight ( FontStorage::Font font ) const noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] float ResolveLineHeight ( android::FontStorage::Font font ) const noexcept;
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;

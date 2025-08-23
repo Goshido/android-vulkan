@@ -6,7 +6,10 @@
 #include "message_queue.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
-#include <pbr/font_storage.hpp>
+
+// FUCK - change
+#include <platform/android/pbr/font_storage.hpp>
+
 #include <pbr/ui_element.hpp>
 #include "rect.hpp"
 
@@ -57,11 +60,17 @@ class Widget
         virtual void OnTyping ( char32_t character ) noexcept;
 
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            pbr::FontStorage &fontStorage
+            // FUCK - remove namespace
+            pbr::android::FontStorage &fontStorage
         ) noexcept;
 
         virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
-        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] virtual bool UpdateCache ( pbr::android::FontStorage &fontStorage,
+            VkExtent2D const &viewport
+        ) noexcept;
+
         virtual void UpdatedRect () noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;

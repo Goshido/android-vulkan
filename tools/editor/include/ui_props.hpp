@@ -16,18 +16,20 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
-        pbr::FontStorage    &_fontStorage;
+        // FUCK - remove namespace
+        pbr::android::FontStorage       &_fontStorage;
 
-        DIVUIElement        _headerLine;
-        UILabel             _headerText;
-        UICloseButton       _closeButton;
-        UICheckBox          _checkBox;
-        UIComboBox          _comboBox;
-        UISlider            _slider;
-        UIEditBox           _editBox;
+        DIVUIElement                    _headerLine;
+        UILabel                         _headerText;
+        UICloseButton                   _closeButton;
+        UICheckBox                      _checkBox;
+        UIComboBox                      _comboBox;
+        UISlider                        _slider;
+        UIEditBox                       _editBox;
 
     public:
-        explicit UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
+        // FUCK - remove namespace
+        explicit UIProps ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept;
 
         UIProps ( UIProps const & ) = delete;
         UIProps &operator = ( UIProps const & ) = delete;

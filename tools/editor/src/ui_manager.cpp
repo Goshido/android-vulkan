@@ -9,7 +9,8 @@
 
 namespace editor {
 
-UIManager::UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
+// FUCK - remove namespace
+UIManager::UIManager ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept:
     _fontStorage ( fontStorage ),
     _messageQueue ( messageQueue )
 {
@@ -42,7 +43,8 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
 {
     AV_TRACE ( "UI" )
 
-    pbr::FontStorage &fontStorage = pass.GetFontStorage ();
+    // FUCK - remove namespace
+    pbr::android::FontStorage &fontStorage = pass.GetFontStorage ();
     bool needRefill = false;
     size_t neededUIVertices = 0U;
 

@@ -82,7 +82,8 @@ class RenderSession final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        [[nodiscard]] pbr::FontStorage &GetFontStorage () noexcept;
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::android::FontStorage &GetFontStorage () noexcept;
 
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;

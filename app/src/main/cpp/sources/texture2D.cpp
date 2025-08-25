@@ -525,13 +525,13 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     _mipLevels = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( _imageView != VK_NULL_HANDLE )
+    if ( _imageView != VK_NULL_HANDLE ) [[likely]]
         vkDestroyImageView ( device, std::exchange ( _imageView, VK_NULL_HANDLE ), nullptr );
 
-    if ( _image != VK_NULL_HANDLE )
+    if ( _image != VK_NULL_HANDLE ) [[likely]]
         vkDestroyImage ( device, std::exchange ( _image, VK_NULL_HANDLE ), nullptr );
 
-    if ( _imageDeviceMemory == VK_NULL_HANDLE )
+    if ( _imageDeviceMemory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( std::exchange ( _imageDeviceMemory, VK_NULL_HANDLE ), _imageMemoryOffset );

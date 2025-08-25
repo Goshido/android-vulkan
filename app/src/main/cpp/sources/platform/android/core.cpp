@@ -333,7 +333,7 @@ bool Core::OnSwapchainDestroyed () noexcept
     return true;
 }
 
-void Core::UpdateFPS ( Timestamp now )
+void Core::UpdateFPS ( Timestamp now ) noexcept
 {
     ++_frameCount;
 

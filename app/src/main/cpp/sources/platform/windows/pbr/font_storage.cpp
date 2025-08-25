@@ -11,8 +11,8 @@ namespace pbr::windows {
 
 namespace {
 
-constexpr uint32_t FONT_ATLAS_RESOLUTION = 1024U;
-constexpr uint8_t TRANSPARENT_GLYPH_ATLAS_LAYER = 0U;
+constexpr uint16_t FONT_ATLAS_RESOLUTION = 1024U;
+constexpr uint8_t TRANSPARENT_GLYPH_IMAGE_INDEX = 0U;
 
 } // end of anonymous namespace
 
@@ -25,9 +25,9 @@ FontStorage::FontLock::FontLock ( Font font, std::shared_lock<std::shared_mutex>
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept
+bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
-    auto const s = static_cast<VkDeviceSize> ( side );
+    constexpr auto s = static_cast<VkDeviceSize> ( FONT_ATLAS_RESOLUTION );
 
     VkBufferCreateInfo const bufferInfo
     {
@@ -129,21 +129,17 @@ void FontStorage::StagingBuffer::Reset () noexcept
     };
 
     _state = StagingBuffer::eState::FirstLine;
+    _hasNewGlyphs = false;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    size_t commandBufferIndex,
-    uint32_t layers
+bool FontStorage::Atlas::AddPages ( android_vulkan::Renderer &renderer,
+    ResourceHeap &resourceHeap,
+    uint32_t pages
 ) noexcept
 {
-    ImageResource &oldResource = _dyingResources[ commandBufferIndex ];
-    oldResource = _resource;
-    uint32_t const layerCount = _layers + layers;
-
-    VkImageCreateInfo const imageInfo
+    constexpr VkImageCreateInfo imageInfo
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .pNext = nullptr,
@@ -153,66 +149,28 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
         .extent
         {
-            .width = FONT_ATLAS_RESOLUTION,
-            .height = FONT_ATLAS_RESOLUTION,
+            .width = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+            .height = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
             .depth = 1U
         },
 
         .mipLevels = 1U,
-        .arrayLayers = layerCount,
+        .arrayLayers = 1U,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-
-        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT ) |
-            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
-
+        .usage = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImage ( device, &imageInfo, nullptr, &_resource._image ),
-        "pbr::windows::FontStorage::Atlas::AddLayer",
-        "Can't create image"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _resource._memory,
-        _resource._memoryOffset,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate image memory (pbr::windows::FontStorage::Atlas::AddLayer)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
-        "pbr::windows::FontStorage::Atlas::AddLayer",
-        "Can't bind image memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    VkImageViewCreateInfo const viewInfo
+    VkImageViewCreateInfo viewInfo
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .image = _resource._image,
+        .image = VK_NULL_HANDLE,
         .viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY,
         .format = imageInfo.format,
 
@@ -230,272 +188,100 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
             .baseMipLevel = 0U,
             .levelCount = 1U,
             .baseArrayLayer = 0U,
-            .layerCount = layerCount
+            .layerCount = 1U
         }
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
-        "pbr::windows::FontStorage::Atlas::AddLayer",
-        "Can't create image view"
-    );
+    uint32_t const limit = pages + static_cast<uint32_t> ( _pages.size () );
+    _pages.resize ( static_cast<size_t> ( limit  ) );
+    ImageResource* p = _pages.data ();
+    VkDevice device = renderer.GetDevice ();
 
-    if ( !result ) [[unlikely]]
+    for ( uint32_t i = pages; i < limit; ++i )
+    {
+        ImageResource &resource = p[ i ];
+
+        bool result = android_vulkan::Renderer::CheckVkResult (
+            vkCreateImage ( device, &imageInfo, nullptr, &resource._image ),
+            "pbr::windows::FontStorage::Atlas::AddLayer",
+            "Can't create image"
+        );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device, resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas page #%u", i )
+        viewInfo.image = resource._image;
+
+        VkMemoryRequirements memoryRequirements;
+        vkGetImageMemoryRequirements ( device, resource._image, &memoryRequirements );
+
+        result =
+            renderer.TryAllocateMemory ( resource._memory,
+                resource._memoryOffset,
+                memoryRequirements,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                "Can't allocate image memory (pbr::windows::FontStorage::Atlas::AddLayer)"
+            ) &&
+
+
+            android_vulkan::Renderer::CheckVkResult (
+                vkBindImageMemory ( device, resource._image, resource._memory, resource._memoryOffset ),
+                "pbr::windows::FontStorage::Atlas::AddLayer",
+                "Can't bind image memory"
+            ) &&
+
+            android_vulkan::Renderer::CheckVkResult (
+                vkCreateImageView ( device, &viewInfo, nullptr, &resource._view ),
+                "pbr::windows::FontStorage::Atlas::AddLayer",
+                "Can't create image view"
+            );
+
+        if ( !result ) [[unlikely]]
+            return false;
+
+        AV_SET_VULKAN_OBJECT_NAME ( device,
+            resource._view,
+            VK_OBJECT_TYPE_IMAGE_VIEW,
+            "Font storage atlas page #%zu",
+            i
+        )
+
+        if ( auto const idx = resourceHeap.RegisterUISampledImage ( device, resource._view ); idx ) [[likley]]
+        {
+            resource._heapResource = static_cast<uint16_t> ( *idx );
+            continue;
+        }
+
         return false;
+    }
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _resource._view, VK_OBJECT_TYPE_IMAGE_VIEW, "Font storage atlas" )
-
-    if ( oldResource._image != VK_NULL_HANDLE )
-        Copy ( commandBuffer, oldResource, layerCount );
-
-    _layers = layerCount;
     return true;
 }
 
-void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer, ResourceHeap &resourceHeap ) noexcept
 {
-    for ( ImageResource &imageResource : _dyingResources )
-        FreeImageResource ( renderer, imageResource );
-
-    FreeImageResource ( renderer, _resource );
-    _layers = 0U;
-}
-
-void FontStorage::Atlas::Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept
-{
-    FreeImageResource ( renderer, _dyingResources[ commandBufferIndex ] );
-}
-
-void FontStorage::Atlas::FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept
-{
-    if ( resource._image == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
     VkDevice device = renderer.GetDevice ();
-    vkDestroyImage ( device, resource._image, nullptr );
-    resource._image = VK_NULL_HANDLE;
 
-    if ( resource._view != VK_NULL_HANDLE ) [[likely]]
+    for ( ImageResource &page : _pages )
     {
-        vkDestroyImageView ( device, resource._view, nullptr );
-        resource._view = VK_NULL_HANDLE;
+        if ( page._heapResource != std::numeric_limits<uint16_t>::max () ) [[likely]]
+            resourceHeap.UnregisterResource ( static_cast<uint32_t> ( page._heapResource ) );
+
+        if ( page._view != VK_NULL_HANDLE ) [[likely]]
+            vkDestroyImageView ( device, page._view, nullptr );
+
+        if ( page._image != VK_NULL_HANDLE ) [[likely]]
+            vkDestroyImage ( device, page._image, nullptr );
+
+        if ( page._memory == VK_NULL_HANDLE ) [[unlikely]]
+            continue;
+
+        renderer.FreeMemory ( page._memory, page._memoryOffset );
     }
 
-    if ( resource._memory == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    renderer.FreeMemory ( resource._memory, resource._memoryOffset );
-    resource._memory = VK_NULL_HANDLE;
-    resource._memoryOffset = 0U;
-}
-
-void FontStorage::Atlas::Copy ( VkCommandBuffer commandBuffer, ImageResource &oldResource, uint32_t newLayers ) noexcept
-{
-    VkImageMemoryBarrier const barriers[] =
-    {
-        {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = oldResource._image,
-
-            .subresourceRange
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0U,
-                .levelCount = 1U,
-                .baseArrayLayer = 0U,
-                .layerCount = _layers
-            }
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_NONE,
-            .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = _resource._image,
-
-            .subresourceRange
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0U,
-                .levelCount = 1U,
-                .baseArrayLayer = 0U,
-                .layerCount = newLayers
-            }
-        }
-    };
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        static_cast<uint32_t> ( std::size ( barriers ) ),
-        barriers
-    );
-
-    uint32_t fullLayers = _layers;
-    VkImageCopy imageCopy[ 3U ];
-    uint32_t count = 0U;
-
-    if ( _line._height != 0U )
-    {
-        --fullLayers;
-
-        imageCopy[ 0U ] =
-        {
-            .srcSubresource
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = 0U,
-                .baseArrayLayer = fullLayers,
-                .layerCount = 1U
-            },
-
-            .srcOffset
-            {
-                .x = 0,
-                .y = static_cast<int32_t> ( _line._y ),
-                .z = 0
-            },
-
-            .dstSubresource
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = 0U,
-                .baseArrayLayer = fullLayers,
-                .layerCount = 1U
-            },
-
-            .dstOffset
-            {
-                .x = 0,
-                .y = static_cast<int32_t> ( _line._y ),
-                .z = 0
-            },
-
-            .extent
-            {
-                .width = _line._x + 1U,
-                .height = _line._height,
-                .depth = 1U
-            }
-        };
-
-        count = 1U;
-
-        if ( _line._y > 0U )
-        {
-            imageCopy[ 1U ] =
-            {
-                .srcSubresource
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .mipLevel = 0U,
-                    .baseArrayLayer = fullLayers,
-                    .layerCount = 1U
-                },
-
-                .srcOffset
-                {
-                    .x = 0,
-                    .y = 0,
-                    .z = 0
-                },
-
-                .dstSubresource
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .mipLevel = 0U,
-                    .baseArrayLayer = fullLayers,
-                    .layerCount = 1U
-                },
-
-                .dstOffset
-                {
-                    .x = 0,
-                    .y = 0,
-                    .z = 0
-                },
-
-                .extent
-                {
-                    .width = FONT_ATLAS_RESOLUTION,
-                    .height = _line._y + 1U,
-                    .depth = 1U
-                }
-            };
-
-            count = 2U;
-        }
-    }
-
-    if ( fullLayers > 0U )
-    {
-        imageCopy[ count ] =
-        {
-            .srcSubresource
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = 0U,
-                .baseArrayLayer = 0U,
-                .layerCount = fullLayers
-            },
-
-            .srcOffset
-            {
-                .x = 0,
-                .y = 0,
-                .z = 0
-            },
-
-            .dstSubresource
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .mipLevel = 0U,
-                .baseArrayLayer = 0U,
-                .layerCount = fullLayers
-            },
-
-            .dstOffset
-            {
-                .x = 0,
-                .y = 0,
-                .z = 0
-            },
-
-            .extent
-            {
-                .width = FONT_ATLAS_RESOLUTION,
-                .height = FONT_ATLAS_RESOLUTION,
-                .depth = 1U
-            }
-        };
-
-        ++count;
-    }
-
-    vkCmdCopyImage ( commandBuffer,
-        oldResource._image,
-        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        _resource._image,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        count,
-        imageCopy
-    );
+    _pages.clear ();
+    _pages.shrink_to_fit ();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -667,107 +453,121 @@ void FontStorage::GetStringMetrics ( StringMetrics &result,
     result.push_back ( static_cast<float> ( p ) );
 }
 
-bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    size_t commandBufferIndex
-) noexcept
+bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    _atlas.Cleanup ( renderer, commandBufferIndex );
-
-    if ( _activeStagingBuffer.empty () )
+    if ( _activeStagingBuffer.empty () ) [[likely]]
         return true;
 
-    size_t const wasPages = _atlas._pages.size ();
-    bool const isEmptyAtlas = wasPages == 0U;
-    size_t newLayers = 0U;
+    auto const wasLayers = static_cast<uint16_t> ( _atlas._pages.size () );
+    bool const isEmptyAtlas = wasLayers == 0U;
+    auto const emptyAtlasCorrection = static_cast<uint16_t> ( isEmptyAtlas );
+
+    uint16_t neededBarriers = 0U;
+    uint16_t newLayers = 0U;
+    uint16_t partialCorrection = 0U;
 
     if ( _fullStagingBuffers.empty () )
     {
+        neededBarriers = 1U;
+
         // It's needed to request one layer if atlas is empty.
-        newLayers += static_cast<size_t> ( isEmptyAtlas );
+        newLayers = emptyAtlasCorrection;
     }
     else
     {
         // It's needed to add one more layer if full buffer in the front starts from top left corner.
-        StagingBuffer const &sb = _fullStagingBuffers.front ();
-        Line const &l = sb._startLine;
-        newLayers += _fullStagingBuffers.size () + static_cast<size_t> ( ( l._x == 0U ) & ( l._y == 0U ) );
+        Line const &line = _fullStagingBuffers.front ()._startLine;
+        partialCorrection = static_cast<uint16_t> ( static_cast<uint16_t> ( line._x + line._y ) > 0U );
+        neededBarriers = static_cast<uint16_t> ( 1U + _fullStagingBuffers.size () );
+        newLayers = static_cast<uint16_t> ( neededBarriers - partialCorrection );
     }
 
-    if ( newLayers )
+    if ( newLayers > 0U && !_atlas.AddPages ( renderer, _resourceHeap, static_cast<uint32_t> ( newLayers ) ) )
     {
-        if ( !_atlas.AddPages ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
+        [[unlikely]]
+        return false;
+    }
+
+    constexpr VkImageMemoryBarrier barrierTemplate
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = VK_ACCESS_NONE,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = VK_NULL_HANDLE,
+
+        .subresourceRange
         {
-            [[unlikely]]
-            return false;
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = 1U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    if ( auto const count = static_cast<uint16_t> ( _barriers.size () ); neededBarriers < count ) [[unlikely]]
+    {
+        _barriers.reserve ( neededBarriers );
+
+        for ( uint16_t i = count; i < neededBarriers; ++i )
+        {
+            _barriers.push_back ( barrierTemplate );
         }
     }
 
-    size_t const barrierCount = _barriers.size ();
-
-    // FUCK - clarify needed logic
-    size_t const needed = newLayers + 1U;
-
-    if ( barrierCount < needed ) [[unlikely]]
+    if ( ( newLayers == 0U ) | isEmptyAtlas )
     {
-        constexpr VkImageMemoryBarrier reference
+        VkPipelineStageFlags srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+        if ( !isEmptyAtlas )
         {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_NONE,
-            .dstAccessMask = VK_ACCESS_NONE,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = VK_NULL_HANDLE,
+            srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-            .subresourceRange
-            {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0U,
-                .levelCount = 1U,
-                .baseArrayLayer = 0U,
-                .layerCount = 1U
-            }
-        };
-
-        _barriers.reserve ( needed );
-        size_t const count = needed - barrierCount;
-
-        for ( size_t i = 0U; i < count; ++i )
-        {
-            _barriers.push_back ( reference );
+            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.subresourceRange.baseArrayLayer = _atlas._layers - 1U;
+            barrier.subresourceRange.layerCount = 1U;
         }
+
+        vkCmdPipelineBarrier ( commandBuffer,
+            srcStage,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &barrier
+        );
     }
 
-    ImageResource const* images = _atlas._pages.data ();
-    VkImageMemoryBarrier* barriers = _barriers.data ();
+    TransferPixels ( commandBuffer, wasLayers - 1U + static_cast<uint32_t> ( emptyAtlasCorrection ) );
 
-    constexpr VkAccessFlagBits accessCases[] = { VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_NONE };
-    constexpr VkImageLayout layoutCases[] = { VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_UNDEFINED };
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 
-    // FUCK - clarify selector logic
-    auto const selector = static_cast<size_t> ( isEmptyAtlas );
+    barrier.subresourceRange.baseArrayLayer =
+        _atlas._layers - static_cast<size_t> ( barrier.subresourceRange.layerCount );
 
-    VkImageMemoryBarrier &first = *barriers;
-    first.srcAccessMask = accessCases[ selector ];
-    first.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    first.oldLayout = layoutCases[ selector ];
-    first.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    first.image = images->_image;
-
-    for ( size_t i = 1U; i < needed; ++i )
-    {
-        VkImageMemoryBarrier &barrier = barriers[ i ];
-        barrier.srcAccessMask = VK_ACCESS_NONE;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.image = images[ i ]._image;
-    }
-
-    // TODO
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrier
+    );
 
     return true;
 }
@@ -829,6 +629,9 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     char32_t character
 ) noexcept
 {
+    [[maybe_unused]] static size_t fuck = 0U;
+    ++fuck;
+
     static GlyphInfo const nullGlyph {};
     auto query = GetStagingBuffer ( renderer );
 
@@ -838,17 +641,17 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     StagingBuffer* stagingBuffer = query.value ();
 
     bool const result = CheckFTResult ( FT_Load_Char ( face, static_cast<FT_ULong> ( character ), FT_LOAD_RENDER ),
-        "pbr::windows::FontStorage::EmbedGlyph",
+        "pbr::android::FontStorage::EmbedGlyph",
         "Can't get glyph bitmap"
     );
 
-    if ( !result )
+    if ( !result ) [[unlikely]]
         return nullGlyph;
 
     FT_GlyphSlot slot = face->glyph;
     FT_Bitmap const &bm = slot->bitmap;
 
-    auto const rows = static_cast<uint32_t> ( bm.rows );
+    auto const rows = static_cast<uint16_t> ( bm.rows );
     auto const width = static_cast<size_t> ( bm.width );
     auto const advance = static_cast<int32_t> ( slot->advance.x ) >> 6U;
 
@@ -879,22 +682,22 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         return status.first->second;
     }
 
-    if ( ( rows > FONT_ATLAS_RESOLUTION ) | ( width > FONT_ATLAS_RESOLUTION ) ) [[unlikely]]
+    if ( ( rows > FONT_ATLAS_RESOLUTION ) | ( static_cast<uint16_t> ( width ) > FONT_ATLAS_RESOLUTION ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "FontStorage::EmbedGlyph - Font size is way too big: %u", fontSize );
         return nullGlyph;
     }
 
-    auto const toRight = static_cast<uint32_t> ( width - 1U );
-    uint32_t const toBottom = rows - 1U;
+    auto const toRight = static_cast<uint16_t> ( width - 1U );
+    uint16_t const toBottom = rows - 1U;
 
-    uint32_t lineHeight = stagingBuffer->_endLine._height;
+    uint16_t lineHeight = stagingBuffer->_endLine._height;
 
     // Move position on one pixel right to not overwrite previously rendered glyph last column.
-    uint32_t left = stagingBuffer->_endLine._x + static_cast<uint32_t> ( lineHeight > 0U );
-    uint32_t top = stagingBuffer->_endLine._y;
+    uint16_t left = static_cast<uint16_t> ( stagingBuffer->_endLine._x + static_cast<uint16_t> ( lineHeight > 0U ) );
+    uint16_t top = stagingBuffer->_endLine._y;
 
-    auto const goToNewLine = [ & ]() noexcept {
+    auto const goToNewLine = [ & ] () noexcept {
         if ( stagingBuffer->_state == StagingBuffer::eState::FirstLine )
             stagingBuffer->_startLine._height = stagingBuffer->_endLine._height;
 
@@ -905,41 +708,47 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         left = 0U;
     };
 
-    if ( left >= FONT_ATLAS_RESOLUTION )
+    if ( left >= FONT_ATLAS_RESOLUTION ) [[unlikely]]
         goToNewLine ();
 
     auto const completeStagingBuffer = [ & ]() noexcept -> bool {
-        _fullStagingBuffers.splice ( _fullStagingBuffers.cend (),
-            _activeStagingBuffer,
-            _activeStagingBuffer.cbegin ()
-        );
+        auto begin = _activeStagingBuffer.begin ();
 
-        query = GetStagingBuffer ( renderer );
+        if ( !begin->_hasNewGlyphs ) [[likely]]
+        {
+            begin->Reset ();
+        }
+        else
+        {
+            _fullStagingBuffers.splice ( _fullStagingBuffers.cend (), _activeStagingBuffer, begin );
+            query = GetStagingBuffer ( renderer );
 
-        if ( !query ) [[unlikely]]
-            return false;
+            if ( !query ) [[unlikely]]
+                return false;
+
+            stagingBuffer = query.value ();
+        }
 
         lineHeight = 0U;
         top = 0U;
         left = 0U;
-        stagingBuffer = query.value ();
         return true;
     };
 
     if ( top >= FONT_ATLAS_RESOLUTION && !completeStagingBuffer () ) [[unlikely]]
         return nullGlyph;
 
-    uint32_t right = left + toRight;
-    uint32_t bottom = top + toBottom;
+    uint16_t right = static_cast<uint16_t> ( left + toRight );
+    uint16_t bottom = static_cast<uint16_t> ( top + toBottom );
 
-    if ( right >= FONT_ATLAS_RESOLUTION )
+    if ( right >= FONT_ATLAS_RESOLUTION ) [[unlikely]]
     {
         goToNewLine ();
-        bottom = top + toBottom;
+        bottom = static_cast<uint16_t> ( top + toBottom );
         right = toRight;
     }
 
-    if ( bottom >= FONT_ATLAS_RESOLUTION )
+    if ( bottom >= FONT_ATLAS_RESOLUTION ) [[unlikely]]
     {
         if ( !completeStagingBuffer () ) [[unlikely]]
             return nullGlyph;
@@ -948,10 +757,17 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
         right = toRight;
     }
 
-    stagingBuffer->_endLine._height = std::max ( lineHeight, rows );
-    stagingBuffer->_endLine._x = right;
-    stagingBuffer->_endLine._y = top;
-    uint8_t* data = stagingBuffer->_data + ( top * FONT_ATLAS_RESOLUTION ) + left;
+    stagingBuffer->_endLine =
+    {
+        ._height = std::max ( lineHeight, rows ),
+        ._x = right,
+        ._y = top
+    };
+
+    stagingBuffer->_hasNewGlyphs = true;
+
+    constexpr auto res = static_cast<size_t> ( FONT_ATLAS_RESOLUTION );
+    uint8_t* data = stagingBuffer->_data + static_cast<size_t> ( left ) + res * static_cast<size_t> ( top );
 
     auto const* raster = static_cast<uint8_t const*> ( bm.buffer );
     auto const pitch = static_cast<ptrdiff_t> ( bm.pitch );
@@ -960,11 +776,11 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     // 'pitch' is negative when glyph image is stored from bottom to top line flow.
     // It's needed to add 'pitch' signed value to 'buffer' to go to the next line in normal top to bottom line flow.
 
-    for ( uint32_t row = 0U; row < rows; ++row )
+    for ( uint16_t row = 0U; row < rows; ++row )
     {
         std::memcpy ( data, raster, static_cast<size_t> ( width ) );
         raster += pitch;
-        data += static_cast<size_t> ( FONT_ATLAS_RESOLUTION );
+        data += res;
     }
 
     uint32_t const cases[] = { 0U, _atlas._layers - 1U };
@@ -1010,7 +826,7 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
 
     StagingBuffer &stagingBuffer = _activeStagingBuffer.emplace_front ();
 
-    if ( stagingBuffer.Init ( renderer, FONT_ATLAS_RESOLUTION ) )
+    if ( stagingBuffer.Init ( renderer ) )
         return &stagingBuffer;
 
     return std::nullopt;
@@ -1128,13 +944,13 @@ bool FontStorage::MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) no
     return true;
 }
 
-void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
+void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer, uint32_t targetLayer ) noexcept
 {
     VkBufferImageCopy bufferImageCopy[ 3U ];
-    uint32_t targetLayer = _atlas._layers - 1U;
 
-    constexpr auto offset = [] ( uint32_t x, uint32_t y ) noexcept -> VkDeviceSize {
-        return static_cast<VkDeviceSize> ( y ) * FONT_ATLAS_RESOLUTION + static_cast<VkDeviceSize> ( x );
+    constexpr auto offset = [] ( uint16_t x, uint16_t y ) noexcept -> VkDeviceSize {
+        return static_cast<VkDeviceSize> ( x ) +
+            static_cast<VkDeviceSize> ( y ) * static_cast<VkDeviceSize> ( FONT_ATLAS_RESOLUTION );
     };
 
     auto const transferComplex = [ & ] ( StagingBuffer const &b ) noexcept {
@@ -1144,8 +960,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             bufferImageCopy[ 0U ] =
             {
                 .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
-                .bufferRowLength = FONT_ATLAS_RESOLUTION,
-                .bufferImageHeight = b._endLine._height,
+                .bufferRowLength = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+                .bufferImageHeight = static_cast<uint32_t> ( b._endLine._height ),
 
                 .imageSubresource
                 {
@@ -1164,8 +980,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
                 .imageExtent
                 {
-                    .width = b._endLine._x - b._startLine._x + 1U,
-                    .height = b._endLine._height,
+                    .width = static_cast<uint32_t> ( b._endLine._x - b._startLine._x + 1U ),
+                    .height = static_cast<uint32_t> (  b._endLine._height ),
                     .depth = 1U,
                 }
             };
@@ -1188,8 +1004,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         bufferImageCopy[ 0U ] =
         {
             .bufferOffset = offset ( b._startLine._x, b._startLine._y ),
-            .bufferRowLength = FONT_ATLAS_RESOLUTION,
-            .bufferImageHeight = b._startLine._height,
+            .bufferRowLength = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+            .bufferImageHeight = static_cast<uint32_t> ( b._startLine._height ),
 
             .imageSubresource
             {
@@ -1208,13 +1024,13 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
             .imageExtent
             {
-                .width = FONT_ATLAS_RESOLUTION - b._startLine._x,
+                .width = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION - b._startLine._x ),
                 .height = b._startLine._height,
                 .depth = 1U,
             }
         };
 
-        uint32_t const nextY = b._startLine._y + b._startLine._height;
+        auto const nextY = static_cast<uint16_t> ( b._startLine._y + b._startLine._height );
         size_t idx = 1U;
 
         if ( nextY != b._endLine._y )
@@ -1223,8 +1039,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             bufferImageCopy[ 1U ] =
             {
                 .bufferOffset = offset ( 0U, nextY ),
-                .bufferRowLength = FONT_ATLAS_RESOLUTION,
-                .bufferImageHeight = b._endLine._y - nextY,
+                .bufferRowLength = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+                .bufferImageHeight = static_cast<uint32_t> ( b._endLine._y - nextY ),
 
                 .imageSubresource
                 {
@@ -1243,8 +1059,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
                 .imageExtent
                 {
-                    .width = FONT_ATLAS_RESOLUTION,
-                    .height = b._endLine._y - nextY,
+                    .width = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+                    .height = static_cast<uint32_t> ( b._endLine._y - nextY ),
                     .depth = 1U,
                 }
             };
@@ -1256,8 +1072,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         bufferImageCopy[ idx ] =
         {
             .bufferOffset = offset ( 0U, b._endLine._y ),
-            .bufferRowLength = FONT_ATLAS_RESOLUTION,
-            .bufferImageHeight = b._endLine._height,
+            .bufferRowLength = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+            .bufferImageHeight = static_cast<uint32_t> ( b._endLine._height ),
 
             .imageSubresource
             {
@@ -1277,7 +1093,7 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
             .imageExtent
             {
                 .width = b._endLine._x + 1U,
-                .height = b._endLine._height,
+                .height = static_cast<uint32_t> ( b._endLine._height ),
                 .depth = 1U,
             }
         };
@@ -1291,25 +1107,24 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         );
     };
 
-    if ( !_fullStagingBuffers.empty () )
+    auto begin = _fullStagingBuffers.begin ();
+    auto const end = _fullStagingBuffers.cend ();
+
+    if ( begin != end )
     {
-        // First full buffer is special: it is could have one, two or three areas.
-        StagingBuffer &b = _fullStagingBuffers.front ();
+        // First full buffer is special: it could have one, two or three areas.
+        StagingBuffer &b = *begin;
         transferComplex ( b );
         b.Reset ();
 
-        _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
-            _fullStagingBuffers,
-            _fullStagingBuffers.cbegin ()
-        );
-
         ++targetLayer;
+        ++begin;
     }
 
-    while ( !_fullStagingBuffers.empty () )
+    for ( ; begin != end; ++begin )
     {
         // Rest full buffers contain only one area: entire atlas layer.
-        StagingBuffer &b = _fullStagingBuffers.front ();
+        StagingBuffer &b = *begin;
 
         bufferImageCopy[ 0U ] =
         {
@@ -1334,8 +1149,8 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
 
             .imageExtent
             {
-                .width = FONT_ATLAS_RESOLUTION,
-                .height = FONT_ATLAS_RESOLUTION,
+                .width = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
+                .height = static_cast<uint32_t> ( FONT_ATLAS_RESOLUTION ),
                 .depth = 1U,
             }
         };
@@ -1349,44 +1164,44 @@ void FontStorage::TransferPixels ( VkCommandBuffer commandBuffer ) noexcept
         );
 
         b.Reset ();
-
-        _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
-            _fullStagingBuffers,
-            _fullStagingBuffers.cbegin ()
-        );
-
         ++targetLayer;
     }
 
-    StagingBuffer &b = _activeStagingBuffer.front ();
-    transferComplex ( b );
+    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (), _fullStagingBuffers );
 
-    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (),
-        _activeStagingBuffer,
-        _activeStagingBuffer.cbegin ()
-    );
+    begin = _activeStagingBuffer.begin ();
+    StagingBuffer &b = *begin;
+    transferComplex ( b );
+    _freeStagingBuffers.splice ( _freeStagingBuffers.cend (), _activeStagingBuffer, begin );
 
     _atlas._line = b._endLine;
 
-    b._startLine._x = b._endLine._x + 1U;
-    b._startLine._y = b._endLine._y;
-    b._startLine._height = b._endLine._height;
+    b._startLine =
+    {
+        ._height = b._endLine._height,
+        ._x = static_cast<uint16_t> ( b._endLine._x + 1U ),
+        ._y = b._endLine._y
+    };
+
     b._state = StagingBuffer::eState::FirstLine;
 
-    if ( b._startLine._x >= FONT_ATLAS_RESOLUTION )
+    if ( b._startLine._x >= FONT_ATLAS_RESOLUTION ) [[unlikely]]
     {
-        b._startLine._height = 0U;
-        b._startLine._x = 0U;
-        b._startLine._y += b._endLine._height;
+        b._startLine =
+        {
+            ._height = 0U,
+            ._x = 0U,
+            ._y = static_cast<uint16_t> ( b._startLine._y + b._endLine._height )
+        };
     }
 
-    if ( b._startLine._y < FONT_ATLAS_RESOLUTION )
+    if ( b._startLine._y >= FONT_ATLAS_RESOLUTION ) [[unlikely]]
     {
-        b._endLine = b._startLine;
+        b.Reset ();
         return;
     }
 
-    b.Reset ();
+    b._endLine = b._startLine;
 }
 
 bool FontStorage::CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept

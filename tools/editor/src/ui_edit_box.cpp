@@ -249,7 +249,11 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
             ._color = theme::MAIN_COLOR,
             ._display = pbr::DisplayProperty::eValue::Block,
             ._fontFile { theme::NORMAL_FONT_FAMILY },
+
+            // FUCK
+            //._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 800.0F ),
             ._fontSize = theme::NORMAL_FONT_SIZE,
+
             ._lineHeight = theme::AUTO_LENGTH,
             ._marginBottom = theme::ZERO_LENGTH,
             ._marginLeft = theme::ZERO_LENGTH,

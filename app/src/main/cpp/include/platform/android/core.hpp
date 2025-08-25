@@ -108,7 +108,7 @@ class Core final
         [[nodiscard]] bool OnSwapchainCreated () noexcept;
         [[nodiscard]] bool OnSwapchainDestroyed () noexcept;
 
-        void UpdateFPS ( Timestamp now );
+        void UpdateFPS ( Timestamp now ) noexcept;
 
         static void OnHomeUp ( void* context ) noexcept;
 };

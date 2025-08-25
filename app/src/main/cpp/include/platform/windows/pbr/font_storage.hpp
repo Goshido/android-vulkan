@@ -6,7 +6,6 @@
 
 #include <half_types.hpp>
 #include <pbr/fif_count.hpp>
-#include <renderer.hpp>
 #include "resource_heap.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -130,12 +129,14 @@ class FontStorage final
             uint8_t*                                    _data = nullptr;
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _memoryOffset = 0U;
-            eState                                      _state = eState::FirstLine;
 
             Line                                        _endLine {};
             Line                                        _startLine {};
 
-            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, uint32_t side ) noexcept;
+            eState                                      _state = eState::FirstLine;
+            bool                                        _hasNewGlyphs = false;
+
+            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
             void Reset () noexcept;
         };
@@ -146,6 +147,7 @@ class FontStorage final
             VkImageView                                 _view = VK_NULL_HANDLE;
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _memoryOffset = 0U;
+            uint16_t                                    _heapResource = std::numeric_limits<uint16_t>::max ();
         };
 
         class Atlas final
@@ -166,16 +168,11 @@ class FontStorage final
                 ~Atlas () = default;
 
                 [[nodiscard]] bool AddPages ( android_vulkan::Renderer &renderer,
-                    VkCommandBuffer commandBuffer,
-                    size_t commandBufferIndex,
+                    ResourceHeap &resourceHeap,
                     uint32_t pages
                 ) noexcept;
 
-                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-                void Cleanup ( android_vulkan::Renderer &renderer, size_t commandBufferIndex ) noexcept;
-
-            private:
-                static void FreeImageResource ( android_vulkan::Renderer &renderer, ImageResource &resource ) noexcept;
+                void Destroy ( android_vulkan::Renderer &renderer, ResourceHeap &resourceHeap ) noexcept;
         };
 
     private:
@@ -226,11 +223,7 @@ class FontStorage final
             std::u32string_view string
         ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            size_t commandBufferIndex
-        ) noexcept;
-
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] static PixelFontMetrics const &GetFontPixelMetrics ( Font font ) noexcept;
         [[nodiscard]] static int32_t GetKerning ( Font font, char32_t left, char32_t right ) noexcept;
 
@@ -248,7 +241,7 @@ class FontStorage final
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] bool MakeFont ( FontHash hash, std::string_view font, uint32_t size ) noexcept;
         [[nodiscard]] bool MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) noexcept;
-        void TransferPixels ( VkCommandBuffer commandBuffer ) noexcept;
+        void TransferPixels ( VkCommandBuffer commandBuffer, uint32_t targetImageIndex ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
         [[nodiscard]] static android_vulkan::Half2 PixToUV ( uint32_t x, uint32_t y ) noexcept;

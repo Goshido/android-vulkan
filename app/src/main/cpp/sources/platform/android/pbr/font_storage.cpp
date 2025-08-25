@@ -186,28 +186,6 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas" )
 
-    VkMemoryRequirements memoryRequirements;
-    vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
-
-    result = renderer.TryAllocateMemory ( _resource._memory,
-        _resource._memoryOffset,
-        memoryRequirements,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-        "Can't allocate image memory (pbr::android::FontStorage::Atlas::AddLayer)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
-        "pbr::android::FontStorage::Atlas::AddLayer",
-        "Can't bind image memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     VkImageViewCreateInfo const viewInfo
     {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -235,11 +213,28 @@ bool FontStorage::Atlas::AddLayers ( android_vulkan::Renderer &renderer,
         }
     };
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
-        "pbr::android::FontStorage::Atlas::AddLayer",
-        "Can't create image view"
-    );
+    VkMemoryRequirements memoryRequirements;
+    vkGetImageMemoryRequirements ( device, _resource._image, &memoryRequirements );
+
+    result =
+        renderer.TryAllocateMemory ( _resource._memory,
+            _resource._memoryOffset,
+            memoryRequirements,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            "Can't allocate image memory (pbr::android::FontStorage::Atlas::AddLayer)"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult (
+            vkBindImageMemory ( device, _resource._image, _resource._memory, _resource._memoryOffset ),
+            "pbr::android::FontStorage::Atlas::AddLayer",
+            "Can't bind image memory"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult (
+            vkCreateImageView ( device, &viewInfo, nullptr, &_resource._view ),
+            "pbr::android::FontStorage::Atlas::AddLayer",
+            "Can't create image view"
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -674,7 +669,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
 {
     _atlas.Cleanup ( renderer, commandBufferIndex );
 
-    if ( _activeStagingBuffer.empty () )
+    if ( _activeStagingBuffer.empty () ) [[likely]]
         return true;
 
     uint32_t const wasLayers = _atlas._layers;
@@ -691,11 +686,11 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer,
     {
         // It's needed to add one more layer if full buffer in the front starts from top left corner.
         Line const &line = _fullStagingBuffers.front ()._startLine;
-        bool const partial = static_cast<uint16_t> ( line._x + line._y ) > 0U;
-        newLayers = _fullStagingBuffers.size () - static_cast<size_t> ( partial );
+        auto const partialCorrection = static_cast<size_t> ( static_cast<uint16_t> ( line._x + line._y ) > 0U );
+        newLayers = 1U + _fullStagingBuffers.size () - partialCorrection;
     }
 
-    if ( newLayers )
+    if ( newLayers ) [[unlikely]]
     {
         if ( !_atlas.AddLayers ( renderer, commandBuffer, commandBufferIndex, static_cast<uint32_t> ( newLayers ) ) )
         {
@@ -835,9 +830,6 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
     char32_t character
 ) noexcept
 {
-    [[maybe_unused]] static size_t fuck = 0U;
-    ++fuck;
-
     static GlyphInfo const nullGlyph {};
     auto query = GetStagingBuffer ( renderer );
 
@@ -1032,7 +1024,7 @@ std::optional<FontStorage::StagingBuffer*> FontStorage::GetStagingBuffer (
 
     StagingBuffer &stagingBuffer = _activeStagingBuffer.emplace_front ();
 
-    if ( stagingBuffer.Init ( renderer ) )
+    if ( stagingBuffer.Init ( renderer ) ) [[likely]]
         return &stagingBuffer;
 
     return std::nullopt;

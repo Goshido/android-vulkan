@@ -93,6 +93,8 @@ class FontStorage final
         };
 
     private:
+        constexpr static auto INVALID_ATLAS = std::numeric_limits<uint16_t>::max ();
+
         // Coefficients for getting pixel metrics of the font.
         struct EMFontMetrics final
         {
@@ -117,6 +119,12 @@ class FontStorage final
             uint16_t                                    _y = 0U;
         };
 
+        struct Binding final
+        {
+            GlyphStorage*                               _glyphs = nullptr;
+            char32_t                                    _character = 0;
+        };
+
         struct StagingBuffer final
         {
             enum class eState : uint8_t
@@ -124,6 +132,8 @@ class FontStorage final
                 FirstLine,
                 FullLinePresent
             };
+
+            std::vector<Binding>                        _bindings {};
 
             VkBuffer                                    _buffer = VK_NULL_HANDLE;
             uint8_t*                                    _data = nullptr;
@@ -138,6 +148,9 @@ class FontStorage final
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
             void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+
+            void AddGlyph ( GlyphStorage &glyphs, char32_t character ) noexcept;
+            void BindGlyphs ( uint16_t heapResource ) noexcept;
             void Reset () noexcept;
         };
 
@@ -147,7 +160,7 @@ class FontStorage final
             VkImageView                                 _view = VK_NULL_HANDLE;
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _memoryOffset = 0U;
-            uint16_t                                    _heapResource = std::numeric_limits<uint16_t>::max ();
+            uint16_t                                    _heapResource = INVALID_ATLAS;
         };
 
         class Atlas final
@@ -184,8 +197,7 @@ class FontStorage final
         std::list<StagingBuffer>                        _freeStagingBuffers {};
         std::list<StagingBuffer>                        _fullStagingBuffers {};
 
-        std::vector<VkImageMemoryBarrier>               _barriers {};
-
+        std::vector<VkImageMemoryBarrier2>              _barriers {};
         FT_Library                                      _library = nullptr;
         std::forward_list<std::string>                  _stringHeap {};
 
@@ -194,8 +206,50 @@ class FontStorage final
         GlyphInfo                                       _transparentGlyph {};
         std::shared_mutex                               _mutex {};
 
+        VkDependencyInfo                                _dependencies
+        {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .pNext = nullptr,
+            .dependencyFlags = 0U,
+            .memoryBarrierCount = 0U,
+            .pMemoryBarriers = nullptr,
+            .bufferMemoryBarrierCount = 0U,
+            .pBufferMemoryBarriers = nullptr,
+            .imageMemoryBarrierCount = 0U,
+            .pImageMemoryBarriers = nullptr
+        };
+
+        VkBufferImageCopy                               _imageCopy
+        {
+            .bufferOffset = 0U,
+            .bufferRowLength = 0U,
+            .bufferImageHeight = 0U,
+
+            .imageSubresource
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .mipLevel = 0U,
+                .baseArrayLayer = 0U,
+                .layerCount = 1U
+            },
+
+            .imageOffset
+            {
+                .x = 0,
+                .y = 0,
+                .z = 0
+            },
+
+            .imageExtent
+            {
+                .width = 0U,
+                .height = 0U,
+                .depth = 1U
+            }
+        };
+
     public:
-        explicit FontStorage () = default;
+        FontStorage () = delete;
 
         FontStorage ( FontStorage const & ) = delete;
         FontStorage &operator = ( FontStorage const & ) = delete;
@@ -241,7 +295,7 @@ class FontStorage final
         [[nodiscard]] std::optional<StagingBuffer*> GetStagingBuffer ( android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] bool MakeFont ( FontHash hash, std::string_view font, uint32_t size ) noexcept;
         [[nodiscard]] bool MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) noexcept;
-        void TransferPixels ( VkCommandBuffer commandBuffer, uint32_t targetImageIndex ) noexcept;
+        void TransferPixels ( VkCommandBuffer commandBuffer, ImageResource const* pages ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;
         [[nodiscard]] static android_vulkan::Half2 PixToUV ( uint32_t x, uint32_t y ) noexcept;

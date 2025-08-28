@@ -1,6 +1,7 @@
 X ( vkCmdBeginRendering )
 X ( vkCmdBindDescriptorBuffersEXT )
 X ( vkCmdEndRendering )
+X ( vkCmdPipelineBarrier2 )
 X ( vkCmdSetDescriptorBufferOffsetsEXT )
 X ( vkGetBufferDeviceAddress )
 X ( vkGetDescriptorEXT )

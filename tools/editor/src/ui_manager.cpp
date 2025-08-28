@@ -39,7 +39,8 @@ void UIManager::Destroy () noexcept
     }
 }
 
-void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
+// FUCK - remove namespace
+void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIPass &pass ) noexcept
 {
     AV_TRACE ( "UI" )
 
@@ -71,7 +72,8 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
     if ( !needRefill )
         return;
 
-    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
+    // FUCK - remove namespace
+    pbr::android::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
 
     if ( !response )
     {

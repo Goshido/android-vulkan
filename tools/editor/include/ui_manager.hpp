@@ -3,7 +3,10 @@
 
 
 #include "message_queue.hpp"
-#include <pbr/ui_pass.hpp>
+
+// FUCK - remove namespace
+#include <platform/android/pbr/ui_pass.hpp>
+
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -49,7 +52,8 @@ class UIManager final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        void RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
+        // FUCK - remove namespace
+        void RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIPass &pass ) noexcept;
 
     private:
         void EventLoop () noexcept;

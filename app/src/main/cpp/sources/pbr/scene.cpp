@@ -661,9 +661,8 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
 {
     AV_TRACE ( "UI" )
 
-    UIPass &uiPass = renderSession.GetUIPass ();
-
     // FUCK - remove namespace
+    android::UIPass &uiPass = renderSession.GetUIPass ();
     android::FontStorage &fontStorage = uiPass.GetFontStorage ();
 
     bool needRefill = false;
@@ -690,7 +689,8 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     if ( !needRefill )
         return;
 
-    UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
+    // FUCK - remove namespace
+    android::UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
 
     if ( !response )
     {

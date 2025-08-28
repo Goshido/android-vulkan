@@ -31,10 +31,11 @@ class ImageUIElement final : public UIElement
             GXVec2                  _parenTopLeft {};
             Texture2DRef            _texture {};
 
-            GXVec2                  _positions[ UIPass::GetVerticesPerRectangle() ] {};
+            // FUCK - remove namespace
+            GXVec2                  _positions[ android::UIPass::GetVerticesPerRectangle() ] {};
 
             // FUCK - remove namespace
-            android::UIVertex       _vertices[ UIPass::GetVerticesPerRectangle() ] {};
+            android::UIVertex       _vertices[ android::UIPass::GetVerticesPerRectangle() ] {};
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };

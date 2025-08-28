@@ -213,7 +213,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/ui_element.cpp
     app/src/main/cpp/sources/pbr/ui_layer.cpp
-    app/src/main/cpp/sources/pbr/ui_pass.cpp
     app/src/main/cpp/sources/pbr/ui_pass_common_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_image_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/ui_pass_transform_descriptor_set_layout.cpp
@@ -242,6 +241,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/ui_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_program.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp
     app/src/main/cpp/sources/platform/android/trace.cpp

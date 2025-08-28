@@ -1,18 +1,14 @@
-// FUCK - windows and android separation
+// FUCK - rename include guard
+#ifndef PBR_WINDOWS_UI_PASS_HPP
+#define PBR_WINDOWS_UI_PASS_HPP
 
-#ifndef PBR_UI_PASS_HPP
-#define PBR_UI_PASS_HPP
 
-
-#include "sampler_manager.hpp"
-#include "types.hpp"
-
-// FUCK - use relative path
-#include <platform/android/pbr/font_storage.hpp>
-#include <platform/android/pbr/ui_program.hpp>
-#include <platform/android/pbr/ui_vertex_info.hpp>
-
-#include "uniform_pool.hpp"
+#include "font_storage.hpp"
+#include <pbr/sampler_manager.hpp>
+#include <pbr/types.hpp>
+#include <pbr/uniform_pool.hpp>
+#include "ui_program.hpp"
+#include "ui_vertex_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -21,13 +17,13 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::windows {
 
 class UIPass final
 {
     public:
-        // FUCK - remove namespace
-        using UIBufferResponse = std::optional<android::UIVertexBuffer>;
+        using UIBufferResponse = std::optional<UIVertexBuffer>;
 
     private:
         class CommonDescriptorSet final
@@ -203,21 +199,16 @@ class UIPass final
         size_t                                          _readVertexIndex = 0U;
         size_t                                          _writeVertexIndex = 0U;
 
-        // FUCK - remove namespace
-        android::FontStorage                            _fontStorage {};
+        FontStorage                                     _fontStorage {};
 
         bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
         std::vector<Job>                                _jobs {};
 
         BufferStream                                    _positions { sizeof ( GXVec2 ) };
+        BufferStream                                    _rest { sizeof ( UIVertex ) };
 
-        // FUCK - remove namespace
-        BufferStream                                    _rest { sizeof ( android::UIVertex ) };
-
-        // FUCK - remove namespace
-        android::UIProgram                              _program {};
-
+        UIProgram                                       _program {};
         VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
 
         UniformPool                                     _uniformPool
@@ -239,8 +230,7 @@ class UIPass final
 
         [[nodiscard]] bool Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
-        // FUCK - remove namespace
-        [[nodiscard]] android::FontStorage &GetFontStorage () noexcept;
+        [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
@@ -281,30 +271,21 @@ class UIPass final
         }
 
         static void AppendImage ( GXVec2* targetPositions,
-
-            // FUCK - remove namespace
-            android::UIVertex* targetVertices,
-
+            UIVertex* targetVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
         static void AppendRectangle ( GXVec2* targetPositions,
-
-            // FUCK - remove namespace
-            android::UIVertex* targetVertices,
-
+            UIVertex* targetVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
         static void AppendText ( GXVec2* targetPositions,
-
-            // FUCK - remove namespace
-            android::UIVertex* targetVertices,
-
+            UIVertex* targetVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
@@ -322,7 +303,7 @@ class UIPass final
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif //  PBR_UI_PASS_HPP
+#endif //  PBR_WINDOWS_UI_PASS_HPP

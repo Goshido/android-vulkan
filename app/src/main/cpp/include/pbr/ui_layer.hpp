@@ -3,8 +3,11 @@
 
 
 #include "html5_element.hpp"
+
+// FUCK - remove namespace
+#include <platform/android/pbr/ui_pass.hpp>
+
 #include "scriptable_div_ui_element.hpp"
-#include "ui_pass.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 

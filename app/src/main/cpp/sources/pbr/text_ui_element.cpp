@@ -410,7 +410,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     pen._data[ 1U ] = static_cast<float> ( y ) + fraction;
     _applyLayoutCache._penOut = pen;
 
-    size_t const vertices = _text.size () * UIPass::GetVerticesPerRectangle ();
+    // FUCK - remove namespace
+    size_t const vertices = _text.size () * android::UIPass::GetVerticesPerRectangle ();
     _applyLayoutCache._vertices = vertices;
     info._vertices += vertices;
 }
@@ -460,7 +461,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     std::vector<android::UIVertex> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
-    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
+    // FUCK - remove namespace
+    constexpr size_t verticesPerGlyph = android::UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
     positionBuffer.resize ( vertexCount );
     vertexBuffer.resize ( vertexCount );
@@ -522,7 +524,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            UIPass::AppendText ( p,
+            // FUCK - remove namespace
+            android::UIPass::AppendText ( p,
                 v,
                 color,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),

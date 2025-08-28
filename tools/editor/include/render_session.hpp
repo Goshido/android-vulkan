@@ -8,7 +8,10 @@
 #include <pbr/exposure_pass.hpp>
 #include <pbr/present_render_pass.hpp>
 #include <pbr/tone_mapper_pass.hpp>
-#include <pbr/ui_pass.hpp>
+
+// FUCK - remove namespace
+#include <platform/android/pbr/ui_pass.hpp>
+
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/ui_program.hpp>
@@ -59,7 +62,10 @@ class RenderSession final
         Timestamp                                                   _timestamp {};
         pbr::ToneMapperPass                                         _toneMapper {};
         size_t                                                      _uiElements = 0U;
-        pbr::UIPass                                                 _uiPass {};
+
+        // FUCK - remove namespace
+        pbr::android::UIPass                                        _uiPass {};
+
         UIManager                                                   &_uiManager;
         VkViewport                                                  _viewport {};
 

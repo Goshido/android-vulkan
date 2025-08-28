@@ -1,15 +1,14 @@
-// FUCK - windows and android separation
-
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-#include <pbr/ui_pass.hpp>
-#include <platform/android/pbr/ui_program.inc>
+#include <platform/windows/pbr/ui_pass.hpp>
+#include <platform/windows/pbr/ui_program.inc>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::windows {
 
 namespace {
 
@@ -151,7 +150,10 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
-        "pbr::ImageStorage::OnInitDevice",
+
+        // FUCK - remove namespace
+        "pbr::windows::ImageStorage::OnInitDevice",
+
         "Can't create command pool"
     );
 
@@ -167,7 +169,8 @@ void ImageStorage::OnDestroyDevice () noexcept
 {
     if ( !_textures.empty () ) [[unlikely]]
     {
-        android_vulkan::LogWarning ( "pbr::ImageStorage::OnDestroyDevice - Memory leak." );
+        // FUCK - remove namespace
+        android_vulkan::LogWarning ( "pbr::windows::ImageStorage::OnDestroyDevice - Memory leak." );
         AV_ASSERT ( false )
     }
 
@@ -206,7 +209,10 @@ bool ImageStorage::SyncGPU () noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::ImageStorage::SyncGPU",
+
+        // FUCK - remove namespace
+        "pbr::windows::ImageStorage::SyncGPU",
+
         "Can't wait fence"
     );
 
@@ -214,7 +220,10 @@ bool ImageStorage::SyncGPU () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-        "pbr::ImageStorage::SyncGPU",
+
+        // FUCK - remove namespace
+        "pbr::windows::ImageStorage::SyncGPU",
+
         "Can't reset fence"
     );
 
@@ -223,7 +232,10 @@ bool ImageStorage::SyncGPU () noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkResetCommandPool ( device, _commandPool, 0U ),
-        "pbr::ImageStorage::SyncGPU",
+
+        // FUCK - remove namespace
+        "pbr::windows::ImageStorage::SyncGPU",
+
         "Can't reset command pool"
     );
 
@@ -253,7 +265,10 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
-        "pbr::ImageStorage::AllocateCommandBuffers",
+
+        // FUCK - remove namespace
+        "pbr::windows::ImageStorage::AllocateCommandBuffers",
+
         "Can't allocate command buffer"
     );
 
@@ -274,7 +289,10 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
     for ( size_t i = current; i < size; ++i )
     {
         result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-            "pbr::ImageStorage::AllocateCommandBuffers",
+        
+            // FUCK - remove namespace
+            "pbr::windows::ImageStorage::AllocateCommandBuffers",
+
             "Can't create fence"
         );
 
@@ -325,12 +343,18 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     bool result =
         android_vulkan::Renderer::CheckVkResult (
             vkCreateCommandPool ( device, &poolInfo, nullptr, &_pool ),
-            "pbr::UIPass::CommonDescriptorSet::Init",
+
+            // FUCK - remove namespace
+            "pbr::windows::UIPass::CommonDescriptorSet::Init",
+
             "Can't create command pool"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-            "pbr::UIPass::CommonDescriptorSet::Init",
+
+            // FUCK - remove namespace
+            "pbr::windows::UIPass::CommonDescriptorSet::Init",
+
             "Can't create fence"
         ) &&
 
@@ -365,13 +389,19 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     result =
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-            "pbr::UIPass::CommonDescriptorSet::Init",
+
+            // FUCK - remove namespace
+            "pbr::windows::UIPass::CommonDescriptorSet::Init",
+
             "Can't allocate descriptor sets"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
-            "pbr::UIPass::CommonDescriptorSet::Init",
+
+            // FUCK - remove namespace
+            "pbr::windows::UIPass::CommonDescriptorSet::Init",
+
             "Can't allocate command buffer"
         );
 
@@ -531,7 +561,10 @@ bool UIPass::CommonDescriptorSet::Update ( android_vulkan::Renderer &renderer, V
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::UIPass::CommonDescriptorSet::UploadTextLUT",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::CommonDescriptorSet::UploadTextLUT",
+
         "Can't wait for fence"
     );
 
@@ -572,7 +605,10 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "pbr::UIPass::Init",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::Init",
+
         ( std::string ( "Can't create buffer: " ) + _name ).c_str ()
     );
 
@@ -595,7 +631,10 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-        "pbr::UIPass::Init",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::Init",
+
         ( std::string ( "Can't bind memory: " ) + _name ).c_str ()
     );
 }
@@ -638,7 +677,10 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
     bool const result = renderer.MapMemory ( data,
         _staging._memory,
         _staging._memoryOffset,
-        "pbr::UIPass::BufferStream::Init",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::BufferStream::Init",
+
         "Can't map memory"
     );
 
@@ -736,7 +778,10 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, ds ),
-        "pbr::UIPass::ImageDescriptorSets::Init",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::ImageDescriptorSets::Init",
+
         "Can't allocate descriptor sets"
     );
 
@@ -944,8 +989,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     return true;
 }
 
-// FUCK - remove namespace
-android::FontStorage &UIPass::GetFontStorage () noexcept
+FontStorage &UIPass::GetFontStorage () noexcept
 {
     return _fontStorage;
 }
@@ -1000,7 +1044,10 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::UIPass::OnInitDevice",
+
+        // FUCK - remove namespace
+        "pbr::windows::UIPass::OnInitDevice",
+
         "Can't create descriptor pool"
     );
 
@@ -1105,7 +1152,9 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     if ( neededVertices > MAX_VERTICES ) [[unlikely]]
     {
-        android_vulkan::LogWarning ( "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
+        // FUCK - remove namespace
+        android_vulkan::LogWarning (
+            "pbr::windows::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
             neededVertices,
             GetVerticesPerRectangle ()
         );
@@ -1124,9 +1173,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     {
         {
             ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-
-            // FUCK - remove namespace
-            ._vertices { static_cast<android::UIVertex*> ( _rest.GetData (nextIdx) ), neededVertices}
+            ._vertices { static_cast<UIVertex*> ( _rest.GetData (nextIdx) ), neededVertices }
         }
     };
 }
@@ -1206,10 +1253,7 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 }
 
 void UIPass::AppendImage ( GXVec2* targetPositions,
-
-    // FUCK - remove namespace
-    android::UIVertex* targetVertices,
-
+    UIVertex* targetVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
@@ -1217,58 +1261,49 @@ void UIPass::AppendImage ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v0 = targetVertices[ 0U ];
+    UIVertex &v0 = targetVertices[ 0U ];
     v0._uv = IMAGE_TOP_LEFT;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v0._color = color;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v1 = targetVertices[ 1U ];
+    UIVertex &v1 = targetVertices[ 1U ];
     v1._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] );
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v1._color = color;
 
     targetPositions[ 2U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v2 = targetVertices[ 2U ];
+    UIVertex &v2 = targetVertices[ 2U ];
     v2._uv = IMAGE_BOTTOM_RIGHT;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v2._color = color;
 
     targetPositions[ 3U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v3 = targetVertices[ 3U ];
+    UIVertex &v3 = targetVertices[ 3U ];
     v3._uv = IMAGE_BOTTOM_RIGHT;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v3._color = color;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v4 = targetVertices[ 4U ];
+    UIVertex &v4 = targetVertices[ 4U ];
     v4._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] );
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v4._color = color;
 
     targetPositions[ 5U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v5 = targetVertices[ 5U ];
+    UIVertex &v5 = targetVertices[ 5U ];
     v5._uv = IMAGE_TOP_LEFT;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v5._color = color;
 }
 
 void UIPass::AppendRectangle ( GXVec2* targetPositions,
-
-    // FUCK - remove namespace
-    android::UIVertex* targetVertices,
-
+    UIVertex* targetVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
@@ -1276,52 +1311,43 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v0 = targetVertices[ 0U ];
+    UIVertex &v0 = targetVertices[ 0U ];
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v0._color = color;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v1 = targetVertices[ 1U ];
+    UIVertex &v1 = targetVertices[ 1U ];
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v1._color = color;
 
     targetPositions[ 2U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v2 = targetVertices[ 2U ];
+    UIVertex &v2 = targetVertices[ 2U ];
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v2._color = color;
 
     targetPositions[ 3U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v3 = targetVertices[ 3U ];
+    UIVertex &v3 = targetVertices[ 3U ];
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v3._color = color;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v4 = targetVertices[ 4U ];
+    UIVertex &v4 = targetVertices[ 4U ];
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v4._color = color;
 
     targetPositions[ 5U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v5 = targetVertices[ 5U ];
+    UIVertex &v5 = targetVertices[ 5U ];
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v5._color = color;
 }
 
 void UIPass::AppendText ( GXVec2* targetPositions,
-
-    // FUCK - remove namespace
-    android::UIVertex* targetVertices,
-
+    UIVertex* targetVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
@@ -1332,8 +1358,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v0 = targetVertices[ 0U ];
+    UIVertex &v0 = targetVertices[ 0U ];
     v0._uv = glyphTopLeft;
     v0._atlasLayer = atlasLayer;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1341,8 +1366,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v1 = targetVertices[ 1U ];
+    UIVertex &v1 = targetVertices[ 1U ];
 
     v1._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] );
     v1._atlasLayer = atlasLayer;
@@ -1351,8 +1375,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 2U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v2 = targetVertices[ 2U ];
+    UIVertex &v2 = targetVertices[ 2U ];
     v2._uv = glyphBottomRight;
     v2._atlasLayer = atlasLayer;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1360,8 +1383,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 3U ] = bottomRight;
 
-    // FUCK - remove namespace
-    android::UIVertex &v3 = targetVertices[ 3U ];
+    UIVertex &v3 = targetVertices[ 3U ];
     v3._uv = glyphBottomRight;
     v3._atlasLayer = atlasLayer;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1369,8 +1391,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    // FUCK - remove namespace
-    android::UIVertex &v4 = targetVertices[ 4U ];
+    UIVertex &v4 = targetVertices[ 4U ];
 
     v4._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] );
     v4._atlasLayer = atlasLayer;
@@ -1379,8 +1400,7 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 
     targetPositions[ 5U ] = topLeft;
 
-    // FUCK - remove namespace
-    android::UIVertex &v5 = targetVertices[ 5U ];
+    UIVertex &v5 = targetVertices[ 5U ];
     v5._uv = glyphTopLeft;
     v5._atlasLayer = atlasLayer;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
@@ -1444,8 +1464,7 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    // FUCK - remove namespace
-    android::UIProgram::Transform transform {};
+    UIProgram::Transform transform {};
     transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
     transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
     transform._offset.Multiply ( _bottomRight, -0.5F );
@@ -1459,4 +1478,4 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     _isTransformChanged = false;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

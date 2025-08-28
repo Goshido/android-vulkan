@@ -40,8 +40,10 @@ class DIVUIElement final : public UIElement
 
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
-        GXVec2                      _positions[ UIPass::GetVerticesPerRectangle() ] {};
-        android::UIVertex           _vertices[ UIPass::GetVerticesPerRectangle() ] {};
+
+        // FUCK - remove namespace
+        GXVec2                      _positions[ android::UIPass::GetVerticesPerRectangle() ] {};
+        android::UIVertex           _vertices[ android::UIPass::GetVerticesPerRectangle() ] {};
 
     public:
         DIVUIElement () = delete;

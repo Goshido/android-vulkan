@@ -36,7 +36,9 @@ bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
     }
 
     info._pen = _penOut;
-    info._vertices += UIPass::GetVerticesPerRectangle ();
+
+    // FUCK - remove namespace
+    info._vertices += android::UIPass::GetVerticesPerRectangle ();
 
     std::vector<float> &lines = *info._lineHeights;
     lines.pop_back ();
@@ -75,7 +77,8 @@ ImageUIElement::ImageUIElement ( bool &success,
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    auto const texture = UIPass::RequestImage ( _asset );
+    // FUCK - remove namespace
+    auto const texture = android::UIPass::RequestImage ( _asset );
 
     if ( success = texture.has_value (); success )
     {
@@ -95,7 +98,8 @@ ImageUIElement::ImageUIElement ( bool &success,
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    auto const texture = UIPass::RequestImage ( _asset );
+    // FUCK - remove namespace
+    auto const texture = android::UIPass::RequestImage ( _asset );
 
     if ( success = texture.has_value (); success )
     {
@@ -107,7 +111,8 @@ ImageUIElement::~ImageUIElement () noexcept
 {
     if ( _submitCache._texture )
     {
-        UIPass::ReleaseImage ( _submitCache._texture );
+        // FUCK - remove namespace
+        android::UIPass::ReleaseImage ( _submitCache._texture );
     }
 }
 
@@ -205,7 +210,8 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     // 'static' position territory
 
-    info._vertices += UIPass::GetVerticesPerRectangle ();
+    // FUCK - remove namespace
+    info._vertices += android::UIPass::GetVerticesPerRectangle ();
 
     if ( _css._display == DisplayProperty::eValue::Block )
     {
@@ -261,7 +267,8 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
+    // FUCK - remove namespace
+    constexpr size_t vertices = android::UIPass::GetVerticesPerRectangle ();
     constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
 
     // FUCK - remove namespace
@@ -321,7 +328,9 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     bottomRight.Sum ( topLeft, _borderSize );
 
     constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
-    UIPass::AppendImage ( _submitCache._positions, _submitCache._vertices, white, topLeft, bottomRight );
+
+    // FUCK - remove namespace
+    android::UIPass::AppendImage ( _submitCache._positions, _submitCache._vertices, white, topLeft, bottomRight );
 
     pen._data[ 0U ] += blockWidth;
     _submitCache._penOut = pen;

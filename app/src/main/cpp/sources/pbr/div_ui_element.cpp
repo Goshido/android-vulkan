@@ -178,7 +178,15 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     };
 
     // Opaque background requires rectangle (two triangles).
-    size_t const vertices[] = { childInfo._vertices, childInfo._vertices + UIPass::GetVerticesPerRectangle () };
+
+    size_t const vertices[] =
+    {
+        childInfo._vertices,
+
+        // FUCK - remove namespace
+        childInfo._vertices + android::UIPass::GetVerticesPerRectangle ()
+    };
+
     bool const hasBackgroundColor = _css._backgroundColor.GetSRGB()._data[ 3U ] != 0U;
     bool const hasBackgroundArea = sizeCheck ( _borderSize );
     _hasBackground = hasBackgroundColor & hasBackgroundArea;
@@ -260,7 +268,8 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
+        // FUCK - remove namespace
+        constexpr size_t vertices = android::UIPass::GetVerticesPerRectangle ();
         constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
 
         // FUCK - remove namespace
@@ -365,7 +374,8 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        UIPass::AppendRectangle ( _positions,
+        // FUCK - remove namespace
+        android::UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
             _absoluteRect._topLeft,

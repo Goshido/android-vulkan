@@ -149,7 +149,8 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
     _exposurePass.FreeTransferResources ( renderer.GetDevice (), pool );
 }
 
-UIPass &RenderSession::GetUIPass () noexcept
+// FUCK - remove namespace
+android::UIPass &RenderSession::GetUIPass () noexcept
 {
     return _uiPass;
 }

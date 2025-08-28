@@ -7,11 +7,14 @@
 #include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
+
+// FUCK - remove namespace
+#include <platform/android/pbr/ui_pass.hpp>
+
 #include "present_render_pass.hpp"
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
 #include "tone_mapper_pass.hpp"
-#include "ui_pass.hpp"
 
 
 namespace pbr {
@@ -69,7 +72,8 @@ class RenderSession final
         SamplerManager              _samplerManager {};
         ToneMapperPass              _toneMapperPass {};
 
-        UIPass                      _uiPass {};
+        // FUCK - remove namespace
+        android::UIPass             _uiPass {};
 
     public:
         RenderSession () = default;
@@ -86,7 +90,10 @@ class RenderSession final
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-        [[nodiscard]] UIPass &GetUIPass () noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] android::UIPass &GetUIPass () noexcept;
+
         [[nodiscard]] size_t GetWritingCommandBufferIndex () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;

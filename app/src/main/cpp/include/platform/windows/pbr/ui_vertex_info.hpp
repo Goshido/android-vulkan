@@ -20,9 +20,9 @@ namespace pbr::windows {
 struct UIVertex final
 {
     android_vulkan::Half2       _uv {};
-    uint32_t                    _color = 0U;
-    uint32_t                    _image: UI_IMAGE_BITS = 0U;
-    uint32_t                    _uiPrimitiveType: ( 16 - UI_IMAGE_BITS ) = PBR_UI_PRIMITIVE_TYPE_TEXT;
+    GXColorUNORM                _color {};
+    uint16_t                    _image: UI_IMAGE_BITS = 0U;
+    uint16_t                    _uiPrimitiveType: ( 16 - UI_IMAGE_BITS ) = PBR_UI_PRIMITIVE_TYPE_TEXT;
 };
 
 #pragma pack ( pop )

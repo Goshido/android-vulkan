@@ -4,9 +4,7 @@
 
 
 #include "font_storage.hpp"
-#include <pbr/sampler_manager.hpp>
 #include <pbr/types.hpp>
-#include <pbr/uniform_pool.hpp>
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
 
@@ -26,40 +24,6 @@ class UIPass final
         using UIBufferResponse = std::optional<UIVertexBuffer>;
 
     private:
-        class CommonDescriptorSet final
-        {
-            public:
-                VkDescriptorSet                         _descriptorSet = VK_NULL_HANDLE;
-                VkDescriptorImageInfo                   _imageInfo {};
-                UIPassCommonDescriptorSetLayout         _layout {};
-                VkWriteDescriptorSet                    _write {};
-                VkCommandPool                           _pool = VK_NULL_HANDLE;
-                VkFence                                 _fence = VK_NULL_HANDLE;
-                android_vulkan::Texture2D               _textLUT {};
-
-            public:
-                CommonDescriptorSet () = default;
-
-                CommonDescriptorSet ( CommonDescriptorSet const & ) = delete;
-                CommonDescriptorSet &operator = ( CommonDescriptorSet const & ) = delete;
-
-                CommonDescriptorSet ( CommonDescriptorSet && ) = delete;
-                CommonDescriptorSet &operator = ( CommonDescriptorSet && ) = delete;
-
-                ~CommonDescriptorSet () = default;
-
-                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    VkDescriptorPool descriptorPool,
-                    SamplerManager const &samplerManager
-                ) noexcept;
-
-                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-                [[nodiscard]] bool Update ( android_vulkan::Renderer &renderer, VkImageView currentAtlas ) noexcept;
-
-            private:
-                [[nodiscard]] bool FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-        };
-
         struct Buffer final
         {
             VkBuffer                                    _buffer = VK_NULL_HANDLE;
@@ -124,43 +88,6 @@ class UIPass final
                 void UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept;
         };
 
-        class ImageDescriptorSets final
-        {
-            public:
-                size_t                                  _commitIndex = 0U;
-                size_t                                  _startIndex = 0U;
-                size_t                                  _written = 0U;
-
-                std::vector<VkDescriptorSet>            _descriptorSets {};
-                UIPassImageDescriptorSetLayout          _layout {};
-
-                std::vector<VkDescriptorImageInfo>      _imageInfo {};
-                std::vector<VkWriteDescriptorSet>       _writeSets {};
-
-                VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
-
-            public:
-                ImageDescriptorSets () = default;
-
-                ImageDescriptorSets ( ImageDescriptorSets const & ) = delete;
-                ImageDescriptorSets &operator = ( ImageDescriptorSets const & ) = delete;
-
-                ImageDescriptorSets ( ImageDescriptorSets && ) = delete;
-                ImageDescriptorSets &operator = ( ImageDescriptorSets && ) = delete;
-
-                ~ImageDescriptorSets () = default;
-
-                [[nodiscard]] bool Init ( VkDevice device,
-                    VkDescriptorPool descriptorPool,
-                    VkImageView transparent
-                ) noexcept;
-
-                void Destroy ( VkDevice device ) noexcept;
-
-                void Commit ( VkDevice device ) noexcept;
-                void Push ( VkImageView view ) noexcept;
-        };
-
         struct InUseImageTracker final
         {
             using Entry = std::unordered_map<Texture2DRef, size_t>;
@@ -189,17 +116,14 @@ class UIPass final
             .height = 0U
         };
 
-        UIPassTransformDescriptorSetLayout              _transformLayout {};
+        android_vulkan::Texture2D                       _textLUT {};
 
-        CommonDescriptorSet                             _commonDescriptorSet {};
-        VkDescriptorPool                                _descriptorPool = VK_NULL_HANDLE;
-        ImageDescriptorSets                             _imageDescriptorSets {};
         InUseImageTracker                               _inUseImageTracker {};
 
         size_t                                          _readVertexIndex = 0U;
         size_t                                          _writeVertexIndex = 0U;
 
-        FontStorage                                     _fontStorage {};
+        FontStorage                                     _fontStorage;
 
         bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
@@ -209,22 +133,18 @@ class UIPass final
         BufferStream                                    _rest { sizeof ( UIVertex ) };
 
         UIProgram                                       _program {};
-        VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
-
-        UniformPool                                     _uniformPool
-        {
-            eUniformSize::Nanoscopic_64KB,
-            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-        };
+        UIProgram::UIInfo                               _uiInfo {};
 
     public:
-        UIPass () = default;
+        UIPass () = delete;
 
         UIPass ( UIPass const & ) = delete;
         UIPass &operator = ( UIPass const & ) = delete;
 
         UIPass ( UIPass && ) = delete;
         UIPass &operator = ( UIPass && ) = delete;
+
+        explicit UIPass ( ResourceHeap &resourceHeap ) noexcept;
 
         ~UIPass () = default;
 
@@ -233,37 +153,22 @@ class UIPass final
         [[nodiscard]] FontStorage &GetFontStorage () noexcept;
         [[nodiscard]] size_t GetUsedVertexCount () const noexcept;
 
-        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer,
-            SamplerManager const &samplerManager,
-            VkImageView transparent
-        ) noexcept;
-
+        [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         void OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
-            VkRenderPass renderPass,
-            uint32_t subpass
-        ) noexcept;
-
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
         void OnSwapchainDestroyed () noexcept;
 
         void RequestEmptyUI () noexcept;
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
 
-        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
-            VkRenderPass renderPass,
-            uint32_t subpass,
-            float brightnessBalance
-        ) noexcept;
+        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept;
 
         void SubmitImage ( Texture2DRef const &texture ) noexcept;
         void SubmitRectangle () noexcept;
         void SubmitText ( size_t usedVertices ) noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            size_t framebufferIndex
-        ) noexcept;
+        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept
         {
@@ -274,7 +179,8 @@ class UIPass final
             UIVertex* targetVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
-            GXVec2 const &bottomRight
+            GXVec2 const &bottomRight,
+            uint16_t image
         ) noexcept;
 
         static void AppendRectangle ( GXVec2* targetPositions,
@@ -291,7 +197,7 @@ class UIPass final
             GXVec2 const &bottomRight,
             android_vulkan::Half2 const &glyphTopLeft,
             android_vulkan::Half2 const &glyphBottomRight,
-            uint8_t atlasLayer
+            uint16_t atlas
         ) noexcept;
 
         static void ReleaseImage ( Texture2DRef const &image ) noexcept;
@@ -300,7 +206,7 @@ class UIPass final
     private:
         void SubmitNonImage ( size_t usedVertices ) noexcept;
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
-        void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        void UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept;
 };
 
 } // namespace pbr::windows

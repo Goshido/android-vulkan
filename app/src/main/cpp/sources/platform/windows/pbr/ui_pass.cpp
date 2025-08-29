@@ -2,7 +2,6 @@
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
-#include <platform/windows/pbr/ui_program.inc>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
@@ -16,15 +15,10 @@ constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t COMMAND_BUFFERS_PER_TEXTURE = 1U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 
-constexpr size_t MAX_IMAGES = 1024U;
+//constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 
-constexpr size_t TRANSPARENT_DESCRIPTOR_SET_COUNT = 1U;
-
-constexpr uint32_t COMMON_DESCRIPTOR_SET_IMAGE_COUNT = 2U;
-constexpr uint32_t COMMON_DESCRIPTOR_SET_SAMPLER_COUNT = 3U;
-
-constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
+//constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
 
 android_vulkan::Half2 const IMAGE_TOP_LEFT ( 0.0F, 0.0F );
 android_vulkan::Half2 const IMAGE_BOTTOM_RIGHT ( 1.0F, 1.0F );
@@ -318,270 +312,6 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
-    VkDescriptorPool descriptorPool,
-    SamplerManager const &samplerManager
-) noexcept
-{
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool result =
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateCommandPool ( device, &poolInfo, nullptr, &_pool ),
-
-            // FUCK - remove namespace
-            "pbr::windows::UIPass::CommonDescriptorSet::Init",
-
-            "Can't create command pool"
-        ) &&
-
-        android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-
-            // FUCK - remove namespace
-            "pbr::windows::UIPass::CommonDescriptorSet::Init",
-
-            "Can't create fence"
-        ) &&
-
-        _layout.Init ( device );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pool, VK_OBJECT_TYPE_COMMAND_POOL, "Text LUT" );
-    AV_SET_VULKAN_OBJECT_NAME ( device, _fence, VK_OBJECT_TYPE_FENCE, "Text LUT" );
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = 1U,
-        .pSetLayouts = &_layout.GetLayout ()
-    };
-
-    VkCommandBufferAllocateInfo const bufferAllocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _pool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-
-    result =
-        android_vulkan::Renderer::CheckVkResult (
-            vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-
-            // FUCK - remove namespace
-            "pbr::windows::UIPass::CommonDescriptorSet::Init",
-
-            "Can't allocate descriptor sets"
-        ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
-
-            // FUCK - remove namespace
-            "pbr::windows::UIPass::CommonDescriptorSet::Init",
-
-            "Can't allocate command buffer"
-        );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI common" )
-    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Text LUT" )
-
-    result = _textLUT.UploadData ( renderer,
-        TEXT_LUT,
-        android_vulkan::eColorSpace::Unorm,
-        false,
-        commandBuffer,
-        _fence
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    VkDescriptorImageInfo const imageInfo[] =
-    {
-        {
-            .sampler = samplerManager.GetPointSampler (),
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        },
-        {
-            .sampler = samplerManager.GetClampToEdgeSampler (),
-            .imageView = _textLUT.GetImageView (),
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        },
-        {
-            .sampler = samplerManager.GetMaterialSampler (),
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        }
-    };
-
-    constexpr size_t textLUTResources = 1U;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _textLUT.GetImage (), VK_OBJECT_TYPE_IMAGE, "Text LUT" )
-    AV_SET_VULKAN_OBJECT_NAME ( device, imageInfo[ textLUTResources ].imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Text LUT")
-
-    VkWriteDescriptorSet const writes[] =
-    {
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
-            .dstBinding = BIND_ATLAS_SAMPLER,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = imageInfo,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
-            .dstBinding = BIND_TEXT_LUT_TEXTURE,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = imageInfo + textLUTResources,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
-            .dstBinding = BIND_TEXT_LUT_SAMPLER,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = imageInfo + textLUTResources,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        },
-        {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .pNext = nullptr,
-            .dstSet = _descriptorSet,
-            .dstBinding = BIND_IMAGE_SAMPLER,
-            .dstArrayElement = 0U,
-            .descriptorCount = 1U,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = imageInfo + 2U,
-            .pBufferInfo = nullptr,
-            .pTexelBufferView = nullptr
-        }
-    };
-
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( std::size ( writes ) ), writes, 0U, nullptr );
-
-    _imageInfo =
-    {
-        .sampler = VK_NULL_HANDLE,
-        .imageView = VK_NULL_HANDLE,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    _write =
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = _descriptorSet,
-        .dstBinding = BIND_ATLAS_TEXTURE,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-        .pImageInfo = &_imageInfo,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
-
-    return true;
-}
-
-void UIPass::CommonDescriptorSet::Destroy ( android_vulkan::Renderer &renderer ) noexcept
-{
-    _layout.Destroy ( renderer.GetDevice () );
-    _textLUT.FreeResources ( renderer );
-    VkDevice device = renderer.GetDevice ();
-
-    if ( _fence != VK_NULL_HANDLE ) [[unlikely]]
-        vkDestroyFence ( device, std::exchange ( _fence, VK_NULL_HANDLE ), nullptr );
-
-    if ( _pool != VK_NULL_HANDLE ) [[unlikely]]
-    {
-        vkDestroyCommandPool ( device, std::exchange ( _pool, VK_NULL_HANDLE ), nullptr );
-    }
-}
-
-bool UIPass::CommonDescriptorSet::Update ( android_vulkan::Renderer &renderer, VkImageView currentAtlas ) noexcept
-{
-    if ( !FreeTransferResources ( renderer ) ) [[unlikely]]
-        return false;
-
-    if ( _imageInfo.imageView == currentAtlas ) [[likely]]
-        return true;
-
-    _imageInfo.imageView = currentAtlas;
-    vkUpdateDescriptorSets ( renderer.GetDevice (), 1U, &_write, 0U, nullptr );
-    return true;
-}
-
-[[nodiscard]] bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
-{
-    if ( _pool == VK_NULL_HANDLE ) [[likely]]
-        return true;
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::CommonDescriptorSet::UploadTextLUT",
-
-        "Can't wait for fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    vkDestroyFence ( device, std::exchange ( _fence, VK_NULL_HANDLE ), nullptr );
-
-    if ( _pool != VK_NULL_HANDLE ) [[unlikely]]
-        vkDestroyCommandPool ( device, std::exchange ( _pool, VK_NULL_HANDLE ), nullptr );
-
-    _textLUT.FreeTransferResources ( renderer );
-    return true;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     size_t size,
     VkBufferUsageFlags usage,
@@ -753,142 +483,6 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
-    VkDescriptorPool descriptorPool,
-    VkImageView transparent
-) noexcept
-{
-    if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
-
-    constexpr size_t count = MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
-    _descriptorSets.resize ( count, VK_NULL_HANDLE );
-
-    std::vector<VkDescriptorSetLayout> const layouts ( count, _layout.GetLayout () );
-    VkDescriptorSet* ds = _descriptorSets.data ();
-
-    VkDescriptorSetAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .descriptorPool = descriptorPool,
-        .descriptorSetCount = static_cast<uint32_t> ( count ),
-        .pSetLayouts = layouts.data ()
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateDescriptorSets ( device, &allocateInfo, ds ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::ImageDescriptorSets::Init",
-
-        "Can't allocate descriptor sets"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
-
-    for ( size_t i = 0U; i < count; ++i )
-        AV_SET_VULKAN_OBJECT_NAME ( device, ds[ i ], VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI image #%zu", i )
-
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
-
-    _transparent = _descriptorSets.back ();
-    _descriptorSets.pop_back ();
-
-    VkDescriptorImageInfo imageInfo
-    {
-        .sampler = VK_NULL_HANDLE,
-        .imageView = VK_NULL_HANDLE,
-        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    _imageInfo.resize ( MAX_IMAGES, imageInfo );
-
-    VkWriteDescriptorSet writeSet
-    {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .pNext = nullptr,
-        .dstSet = VK_NULL_HANDLE,
-        .dstBinding = BIND_IMAGE_TEXTURE,
-        .dstArrayElement = 0U,
-        .descriptorCount = 1U,
-        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-        .pImageInfo = nullptr,
-        .pBufferInfo = nullptr,
-        .pTexelBufferView = nullptr
-    };
-
-    _writeSets.resize ( MAX_IMAGES, writeSet );
-    VkDescriptorImageInfo const* imageInfoData = _imageInfo.data ();
-
-    for ( size_t i = 0U; i < MAX_IMAGES; ++i )
-    {
-        VkWriteDescriptorSet &write = _writeSets[ i ];
-        write.dstSet = ds[ i ];
-        write.pImageInfo = imageInfoData + i;
-    }
-
-    _commitIndex = 0U;
-    _startIndex = 0U;
-    _written = 0U;
-
-    // Init transparent descriptor set.
-    imageInfo.imageView = transparent;
-    writeSet.dstSet = _transparent;
-    writeSet.pImageInfo = &imageInfo;
-    vkUpdateDescriptorSets ( device, 1U, &writeSet, 0U, nullptr );
-
-    return true;
-}
-
-void UIPass::ImageDescriptorSets::Destroy ( VkDevice device ) noexcept
-{
-    _layout.Destroy ( device );
-
-    constexpr auto clear = [] ( auto &v ) noexcept {
-        v.clear ();
-        v.shrink_to_fit ();
-    };
-
-    clear ( _writeSets );
-    clear ( _descriptorSets );
-    clear ( _imageInfo );
-}
-
-void UIPass::ImageDescriptorSets::Commit ( VkDevice device ) noexcept
-{
-    if ( !_written )
-        return;
-
-    size_t const idx = _startIndex + _written;
-    size_t const cases[] = { 0U, idx - MAX_IMAGES };
-    size_t const more = cases[ static_cast<size_t> ( idx > MAX_IMAGES ) ];
-    size_t const available = _written - more;
-
-    VkWriteDescriptorSet const* writeSets = _writeSets.data ();
-    vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( available ), writeSets + _startIndex, 0U, nullptr );
-
-    _commitIndex = _startIndex;
-    _startIndex = idx % MAX_IMAGES;
-    _written = 0U;
-
-    if ( more >= 1U ) [[unlikely]]
-    {
-        vkUpdateDescriptorSets ( device, static_cast<uint32_t> ( more ), writeSets, 0U, nullptr );
-    }
-}
-
-void UIPass::ImageDescriptorSets::Push ( VkImageView view ) noexcept
-{
-    _imageInfo[ ( _startIndex + _written ) % MAX_IMAGES ].imageView = view;
-    ++_written;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void UIPass::InUseImageTracker::Destroy () noexcept
 {
     for ( Entry &entry : _registry )
@@ -939,6 +533,12 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 
 //----------------------------------------------------------------------------------------------------------------------
 
+UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
+    _fontStorage ( resourceHeap )
+{
+    // NOTHING
+}
+
 bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
@@ -955,33 +555,24 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
 
     _program.Bind ( commandBuffer );
 
-    VkDescriptorSet const sets[] = { _transformDescriptorSet, _commonDescriptorSet._descriptorSet };
-    _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
-
-    VkBuffer const buffers[] = { _positions.GetBuffer (), _rest.GetBuffer () };
-    constexpr VkDeviceSize const offsets[] = { 0U, 0U };
-    static_assert ( std::size ( buffers ) == std::size ( offsets ) );
-
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, static_cast<uint32_t> ( std::size ( buffers ) ), buffers, offsets );
-
     auto start = static_cast<uint32_t> ( _readVertexIndex );
-    size_t imageIdx = _imageDescriptorSets._commitIndex;
-    VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
+    //size_t imageIdx = _imageDescriptorSets._commitIndex;
+    //VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
 
     for ( auto const &job : _jobs )
     {
         if ( !job._texture )
         {
-            _program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
+            //_program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
         }
         else
         {
             _inUseImageTracker.MarkInUse ( *job._texture, commandBufferIndex );
-            _program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
-            imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
+            //_program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
+            //imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
         }
 
-        vkCmdDraw ( commandBuffer, job._vertices, 1U, start, 0U );
+        vkCmdDraw ( commandBuffer, job._vertices, 1U, 0U, 0U );
         start += job._vertices;
     }
 
@@ -999,89 +590,19 @@ size_t UIPass::GetUsedVertexCount () const noexcept
     return _writeVertexIndex - _readVertexIndex;
 }
 
-bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
-    SamplerManager const &samplerManager,
-    VkImageView transparent
-) noexcept
+bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    bool result = _fontStorage.Init ( renderer ) &&
+    return _fontStorage.Init ( renderer ) &&
         _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
-        _rest.Init ( renderer, "UI rest", "UI rest staging" );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    constexpr size_t commonDescriptorSetCount = 1U;
-    constexpr size_t descriptorSetCount = commonDescriptorSetCount + MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
-
-    constexpr auto images = COMMON_DESCRIPTOR_SET_IMAGE_COUNT +
-        static_cast<uint32_t> ( MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT );
-
-    constexpr static VkDescriptorPoolSize const poolSizes[] =
-    {
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .descriptorCount = images
-
-        },
-        {
-            .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = COMMON_DESCRIPTOR_SET_SAMPLER_COUNT
-        }
-    };
-
-    constexpr VkDescriptorPoolCreateInfo poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .maxSets = static_cast<uint32_t> ( descriptorSetCount ),
-        .poolSizeCount = static_cast<uint32_t> ( std::size ( poolSizes ) ),
-        .pPoolSizes = poolSizes
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::OnInitDevice",
-
-        "Can't create descriptor pool"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorPool, VK_OBJECT_TYPE_DESCRIPTOR_POOL, "UI pass" )
-
-    return _commonDescriptorSet.Init ( renderer, _descriptorPool, samplerManager ) &&
-        _imageDescriptorSets.Init ( device, _descriptorPool, transparent ) &&
-        _transformLayout.Init ( device ) &&
-        ImageStorage::OnInitDevice ( renderer ) &&
-
-        _uniformPool.Init ( renderer,
-            _transformLayout,
-
-            // FUCK - remove namespace, one liner
-            sizeof ( android::UIProgram::Transform ),
-            BIND_TRANSFORM,
-            "UI pass"
-        );
+        _rest.Init ( renderer, "UI rest", "UI rest staging" ) &&
+        /*_imageDescriptorSets.Init ( renderer.GetDevice (), _descriptorPool, transparent) &&*/
+        ImageStorage::OnInitDevice ( renderer );
 }
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _uniformPool.Destroy ( renderer );
-
     VkDevice device = renderer.GetDevice ();
-    _imageDescriptorSets.Destroy ( device );
-    _commonDescriptorSet.Destroy ( renderer );
-    _transformLayout.Destroy ( device );
-
-    if ( _descriptorPool != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyDescriptorPool ( device, std::exchange ( _descriptorPool, VK_NULL_HANDLE ), nullptr );
+    //_imageDescriptorSets.Destroy ( device );
 
     _program.Destroy ( device );
 
@@ -1102,35 +623,20 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     ImageStorage::OnDestroyDevice ();
 }
 
-bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass
-) noexcept
+bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
     VkExtent2D &r = _currentResolution;
 
-    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
+    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) ) [[unlikely]]
         return true;
-
-    VkDevice device = renderer.GetDevice ();
-    _program.Destroy ( device );
-
-    bool const result = _program.Init ( renderer,
-        renderPass,
-        subpass,
-        BrightnessInfo ( _brightnessBalance ),
-        resolution
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
 
     r = resolution;
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
     _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
     _isTransformChanged = true;
-    return true;
+
+    return SetBrightness ( renderer, _brightnessBalance );
 }
 
 void UIPass::OnSwapchainDestroyed () noexcept
@@ -1169,40 +675,32 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     _readVertexIndex = nextIdx;
     _writeVertexIndex = nextIdx + neededVertices;
 
-    return UIPass::UIBufferResponse
+    return
     {
         {
             ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-            ._vertices { static_cast<UIVertex*> ( _rest.GetData (nextIdx) ), neededVertices }
+            ._vertices { static_cast<UIVertex*> ( _rest.GetData ( nextIdx ) ), neededVertices }
         }
     };
 }
 
-bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass,
-    float brightnessBalance
-) noexcept
+bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept
 {
-    _program.Destroy ( renderer.GetDevice () );
+    _brightnessBalance = brightnessBalance;
 
-    bool const result = _program.Init ( renderer,
-        renderPass,
-        subpass,
+    VkDevice device = renderer.GetDevice ();
+    _program.Destroy ( device );
+
+    return _program.Init ( device,
+        renderer.GetSurfaceFormat (),
         BrightnessInfo ( brightnessBalance ),
         _currentResolution
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _brightnessBalance = brightnessBalance;
-    return true;
 }
 
 void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
-    _imageDescriptorSets.Push ( texture->GetImageView () );
+    //_imageDescriptorSets.Push ( texture->GetImageView () );
 
     _jobs.emplace_back (
         Job
@@ -1225,26 +723,18 @@ void UIPass::SubmitText ( size_t usedVertices ) noexcept
     SubmitNonImage ( usedVertices );
 }
 
-bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    size_t framebufferIndex
-) noexcept
+bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
     AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
 
-    VkDevice device = renderer.GetDevice ();
-    _imageDescriptorSets.Commit ( device );
+    //_imageDescriptorSets.Commit ( renderer.GetDevice () );
 
-    bool const result =
-        _fontStorage.UploadGPUData ( renderer, commandBuffer, framebufferIndex ) &&
-        _commonDescriptorSet.Update ( renderer, _fontStorage.GetAtlasImageView () );
-
-    if ( !result ) [[unlikely]]
+    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) ) [[unlikely]]
         return false;
 
-    if ( _isTransformChanged )
-        UpdateTransform ( renderer, commandBuffer );
+    if ( _isTransformChanged ) [[unlikely]]
+        UpdateTransform ( renderer );
 
     if ( _hasChanges )
         UpdateGeometry ( commandBuffer );
@@ -1256,50 +746,69 @@ void UIPass::AppendImage ( GXVec2* targetPositions,
     UIVertex* targetVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
-    GXVec2 const &bottomRight
+    GXVec2 const &bottomRight,
+    uint16_t image
 ) noexcept
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
-    v0._uv = IMAGE_TOP_LEFT;
-    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v0._color = color;
+    targetVertices[ 0U ] =
+    {
+        ._uv = IMAGE_TOP_LEFT,
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
-    v1._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] );
-    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v1._color = color;
+    targetVertices[ 1U ] =
+    {
+        ._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] ),
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
-    v2._uv = IMAGE_BOTTOM_RIGHT;
-    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v2._color = color;
+    targetVertices[ 2U ] =
+    {
+        ._uv = IMAGE_BOTTOM_RIGHT,
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
-    v3._uv = IMAGE_BOTTOM_RIGHT;
-    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v3._color = color;
+    targetVertices[ 3U ] =
+    {
+        ._uv = IMAGE_BOTTOM_RIGHT,
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
-    v4._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] );
-    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v4._color = color;
+    targetVertices[ 4U ] =
+    {
+        ._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] ),
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
-    v5._uv = IMAGE_TOP_LEFT;
-    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
-    v5._color = color;
+    targetVertices[ 5U ] =
+    {
+        ._uv = IMAGE_TOP_LEFT,
+        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
 }
 
 void UIPass::AppendRectangle ( GXVec2* targetPositions,
@@ -1312,38 +821,38 @@ void UIPass::AppendRectangle ( GXVec2* targetPositions,
     targetPositions[ 0U ] = topLeft;
 
     UIVertex &v0 = targetVertices[ 0U ];
-    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v0._color = color;
+    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
     UIVertex &v1 = targetVertices[ 1U ];
-    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v1._color = color;
+    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
     targetPositions[ 2U ] = bottomRight;
 
     UIVertex &v2 = targetVertices[ 2U ];
-    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v2._color = color;
+    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
     targetPositions[ 3U ] = bottomRight;
 
     UIVertex &v3 = targetVertices[ 3U ];
-    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v3._color = color;
+    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
     UIVertex &v4 = targetVertices[ 4U ];
-    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v4._color = color;
+    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
     targetPositions[ 5U ] = topLeft;
 
     UIVertex &v5 = targetVertices[ 5U ];
-    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v5._color = color;
+    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 }
 
 void UIPass::AppendText ( GXVec2* targetPositions,
@@ -1353,58 +862,68 @@ void UIPass::AppendText ( GXVec2* targetPositions,
     GXVec2 const &bottomRight,
     android_vulkan::Half2 const &glyphTopLeft,
     android_vulkan::Half2 const &glyphBottomRight,
-    uint8_t atlasLayer
+    uint16_t atlas
 ) noexcept
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
-    v0._uv = glyphTopLeft;
-    v0._atlasLayer = atlasLayer;
-    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v0._color = color;
+    targetVertices[ 0U ] =
+    {
+        ._uv = glyphTopLeft,
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
+    };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
-
-    v1._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] );
-    v1._atlasLayer = atlasLayer;
-    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v1._color = color;
+    targetVertices[ 1U ] =
+    {
+        ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+    };
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
-    v2._uv = glyphBottomRight;
-    v2._atlasLayer = atlasLayer;
-    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v2._color = color;
+    targetVertices[ 2U ] =
+    {
+        ._uv = glyphBottomRight,
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
+    };
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
-    v3._uv = glyphBottomRight;
-    v3._atlasLayer = atlasLayer;
-    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v3._color = color;
+    targetVertices[ 3U ] =
+    {
+        ._uv = glyphBottomRight,
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
+    };
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
-
-    v4._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] );
-    v4._atlasLayer = atlasLayer;
-    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v4._color = color;
+    targetVertices[ 4U ] =
+    {
+        ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
+    };
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
-    v5._uv = glyphTopLeft;
-    v5._atlasLayer = atlasLayer;
-    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v5._color = color;
+    targetVertices[ 5U ] =
+    {
+        ._uv = glyphTopLeft,
+        ._color = color,
+        ._image = atlas,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
+    };
 }
 
 void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept
@@ -1458,22 +977,15 @@ void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
     _hasChanges = false;
 }
 
-void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
 {
     float const scaleX = 2.0F / _bottomRight._data[ 0U ];
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    UIProgram::Transform transform {};
-    transform._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
-    transform._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
-    transform._offset.Multiply ( _bottomRight, -0.5F );
-
-    _uniformPool.Push ( commandBuffer, &transform, sizeof ( transform ) );
-    _transformDescriptorSet = _uniformPool.Acquire ();
-
-    _uniformPool.IssueSync ( renderer.GetDevice (), commandBuffer );
-    _uniformPool.Commit ();
+    _uiInfo._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
+    _uiInfo._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
+    _uiInfo._offset.Multiply ( _bottomRight, -0.5F );
 
     _isTransformChanged = false;
 }

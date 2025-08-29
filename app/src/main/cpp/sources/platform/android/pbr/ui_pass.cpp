@@ -1102,36 +1102,24 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     ImageStorage::OnDestroyDevice ();
 }
 
-bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass
-) noexcept
-{
-    VkExtent2D const &resolution = renderer.GetSurfaceSize ();
-    VkExtent2D &r = _currentResolution;
+ bool UIPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+     VkRenderPass renderPass,
+     uint32_t subpass
+ ) noexcept
+ {
+     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
+     VkExtent2D &r = _currentResolution;
 
-    if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) )
-        return true;
+     if ( ( r.width == resolution.width ) & ( r.height == resolution.height ) ) [[likely]]
+         return true;
 
-    VkDevice device = renderer.GetDevice ();
-    _program.Destroy ( device );
+     r = resolution;
+     VkExtent2D const &viewport = renderer.GetViewportResolution ();
+     _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
+     _isTransformChanged = true;
 
-    bool const result = _program.Init ( renderer,
-        renderPass,
-        subpass,
-        BrightnessInfo ( _brightnessBalance ),
-        resolution
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    r = resolution;
-    VkExtent2D const &viewport = renderer.GetViewportResolution ();
-    _bottomRight = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _isTransformChanged = true;
-    return true;
-}
+     return SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );
+ }
 
 void UIPass::OnSwapchainDestroyed () noexcept
 {
@@ -1173,32 +1161,27 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     {
         {
             ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-            ._vertices { static_cast<UIVertex*> ( _rest.GetData (nextIdx) ), neededVertices }
+            ._vertices { static_cast<UIVertex*> ( _rest.GetData ( nextIdx ) ), neededVertices }
         }
     };
 }
 
-bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass,
-    float brightnessBalance
-) noexcept
-{
-    _program.Destroy ( renderer.GetDevice () );
+ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
+     VkRenderPass renderPass,
+     uint32_t subpass,
+     float brightnessBalance
+ ) noexcept
+ {
+     _brightnessBalance = brightnessBalance;
+     _program.Destroy ( renderer.GetDevice () );
 
-    bool const result = _program.Init ( renderer,
-        renderPass,
-        subpass,
-        BrightnessInfo ( brightnessBalance ),
-        _currentResolution
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _brightnessBalance = brightnessBalance;
-    return true;
-}
+     return _program.Init ( renderer,
+         renderPass,
+         subpass,
+         BrightnessInfo ( brightnessBalance ),
+         _currentResolution
+     );
+ }
 
 void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
@@ -1358,53 +1341,63 @@ void UIPass::AppendText ( GXVec2* targetPositions,
 {
     targetPositions[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
-    v0._uv = glyphTopLeft;
-    v0._atlasLayer = atlasLayer;
-    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v0._color = color;
+    targetVertices[ 0U ] =
+    {
+        ._uv = glyphTopLeft,
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 
     targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
-
-    v1._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] );
-    v1._atlasLayer = atlasLayer;
-    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v1._color = color;
+    targetVertices[ 1U ] =
+    {
+        ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 
     targetPositions[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
-    v2._uv = glyphBottomRight;
-    v2._atlasLayer = atlasLayer;
-    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v2._color = color;
+    targetVertices[ 2U ] =
+    {
+        ._uv = glyphBottomRight,
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 
     targetPositions[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
-    v3._uv = glyphBottomRight;
-    v3._atlasLayer = atlasLayer;
-    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v3._color = color;
+    targetVertices[ 3U ] =
+    {
+        ._uv = glyphBottomRight,
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 
     targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
-
-    v4._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] );
-    v4._atlasLayer = atlasLayer;
-    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v4._color = color;
+    targetVertices[ 4U ] =
+    {
+        ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 
     targetPositions[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
-    v5._uv = glyphTopLeft;
-    v5._atlasLayer = atlasLayer;
-    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT;
-    v5._color = color;
+    targetVertices[ 5U ] =
+    {
+        ._uv = glyphTopLeft,
+        ._atlasLayer = atlasLayer,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
+        ._color = color
+    };
 }
 
 void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept

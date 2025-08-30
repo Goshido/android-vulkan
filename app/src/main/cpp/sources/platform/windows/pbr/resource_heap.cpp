@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
-#include <platform/windows/pbr/resource_heap.inc>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 #include <vulkan_utils.hpp>

@@ -93,8 +93,6 @@ class FontStorage final
         };
 
     private:
-        constexpr static auto INVALID_ATLAS = std::numeric_limits<uint16_t>::max ();
-
         // Coefficients for getting pixel metrics of the font.
         struct EMFontMetrics final
         {
@@ -160,7 +158,7 @@ class FontStorage final
             VkImageView                                 _view = VK_NULL_HANDLE;
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _memoryOffset = 0U;
-            uint16_t                                    _heapResource = INVALID_ATLAS;
+            uint16_t                                    _heapResource = ResourceHeap::INVALID_UI_IMAGE;
         };
 
         class Atlas final

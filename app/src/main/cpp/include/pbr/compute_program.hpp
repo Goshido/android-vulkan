@@ -27,7 +27,7 @@ class ComputeProgram
         [[maybe_unused]] std::string_view const     _name;
         VkPipeline                                  _pipeline = VK_NULL_HANDLE;
         VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
-        uint32_t                                    _pushConstantSize;
+        uint32_t                                    _pushConstantSize = 0U;
 
     public:
         ComputeProgram () = delete;

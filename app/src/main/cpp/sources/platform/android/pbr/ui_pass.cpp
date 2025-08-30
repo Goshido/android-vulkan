@@ -133,7 +133,7 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
     Texture2DRef const &t = *status.first;
     _textureMap.emplace ( asset, &t );
 
-    return t;
+    return std::optional<Texture2DRef const> { t };
 }
 
 bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -178,11 +178,8 @@ void ImageStorage::OnDestroyDevice () noexcept
 
     VkDevice device = _renderer->GetDevice ();
 
-    if ( _commandPool != VK_NULL_HANDLE )
-    {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-        _commandPool = VK_NULL_HANDLE;
-    }
+    if ( _commandPool != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyCommandPool ( device, std::exchange ( _commandPool, VK_NULL_HANDLE ), nullptr );
 
     constexpr auto clean = [] ( auto &v ) noexcept {
         v.clear ();
@@ -289,7 +286,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
     for ( size_t i = current; i < size; ++i )
     {
         result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-        
+
             // FUCK - remove namespace
             "pbr::android::ImageStorage::AllocateCommandBuffers",
 
@@ -552,7 +549,7 @@ bool UIPass::CommonDescriptorSet::Update ( android_vulkan::Renderer &renderer, V
     return true;
 }
 
-[[nodiscard]] bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     if ( _pool == VK_NULL_HANDLE ) [[likely]]
         return true;
@@ -923,18 +920,9 @@ void UIPass::InUseImageTracker::CollectGarbage ( size_t commandBufferIndex ) noe
     }
 }
 
-void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex )
+void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex ) noexcept
 {
-    Entry &entry = _registry[ commandBufferIndex ];
-    auto i = entry.find ( texture );
-
-    if ( i == entry.end () )
-    {
-        auto result = entry.emplace ( texture, 1U );
-        i = result.first;
-    }
-
-    i->second = 2U;
+    _registry[ commandBufferIndex ][ texture ] = 2U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1187,8 +1175,7 @@ void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
 {
     _imageDescriptorSets.Push ( texture->GetImageView () );
 
-    _jobs.emplace_back (
-        Job
+    _jobs.push_back (
         {
             ._texture = &texture,
             ._vertices = static_cast<uint32_t> ( GetVerticesPerRectangle () )
@@ -1416,8 +1403,7 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 
     if ( _jobs.empty () )
     {
-        _jobs.emplace_back (
-            Job
+        _jobs.push_back (
             {
                 ._texture = {},
                 ._vertices = static_cast<uint32_t> ( usedVertices )
@@ -1435,8 +1421,7 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
         return;
     }
 
-    _jobs.emplace_back (
-        Job
+    _jobs.push_back (
         {
             ._texture = {},
             ._vertices = static_cast<uint32_t> ( usedVertices )

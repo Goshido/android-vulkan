@@ -63,6 +63,8 @@ class UIPass final
                 Buffer                                  _staging {};
                 Buffer                                  _vertex {};
 
+                VkDeviceAddress                         _bda = 0U;
+
             public:
                 BufferStream () = delete;
 
@@ -83,27 +85,21 @@ class UIPass final
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-                [[nodiscard]] VkBuffer GetBuffer () const noexcept;
+                [[nodiscard]] VkDeviceAddress GetBufferAddress () const noexcept;
                 [[nodiscard]] void *GetData ( size_t startIndex ) const noexcept;
                 void UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept;
         };
 
         struct InUseImageTracker final
         {
-            using Entry = std::unordered_map<Texture2DRef, size_t>;
+            using Entry = std::unordered_map<uint16_t, size_t>;
 
             Entry                                       _registry[ FIF_COUNT ];
 
             void Destroy () noexcept;
 
             void CollectGarbage ( size_t commandBufferIndex ) noexcept;
-            void MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex );
-        };
-
-        struct Job final
-        {
-            Texture2DRef const*                         _texture = nullptr;
-            uint32_t                                    _vertices {};
+            void MarkInUse ( uint16_t image, size_t commandBufferIndex ) noexcept;
         };
 
     private:
@@ -116,18 +112,17 @@ class UIPass final
             .height = 0U
         };
 
-        android_vulkan::Texture2D                       _textLUT {};
-
+        uint16_t                                        _textLUT = ResourceHeap::INVALID_UI_IMAGE;
         InUseImageTracker                               _inUseImageTracker {};
 
         size_t                                          _readVertexIndex = 0U;
         size_t                                          _writeVertexIndex = 0U;
+        uint32_t                                        _vertices = 0U;
 
         FontStorage                                     _fontStorage;
 
         bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
-        std::vector<Job>                                _jobs {};
 
         BufferStream                                    _positions { sizeof ( GXVec2 ) };
         BufferStream                                    _rest { sizeof ( UIVertex ) };
@@ -163,11 +158,6 @@ class UIPass final
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
 
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept;
-
-        void SubmitImage ( Texture2DRef const &texture ) noexcept;
-        void SubmitRectangle () noexcept;
-        void SubmitText ( size_t usedVertices ) noexcept;
-
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept
@@ -200,11 +190,10 @@ class UIPass final
             uint16_t atlas
         ) noexcept;
 
-        static void ReleaseImage ( Texture2DRef const &image ) noexcept;
-        [[nodiscard]] static std::optional<Texture2DRef const> RequestImage ( std::string const &asset ) noexcept;
+        static void ReleaseImage ( uint16_t image ) noexcept;
+        [[nodiscard]] static std::optional<uint16_t> RequestImage ( std::string const &asset ) noexcept;
 
     private:
-        void SubmitNonImage ( size_t usedVertices ) noexcept;
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
         void UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept;
 };

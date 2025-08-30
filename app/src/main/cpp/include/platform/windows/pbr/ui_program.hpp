@@ -25,6 +25,9 @@ class UIProgram final : public windows::GraphicsProgram
             GXVec2                              _padding0;
             GXVec2                              _rotateScaleRow1;
             GXVec2                              _offset;
+
+            // FUCK - use better packing
+            uint32_t                            _textLUT;
         };
 
         AV_DX_ALIGNMENT_END

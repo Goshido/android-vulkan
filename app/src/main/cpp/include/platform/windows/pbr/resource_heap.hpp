@@ -5,6 +5,7 @@
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
 #include "resource_heap_descriptor_set_layout.hpp"
+#include "resource_heap.inc"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -17,6 +18,9 @@ namespace pbr::windows {
 
 class ResourceHeap final
 {
+    public:
+        constexpr static uint16_t INVALID_UI_IMAGE = ( 1U << UI_IMAGE_BITS );
+
     private:
         class Buffer final
         {

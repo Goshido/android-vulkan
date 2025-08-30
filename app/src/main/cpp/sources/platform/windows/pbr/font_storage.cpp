@@ -282,7 +282,7 @@ void FontStorage::Atlas::Destroy ( android_vulkan::Renderer &renderer, ResourceH
 
     for ( ImageResource &page : _pages )
     {
-        if ( page._heapResource != INVALID_ATLAS ) [[likely]]
+        if ( page._heapResource != ResourceHeap::INVALID_UI_IMAGE ) [[likely]]
             resourceHeap.UnregisterResource ( static_cast<uint32_t> ( page._heapResource ) );
 
         if ( page._view != VK_NULL_HANDLE ) [[likely]]
@@ -502,7 +502,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
 
     ImageResource const* pages = _atlas._pages.data () + pageIndexCases[ emptyAtlasCorrection ];
 
-    if ( _transparentGlyph._atlas == INVALID_ATLAS ) [[unlikely]]
+    if ( _transparentGlyph._atlas == ResourceHeap::INVALID_UI_IMAGE ) [[unlikely]]
         _transparentGlyph._atlas = pages->_heapResource;
 
     uint16_t i = 0U;
@@ -811,7 +811,7 @@ FontStorage::GlyphInfo const &FontStorage::EmbedGlyph ( android_vulkan::Renderer
             {
                 ._topLeft = PixToUV ( left, top ),
                 ._bottomRight = PixToUV ( right + 1U, bottom + 1U ),
-                ._atlas = INVALID_ATLAS,
+                ._atlas = ResourceHeap::INVALID_UI_IMAGE,
                 ._width = static_cast<int32_t> ( width ),
                 ._height = static_cast<int32_t> ( rows ),
                 ._advance = advance,
@@ -941,7 +941,7 @@ bool FontStorage::MakeTransparentGlyph ( android_vulkan::Renderer &renderer ) no
     {
         ._topLeft = transparent,
         ._bottomRight = transparent,
-        ._atlas = INVALID_ATLAS,
+        ._atlas = ResourceHeap::INVALID_UI_IMAGE,
         ._width = 1,
         ._height = 1,
         ._advance = 0,

@@ -21,7 +21,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    windows::GraphicsProgram ( "UI" )
+    windows::GraphicsProgram ( "UI", sizeof ( UIInfo ) )
 {
     // NOTHING
 }
@@ -230,7 +230,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     constexpr VkPushConstantRange pushConstantRange
     {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
         .offset = 0U,
         .size = static_cast<uint32_t> ( sizeof ( UIInfo ) )
     };

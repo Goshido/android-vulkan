@@ -1,18 +1,8 @@
 #include "color_packing.hlsl"
 #include "platform/windows/pbr/resource_heap.inc"
 #include "ui_bindings.hlsl"
+#include "ui_push_constants.hlsl"
 
-
-struct PushConstants
-{
-    uint64_t                        _positionBDA;
-    uint64_t                        _restBDA;
-    float32_t2x2                    _rotateScale;
-    float32_t2                      _offset;
-};
-
-[[vk::push_constant]]
-PushConstants                       g_uiInfo;
 
 using Position = float32_t2;
 
@@ -48,6 +38,7 @@ struct OutputData
 
 OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
+    // FUCK - use single vertex data buffer
     OutputData result;
 
     result._vertexH = float32_t4 (

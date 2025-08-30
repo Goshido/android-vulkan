@@ -15,10 +15,9 @@ constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t COMMAND_BUFFERS_PER_TEXTURE = 1U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
 
-//constexpr size_t MAX_IMAGES = 1024U;
 constexpr size_t MAX_VERTICES = 762600U;
 
-//constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
+constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
 
 android_vulkan::Half2 const IMAGE_TOP_LEFT ( 0.0F, 0.0F );
 android_vulkan::Half2 const IMAGE_BOTTOM_RIGHT ( 1.0F, 1.0F );
@@ -28,13 +27,35 @@ android_vulkan::Half2 const IMAGE_BOTTOM_RIGHT ( 1.0F, 1.0F );
 class ImageStorage final
 {
     private:
-        static size_t                                                   _commandBufferIndex;
-        static std::vector<VkCommandBuffer>                             _commandBuffers;
-        static VkCommandPool                                            _commandPool;
-        static std::vector<VkFence>                                     _fences;
-        static android_vulkan::Renderer*                                _renderer;
-        static std::unordered_map<std::string, Texture2DRef const*>     _textureMap;
-        static std::unordered_set<Texture2DRef>                         _textures;
+        class Asset final
+        {
+            public:
+                android_vulkan::Texture2D                   _texture {};
+                size_t                                      _refs = 1U;
+                uint16_t                                    _image = ResourceHeap::INVALID_UI_IMAGE;
+
+            public:
+                Asset () = default;
+
+                Asset ( Asset const & ) = delete;
+                Asset &operator = ( Asset const & ) = delete;
+
+                Asset ( Asset && ) = default;
+                Asset &operator = ( Asset && ) = default;
+
+                ~Asset () = default;
+        };
+
+    private:
+        static size_t                                           _commandBufferIndex;
+        static std::vector<VkCommandBuffer>                     _commandBuffers;
+        static VkCommandPool                                    _commandPool;
+        static std::vector<VkFence>                             _fences;
+        static android_vulkan::Renderer*                        _renderer;
+        static ResourceHeap*                                    _resourceHeap;
+        static std::unordered_map<std::string_view, Asset*>     _assetMap;
+        static std::unordered_map<uint16_t, Asset>              _assets;
+        static std::vector<Asset>                               _brokenAssets;
 
     public:
         ImageStorage () = delete;
@@ -47,11 +68,14 @@ class ImageStorage final
 
         ~ImageStorage () = delete;
 
-        static void ReleaseImage ( Texture2DRef const &image ) noexcept;
-        [[nodiscard]] static std::optional<Texture2DRef const> GetImage ( std::string const &asset ) noexcept;
+        static void ReleaseImage ( uint16_t image ) noexcept;
+        [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string const &asset ) noexcept;
+        [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string_view asset ) noexcept;
 
         [[nodiscard]] static bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         static void OnDestroyDevice () noexcept;
+
+        static void SetResourceHeap ( ResourceHeap &resourceHeap ) noexcept;
         [[nodiscard]] static bool SyncGPU () noexcept;
 
     private:
@@ -63,38 +87,41 @@ std::vector<VkCommandBuffer> ImageStorage::_commandBuffers {};
 VkCommandPool ImageStorage::_commandPool = VK_NULL_HANDLE;
 std::vector<VkFence> ImageStorage::_fences {};
 android_vulkan::Renderer* ImageStorage::_renderer = nullptr;
-std::unordered_map<std::string, Texture2DRef const*> ImageStorage::_textureMap {};
-std::unordered_set<Texture2DRef> ImageStorage::_textures {};
+ResourceHeap* ImageStorage::_resourceHeap = nullptr;
+std::unordered_map<std::string_view, ImageStorage::Asset*> ImageStorage::_assetMap {};
+std::unordered_map<uint16_t, ImageStorage::Asset> ImageStorage::_assets {};
+std::vector<ImageStorage::Asset> ImageStorage::_brokenAssets {};
 
-void ImageStorage::ReleaseImage ( Texture2DRef const &image ) noexcept
+void ImageStorage::ReleaseImage ( uint16_t image ) noexcept
 {
-    // About to delete resource event somewhere in user code.
-    // One reference inside '_textures'. One reference in user code. Two references in total.
-    // Current reference count equal two: safe to delete all image resources.
-    // More that two references means that someone is still holding reference. Do nothing in that case.
+    auto const findResult = _assets.find ( image );
+    Asset &asset = findResult->second;
 
-    if ( image.use_count () > 2U )
+    if ( --asset._refs > 0U )
         return;
 
-    auto const findResult = _textures.find ( image );
-    Texture2DRef const &t = *findResult;
-    t->FreeResources ( *_renderer );
+    asset._texture.FreeResources ( *_renderer );
+    auto const end = _assetMap.cend ();
 
-    auto const end = _textureMap.cend ();
-
-    for ( auto i = _textureMap.cbegin (); i != end; ++i )
+    for ( auto i = _assetMap.cbegin (); i != end; ++i )
     {
-        if ( i->second != &t )
+        if ( i->second != &asset )
             continue;
 
-        _textureMap.erase ( i );
+        _assetMap.erase ( i );
         break;
     }
 
-    _textures.erase ( findResult );
+    _resourceHeap->UnregisterResource ( asset._image );
+    _assets.erase ( findResult );
 }
 
-std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &asset ) noexcept
+std::optional<uint16_t> ImageStorage::GetImage ( std::string const &asset ) noexcept
+{
+    return GetImage ( std::string_view ( asset ) );
+}
+
+std::optional<uint16_t> ImageStorage::GetImage ( std::string_view asset ) noexcept
 {
     if ( _commandBuffers.size () - _commandBufferIndex < COMMAND_BUFFERS_PER_TEXTURE )
     {
@@ -104,13 +131,17 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
         }
     }
 
-    if ( auto const findResult = _textureMap.find ( asset ); findResult != _textureMap.cend () )
-        return *findResult->second;
+    if ( auto findResult = _assetMap.find ( asset ); findResult != _assetMap.cend () )
+    {
+        Asset &ast = *findResult->second;
+        ++ast._refs;
+        return std::optional<uint16_t> { ast._image };
+    }
 
-    Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
+    Asset ast {};
 
     // Note UNORM is correct mode because of pixel shader, alpha blending and swapchain UNORM format.
-    bool const result = texture->UploadData ( *_renderer,
+    bool const result = ast._texture.UploadData ( *_renderer,
         asset,
         android_vulkan::eColorSpace::Unorm,
         true,
@@ -122,12 +153,20 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
         return std::nullopt;
 
     _commandBufferIndex += COMMAND_BUFFERS_PER_TEXTURE;
+    auto const image = _resourceHeap->RegisterUISampledImage ( _renderer->GetDevice (), ast._texture.GetImageView () );
 
-    auto status = _textures.emplace ( std::move ( texture ) );
-    Texture2DRef const &t = *status.first;
-    _textureMap.emplace ( asset, &t );
+    if ( !image ) [[likely]]
+    {
+        // Note texture is not deleted because it's too late. Image data is uploading via command buffer.
+        _brokenAssets.push_back ( std::move ( ast ) );
+        return std::nullopt;
+    }
 
-    return t;
+    auto const img = static_cast<uint16_t> ( *image );
+    Asset &a = _assets[ img ];
+    a = std::move ( ast );
+    _assetMap[ a._texture.GetName () ] = &a;
+    return std::optional<uint16_t> { img };
 }
 
 bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -159,24 +198,20 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
 
-void ImageStorage::OnDestroyDevice () noexcept
+void ImageStorage::OnDestroyDevice ( ) noexcept
 {
-    if ( !_textures.empty () ) [[unlikely]]
+    if ( !_assets.empty () ) [[unlikely]]
     {
         // FUCK - remove namespace
         android_vulkan::LogWarning ( "pbr::windows::ImageStorage::OnDestroyDevice - Memory leak." );
         AV_ASSERT ( false )
     }
 
-    _textures.clear ();
-
+    _assets.clear ();
     VkDevice device = _renderer->GetDevice ();
 
-    if ( _commandPool != VK_NULL_HANDLE )
-    {
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-        _commandPool = VK_NULL_HANDLE;
-    }
+    if ( _commandPool != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyCommandPool ( device, std::exchange ( _commandPool, VK_NULL_HANDLE ), nullptr );
 
     constexpr auto clean = [] ( auto &v ) noexcept {
         v.clear ();
@@ -189,7 +224,17 @@ void ImageStorage::OnDestroyDevice () noexcept
         vkDestroyFence ( device, fence, nullptr );
 
     clean ( _fences );
+
+    for ( auto &asset : _brokenAssets )
+        asset._texture.FreeResources ( *_renderer );
+
+    clean ( _brokenAssets );
     _renderer = nullptr;
+}
+
+void ImageStorage::SetResourceHeap ( ResourceHeap &resourceHeap ) noexcept
+{
+    _resourceHeap = &resourceHeap;
 }
 
 bool ImageStorage::SyncGPU () noexcept
@@ -425,6 +470,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
     if ( !_vertex.Init ( renderer, size, vertexUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexName ) ) [[unlikely]]
         return false;
 
+    // FUCK - setup BDA
     _barrier.buffer = _vertex._buffer;
     return true;
 }
@@ -441,9 +487,9 @@ void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexce
     _vertex.Destroy ( renderer );
 }
 
-VkBuffer UIPass::BufferStream::GetBuffer () const noexcept
+VkDeviceAddress UIPass::BufferStream::GetBufferAddress () const noexcept
 {
-    return _vertex._buffer;
+    return _bda;
 }
 
 void *UIPass::BufferStream::GetData ( size_t startIndex ) const noexcept
@@ -517,18 +563,9 @@ void UIPass::InUseImageTracker::CollectGarbage ( size_t commandBufferIndex ) noe
     }
 }
 
-void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex )
+void UIPass::InUseImageTracker::MarkInUse ( uint16_t image, size_t commandBufferIndex ) noexcept
 {
-    Entry &entry = _registry[ commandBufferIndex ];
-    auto i = entry.find ( texture );
-
-    if ( i == entry.end () )
-    {
-        auto result = entry.emplace ( texture, 1U );
-        i = result.first;
-    }
-
-    i->second = 2U;
+    _registry[ commandBufferIndex ][ image ] = 2U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -536,7 +573,7 @@ void UIPass::InUseImageTracker::MarkInUse ( Texture2DRef const &texture, size_t 
 UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
     _fontStorage ( resourceHeap )
 {
-    // NOTHING
+    ImageStorage::SetResourceHeap ( resourceHeap );
 }
 
 bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
@@ -547,7 +584,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     if ( !ImageStorage::SyncGPU () ) [[unlikely]]
         return false;
 
-    if ( _jobs.empty () ) [[unlikely]]
+    if ( !_vertices ) [[unlikely]]
     {
         _inUseImageTracker.CollectGarbage ( commandBufferIndex );
         return true;
@@ -555,26 +592,16 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
 
     _program.Bind ( commandBuffer );
 
-    auto start = static_cast<uint32_t> ( _readVertexIndex );
-    //size_t imageIdx = _imageDescriptorSets._commitIndex;
-    //VkDescriptorSet* ds = _imageDescriptorSets._descriptorSets.data ();
+    auto const start = static_cast<VkDeviceAddress> ( _readVertexIndex );
+    _uiInfo._positionBDA = _positions.GetBufferAddress () + start * sizeof ( GXVec2 );
+    _uiInfo._restBDA = _rest.GetBufferAddress () + start * sizeof ( UIVertex );
 
-    for ( auto const &job : _jobs )
-    {
-        if ( !job._texture )
-        {
-            //_program.SetDescriptorSet ( commandBuffer, &_imageDescriptorSets._transparent, 2U, 1U );
-        }
-        else
-        {
-            _inUseImageTracker.MarkInUse ( *job._texture, commandBufferIndex );
-            //_program.SetDescriptorSet ( commandBuffer, ds + imageIdx, 2U, 1U );
-            //imageIdx = ( imageIdx + 1U ) % MAX_IMAGES;
-        }
+    _program.SetPushConstants ( commandBuffer, &_uiInfo );
 
-        vkCmdDraw ( commandBuffer, job._vertices, 1U, 0U, 0U );
-        start += job._vertices;
-    }
+    // FUCK - set descriptor buffer
+    // FUCK - _inUseImageTracker.MarkInUse ( job._image, commandBufferIndex );
+
+    vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
 
     _inUseImageTracker.CollectGarbage ( commandBufferIndex );
     return true;
@@ -592,18 +619,26 @@ size_t UIPass::GetUsedVertexCount () const noexcept
 
 bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return _fontStorage.Init ( renderer ) &&
+    bool const status = _fontStorage.Init ( renderer ) &&
         _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
         _rest.Init ( renderer, "UI rest", "UI rest staging" ) &&
-        /*_imageDescriptorSets.Init ( renderer.GetDevice (), _descriptorPool, transparent) &&*/
         ImageStorage::OnInitDevice ( renderer );
+
+    if ( !status ) [[unlikely]]
+        return false;
+
+    auto const probe = ImageStorage::GetImage ( std::string ( TEXT_LUT ) );
+
+    if ( !probe ) [[unlikely]]
+        return false;
+
+    _textLUT = static_cast<uint16_t> ( *probe );
+    return true;
 }
 
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
-    //_imageDescriptorSets.Destroy ( device );
-
     _program.Destroy ( device );
 
     _positions.Destroy ( renderer );
@@ -615,10 +650,10 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
     _writeVertexIndex = 0U;
     _readVertexIndex = 0U;
 
-    _jobs.clear ();
-    _jobs.shrink_to_fit ();
-
     _hasChanges = false;
+
+    if ( _textLUT != ResourceHeap::INVALID_UI_IMAGE ) [[likely]]
+        ImageStorage::ReleaseImage ( std::exchange ( _textLUT, ResourceHeap::INVALID_UI_IMAGE ) );
 
     ImageStorage::OnDestroyDevice ();
 }
@@ -646,10 +681,7 @@ void UIPass::OnSwapchainDestroyed () noexcept
 
 void UIPass::RequestEmptyUI () noexcept
 {
-    if ( !_jobs.empty () )
-        _hasChanges = true;
-
-    _jobs.clear ();
+    _hasChanges = _hasChanges | ( std::exchange ( _vertices, 0U ) > 0U );
 }
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
@@ -698,37 +730,10 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnes
     );
 }
 
-void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
-{
-    //_imageDescriptorSets.Push ( texture->GetImageView () );
-
-    _jobs.emplace_back (
-        Job
-        {
-            ._texture = &texture,
-            ._vertices = static_cast<uint32_t> ( GetVerticesPerRectangle () )
-        }
-    );
-
-    _hasChanges = true;
-}
-
-void UIPass::SubmitRectangle () noexcept
-{
-    SubmitNonImage ( GetVerticesPerRectangle () );
-}
-
-void UIPass::SubmitText ( size_t usedVertices ) noexcept
-{
-    SubmitNonImage ( usedVertices );
-}
-
 bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     AV_TRACE ( "UI pass: Upload GPU data" )
     AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
-
-    //_imageDescriptorSets.Commit ( renderer.GetDevice () );
 
     if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) ) [[unlikely]]
         return false;
@@ -926,48 +931,14 @@ void UIPass::AppendText ( GXVec2* targetPositions,
     };
 }
 
-void UIPass::ReleaseImage ( Texture2DRef const &image ) noexcept
+void UIPass::ReleaseImage ( uint16_t image ) noexcept
 {
     ImageStorage::ReleaseImage ( image );
 }
 
-std::optional<Texture2DRef const> UIPass::RequestImage ( std::string const &asset ) noexcept
+std::optional<uint16_t> UIPass::RequestImage ( std::string const &asset ) noexcept
 {
     return ImageStorage::GetImage ( asset );
-}
-
-void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
-{
-    _hasChanges = true;
-
-    if ( _jobs.empty () )
-    {
-        _jobs.emplace_back (
-            Job
-            {
-                ._texture = {},
-                ._vertices = static_cast<uint32_t> ( usedVertices )
-            }
-        );
-
-        return;
-    }
-
-    Job &last = _jobs.back ();
-
-    if ( !last._texture )
-    {
-        last._vertices += static_cast<uint32_t> ( usedVertices );
-        return;
-    }
-
-    _jobs.emplace_back (
-        Job
-        {
-            ._texture = {},
-            ._vertices = static_cast<uint32_t> ( usedVertices )
-        }
-    );
 }
 
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept

@@ -16,6 +16,9 @@ namespace pbr::windows {
 
 class GraphicsProgram : public pbr::GraphicsProgram
 {
+    private:
+        uint32_t    _pushConstantSize = 0U;
+
     public:
         GraphicsProgram () = delete;
 
@@ -25,8 +28,10 @@ class GraphicsProgram : public pbr::GraphicsProgram
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
+        void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
+
     protected:
-        explicit GraphicsProgram ( std::string_view name ) noexcept;
+        explicit GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         ~GraphicsProgram () override = default;
 
         // 'nativeXXX' are needed when format is OS/platform specific and could be known in runtime only.

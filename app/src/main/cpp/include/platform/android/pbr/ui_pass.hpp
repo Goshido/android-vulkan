@@ -170,13 +170,13 @@ class UIPass final
             void Destroy () noexcept;
 
             void CollectGarbage ( size_t commandBufferIndex ) noexcept;
-            void MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex );
+            void MarkInUse ( Texture2DRef const &texture, size_t commandBufferIndex ) noexcept;
         };
 
         struct Job final
         {
             Texture2DRef const*                         _texture = nullptr;
-            uint32_t                                    _vertices {};
+            uint32_t                                    _vertices = 0U;
         };
 
     private:

@@ -54,6 +54,60 @@ std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
+Texture2D::Texture2D ( Texture2D &&other ) noexcept:
+    _format ( std::exchange ( other._format, VK_FORMAT_UNDEFINED ) ),
+    _image ( std::exchange ( other._image, VK_NULL_HANDLE ) ),
+    _imageDeviceMemory ( std::exchange ( other._imageDeviceMemory, VK_NULL_HANDLE ) ),
+    _imageMemoryOffset ( std::exchange ( other._imageMemoryOffset, 0U ) ),
+    _imageView ( std::exchange ( other._imageView, VK_NULL_HANDLE ) ),
+    _mipLevels ( std::exchange ( other._mipLevels, static_cast<uint8_t> ( 0U ) ) ),
+
+    _resolution (
+        std::exchange ( other._resolution,
+            VkExtent2D
+            {
+                .width = 0U,
+                .height = 0U
+            }
+        )
+    ),
+
+    _transfer ( std::exchange ( other._transfer, VK_NULL_HANDLE ) ),
+    _transferDeviceMemory ( std::exchange ( other._transferDeviceMemory, VK_NULL_HANDLE ) ),
+    _transferMemoryOffset ( std::exchange ( other._transferMemoryOffset, 0U ) ),
+    _fileName ( std::move ( other._fileName ) )
+{
+    // NOTHING
+}
+
+Texture2D &Texture2D::operator = ( Texture2D &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _format = std::exchange ( other._format, VK_FORMAT_UNDEFINED );
+    _image = std::exchange ( other._image, VK_NULL_HANDLE );
+    _imageDeviceMemory = std::exchange ( other._imageDeviceMemory, VK_NULL_HANDLE );
+    _imageMemoryOffset = std::exchange ( other._imageMemoryOffset, 0U );
+    _imageView = std::exchange ( other._imageView, VK_NULL_HANDLE );
+    _mipLevels = std::exchange ( other._mipLevels, static_cast<uint8_t> ( 0U ) );
+
+    _resolution = std::exchange ( other._resolution,
+
+        VkExtent2D
+        {
+            .width = 0U,
+            .height = 0U
+        }
+    );
+
+    _transfer = std::exchange ( other._transfer, VK_NULL_HANDLE );
+    _transferDeviceMemory = std::exchange ( other._transferDeviceMemory, VK_NULL_HANDLE );
+    _transferMemoryOffset = std::exchange ( other._transferMemoryOffset, 0U );
+    _fileName = std::move ( other._fileName );
+    return *this;
+}
+
 void Texture2D::AssignName ( std::string &&name ) noexcept
 {
     _fileName = std::move ( name );

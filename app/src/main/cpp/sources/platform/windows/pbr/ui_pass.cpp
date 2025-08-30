@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
 #include <trace.hpp>
-#include <vulkan_utils.hpp>
 
 
 // FUCK - remove namespace
@@ -14,6 +13,8 @@ namespace {
 constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
 constexpr size_t COMMAND_BUFFERS_PER_TEXTURE = 1U;
 constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
+
+constexpr size_t INITIAL_USED_IMAGE_CAPACITY = 128U;
 
 constexpr size_t MAX_VERTICES = 762600U;
 
@@ -69,6 +70,7 @@ class ImageStorage final
         ~ImageStorage () = delete;
 
         static void ReleaseImage ( uint16_t image ) noexcept;
+
         [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string const &asset ) noexcept;
         [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string_view asset ) noexcept;
 
@@ -435,43 +437,46 @@ UIPass::BufferStream::BufferStream ( size_t elementSize ) noexcept:
 }
 
 bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
-    char const *vertexName,
-    char const *stagingName
+    char const* gpuBufferName,
+    char const* stagingName
 ) noexcept
 {
     constexpr VkMemoryPropertyFlags stagingProps = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
+    constexpr VkBufferUsageFlags usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+        AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT );
+
     size_t const size = MAX_VERTICES * _elementSize;
 
-    if ( !_staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) ) [[unlikely]]
-        return false;
+    bool const result =
+        _staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) &&
 
-    void* data;
+        renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
+            _staging._memory,
+            _staging._memoryOffset,
 
-    bool const result = renderer.MapMemory ( data,
-        _staging._memory,
-        _staging._memoryOffset,
+            // FUCK - remove namespace
+            "pbr::windows::UIPass::BufferStream::Init",
 
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::BufferStream::Init",
+            "Can't map memory"
+        ) &&
 
-        "Can't map memory"
-    );
+        _gpuBuffer.Init ( renderer, size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, gpuBufferName );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    _data = static_cast<uint8_t*> ( data );
+    VkBufferDeviceAddressInfo const info
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .pNext = nullptr,
+        .buffer = _gpuBuffer._buffer
+    };
 
-    constexpr VkBufferUsageFlags vertexUsage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
-
-    if ( !_vertex.Init ( renderer, size, vertexUsage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexName ) ) [[unlikely]]
-        return false;
-
-    // FUCK - setup BDA
-    _barrier.buffer = _vertex._buffer;
+    _bda = vkGetBufferDeviceAddress ( renderer.GetDevice (), &info );
+    _barrier.buffer = _gpuBuffer._buffer;
     return true;
 }
 
@@ -484,7 +489,7 @@ void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexce
     }
 
     _staging.Destroy ( renderer );
-    _vertex.Destroy ( renderer );
+    _gpuBuffer.Destroy ( renderer );
 }
 
 VkDeviceAddress UIPass::BufferStream::GetBufferAddress () const noexcept
@@ -509,7 +514,7 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
         .size = size
     };
 
-    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _vertex._buffer, 1U, &copy );
+    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _gpuBuffer._buffer, 1U, &copy );
 
     _barrier.offset = offset;
     _barrier.size = size;
@@ -571,7 +576,8 @@ void UIPass::InUseImageTracker::MarkInUse ( uint16_t image, size_t commandBuffer
 //----------------------------------------------------------------------------------------------------------------------
 
 UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
-    _fontStorage ( resourceHeap )
+    _fontStorage ( resourceHeap ),
+    _resourceHeap ( resourceHeap )
 {
     ImageStorage::SetResourceHeap ( resourceHeap );
 }
@@ -591,17 +597,17 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     }
 
     _program.Bind ( commandBuffer );
+    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
     auto const start = static_cast<VkDeviceAddress> ( _readVertexIndex );
     _uiInfo._positionBDA = _positions.GetBufferAddress () + start * sizeof ( GXVec2 );
     _uiInfo._restBDA = _rest.GetBufferAddress () + start * sizeof ( UIVertex );
-
     _program.SetPushConstants ( commandBuffer, &_uiInfo );
 
-    // FUCK - set descriptor buffer
-    // FUCK - _inUseImageTracker.MarkInUse ( job._image, commandBufferIndex );
-
     vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
+
+    for ( uint16_t const image : _usedImages )
+        _inUseImageTracker.MarkInUse ( image, commandBufferIndex );
 
     _inUseImageTracker.CollectGarbage ( commandBufferIndex );
     return true;
@@ -633,6 +639,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     _textLUT = static_cast<uint16_t> ( *probe );
+    _usedImages.reserve ( INITIAL_USED_IMAGE_CAPACITY );
     return true;
 }
 
@@ -649,6 +656,9 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _writeVertexIndex = 0U;
     _readVertexIndex = 0U;
+
+    _usedImages.clear ();
+    _usedImages.shrink_to_fit ();
 
     _hasChanges = false;
 
@@ -682,6 +692,7 @@ void UIPass::OnSwapchainDestroyed () noexcept
 void UIPass::RequestEmptyUI () noexcept
 {
     _hasChanges = _hasChanges | ( std::exchange ( _vertices, 0U ) > 0U );
+    _usedImages.clear ();
 }
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
@@ -728,6 +739,17 @@ bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnes
         BrightnessInfo ( brightnessBalance ),
         _currentResolution
     );
+}
+
+void UIPass::SubmitImage ( uint16_t image ) noexcept
+{
+    _usedImages.push_back ( image );
+    _hasChanges = true;
+}
+
+void UIPass::SubmitNonImage () noexcept
+{
+    _hasChanges = true;
 }
 
 bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept

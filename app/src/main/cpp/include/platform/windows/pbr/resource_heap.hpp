@@ -4,8 +4,8 @@
 
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
 #include "resource_heap.inc"
+#include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -122,8 +122,6 @@ class ResourceHeap final
         Sampler                                 _pointSampler {};
         Sampler                                 _shadowSampler {};
 
-        ResourceHeapDescriptorSetLayout         _layout {};
-
         Buffer                                  _descriptorBuffer {};
 
         Slots                                   _nonUISlots {};
@@ -141,13 +139,17 @@ class ResourceHeap final
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
                 .pNext = nullptr,
                 .address = 0U,
-                .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
+
+                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT )
             },
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
                 .pNext = nullptr,
                 .address = 0U,
-                .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
+
+                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT )
             }
         };
 
@@ -164,6 +166,11 @@ class ResourceHeap final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
+
+        void Bind ( VkCommandBuffer commandBuffer,
+            VkPipelineBindPoint pipelineBindPoint,
+            VkPipelineLayout layout
+        ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
             VkDeviceAddress bufferAddress,

@@ -14,6 +14,11 @@ GraphicsProgram::GraphicsProgram ( std::string_view name, size_t pushConstantSiz
     // NOTHING
 }
 
+VkPipelineLayout GraphicsProgram::GetPipelineLayout () const noexcept
+{
+    return _pipelineLayout;
+}
+
 void GraphicsProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept
 {
     constexpr VkPipelineStageFlags stages =

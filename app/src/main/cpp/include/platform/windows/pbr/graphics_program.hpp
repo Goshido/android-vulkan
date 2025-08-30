@@ -28,6 +28,7 @@ class GraphicsProgram : public pbr::GraphicsProgram
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
         void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
     protected:

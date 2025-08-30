@@ -3,7 +3,6 @@
 #include <file.hpp>
 #include <logger.hpp>
 #include <platform/windows/pbr/font_storage.hpp>
-#include <vulkan_utils.hpp>
 
 
 // FUCK - remove namespace

@@ -61,7 +61,7 @@ class UIPass final
                 size_t const                            _elementSize = 0U;
 
                 Buffer                                  _staging {};
-                Buffer                                  _vertex {};
+                Buffer                                  _gpuBuffer {};
 
                 VkDeviceAddress                         _bda = 0U;
 
@@ -79,8 +79,8 @@ class UIPass final
                 ~BufferStream () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    char const *vertexName,
-                    char const *stagingName
+                    char const* gpuBufferName,
+                    char const* stagingName
                 ) noexcept;
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -97,7 +97,6 @@ class UIPass final
             Entry                                       _registry[ FIF_COUNT ];
 
             void Destroy () noexcept;
-
             void CollectGarbage ( size_t commandBufferIndex ) noexcept;
             void MarkInUse ( uint16_t image, size_t commandBufferIndex ) noexcept;
         };
@@ -118,8 +117,10 @@ class UIPass final
         size_t                                          _readVertexIndex = 0U;
         size_t                                          _writeVertexIndex = 0U;
         uint32_t                                        _vertices = 0U;
+        std::vector<uint16_t>                           _usedImages {};
 
         FontStorage                                     _fontStorage;
+        ResourceHeap                                    &_resourceHeap;
 
         bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
@@ -158,6 +159,10 @@ class UIPass final
         [[nodiscard]] UIBufferResponse RequestUIBuffer ( size_t neededVertices ) noexcept;
 
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept;
+
+        void SubmitImage ( uint16_t image ) noexcept;
+        void SubmitNonImage () noexcept;
+
         [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept

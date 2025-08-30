@@ -3,9 +3,9 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr::windows {
@@ -270,7 +270,6 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
 
         _write.Init ( renderer, bufferSize, resourceCapacity, resourceOffset, resourceSize ) &&
         InitInternalStructures ( device, resourceCapacity, resourceOffset ) &&
-        _layout.Init ( device ) &&
         InitSamplers ( renderer, commandBuffer );
 }
 
@@ -284,10 +283,20 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _pointSampler.Destroy ( device );
     _shadowSampler.Destroy ( device );
 
-    _layout.Destroy ( device );
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
+}
+
+void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
+    VkPipelineBindPoint pipelineBindPoint,
+    VkPipelineLayout layout
+) noexcept
+{
+    vkCmdBindDescriptorBuffersEXT ( commandBuffer, 2U, _bindingInfo );
+    constexpr uint32_t const indices[] = { 0U, 1U };
+    constexpr VkDeviceSize const offsets[] = { 0U, 0U };
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, pipelineBindPoint, layout, 0U, 2U, indices, offsets );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,

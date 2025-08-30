@@ -97,7 +97,7 @@ class UIPass final
                 size_t const                            _elementSize = 0U;
 
                 Buffer                                  _staging {};
-                Buffer                                  _vertex {};
+                Buffer                                  _gpuBuffer {};
 
             public:
                 BufferStream () = delete;
@@ -113,8 +113,8 @@ class UIPass final
                 ~BufferStream () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    char const *vertexName,
-                    char const *stagingName
+                    char const* gpuBufferName,
+                    char const* stagingName
                 ) noexcept;
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;

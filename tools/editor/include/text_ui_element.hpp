@@ -3,7 +3,9 @@
 
 
 #include "div_ui_element.hpp"
-#include <pbr/text_ui_element.hpp>
+
+// FUCK - remove namespace
+#include <platform/android/pbr/text_ui_element.hpp>
 
 
 namespace editor {
@@ -11,7 +13,8 @@ namespace editor {
 class TextUIElement final : public UIElement
 {
     private:
-        pbr::TextUIElement*     _text = nullptr;
+        // FUCK - remove namespace
+        pbr::android::TextUIElement*    _text = nullptr;
 
     public:
         TextUIElement () = delete;

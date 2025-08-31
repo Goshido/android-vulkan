@@ -35,7 +35,8 @@ int32_t Rect::GetHeight () const noexcept
     return _bottom - _top;
 }
 
-void Rect::From ( pbr::DIVUIElement::Rect const& rect ) noexcept
+// FUCK - remove namespace
+void Rect::From ( pbr::android::DIVUIElement::Rect const& rect ) noexcept
 {
     _left = static_cast<int32_t> ( rect._topLeft._data[ 0U ] );
     _top = static_cast<int32_t> ( rect._topLeft._data[ 1U ] );

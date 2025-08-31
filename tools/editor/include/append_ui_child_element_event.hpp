@@ -2,7 +2,8 @@
 #define EDITOR_APPEND_UI_CHILD_ELEMENT_EVENT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+// FUCK - remove namespace
+#include <platform/android/pbr/div_ui_element.hpp>
 
 
 namespace editor {
@@ -10,8 +11,8 @@ namespace editor {
 class AppendUIChildElementEvent final
 {
     private:
-        pbr::UIElement          &_element;
-        pbr::DIVUIElement       &_parent;
+        pbr::UIElement                  &_element;
+        pbr::android::DIVUIElement      &_parent;
 
     public:
         AppendUIChildElementEvent () = delete;
@@ -22,7 +23,7 @@ class AppendUIChildElementEvent final
         AppendUIChildElementEvent ( AppendUIChildElementEvent && ) = delete;
         AppendUIChildElementEvent &operator = ( AppendUIChildElementEvent && ) = delete;
 
-        explicit AppendUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element ) noexcept;
+        explicit AppendUIChildElementEvent ( pbr::android::DIVUIElement &parent, pbr::UIElement &element ) noexcept;
 
         ~AppendUIChildElementEvent () = default;
 

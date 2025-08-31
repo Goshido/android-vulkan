@@ -4,7 +4,9 @@
 
 namespace editor {
 
-AppendUIChildElementEvent::AppendUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element ) noexcept:
+AppendUIChildElementEvent::AppendUIChildElementEvent ( pbr::android::DIVUIElement &parent,
+    pbr::UIElement &element
+) noexcept:
     _element ( element ),
     _parent ( parent )
 {

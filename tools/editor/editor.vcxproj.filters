@@ -240,15 +240,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_element.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\div_ui_element.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\image_ui_element.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_ui_element.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -394,6 +385,24 @@
       <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_pass.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\text_ui_element.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\div_ui_element.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\image_ui_element.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\div_ui_element.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\image_ui_element.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
   </ItemGroup>
@@ -575,13 +584,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_ui_element.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="include\theme.hpp">
@@ -823,6 +826,24 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_pass.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\div_ui_element.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\image_ui_element.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\text_ui_element.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\text_ui_element.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\div_ui_element.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\image_ui_element.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

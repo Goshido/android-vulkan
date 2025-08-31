@@ -1345,7 +1345,9 @@ void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI update element" )
     _messageQueue.DequeueEnd ();
-    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::android::DIVUIElement*> ( message._params )->Update ();
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept

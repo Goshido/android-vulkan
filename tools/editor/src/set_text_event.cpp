@@ -15,7 +15,8 @@ void SetTextEvent::Execute () noexcept
     _element.SetText ( std::get<std::u32string_view> ( _text ) );
 }
 
-SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::string_view text ) noexcept
+// FUCK - remove namespace
+SetTextEvent* SetTextEvent::Create ( pbr::android::TextUIElement &element, std::string_view text ) noexcept
 {
     size_t const symbols = text.size ();
     bool const isEmpty = symbols < 1U;
@@ -33,7 +34,8 @@ SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::string_vi
     return new ( data ) SetTextEvent ( element, { contentData, symbols } );
 }
 
-SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::u32string_view text ) noexcept
+// FUCK - remove namespace
+SetTextEvent* SetTextEvent::Create ( pbr::android::TextUIElement &element, std::u32string_view text ) noexcept
 {
     size_t const symbols = text.size ();
     bool const isEmpty = symbols < 1U;
@@ -60,14 +62,16 @@ void SetTextEvent::Destroy ( SetTextEvent &event ) noexcept
     std::free ( &event );
 }
 
-SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::string_view text ) noexcept:
+// FUCK - remove namespace
+SetTextEvent::SetTextEvent ( pbr::android::TextUIElement &element, std::string_view text ) noexcept:
     _element ( element ),
     _text ( text )
 {
     // NOTHING
 }
 
-SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::u32string_view text ) noexcept:
+// FUCK - remove namespace
+SetTextEvent::SetTextEvent ( pbr::android::TextUIElement &element, std::u32string_view text ) noexcept:
     _element ( element ),
     _text ( text )
 {

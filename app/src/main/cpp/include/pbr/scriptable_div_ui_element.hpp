@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_DIV_UI_ELEMENT_HPP
 
 
-#include "div_ui_element.hpp"
+#include <platform/android/pbr/div_ui_element.hpp>
 #include "scriptable_ui_element.hpp"
 
 
@@ -11,7 +11,8 @@ namespace pbr {
 class ScriptableDIVUIElement final : public ScriptableUIElement
 {
     private:
-        DIVUIElement     _div;
+        // FUCK - remove namespace
+        android::DIVUIElement       _div;
 
     public:
         ScriptableDIVUIElement () = delete;

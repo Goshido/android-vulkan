@@ -4,7 +4,9 @@
 
 namespace editor {
 
-PrependUIChildElementEvent::PrependUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element ) noexcept:
+PrependUIChildElementEvent::PrependUIChildElementEvent ( pbr::android::DIVUIElement &parent,
+    pbr::UIElement &element
+) noexcept:
     _element ( element ),
     _parent ( parent )
 {

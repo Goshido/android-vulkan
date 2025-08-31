@@ -521,14 +521,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\default_texture_manager.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\default_texture_manager.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\div_ui_element.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\div_ui_element.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_descriptor_set_layout.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\exposure_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\exposure_descriptor_set_layout.obj</ObjectFileName>
@@ -568,14 +560,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\graphics_program.obj</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\image_ui_element.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\image_ui_element.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
@@ -632,14 +616,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\stream.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\stream.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\stream.obj</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_ui_element.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\text_ui_element.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_descriptor_set_layout.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\tone_mapper_descriptor_set_layout.obj</ObjectFileName>
@@ -745,6 +721,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\compute_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\compute_program.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\div_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\div_ui_element.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\font_storage.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\font_storage.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\font_storage.obj</ObjectFileName>
@@ -760,6 +744,22 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\graphics_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\image_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\image_ui_element.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\text_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\ui_pass.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\ui_pass.obj</ObjectFileName>
@@ -809,6 +809,20 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\compute_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\compute_program.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\div_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\font_storage.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\font_storage.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\font_storage.obj</ObjectFileName>
@@ -837,6 +851,20 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\image_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\image_ui_element.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\resource_heap.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\resource_heap.obj</ObjectFileName>
@@ -852,6 +880,20 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_pass.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\ui_pass.obj</ObjectFileName>
@@ -1056,7 +1098,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\default_texture_manager.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_program.hpp" />
@@ -1069,7 +1110,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler_manager.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_program.hpp" />
@@ -1085,18 +1125,24 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\mesh_buffer_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\compute_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\div_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\graphics_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\image_ui_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\text_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_buffer_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\compute_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\div_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\graphics_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\image_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\text_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_vertex_info.hpp" />

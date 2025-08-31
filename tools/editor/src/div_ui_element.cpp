@@ -12,7 +12,9 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     UIElement ( messageQueue ),
-    _div ( new pbr::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
+
+    // FUCK - remove namespace
+    _div ( new pbr::android::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -23,7 +25,9 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     UIElement ( messageQueue ),
-    _div ( new pbr::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
+
+    // FUCK - remove namespace
+    _div ( new pbr::android::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -126,7 +130,8 @@ void DIVUIElement::Update () noexcept
     );
 }
 
-pbr::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
+// FUCK - remove namespace
+pbr::android::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
 {
     return _div->GetAbsoluteRect ();
 }

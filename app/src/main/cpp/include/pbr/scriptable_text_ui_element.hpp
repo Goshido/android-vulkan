@@ -2,8 +2,10 @@
 #define PBR_SCRIPTABLE_TEXT_UI_ELEMENT_HPP
 
 
+// FUCK - remove namespace
+#include <platform/android/pbr/text_ui_element.hpp>
+
 #include "scriptable_ui_element.hpp"
-#include "text_ui_element.hpp"
 
 
 namespace pbr {
@@ -11,7 +13,8 @@ namespace pbr {
 class ScriptableTextUIElement final : public ScriptableUIElement
 {
     private:
-        TextUIElement       _text;
+        // FUCK - remove namespace
+        android::TextUIElement      _text;
 
     public:
         ScriptableTextUIElement () = delete;

@@ -2,7 +2,8 @@
 #define EDITOR_DIV_UI_ELEMENT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+// FUCK - remove namespace
+#include <platform/android/pbr/div_ui_element.hpp>
 #include "ui_element.hpp"
 
 
@@ -13,7 +14,7 @@ class TextUIElement;
 class DIVUIElement final : public UIElement
 {
     private:
-        pbr::DIVUIElement*      _div = nullptr;
+        pbr::android::DIVUIElement*     _div = nullptr;
 
     public:
         DIVUIElement () = delete;
@@ -50,7 +51,8 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool IsVisible () const noexcept;
         void Update () noexcept;
 
-        [[nodiscard]] pbr::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::android::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
         void ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept;

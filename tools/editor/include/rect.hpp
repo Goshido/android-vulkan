@@ -2,7 +2,8 @@
 #define EDITOR_RECT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+// FUCK - remove namespace
+#include <platform/android/pbr/div_ui_element.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -39,7 +40,8 @@ class Rect final
             // NOTHING
         }
 
-        constexpr explicit Rect ( pbr::DIVUIElement::Rect const &rect ) noexcept:
+        // FUCK - remove namespace
+        constexpr explicit Rect ( pbr::android::DIVUIElement::Rect const &rect ) noexcept:
             _left ( static_cast<int32_t> ( rect._topLeft._data[ 0U ] ) ),
             _right ( static_cast<int32_t> ( rect._bottomRight._data[ 0U ] ) ),
             _top ( static_cast<int32_t> ( rect._topLeft._data[ 1U ] ) ),
@@ -50,7 +52,8 @@ class Rect final
 
         ~Rect () = default;
 
-        void From ( pbr::DIVUIElement::Rect const &rect ) noexcept;
+        // FUCK - remove namespace
+        void From ( pbr::android::DIVUIElement::Rect const &rect ) noexcept;
         void From ( GXVec2 const &topLeft, GXVec2 const &bottomRight ) noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;

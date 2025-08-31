@@ -26,10 +26,10 @@ class UIPass final
     private:
         struct Buffer final
         {
-            VkBuffer                                    _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory                              _memory = VK_NULL_HANDLE;
-            char const*                                 _name = nullptr;
-            VkDeviceSize                                _memoryOffset = 0U;
+            VkBuffer                        _buffer = VK_NULL_HANDLE;
+            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
+            char const*                     _name = nullptr;
+            VkDeviceSize                    _memoryOffset = 0U;
 
             [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                 size_t size,
@@ -44,7 +44,7 @@ class UIPass final
         class BufferStream final
         {
             private:
-                VkBufferMemoryBarrier                   _barrier
+                VkBufferMemoryBarrier       _barrier
                 {
                     .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
                     .pNext = nullptr,
@@ -57,13 +57,13 @@ class UIPass final
                     .size = 0U
                 };
 
-                uint8_t*                                _data = nullptr;
-                size_t const                            _elementSize = 0U;
+                uint8_t*                    _data = nullptr;
+                size_t const                _elementSize = 0U;
 
-                Buffer                                  _staging {};
-                Buffer                                  _gpuBuffer {};
+                Buffer                      _staging {};
+                Buffer                      _gpuBuffer {};
 
-                VkDeviceAddress                         _bda = 0U;
+                VkDeviceAddress             _bda = 0U;
 
             public:
                 BufferStream () = delete;
@@ -94,7 +94,7 @@ class UIPass final
         {
             using Entry = std::unordered_map<uint16_t, size_t>;
 
-            Entry                                       _registry[ FIF_COUNT ];
+            Entry                           _registry[ FIF_COUNT ];
 
             void Destroy () noexcept;
             void CollectGarbage ( size_t commandBufferIndex ) noexcept;
@@ -102,34 +102,34 @@ class UIPass final
         };
 
     private:
-        GXVec2                                          _bottomRight {};
-        float                                           _brightnessBalance = 0.0F;
+        GXVec2                              _bottomRight {};
+        float                               _brightnessBalance = 0.0F;
 
-        VkExtent2D                                      _currentResolution
+        VkExtent2D                          _currentResolution
         {
             .width = 0U,
             .height = 0U
         };
 
-        uint16_t                                        _textLUT = ResourceHeap::INVALID_UI_IMAGE;
-        InUseImageTracker                               _inUseImageTracker {};
+        uint16_t                            _textLUT = ResourceHeap::INVALID_UI_IMAGE;
+        InUseImageTracker                   _inUseImageTracker {};
 
-        size_t                                          _readVertexIndex = 0U;
-        size_t                                          _writeVertexIndex = 0U;
-        uint32_t                                        _vertices = 0U;
-        std::vector<uint16_t>                           _usedImages {};
+        size_t                              _readVertexIndex = 0U;
+        size_t                              _writeVertexIndex = 0U;
+        uint32_t                            _vertices = 0U;
+        std::vector<uint16_t>               _usedImages {};
 
-        FontStorage                                     _fontStorage;
-        ResourceHeap                                    &_resourceHeap;
+        FontStorage                         _fontStorage;
+        ResourceHeap                        &_resourceHeap;
 
-        bool                                            _hasChanges = false;
-        bool                                            _isTransformChanged = false;
+        bool                                _hasChanges = false;
+        bool                                _isTransformChanged = false;
 
-        BufferStream                                    _positions { sizeof ( GXVec2 ) };
-        BufferStream                                    _rest { sizeof ( UIVertex ) };
+        BufferStream                        _positions { sizeof ( GXVec2 ) };
+        BufferStream                        _rest { sizeof ( UIVertex ) };
 
-        UIProgram                                       _program {};
-        UIProgram::UIInfo                               _uiInfo {};
+        UIProgram                           _program {};
+        UIProgram::UIInfo                   _uiInfo {};
 
     public:
         UIPass () = delete;

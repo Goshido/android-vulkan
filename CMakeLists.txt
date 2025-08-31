@@ -83,7 +83,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/display_property.cpp
     app/src/main/cpp/sources/pbr/display_property_checker.cpp
     app/src/main/cpp/sources/pbr/div_html5_element.cpp
-    app/src/main/cpp/sources/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/pbr/doctype_parser.cpp
     app/src/main/cpp/sources/pbr/dummy_geometry_program.cpp
     app/src/main/cpp/sources/pbr/dummy_light_program.cpp
@@ -112,7 +111,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/html5_parser.cpp
     app/src/main/cpp/sources/pbr/html5_tag.cpp
     app/src/main/cpp/sources/pbr/image_attribute_checker.cpp
-    app/src/main/cpp/sources/pbr/image_ui_element.cpp
     app/src/main/cpp/sources/pbr/img_html5_element.cpp
     app/src/main/cpp/sources/pbr/length_property.cpp
     app/src/main/cpp/sources/pbr/length_property_checker.cpp
@@ -206,7 +204,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/text_align_property.cpp
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_html5_element.cpp
-    app/src/main/cpp/sources/pbr/text_ui_element.cpp
     app/src/main/cpp/sources/pbr/tone_mapper_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/tone_mapper_pass.cpp
     app/src/main/cpp/sources/pbr/tone_mapper_program.cpp
@@ -239,8 +236,11 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/image_ui_element.cpp
+    app/src/main/cpp/sources/platform/android/pbr/text_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_program.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp

@@ -2,7 +2,9 @@
 #define PBR_SCRIPTABLE_IMAGE_UI_ELEMENT_HPP
 
 
-#include "image_ui_element.hpp"
+// FUCK - remove namespace
+#include <platform/android/pbr/image_ui_element.hpp>
+
 #include "scriptable_ui_element.hpp"
 
 
@@ -11,7 +13,8 @@ namespace pbr {
 class ScriptableImageUIElement final : public ScriptableUIElement
 {
     private:
-        ImageUIElement       _image;
+        // FUCK - remove namespace
+        android::ImageUIElement     _image;
 
     public:
         ScriptableImageUIElement () = delete;

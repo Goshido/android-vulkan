@@ -83,7 +83,8 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
     css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 0U ] );
     css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 1U ] );
 
-    pbr::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
+    // FUCK - remove namespace
+    pbr::android::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
 
     css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX,
         devicePXtoCSSPX * ( widthRect._bottomRight._data[ 0U ] - widthRect._topLeft._data[ 0U ] )

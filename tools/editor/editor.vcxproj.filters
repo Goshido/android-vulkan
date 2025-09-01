@@ -405,6 +405,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\ui_element.cpp">
       <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_element.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -844,6 +847,9 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_element.hpp">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_element.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

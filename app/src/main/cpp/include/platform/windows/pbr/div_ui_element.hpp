@@ -1,7 +1,7 @@
 // FUCK - windows and android separation
 
-#ifndef PBR_DIV_UI_ELEMENT_HPP
-#define PBR_DIV_UI_ELEMENT_HPP
+#ifndef PBR_WINDOWS_DIV_UI_ELEMENT_HPP
+#define PBR_WINDOWS_DIV_UI_ELEMENT_HPP
 
 
 #include "ui_element.hpp"
@@ -13,7 +13,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr {
+namespace pbr::windows {
 
 class DIVUIElement final : public UIElement
 {
@@ -41,9 +41,8 @@ class DIVUIElement final : public UIElement
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
 
-        // FUCK - remove namespace
-        GXVec2                      _positions[ android::UIPass::GetVerticesPerRectangle() ] {};
-        android::UIVertex           _vertices[ android::UIPass::GetVerticesPerRectangle() ] {};
+        GXVec2                      _positions[ UIPass::GetVerticesPerRectangle() ] {};
+        UIVertex                    _vertices[ UIPass::GetVerticesPerRectangle() ] {};
 
     public:
         DIVUIElement () = delete;
@@ -70,7 +69,7 @@ class DIVUIElement final : public UIElement
         void Update () noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif // PBR_DIV_UI_ELEMENT_HPP
+#endif // PBR_WINDOWS_DIV_UI_ELEMENT_HPP

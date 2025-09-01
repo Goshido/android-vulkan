@@ -9,8 +9,8 @@
 
 // FUCK - change
 #include <platform/android/pbr/font_storage.hpp>
+#include <platform/android/pbr/ui_element.hpp>
 
-#include <pbr/ui_element.hpp>
 #include "rect.hpp"
 
 
@@ -64,7 +64,8 @@ class Widget
             pbr::android::FontStorage &fontStorage
         ) noexcept;
 
-        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
+        // FUCK - remove namespace
+        virtual void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept;
 
         // FUCK - remove namespace
         [[nodiscard]] virtual bool UpdateCache ( pbr::android::FontStorage &fontStorage,

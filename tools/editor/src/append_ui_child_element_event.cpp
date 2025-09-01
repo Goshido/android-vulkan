@@ -4,8 +4,9 @@
 
 namespace editor {
 
+// FUCK - remove namespace
 AppendUIChildElementEvent::AppendUIChildElementEvent ( pbr::android::DIVUIElement &parent,
-    pbr::UIElement &element
+    pbr::android::UIElement &element
 ) noexcept:
     _element ( element ),
     _parent ( parent )

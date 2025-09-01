@@ -91,7 +91,9 @@ class UIDialogBox : public Widget
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
-        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+
+        // FUCK - remove namespace
+        void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept override;
 
     private:
         // FUCK - remove namespace

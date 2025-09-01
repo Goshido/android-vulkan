@@ -7,7 +7,7 @@
 #include "ui_element.hpp"
 
 
-namespace pbr {
+namespace pbr::windows {
 
 class TextUIElement final : public UIElement
 {
@@ -18,7 +18,7 @@ class TextUIElement final : public UIElement
 
             android_vulkan::Half2               _atlasTopLeft;
             android_vulkan::Half2               _atlasBottomRight;
-            uint8_t                             _atlasLayer;
+            uint16_t                            _atlas;
 
             int32_t                             _offsetX;
             int32_t                             _offsetY;

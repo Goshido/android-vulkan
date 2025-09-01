@@ -26,7 +26,10 @@ class ScriptableImageUIElement final : public ScriptableUIElement
         ScriptableImageUIElement &operator = ( ScriptableImageUIElement && ) = delete;
 
         explicit ScriptableImageUIElement ( bool &success,
-            UIElement const* parent,
+
+            // FUCK - remove namespace
+            android::UIElement const* parent,
+
             lua_State &vm,
             int errorHandlerIdx,
             std::string &&asset,
@@ -35,8 +38,9 @@ class ScriptableImageUIElement final : public ScriptableUIElement
 
         ~ScriptableImageUIElement () override = default;
 
-        [[nodiscard]] UIElement &GetElement () noexcept override;
-        [[nodiscard]] UIElement const &GetElement () const noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] android::UIElement &GetElement () noexcept override;
+        [[nodiscard]] android::UIElement const &GetElement () const noexcept override;
 };
 
 } // namespace pbr

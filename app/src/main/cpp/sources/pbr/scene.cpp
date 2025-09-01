@@ -698,7 +698,8 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    UIElement::SubmitInfo info
+    // FUCK - remove namespace
+    android::UIElement::SubmitInfo info
     {
         ._uiPass = &uiPass,
         ._vertexBuffer = *response

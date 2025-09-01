@@ -2,7 +2,6 @@
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/scriptable_ui_element.hpp>
-#include <pbr/ui_element.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

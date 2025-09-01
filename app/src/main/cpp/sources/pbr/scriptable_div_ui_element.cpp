@@ -6,7 +6,10 @@
 namespace pbr {
 
 ScriptableDIVUIElement::ScriptableDIVUIElement ( bool &success,
-    UIElement const* parent,
+
+    // FUCK - remove namespace
+    android::UIElement const* parent,
+
     lua_State &vm,
     int errorHandlerIdx,
     CSSComputedValues &&css
@@ -38,12 +41,14 @@ ScriptableDIVUIElement::ScriptableDIVUIElement ( bool &success,
     );
 }
 
-UIElement &ScriptableDIVUIElement::GetElement () noexcept
+// FUCK - remove namespace
+android::UIElement &ScriptableDIVUIElement::GetElement () noexcept
 {
     return _div;
 }
 
-UIElement const &ScriptableDIVUIElement::GetElement () const noexcept
+// FUCK - remove namespace
+android::UIElement const &ScriptableDIVUIElement::GetElement () const noexcept
 {
     return _div;
 }
@@ -51,7 +56,9 @@ UIElement const &ScriptableDIVUIElement::GetElement () const noexcept
 bool ScriptableDIVUIElement::AppendChildElement ( lua_State &vm,
     int errorHandlerIdx,
     int appendChildElementIdx,
-    UIElement &element
+
+    // FUCK - remove namespace
+    android::UIElement &element
 ) noexcept
 {
     if ( !lua_checkstack ( &vm, 3 ) ) [[unlikely]]

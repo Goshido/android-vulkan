@@ -33,7 +33,8 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () noexcept override;
 
-        [[nodiscard]] pbr::UIElement &GetNativeElement () noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::android::UIElement &GetNativeElement () noexcept override;
 
         void SetColor ( pbr::ColorValue const &color ) noexcept;
         void SetText ( std::string_view text ) noexcept;

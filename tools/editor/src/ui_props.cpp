@@ -212,7 +212,8 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     UIDialogBox::OnMouseMove ( event );
 }
 
-void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+// FUCK - remove namespace
+void UIProps::Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();

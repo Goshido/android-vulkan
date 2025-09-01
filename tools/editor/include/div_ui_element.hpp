@@ -38,7 +38,8 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () noexcept override;
 
-        [[nodiscard]] pbr::UIElement &GetNativeElement () noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::android::UIElement &GetNativeElement () noexcept override;
 
         void AppendChildElement ( DIVUIElement &element ) noexcept;
         void PrependChildElement ( DIVUIElement &element ) noexcept;
@@ -55,9 +56,10 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] pbr::android::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
-        void ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept;
-        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
-        [[nodiscard]] bool UpdateCache ( pbr::UIElement::UpdateInfo &info ) noexcept;
+        // FUCK - remove namespace
+        void ApplyLayout ( pbr::android::UIElement::ApplyInfo &info ) noexcept;
+        void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] bool UpdateCache ( pbr::android::UIElement::UpdateInfo &info ) noexcept;
 };
 
 } // namespace editor

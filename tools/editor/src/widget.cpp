@@ -66,7 +66,8 @@ Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*
     return {};
 }
 
-void Widget::Submit ( pbr::UIElement::SubmitInfo &/*info*/ ) noexcept
+// FUCK - remove namespace
+void Widget::Submit ( pbr::android::UIElement::SubmitInfo &/*info*/ ) noexcept
 {
     // NOTHING
 }

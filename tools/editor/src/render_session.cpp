@@ -1303,7 +1303,9 @@ void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI delete element" )
     _messageQueue.DequeueEnd ();
-    delete static_cast<pbr::UIElement*> ( message._params );
+
+    // FUCK - remove namespace
+    delete static_cast<pbr::android::UIElement*> ( message._params );
     --_uiElements;
 }
 
@@ -1311,14 +1313,18 @@ void RenderSession::OnUIHideElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI hide element" )
     _messageQueue.DequeueEnd ();
-    static_cast<pbr::UIElement*> ( message._params )->Hide ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::android::UIElement*> ( message._params )->Hide ();
 }
 
 void RenderSession::OnUIShowElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
     _messageQueue.DequeueEnd ();
-    static_cast<pbr::UIElement*> ( message._params )->Show ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::android::UIElement*> ( message._params )->Show ();
 }
 
 void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept

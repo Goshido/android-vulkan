@@ -43,7 +43,8 @@ DIVUIElement::~DIVUIElement () noexcept
     );
 }
 
-pbr::UIElement &DIVUIElement::GetNativeElement () noexcept
+// FUCK - remove namespace
+pbr::android::UIElement &DIVUIElement::GetNativeElement () noexcept
 {
     return *_div;
 }
@@ -141,17 +142,20 @@ pbr::CSSComputedValues &DIVUIElement::GetCSS () noexcept
     return _div->GetCSS ();
 }
 
-void DIVUIElement::ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept
+// FUCK - remove namespace
+void DIVUIElement::ApplyLayout ( pbr::android::UIElement::ApplyInfo &info ) noexcept
 {
     _div->ApplyLayout ( info );
 }
 
-void DIVUIElement::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+// FUCK - remove namespace
+void DIVUIElement::Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept
 {
     _div->Submit ( info );
 }
 
-bool DIVUIElement::UpdateCache ( pbr::UIElement::UpdateInfo &info ) noexcept
+// FUCK - remove namespace
+bool DIVUIElement::UpdateCache ( pbr::android::UIElement::UpdateInfo &info ) noexcept
 {
     return _div->UpdateCache ( info );
 }

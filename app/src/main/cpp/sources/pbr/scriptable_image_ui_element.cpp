@@ -16,7 +16,10 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 ScriptableImageUIElement::ScriptableImageUIElement ( bool &success,
-    UIElement const* parent,
+
+    // FUCK - remove namespace
+    android::UIElement const* parent,
+
     lua_State &vm,
     int errorHandlerIdx,
     std::string &&asset,
@@ -52,12 +55,14 @@ ScriptableImageUIElement::ScriptableImageUIElement ( bool &success,
     );
 }
 
-UIElement &ScriptableImageUIElement::GetElement () noexcept
+// FUCK - remove namespace
+android::UIElement &ScriptableImageUIElement::GetElement () noexcept
 {
     return _image;
 }
 
-UIElement const &ScriptableImageUIElement::GetElement () const noexcept
+// FUCK - remove namespace
+android::UIElement const &ScriptableImageUIElement::GetElement () const noexcept
 {
     return _image;
 }

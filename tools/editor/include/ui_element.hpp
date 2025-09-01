@@ -3,7 +3,7 @@
 
 
 #include "message_queue.hpp"
-#include <pbr/ui_element.hpp>
+#include <platform/android/pbr/ui_element.hpp>
 
 
 namespace editor {
@@ -24,7 +24,8 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        [[nodiscard]] virtual pbr::UIElement &GetNativeElement () noexcept = 0;
+        // FUCK - remove namespace
+        [[nodiscard]] virtual pbr::android::UIElement &GetNativeElement () noexcept = 0;
 
     protected:
         explicit UIElement ( MessageQueue &messageQueue ) noexcept;

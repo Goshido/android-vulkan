@@ -2,7 +2,7 @@
 #define PBR_SCRIPTABLE_UI_ELEMENT_HPP
 
 
-#include "ui_element.hpp"
+#include <platform/android/pbr/ui_element.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -39,8 +39,9 @@ class ScriptableUIElement
 
         virtual ~ScriptableUIElement () = default;
 
-        [[nodiscard]] virtual UIElement &GetElement () noexcept = 0;
-        [[nodiscard]] virtual UIElement const &GetElement () const noexcept = 0;
+        // FUCK - remove namespace
+        [[nodiscard]] virtual android::UIElement &GetElement () noexcept = 0;
+        [[nodiscard]] virtual android::UIElement const &GetElement () const noexcept = 0;
 
         static void AppendElement ( ScriptableUIElement &element ) noexcept;
         static void InitCommon ( lua_State &vm ) noexcept;

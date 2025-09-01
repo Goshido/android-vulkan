@@ -237,9 +237,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\stream.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_element.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -404,6 +401,9 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\ui_element.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -582,9 +582,6 @@
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="include\theme.hpp">
@@ -843,6 +840,9 @@
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\image_ui_element.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_element.hpp">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
   </ItemGroup>

@@ -81,7 +81,8 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIP
         return;
     }
 
-    pbr::UIElement::SubmitInfo info
+    // FUCK - remove namespace
+    pbr::android::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
         ._vertexBuffer = *response

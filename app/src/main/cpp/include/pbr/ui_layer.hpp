@@ -53,7 +53,8 @@ class UILayer final
             android::FontStorage &fontStorage
         ) noexcept;
 
-        void Submit ( UIElement::SubmitInfo &info ) noexcept;
+        // FUCK - remove namespace
+        void Submit ( android::UIElement::SubmitInfo &info ) noexcept;
 
         // FUCK - remove namespace
         [[nodiscard]] bool UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;

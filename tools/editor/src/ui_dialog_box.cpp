@@ -197,7 +197,8 @@ void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     Widget::OnMouseMove ( event );
 }
 
-void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+// FUCK - remove namespace
+void UIDialogBox::Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept
 {
     _div.Submit ( info );
 }
@@ -212,7 +213,8 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    pbr::UIElement::ApplyInfo info
+    // FUCK - remove namespace
+    pbr::android::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._fontStorage = &fontStorage,
@@ -237,7 +239,8 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
 // FUCK - remove namespace
 bool UIDialogBox::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
-    pbr::UIElement::UpdateInfo info
+    // FUCK - remove namespace
+    pbr::android::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,

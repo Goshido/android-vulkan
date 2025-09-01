@@ -11,7 +11,8 @@ namespace editor {
 class PrependUIChildElementEvent final
 {
     private:
-        pbr::UIElement                  &_element;
+        // FUCK - remove namespace
+        pbr::android::UIElement         &_element;
         pbr::android::DIVUIElement      &_parent;
 
     public:
@@ -23,7 +24,10 @@ class PrependUIChildElementEvent final
         PrependUIChildElementEvent ( PrependUIChildElementEvent && ) = delete;
         PrependUIChildElementEvent &operator = ( PrependUIChildElementEvent && ) = delete;
 
-        explicit PrependUIChildElementEvent ( pbr::android::DIVUIElement &parent, pbr::UIElement &element ) noexcept;
+        // FUCK - remove namespace
+        explicit PrependUIChildElementEvent ( pbr::android::DIVUIElement &parent,
+            pbr::android::UIElement &element
+        ) noexcept;
 
         ~PrependUIChildElementEvent () = default;
 

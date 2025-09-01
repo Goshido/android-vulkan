@@ -24,7 +24,10 @@ class ScriptableDIVUIElement final : public ScriptableUIElement
         ScriptableDIVUIElement &operator = ( ScriptableDIVUIElement && ) = delete;
 
         explicit ScriptableDIVUIElement ( bool &success,
-            UIElement const* parent,
+
+            // FUCK - remove namespace
+            android::UIElement const* parent,
+
             lua_State &vm,
             int errorHandlerIdx,
             CSSComputedValues &&css
@@ -32,8 +35,9 @@ class ScriptableDIVUIElement final : public ScriptableUIElement
 
         ~ScriptableDIVUIElement () override = default;
 
-        [[nodiscard]] UIElement &GetElement () noexcept override;
-        [[nodiscard]] UIElement const &GetElement () const noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] android::UIElement &GetElement () noexcept override;
+        [[nodiscard]] android::UIElement const &GetElement () const noexcept override;
 
         // Lua stack must have the following configuration:
         //      stack[ -1 ] -> child element
@@ -42,7 +46,9 @@ class ScriptableDIVUIElement final : public ScriptableUIElement
         [[nodiscard]] bool AppendChildElement ( lua_State &vm,
             int errorHandlerIdx,
             int appendChildElementIdx,
-            UIElement &element
+
+            // FUCK - remove namespace
+            android::UIElement &element
         ) noexcept;
 };
 

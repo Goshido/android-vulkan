@@ -143,7 +143,8 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    UIElement::ApplyInfo info
+    // FUCK - remove namespace
+    android::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._fontStorage = &fontStorage,
@@ -164,7 +165,8 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     };
 }
 
-void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
+// FUCK - remove namespace
+void UILayer::Submit ( android::UIElement::SubmitInfo &info ) noexcept
 {
     _body->GetElement ().Submit ( info );
 }
@@ -172,7 +174,8 @@ void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
 // FUCK - remove namespace
 bool UILayer::UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
-    UIElement::UpdateInfo info
+    // FUCK - remove namespace
+    android::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,

@@ -43,7 +43,9 @@ class UIProps final : public UIDialogBox
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
-        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+
+        // FUCK - remove namespace
+        void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept override;
 
         void OnCheckBox ( UICheckBox::eState state ) noexcept;
         void OnComboBox ( UIComboBox::ID id ) noexcept;

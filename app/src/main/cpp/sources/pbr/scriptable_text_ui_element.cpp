@@ -16,7 +16,10 @@ GX_RESTORE_WARNING_STATE
 namespace pbr {
 
 ScriptableTextUIElement::ScriptableTextUIElement ( bool &success,
-    UIElement const* parent,
+
+    // FUCK - remove namespace
+    android::UIElement const* parent,
+
     lua_State &vm,
     int errorHandlerIdx,
     std::u32string &&text
@@ -48,12 +51,14 @@ ScriptableTextUIElement::ScriptableTextUIElement ( bool &success,
     );
 }
 
-UIElement &ScriptableTextUIElement::GetElement () noexcept
+// FUCK - remove namespace
+android::UIElement &ScriptableTextUIElement::GetElement () noexcept
 {
     return _text;
 }
 
-UIElement const &ScriptableTextUIElement::GetElement () const noexcept
+// FUCK - remove namespace
+android::UIElement const &ScriptableTextUIElement::GetElement () const noexcept
 {
     return _text;
 }

@@ -26,7 +26,10 @@ class ScriptableTextUIElement final : public ScriptableUIElement
         ScriptableTextUIElement &operator = ( ScriptableTextUIElement && ) = delete;
 
         explicit ScriptableTextUIElement ( bool &success,
-            UIElement const* parent,
+
+            // FUCK - remove namespace
+            android::UIElement const* parent,
+
             lua_State &vm,
             int errorHandlerIdx,
             std::u32string &&text
@@ -34,8 +37,9 @@ class ScriptableTextUIElement final : public ScriptableUIElement
 
         ~ScriptableTextUIElement () override = default;
 
-        [[nodiscard]] UIElement &GetElement () noexcept override;
-        [[nodiscard]] UIElement const &GetElement () const noexcept override;
+        // FUCK - remove namespace
+        [[nodiscard]] android::UIElement &GetElement () noexcept override;
+        [[nodiscard]] android::UIElement const &GetElement () const noexcept override;
 
         static void Init ( lua_State &vm ) noexcept;
 

@@ -29,7 +29,8 @@ TextUIElement::~TextUIElement () noexcept
     );
 }
 
-pbr::UIElement &TextUIElement::GetNativeElement () noexcept
+// FUCK - remove namespace
+pbr::android::UIElement &TextUIElement::GetNativeElement () noexcept
 {
     return *_text;
 }

@@ -1,17 +1,15 @@
 // FUCK - windows and android separation
 
-#ifndef PBR_UI_ELEMENT_HPP
-#define PBR_UI_ELEMENT_HPP
+#ifndef PBR_WINDOWS_UI_ELEMENT_HPP
+#define PBR_WINDOWS_UI_ELEMENT_HPP
 
 
-#include "css_computed_values.hpp"
-
-// FUCK - use relative path
-#include <platform/android/pbr/ui_vertex_info.hpp>
-#include <platform/android/pbr/ui_pass.hpp>
+#include <pbr/css_computed_values.hpp>
+#include "ui_vertex_info.hpp"
+#include "ui_pass.hpp"
 
 
-namespace pbr {
+namespace pbr::windows {
 
 class UIElement
 {
@@ -19,9 +17,7 @@ class UIElement
         struct ApplyInfo final
         {
             GXVec2                          _canvasSize {};
-
-            // FUCK - remove namespace
-            android::FontStorage*           _fontStorage = nullptr;
+            FontStorage*                    _fontStorage = nullptr;
 
             bool                            _hasChanges = false;
             std::vector<float>*             _lineHeights = nullptr;
@@ -33,15 +29,13 @@ class UIElement
 
         struct SubmitInfo final
         {
-            // FUCK - remove namespace
-            android::UIPass*                _uiPass = 0U;
-            android::UIVertexBuffer         _vertexBuffer {};
+            UIPass*                         _uiPass = 0U;
+            UIVertexBuffer                  _vertexBuffer {};
         };
 
         struct UpdateInfo final
         {
-            // FUCK - remove namespace
-            android::FontStorage*           _fontStorage = nullptr;
+            FontStorage*                    _fontStorage = nullptr;
 
             size_t                          _line = 0U;
             float                           _lineHeight = 0.0F;
@@ -94,9 +88,7 @@ class UIElement
 
         [[nodiscard]] std::string_view ResolveFont () const noexcept;
         [[nodiscard]] float ResolveFontSize () const noexcept;
-
-        // FUCK - remove namespace
-        [[nodiscard]] float ResolveLineHeight ( android::FontStorage::Font font ) const noexcept;
+        [[nodiscard]] float ResolveLineHeight ( FontStorage::Font font ) const noexcept;
 
     protected:
         explicit UIElement ( bool visible, UIElement const* parent ) noexcept;
@@ -122,7 +114,7 @@ class UIElement
         [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif // PBR_UI_ELEMENT_HPP
+#endif // PBR_WINDOWS_UI_ELEMENT_HPP

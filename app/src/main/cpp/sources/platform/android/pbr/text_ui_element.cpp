@@ -7,16 +7,6 @@
 #include <platform/android/pbr/div_ui_element.hpp>
 #include <platform/android/pbr/text_ui_element.hpp>
 
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr::android {
 
@@ -654,7 +644,8 @@ GXColorUNORM TextUIElement::ResolveColor () const noexcept
         }
     }
 
-    android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
+    // FUCK - remove namespace
+    android_vulkan::LogError ( "pbr::android::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
     constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );

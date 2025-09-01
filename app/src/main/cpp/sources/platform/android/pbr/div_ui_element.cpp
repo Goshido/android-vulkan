@@ -270,7 +270,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
         constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
-        android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+        UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
         std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
         std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 

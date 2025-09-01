@@ -1,24 +1,14 @@
 // FUCK - windows and android separation
 
 #include <precompiled_headers.hpp>
-#include <pbr/div_ui_element.hpp>
-#include <pbr/text_ui_element.hpp>
-#include <pbr/utf8_parser.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-extern "C" {
-
-#include <lua/lauxlib.h>
-
-} // extern "C"
-
-GX_RESTORE_WARNING_STATE
+#include <pbr/utf8_parser.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/text_ui_element.hpp>
 
 
-namespace pbr {
+namespace pbr::windows {
 
 void TextUIElement::ApplyLayoutCache::Clear () noexcept
 {
@@ -236,8 +226,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _glyphs.clear ();
     _glyphs.reserve ( glyphCount );
 
-    // FUCK - remove namespace
-    android::FontStorage &fontStorage = *info._fontStorage;
+    FontStorage &fontStorage = *info._fontStorage;
 
     auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (),
         static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
@@ -245,8 +234,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     if ( !fontProbe ) [[unlikely]]
         return;
 
-    // FUCK - remove namespace
-    android::FontStorage::Font const font = fontProbe->_font;
+    FontStorage::Font const font = fontProbe->_font;
     constexpr size_t firstLineHeightIdx = 1U;
 
     std::vector<float> &divLineHeights = *info._lineHeights;
@@ -258,8 +246,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
 
-    // FUCK - remove namespace
-    android::FontStorage::PixelFontMetrics const &metrics = android::FontStorage::GetFontPixelMetrics ( font );
+    FontStorage::PixelFontMetrics const &metrics = FontStorage::GetFontPixelMetrics ( font );
     _baselineToBaseline = metrics._baselineToBaseline;
     _contentAreaHeight = metrics._contentAreaHeight;
     auto const baselineToBaselineF = static_cast<float> ( _baselineToBaseline );
@@ -287,15 +274,14 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     char32_t leftCharacter = 0;
     android_vulkan::Renderer &renderer = *info._renderer;
 
-    // FUCK - remove namespace
-    auto const appendGlyph = [ this ] ( size_t line, android::FontStorage::GlyphInfo const &glyphInfo ) noexcept {
+    auto const appendGlyph = [ this ] ( size_t line, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
         _glyphs.emplace_back (
             Glyph
             {
                 ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
                 ._atlasBottomRight = glyphInfo._bottomRight,
-                ._atlasLayer = glyphInfo._layer,
+                ._atlas = glyphInfo._atlas,
                 ._offsetX = glyphInfo._offsetX,
                 ._offsetY = glyphInfo._offsetY,
                 ._parentLine = line,
@@ -305,8 +291,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         );
     };
 
-    // FUCK - remove namespace
-    android::FontStorage::GlyphInfo const* gi;
+    FontStorage::GlyphInfo const* gi;
     int32_t previousX;
 
     {
@@ -317,8 +302,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         previousX = x;
 
-        // FUCK - remove namespace
-        x += gi->_advance + android::FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+        x += gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
         ++glyphsPerLine;
 
@@ -352,8 +336,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         int32_t const baseX = x;
 
-        // FUCK - remove namespace
-        int32_t const advance = gi->_advance + android::FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+        int32_t const advance = gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
         x += advance;
         leftCharacter = rightCharacter;
 
@@ -410,8 +393,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     pen._data[ 1U ] = static_cast<float> ( y ) + fraction;
     _applyLayoutCache._penOut = pen;
 
-    // FUCK - remove namespace
-    size_t const vertices = _text.size () * android::UIPass::GetVerticesPerRectangle ();
+    size_t const vertices = _text.size () * UIPass::GetVerticesPerRectangle ();
     _applyLayoutCache._vertices = vertices;
     info._vertices += vertices;
 }
@@ -423,12 +405,9 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
 
     size_t const vertices = _submitCache._positions.size ();
 
-    // FUCK - remove namespace
-    android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-
-    // FUCK - remove namespace
-    std::span<android::UIVertex> &uiVertices = uiVertexBuffer._vertices;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
@@ -436,7 +415,7 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     uiPositions = uiPositions.subspan ( vertices );
     uiVertices = uiVertices.subspan ( vertices );
 
-    info._uiPass->SubmitText ( vertices );
+    info._uiPass->SubmitNonImage ();
 }
 
 bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
@@ -457,20 +436,16 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     std::vector<GXVec2> &positionBuffer = _submitCache._positions;
     positionBuffer.clear ();
 
-    // FUCK - remove namespace
-    std::vector<android::UIVertex> &vertexBuffer = _submitCache._vertices;
+    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
-    // FUCK - remove namespace
-    constexpr size_t verticesPerGlyph = android::UIPass::GetVerticesPerRectangle ();
+    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
     positionBuffer.resize ( vertexCount );
     vertexBuffer.resize ( vertexCount );
 
     GXVec2* p = positionBuffer.data ();
-
-    // FUCK - remove namespace
-    android::UIVertex* v = vertexBuffer.data ();
+    UIVertex* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorUNORM const color = ResolveColor ();
@@ -524,15 +499,14 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            // FUCK - remove namespace
-            android::UIPass::AppendText ( p,
+            UIPass::AppendText ( p,
                 v,
                 color,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,
                 g._atlasBottomRight,
-                g._atlasLayer
+                g._atlas
             );
 
             x += g._advance;
@@ -553,9 +527,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     info._pen = penOut;
 
     _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
-
-    // FUCK - remove namespace
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( android::UIVertex );
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
     return true;
 }
 
@@ -672,7 +644,7 @@ GXColorUNORM TextUIElement::ResolveColor () const noexcept
         }
     }
 
-    android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
+    android_vulkan::LogError ( "pbr::windows::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
     constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
@@ -706,4 +678,4 @@ int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen,
     return pen + parentSize - lineSize - halfLeading;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

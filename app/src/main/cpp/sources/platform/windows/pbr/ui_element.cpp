@@ -2,10 +2,10 @@
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
-#include <pbr/ui_element.hpp>
+#include <platform/windows/pbr/ui_element.hpp>
 
 
-namespace pbr {
+namespace pbr::windows {
 
 void UIElement::Hide () noexcept
 {
@@ -91,7 +91,8 @@ float UIElement::ResolveFontSize () const noexcept
 
     if ( !target ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::UIElement::ResolveFontSize - Everything is inherit." );
+        // FUCK - remove namespace
+        android_vulkan::LogError ( "pbr::windows::UIElement::ResolveFontSize - Everything is inherit." );
         AV_ASSERT ( false )
         return 0.0F;
     }
@@ -126,8 +127,7 @@ float UIElement::ResolveFontSize () const noexcept
     }
 }
 
-// FUCK - remove namespace
-float UIElement::ResolveLineHeight ( android::FontStorage::Font font) const noexcept
+float UIElement::ResolveLineHeight ( FontStorage::Font font) const noexcept
 {
     CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
     float const rootValue = _css._lineHeight.GetValue ();
@@ -137,8 +137,7 @@ float UIElement::ResolveLineHeight ( android::FontStorage::Font font) const noex
         switch ( LengthValue const &lineHeight = p->_css._lineHeight; lineHeight.GetType () )
         {
             case LengthValue::eType::Auto:
-            // FUCK - remove namespace
-            return static_cast<float> ( android::FontStorage::GetFontPixelMetrics ( font )._baselineToBaseline );
+            return static_cast<float> ( FontStorage::GetFontPixelMetrics ( font )._baselineToBaseline );
 
             case LengthValue::eType::EM:
                 [[fallthrough]];
@@ -163,7 +162,8 @@ float UIElement::ResolveLineHeight ( android::FontStorage::Font font) const noex
         }
     }
 
-    android_vulkan::LogError ( "pbr::UIElement::ResolveLineHeight - Everything is inherit." );
+    // FUCK - remove namespace
+    android_vulkan::LogError ( "pbr::windows::UIElement::ResolveLineHeight - Everything is inherit." );
     AV_ASSERT ( false )
     return 0.0F;
 }
@@ -274,7 +274,8 @@ UIElement::AlignHandler UIElement::ResolveTextAlignment ( UIElement const &paren
             break;
 
             default:
-                android_vulkan::LogError ( "pbr::UIElement::ResolveTextAlignment - Unknown alignment." );
+                // FUCK - remove namespace
+                android_vulkan::LogError ( "pbr::windows::UIElement::ResolveTextAlignment - Unknown alignment." );
                 AV_ASSERT ( false )
             break;
         }
@@ -304,7 +305,8 @@ UIElement::AlignHandler UIElement::ResolveVerticalAlignment ( UIElement const &p
             break;
 
             default:
-                android_vulkan::LogError ( "pbr::UIElement::ResolveVerticalAlignment - Unknown alignment." );
+                // FUCK - remove namespace
+                android_vulkan::LogError ( "pbr::windows::UIElement::ResolveVerticalAlignment - Unknown alignment." );
                 AV_ASSERT ( false )
             break;
         }
@@ -329,4 +331,4 @@ float UIElement::AlignToEnd ( float pen, float parentSize, float lineSize ) noex
     return pen + parentSize - lineSize;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

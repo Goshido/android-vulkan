@@ -3,10 +3,10 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
-#include <pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
 
 
-namespace pbr {
+namespace pbr::windows {
 
 DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
@@ -182,9 +182,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     size_t const vertices[] =
     {
         childInfo._vertices,
-
-        // FUCK - remove namespace
-        childInfo._vertices + android::UIPass::GetVerticesPerRectangle ()
+        childInfo._vertices + UIPass::GetVerticesPerRectangle ()
     };
 
     bool const hasBackgroundColor = _css._backgroundColor.GetSRGB()._data[ 3U ] != 0U;
@@ -268,18 +266,13 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        // FUCK - remove namespace
-        constexpr size_t vertices = android::UIPass::GetVerticesPerRectangle ();
+        constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
         constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
+        constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
-        // FUCK - remove namespace
-        constexpr size_t verticesBytes = vertices * sizeof ( android::UIVertex );
-
-        android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+        UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
         std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-
-        // FUCK - remove namespace
-        std::span<android::UIVertex> &uiVertices = uiVertexBuffer._vertices;
+        std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
         std::memcpy ( uiPositions.data (), _positions, positionBytes );
         std::memcpy ( uiVertices.data (), _vertices, verticesBytes );
@@ -287,7 +280,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         uiPositions = uiPositions.subspan ( vertices );
         uiVertices = uiVertices.subspan ( vertices );
 
-        info._uiPass->SubmitRectangle ();
+        info._uiPass->SubmitNonImage ();
     }
 
     for ( auto* child : _children )
@@ -374,8 +367,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        // FUCK - remove namespace
-        android::UIPass::AppendRectangle ( _positions,
+        UIPass::AppendRectangle ( _positions,
             _vertices,
             _css._backgroundColor.GetSRGB (),
             _absoluteRect._topLeft,
@@ -431,4 +423,4 @@ void DIVUIElement::Update () noexcept
     _hasChanges = true;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

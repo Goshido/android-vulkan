@@ -267,7 +267,6 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
 
     UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-
     std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );

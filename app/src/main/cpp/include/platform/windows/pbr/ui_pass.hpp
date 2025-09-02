@@ -23,6 +23,12 @@ class UIPass final
     public:
         using UIBufferResponse = std::optional<UIVertexBuffer>;
 
+        struct Image final
+        {
+            uint16_t                        _image = ResourceHeap::INVALID_UI_IMAGE;
+            VkExtent2D                      _resolution {};
+        };
+
     private:
         struct Buffer final
         {
@@ -196,7 +202,7 @@ class UIPass final
         ) noexcept;
 
         static void ReleaseImage ( uint16_t image ) noexcept;
-        [[nodiscard]] static std::optional<uint16_t> RequestImage ( std::string const &asset ) noexcept;
+        [[nodiscard]] static std::optional<Image> RequestImage ( std::string const &asset ) noexcept;
 
     private:
         void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;

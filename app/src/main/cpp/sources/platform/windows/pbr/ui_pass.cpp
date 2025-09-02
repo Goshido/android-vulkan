@@ -71,8 +71,8 @@ class ImageStorage final
 
         static void ReleaseImage ( uint16_t image ) noexcept;
 
-        [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string const &asset ) noexcept;
-        [[nodiscard]] static std::optional<uint16_t> GetImage ( std::string_view asset ) noexcept;
+        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string const &asset ) noexcept;
+        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string_view asset ) noexcept;
 
         [[nodiscard]] static bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         static void OnDestroyDevice () noexcept;
@@ -118,12 +118,12 @@ void ImageStorage::ReleaseImage ( uint16_t image ) noexcept
     _assets.erase ( findResult );
 }
 
-std::optional<uint16_t> ImageStorage::GetImage ( std::string const &asset ) noexcept
+std::optional<UIPass::Image> ImageStorage::GetImage ( std::string const &asset ) noexcept
 {
     return GetImage ( std::string_view ( asset ) );
 }
 
-std::optional<uint16_t> ImageStorage::GetImage ( std::string_view asset ) noexcept
+std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset ) noexcept
 {
     if ( _commandBuffers.size () - _commandBufferIndex < COMMAND_BUFFERS_PER_TEXTURE )
     {
@@ -137,7 +137,13 @@ std::optional<uint16_t> ImageStorage::GetImage ( std::string_view asset ) noexce
     {
         Asset &ast = *findResult->second;
         ++ast._refs;
-        return std::optional<uint16_t> { ast._image };
+
+        return std::optional<UIPass::Image> {
+            {
+                ._image = ast._image,
+                ._resolution = ast._texture.GetResolution ()
+            }
+        };
     }
 
     Asset ast {};
@@ -168,7 +174,13 @@ std::optional<uint16_t> ImageStorage::GetImage ( std::string_view asset ) noexce
     Asset &a = _assets[ img ];
     a = std::move ( ast );
     _assetMap[ a._texture.GetName () ] = &a;
-    return std::optional<uint16_t> { img };
+
+    return std::optional<UIPass::Image> {
+        {
+            ._image = img,
+            ._resolution = a._texture.GetResolution ()
+        }
+    };
 }
 
 bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
@@ -638,7 +650,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !probe ) [[unlikely]]
         return false;
 
-    _textLUT = static_cast<uint16_t> ( *probe );
+    _textLUT = static_cast<uint16_t> ( probe->_image );
     _usedImages.reserve ( INITIAL_USED_IMAGE_CAPACITY );
     return true;
 }
@@ -958,7 +970,7 @@ void UIPass::ReleaseImage ( uint16_t image ) noexcept
     ImageStorage::ReleaseImage ( image );
 }
 
-std::optional<uint16_t> UIPass::RequestImage ( std::string const &asset ) noexcept
+std::optional<UIPass::Image> UIPass::RequestImage ( std::string const &asset ) noexcept
 {
     return ImageStorage::GetImage ( asset );
 }

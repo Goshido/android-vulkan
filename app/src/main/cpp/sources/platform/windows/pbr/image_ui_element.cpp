@@ -3,10 +3,10 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
-#include <pbr/image_ui_element.hpp>
+#include <platform/windows/pbr/image_ui_element.hpp>
 
 
-namespace pbr {
+namespace pbr::windows {
 
 bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 {
@@ -36,9 +36,7 @@ bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
     }
 
     info._pen = _penOut;
-
-    // FUCK - remove namespace
-    info._vertices += android::UIPass::GetVerticesPerRectangle ();
+    info._vertices += UIPass::GetVerticesPerRectangle ();
 
     std::vector<float> &lines = *info._lineHeights;
     lines.pop_back ();
@@ -77,12 +75,11 @@ ImageUIElement::ImageUIElement ( bool &success,
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    // FUCK - remove namespace
-    auto const texture = android::UIPass::RequestImage ( _asset );
+    auto const image = UIPass::RequestImage ( _asset );
 
-    if ( success = texture.has_value (); success )
+    if ( success = image.has_value (); success )
     {
-        _submitCache._texture = *texture;
+        _submitCache._image = *image;
     }
 }
 
@@ -98,21 +95,19 @@ ImageUIElement::ImageUIElement ( bool &success,
     _isAutoHeight ( _css._height.GetType () == LengthValue::eType::Auto ),
     _isInlineBlock ( _css._display == DisplayProperty::eValue::InlineBlock )
 {
-    // FUCK - remove namespace
-    auto const texture = android::UIPass::RequestImage ( _asset );
+    auto const image = UIPass::RequestImage ( _asset );
 
-    if ( success = texture.has_value (); success )
+    if ( success = image.has_value (); success )
     {
-        _submitCache._texture = *texture;
+        _submitCache._image = *image;
     }
 }
 
 ImageUIElement::~ImageUIElement () noexcept
 {
-    if ( _submitCache._texture )
+    if ( uint16_t const image = _submitCache._image._image; image != INVALID_IMAGE )
     {
-        // FUCK - remove namespace
-        android::UIPass::ReleaseImage ( _submitCache._texture );
+        UIPass::ReleaseImage ( image );
     }
 }
 
@@ -210,8 +205,7 @@ void ImageUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     // 'static' position territory
 
-    // FUCK - remove namespace
-    info._vertices += android::UIPass::GetVerticesPerRectangle ();
+    info._vertices += UIPass::GetVerticesPerRectangle ();
 
     if ( _css._display == DisplayProperty::eValue::Block )
     {
@@ -267,19 +261,13 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    // FUCK - remove namespace
-    constexpr size_t vertices = android::UIPass::GetVerticesPerRectangle ();
+    constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
     constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
+    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
 
-    // FUCK - remove namespace
-    constexpr size_t verticesBytes = vertices * sizeof ( android::UIVertex);
-
-    // FUCK - remove namespace
-    android::UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-
-    // FUCK - remove namespace
-    std::span<android::UIVertex> &uiVertices = uiVertexBuffer._vertices;
+    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );
@@ -287,7 +275,7 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
     uiPositions = uiPositions.subspan ( vertices );
     uiVertices = uiVertices.subspan ( vertices );
 
-    info._uiPass->SubmitImage ( _submitCache._texture );
+    info._uiPass->SubmitImage ( _submitCache._image._image );
 }
 
 bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
@@ -329,8 +317,12 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
 
-    // FUCK - remove namespace
-    android::UIPass::AppendImage ( _submitCache._positions, _submitCache._vertices, white, topLeft, bottomRight );
+    UIPass::AppendImage ( _submitCache._positions,
+        _submitCache._vertices,
+        white, topLeft,
+        bottomRight,
+        _submitCache._image._image
+    );
 
     pen._data[ 0U ] += blockWidth;
     _submitCache._penOut = pen;
@@ -356,7 +348,7 @@ GXVec2 ImageUIElement::ResolveSize ( GXVec2 const &parentCanvasSize ) noexcept
 
 GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth ) noexcept
 {
-    VkExtent2D const &r = _submitCache._texture->GetResolution ();
+    VkExtent2D const &r = _submitCache._image._resolution;
 
     GXVec2 result {};
     result._data[ 0U ] = ResolvePixelLength ( _css._width, parentWidth, false );
@@ -367,7 +359,7 @@ GXVec2 ImageUIElement::ResolveSizeByWidth ( float parentWidth ) noexcept
 
 GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight ) noexcept
 {
-    VkExtent2D const &r = _submitCache._texture->GetResolution ();
+    VkExtent2D const &r = _submitCache._image._resolution;
 
     GXVec2 result {};
     result._data[ 1U ] = ResolvePixelLength ( _css._height, parentHeight, true );
@@ -376,4 +368,4 @@ GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight ) noexcept
     return result;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

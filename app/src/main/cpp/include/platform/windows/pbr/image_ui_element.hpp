@@ -1,17 +1,19 @@
 // FUCK - windows and android separation
 
-#ifndef PBR_IMAGE_UI_ELEMENT_HPP
-#define PBR_IMAGE_UI_ELEMENT_HPP
+#ifndef PBR_WINDOWS_IMAGE_UI_ELEMENT_HPP
+#define PBR_WINDOWS_IMAGE_UI_ELEMENT_HPP
 
 
 #include "ui_element.hpp"
 
 
-namespace pbr {
+namespace pbr::windows {
 
 class ImageUIElement final : public UIElement
 {
     private:
+        constexpr static uint16_t INVALID_IMAGE = std::numeric_limits<uint16_t>::max ();
+
         struct ApplyLayoutCache final
         {
             std::vector<float>      _lineHeights {};
@@ -29,13 +31,15 @@ class ImageUIElement final : public UIElement
 
             std::vector<float>      _parentLineHeights {};
             GXVec2                  _parenTopLeft {};
-            Texture2DRef            _texture {};
 
-            // FUCK - remove namespace
-            GXVec2                  _positions[ android::UIPass::GetVerticesPerRectangle() ] {};
+            UIPass::Image           _image
+            {
+                ._image = INVALID_IMAGE,
+                ._resolution {}
+            };
 
-            // FUCK - remove namespace
-            android::UIVertex       _vertices[ android::UIPass::GetVerticesPerRectangle() ] {};
+            GXVec2                  _positions[ UIPass::GetVerticesPerRectangle () ] {};
+            UIVertex                _vertices[ UIPass::GetVerticesPerRectangle () ] {};
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };
@@ -91,7 +95,7 @@ class ImageUIElement final : public UIElement
         [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight ) noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::windows
 
 
-#endif // PBR_IMAGE_UI_ELEMENT_HPP
+#endif // PBR_WINDOWS_IMAGE_UI_ELEMENT_HPP

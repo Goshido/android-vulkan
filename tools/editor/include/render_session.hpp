@@ -6,10 +6,10 @@
 #include "message_queue.hpp"
 #include <pbr/default_texture_manager.hpp>
 #include <pbr/exposure_pass.hpp>
-#include <pbr/present_render_pass.hpp>
 #include <pbr/tone_mapper_pass.hpp>
 
 // FUCK - remove namespace
+#include <platform/android/pbr/present_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
 
 #include <platform/windows/mesh_geometry.hpp>
@@ -52,8 +52,13 @@ class RenderSession final
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;
-        pbr::PresentRenderPass                                      _presentRenderPass {};
+
+        // FUCK - remove namespace
+        pbr::android::PresentPass                                   _presentRenderPass {};
+
+        // FUCK - refactor
         VkRenderPassBeginInfo                                       _renderPassInfo {};
+
         android_vulkan::Texture2D                                   _renderTarget {};
         pbr::windows::ResourceHeap                                  _resourceHeap {};
         pbr::SamplerManager                                         _samplerManager {};

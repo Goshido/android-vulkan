@@ -1,5 +1,4 @@
 // FUCK - windows and android separation
-
 #ifndef PBR_ANDROID_FONT_STORAGE_HPP
 #define PBR_ANDROID_FONT_STORAGE_HPP
 

@@ -1,3 +1,4 @@
+// FUCK - remove namespace
 #ifndef PBR_WINDOWS_UI_PROGRAM_HPP
 #define PBR_WINDOWS_UI_PROGRAM_HPP
 

@@ -149,7 +149,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/property.cpp
     app/src/main/cpp/sources/pbr/property_checker.cpp
     app/src/main/cpp/sources/pbr/property_parser.cpp
-    app/src/main/cpp/sources/pbr/present_render_pass.cpp
     app/src/main/cpp/sources/pbr/reflection_component.cpp
     app/src/main/cpp/sources/pbr/reflection_global_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/reflection_global_pass.cpp
@@ -239,6 +238,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/image_ui_element.cpp
+    app/src/main/cpp/sources/platform/android/pbr/present_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/text_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_pass.cpp

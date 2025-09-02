@@ -1,5 +1,6 @@
-#ifndef PBR_PRESENT_RENDER_PASS_HPP
-#define PBR_PRESENT_RENDER_PASS_HPP
+// FUCK - remove namespace
+#ifndef PBR_ANDROID_PRESENT_PASS_HPP
+#define PBR_ANDROID_PRESENT_PASS_HPP
 
 
 #include <renderer.hpp>
@@ -11,9 +12,10 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
-class PresentRenderPass final
+class PresentPass final
 {
     private:
         struct FramebufferInfo final
@@ -29,15 +31,15 @@ class PresentRenderPass final
         VkSubmitInfo                    _submitInfo {};
 
     public:
-        PresentRenderPass () = default;
+        PresentPass () = default;
 
-        PresentRenderPass ( PresentRenderPass const & ) = delete;
-        PresentRenderPass &operator = ( PresentRenderPass const & ) = delete;
+        PresentPass ( PresentPass const & ) = delete;
+        PresentPass &operator = ( PresentPass const & ) = delete;
 
-        PresentRenderPass ( PresentRenderPass && ) = delete;
-        PresentRenderPass &operator = ( PresentRenderPass && ) = delete;
+        PresentPass ( PresentPass && ) = delete;
+        PresentPass &operator = ( PresentPass && ) = delete;
 
-        ~PresentRenderPass () = default;
+        ~PresentPass () = default;
 
         [[nodiscard]] VkResult AcquirePresentTarget ( android_vulkan::Renderer &renderer,
             VkSemaphore acquire
@@ -84,4 +86,4 @@ class PresentRenderPass final
 } // namespace pbr
 
 
-#endif // PBR_PRESENT_RENDER_PASS_HPP
+#endif // PBR_ANDROID_PRESENT_PASS_HPP

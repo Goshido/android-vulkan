@@ -273,7 +273,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
-    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
+    // FUCK - remove namespace
+    constexpr uint32_t subpass = android::PresentPass::GetSubpass ();
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
@@ -812,7 +813,8 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
         return false;
 
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    constexpr uint32_t subpass = PresentRenderPass::GetSubpass ();
+    // FUCK - remove namespace
+    constexpr uint32_t subpass = android::PresentPass::GetSubpass ();
 
     result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );

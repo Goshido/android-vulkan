@@ -1,5 +1,4 @@
 // FUCK - windows and android separation
-
 #ifndef PBR_ANDROID_DIV_UI_ELEMENT_HPP
 #define PBR_ANDROID_DIV_UI_ELEMENT_HPP
 

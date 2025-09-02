@@ -824,8 +824,9 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
+    // FUCK - refactor
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    constexpr uint32_t subpass = pbr::PresentRenderPass::GetSubpass ();
+    constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
 
     result = _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
@@ -1259,8 +1260,10 @@ void RenderSession::OnSwapchainCreated () noexcept
     }
 
     _uiPass.OnSwapchainDestroyed ();
+
+    // FUCK - refactor
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    constexpr uint32_t subpass = pbr::PresentRenderPass::GetSubpass ();
+    constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
 
     bool const result = _exposurePass.SetTarget ( renderer, _renderTarget ) &&
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&

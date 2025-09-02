@@ -1,3 +1,4 @@
+// FUCK - remove namespace
 #ifndef PBR_WINDOWS_COMPUTE_PROGRAM_HPP
 #define PBR_WINDOWS_COMPUTE_PROGRAM_HPP
 

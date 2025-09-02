@@ -7,11 +7,8 @@
 #include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
-
-// FUCK - remove namespace
+#include <platform/android/pbr/present_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
-
-#include "present_render_pass.hpp"
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
 #include "tone_mapper_pass.hpp"
@@ -65,7 +62,8 @@ class RenderSession final
         MeshHandler                 _meshHandlers[ 2U ] {};
         size_t                      _opaqueMeshCount = 0U;
 
-        PresentRenderPass           _presentRenderPass {};
+        // FUCK - remove namespace
+        android::PresentPass        _presentRenderPass {};
 
         VkRenderPassBeginInfo       _renderPassInfo {};
         RenderSessionStats          _renderSessionStats {};

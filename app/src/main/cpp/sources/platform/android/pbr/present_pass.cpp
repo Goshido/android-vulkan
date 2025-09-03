@@ -25,12 +25,6 @@ VkRenderPass PresentPass::GetRenderPass () const noexcept
     return _renderInfo.renderPass;
 }
 
-bool PresentPass::OnInitDevice () noexcept
-{
-    InitCommonStructures ();
-    return true;
-}
-
 void PresentPass::OnDestroyDevice ( VkDevice device ) noexcept
 {
     DestroyFramebuffers ( device );
@@ -41,9 +35,9 @@ void PresentPass::OnDestroyDevice ( VkDevice device ) noexcept
         .height = 0U
     };
 
-    if ( _renderInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
+    if ( VkRenderPass &renderPass = _renderInfo.renderPass; renderPass != VK_NULL_HANDLE ) [[likely]]
     {
-        vkDestroyRenderPass ( device, std::exchange ( _renderInfo.renderPass, VK_NULL_HANDLE ), nullptr );
+        vkDestroyRenderPass ( device, std::exchange ( renderPass, VK_NULL_HANDLE ), nullptr );
     }
 }
 
@@ -51,15 +45,10 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 {
     VkDevice device = renderer.GetDevice ();
     VkExtent2D const &resolution = renderer.GetSurfaceSize ();
-    bool const hasRenderPass = _renderInfo.renderPass != VK_NULL_HANDLE;
 
-    if ( hasRenderPass && !CreateFramebuffers ( renderer, device, resolution ) ) [[unlikely]]
-        return false;
-
-    if ( !CreateRenderPass ( renderer, device, resolution ) ) [[unlikely]]
-        return false;
-
-    return !_framebufferInfo.empty () || CreateFramebuffers ( renderer, device, resolution );
+    return !( ( _renderInfo.renderPass != VK_NULL_HANDLE ) && !CreateFramebuffers ( renderer, device, resolution ) ) &&
+        CreateRenderPass ( renderer, device, resolution ) &&
+        ( !_framebufferInfo.empty () || CreateFramebuffers ( renderer, device, resolution ) );
 }
 
 void PresentPass::OnSwapchainDestroyed ( VkDevice device ) noexcept
@@ -100,8 +89,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
 
     auto const submit = [ & ]() noexcept -> bool
     {
-        return android_vulkan::Renderer::CheckVkResult (
-            vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
+        return android_vulkan::Renderer::CheckVkResult ( vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
             // FUCK - remove namespace
             "pbr::android::PresentPass::End",
             "Can't submit command buffer"
@@ -288,62 +276,6 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _renderInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Present" )
     return true;
-}
-
-void PresentPass::InitCommonStructures () noexcept
-{
-    _renderInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .pNext = nullptr,
-        .renderPass = VK_NULL_HANDLE,
-        .framebuffer = VK_NULL_HANDLE,
-
-        .renderArea =
-        {
-            .offset
-            {
-                .x = 0,
-                .y = 0
-            },
-
-            .extent =
-            {
-                .width = 0U,
-                .height = 0U
-            }
-        },
-
-        .clearValueCount = 0U,
-        .pClearValues = nullptr
-    };
-
-    _presentInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = nullptr,
-        .swapchainCount = 1U,
-        .pSwapchains = nullptr,
-        .pImageIndices = nullptr,
-        .pResults = nullptr
-    };
-
-    constexpr static VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-
-    _submitInfo =
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 1U,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = &waitStage,
-        .commandBufferCount = 1U,
-        .pCommandBuffers = nullptr,
-        .signalSemaphoreCount = 1U,
-        .pSignalSemaphores = nullptr
-    };
 }
 
 } // namespace pbr::android

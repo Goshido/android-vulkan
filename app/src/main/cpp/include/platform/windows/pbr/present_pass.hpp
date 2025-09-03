@@ -49,6 +49,56 @@ class PresentPass final
             .pResults = nullptr
         };
 
+        VkRenderingAttachmentInfo       _colorAttachment
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = nullptr,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = VK_NULL_HANDLE,
+            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+            .clearValue
+            {
+                .color
+                {
+                    .float32 { 0.0F, 0.0F, 0.0F, 0.0F }
+                }
+            }
+        };
+
+        VkRenderingInfo                 _renderingInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+
+            .renderArea
+            {
+                .offset
+                {
+                    .x = 0,
+                    .y = 0
+                },
+
+                .extent
+                {
+                    .width = 0U,
+                    .height = 0U
+                }
+            },
+
+            .layerCount = 1U,
+            .viewMask = 0U,
+            .colorAttachmentCount = 1U,
+            .pColorAttachments = &_colorAttachment,
+            .pDepthAttachment = nullptr,
+            .pStencilAttachment = nullptr
+        };
+
     public:
         explicit PresentPass () = default;
 
@@ -67,7 +117,7 @@ class PresentPass final
         void OnDestroyDevice ( VkDevice device ) noexcept;
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
 
-        void Begin ( VkCommandBuffer commandBuffer ) noexcept;
+        void Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] std::optional<VkResult> End ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,

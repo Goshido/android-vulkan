@@ -18,6 +18,8 @@ namespace pbr::android {
 class PresentPass final
 {
     private:
+        constexpr static VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
         struct FramebufferInfo final
         {
             VkFramebuffer               _framebuffer = VK_NULL_HANDLE;
@@ -26,9 +28,57 @@ class PresentPass final
 
         uint32_t                        _framebufferIndex = std::numeric_limits<uint32_t>::max ();
         std::vector<FramebufferInfo>    _framebufferInfo {};
-        VkPresentInfoKHR                _presentInfo {};
-        VkRenderPassBeginInfo           _renderInfo {};
-        VkSubmitInfo                    _submitInfo {};
+
+        VkRenderPassBeginInfo           _renderInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .pNext = nullptr,
+            .renderPass = VK_NULL_HANDLE,
+            .framebuffer = VK_NULL_HANDLE,
+
+            .renderArea
+            {
+                .offset
+                {
+                    .x = 0,
+                    .y = 0
+                },
+
+                .extent
+                {
+                    .width = 0U,
+                    .height = 0U
+                }
+            },
+
+            .clearValueCount = 0U,
+            .pClearValues = nullptr
+        };
+
+        VkPresentInfoKHR                _presentInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 1U,
+            .pWaitSemaphores = nullptr,
+            .swapchainCount = 1U,
+            .pSwapchains = nullptr,
+            .pImageIndices = nullptr,
+            .pResults = nullptr
+        };
+
+        VkSubmitInfo                    _submitInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 1U,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = &WAIT_STAGE,
+            .commandBufferCount = 1U,
+            .pCommandBuffers = nullptr,
+            .signalSemaphoreCount = 1U,
+            .pSignalSemaphores = nullptr
+        };
 
     public:
         PresentPass () = default;
@@ -47,9 +97,7 @@ class PresentPass final
 
         [[nodiscard]] VkRenderPass GetRenderPass () const noexcept;
 
-        [[nodiscard]] bool OnInitDevice () noexcept;
         void OnDestroyDevice ( VkDevice device ) noexcept;
-
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
         void OnSwapchainDestroyed ( VkDevice device ) noexcept;
 
@@ -79,8 +127,6 @@ class PresentPass final
             VkDevice device,
             VkExtent2D const &resolution
         ) noexcept;
-
-        void InitCommonStructures () noexcept;
 };
 
 } // namespace pbr

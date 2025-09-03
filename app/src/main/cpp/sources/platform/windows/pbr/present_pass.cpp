@@ -31,8 +31,6 @@ void PresentPass::OnDestroyDevice ( VkDevice device ) noexcept
 
 bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 {
-    // FUCK - init begin rendering structures
-
     size_t const imageCount = renderer.GetPresentImageCount ();
     size_t const semaphoreCount = _renderEnd.size ();
 
@@ -70,9 +68,10 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
-void PresentPass::Begin ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    // FUCK
+    _colorAttachment.imageView = renderer.GetPresentImageView ( static_cast<size_t> ( _swapchainImageIndex ) );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }
 
 std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
@@ -82,7 +81,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     std::mutex* submitMutex
 ) noexcept
 {
-    // FUCK finish begin rendering structures
+    vkCmdEndRendering ( commandBuffer );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         // FUCK - remove namespace
@@ -102,8 +101,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
 
     auto const submit = [ & ]() noexcept -> bool
     {
-        return android_vulkan::Renderer::CheckVkResult (
-            vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
+        return android_vulkan::Renderer::CheckVkResult ( vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
             // FUCK - remove namespace
             "pbr::windows::PresentPass::End",
             "Can't submit command buffer"

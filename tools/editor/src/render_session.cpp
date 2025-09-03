@@ -766,11 +766,7 @@ bool RenderSession::InitModules () noexcept
 
     new HelloTriangleJob ( _messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
 
-    bool result = AllocateCommandBuffers ( device ) &&
-        _presentRenderPass.OnInitDevice () &&
-        _presentRenderPass.OnSwapchainCreated ( renderer );
-
-    if ( !result ) [[unlikely]]
+    if ( !AllocateCommandBuffers ( device ) || !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
@@ -794,7 +790,7 @@ bool RenderSession::InitModules () noexcept
 
     VkCommandBuffer commandBuffer;
 
-    result =
+    bool result =
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateCommandBuffers ( device, &allocateInfo, &commandBuffer ),
             "editor::RenderSession::InitModules",

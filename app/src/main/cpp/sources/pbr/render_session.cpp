@@ -183,7 +183,6 @@ bool RenderSession::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         _toneMapperPass.Init ( renderer ) &&
         _defaultTextureManager.Init ( renderer, commandInfo._pool ) &&
         _samplerManager.Init ( device ) &&
-        _presentRenderPass.OnInitDevice () &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () );
 }
 

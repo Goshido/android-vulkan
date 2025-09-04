@@ -4,14 +4,9 @@
 
 struct PushConstants
 {
-    // FUCK - use single vertex data buffer
-    uint64_t        _positionBDA;
-    uint64_t        _restBDA;
-
+    uint64_t        _bda;
     float32_t2x2    _rotateScale;
     float32_t2      _offset;
-
-    // FUCK make better packing
     uint32_t        _textLUT;
 };
 

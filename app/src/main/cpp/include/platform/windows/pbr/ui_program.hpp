@@ -20,14 +20,13 @@ class UIProgram final : public windows::GraphicsProgram
 
         struct UIInfo final
         {
+            // FUCK single BDA now
             VkDeviceAddress                     _positionBDA;
             VkDeviceAddress                     _restBDA;
+
             GXVec2                              _rotateScaleRow0;
-            GXVec2                              _padding0;
             GXVec2                              _rotateScaleRow1;
             GXVec2                              _offset;
-
-            // FUCK - use better packing
             uint32_t                            _textLUT;
         };
 

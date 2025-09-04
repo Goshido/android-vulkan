@@ -4,10 +4,9 @@
 #include "ui_push_constants.hlsl"
 
 
-using Position = float32_t2;
-
 struct UIVertex
 {
+    float32_t2                      _position;
     float16_t2                      _uv;
     uint32_t                        _colorR: 8;
     uint32_t                        _colorG: 8;
@@ -38,23 +37,14 @@ struct OutputData
 
 OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
-    // FUCK - use single vertex data buffer
+    UIVertex const uiVertex = vk::RawBufferLoad<UIVertex> ( g_uiInfo._bda + vertexID * sizeof ( UIVertex ), 2U );
+
     OutputData result;
-
-    result._vertexH = float32_t4 (
-        mul ( g_uiInfo._rotateScale,
-            vk::RawBufferLoad<Position> ( g_uiInfo._positionBDA + vertexID * sizeof ( Position ) ) + g_uiInfo._offset
-        ),
-
-        0.5F,
-        1.0F
-    );
-
-    UIVertex const rest = vk::RawBufferLoad<UIVertex> ( g_uiInfo._restBDA + vertexID * sizeof ( UIVertex ) );
-    result._uv = (float32_t2)rest._uv;
-    result._image = (uint32_t)rest._image;
-    result._uiPrimitiveType = (uint32_t)rest._uiPrimitiveType;
-    result._color = UnpackColorF32x4 ( rest._colorR, rest._colorG, rest._colorB, rest._colorA );
+    result._vertexH = float32_t4 ( mul ( g_uiInfo._rotateScale, uiVertex._position + g_uiInfo._offset ), 0.5F, 1.0F );
+    result._uv = (float32_t2)uiVertex._uv;
+    result._image = (uint32_t)uiVertex._image;
+    result._uiPrimitiveType = (uint32_t)uiVertex._uiPrimitiveType;
+    result._color = UnpackColorF32x4 ( uiVertex._colorR, uiVertex._colorG, uiVertex._colorB, uiVertex._colorA );
 
     return result;
 }

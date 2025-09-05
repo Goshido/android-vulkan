@@ -30,7 +30,7 @@ class UIElement
         struct SubmitInfo final
         {
             UIPass*                         _uiPass = 0U;
-            UIVertexBuffer                  _vertexBuffer {};
+            UIVertexBuffer                  _uiVertexBuffer {};
         };
 
         struct UpdateInfo final

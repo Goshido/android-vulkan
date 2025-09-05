@@ -262,19 +262,11 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-    constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
-    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
+    constexpr size_t uiVertexBytes = vertices * sizeof ( UIVertex );
 
-    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
-
-    std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
-    std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );
-
-    uiPositions = uiPositions.subspan ( vertices );
+    UIVertexBuffer &uiVertices = info._uiVertexBuffer;
+    std::memcpy ( uiVertices.data (), &_submitCache._uiVertices, uiVertexBytes );
     uiVertices = uiVertices.subspan ( vertices );
-
     info._uiPass->SubmitImage ( _submitCache._image._image );
 }
 
@@ -317,8 +309,7 @@ bool ImageUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     constexpr GXColorUNORM white ( 0xFFU, 0xFFU, 0xFFU, 0xFFU );
 
-    UIPass::AppendImage ( _submitCache._positions,
-        _submitCache._vertices,
+    UIPass::AppendImage ( _submitCache._uiVertices,
         white, topLeft,
         bottomRight,
         _submitCache._image._image

@@ -57,11 +57,8 @@ class TextUIElement final : public UIElement
             std::vector<float>          _parentLineHeights {};
             GXVec2                      _parenSize {};
 
-            std::vector<GXVec2>         _positions {};
-            size_t                      _positionBufferBytes = 0U;
-
-            std::vector<UIVertex>       _vertices {};
-            size_t                      _vertexBufferBytes = 0U;
+            std::vector<UIVertex>       _uiVertices {};
+            size_t                      _uiVertexBufferBytes = 0U;
 
             void Clear () noexcept;
 

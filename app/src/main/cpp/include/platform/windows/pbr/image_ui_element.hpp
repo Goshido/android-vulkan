@@ -38,8 +38,7 @@ class ImageUIElement final : public UIElement
                 ._resolution {}
             };
 
-            GXVec2                  _positions[ UIPass::GetVerticesPerRectangle () ] {};
-            UIVertex                _vertices[ UIPass::GetVerticesPerRectangle () ] {};
+            UIVertex                _uiVertices[ UIPass::GetVerticesPerRectangle () ] {};
 
             [[nodiscard]] bool Run ( UpdateInfo &info, std::vector<float> const &cachedLineHeight ) const noexcept;
         };

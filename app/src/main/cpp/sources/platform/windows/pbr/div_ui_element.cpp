@@ -267,19 +267,11 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( _hasBackground )
     {
         constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-        constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
-        constexpr size_t verticesBytes = vertices * sizeof ( UIVertex );
+        constexpr size_t uiVertexBytes = vertices * sizeof ( UIVertex );
 
-        UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-        std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-        std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
-
-        std::memcpy ( uiPositions.data (), _positions, positionBytes );
-        std::memcpy ( uiVertices.data (), _vertices, verticesBytes );
-
-        uiPositions = uiPositions.subspan ( vertices );
+        UIVertexBuffer &uiVertices = info._uiVertexBuffer;
+        std::memcpy ( uiVertices.data (), &_uiVertices, uiVertexBytes );
         uiVertices = uiVertices.subspan ( vertices );
-
         info._uiPass->SubmitNonImage ();
     }
 
@@ -367,8 +359,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        UIPass::AppendRectangle ( _positions,
-            _vertices,
+        UIPass::AppendRectangle ( _uiVertices,
             _css._backgroundColor.GetSRGB (),
             _absoluteRect._topLeft,
             _absoluteRect._bottomRight

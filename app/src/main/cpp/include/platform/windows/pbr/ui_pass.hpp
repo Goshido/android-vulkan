@@ -131,8 +131,7 @@ class UIPass final
         bool                                _hasChanges = false;
         bool                                _isTransformChanged = false;
 
-        BufferStream                        _positions { sizeof ( GXVec2 ) };
-        BufferStream                        _rest { sizeof ( UIVertex ) };
+        BufferStream                        _uiVertices { sizeof ( UIVertex ) };
 
         UIProgram                           _program {};
         UIProgram::UIInfo                   _uiInfo {};
@@ -176,23 +175,20 @@ class UIPass final
             return 6U;
         }
 
-        static void AppendImage ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendImage ( UIVertex* uiVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
             uint16_t image
         ) noexcept;
 
-        static void AppendRectangle ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendRectangle ( UIVertex* uiVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
-        static void AppendText ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendText ( UIVertex* uiVertices,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,

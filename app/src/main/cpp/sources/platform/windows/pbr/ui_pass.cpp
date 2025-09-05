@@ -31,9 +31,9 @@ class ImageStorage final
         class Asset final
         {
             public:
-                android_vulkan::Texture2D                   _texture {};
-                size_t                                      _refs = 1U;
-                uint16_t                                    _image = ResourceHeap::INVALID_UI_IMAGE;
+                android_vulkan::Texture2D                       _texture {};
+                size_t                                          _refs = 1U;
+                uint16_t                                        _image = ResourceHeap::INVALID_UI_IMAGE;
 
             public:
                 Asset () = default;
@@ -208,7 +208,6 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "UI image storage" )
-
     return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS );
 }
 
@@ -611,9 +610,9 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     _program.Bind ( commandBuffer );
     _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
-    auto const start = static_cast<VkDeviceAddress> ( _readVertexIndex );
-    _uiInfo._positionBDA = _positions.GetBufferAddress () + start * sizeof ( GXVec2 );
-    _uiInfo._restBDA = _rest.GetBufferAddress () + start * sizeof ( UIVertex );
+    _uiInfo._bda =
+        _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );
+
     _program.SetPushConstants ( commandBuffer, &_uiInfo );
 
     vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
@@ -638,8 +637,7 @@ size_t UIPass::GetUsedVertexCount () const noexcept
 bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     bool const status = _fontStorage.Init ( renderer ) &&
-        _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
-        _rest.Init ( renderer, "UI rest", "UI rest staging" ) &&
+        _uiVertices.Init ( renderer, "UI vertices", "UI staging" ) &&
         ImageStorage::OnInitDevice ( renderer );
 
     if ( !status ) [[unlikely]]
@@ -658,11 +656,9 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
+
     _program.Destroy ( device );
-
-    _positions.Destroy ( renderer );
-    _rest.Destroy ( renderer );
-
+    _uiVertices.Destroy ( renderer );
     _inUseImageTracker.Destroy ();
     _fontStorage.Destroy ( renderer );
 
@@ -730,13 +726,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
     _readVertexIndex = nextIdx;
     _writeVertexIndex = nextIdx + neededVertices;
 
-    return
-    {
-        {
-            ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-            ._vertices { static_cast<UIVertex*> ( _rest.GetData ( nextIdx ) ), neededVertices }
-        }
-    };
+    return UIPass::UIBufferResponse { { static_cast<UIVertex*> ( _uiVertices.GetData ( nextIdx ) ), neededVertices } };
 }
 
 bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept
@@ -781,68 +771,61 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer
     return true;
 }
 
-void UIPass::AppendImage ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendImage ( UIVertex* uiVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
     uint16_t image
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
-
-    targetVertices[ 0U ] =
+    uiVertices[ 0U ] =
     {
+        ._position = topLeft,
         ._uv = IMAGE_TOP_LEFT,
         ._color = color,
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-
-    targetVertices[ 1U ] =
+    uiVertices[ 1U ] =
     {
+        ._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] ),
         ._color = color,
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    targetPositions[ 2U ] = bottomRight;
-
-    targetVertices[ 2U ] =
+    uiVertices[ 2U ] =
     {
+        ._position = bottomRight,
         ._uv = IMAGE_BOTTOM_RIGHT,
         ._color = color,
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    targetPositions[ 3U ] = bottomRight;
-
-    targetVertices[ 3U ] =
+    uiVertices[ 3U ] =
     {
+        ._position = bottomRight,
         ._uv = IMAGE_BOTTOM_RIGHT,
         ._color = color,
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
-
-    targetVertices[ 4U ] =
+    uiVertices[ 4U ] =
     {
+        ._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] ),
         ._color = color,
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    targetPositions[ 5U ] = topLeft;
-
-    targetVertices[ 5U ] =
+    uiVertices[ 5U ] =
     {
+        ._position = topLeft,
         ._uv = IMAGE_TOP_LEFT,
         ._color = color,
         ._image = image,
@@ -850,52 +833,44 @@ void UIPass::AppendImage ( GXVec2* targetPositions,
     };
 }
 
-void UIPass::AppendRectangle ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendRectangle ( UIVertex* uiVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
-
-    UIVertex &v0 = targetVertices[ 0U ];
+    UIVertex &v0 = uiVertices[ 0U ];
+    v0._position = topLeft;
     v0._color = color;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-
-    UIVertex &v1 = targetVertices[ 1U ];
+    UIVertex &v1 = uiVertices[ 1U ];
+    v1._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
     v1._color = color;
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
-    targetPositions[ 2U ] = bottomRight;
-
-    UIVertex &v2 = targetVertices[ 2U ];
+    UIVertex &v2 = uiVertices[ 2U ];
+    v2._position = bottomRight;
     v2._color = color;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
-    targetPositions[ 3U ] = bottomRight;
-
-    UIVertex &v3 = targetVertices[ 3U ];
+    UIVertex &v3 = uiVertices[ 3U ];
+    v3._position = bottomRight;
     v3._color = color;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
-
-    UIVertex &v4 = targetVertices[ 4U ];
+    UIVertex &v4 = uiVertices[ 4U ];
+    v4._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
     v4._color = color;
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 
-    targetPositions[ 5U ] = topLeft;
-
-    UIVertex &v5 = targetVertices[ 5U ];
+    UIVertex &v5 = uiVertices[ 5U ];
+    v5._position = topLeft;
     v5._color = color;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 }
 
-void UIPass::AppendText ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendText ( UIVertex* uiVertices,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
@@ -904,60 +879,54 @@ void UIPass::AppendText ( GXVec2* targetPositions,
     uint16_t atlas
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
-
-    targetVertices[ 0U ] =
+    uiVertices[ 0U ] =
     {
+        ._position = topLeft,
         ._uv = glyphTopLeft,
         ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
-
-    targetVertices[ 1U ] =
+    uiVertices[ 1U ] =
     {
+        ._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
         ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
     };
 
-    targetPositions[ 2U ] = bottomRight;
-
-    targetVertices[ 2U ] =
+    uiVertices[ 2U ] =
     {
+        ._position = bottomRight,
         ._uv = glyphBottomRight,
         ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    targetPositions[ 3U ] = bottomRight;
-
-    targetVertices[ 3U ] =
+    uiVertices[ 3U ] =
     {
+        ._position = bottomRight,
         ._uv = glyphBottomRight,
         ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
-
-    targetVertices[ 4U ] =
+    uiVertices[ 4U ] =
     {
+        ._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
         ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    targetPositions[ 5U ] = topLeft;
-
-    targetVertices[ 5U ] =
+    uiVertices[ 5U ] =
     {
+        ._position = topLeft,
         ._uv = glyphTopLeft,
         ._color = color,
         ._image = atlas,
@@ -977,8 +946,7 @@ std::optional<UIPass::Image> UIPass::RequestImage ( std::string const &asset ) n
 
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 {
-    _positions.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
-    _rest.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
+    _uiVertices.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
     _hasChanges = false;
 }
 

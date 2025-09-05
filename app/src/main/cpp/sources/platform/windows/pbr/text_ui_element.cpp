@@ -48,11 +48,8 @@ void TextUIElement::SubmitCache::Clear () noexcept
     _isTextChanged = true;
     _parentLineHeights.clear ();
 
-    _positions.clear ();
-    _positionBufferBytes = 0U;
-
-    _vertices.clear ();
-    _vertexBufferBytes = 0U;
+    _uiVertices.clear ();
+    _uiVertexBufferBytes = 0U;
 }
 
 bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
@@ -403,18 +400,10 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    size_t const vertices = _submitCache._positions.size ();
-
-    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
-    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
-
-    std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
-    std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
-
-    uiPositions = uiPositions.subspan ( vertices );
-    uiVertices = uiVertices.subspan ( vertices );
-
+    size_t const vertices = _submitCache._uiVertices.size ();
+    UIVertexBuffer &uiVertexBuffer = info._uiVertexBuffer;
+    std::memcpy ( uiVertexBuffer.data (), _submitCache._uiVertices.data (), _submitCache._uiVertexBufferBytes );
+    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
     info._uiPass->SubmitNonImage ();
 }
 
@@ -433,19 +422,14 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._parenSize = info._parentSize;
     _submitCache._penIn = info._pen;
 
-    std::vector<GXVec2> &positionBuffer = _submitCache._positions;
-    positionBuffer.clear ();
-
-    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
-    vertexBuffer.clear ();
+    std::vector<UIVertex> &uiVertices = _submitCache._uiVertices;
+    uiVertices.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
-    positionBuffer.resize ( vertexCount );
-    vertexBuffer.resize ( vertexCount );
+    uiVertices.resize ( vertexCount );
 
-    GXVec2* p = positionBuffer.data ();
-    UIVertex* v = vertexBuffer.data ();
+    UIVertex* v = uiVertices.data ();
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorUNORM const color = ResolveColor ();
@@ -499,8 +483,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            UIPass::AppendText ( p,
-                v,
+            UIPass::AppendText ( v,
                 color,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
@@ -510,8 +493,6 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             );
 
             x += g._advance;
-
-            p += verticesPerGlyph;
             v += verticesPerGlyph;
         }
 
@@ -526,8 +507,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
+    _submitCache._uiVertexBufferBytes = vertexCount * sizeof ( UIVertex );
     return true;
 }
 

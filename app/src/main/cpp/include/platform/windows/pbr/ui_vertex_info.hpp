@@ -20,6 +20,7 @@ namespace pbr::windows {
 
 struct UIVertex final
 {
+    GXVec2                      _position {};
     android_vulkan::Half2       _uv {};
     GXColorUNORM                _color {};
     uint16_t                    _image: UI_IMAGE_BITS = 0U;
@@ -28,11 +29,7 @@ struct UIVertex final
 
 #pragma pack ( pop )
 
-struct UIVertexBuffer final
-{
-    std::span<GXVec2>       _positions {};
-    std::span<UIVertex>     _vertices {};
-};
+using UIVertexBuffer = std::span<UIVertex>;
 
 } // namespace pbr::windows
 

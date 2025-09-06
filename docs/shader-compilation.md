@@ -174,5 +174,6 @@ Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShade
 [SPIR-V] Non semantic shader information issue (-fspv-debug=vulkan-with-source) | [#6939](https://github.com/microsoft/DirectXShaderCompiler/issues/6939) | ✔️ Fixed
 [SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | 🛡️ Not an issue
 True buffer device address and `globallycoherent` | [#7661](https://github.com/microsoft/DirectXShaderCompiler/issues/7661) | ⚠️ Submitted
+[SPIR-V] globallycoherent with ResourceDescriptorHeap approach | [#7740](https://github.com/microsoft/DirectXShaderCompiler/issues/7740) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

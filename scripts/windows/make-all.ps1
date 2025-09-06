@@ -135,5 +135,9 @@ scripts\windows\make-spv.ps1                                                    
     "$ANDROID_SHADER_DIRECTORY\exposure.cs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\exposure.cs.hlsl"                                                                         `
+    "$WINDOWS_SHADER_DIRECTORY\exposure.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\skin.cs.hlsl"                                                                                `
     "$CORE_SHADER_DIRECTORY\skin.cs.spv"

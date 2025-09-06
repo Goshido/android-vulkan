@@ -14,8 +14,8 @@
 /app/build
 
 # HLSL SPIR-V
-/app/src/main/hlsl/disassm/blob.spvasm
-/app/src/main/hlsl/validation/blob.spv
+/app/src/main/hlsl/disassm/*.spvasm
+/app/src/main/hlsl/validation/*.spv
 
 # NVIDIA Nsight Graphics config
 /app/src/main/assets/imgui.ini

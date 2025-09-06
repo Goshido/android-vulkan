@@ -26,7 +26,8 @@ class ComputeProgram : public pbr::ComputeProgram
 
         [[nodiscard]] virtual bool Init ( VkDevice device, SpecializationData specializationData ) noexcept = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( VkDevice device,
+        [[nodiscard]] virtual bool InitShaderInfo ( std::vector<uint8_t> &cs,
+            VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo

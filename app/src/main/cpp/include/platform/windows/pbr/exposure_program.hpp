@@ -1,16 +1,16 @@
 // FUCK - windows and android separation
 
-#ifndef PBR_ANDROID_EXPOSURE_PROGRAM_HPP
-#define PBR_ANDROID_EXPOSURE_PROGRAM_HPP
+#ifndef PBR_WINDOWS_EXPOSURE_PROGRAM_HPP
+#define PBR_WINDOWS_EXPOSURE_PROGRAM_HPP
 
 
 #include "compute_program.hpp"
-#include "exposure_descriptor_set_layout.hpp"
+#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
 // FUCK - remove namespace
-namespace pbr::android {
+namespace pbr::windows {
 
 class ExposureProgram final : public ComputeProgram
 {
@@ -19,6 +19,12 @@ class ExposureProgram final : public ComputeProgram
 
         struct PushConstants final
         {
+            [[maybe_unused]] uint32_t       _hdrImage;
+            [[maybe_unused]] uint32_t       _syncMip5;
+            [[maybe_unused]] uint32_t       _exposure;
+            [[maybe_unused]] uint32_t       _globalAtomic;
+            [[maybe_unused]] uint32_t       _temporalLuma;
+
             [[maybe_unused]] float          _exposureCompensation;
             [[maybe_unused]] float          _eyeAdaptation;
             [[maybe_unused]] float          _maxLuma;
@@ -28,7 +34,7 @@ class ExposureProgram final : public ComputeProgram
         AV_DX_ALIGNMENT_END
 
     private:
-        ExposureDescriptorSetLayout         _layout {};
+        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit ExposureProgram () noexcept;
@@ -41,25 +47,22 @@ class ExposureProgram final : public ComputeProgram
 
         ~ExposureProgram () override = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            SpecializationData specializationData
-        ) noexcept override;
+        [[nodiscard]] bool Init ( VkDevice device, SpecializationData specializationData ) noexcept override;
 
         void Destroy ( VkDevice device ) noexcept override;
-
-        void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
     private:
         [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool InitShaderInfo ( std::vector<uint8_t> &cs,
+            VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo
         ) noexcept override;
 };
 
-} // namespace pbr::android
+} // namespace pbr::windows
 
 
-#endif // PBR_ANDROID_EXPOSURE_PROGRAM_HPP
+#endif // PBR_WINDOWS_EXPOSURE_PROGRAM_HPP

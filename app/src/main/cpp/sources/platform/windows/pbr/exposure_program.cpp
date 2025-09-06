@@ -1,15 +1,16 @@
 #include <precompiled_headers.hpp>
+#include <file.hpp>
 #include <pbr/exposure.inc>
 #include <pbr/exposure_specialization.hpp>
-#include <platform/android/pbr/exposure_program.hpp>
+#include <platform/windows/pbr/exposure_program.hpp>
 
 
 // FUCK - remove namespace
-namespace pbr::android {
+namespace pbr::windows {
 
 namespace {
 
-constexpr char const* SHADER = "shaders/android/exposure.cs.spv";
+constexpr char const* SHADER = "shaders/windows/exposure.cs.spv";
 
 } // end of anonymous namespace
 
@@ -21,12 +22,11 @@ ExposureProgram::ExposureProgram () noexcept:
     // NOTHING
 }
 
-bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
-    SpecializationData specializationData
-) noexcept
+bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationData ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
     VkSpecializationInfo specInfo {};
+    VkShaderModuleCreateInfo moduleInfo {};
+    std::vector<uint8_t> cs{};
 
     VkComputePipelineCreateInfo pipelineInfo;
     pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -35,14 +35,14 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    bool const result = InitShaderInfo ( renderer, specializationData, &specInfo, pipelineInfo.stage ) &&
+    bool const result = InitShaderInfo ( cs, moduleInfo, specializationData, &specInfo, pipelineInfo.stage ) &&
         InitLayout ( device, pipelineInfo.layout ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
 
             // FUCK - remove namespace
-            "pbr::android::ExposureProgram::Init",
+            "pbr::windows::ExposureProgram::Init",
 
             "Can't create pipeline"
         );
@@ -51,7 +51,6 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Exposure" )
-    DestroyShaderModule ( device );
     return true;
 }
 
@@ -59,19 +58,6 @@ void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
-}
-
-void ExposureProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept
-{
-    vkCmdBindDescriptorSets ( commandBuffer,
-        VK_PIPELINE_BIND_POINT_COMPUTE,
-        _pipelineLayout,
-        0U,
-        1U,
-        &set,
-        0U,
-        nullptr
-    );
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
@@ -101,7 +87,7 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
 
         // FUCK - remove namespace
-        "pbr::android::ExposureProgram::InitLayout",
+        "pbr::windows::ExposureProgram::InitLayout",
 
         "Can't create pipeline layout"
     );
@@ -115,23 +101,19 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     return true;
 }
 
-bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
+    VkShaderModuleCreateInfo &moduleInfo,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo &targetInfo
 ) noexcept
 {
-    bool const result = renderer.CreateShader ( _computeShader,
-        SHADER,
+    android_vulkan::File csFile ( SHADER );
 
-        // FUCK - remove namespace
-        "Can't create shader (pbr::android::ExposureProgram)"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !csFile.LoadContent () ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _computeShader, VK_OBJECT_TYPE_SHADER_MODULE, SHADER )
+    cs = std::move ( csFile.GetContent () );
 
     constexpr size_t w = offsetof ( VkExtent2D, width );
     constexpr size_t h = offsetof ( VkExtent2D, height );
@@ -165,6 +147,15 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
         }
     };
 
+    moduleInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = cs.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( cs.data () )
+    };
+
     *specializationInfo =
     {
         .mapEntryCount = static_cast<uint32_t> ( std::size ( entries ) ),
@@ -176,10 +167,10 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     targetInfo =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
+        .pNext = &moduleInfo,
         .flags = 0U,
         .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = _computeShader,
+        .module = VK_NULL_HANDLE,
         .pName = COMPUTE_SHADER_ENTRY_POINT,
         .pSpecializationInfo = specializationInfo
     };
@@ -187,4 +178,4 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-} // namespace pbr::android
+} // namespace pbr::windows

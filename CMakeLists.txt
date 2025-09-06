@@ -88,6 +88,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/dummy_light_program.cpp
     app/src/main/cpp/sources/pbr/dummy_program.cpp
     app/src/main/cpp/sources/pbr/exposure_pass.cpp
+    app/src/main/cpp/sources/pbr/exposure_specialization.cpp
     app/src/main/cpp/sources/pbr/fail_property_checker.cpp
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp

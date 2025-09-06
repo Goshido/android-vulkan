@@ -164,9 +164,7 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulka
     VkDevice device = renderer.GetDevice ();
 
     VkExtent2D mipResolution;
-    // FUCK - remove namespace
-    android::ExposureProgram::SpecializationInfo specData {};
-    android::ExposureProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
+    ExposureSpecialization const specData ( _dispatch, mipResolution, hdrImage.GetResolution () );
 
     bool const result = UpdateSyncMip5 ( renderer, device, specData._mip5Resolution ) &&
 
@@ -810,9 +808,7 @@ void ExposurePass::SyncBefore ( VkCommandBuffer commandBuffer ) noexcept
 bool ExposurePass::UpdateMipCount ( android_vulkan::Renderer &renderer,
     VkDevice device,
     uint32_t mipCount,
-
-    // FUCK - remove namespace
-    android::ExposureProgram::SpecializationInfo const &specInfo
+    ExposureSpecialization const &specInfo
 ) noexcept
 {
     if ( mipCount == _mipCount )

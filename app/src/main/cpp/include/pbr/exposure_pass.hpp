@@ -4,6 +4,8 @@
 #define PBR_EXPOSURE_PASS_HPP
 
 
+#include <pbr/exposure_specialization.hpp>
+
 // FUCK - remove namespace
 #include <platform/android/pbr/exposure_descriptor_set_layout.hpp>
 #include <platform/android/pbr/exposure_program.hpp>
@@ -108,9 +110,7 @@ class ExposurePass final
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,
             uint32_t mipCount,
-
-            // FUCK - remove namespace
-            android::ExposureProgram::SpecializationInfo const &specInfo
+            ExposureSpecialization const &specInfo
         ) noexcept;
 
         [[nodiscard]] bool UpdateSyncMip5 ( android_vulkan::Renderer &renderer,

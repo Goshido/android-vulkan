@@ -1,9 +1,13 @@
+// FUCK - windows and android separation
+
 #ifndef PBR_EXPOSURE_PASS_HPP
 #define PBR_EXPOSURE_PASS_HPP
 
 
-#include "exposure_descriptor_set_layout.hpp"
-#include "exposure_program.hpp"
+// FUCK - remove namespace
+#include <platform/android/pbr/exposure_descriptor_set_layout.hpp>
+#include <platform/android/pbr/exposure_program.hpp>
+
 #include <texture2D.hpp>
 
 
@@ -14,39 +18,42 @@ class ExposurePass final
     private:
         struct Memory final
         {
-            VkDeviceMemory                  _memory = VK_NULL_HANDLE;
-            VkDeviceSize                    _offset = std::numeric_limits<VkDeviceSize>::max ();
+            VkDeviceMemory                          _memory = VK_NULL_HANDLE;
+            VkDeviceSize                            _offset = std::numeric_limits<VkDeviceSize>::max ();
         };
 
     private:
-        VkBufferMemoryBarrier               _exposureBeforeBarrier {};
-        VkBufferMemoryBarrier               _exposureAfterBarrier {};
-        Memory                              _exposureMemory {};
+        VkBufferMemoryBarrier                       _exposureBeforeBarrier {};
+        VkBufferMemoryBarrier                       _exposureAfterBarrier {};
+        Memory                                      _exposureMemory {};
 
-        VkCommandBuffer                     _commandBuffer = VK_NULL_HANDLE;
+        VkCommandBuffer                             _commandBuffer = VK_NULL_HANDLE;
 
-        VkExtent3D                          _dispatch {};
-        VkDescriptorPool                    _descriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet                     _descriptorSet = VK_NULL_HANDLE;
+        VkExtent3D                                  _dispatch {};
+        VkDescriptorPool                            _descriptorPool = VK_NULL_HANDLE;
+        VkDescriptorSet                             _descriptorSet = VK_NULL_HANDLE;
 
-        ExposureProgram::PushConstants      _exposureInfo {};
-        float                               _eyeAdaptationSpeed = 1.0F;
+        // FUCK - remove namespace
+        android::ExposureProgram::PushConstants     _exposureInfo {};
+        float                                       _eyeAdaptationSpeed = 1.0F;
 
-        uint32_t                            _mipCount = 0U;
-        VkImage                             _syncMip5 = VK_NULL_HANDLE;
-        VkImageView                         _syncMip5View = VK_NULL_HANDLE;
-        Memory                              _syncMip5Memory {};
+        uint32_t                                    _mipCount = 0U;
+        VkImage                                     _syncMip5 = VK_NULL_HANDLE;
+        VkImageView                                 _syncMip5View = VK_NULL_HANDLE;
+        Memory                                      _syncMip5Memory {};
 
-        bool                                _isNeedTransitLayout = true;
+        bool                                        _isNeedTransitLayout = true;
 
-        VkBufferMemoryBarrier               _computeOnlyBarriers[ 2U ];
-        Memory                              _globalCounterMemory {};
-        Memory                              _lumaMemory {};
+        VkBufferMemoryBarrier                       _computeOnlyBarriers[ 2U ];
+        Memory                                      _globalCounterMemory {};
+        Memory                                      _lumaMemory {};
 
-        ExposureDescriptorSetLayout         _layout {};
-        ExposureProgram                     _program {};
+        ExposureDescriptorSetLayout                 _layout {};
 
-        VkExtent2D                          _mip5resolution
+        // FUCK - remove namespace
+        android::ExposureProgram                    _program {};
+
+        VkExtent2D                                  _mip5resolution
         {
             .width = 0U,
             .height = 0U
@@ -101,7 +108,9 @@ class ExposurePass final
         [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
             VkDevice device,
             uint32_t mipCount,
-            ExposureProgram::SpecializationInfo const &specInfo
+
+            // FUCK - remove namespace
+            android::ExposureProgram::SpecializationInfo const &specInfo
         ) noexcept;
 
         [[nodiscard]] bool UpdateSyncMip5 ( android_vulkan::Renderer &renderer,

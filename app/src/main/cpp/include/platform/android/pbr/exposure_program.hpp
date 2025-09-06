@@ -1,39 +1,42 @@
-#ifndef PBR_EXPOSURE_PROGRAM_HPP
-#define PBR_EXPOSURE_PROGRAM_HPP
+// FUCK - windows and android separation
+
+#ifndef PBR_ANDROID_EXPOSURE_PROGRAM_HPP
+#define PBR_ANDROID_EXPOSURE_PROGRAM_HPP
 
 
+#include "compute_program.hpp"
 #include "exposure_descriptor_set_layout.hpp"
-#include <platform/android/pbr/compute_program.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
-class ExposureProgram final : public android::ComputeProgram
+class ExposureProgram final : public ComputeProgram
 {
     public:
         struct SpecializationInfo final
         {
-            [[maybe_unused]] uint32_t           _workgroupCount;
-            [[maybe_unused]] VkExtent2D         _mip5Resolution;
-            [[maybe_unused]] float              _normalizeW;
-            [[maybe_unused]] float              _normalizeH;
+            [[maybe_unused]] uint32_t       _workgroupCount;
+            [[maybe_unused]] VkExtent2D     _mip5Resolution;
+            [[maybe_unused]] float          _normalizeW;
+            [[maybe_unused]] float          _normalizeH;
         };
 
         AV_DX_ALIGNMENT_BEGIN
 
         struct PushConstants final
         {
-            [[maybe_unused]] float              _exposureCompensation;
-            [[maybe_unused]] float              _eyeAdaptation;
-            [[maybe_unused]] float              _maxLuma;
-            [[maybe_unused]] float              _minLuma;
+            [[maybe_unused]] float          _exposureCompensation;
+            [[maybe_unused]] float          _eyeAdaptation;
+            [[maybe_unused]] float          _maxLuma;
+            [[maybe_unused]] float          _minLuma;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        ExposureDescriptorSetLayout    _layout {};
+        ExposureDescriptorSetLayout         _layout {};
 
     public:
         explicit ExposureProgram () noexcept;
@@ -70,7 +73,7 @@ class ExposureProgram final : public android::ComputeProgram
         ) noexcept override;
 };
 
-} // namespace pbr
+} // namespace pbr::android
 
 
-#endif // PBR_EXPOSURE_PROGRAM_HPP
+#endif // PBR_ANDROID_EXPOSURE_PROGRAM_HPP

@@ -1,7 +1,10 @@
+// FUCK - windows and android separation
+
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <pbr/exposure.inc>
 #include <pbr/exposure_pass.hpp>
-#include <av_assert.hpp>
+#include <platform/android/pbr/exposure.inc>
 #include <vulkan_utils.hpp>
 
 
@@ -161,8 +164,9 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer, android_vulka
     VkDevice device = renderer.GetDevice ();
 
     VkExtent2D mipResolution;
-    ExposureProgram::SpecializationInfo specData {};
-    ExposureProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
+    // FUCK - remove namespace
+    android::ExposureProgram::SpecializationInfo specData {};
+    android::ExposureProgram::GetMetaInfo ( _dispatch, mipResolution, specData, hdrImage.GetResolution () );
 
     bool const result = UpdateSyncMip5 ( renderer, device, specData._mip5Resolution ) &&
 
@@ -806,7 +810,9 @@ void ExposurePass::SyncBefore ( VkCommandBuffer commandBuffer ) noexcept
 bool ExposurePass::UpdateMipCount ( android_vulkan::Renderer &renderer,
     VkDevice device,
     uint32_t mipCount,
-    ExposureProgram::SpecializationInfo const &specInfo
+
+    // FUCK - remove namespace
+    android::ExposureProgram::SpecializationInfo const &specInfo
 ) noexcept
 {
     if ( mipCount == _mipCount )

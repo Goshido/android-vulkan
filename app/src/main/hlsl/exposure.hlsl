@@ -14,49 +14,22 @@
 #define SAFE_LUMA           9.7656e-4H
 
 [[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
-uint32_t const                                      g_workgroupCount = 256U;
+uint32_t const              g_workgroupCount = 256U;
 
 [[vk::constant_id ( CONST_MIP_5_W )]]
-uint32_t const                                      g_mip5W = 32U;
+uint32_t const              g_mip5W = 32U;
 
 [[vk::constant_id ( CONST_MIP_5_H )]]
-uint32_t const                                      g_mip5H = 14U;
+uint32_t const              g_mip5H = 14U;
 
 [[vk::constant_id ( CONST_NORMALIZE_W )]]
-float32_t const                                     g_normalizeW = 3.125e-2H;
+float32_t const             g_normalizeW = 3.125e-2H;
 
 [[vk::constant_id ( CONST_NORMALIZE_H )]]
-float32_t const                                     g_normalizeH = 7.142e-2H;
+float32_t const             g_normalizeH = 7.142e-2H;
 
-struct PushConstants
-{
-    float32_t                                       _exposureCompensation;
-    float32_t                                       _eyeAdaptation;
-    float32_t                                       _maxLuma;
-    float32_t                                       _minLuma;
-};
-
-[[vk::push_constant]]
-PushConstants                                       g_exposureInfo;
-
-[[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]
-Texture2D<float32_t4>                               g_hdrImage:         register ( t0 );
-
-[[vk::binding ( BIND_SYNC_MIP_5, SET_RESOURCE )]]
-[[vk::image_format ( "r16f" )]]
-globallycoherent RWTexture2D<float32_t>             g_syncMip5:         register ( u0 );
-
-[[vk::binding ( BIND_EXPOSURE, SET_RESOURCE )]]
-RWStructuredBuffer<float32_t>                       g_exposure:         register ( u1 );
-
-[[vk::binding ( BIND_GLOBAL_ATOMIC, SET_RESOURCE )]]
-globallycoherent RWStructuredBuffer<uint32_t>       g_globalAtomic:     register ( u2 );
-
-[[vk::binding ( BIND_TEMPORAL_LUMA, SET_RESOURCE )]]
-RWStructuredBuffer<float32_t>                       g_temporalLuma:     register ( u3 );
-
-groupshared float16_t                               s_luma[ 16U ][ 16U ];
-groupshared uint32_t                                s_counter;
+groupshared float16_t       s_luma[ 16U ][ 16U ];
+groupshared uint32_t        s_counter;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -66,15 +39,15 @@ float16_t Reduce4 ( in float16_t v0, in float16_t v1, in float16_t v2, in float1
     return ( alpha.x + alpha.y ) * 0.25H;
 }
 
-float16_t ReduceLoadSourceImage ( in uint32_t2 base )
+float16_t ReduceLoadSourceImage ( in Texture2D<float32_t4> hdrImage, in uint32_t2 base )
 {
     // Converting to RGB to luma using BT.709:
     float16_t3 const bt709 = float16_t3 ( 0.2126H, 0.7152H, 0.0722H );
 
-    float16_t4 const luma = float16_t4 ( dot ( bt709, (float16_t3)g_hdrImage[ base ].xyz ),
-        dot ( bt709, (float16_t3)g_hdrImage[ base + uint32_t2 ( 0U, 1U ) ].xyz ),
-        dot ( bt709, (float16_t3)g_hdrImage[ base + uint32_t2 ( 1U, 0U ) ].xyz ),
-        dot ( bt709, (float16_t3)g_hdrImage[ base + uint32_t2 ( 1U, 1U ) ].xyz )
+    float16_t4 const luma = float16_t4 ( dot ( bt709, (float16_t3)hdrImage[ base ].xyz ),
+        dot ( bt709, (float16_t3)hdrImage[ base + uint32_t2 ( 0U, 1U ) ].xyz ),
+        dot ( bt709, (float16_t3)hdrImage[ base + uint32_t2 ( 1U, 0U ) ].xyz ),
+        dot ( bt709, (float16_t3)hdrImage[ base + uint32_t2 ( 1U, 1U ) ].xyz )
     );
 
     // Using log2|exp2 trick to calculate geometric mean brightness.
@@ -94,7 +67,7 @@ float16_t ReduceIntermediate ( in uint32_t2 i0, in uint32_t2 i1, in uint32_t2 i2
     return Reduce4 ( v0, v1, v2, v3 );
 }
 
-void ReduceRows ( in uint32_t threadID )
+void ReduceRows ( in globallycoherent RWTexture2D<float32_t> syncMip5, in uint32_t threadID )
 {
     if ( threadID >= g_mip5H )
         return;
@@ -102,7 +75,7 @@ void ReduceRows ( in uint32_t threadID )
     float16_t acc = 0.0H;
 
     for ( uint32_t x = 0U; x < g_mip5W; ++x )
-        acc += (float16_t)g_syncMip5[ uint32_t2 ( x, threadID ) ].x;
+        acc += (float16_t)syncMip5[ uint32_t2 ( x, threadID ) ].x;
 
     s_luma[ threadID >> 4U ][ threadID & 0x0000000FU ] = acc * (float16_t)g_normalizeW;
 }
@@ -152,17 +125,22 @@ uint32_t2 GetThreadTarget ( in uint32_t threadID )
 // Increase the global atomic counter for the given slice and check if it's the last remaining thread group:
 // terminate if not, continue if yes.
 // Only last active workgroup should proceed
-bool ExitWorkgroup ( in uint32_t threadID )
+bool ExitWorkgroup ( in globallycoherent RWStructuredBuffer<uint32_t> globalAtomic, in uint32_t threadID )
 {
     // global atomic counter
     if ( threadID == 0U )
-        InterlockedAdd ( g_globalAtomic[ 0U ], 1U, s_counter );
+        InterlockedAdd ( globalAtomic[ 0U ], 1U, s_counter );
 
     GroupMemoryBarrierWithGroupSync ();
     return s_counter != g_workgroupCount;
 }
 
-void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in uint32_t threadID )
+void DownsampleMips01 ( in Texture2D<float32_t4> hdrImage,
+    in uint32_t x,
+    in uint32_t y,
+    in uint32_t2 workGroupID,
+    in uint32_t threadID
+)
 {
     // See <repo>/docs/spd-algorithm.md#mip-0
     float16_t v[ 4U ];
@@ -171,10 +149,10 @@ void DownsampleMips01 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, 
     uint32_t2 const pixBase = workGroupID.xy * 32U + xy;
     uint32_t2 const texBase = pixBase + pixBase;
 
-    v[ 0U ] = ReduceLoadSourceImage ( texBase );
-    v[ 1U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 32U, 0U ) );
-    v[ 2U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 0U, 32U ) );
-    v[ 3U ] = ReduceLoadSourceImage ( texBase + uint32_t2 ( 32U, 32U ) );
+    v[ 0U ] = ReduceLoadSourceImage ( hdrImage, texBase );
+    v[ 1U ] = ReduceLoadSourceImage ( hdrImage, texBase + uint32_t2 ( 32U, 0U ) );
+    v[ 2U ] = ReduceLoadSourceImage ( hdrImage, texBase + uint32_t2 ( 0U, 32U ) );
+    v[ 3U ] = ReduceLoadSourceImage ( hdrImage, texBase + uint32_t2 ( 32U, 32U ) );
 
     uint32_t2 const alpha = xy + xy;
     uint32_t2 const betta = workGroupID * 16U + xy;
@@ -268,7 +246,10 @@ void DownsampleMip4 ( in uint32_t x, in uint32_t y, in uint32_t2 workGroupID, in
 }
 
 // See <repo>/docs/spd-algorithm.md#mip-5
-void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
+void DownsampleMip5 ( in globallycoherent RWTexture2D<float32_t> syncMip5,
+    in uint32_t2 workGroupID,
+    in uint32_t threadID
+)
 {
     if ( threadID >= 1U )
         return;
@@ -279,16 +260,26 @@ void DownsampleMip5 ( in uint32_t2 workGroupID, in uint32_t threadID )
         uint32_t2 ( 3U, 0U )
     );
 
-    g_syncMip5[ workGroupID.xy ] = (float32_t)v;
+    syncMip5[ workGroupID.xy ] = (float32_t)v;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]
-void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_GroupID )
+void Execute ( in Texture2D<float32_t4> hdrImage,
+    in globallycoherent RWTexture2D<float32_t> syncMip5,
+    in RWStructuredBuffer<float32_t> exposure,
+    in globallycoherent RWStructuredBuffer<uint32_t> globalAtomic,
+    in RWStructuredBuffer<float32_t> temporalLuma,
+    in float32_t exposureCompensation,
+    in float32_t eyeAdaptation,
+    in float32_t maxLuma,
+    in float32_t minLuma,
+    in uint32_t threadID,
+    in uint32_t3 workGroupID
+)
 {
     uint32_t2 const base = GetThreadTarget ( threadID );
-    DownsampleMips01 ( base.x, base.y, workGroupID.xy, threadID );
+    DownsampleMips01 ( hdrImage, base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
     DownsampleMip2 ( base.x, base.y, workGroupID.xy, threadID );
@@ -300,30 +291,26 @@ void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_Grou
     DownsampleMip4 ( base.x, base.y, workGroupID.xy, threadID );
 
     GroupMemoryBarrierWithGroupSync ();
-    DownsampleMip5 ( workGroupID.xy, threadID );
+    DownsampleMip5 ( syncMip5, workGroupID.xy, threadID );
 
-    if ( ExitWorkgroup ( threadID ) )
+    if ( ExitWorkgroup ( globalAtomic, threadID ) )
         return;
 
-    ReduceRows ( threadID );
+    ReduceRows ( syncMip5, threadID );
     GroupMemoryBarrierWithGroupSync ();
 
     if ( threadID > 0U )
         return;
 
-    float32_t const prevLuma = g_temporalLuma[ 0U ];
+    float32_t const prevLuma = temporalLuma[ 0U ];
     float32_t const deltaLuma = ReduceToAverage () - prevLuma;
-    float32_t const eyeLuma = mad ( deltaLuma, g_exposureInfo._eyeAdaptation, prevLuma );
-    g_temporalLuma[ 0U ] = eyeLuma;
+    float32_t const eyeLuma = mad ( deltaLuma, eyeAdaptation, prevLuma );
+    temporalLuma[ 0U ] = eyeLuma;
 
-    float32_t const luma = clamp ( eyeLuma - g_exposureInfo._exposureCompensation,
-        g_exposureInfo._minLuma,
-        g_exposureInfo._maxLuma
-    );
-
+    float32_t const luma = clamp ( eyeLuma - exposureCompensation, minLuma, maxLuma );
     float32_t const keyValue = 1.03F + ( -2.0F / ( log10 ( eyeLuma + 1.0F ) + 2.0F ) );
-    g_exposure[ 0U ] = max ( keyValue / luma, SAFE_EXPOSURE );
+    exposure[ 0U ] = max ( keyValue / luma, SAFE_EXPOSURE );
 
-    // Reset the global atomic counter back to 0 for the next spd dispatch.
-    g_globalAtomic[ 0U ] = 0U;
+    // Reset the global atomic counter back to 0 for the next SPD dispatch.
+    globalAtomic[ 0U ] = 0U;
 }

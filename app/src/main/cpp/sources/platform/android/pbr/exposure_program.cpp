@@ -1,13 +1,14 @@
 #include <precompiled_headers.hpp>
 #include <pbr/exposure.inc>
-#include <pbr/exposure_program.hpp>
+#include <platform/android/pbr/exposure_program.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
 namespace {
 
-constexpr char const* SHADER = "shaders/exposure.cs.spv";
+constexpr char const* SHADER = "shaders/android/exposure.cs.spv";
 
 } // end of anonymous namespace
 
@@ -42,7 +43,10 @@ bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::ExposureProgram::Init",
+
+        // FUCK - remove namespace
+        "pbr::android::ExposureProgram::Init",
+
         "Can't create pipeline"
     );
 
@@ -147,7 +151,10 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::ExposureProgram::InitLayout",
+
+        // FUCK - remove namespace
+        "pbr::android::ExposureProgram::InitLayout",
+
         "Can't create pipeline layout"
     );
 
@@ -168,7 +175,9 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
 {
     bool const result = renderer.CreateShader ( _computeShader,
         SHADER,
-        "Can't create shader (pbr::ExposureProgram)"
+
+        // FUCK - remove namespace
+        "Can't create shader (pbr::android::ExposureProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -230,4 +239,4 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-} // namespace pbr
+} // namespace pbr::android

@@ -87,9 +87,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/dummy_geometry_program.cpp
     app/src/main/cpp/sources/pbr/dummy_light_program.cpp
     app/src/main/cpp/sources/pbr/dummy_program.cpp
-    app/src/main/cpp/sources/pbr/exposure_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/exposure_pass.cpp
-    app/src/main/cpp/sources/pbr/exposure_program.cpp
     app/src/main/cpp/sources/pbr/fail_property_checker.cpp
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp
@@ -235,6 +233,8 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/div_ui_element.cpp
+    app/src/main/cpp/sources/platform/android/pbr/exposure_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/platform/android/pbr/exposure_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/image_ui_element.cpp

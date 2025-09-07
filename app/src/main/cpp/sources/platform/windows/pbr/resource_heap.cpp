@@ -300,7 +300,7 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
-    VkDeviceAddress bufferAddress,
+    VkBuffer buffer,
     VkDeviceSize range
 ) noexcept
 {
@@ -310,13 +310,18 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
         return std::nullopt;
     }
 
-    uint32_t const index = _nonUISlots.Allocate ();
+    VkBufferDeviceAddressInfo const bdaInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .pNext = nullptr,
+        .buffer = buffer
+    };
 
-    VkDescriptorAddressInfoEXT const buffer
+    VkDescriptorAddressInfoEXT const bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT,
         .pNext = nullptr,
-        .address = bufferAddress,
+        .address = vkGetBufferDeviceAddress ( device, &bdaInfo ),
         .range = range,
         .format = VK_FORMAT_UNDEFINED
     };
@@ -329,10 +334,11 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
 
         .data
         {
-            .pStorageBuffer = &buffer
+            .pStorageBuffer = &bufferInfo
         }
     };
 
+    uint32_t const index = _nonUISlots.Allocate ();
     vkGetDescriptorEXT ( device, &getInfo, _bufferSize, _write.Push ( index, _bufferSize ) );
     return std::optional<uint32_t> { index };
 }

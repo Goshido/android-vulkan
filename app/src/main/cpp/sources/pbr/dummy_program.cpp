@@ -87,8 +87,6 @@ bool DummyProgram::Init ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-
-
 DummyProgram::DummyProgram ( std::string_view &&name,
     std::string_view &&fragmentShader,
     uint32_t subpass

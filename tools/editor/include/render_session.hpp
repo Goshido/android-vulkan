@@ -5,10 +5,10 @@
 #include "hello_triangle_program.hpp"
 #include "message_queue.hpp"
 #include <pbr/default_texture_manager.hpp>
-#include <pbr/exposure_pass.hpp>
 #include <pbr/tone_mapper_pass.hpp>
 
 // FUCK - remove namespace
+#include <platform/android/pbr/exposure_pass.hpp>
 #include <platform/android/pbr/present_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
 
@@ -41,7 +41,9 @@ class RenderSession final
         size_t                                                      _writingCommandInfo = 0U;
 
         pbr::DefaultTextureManager                                  _defaultTextureManager {};
-        pbr::ExposurePass                                           _exposurePass {};
+
+        // FUCK - remove namespace
+        pbr::android::ExposurePass                                  _exposurePass {};
 
         std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
 

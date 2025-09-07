@@ -20,7 +20,7 @@ void MeshGeometry::CommitMeshInfo ( VkDevice device,
 {
     _meshBufferInfo._indexType = indexType;
 
-    VkBufferDeviceAddressInfo info
+    VkBufferDeviceAddressInfo const info
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
         .pNext = nullptr,

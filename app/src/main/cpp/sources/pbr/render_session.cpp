@@ -234,7 +234,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
+    // FUCK - remove namespace
+    VkExtent2D const newResolution = android::ExposurePass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
     bool const hasChanges = ( currentResolution.width != newResolution.width ) |

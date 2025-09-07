@@ -515,14 +515,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\default_texture_manager.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\default_texture_manager.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_pass.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\exposure_pass.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\exposure_specialization.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\exposure_specialization.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\exposure_specialization.obj</ObjectFileName>
@@ -707,6 +699,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\exposure_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\exposure_descriptor_set_layout.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\exposure_pass.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\exposure_pass.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\exposure_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\exposure_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\exposure_program.obj</ObjectFileName>
@@ -819,6 +819,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\exposure_pass.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\exposure_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\exposure_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\exposure_program.obj</ObjectFileName>
@@ -1076,7 +1077,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\default_texture_manager.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_specialization.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program.hpp" />
@@ -1102,6 +1102,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\compute_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\div_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\exposure_descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\exposure_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\exposure_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\graphics_program.hpp" />
@@ -1116,6 +1117,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_geometry.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\compute_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\div_ui_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\exposure_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\exposure_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\font_storage.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\graphics_program.hpp" />

@@ -174,7 +174,7 @@ class ResourceHeap final
         ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
-            VkDeviceAddress bufferAddress,
+            VkBuffer buffer,
             VkDeviceSize range
         ) noexcept;
 

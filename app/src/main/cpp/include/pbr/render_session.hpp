@@ -4,11 +4,14 @@
 
 #include "fif_count.hpp"
 #include "default_texture_manager.hpp"
-#include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
+
+// FUCK - remove namespace
+#include <platform/android/pbr/exposure_pass.hpp>
 #include <platform/android/pbr/present_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
+
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
 #include "tone_mapper_pass.hpp"
@@ -50,7 +53,9 @@ class RenderSession final
         GXMat4                      _viewerLocal {};
 
         DefaultTextureManager       _defaultTextureManager {};
-        ExposurePass                _exposurePass {};
+
+        // FUCK - remove namespace
+        android::ExposurePass       _exposurePass {};
         GXProjectionClipPlanes      _frustum {};
 
         GBuffer                     _gBuffer {};

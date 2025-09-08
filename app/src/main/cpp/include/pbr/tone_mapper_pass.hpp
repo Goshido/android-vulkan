@@ -3,7 +3,10 @@
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
-#include "tone_mapper_program.hpp"
+
+// FUCK - windows and android separation
+#include <platform/android/pbr/tone_mapper_program.hpp>
+
 #include "uniform_pool.hpp"
 
 
@@ -14,7 +17,10 @@ class ToneMapperPass final
     private:
         float                                       _brightnessBalance = 0.0F;
         VkDescriptorSet                             _descriptorSets[ 2U ] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
-        ToneMapperProgram                           _program {};
+
+        // FUCK - remove namespace
+        android::ToneMapperProgram                  _program {};
+
         ToneMapperDescriptorSetLayout               _resourceLayout {};
         FullScreenTriangleDescriptorSetLayout       _transformLayout {};
         VkDescriptorPool                            _resourceDescriptorPool = VK_NULL_HANDLE;

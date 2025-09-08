@@ -16,13 +16,13 @@
 cbuffer InstancePositionData:       register ( b0 )
 {
     float32_t4x4    g_localViewProj[ PBR_OPAQUE_MAX_INSTANCE_COUNT ];
-}
+};
 
 [[vk::binding ( BIND_INSTANCE_NORMAL_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceNormalData:         register ( b1 )
 {
     TBN64           g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
-}
+};
 
 struct ColorData
 {

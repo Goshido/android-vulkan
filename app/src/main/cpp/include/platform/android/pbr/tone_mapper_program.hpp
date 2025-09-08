@@ -1,17 +1,19 @@
-#ifndef PBR_TONE_MAPPER_PROGRAM_HPP
-#define PBR_TONE_MAPPER_PROGRAM_HPP
+// FUCK - windows and android separation
+
+#ifndef PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
+#define PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
 
 
-#include "brightness_info.hpp"
-#include "full_screen_triangle_descriptor_set_layout.hpp"
+#include "graphics_program.hpp"
+#include <pbr/brightness_info.hpp>
+#include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
+#include <pbr/tone_mapper_descriptor_set_layout.hpp>
 
-// FUCK - use relative path
-#include <platform/android/pbr/graphics_program.hpp>
-#include "tone_mapper_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
 class ToneMapperProgram final : public android::GraphicsProgram
 {
@@ -102,7 +104,7 @@ class ToneMapperProgram final : public android::GraphicsProgram
         ) const noexcept override;
 };
 
-} // namespace pbr
+} // namespace pbr::android
 
 
-#endif // PBR_TONE_MAPPER_PROGRAM_HPP
+#endif // PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP

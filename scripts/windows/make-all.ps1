@@ -106,12 +106,20 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\stipple.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps.hlsl"                                                       `
-    "$CORE_SHADER_DIRECTORY\tone_mapper_custom_brightness.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps.hlsl"                                                    `
+    "$ANDROID_SHADER_DIRECTORY\tone_mapper_custom_brightness.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\tone_mapper_default_brightness.ps.hlsl"                                                      `
-    "$CORE_SHADER_DIRECTORY\tone_mapper_default_brightness.ps.spv"
+    "$WINDOWS_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps.hlsl"                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\tone_mapper_custom_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$ANDROID_HLSL_DIRECTORY\tone_mapper_default_brightness.ps.hlsl"                                                   `
+    "$ANDROID_SHADER_DIRECTORY\tone_mapper_default_brightness.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\tone_mapper_default_brightness.ps.hlsl"                                                   `
+    "$WINDOWS_SHADER_DIRECTORY\tone_mapper_default_brightness.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$ANDROID_HLSL_DIRECTORY\ui_custom_brightness.ps.hlsl"                                                             `

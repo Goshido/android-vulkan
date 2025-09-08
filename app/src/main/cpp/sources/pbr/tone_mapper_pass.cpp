@@ -78,7 +78,10 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     return _transformUniformPool.Init ( renderer,
         _transformLayout,
-        sizeof ( ToneMapperProgram::Transform ),
+
+        // FUCK - remove namespace
+        sizeof ( android::ToneMapperProgram::Transform ),
+
         BIND_TRANSFORM,
         "Tone mapper transform uniform"
     );
@@ -221,7 +224,8 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkComma
 
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    ToneMapperProgram::Transform const transform
+    // FUCK - remove namespace
+    android::ToneMapperProgram::Transform const transform
     {
         ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ),
         ._padding0 {},

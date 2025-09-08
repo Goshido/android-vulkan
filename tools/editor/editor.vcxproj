@@ -603,14 +603,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\tone_mapper_pass.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\tone_mapper_pass.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_program.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\tone_mapper_program.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ui_pass_common_descriptor_set_layout.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\ui_pass_common_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\ui_pass_common_descriptor_set_layout.obj</ObjectFileName>
@@ -754,6 +746,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\text_ui_element.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\tone_mapper_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\android\pbr\tone_mapper_program.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\ui_element.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\android\pbr\ui_element.obj</ObjectFileName>
@@ -1088,7 +1088,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_pass.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\types.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_common_descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_pass_image_descriptor_set_layout.hpp" />
@@ -1109,6 +1108,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\image_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\present_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\text_ui_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\ui_program.hpp" />

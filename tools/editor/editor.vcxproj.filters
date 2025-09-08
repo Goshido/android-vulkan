@@ -201,9 +201,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_pass.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_program.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\full_screen_triangle_descriptor_set_layout.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -420,6 +417,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\exposure_pass.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\tone_mapper_program.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -558,9 +558,6 @@
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_pass.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_program.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp">
@@ -874,6 +871,9 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\exposure_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper_program.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

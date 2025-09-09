@@ -43,7 +43,7 @@ float16_t4 HandleText ( in float16_t4 color, in InputData inputData )
         return 0.0H;
 
     float32_t2 const uv = float32_t2 ( glyphLuma, inputData._color.w );
-    Texture2D<float32_t4> textLUT = ResourceDescriptorHeap[ g_uiInfo._textLUT ];
+    Texture2D<float32_t4> textLUT = ResourceDescriptorHeap[ g_pushConstants._textLUT ];
     SamplerState lutSampler = SamplerDescriptorHeap[ CLAMP_TO_EDGE_SAMPLER ];
     return float16_t4 ( color.xyz, (float16_t)textLUT.SampleLevel ( lutSampler, uv, 0.0F ).x );
 }

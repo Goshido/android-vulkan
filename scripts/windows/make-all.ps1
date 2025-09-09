@@ -21,8 +21,12 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\dummy.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\full_screen_triangle.vs.hlsl"                                                                `
-    "$CORE_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
+    "$ANDROID_HLSL_DIRECTORY\full_screen_triangle.vs.hlsl"                                                             `
+    "$ANDROID_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\full_screen_triangle.vs.hlsl"                                                             `
+    "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\light_volume.vs.hlsl"                                                                        `

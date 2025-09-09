@@ -1,11 +1,6 @@
 #include "pbr/full_screen_triangle.inc"
+#include "tone_mapper_push_constants.hlsl"
 
-
-[[vk::binding ( BIND_TRANSFORM, SET_TRANSFORM )]]
-cbuffer Transform:                              register ( b0 )
-{
-    float32_t2x2                g_transform;
-};
 
 static float32_t2 const g_vertices[ 3U ] =
 {
@@ -34,7 +29,7 @@ struct OutputData
 OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
     OutputData result;
-    result._vertexH = float32_t4 ( mul ( g_transform, g_vertices[ vertexID ] ), 0.5F, 1.0F );
+    result._vertexH = float32_t4 ( mul ( g_pushConstants._transform, g_vertices[ vertexID ] ), 0.5F, 1.0F );
     result._uv = g_uvs[ vertexID ];
     return result;
 }

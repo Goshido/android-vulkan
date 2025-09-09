@@ -10,7 +10,7 @@ namespace pbr::android {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/full_screen_triangle.vs.spv";
+constexpr char const* VERTEX_SHADER = "shaders/android/full_screen_triangle.vs.spv";
 constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/android/tone_mapper_custom_brightness.ps.spv";
 constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/android/tone_mapper_default_brightness.ps.spv";
 

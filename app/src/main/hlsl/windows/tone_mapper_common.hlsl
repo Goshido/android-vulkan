@@ -18,9 +18,9 @@ struct InputData
 
 float16_t3 Execute ( in float32_t2 uv )
 {
-    Texture2D<float32_t4> hdrImage = ResourceDescriptorHeap[ g_toneMapperInfo._hdrImage ];
+    Texture2D<float32_t4> hdrImage = ResourceDescriptorHeap[ g_pushConstants._hdrImage ];
     SamplerState clampToEdgeSampler = SamplerDescriptorHeap[ CLAMP_TO_EDGE_SAMPLER ];
-    StructuredBuffer<float32_t> exposure = ResourceDescriptorHeap[ g_toneMapperInfo._exposure ];
+    StructuredBuffer<float32_t> exposure = ResourceDescriptorHeap[ g_pushConstants._exposure ];
     return ApplyACES ( hdrImage, clampToEdgeSampler, uv, exposure[ 0U ] );
 }
 

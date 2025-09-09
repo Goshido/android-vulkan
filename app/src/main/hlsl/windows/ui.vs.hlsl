@@ -37,10 +37,15 @@ struct OutputData
 
 OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
-    UIVertex const uiVertex = vk::RawBufferLoad<UIVertex> ( g_uiInfo._bda + vertexID * sizeof ( UIVertex ), 2U );
+    UIVertex const uiVertex = vk::RawBufferLoad<UIVertex> ( g_pushConstants._bda + vertexID * sizeof ( UIVertex ), 2U );
 
     OutputData result;
-    result._vertexH = float32_t4 ( mul ( g_uiInfo._rotateScale, uiVertex._position + g_uiInfo._offset ), 0.5F, 1.0F );
+
+    result._vertexH = float32_t4 ( mul ( g_pushConstants._rotateScale, uiVertex._position + g_pushConstants._offset ),
+        0.5F,
+        1.0F
+    );
+
     result._uv = (float32_t2)uiVertex._uv;
     result._image = (uint32_t)uiVertex._image;
     result._uiPrimitiveType = (uint32_t)uiVertex._uiPrimitiveType;

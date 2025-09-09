@@ -610,10 +610,10 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     _program.Bind ( commandBuffer );
     _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
-    _uiInfo._bda =
+    _pushConstants._bda =
         _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );
 
-    _program.SetPushConstants ( commandBuffer, &_uiInfo );
+    _program.SetPushConstants ( commandBuffer, &_pushConstants );
 
     vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
 
@@ -956,9 +956,9 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    _uiInfo._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
-    _uiInfo._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
-    _uiInfo._offset.Multiply ( _bottomRight, -0.5F );
+    _pushConstants._rotateScaleRow0.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ), scaleX );
+    _pushConstants._rotateScaleRow1.Multiply ( *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] ), scaleY );
+    _pushConstants._offset.Multiply ( _bottomRight, -0.5F );
 
     _isTransformChanged = false;
 }

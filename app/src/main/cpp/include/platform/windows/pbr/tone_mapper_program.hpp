@@ -1,30 +1,31 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_UI_PROGRAM_HPP
-#define PBR_WINDOWS_UI_PROGRAM_HPP
+// FUCK - windows and android separation
+
+#ifndef PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP
+#define PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP
 
 
 #include "graphics_program.hpp"
-#include <GXCommon/GXMath.hpp>
 #include <pbr/brightness_info.hpp>
+#include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
 #include "resource_heap_descriptor_set_layout.hpp"
+
 #include <vulkan_utils.hpp>
 
 
 // FUCK - remove namespace
 namespace pbr::windows {
 
-class UIProgram final : public windows::GraphicsProgram
+class ToneMapperProgram final : public windows::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
         struct PushConstants final
         {
-            VkDeviceAddress                 _bda;
-            GXVec2                          _rotateScaleRow0;
-            GXVec2                          _rotateScaleRow1;
-            GXVec2                          _offset;
-            uint32_t                        _textLUT;
+            uint32_t                        _exposure;
+            uint32_t                        _hdrImage;
+            GXVec2                          _transformRow0;
+            GXVec2                          _transformRow1;
         };
 
         AV_DX_ALIGNMENT_END
@@ -33,15 +34,15 @@ class UIProgram final : public windows::GraphicsProgram
         ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
-        UIProgram () noexcept;
+        ToneMapperProgram () noexcept;
 
-        UIProgram ( UIProgram const & ) = delete;
-        UIProgram &operator = ( UIProgram const & ) = delete;
+        ToneMapperProgram ( ToneMapperProgram const & ) = delete;
+        ToneMapperProgram &operator = ( ToneMapperProgram const & ) = delete;
 
-        UIProgram ( UIProgram && ) = delete;
-        UIProgram &operator = ( UIProgram && ) = delete;
+        ToneMapperProgram ( ToneMapperProgram && ) = delete;
+        ToneMapperProgram &operator = ( ToneMapperProgram && ) = delete;
 
-        ~UIProgram () override = default;
+        ~ToneMapperProgram () override = default;
 
         void Destroy ( VkDevice device ) noexcept override;
 
@@ -101,10 +102,10 @@ class UIProgram final : public windows::GraphicsProgram
             VkSpecializationInfo* specializationInfo,
             VkShaderModuleCreateInfo* moduleInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
-        ) const noexcept override;
+        ) const noexcept;
 };
 
 } // namespace pbr::windows
 
 
-#endif // PBR_WINDOWS_UI_PROGRAM_HPP
+#endif // PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP

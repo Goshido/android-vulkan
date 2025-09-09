@@ -134,7 +134,7 @@ class UIPass final
         BufferStream                        _uiVertices { sizeof ( UIVertex ) };
 
         UIProgram                           _program {};
-        UIProgram::UIInfo                   _uiInfo {};
+        UIProgram::PushConstants            _pushConstants {};
 
     public:
         UIPass () = delete;

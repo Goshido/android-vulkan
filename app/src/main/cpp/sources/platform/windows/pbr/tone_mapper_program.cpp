@@ -1,7 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
-#include <platform/windows/pbr/ui_program.hpp>
 #include <pbr/brightness_factor.inc>
+
+// FUCK - windows and android separation
+#include <platform/windows/pbr/tone_mapper_program.hpp>
 
 
 // FUCK - remove namespace
@@ -9,9 +11,11 @@ namespace pbr::windows {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/windows/ui.vs.spv";
-constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/windows/ui_custom_brightness.ps.spv";
-constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/windows/ui_default_brightness.ps.spv";
+// FUCK - change
+constexpr char const* VERTEX_SHADER = "shaders/windows/full_screen_triangle.vs.spv";
+
+constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/windows/tone_mapper_custom_brightness.ps.spv";
+constexpr char const* DEFAULT_BRIGHTNESS_FRAGMENT_SHADER = "shaders/windows/tone_mapper_default_brightness.ps.spv";
 
 constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -20,19 +24,19 @@ constexpr size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIProgram::UIProgram () noexcept:
-    windows::GraphicsProgram ( "UI", sizeof ( PushConstants ) )
+ToneMapperProgram::ToneMapperProgram () noexcept:
+    windows::GraphicsProgram ( "pbr::ToneMapperProgram", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
 
-void UIProgram::Destroy ( VkDevice device ) noexcept
+void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 {
     windows::GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 
-bool UIProgram::Init ( VkDevice device,
+bool ToneMapperProgram::Init ( VkDevice device,
     VkFormat swapchainFormat,
     BrightnessInfo const &brightnessInfo,
     VkExtent2D const &viewport
@@ -109,7 +113,7 @@ bool UIProgram::Init ( VkDevice device,
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
 
         // FUCK - remove namespace
-        "pbr::windows::UIProgram::Init",
+        "pbr::windows::ToneMapperProgram::Init",
 
         "Can't create pipeline"
     );
@@ -117,23 +121,23 @@ bool UIProgram::Init ( VkDevice device,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "UI" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Tone mapper" )
     return true;
 }
 
-VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* ToneMapperProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
     *attachments =
     {
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
         .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
         .alphaBlendOp = VK_BLEND_OP_ADD,
 
         .colorWriteMask =
@@ -158,7 +162,7 @@ VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
     return &info;
 }
 
-VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* ToneMapperProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const noexcept
 {
@@ -202,14 +206,14 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
     return &info;
 }
 
-VkPipelineDynamicStateCreateInfo const* UIProgram::InitDynamicStateInfo (
+VkPipelineDynamicStateCreateInfo const* ToneMapperProgram::InitDynamicStateInfo (
     VkPipelineDynamicStateCreateInfo* /*info*/
 ) const noexcept
 {
     return nullptr;
 }
 
-VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
 {
@@ -225,7 +229,7 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     return &info;
 }
 
-bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -250,19 +254,22 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::windows::UIProgram::InitLayout",
+
+        // FUCK - remove namespace
+        "pbr::windows::ToneMapperProgram::InitLayout",
+
         "Can't create pipeline layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
     layout = _pipelineLayout;
     return true;
 }
 
-VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* ToneMapperProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
 {
@@ -282,7 +289,7 @@ VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
     return &info;
 }
 
-VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* ToneMapperProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const noexcept
 {
@@ -306,7 +313,7 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
     return &info;
 }
 
-VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
+VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
     VkRect2D* scissorInfo,
     VkViewport* viewportInfo,
     VkExtent2D const* viewport
@@ -347,7 +354,7 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo ( VkPipelin
     return &info;
 }
 
-VkPipelineRenderingCreateInfo const* UIProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
+VkPipelineRenderingCreateInfo const* ToneMapperProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
     VkFormat /*nativeDepth*/,
     VkFormat /*nativeStencil*/,
     VkFormat /*nativeDepthStencil*/,
@@ -369,7 +376,7 @@ VkPipelineRenderingCreateInfo const* UIProgram::InitRenderingInfo ( VkFormat /*n
     return &info;
 }
 
-bool UIProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
     std::vector<uint8_t> &vs,
     std::vector<uint8_t> &fs,
     SpecializationData specializationData,
@@ -448,4 +455,4 @@ bool UIProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetI
     return true;
 }
 
-} // namespace pbr
+} // namespace pbr::windows

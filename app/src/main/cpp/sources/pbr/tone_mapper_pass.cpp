@@ -3,6 +3,10 @@
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/tone_mapper.inc>
 #include <pbr/tone_mapper_pass.hpp>
+
+// FUCK - windows and android separation
+#include <platform/android/pbr/full_screen_triangle.inc>
+
 #include <vulkan_utils.hpp>
 
 

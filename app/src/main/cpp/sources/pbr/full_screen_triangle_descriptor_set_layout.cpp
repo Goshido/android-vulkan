@@ -1,6 +1,10 @@
 #include <precompiled_headers.hpp>
 #include <pbr/full_screen_triangle.inc>
 #include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
+
+// FUCK - windows and android separation
+#include <platform/android/pbr/full_screen_triangle.inc>
+
 #include <vulkan_utils.hpp>
 
 

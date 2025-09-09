@@ -11,7 +11,7 @@ struct PushConstants
 };
 
 [[vk::push_constant]]
-PushConstants       g_uiInfo;
+PushConstants       g_pushConstants;
 
 
 #endif // UI_PUSH_CONSTANTS_HLSL

@@ -92,7 +92,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/font_face_css_rule.cpp
     app/src/main/cpp/sources/pbr/font_family_property.cpp
     app/src/main/cpp/sources/pbr/font_family_property_checker.cpp
-    app/src/main/cpp/sources/pbr/full_screen_triangle_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/gbuffer.cpp
     app/src/main/cpp/sources/pbr/geometry_call.cpp
     app/src/main/cpp/sources/pbr/geometry_pass.cpp
@@ -201,8 +200,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/text_align_property.cpp
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_html5_element.cpp
-    app/src/main/cpp/sources/pbr/tone_mapper_descriptor_set_layout.cpp
-    app/src/main/cpp/sources/pbr/tone_mapper_pass.cpp
     app/src/main/cpp/sources/pbr/transform_component.cpp
     app/src/main/cpp/sources/pbr/ui_layer.cpp
     app/src/main/cpp/sources/pbr/ui_pass_common_descriptor_set_layout.cpp
@@ -236,10 +233,13 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/exposure_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/exposure_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/font_storage.cpp
+    app/src/main/cpp/sources/platform/android/pbr/full_screen_triangle_descriptor_set_layout.cpp
     app/src/main/cpp/sources/platform/android/pbr/graphics_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/image_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/present_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/text_ui_element.cpp
+    app/src/main/cpp/sources/platform/android/pbr/tone_mapper_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/platform/android/pbr/tone_mapper_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_pass.cpp

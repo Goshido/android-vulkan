@@ -4,11 +4,10 @@
 #define PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
 
 
+#include "full_screen_triangle_descriptor_set_layout.hpp"
 #include "graphics_program.hpp"
 #include <pbr/brightness_info.hpp>
-#include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
-#include <pbr/tone_mapper_descriptor_set_layout.hpp>
-
+#include "tone_mapper_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -34,7 +33,7 @@ class ToneMapperProgram final : public android::GraphicsProgram
         ToneMapperDescriptorSetLayout               _toneMapperLayout {};
 
     public:
-        ToneMapperProgram () noexcept;
+        explicit ToneMapperProgram () noexcept;
 
         ToneMapperProgram ( ToneMapperProgram const & ) = delete;
         ToneMapperProgram &operator = ( ToneMapperProgram const & ) = delete;

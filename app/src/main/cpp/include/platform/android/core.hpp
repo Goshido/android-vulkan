@@ -21,7 +21,7 @@ namespace android_vulkan::android {
 class Core final
 {
     private:
-        using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
+        using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
         using CommandHandler = bool ( Core::* ) () noexcept;
         using RendererBodyHandler = void ( Core::* ) () noexcept;
 

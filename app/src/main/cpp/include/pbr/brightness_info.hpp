@@ -16,8 +16,8 @@ class BrightnessInfo final
         BrightnessInfo ( BrightnessInfo const & ) = delete;
         BrightnessInfo &operator = ( BrightnessInfo const & ) = delete;
 
-        BrightnessInfo ( BrightnessInfo && ) = delete;
-        BrightnessInfo &operator = ( BrightnessInfo && ) = delete;
+        BrightnessInfo ( BrightnessInfo && ) = default;
+        BrightnessInfo &operator = ( BrightnessInfo && ) = default;
 
         // Brightness balance should be in range [-1.0F, 1.0F].
         explicit BrightnessInfo ( float brightnessBalance ) noexcept;

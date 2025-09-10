@@ -87,7 +87,6 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
         { eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
         { eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
-
         { eGame::World1x1, std::make_shared<pbr::UniversalGame> ( "pbr/assets/world-1-1.scene" ) }
     };
 
@@ -251,7 +250,7 @@ void Core::OnFrame () noexcept
     if ( !_game->IsReady () )
         return;
 
-    Timestamp const now = std::chrono::system_clock::now ();
+    Timestamp const now = std::chrono::steady_clock::now ();
     std::chrono::duration<double> const delta = now - _frameTimestamp;
 
     if ( _renderer.CheckSwapchainStatus () && !_game->OnFrame ( _renderer, delta.count () ) ) [[unlikely]]
@@ -313,7 +312,7 @@ bool Core::OnSwapchainCreated () noexcept
         return false;
     }
 
-    _fpsTimestamp = std::chrono::system_clock::now ();
+    _fpsTimestamp = std::chrono::steady_clock::now ();
     _frameTimestamp = _fpsTimestamp;
     _rendererBodyHandler = &Core::OnFrame;
 

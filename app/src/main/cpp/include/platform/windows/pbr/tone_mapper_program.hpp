@@ -6,9 +6,7 @@
 
 #include "graphics_program.hpp"
 #include <pbr/brightness_info.hpp>
-#include <pbr/full_screen_triangle_descriptor_set_layout.hpp>
 #include "resource_heap_descriptor_set_layout.hpp"
-
 #include <vulkan_utils.hpp>
 
 
@@ -34,7 +32,7 @@ class ToneMapperProgram final : public windows::GraphicsProgram
         ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
-        ToneMapperProgram () noexcept;
+        explicit ToneMapperProgram () noexcept;
 
         ToneMapperProgram ( ToneMapperProgram const & ) = delete;
         ToneMapperProgram &operator = ( ToneMapperProgram const & ) = delete;

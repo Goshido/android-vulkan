@@ -1,3 +1,4 @@
+// FUCK - windows and android separation
 #ifndef PBR_RENDER_SESSION_HPP
 #define PBR_RENDER_SESSION_HPP
 
@@ -10,11 +11,11 @@
 // FUCK - remove namespace
 #include <platform/android/pbr/exposure_pass.hpp>
 #include <platform/android/pbr/present_pass.hpp>
+#include <platform/android/pbr/tone_mapper_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
 
 #include "reflection_global_pass.hpp"
 #include "shadow_casters.hpp"
-#include "tone_mapper_pass.hpp"
 
 
 namespace pbr {
@@ -56,6 +57,7 @@ class RenderSession final
 
         // FUCK - remove namespace
         android::ExposurePass       _exposurePass {};
+
         GXProjectionClipPlanes      _frustum {};
 
         GBuffer                     _gBuffer {};
@@ -73,9 +75,9 @@ class RenderSession final
         VkRenderPassBeginInfo       _renderPassInfo {};
         RenderSessionStats          _renderSessionStats {};
         SamplerManager              _samplerManager {};
-        ToneMapperPass              _toneMapperPass {};
 
         // FUCK - remove namespace
+        android::ToneMapperPass     _toneMapperPass {};
         android::UIPass             _uiPass {};
 
     public:

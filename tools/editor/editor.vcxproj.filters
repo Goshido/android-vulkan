@@ -198,15 +198,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\half_types.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_pass.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\full_screen_triangle_descriptor_set_layout.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tone_mapper_descriptor_set_layout.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\compute_program.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -423,6 +414,18 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\tone_mapper_program.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\full_screen_triangle_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\tone_mapper_pass.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\android\pbr\tone_mapper_descriptor_set_layout.cpp">
+      <Filter>Source Files\core\platform\FUCK android\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\tone_mapper_pass.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -559,15 +562,6 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\half_types.hpp">
       <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_pass.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle_descriptor_set_layout.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tone_mapper_descriptor_set_layout.hpp">
-      <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\compute_program.hpp">
       <Filter>Header Files\core\pbr</Filter>
@@ -881,6 +875,18 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\full_screen_triangle_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper_pass.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper_descriptor_set_layout.hpp">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -914,9 +920,6 @@
     <None Include="include\blit_program.inc">
       <Filter>Header Files\core</Filter>
     </None>
-    <None Include="..\..\app\src\main\cpp\include\pbr\tone_mapper.inc">
-      <Filter>Header Files\core\pbr</Filter>
-    </None>
     <None Include="..\..\app\src\main\cpp\include\pbr\full_screen_triangle.inc">
       <Filter>Header Files\core\pbr</Filter>
     </None>
@@ -940,6 +943,9 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper.inc">
+      <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

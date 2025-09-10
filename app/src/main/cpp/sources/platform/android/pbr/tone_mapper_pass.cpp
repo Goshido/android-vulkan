@@ -1,16 +1,13 @@
 #include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
-#include <pbr/full_screen_triangle.inc>
-#include <pbr/tone_mapper.inc>
-#include <pbr/tone_mapper_pass.hpp>
-
-// FUCK - windows and android separation
 #include <platform/android/pbr/full_screen_triangle.inc>
-
+#include <platform/android/pbr/tone_mapper.inc>
+#include <platform/android/pbr/tone_mapper_pass.hpp>
 #include <vulkan_utils.hpp>
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
 bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
@@ -44,7 +41,10 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_resourceDescriptorPool ),
-        "pbr::ToneMapperPass::Init",
+
+        // FUCK - remove namespace
+        "pbr::android::ToneMapperPass::Init",
+
         "Can't create descriptor pool"
     );
 
@@ -67,7 +67,10 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets + SET_RESOURCE ),
-        "pbr::ToneMapperPass::Init",
+
+        // FUCK - remove namespace
+        "pbr::android::ToneMapperPass::Init",
+
         "Can't create descriptor set"
     );
 
@@ -82,10 +85,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     return _transformUniformPool.Init ( renderer,
         _transformLayout,
-
-        // FUCK - remove namespace
-        sizeof ( android::ToneMapperProgram::Transform ),
-
+        sizeof ( ToneMapperProgram::Transform ),
         BIND_TRANSFORM,
         "Tone mapper transform uniform"
     );
@@ -96,10 +96,7 @@ void ToneMapperPass::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     VkDevice device = renderer.GetDevice ();
 
     if ( _resourceDescriptorPool != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyDescriptorPool ( device, _resourceDescriptorPool, nullptr );
-        _resourceDescriptorPool = VK_NULL_HANDLE;
-    }
+        vkDestroyDescriptorPool ( device, std::exchange ( _resourceDescriptorPool, VK_NULL_HANDLE ), nullptr );
 
     _program.Destroy ( device );
     _transformLayout.Destroy ( device );
@@ -221,15 +218,13 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
 
 void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_VULKAN_GROUP ( commandBuffer, "Upload tone mapper data" )
-
-    if ( !_transformUpdated )
+    if ( !_transformUpdated ) [[likely]]
         return;
 
+    AV_VULKAN_GROUP ( commandBuffer, "Upload tone mapper data" )
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
 
-    // FUCK - remove namespace
-    android::ToneMapperProgram::Transform const transform
+    ToneMapperProgram::Transform const transform
     {
         ._transformRow0 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] ),
         ._padding0 {},
@@ -245,4 +240,4 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkComma
     _transformUpdated = false;
 }
 
-} // namespace pbr
+} // namespace pbr::android

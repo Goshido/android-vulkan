@@ -2,7 +2,7 @@
 #define PBR_FULL_SCREEN_TRIANGLE_DESCRIPTOR_SET_LAYOUT_HPP
 
 
-#include "descriptor_set_layout.hpp"
+#include <pbr/descriptor_set_layout.hpp>
 
 
 namespace pbr {

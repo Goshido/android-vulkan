@@ -1,16 +1,15 @@
-#ifndef PBR_TONE_MAPPER_PASS_HPP
-#define PBR_TONE_MAPPER_PASS_HPP
+// FUCK - windows and android separation
+#ifndef PBR_ANDROID_TONE_MAPPER_PASS_HPP
+#define PBR_ANDROID_TONE_MAPPER_PASS_HPP
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
-
-// FUCK - windows and android separation
-#include <platform/android/pbr/tone_mapper_program.hpp>
-
-#include "uniform_pool.hpp"
+#include <pbr/uniform_pool.hpp>
+#include "tone_mapper_program.hpp"
 
 
-namespace pbr {
+// FUCK - remove namespace
+namespace pbr::android {
 
 class ToneMapperPass final
 {
@@ -18,9 +17,7 @@ class ToneMapperPass final
         float                                       _brightnessBalance = 0.0F;
         VkDescriptorSet                             _descriptorSets[ 2U ] = { VK_NULL_HANDLE, VK_NULL_HANDLE };
 
-        // FUCK - remove namespace
-        android::ToneMapperProgram                  _program {};
-
+        ToneMapperProgram                           _program {};
         ToneMapperDescriptorSetLayout               _resourceLayout {};
         FullScreenTriangleDescriptorSetLayout       _transformLayout {};
         VkDescriptorPool                            _resourceDescriptorPool = VK_NULL_HANDLE;
@@ -34,7 +31,7 @@ class ToneMapperPass final
         bool                                        _transformUpdated = true;
 
     public:
-        ToneMapperPass () = default;
+        explicit ToneMapperPass () = default;
 
         ToneMapperPass ( ToneMapperPass const & ) = delete;
         ToneMapperPass &operator = ( ToneMapperPass const & ) = delete;
@@ -66,7 +63,7 @@ class ToneMapperPass final
         void UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
-} // namespace pbr
+} // namespace pbr::android
 
 
-#endif // PBR_TONE_MAPPER_PASS_HPP
+#endif // PBR_ANDROID_TONE_MAPPER_PASS_HPP

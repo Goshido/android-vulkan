@@ -5,11 +5,11 @@
 #include "hello_triangle_program.hpp"
 #include "message_queue.hpp"
 #include <pbr/default_texture_manager.hpp>
-#include <pbr/tone_mapper_pass.hpp>
 
 // FUCK - remove namespace
 #include <platform/android/pbr/exposure_pass.hpp>
 #include <platform/android/pbr/present_pass.hpp>
+#include <platform/android/pbr/tone_mapper_pass.hpp>
 #include <platform/android/pbr/ui_pass.hpp>
 
 #include <platform/windows/mesh_geometry.hpp>
@@ -67,7 +67,10 @@ class RenderSession final
         std::mutex                                                  _submitMutex {};
         std::thread                                                 _thread {};
         Timestamp                                                   _timestamp {};
-        pbr::ToneMapperPass                                         _toneMapper {};
+
+        // FUCK - remove namespace
+        pbr::android::ToneMapperPass                                _toneMapper {};
+
         size_t                                                      _uiElements = 0U;
 
         // FUCK - remove namespace

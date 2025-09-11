@@ -2,8 +2,8 @@
 
 
 // See https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#resourcedescriptorheaps-samplerdescriptorheaps
-#define RESOURCE_DESCRIPTOR_HEAP_SET        0
-#define RESOURCE_DESCRIPTOR_HEAP_BIND       0
+#define SET_RESOURCE_DESCRIPTOR_HEAP        0
+#define BIND_RESOURCE_DESCRIPTOR_HEAP       0
 
 
 struct PushConstants
@@ -27,16 +27,17 @@ PushConstants       g_exposureInfo;
 // So the workaround is used.
 // See https://github.com/microsoft/DirectXShaderCompiler/issues/7740
 
-[[vk::binding ( RESOURCE_DESCRIPTOR_HEAP_BIND, RESOURCE_DESCRIPTOR_HEAP_SET )]]
+[[vk::binding ( BIND_RESOURCE_DESCRIPTOR_HEAP, SET_RESOURCE_DESCRIPTOR_HEAP )]]
 Texture2D<float32_t4>                               g_images[]:             register ( t0 );
 
-[[vk::binding ( RESOURCE_DESCRIPTOR_HEAP_BIND, RESOURCE_DESCRIPTOR_HEAP_SET )]]
+[[vk::binding ( BIND_RESOURCE_DESCRIPTOR_HEAP, SET_RESOURCE_DESCRIPTOR_HEAP )]]
+[[vk::image_format ( "r16f" )]]
 globallycoherent RWTexture2D<float32_t>             g_coherentImages[]:     register ( u0 );
 
-[[vk::binding ( RESOURCE_DESCRIPTOR_HEAP_BIND, RESOURCE_DESCRIPTOR_HEAP_SET )]]
+[[vk::binding ( BIND_RESOURCE_DESCRIPTOR_HEAP, SET_RESOURCE_DESCRIPTOR_HEAP )]]
 RWStructuredBuffer<float32_t>                       g_buffers[]:            register ( u0 );
 
-[[vk::binding ( RESOURCE_DESCRIPTOR_HEAP_BIND, RESOURCE_DESCRIPTOR_HEAP_SET )]]
+[[vk::binding ( BIND_RESOURCE_DESCRIPTOR_HEAP, SET_RESOURCE_DESCRIPTOR_HEAP )]]
 globallycoherent RWStructuredBuffer<uint32_t>       g_coherentBuffers[]:    register ( u0 );
 
 //----------------------------------------------------------------------------------------------------------------------

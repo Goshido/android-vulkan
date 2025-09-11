@@ -653,19 +653,19 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( _renderer.GetDevice (),
-        _renderTarget.GetImage (),
-        VK_OBJECT_TYPE_IMAGE,
-        "Render target"
-    )
+    VkDevice device = _renderer.GetDevice ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _renderTarget.GetImage (), VK_OBJECT_TYPE_IMAGE, "Render target" )
 
-    AV_SET_VULKAN_OBJECT_NAME ( _renderer.GetDevice (),
-        _renderTarget.GetImageView (),
-        VK_OBJECT_TYPE_IMAGE_VIEW,
-        "Render target"
-    )
+    VkImageView view = _renderTarget.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "Render target" )
 
-    return true;
+    if ( auto const idx = _resourceHeap.RegisterNonUISampledImage ( device, view ); idx ) [[likely]]
+    {
+        _renderTargetIdx = *idx;
+        return true;
+    }
+
+    return false;
 }
 
 void RenderSession::EventLoop () noexcept
@@ -766,7 +766,11 @@ bool RenderSession::InitModules () noexcept
 
     new HelloTriangleJob ( _messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
 
-    if ( !AllocateCommandBuffers ( device ) || !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    bool result = AllocateCommandBuffers ( device ) &&
+        _presentRenderPass.OnSwapchainCreated ( renderer ) &&
+        _presentRenderPassEXT.OnSwapchainCreated ( renderer );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
@@ -790,7 +794,7 @@ bool RenderSession::InitModules () noexcept
 
     VkCommandBuffer commandBuffer;
 
-    bool result =
+    result =
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateCommandBuffers ( device, &allocateInfo, &commandBuffer ),
             "editor::RenderSession::InitModules",
@@ -830,13 +834,6 @@ bool RenderSession::InitModules () noexcept
         android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "editor::RenderSession::InitModules",
             "Can't end command buffer"
-        ) &&
-
-      // FUCK
-        _fuckUIProgram.Init ( device,
-            renderer.GetSurfaceFormat (),
-            pbr::BrightnessInfo::BrightnessInfo ( 0.0F ),
-            renderer.GetViewportResolution ()
         );
 
     if ( !result ) [[unlikely]]
@@ -906,7 +903,7 @@ bool RenderSession::InitModules () noexcept
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
-    _timestamp = std::chrono::system_clock::now ();
+    _timestamp = std::chrono::steady_clock::now ();
     return true;
 }
 
@@ -928,7 +925,7 @@ void RenderSession::OnRenderFrame () noexcept
     if ( _broken ) [[unlikely]]
         return;
 
-    Timestamp const now = std::chrono::system_clock::now ();
+    Timestamp const now = std::chrono::steady_clock::now ();
     std::chrono::duration<float> const seconds = now - _timestamp;
     float const deltaTime = seconds.count ();
     _timestamp = now;
@@ -1184,6 +1181,9 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
         _fuckHelloTriangleGeometry.reset ();
     }
 
+    if ( _renderTargetIdx ) [[likely]]
+        _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
+
     _renderTarget.FreeResources ( renderer );
 
     if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
@@ -1195,16 +1195,14 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _presentRenderPass.OnSwapchainDestroyed ( device );
     _presentRenderPass.OnDestroyDevice ( device );
 
+    _presentRenderPassEXT.OnDestroyDevice ( device );
+
     _exposurePass.Destroy ( renderer );
     _toneMapper.Destroy ( renderer );
 
     _defaultTextureManager.Destroy ( renderer );
     _samplerManager.Destroy ( device );
-
     _resourceHeap.Destroy ( renderer );
-
-    // FUCK
-    _fuckUIProgram.Destroy ( device );
 
     _messageQueue.EnqueueFront (
         Message
@@ -1224,8 +1222,9 @@ void RenderSession::OnSwapchainCreated () noexcept
     VkDevice device = renderer.GetDevice ();
     _presentRenderPass.OnSwapchainDestroyed ( device );
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) || !_presentRenderPassEXT.OnSwapchainCreated ( renderer ) )
     {
+         [[unlikely]]
         // FUCK
         AV_ASSERT ( false )
     }
@@ -1245,6 +1244,9 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
     _renderPassInfo.framebuffer = VK_NULL_HANDLE;
+
+    if ( _renderTargetIdx ) [[likely]]
+        _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
 
     _renderTarget.FreeResources ( renderer );
 

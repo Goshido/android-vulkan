@@ -10,11 +10,11 @@
 #include <platform/android/pbr/exposure_pass.hpp>
 #include <platform/android/pbr/present_pass.hpp>
 #include <platform/android/pbr/tone_mapper_pass.hpp>
-#include <platform/android/pbr/ui_pass.hpp>
 
 #include <platform/windows/mesh_geometry.hpp>
+#include <platform/windows/pbr/exposure_pass.hpp>
+#include <platform/windows/pbr/present_pass.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
-#include <platform/windows/pbr/ui_program.hpp>
 #include "ui_manager.hpp"
 
 
@@ -32,7 +32,7 @@ class RenderSession final
             VkCommandPool                                           _pool = VK_NULL_HANDLE;
         };
 
-        using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
+        using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
 
     private:
         bool                                                        _broken = false;
@@ -44,24 +44,27 @@ class RenderSession final
 
         // FUCK - remove namespace
         pbr::android::ExposurePass                                  _exposurePass {};
+        pbr::windows::ExposurePass                                  _exposurePassEXT {};
 
         std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
 
         // FUCK
         std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
-        pbr::windows::UIProgram                                     _fuckUIProgram {};
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;
 
         // FUCK - remove namespace
         pbr::android::PresentPass                                   _presentRenderPass {};
+        pbr::windows::PresentPass                                   _presentRenderPassEXT {};
 
         // FUCK - refactor
         VkRenderPassBeginInfo                                       _renderPassInfo {};
 
         android_vulkan::Texture2D                                   _renderTarget {};
+        uint32_t                                                    _renderTargetIdx = 0U;
+
         pbr::windows::ResourceHeap                                  _resourceHeap {};
         pbr::SamplerManager                                         _samplerManager {};
         std::mutex                                                  _submitMutex {};

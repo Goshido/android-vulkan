@@ -345,17 +345,35 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
 
 std::optional<uint32_t> ResourceHeap::RegisterNonUISampledImage ( VkDevice device, VkImageView view ) noexcept
 {
-    return RegisterImage ( _nonUISlots, "Non UI heap", device, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+    return RegisterImage ( _nonUISlots,
+        "Non UI heap",
+        device,
+        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        view,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterUISampledImage ( VkDevice device, VkImageView view ) noexcept
 {
-    return RegisterImage ( _uiSlots, "UI heap", device, view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+    return RegisterImage ( _uiSlots,
+        "UI heap",
+        device,
+        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        view,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice device, VkImageView view ) noexcept
 {
-    return RegisterImage ( _nonUISlots, "Non UI heap", device, view, VK_IMAGE_LAYOUT_GENERAL );
+    return RegisterImage ( _nonUISlots,
+        "Non UI heap",
+        device,
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        view,
+        VK_IMAGE_LAYOUT_GENERAL
+    );
 }
 
 void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
@@ -572,6 +590,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
 std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
     char const* heap,
     VkDevice device,
+    VkDescriptorType type,
     VkImageView view,
     VkImageLayout layout
 ) noexcept
@@ -592,19 +611,34 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
         .imageLayout = layout,
     };
 
-    VkDescriptorGetInfoEXT const getInfo
+    VkDescriptorGetInfoEXT const getInfo[]
     {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-        .pNext = nullptr,
-        .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-
-        .data
         {
-            .pSampledImage = &image
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+            .pNext = nullptr,
+            .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+
+            .data
+            {
+                .pStorageImage = &image
+            }
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+            .pNext = nullptr,
+            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+
+            .data
+            {
+                .pSampledImage = &image
+            }
         }
     };
 
-    vkGetDescriptorEXT ( device, &getInfo, _bufferSize, _write.Push ( index, _sampledImageSize ) );
+    size_t const cases[] = { _storageImageSize, _sampledImageSize };
+    auto const selector = static_cast<size_t> ( type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE );
+
+    vkGetDescriptorEXT ( device, getInfo + selector, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
     return std::optional<uint32_t> { index };
 }
 

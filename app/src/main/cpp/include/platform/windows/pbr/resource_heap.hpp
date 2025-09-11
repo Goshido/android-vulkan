@@ -196,6 +196,7 @@ class ResourceHeap final
         [[nodiscard]] std::optional<uint32_t> RegisterImage ( Slots &slots,
             char const* heap,
             VkDevice device,
+            VkDescriptorType type,
             VkImageView view,
             VkImageLayout layout
         ) noexcept;

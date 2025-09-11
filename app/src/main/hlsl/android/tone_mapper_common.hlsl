@@ -4,7 +4,7 @@
 
 #include "aces.hlsl"
 #include "pbr/full_screen_triangle.inc"
-#include "pbr/tone_mapper.inc"
+#include "platform/android/pbr/tone_mapper.inc"
 
 
 [[vk::binding ( BIND_HDR_IMAGE, SET_RESOURCE )]]

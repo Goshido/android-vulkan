@@ -454,6 +454,7 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
             "shaderStorageImageArrayNonUniformIndexing" ) ) &
 
         AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) ) &
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2" ) ) &
 
         AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5" ) );
 }
@@ -654,7 +655,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .shaderTerminateInvocation = VK_FALSE,
         .subgroupSizeControl = VK_FALSE,
         .computeFullSubgroups = VK_FALSE,
-        .synchronization2 = VK_FALSE,
+        .synchronization2 = VK_TRUE,
         .textureCompressionASTC_HDR = VK_FALSE,
         .shaderZeroInitializeWorkgroupMemory = VK_FALSE,
         .dynamicRendering = VK_TRUE,

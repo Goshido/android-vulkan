@@ -186,7 +186,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_UNIFORM_READ_BIT,
+        .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
         .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -201,7 +201,10 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( float ),
-        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ),
+
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
+
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
@@ -296,7 +299,11 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( uint32_t ),
-        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
+
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
@@ -404,7 +411,11 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer,
         .pNext = nullptr,
         .flags = 0U,
         .size = sizeof ( float ),
-        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+
+        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+            AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
+
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
@@ -500,8 +511,8 @@ void ExposurePass::FreeTargetResources ( android_vulkan::Renderer &renderer,
     ResourceHeap &resourceHeap
 ) noexcept
 {
-    if ( _syncMip5Index ) [[likely]]
-        resourceHeap.UnregisterResource ( std::exchange ( _syncMip5Index, 0U ) );
+    if ( uint32_t &idx = _exposureInfo._syncMip5; idx ) [[likely]]
+        resourceHeap.UnregisterResource ( std::exchange ( idx, 0U ) );
 
     if ( _syncMip5View != VK_NULL_HANDLE ) [[likely]]
         vkDestroyImageView ( device, std::exchange ( _syncMip5View, VK_NULL_HANDLE ), nullptr );

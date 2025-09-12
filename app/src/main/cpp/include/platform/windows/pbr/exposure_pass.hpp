@@ -26,7 +26,6 @@ class ExposurePass final
         VkBufferMemoryBarrier               _exposureBeforeBarrier {};
         VkBufferMemoryBarrier               _exposureAfterBarrier {};
         Memory                              _exposureMemory {};
-        uint32_t                            _exposureIndex = 0U;
 
         VkCommandBuffer                     _commandBuffer = VK_NULL_HANDLE;
         VkExtent3D                          _dispatch {};
@@ -38,16 +37,12 @@ class ExposurePass final
         VkImage                             _syncMip5 = VK_NULL_HANDLE;
         VkImageView                         _syncMip5View = VK_NULL_HANDLE;
         Memory                              _syncMip5Memory {};
-        uint32_t                            _syncMip5Index = 0U;
 
         bool                                _isNeedTransitLayout = true;
         VkBufferMemoryBarrier               _computeOnlyBarriers[ 2U ];
 
         Memory                              _globalCounterMemory {};
-        uint32_t                            _globalCounterIndex = 0U;
-
         Memory                              _lumaMemory {};
-        uint32_t                            _lumaIndex = 0U;
 
         ExposureProgram                     _program {};
 

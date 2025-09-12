@@ -114,7 +114,7 @@ void ImageStorage::ReleaseImage ( uint16_t image ) noexcept
         break;
     }
 
-    _resourceHeap->UnregisterResource ( asset._image );
+    _resourceHeap->UnregisterResource ( image );
     _assets.erase ( findResult );
 }
 

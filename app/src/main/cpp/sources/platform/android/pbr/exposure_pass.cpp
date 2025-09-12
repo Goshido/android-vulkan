@@ -254,7 +254,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_UNIFORM_READ_BIT,
+        .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_UNIFORM_READ_BIT ),
         .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,

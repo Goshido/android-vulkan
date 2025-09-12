@@ -15,6 +15,7 @@
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/ui_pass.hpp>
 #include "ui_manager.hpp"
 
 
@@ -65,8 +66,12 @@ class RenderSession final
         android_vulkan::Texture2D                                   _renderTarget {};
         uint32_t                                                    _renderTargetIdx = 0U;
 
+        // FUCK - call update GPU
         pbr::windows::ResourceHeap                                  _resourceHeap {};
+
+        // FUCK - remove
         pbr::SamplerManager                                         _samplerManager {};
+
         std::mutex                                                  _submitMutex {};
         std::thread                                                 _thread {};
         Timestamp                                                   _timestamp {};
@@ -78,6 +83,7 @@ class RenderSession final
 
         // FUCK - remove namespace
         pbr::android::UIPass                                        _uiPass {};
+        pbr::windows::UIPass                                        _uiPassEXT { _resourceHeap };
 
         UIManager                                                   &_uiManager;
         VkViewport                                                  _viewport {};

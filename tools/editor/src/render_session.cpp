@@ -816,7 +816,8 @@ bool RenderSession::InitModules () noexcept
 
         result = _defaultTextureManager.Init ( renderer, pool ) &&
             _exposurePass.Init ( renderer, pool ) &&
-            _resourceHeap.Init ( renderer, commandBuffer );
+            _resourceHeap.Init ( renderer, commandBuffer ) &&
+            _exposurePassEXT.Init ( renderer, _resourceHeap, pool );
 
         if ( !result ) [[unlikely]]
         {
@@ -830,6 +831,7 @@ bool RenderSession::InitModules () noexcept
 
     result = _samplerManager.Init ( device ) &&
         _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
+        _uiPassEXT.OnInitDevice ( renderer ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "editor::RenderSession::InitModules",
@@ -878,6 +880,7 @@ bool RenderSession::InitModules () noexcept
 
     result = CreateRenderTarget () &&
         _exposurePass.SetTarget ( renderer, _renderTarget ) &&
+        _exposurePassEXT.SetTarget ( renderer, _resourceHeap, _renderTarget, _renderTargetIdx ) &&
         _toneMapper.Init ( renderer ) &&
 
         _toneMapper.SetTarget ( renderer,
@@ -890,7 +893,9 @@ bool RenderSession::InitModules () noexcept
 
         _toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
+        _uiPassEXT.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        _uiPassEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
@@ -902,6 +907,7 @@ bool RenderSession::InitModules () noexcept
 
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
+    _exposurePassEXT.FreeTransferResources ( device, pool );
     _defaultTextureManager.FreeTransferResources ( renderer, pool );
     _timestamp = std::chrono::steady_clock::now ();
     return true;
@@ -992,7 +998,10 @@ void RenderSession::OnRenderFrame () noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Upload" )
 
-        if ( !_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        result = _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
+            _uiPassEXT.UploadGPUData ( renderer, commandBuffer );
+
+        if ( !result ) [[unlikely]]
         {
             // FUCK
             AV_ASSERT ( false )
@@ -1190,13 +1199,17 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
         vkDestroyRenderPass ( device, std::exchange ( _renderPassInfo.renderPass, VK_NULL_HANDLE ), nullptr );
 
     _uiPass.OnSwapchainDestroyed ();
+    _uiPassEXT.OnSwapchainDestroyed ();
+
     _uiPass.OnDestroyDevice ( renderer );
+    _uiPassEXT.OnDestroyDevice ( renderer );
 
     _presentRenderPass.OnSwapchainDestroyed ( device );
     _presentRenderPass.OnDestroyDevice ( device );
 
     _presentRenderPassEXT.OnDestroyDevice ( device );
 
+    _exposurePassEXT.Destroy ( renderer, _resourceHeap );
     _exposurePass.Destroy ( renderer );
     _toneMapper.Destroy ( renderer );
 
@@ -1258,6 +1271,7 @@ void RenderSession::OnSwapchainCreated () noexcept
     }
 
     _uiPass.OnSwapchainDestroyed ();
+    _uiPassEXT.OnSwapchainDestroyed ();
 
     // FUCK - refactor
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
@@ -1265,6 +1279,7 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     bool const result = _exposurePass.SetTarget ( renderer, _renderTarget ) &&
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
+        _uiPassEXT.OnSwapchainCreated ( renderer ) &&
 
         _toneMapper.SetTarget ( renderer,
             renderPass,

@@ -208,12 +208,13 @@ bool FontStorage::Atlas::AddPages ( android_vulkan::Renderer &renderer,
         }
     };
 
-    uint32_t const limit = pages + static_cast<uint32_t> ( _pages.size () );
+    uint32_t i = static_cast<uint32_t> ( _pages.size () );
+    uint32_t const limit = pages + i;
     _pages.resize ( static_cast<size_t> ( limit  ) );
     ImageResource* p = _pages.data ();
     VkDevice device = renderer.GetDevice ();
 
-    for ( uint32_t i = pages; i < limit; ++i )
+    for ( ; i < limit; ++i )
     {
         ImageResource &resource = p[ i ];
 
@@ -538,7 +539,7 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
     VkImageMemoryBarrier2* barriers = _barriers.data ();
     _dependencies.imageMemoryBarrierCount = static_cast<uint32_t> ( neededBarriers );
 
-    if ( auto const count = static_cast<uint16_t> ( _barriers.size () ); neededBarriers < count ) [[unlikely]]
+    if ( auto const count = static_cast<uint16_t> ( _barriers.size () ); count < neededBarriers ) [[unlikely]]
     {
         _barriers.reserve ( static_cast<size_t> ( neededBarriers ) );
 
@@ -551,14 +552,28 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
 
     i = 0U;
 
-    if ( newLayers != neededBarriers ) [[likely]]
+    if ( ( newLayers != neededBarriers ) | emptyAtlasCorrection ) [[likely]]
     {
+        constexpr VkPipelineStageFlags2 const stageCases[] =
+        {
+            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT
+        };
+
+        constexpr VkAccessFlags2 const accessCases[] = { VK_ACCESS_2_SHADER_READ_BIT, VK_ACCESS_2_NONE };
+
+        constexpr VkImageLayout const layoutCases[] =
+        {
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_IMAGE_LAYOUT_UNDEFINED
+        };
+
         VkImageMemoryBarrier2 &b = barriers[ i ];
-        b.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
-        b.srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
+        b.srcStageMask = stageCases[ emptyAtlasCorrection ],
+        b.srcAccessMask = accessCases[ emptyAtlasCorrection ];
         b.dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         b.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-        b.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        b.oldLayout = layoutCases[ emptyAtlasCorrection ];
         b.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         b.image = pages[ i++ ]._image;
     }

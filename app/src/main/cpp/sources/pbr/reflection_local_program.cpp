@@ -38,7 +38,7 @@ void ReflectionLocalProgram::Destroy ( VkDevice device ) noexcept
     _commonLayout.Destroy ( device );
 }
 
-bool ReflectionLocalProgram::Init ( android_vulkan::Renderer &renderer,
+bool ReflectionLocalProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     VkExtent2D const &viewport
 ) noexcept
@@ -314,7 +314,7 @@ VkPipelineRasterizationStateCreateInfo const* ReflectionLocalProgram::InitRaster
     return &info;
 }
 
-bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ReflectionLocalProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

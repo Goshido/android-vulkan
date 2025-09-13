@@ -38,7 +38,7 @@ void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
     _commonLayout.Destroy ( device );
 }
 
-bool PointLightLightupProgram::Init ( android_vulkan::Renderer &renderer,
+bool PointLightLightupProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     VkExtent2D const &viewport
 ) noexcept
@@ -315,7 +315,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
     return &info;
 }
 
-bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

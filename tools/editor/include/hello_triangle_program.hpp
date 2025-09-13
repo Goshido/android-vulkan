@@ -21,7 +21,7 @@ class HelloTriangleProgram final : public pbr::android::GraphicsProgram
 
         ~HelloTriangleProgram () override = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer const &renderer,
             VkRenderPass renderPass,
             uint32_t subpass
         ) noexcept;
@@ -54,7 +54,7 @@ class HelloTriangleProgram final : public pbr::android::GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

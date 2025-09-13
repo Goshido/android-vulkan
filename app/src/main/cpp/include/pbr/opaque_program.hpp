@@ -10,7 +10,7 @@ namespace pbr {
 class OpaqueProgram final : public GeometryPassProgram
 {
     public:
-        OpaqueProgram () noexcept;
+        explicit OpaqueProgram () noexcept;
 
         OpaqueProgram ( OpaqueProgram const & ) = delete;
         OpaqueProgram &operator = ( OpaqueProgram const & ) = delete;

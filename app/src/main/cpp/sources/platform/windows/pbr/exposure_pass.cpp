@@ -56,9 +56,9 @@ void ExposurePass::FreeTransferResources ( VkDevice device, VkCommandPool comman
     _commandBuffer = VK_NULL_HANDLE;
 }
 
-VkBuffer ExposurePass::GetExposure () const noexcept
+uint32_t ExposurePass::GetExposure () const noexcept
 {
-    return _exposureBeforeBarrier.buffer;
+    return _exposureInfo._exposure;
 }
 
 bool ExposurePass::Init ( android_vulkan::Renderer &renderer,

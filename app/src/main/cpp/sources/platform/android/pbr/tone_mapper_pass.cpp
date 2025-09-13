@@ -112,7 +112,7 @@ void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }
 
-bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
+bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     float brightnessBalance
@@ -134,7 +134,7 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
+bool ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkImageView hdrView,
@@ -216,7 +216,7 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !_transformUpdated ) [[likely]]
         return;

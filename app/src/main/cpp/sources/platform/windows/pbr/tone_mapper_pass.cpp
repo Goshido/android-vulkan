@@ -20,7 +20,7 @@ void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }
 
-bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept
+bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer const &renderer, float brightnessBalance ) noexcept
 {
     _brightnessInfo = BrightnessInfo ( brightnessBalance );
 
@@ -40,28 +40,17 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer &renderer, float b
     return true;
 }
 
-bool ToneMapperPass::SetTarget ( android_vulkan::Renderer &renderer, uint32_t hdrImage, uint32_t exposure ) noexcept
+void ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
+    uint32_t hdrImage,
+    uint32_t exposure
+) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
-    _program.Destroy ( device );
-
-    bool const result = _program.Init ( device,
-        renderer.GetSurfaceFormat (),
-        _brightnessInfo,
-        renderer.GetSurfaceSize ()
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     _pushConstants._exposure = exposure;
     _pushConstants._hdrImage = hdrImage;
-
     UpdateTransform ( renderer );
-    return true;
 }
 
-void ToneMapperPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
+void ToneMapperPass::UpdateTransform ( android_vulkan::Renderer const &renderer ) noexcept
 {
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();
     _pushConstants._transformRow0 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 0U ] );

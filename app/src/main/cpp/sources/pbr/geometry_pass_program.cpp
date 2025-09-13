@@ -58,7 +58,7 @@ void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
     _instanceLayout.Destroy ( device );
 }
 
-bool GeometryPassProgram::Init ( android_vulkan::Renderer &renderer,
+bool GeometryPassProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     VkExtent2D const &viewport
 ) noexcept
@@ -402,7 +402,7 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
     return &info;
 }
 
-bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

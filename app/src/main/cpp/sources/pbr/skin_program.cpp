@@ -19,7 +19,7 @@ SkinProgram::SkinProgram () noexcept:
     // NOTHING
 }
 
-bool SkinProgram::Init ( android_vulkan::Renderer &renderer,
+bool SkinProgram::Init ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/
 ) noexcept
 {
@@ -109,7 +109,7 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
     return true;
 }
 
-bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo &targetInfo

@@ -65,7 +65,7 @@ class ExposurePass final
 
         void Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
-        [[nodiscard]] VkBuffer GetExposure () const noexcept;
+        [[nodiscard]] uint32_t GetExposure () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
             ResourceHeap &resourceHeap,

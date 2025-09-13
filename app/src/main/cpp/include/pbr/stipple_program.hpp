@@ -10,7 +10,7 @@ namespace pbr {
 class StippleProgram final : public GeometryPassProgram
 {
     public:
-        StippleProgram () noexcept;
+        explicit StippleProgram () noexcept;
 
         StippleProgram ( StippleProgram const & ) = delete;
         StippleProgram &operator = ( StippleProgram const & ) = delete;

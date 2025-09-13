@@ -27,14 +27,14 @@ class ComputeProgram : public pbr::ComputeProgram
         explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         ~ComputeProgram () override = default;
 
-        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] virtual bool Init ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData
         ) noexcept = 0;
 
         // Successor classes MUST call this method.
         void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo

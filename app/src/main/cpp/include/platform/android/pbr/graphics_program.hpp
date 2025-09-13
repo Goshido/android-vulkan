@@ -31,7 +31,7 @@ class GraphicsProgram : public pbr::GraphicsProgram
         explicit GraphicsProgram ( std::string_view name ) noexcept;
         ~GraphicsProgram () override = default;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

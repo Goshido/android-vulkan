@@ -17,7 +17,7 @@ constexpr size_t STAGE_COUNT = 2U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool DummyProgram::Init ( android_vulkan::Renderer &renderer,
+bool DummyProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     VkExtent2D const &viewport
 ) noexcept
@@ -175,7 +175,7 @@ VkPipelineMultisampleStateCreateInfo const* DummyProgram::InitMultisampleInfo (
     return &info;
 }
 
-bool DummyProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

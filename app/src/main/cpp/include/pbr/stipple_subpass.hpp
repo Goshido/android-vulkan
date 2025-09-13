@@ -16,7 +16,7 @@ class StippleSubpass final : public GeometrySubpassBase
         StippleProgram      _program {};
 
     public:
-        StippleSubpass () = default;
+        explicit StippleSubpass () = default;
 
         StippleSubpass ( StippleSubpass const & ) = delete;
         StippleSubpass &operator = ( StippleSubpass const & ) = delete;

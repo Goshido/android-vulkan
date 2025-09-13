@@ -38,7 +38,7 @@ void UIProgram::Destroy ( VkDevice device ) noexcept
     _transformLayout.Destroy ( device );
 }
 
-bool UIProgram::Init ( android_vulkan::Renderer &renderer,
+bool UIProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     BrightnessInfo const &brightnessInfo,
@@ -318,7 +318,7 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
     return &info;
 }
 
-bool UIProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,

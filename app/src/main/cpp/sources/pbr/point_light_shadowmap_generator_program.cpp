@@ -31,7 +31,7 @@ void PointLightShadowmapGeneratorProgram::Destroy ( VkDevice device ) noexcept
     _instanceLayout.Destroy ( device );
 }
 
-bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer &renderer,
+bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     VkExtent2D const &viewport
@@ -284,7 +284,7 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

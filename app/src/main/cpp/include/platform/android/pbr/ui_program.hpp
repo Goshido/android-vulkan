@@ -46,7 +46,7 @@ class UIProgram final : public android::GraphicsProgram
 
         void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer const &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             BrightnessInfo const &brightnessInfo,
@@ -87,7 +87,7 @@ class UIProgram final : public android::GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

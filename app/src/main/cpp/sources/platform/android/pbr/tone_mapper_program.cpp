@@ -35,7 +35,7 @@ void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
     _toneMapperLayout.Destroy ( device );
 }
 
-bool ToneMapperProgram::Init ( android_vulkan::Renderer &renderer,
+bool ToneMapperProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass,
     BrightnessInfo const &brightnessInfo,
@@ -307,7 +307,7 @@ VkPipelineRasterizationStateCreateInfo const* ToneMapperProgram::InitRasterizati
     return &info;
 }
 
-bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,

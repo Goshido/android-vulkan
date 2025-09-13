@@ -43,7 +43,7 @@ class PointLightShadowmapGeneratorProgram final : public android::GraphicsProgra
 
         void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer const &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkExtent2D const &viewport
@@ -79,7 +79,7 @@ class PointLightShadowmapGeneratorProgram final : public android::GraphicsProgra
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             VkPipelineShaderStageCreateInfo const* &targetInfo,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

@@ -25,7 +25,7 @@ class ReflectionGlobalPass final
         std::vector<VkWriteDescriptorSet>       _writeSets {};
 
     public:
-        ReflectionGlobalPass () = default;
+        explicit ReflectionGlobalPass () = default;
 
         ReflectionGlobalPass ( ReflectionGlobalPass const & ) = delete;
         ReflectionGlobalPass &operator = ( ReflectionGlobalPass const & ) = delete;

@@ -35,7 +35,7 @@ class SkinProgram final : public android::ComputeProgram
 
         ~SkinProgram () override = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool Init ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData
         ) noexcept override;
 
@@ -46,7 +46,7 @@ class SkinProgram final : public android::ComputeProgram
     private:
         [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo &targetInfo

@@ -26,7 +26,7 @@ HelloTriangleProgram::HelloTriangleProgram () noexcept:
     // NOTHING
 }
 
-bool HelloTriangleProgram::Init ( android_vulkan::Renderer &renderer,
+bool HelloTriangleProgram::Init ( android_vulkan::Renderer const &renderer,
     VkRenderPass renderPass,
     uint32_t subpass
 ) noexcept
@@ -276,7 +276,7 @@ VkPipelineRasterizationStateCreateInfo const* HelloTriangleProgram::InitRasteriz
     return &info;
 }
 
-bool HelloTriangleProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool HelloTriangleProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     VkPipelineShaderStageCreateInfo const* &targetInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,

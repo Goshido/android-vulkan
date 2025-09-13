@@ -21,7 +21,7 @@ ExposureProgram::ExposureProgram () noexcept:
     // NOTHING
 }
 
-bool ExposureProgram::Init ( android_vulkan::Renderer &renderer,
+bool ExposureProgram::Init ( android_vulkan::Renderer const &renderer,
     SpecializationData specializationData
 ) noexcept
 {
@@ -115,7 +115,7 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     return true;
 }
 
-bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer &renderer,
+bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo &targetInfo

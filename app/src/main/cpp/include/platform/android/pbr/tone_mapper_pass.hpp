@@ -46,13 +46,13 @@ class ToneMapperPass final
 
         void Execute ( VkCommandBuffer commandBuffer ) noexcept;
 
-        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer const &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             float brightnessBalance
         ) noexcept;
 
-        [[nodiscard]] bool SetTarget ( android_vulkan::Renderer &renderer,
+        [[nodiscard]] bool SetTarget ( android_vulkan::Renderer const &renderer,
             VkRenderPass renderPass,
             uint32_t subpass,
             VkImageView hdrView,
@@ -60,7 +60,7 @@ class ToneMapperPass final
             VkSampler clampToEdgeSampler
         ) noexcept;
 
-        void UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        void UploadGPUData ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
 } // namespace pbr::android

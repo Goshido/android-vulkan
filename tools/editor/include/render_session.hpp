@@ -15,6 +15,7 @@
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
 #include "ui_manager.hpp"
 
@@ -78,6 +79,7 @@ class RenderSession final
 
         // FUCK - remove namespace
         pbr::android::ToneMapperPass                                _toneMapper {};
+        pbr::windows::ToneMapperPass                                _toneMapperEXT {};
 
         size_t                                                      _uiElements = 0U;
 

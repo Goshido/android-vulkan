@@ -892,6 +892,7 @@ bool RenderSession::InitModules () noexcept
         ) &&
 
         _toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        _toneMapperEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
         _uiPassEXT.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
@@ -904,6 +905,8 @@ bool RenderSession::InitModules () noexcept
 
     if ( !result ) [[unlikely]]
         return false;
+
+    _toneMapperEXT.SetTarget ( renderer, _renderTargetIdx, _exposurePassEXT.GetExposure () );
 
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
@@ -1043,6 +1046,7 @@ void RenderSession::OnRenderFrame () noexcept
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
         _presentRenderPass.Begin ( commandBuffer );
 
+        // FUCK - call Windows backend
         _toneMapper.Execute ( commandBuffer );
 
         if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
@@ -1212,6 +1216,7 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _exposurePassEXT.Destroy ( renderer, _resourceHeap );
     _exposurePass.Destroy ( renderer );
     _toneMapper.Destroy ( renderer );
+    _toneMapperEXT.Destroy ( device );
 
     _defaultTextureManager.Destroy ( renderer );
     _samplerManager.Destroy ( device );
@@ -1290,7 +1295,10 @@ void RenderSession::OnSwapchainCreated () noexcept
         );
 
     if ( result ) [[likely]]
+    {
+        _toneMapperEXT.SetTarget ( renderer, _renderTargetIdx, _exposurePassEXT.GetExposure () );
         return;
+    }
 
     // FUCK
     android_vulkan::LogError ( "editor::RenderSession::OnSwapchainCreated - Can't create UI pass." );

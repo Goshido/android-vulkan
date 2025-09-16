@@ -4,6 +4,8 @@
 
 // FUCK - remove namespace
 #include <platform/android/pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
+
 #include "ui_element.hpp"
 
 
@@ -14,7 +16,11 @@ class TextUIElement;
 class DIVUIElement final : public UIElement
 {
     private:
+        // FUCK - remove it
         pbr::android::DIVUIElement*     _div = nullptr;
+
+        // FUCK - remove namespace
+        pbr::windows::DIVUIElement*     _divEXT = nullptr;
 
     public:
         DIVUIElement () = delete;
@@ -38,8 +44,11 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () noexcept override;
 
-        // FUCK - remove namespace
+        // FUCK - remove it
         [[nodiscard]] pbr::android::UIElement &GetNativeElement () noexcept override;
+
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::windows::UIElement &GetNativeElementEXT () noexcept override;
 
         void AppendChildElement ( DIVUIElement &element ) noexcept;
         void PrependChildElement ( DIVUIElement &element ) noexcept;
@@ -52,14 +61,32 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool IsVisible () const noexcept;
         void Update () noexcept;
 
-        // FUCK - remove namespace
+        // FUCK - remove it
         [[nodiscard]] pbr::android::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
-        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
         // FUCK - remove namespace
-        void ApplyLayout ( pbr::android::UIElement::ApplyInfo &info ) noexcept;
-        void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept;
-        [[nodiscard]] bool UpdateCache ( pbr::android::UIElement::UpdateInfo &info ) noexcept;
+        [[nodiscard]] pbr::windows::DIVUIElement::Rect const &GetAbsoluteRectEXT () const noexcept;
+
+        // FUCK - remove it
+        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
+
+        // FUCK - rename
+        [[nodiscard]] pbr::CSSComputedValues &GetCSSEXT () noexcept;
+
+        // FUCK - remove namespace
+        void ApplyLayout ( pbr::android::UIElement::ApplyInfo &info,
+            pbr::windows::UIElement::ApplyInfo &infoEXT
+        ) noexcept;
+
+        // FUCK - remove namespace
+        void Submit ( pbr::android::UIElement::SubmitInfo &info,
+            pbr::windows::UIElement::SubmitInfo &infoEXT
+        ) noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] bool UpdateCache ( pbr::android::UIElement::UpdateInfo &info,
+            pbr::windows::UIElement::UpdateInfo &infoEXT
+        ) noexcept;
 };
 
 } // namespace editor

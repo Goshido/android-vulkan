@@ -28,6 +28,8 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     // FUCK - remove namespace
     pbr::android::FontStorage &fontStorage,
 
+    pbr::windows::FontStorage &fontStorageEXT,
+
     std::string_view caption,
     std::string_view value,
     std::string &&name
@@ -35,6 +37,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     Widget ( messageQueue ),
     _committed ( value ),
     _fontStorage ( fontStorage ),
+    _fontStorageEXT ( fontStorageEXT ),
 
     _lineDIV ( messageQueue,
         parent,
@@ -976,9 +979,15 @@ void UIEditBox::UpdateCursor () noexcept
     pbr::CSSComputedValues &selectionCSS = _selectionDIV.GetCSS ();
     selectionCSS._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 0U ] );
     selectionCSS._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 1U ] );
+
+    pbr::CSSComputedValues &selectionCSSEXT = _selectionDIV.GetCSSEXT ();
+    selectionCSSEXT._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 0U ] );
+    selectionCSSEXT._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 1U ] );
+
     _selectionDIV.Update ();
 
     _cursorDIV.GetCSS ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );
+    _cursorDIV.GetCSSEXT ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );
     _cursorDIV.Update ();
 }
 
@@ -989,6 +998,14 @@ void UIEditBox::UpdateMetrics () noexcept
     _fontStorage.GetStringMetrics ( _metrics,
         css._fontFile,
         static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
+        _content
+    );
+
+    pbr::CSSComputedValues const &cssEXT = _textDIV.GetCSSEXT ();
+
+    _fontStorageEXT.GetStringMetrics ( _metricsEXT,
+        cssEXT._fontFile,
+        static_cast<uint32_t> ( cssEXT._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
         _content
     );
 }

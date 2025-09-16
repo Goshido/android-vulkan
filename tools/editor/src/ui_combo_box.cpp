@@ -83,10 +83,18 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
     css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 0U ] );
     css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 1U ] );
 
+    pbr::CSSComputedValues &cssEXT = _div.GetCSSEXT ();
+    cssEXT._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 0U ] );
+    cssEXT._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 1U ] );
+
     // FUCK - remove namespace
     pbr::android::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
 
     css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX,
+        devicePXtoCSSPX * ( widthRect._bottomRight._data[ 0U ] - widthRect._topLeft._data[ 0U ] )
+    );
+
+    cssEXT._width = pbr::LengthValue ( pbr::LengthValue::eType::PX,
         devicePXtoCSSPX * ( widthRect._bottomRight._data[ 0U ] - widthRect._topLeft._data[ 0U ] )
     );
 
@@ -193,11 +201,13 @@ void UIComboBox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     setColor ( oldFocused, theme::MAIN_COLOR );
     setColor ( _focused, theme::HOVER_COLOR );
     _isChanged = true;
+    _isChangedEXT = true;
 }
 
 // FUCK - remove namespace
 Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::android::FontStorage &fontStorage
+    pbr::android::FontStorage &fontStorage,
+    pbr::windows::FontStorage &fontStorageEXT
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -205,7 +215,7 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
@@ -218,8 +228,25 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
         ._vertices = 0U
     };
 
-    _div.ApplyLayout ( info );
+    _lineHeightsEXT.clear ();
+    _lineHeightsEXT.push_back ( 0.0F );
+
+    // FUCK - remove namespace
+    pbr::windows::UIElement::ApplyInfo infoEXT
+    {
+        ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._fontStorage = &fontStorageEXT,
+        ._hasChanges = _isChangedEXT,
+        ._lineHeights = &_lineHeightsEXT,
+        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
+        ._renderer = &renderer,
+        ._vertices = 0U
+    };
+
+    _div.ApplyLayout ( info, infoEXT );
     _isChanged = false;
+    _isChangedEXT = false;
 
     return
     {
@@ -229,15 +256,20 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
 }
 
 // FUCK - remove namespace
-void UIComboBox::Popup::Submit ( pbr::android::UIElement::SubmitInfo& info ) noexcept
+void UIComboBox::Popup::Submit ( pbr::android::UIElement::SubmitInfo &info,
+    pbr::windows::UIElement::SubmitInfo &infoEXT
+) noexcept
 {
-    _div.Submit ( info );
+    _div.Submit ( info, infoEXT );
 }
 
 // FUCK - remove namespace
-bool UIComboBox::Popup::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UIComboBox::Popup::UpdateCache ( pbr::android::FontStorage &fontStorage,
+    pbr::windows::FontStorage &fontStorageEXT,
+    VkExtent2D const &viewport
+) noexcept
 {
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
@@ -248,7 +280,17 @@ bool UIComboBox::Popup::UpdateCache ( pbr::android::FontStorage &fontStorage, Vk
         ._pen = GXVec2 ( 0.0F, 0.0F )
     };
 
-    return _div.UpdateCache ( info );
+    pbr::windows::UIElement::UpdateInfo infoEXT
+    {
+        ._fontStorage = &fontStorageEXT,
+        ._line = 0U,
+        ._parentLineHeights = _lineHeights.data (),
+        ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F )
+    };
+
+    return _div.UpdateCache ( info, infoEXT );
 }
 
 bool UIComboBox::Popup::HandleMouseButtonDown ( MouseButtonEvent const &event ) noexcept
@@ -681,6 +723,7 @@ void UIComboBox::SwitchToNormalState () noexcept
 {
     _icon.SetText ( glyph::COMBOBOX_DOWN );
     _valueDIV.GetCSS ()._backgroundColor = theme::WIDGET_BACKGROUND_COLOR;
+    _valueDIV.GetCSSEXT ()._backgroundColor = theme::WIDGET_BACKGROUND_COLOR;
 
     UpdatedRectNormal ();
 
@@ -709,6 +752,7 @@ void UIComboBox::SwitchToMenuState () noexcept
     _text.SetColor ( theme::MAIN_COLOR );
     _icon.SetColor ( theme::MAIN_COLOR );
     _valueDIV.GetCSS ()._backgroundColor = POPUP_BACKGROUND;
+    _valueDIV.GetCSSEXT ()._backgroundColor = POPUP_BACKGROUND;
 
     _popup = new Popup ( _messageQueue,
         _menuAnchorDIV,

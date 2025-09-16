@@ -532,7 +532,7 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
         0U,
         0U,
         nullptr,

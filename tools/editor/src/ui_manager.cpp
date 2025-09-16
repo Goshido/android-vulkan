@@ -10,8 +10,12 @@
 namespace editor {
 
 // FUCK - remove namespace
-UIManager::UIManager ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept:
+UIManager::UIManager ( MessageQueue &messageQueue,
+    pbr::android::FontStorage &fontStorage,
+    pbr::windows::FontStorage &fontStorageEXT
+) noexcept:
     _fontStorage ( fontStorage ),
+    _fontStorageEXT ( fontStorageEXT ),
     _messageQueue ( messageQueue )
 {
     // NOTHING
@@ -40,12 +44,14 @@ void UIManager::Destroy () noexcept
 }
 
 // FUCK - remove namespace
-void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIPass &pass ) noexcept
+void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
+    pbr::android::UIPass &pass,
+    pbr::windows::UIPass &passEXT
+) noexcept
 {
     AV_TRACE ( "UI" )
 
     // FUCK - remove namespace
-    pbr::android::FontStorage &fontStorage = pass.GetFontStorage ();
     bool needRefill = false;
     size_t neededUIVertices = 0U;
 
@@ -53,7 +59,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIP
 
     for ( auto &widget : _widgets )
     {
-        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, fontStorage );
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage, _fontStorageEXT );
         needRefill |= status._hasChanges;
         neededUIVertices += status._neededUIVertices;
     }
@@ -61,36 +67,54 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIP
     if ( neededUIVertices == 0U )
     {
         pass.RequestEmptyUI ();
+        passEXT.RequestEmptyUI ();
         return;
     }
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     for ( auto &widget : _widgets )
-        needRefill |= widget->UpdateCache ( fontStorage, viewport );
+        needRefill |= widget->UpdateCache ( _fontStorage, _fontStorageEXT, viewport );
 
     if ( !needRefill )
         return;
 
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
 
     if ( !response )
     {
         pass.RequestEmptyUI ();
+        passEXT.RequestEmptyUI ();
         return;
     }
 
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
         ._vertexBuffer = *response
     };
 
+    // FUCK - remove namespace
+    pbr::windows::UIPass::UIBufferResponse responseEXT = passEXT.RequestUIBuffer ( neededUIVertices );
+
+    if ( !responseEXT )
+    {
+        pass.RequestEmptyUI ();
+        passEXT.RequestEmptyUI ();
+        return;
+    }
+
+    pbr::windows::UIElement::SubmitInfo infoEXT
+    {
+        ._uiPass = &passEXT,
+        ._uiVertexBuffer = *responseEXT
+    };
+
     for ( auto &widget : _widgets )
     {
-        widget->Submit ( info );
+        widget->Submit ( info, infoEXT );
     }
 }
 
@@ -231,7 +255,7 @@ void UIManager::OnFontStorageReady () noexcept
     AV_TRACE ( "FontStorage ready" )
     _messageQueue.DequeueEnd ();
 
-    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
+    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage, _fontStorageEXT );
     dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),

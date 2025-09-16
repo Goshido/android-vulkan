@@ -10,6 +10,8 @@
 // FUCK - change
 #include <platform/android/pbr/font_storage.hpp>
 #include <platform/android/pbr/ui_element.hpp>
+#include <platform/windows/pbr/font_storage.hpp>
+#include <platform/windows/pbr/ui_element.hpp>
 
 #include "rect.hpp"
 
@@ -59,16 +61,20 @@ class Widget
 
         virtual void OnTyping ( char32_t character ) noexcept;
 
+        // FUCK - remove namespace
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            // FUCK - remove namespace
-            pbr::android::FontStorage &fontStorage
+            pbr::android::FontStorage &fontStorage,
+            pbr::windows::FontStorage &fontStorageEXT
         ) noexcept;
 
         // FUCK - remove namespace
-        virtual void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept;
+        virtual void Submit ( pbr::android::UIElement::SubmitInfo &info,
+            pbr::windows::UIElement::SubmitInfo &infoEXT
+        ) noexcept;
 
         // FUCK - remove namespace
         [[nodiscard]] virtual bool UpdateCache ( pbr::android::FontStorage &fontStorage,
+            pbr::windows::FontStorage &fontStorageEXT,
             VkExtent2D const &viewport
         ) noexcept;
 

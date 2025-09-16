@@ -13,7 +13,8 @@ TextUIElement::TextUIElement ( MessageQueue &messageQueue,
     UIElement ( messageQueue ),
 
     // FUCK - remove namespace
-    _text ( new pbr::android::TextUIElement ( true, &parent.GetNativeElement (), text, std::move ( name ) ) )
+    _text ( new pbr::android::TextUIElement ( true, &parent.GetNativeElement (), text, std::string ( name ) ) ),
+    _textEXT ( new pbr::windows::TextUIElement ( true, &parent.GetNativeElementEXT (), text, std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -27,17 +28,32 @@ TextUIElement::~TextUIElement () noexcept
             ._serialNumber = 0U
         }
     );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIDeleteElementEXT,
+            ._params = std::exchange ( _textEXT, nullptr ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
-// FUCK - remove namespace
+// FUCK - remove it
 pbr::android::UIElement &TextUIElement::GetNativeElement () noexcept
 {
     return *_text;
 }
 
+// FUCK - remove namespace
+pbr::windows::UIElement &TextUIElement::GetNativeElementEXT () noexcept
+{
+    return *_textEXT;
+}
+
 void TextUIElement::SetColor ( pbr::ColorValue const &color ) noexcept
 {
     _text->SetColor ( color );
+    _textEXT->SetColor ( color );
 }
 
 void TextUIElement::SetText ( std::string_view text ) noexcept
@@ -49,6 +65,14 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
             ._serialNumber = 0U
         }
     );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UISetText,
+            ._params = SetTextEvent::Create ( *_textEXT, text ),
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void TextUIElement::SetText ( std::u32string_view text ) noexcept
@@ -57,6 +81,14 @@ void TextUIElement::SetText ( std::u32string_view text ) noexcept
         {
             ._type = eMessageType::UISetText,
             ._params = SetTextEvent::Create ( *_text, text ),
+            ._serialNumber = 0U
+        }
+    );
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UISetText,
+            ._params = SetTextEvent::Create ( *_textEXT, text ),
             ._serialNumber = 0U
         }
     );

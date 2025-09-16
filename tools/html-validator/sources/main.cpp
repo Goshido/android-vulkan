@@ -4,8 +4,6 @@
 #include <pbr/html5_parser.hpp>
 
 
-//----------------------------------------------------------------------------------------------------------------------
-
 namespace {
 
 constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );

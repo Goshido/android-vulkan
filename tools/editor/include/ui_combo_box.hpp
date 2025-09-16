@@ -67,8 +67,17 @@ class UIComboBox final : public Widget
 
                 Callback                            &_callback;
 
+                // FUCK - remove it
                 std::vector<float>                  _lineHeights { 1U, 0.0F };
+
+                // FUCK - rename
+                std::vector<float>                  _lineHeightsEXT { 1U, 0.0F };
+
+                // FUCK - remove it
                 bool                                _isChanged = false;
+
+                // FUCK - rename
+                bool                                _isChangedEXT = false;
 
                 Items const                         _items;
                 size_t                              _focused = NO_INDEX;
@@ -98,16 +107,20 @@ class UIComboBox final : public Widget
 
                 void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
+                // FUCK - remove namespace
                 [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-                    // FUCK - remove namespace
-                    pbr::android::FontStorage &fontStorage
+                    pbr::android::FontStorage &fontStorage,
+                    pbr::windows::FontStorage &fontStorageEXT
                 ) noexcept override;
 
                 // FUCK - remove namespace
-                void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept override;
+                void Submit ( pbr::android::UIElement::SubmitInfo &info,
+                    pbr::windows::UIElement::SubmitInfo &infoEXT
+                ) noexcept override;
 
                 // FUCK - remove namespace
                 [[nodiscard]] bool UpdateCache ( pbr::android::FontStorage &fontStorage,
+                    pbr::windows::FontStorage &fontStorageEXT,
                     VkExtent2D const &viewport
                 ) noexcept override;
 

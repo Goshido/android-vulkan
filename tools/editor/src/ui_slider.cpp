@@ -4,6 +4,7 @@
 #include <theme.hpp>
 #include <ui_slider.hpp>
 
+
 namespace editor {
 
 UISlider::UISlider ( MessageQueue &messageQueue,
@@ -352,6 +353,10 @@ void UISlider::UpdateProgress ( double progress ) noexcept
         _callback ( _value );
 
     _progressDIV.GetCSS ()._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent,
+        100.0F * static_cast<float> ( progress )
+    );
+
+    _progressDIV.GetCSSEXT ()._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent,
         100.0F * static_cast<float> ( progress )
     );
 

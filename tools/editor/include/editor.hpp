@@ -35,7 +35,14 @@ class Editor final
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};
         RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
-        UIManager                               _uiManager { _messageQueue, _renderSession.GetFontStorage () };
+
+        UIManager                               _uiManager
+        {
+            _messageQueue,
+            _renderSession.GetFontStorage (),
+            _renderSession.GetFontStorageEXT ()
+        };
+
         TimerManager                            _timerManager { _messageQueue };
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;

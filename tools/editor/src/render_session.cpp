@@ -353,10 +353,16 @@ void RenderSession::Destroy () noexcept
     }
 }
 
-// FUCK - remove namespace
+// FUCK - remove it
 pbr::android::FontStorage &RenderSession::GetFontStorage () noexcept
 {
     return _uiPass.GetFontStorage ();
+}
+
+// FUCK - remove EXT
+pbr::windows::FontStorage& RenderSession::GetFontStorageEXT () noexcept
+{
+    return _uiPassEXT.GetFontStorage ();
 }
 
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
@@ -721,12 +727,20 @@ void RenderSession::EventLoop () noexcept
                 OnUIDeleteElement ( std::move ( message ) );
             break;
 
+            case eMessageType::UIDeleteElementEXT:
+                OnUIDeleteElementEXT ( std::move ( message ) );
+            break;
+
             case eMessageType::UIElementCreated:
                 OnUIElementCreated ();
             break;
 
             case eMessageType::UIShowElement:
                 OnUIShowElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIShowElementEXT:
+                OnUIShowElementEXT ( std::move ( message ) );
             break;
 
             case eMessageType::UIPrependChildElement:
@@ -737,12 +751,20 @@ void RenderSession::EventLoop () noexcept
                 OnUIHideElement ( std::move ( message ) );
             break;
 
+            case eMessageType::UIHideElementEXT:
+                OnUIHideElementEXT ( std::move ( message ) );
+            break;
+
             case eMessageType::UISetText:
                 OnUISetText ( std::move ( message ) );
             break;
 
             case eMessageType::UIUpdateElement:
                 OnUIUpdateElement ( std::move ( message ) );
+            break;
+
+            case eMessageType::UIUpdateElementEXT:
+                OnUIUpdateElementEXT ( std::move ( message ) );
             break;
 
             default:
@@ -944,7 +966,7 @@ void RenderSession::OnRenderFrame () noexcept
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
     android_vulkan::Renderer &renderer = _renderer;
-    _uiManager.RenderUI ( renderer, _uiPass );
+    _uiManager.RenderUI ( renderer, _uiPass, _uiPassEXT );
 
     VkDevice device = renderer.GetDevice ();
 
@@ -1140,6 +1162,10 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
                 OnUIDeleteElement ( std::move ( message ) );
             break;
 
+            case eMessageType::UIDeleteElementEXT:
+                OnUIDeleteElementEXT ( std::move ( message ) );
+            break;
+
             case eMessageType::UIElementCreated:
                 OnUIElementCreated ();
             break;
@@ -1244,7 +1270,8 @@ void RenderSession::OnSwapchainCreated () noexcept
     {
          [[unlikely]]
         // FUCK
-        AV_ASSERT ( false )
+         AV_ASSERT ( false )
+        return;
     }
 
     VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
@@ -1316,13 +1343,6 @@ void RenderSession::OnUIAppendChildElement ( Message &&message ) noexcept
     delete event;
 }
 
-void RenderSession::OnUIElementCreated () noexcept
-{
-    AV_TRACE ( "UI element created" )
-    _messageQueue.DequeueEnd ();
-    ++_uiElements;
-}
-
 void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI delete element" )
@@ -1331,6 +1351,26 @@ void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
     // FUCK - remove namespace
     delete static_cast<pbr::android::UIElement*> ( message._params );
     --_uiElements;
+}
+
+void RenderSession::OnUIDeleteElementEXT ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI delete element" )
+    _messageQueue.DequeueEnd ();
+
+    // FUCK - remove namespace
+    delete static_cast<pbr::windows::UIElement*> ( message._params );
+    --_uiElements;
+}
+
+void RenderSession::OnUIElementCreated () noexcept
+{
+    AV_TRACE ( "UI element created" )
+    _messageQueue.DequeueEnd ();
+
+    // FUCK - fix increment by 1
+    //++_uiElements;
+    _uiElements += 2U;
 }
 
 void RenderSession::OnUIHideElement ( Message &&message ) noexcept
@@ -1342,6 +1382,15 @@ void RenderSession::OnUIHideElement ( Message &&message ) noexcept
     static_cast<pbr::android::UIElement*> ( message._params )->Hide ();
 }
 
+void RenderSession::OnUIHideElementEXT ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI hide element" )
+    _messageQueue.DequeueEnd ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::windows::UIElement*> ( message._params )->Hide ();
+}
+
 void RenderSession::OnUIShowElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
@@ -1349,6 +1398,15 @@ void RenderSession::OnUIShowElement ( Message &&message ) noexcept
 
     // FUCK - remove namespace
     static_cast<pbr::android::UIElement*> ( message._params )->Show ();
+}
+
+void RenderSession::OnUIShowElementEXT ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI show element" )
+    _messageQueue.DequeueEnd ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::windows::UIElement*> ( message._params )->Show ();
 }
 
 void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
@@ -1378,6 +1436,15 @@ void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
 
     // FUCK - remove namespace
     static_cast<pbr::android::DIVUIElement*> ( message._params )->Update ();
+}
+
+void RenderSession::OnUIUpdateElementEXT ( Message &&message ) noexcept
+{
+    AV_TRACE ( "UI update element" )
+    _messageQueue.DequeueEnd ();
+
+    // FUCK - remove namespace
+    static_cast<pbr::windows::DIVUIElement*> ( message._params )->Update ();
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept

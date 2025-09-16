@@ -16,9 +16,6 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
-        // FUCK - remove namespace
-        pbr::android::FontStorage       &_fontStorage;
-
         DIVUIElement                    _headerLine;
         UILabel                         _headerText;
         UICloseButton                   _closeButton;
@@ -28,14 +25,19 @@ class UIProps final : public UIDialogBox
         UIEditBox                       _editBox;
 
     public:
-        // FUCK - remove namespace
-        explicit UIProps ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept;
+        UIProps () = delete;
 
         UIProps ( UIProps const & ) = delete;
         UIProps &operator = ( UIProps const & ) = delete;
 
         UIProps ( UIProps && ) = delete;
         UIProps &operator = ( UIProps && ) = delete;
+
+        // FUCK - remove namespace
+        explicit UIProps ( MessageQueue &messageQueue,
+            pbr::android::FontStorage &fontStorage,
+            pbr::windows::FontStorage &fontStorageEXT
+        ) noexcept;
 
         ~UIProps () override = default;
 
@@ -45,7 +47,9 @@ class UIProps final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
         // FUCK - remove namespace
-        void Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept override;
+        void Submit ( pbr::android::UIElement::SubmitInfo &info,
+            pbr::windows::UIElement::SubmitInfo &infoEXT
+        ) noexcept override;
 
         void OnCheckBox ( UICheckBox::eState state ) noexcept;
         void OnComboBox ( UIComboBox::ID id ) noexcept;

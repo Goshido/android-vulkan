@@ -57,4 +57,9 @@ pbr::CSSComputedValues &UILabel::GetCSS () noexcept
     return _div.GetCSS ();
 }
 
+pbr::CSSComputedValues &UILabel::GetCSSEXT () noexcept
+{
+    return _div.GetCSSEXT ();
+}
+
 } // namespace editor

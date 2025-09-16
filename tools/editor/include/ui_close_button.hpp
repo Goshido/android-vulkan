@@ -53,7 +53,12 @@ class UICloseButton final : public Widget
         void UpdatedRect () noexcept override;
 
         void Connect ( Callback &&callback ) noexcept;
+
+        // FUCK - remove it
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
+
+        // FUCK - rename
+        [[nodiscard]] pbr::CSSComputedValues &GetCSSEXT () noexcept;
 
     private:
         void OnMouseLeave () noexcept override;

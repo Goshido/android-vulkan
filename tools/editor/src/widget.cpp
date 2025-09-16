@@ -60,20 +60,25 @@ void Widget::OnTyping ( char32_t /*character*/ ) noexcept
 
 // FUCK - remove namespace
 Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
-    pbr::android::FontStorage &/*fontStorage*/
+    pbr::android::FontStorage &/*fontStorage*/,
+    pbr::windows::FontStorage &/*fontStorageEXT*/
 ) noexcept
 {
     return {};
 }
 
 // FUCK - remove namespace
-void Widget::Submit ( pbr::android::UIElement::SubmitInfo &/*info*/ ) noexcept
+void Widget::Submit ( pbr::android::UIElement::SubmitInfo &/*info*/,
+    pbr::windows::UIElement::SubmitInfo &/*infoEXT*/
+) noexcept
 {
     // NOTHING
 }
 
 // FUCK - remove namespace
-bool Widget::UpdateCache ( pbr::android::FontStorage &/*fontStorage*/, VkExtent2D const &/*viewport*/ ) noexcept
+bool Widget::UpdateCache ( pbr::android::FontStorage &/*fontStorage*/,
+    pbr::windows::FontStorage &/*fontStorageEXT*/,
+    VkExtent2D const &/*viewport*/ ) noexcept
 {
     return false;
 }

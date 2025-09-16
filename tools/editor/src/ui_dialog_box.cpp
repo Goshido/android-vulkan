@@ -47,6 +47,7 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEven
 void UIDialogBox::SetRect ( Rect const &rect ) noexcept
 {
     _isChanged = true;
+    _isChangedEXT = true;
     _rect = rect;
     UpdateAreas ();
 }
@@ -198,14 +199,17 @@ void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 }
 
 // FUCK - remove namespace
-void UIDialogBox::Submit ( pbr::android::UIElement::SubmitInfo &info ) noexcept
+void UIDialogBox::Submit ( pbr::android::UIElement::SubmitInfo &info,
+    pbr::windows::UIElement::SubmitInfo &infoEXT
+) noexcept
 {
-    _div.Submit ( info );
+    _div.Submit ( info, infoEXT );
 }
 
 // FUCK - remove namespace
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::android::FontStorage &fontStorage
+    pbr::android::FontStorage &fontStorage,
+    pbr::windows::FontStorage &fontStorageEXT
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -213,7 +217,7 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
@@ -226,8 +230,25 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
         ._vertices = 0U
     };
 
-    _div.ApplyLayout ( info );
+    _lineHeightsEXT.clear ();
+    _lineHeightsEXT.push_back ( 0.0F );
+
+    // FUCK - remove namespace
+    pbr::windows::UIElement::ApplyInfo infoEXT
+    {
+        ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._fontStorage = &fontStorageEXT,
+        ._hasChanges = _isChangedEXT,
+        ._lineHeights = &_lineHeightsEXT,
+        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F ),
+        ._renderer = &renderer,
+        ._vertices = 0U
+    };
+
+    _div.ApplyLayout ( info, infoEXT );
     _isChanged = false;
+    _isChangedEXT = false;
 
     return
     {
@@ -237,9 +258,12 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
 }
 
 // FUCK - remove namespace
-bool UIDialogBox::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UIDialogBox::UpdateCache ( pbr::android::FontStorage &fontStorage,
+    pbr::windows::FontStorage &fontStorageEXT,
+    VkExtent2D const &viewport
+) noexcept
 {
-    // FUCK - remove namespace
+    // FUCK - remove it
     pbr::android::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
@@ -250,7 +274,17 @@ bool UIDialogBox::UpdateCache ( pbr::android::FontStorage &fontStorage, VkExtent
         ._pen = GXVec2 ( 0.0F, 0.0F )
     };
 
-    return _div.UpdateCache ( info );
+    pbr::windows::UIElement::UpdateInfo infoEXT
+    {
+        ._fontStorage = &fontStorageEXT,
+        ._line = 0U,
+        ._parentLineHeights = _lineHeights.data (),
+        ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
+        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
+        ._pen = GXVec2 ( 0.0F, 0.0F )
+    };
+
+    return _div.UpdateCache ( info, infoEXT );
 }
 
 void UIDialogBox::DoDrag ( MouseMoveEvent const &event ) noexcept
@@ -312,9 +346,7 @@ void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
     if ( handled )
         return;
 
-    size_t const eventID = event._eventID;
-
-    if ( eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
+    if ( size_t const eventID = event._eventID; eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
     {
         ChangeCursor ( eCursor::Arrow );
     }
@@ -348,6 +380,7 @@ void UIDialogBox::UpdateAreas () noexcept
     _resizeBottomRight._rect.From ( d, b );
 
     _rect.ToCSSBounds ( _div.GetCSS () );
+    _rect.ToCSSBounds ( _div.GetCSSEXT () );
 }
 
 void UIDialogBox::UpdateMinSize () noexcept

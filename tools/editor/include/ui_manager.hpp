@@ -6,6 +6,7 @@
 
 // FUCK - remove namespace
 #include <platform/android/pbr/ui_pass.hpp>
+#include <platform/windows/pbr/ui_pass.hpp>
 
 #include "widget.hpp"
 
@@ -24,8 +25,11 @@ class UIManager final
     private:
         size_t                                  _eventID = 0U;
 
-        // FUCK - remove namespace
+        // FUCK - remove it
         pbr::android::FontStorage               &_fontStorage;
+
+        // FUCK - remove namespace
+        pbr::windows::FontStorage               &_fontStorageEXT;
 
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
@@ -45,7 +49,10 @@ class UIManager final
         UIManager &operator = ( UIManager && ) = delete;
 
         // FUCK - remove namespace
-        explicit UIManager ( MessageQueue &messageQueue, pbr::android::FontStorage &fontStorage ) noexcept;
+        explicit UIManager ( MessageQueue &messageQueue,
+            pbr::android::FontStorage &fontStorage,
+            pbr::windows::FontStorage &fontStorageEXT
+        ) noexcept;
 
         ~UIManager () = default;
 
@@ -53,7 +60,10 @@ class UIManager final
         void Destroy () noexcept;
 
         // FUCK - remove namespace
-        void RenderUI ( android_vulkan::Renderer &renderer, pbr::android::UIPass &pass ) noexcept;
+        void RenderUI ( android_vulkan::Renderer &renderer,
+            pbr::android::UIPass &pass,
+            pbr::windows::UIPass &passEXT
+        ) noexcept;
 
     private:
         void EventLoop () noexcept;

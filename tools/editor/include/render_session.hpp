@@ -109,8 +109,11 @@ class RenderSession final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        // FUCK - remove namespace
+        // FUCK - remove it
         [[nodiscard]] pbr::android::FontStorage &GetFontStorage () noexcept;
+
+        // FUCK - remove namespace
+        [[nodiscard]] pbr::windows::FontStorage &GetFontStorageEXT () noexcept;
 
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;
@@ -128,13 +131,35 @@ class RenderSession final
         void OnShutdown ( Message &&refund ) noexcept;
         void OnSwapchainCreated () noexcept;
         void OnUIAppendChildElement ( Message &&message ) noexcept;
+
+        // FUCK - remove it
         void OnUIDeleteElement ( Message &&message ) noexcept;
+
+        // FUCK - rename
+        void OnUIDeleteElementEXT ( Message &&message ) noexcept;
+
         void OnUIElementCreated () noexcept;
+
+        // FUCK - remove it
         void OnUIHideElement ( Message &&message ) noexcept;
+
+        // FUCK - rename
+        void OnUIHideElementEXT ( Message &&message ) noexcept;
+
+        // FUCK - remove it
         void OnUIShowElement ( Message &&message ) noexcept;
+
+        // FUCK - rename
+        void OnUIShowElementEXT ( Message &&message ) noexcept;
+
         void OnUIPrependChildElement ( Message &&message ) noexcept;
         void OnUISetText ( Message &&message ) noexcept;
+
+        // FUCK - remove it
         void OnUIUpdateElement ( Message &&message ) noexcept;
+
+        // FUCK - rename
+        void OnUIUpdateElementEXT ( Message &&message ) noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
 

@@ -90,6 +90,78 @@ class RenderSession final
         UIManager                                                   &_uiManager;
         VkViewport                                                  _viewport {};
 
+        VkRenderingAttachmentInfo                                   _colorAttachment
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = nullptr,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = VK_NULL_HANDLE,
+            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+            .clearValue
+            {
+                .color
+                {
+                    .float32 { 0.5F, 0.5F, 0.5F, 1.0F }
+                }
+            }
+        };
+
+        VkRenderingInfo                                             _renderingInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+
+            .renderArea
+            {
+                .offset
+                {
+                    .x = 0,
+                    .y = 0
+                },
+
+                .extent
+                {
+                    .width = 0U,
+                    .height = 0U
+                }
+            },
+
+            .layerCount = 1U,
+            .viewMask = 0U,
+            .colorAttachmentCount = 1U,
+            .pColorAttachments = &_colorAttachment,
+            .pDepthAttachment = nullptr,
+            .pStencilAttachment = nullptr
+        };
+
+        VkImageMemoryBarrier                                        _barrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .pNext = nullptr,
+            .srcAccessMask = VK_ACCESS_NONE,
+            .dstAccessMask = VK_ACCESS_NONE,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = VK_NULL_HANDLE,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = 1U
+            }
+        };
+
     public:
         RenderSession () = delete;
 

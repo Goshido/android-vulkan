@@ -867,6 +867,11 @@ size_t Renderer::GetPresentImageCount () const noexcept
     return _swapchainImageViews.size ();
 }
 
+[[maybe_unused]] VkImage const &Renderer::GetPresentImage ( size_t imageIndex ) const noexcept
+{
+    return _swapchainImages[ imageIndex ];
+}
+
 VkImageView const &Renderer::GetPresentImageView ( size_t imageIndex ) const noexcept
 {
     return _swapchainImageViews[ imageIndex ];

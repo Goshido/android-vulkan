@@ -4,6 +4,11 @@
 
 namespace pbr::windows {
 
+VkPipelineLayout ComputeProgram::GetPipelineLayout () const noexcept
+{
+    return _pipelineLayout;
+}
+
 ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
     pbr::ComputeProgram ( name, pushConstantSize )
 {

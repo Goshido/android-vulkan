@@ -472,23 +472,16 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
 {
     for ( auto &commandInfo : _commandInfo )
     {
-        if ( commandInfo._pool != VK_NULL_HANDLE ) [[likely]]
+        if ( VkCommandPool &pool = commandInfo._pool; pool != VK_NULL_HANDLE ) [[likely]]
+            vkDestroyCommandPool ( device, std::exchange ( pool, VK_NULL_HANDLE ), nullptr );
+
+        if ( VkSemaphore &acquire = commandInfo._acquire; acquire != VK_NULL_HANDLE ) [[likely]]
+            vkDestroySemaphore ( device, std::exchange ( acquire, VK_NULL_HANDLE ), nullptr );
+
+        if ( VkFence &fence = commandInfo._fence; fence != VK_NULL_HANDLE ) [[likely]]
         {
-            vkDestroyCommandPool ( device, commandInfo._pool, nullptr );
-            commandInfo._pool = VK_NULL_HANDLE;
+            vkDestroyFence ( device, std::exchange ( fence, VK_NULL_HANDLE ), nullptr );
         }
-
-        if ( commandInfo._acquire != VK_NULL_HANDLE ) [[likely]]
-        {
-            vkDestroySemaphore ( device, commandInfo._acquire, nullptr );
-            commandInfo._acquire = VK_NULL_HANDLE;
-        }
-
-        if ( commandInfo._fence == VK_NULL_HANDLE ) [[unlikely]]
-            continue;
-
-        vkDestroyFence ( device, commandInfo._fence, nullptr );
-        commandInfo._fence = VK_NULL_HANDLE;
     }
 }
 
@@ -628,8 +621,9 @@ bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
 
 bool RenderSession::CreateRenderTarget () noexcept
 {
-    VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
+    VkExtent2D &resolution = _renderingInfo.renderArea.extent;
     resolution = _renderer.GetSurfaceSize ();
+    _renderPassInfo.renderArea.extent = resolution;
     VkDevice device = _renderer.GetDevice ();
 
     if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
@@ -660,13 +654,15 @@ bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noe
         return false;
 
     VkDevice device = _renderer.GetDevice ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, _renderTarget.GetImage (), VK_OBJECT_TYPE_IMAGE, "Render target" )
+    _barrier.image = _renderTarget.GetImage ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.image, VK_OBJECT_TYPE_IMAGE, "Render target" )
 
-    VkImageView view = _renderTarget.GetImageView ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "Render target" )
+    _colorAttachment.imageView = _renderTarget.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _colorAttachment.imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Render target" )
 
-    if ( auto const idx = _resourceHeap.RegisterNonUISampledImage ( device, view ); idx ) [[likely]]
+    if ( auto const idx = _resourceHeap.RegisterNonUISampledImage ( device, _colorAttachment.imageView ); idx )
     {
+        [[likely]]
         _renderTargetIdx = *idx;
         return true;
     }
@@ -977,7 +973,8 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
-    VkResult vulkanResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
+    //VkResult vulkanResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
+    VkResult vulkanResult = _presentRenderPassEXT.AcquirePresentTarget ( renderer, commandInfo._acquire );
 
     if ( vulkanResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
     {
@@ -1038,15 +1035,39 @@ void RenderSession::OnRenderFrame () noexcept
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
-        vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        //vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+        _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        _barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &_barrier
+        );
+
+        vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 
         vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
-        vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
+
+        //vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
+        vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+
         result = static_cast<bool> ( _fuckHelloTriangleGeometry ) & static_cast<bool> ( _fuckHelloTriangleGeometry );
 
         if ( result ) [[likely]]
         {
-            constexpr VkDeviceSize const offsets = 0U;
+            GXVec2 fuck {};
+            // FUCK make replacement for vertex puuling
+            /*constexpr VkDeviceSize const offsets = 0U;
 
             vkCmdBindVertexBuffers ( commandBuffer,
                 0U,
@@ -1056,22 +1077,52 @@ void RenderSession::OnRenderFrame () noexcept
             );
 
             _helloTriangleProgram->Bind ( commandBuffer );
-            vkCmdDraw ( commandBuffer, _fuckHelloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
+            vkCmdDraw ( commandBuffer, _fuckHelloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );*/
         }
 
-        vkCmdEndRenderPass ( commandBuffer );
+        //vkCmdEndRenderPass ( commandBuffer );
+        vkCmdEndRendering ( commandBuffer );
+
+        _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        _barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        _barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        constexpr VkPipelineStageFlags dstStages = AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+
+        vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            dstStages,
+            VK_DEPENDENCY_BY_REGION_BIT,
+            0U,
+            nullptr,
+            0U,
+            nullptr,
+            1U,
+            &_barrier
+        );
     }
 
-    _exposurePass.Execute ( commandBuffer, deltaTime );
+    //_exposurePass.Execute ( commandBuffer, deltaTime );
+    _exposurePassEXT.Execute ( commandBuffer, deltaTime, _resourceHeap );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
-        _presentRenderPass.Begin ( commandBuffer );
+        //_presentRenderPass.Begin ( commandBuffer );
+        _presentRenderPassEXT.Begin ( renderer, commandBuffer );
 
         // FUCK - call Windows backend
-        _toneMapper.Execute ( commandBuffer );
+        //_toneMapper.Execute ( commandBuffer );
+        _toneMapperEXT.Execute ( commandBuffer );
 
-        if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        //if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        //{
+        //    // FUCK
+        //    AV_ASSERT ( false )
+        //    return;
+        //}
+
+        if ( !_uiPassEXT.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         {
             // FUCK
             AV_ASSERT ( false )
@@ -1079,7 +1130,14 @@ void RenderSession::OnRenderFrame () noexcept
         }
     }
 
-    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+    /*std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
+        commandBuffer,
+        commandInfo._acquire,
+        commandInfo._fence,
+        &_submitMutex
+    );*/
+
+    std::optional<VkResult> const presentResult = _presentRenderPassEXT.End ( renderer,
         commandBuffer,
         commandInfo._acquire,
         commandInfo._fence,
@@ -1274,8 +1332,12 @@ void RenderSession::OnSwapchainCreated () noexcept
         return;
     }
 
-    VkExtent2D &resolution = _renderPassInfo.renderArea.extent;
+    VkExtent2D &resolution = _renderingInfo.renderArea.extent;
+
+    // FUCK - ask resolution from exposure pass
     resolution = renderer.GetSurfaceSize ();
+
+    _renderPassInfo.renderArea.extent = resolution;
 
     _viewport =
     {

@@ -70,7 +70,26 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 
 void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    _colorAttachment.imageView = renderer.GetPresentImageView ( static_cast<size_t> ( _swapchainImageIndex ) );
+    _barrier.srcAccessMask = VK_ACCESS_NONE;
+    _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    _barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    auto const idx = static_cast<size_t> ( _swapchainImageIndex );
+    _barrier.image = renderer.GetPresentImage ( idx );
+
+    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &_barrier
+    );
+
+    _colorAttachment.imageView = renderer.GetPresentImageView ( idx );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }
 
@@ -82,6 +101,22 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
 ) noexcept
 {
     vkCmdEndRendering ( commandBuffer );
+
+    _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    _barrier.dstAccessMask = VK_ACCESS_NONE;
+    _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    _barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &_barrier
+    );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         // FUCK - remove namespace

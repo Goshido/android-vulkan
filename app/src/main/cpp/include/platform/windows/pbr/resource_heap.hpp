@@ -141,16 +141,18 @@ class ResourceHeap final
                 .pNext = nullptr,
                 .address = 0U,
 
-                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT )
+                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT )
             },
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
                 .pNext = nullptr,
                 .address = 0U,
 
-                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT )
+                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                    AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT )
             }
         };
 
@@ -170,7 +172,8 @@ class ResourceHeap final
 
         void Bind ( VkCommandBuffer commandBuffer,
             VkPipelineBindPoint pipelineBindPoint,
-            VkPipelineLayout layout
+            VkPipelineLayout layout,
+            bool requireSamplers
         ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,

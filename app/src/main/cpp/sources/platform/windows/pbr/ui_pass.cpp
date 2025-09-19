@@ -608,7 +608,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     }
 
     _program.Bind ( commandBuffer );
-    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
+    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout (), true );
 
     _pushConstants._bda =
         _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );

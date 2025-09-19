@@ -20,6 +20,8 @@ class ComputeProgram : public pbr::ComputeProgram
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
 
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
+
     protected:
         explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         ~ComputeProgram () override = default;

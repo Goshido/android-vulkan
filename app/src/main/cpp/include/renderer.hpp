@@ -187,6 +187,7 @@ class Renderer final
         [[nodiscard]] size_t GetNonCoherentAtomSize () const noexcept;
 
         [[nodiscard]] size_t GetPresentImageCount () const noexcept;
+        [[maybe_unused, nodiscard]] VkImage const &GetPresentImage ( size_t imageIndex ) const noexcept;
         [[nodiscard]] VkImageView const &GetPresentImageView ( size_t imageIndex ) const noexcept;
 
         // Note this transform MUST be applied after projection transform to compensate screen orientation on the

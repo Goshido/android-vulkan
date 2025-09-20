@@ -317,7 +317,7 @@ void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
     bool const status = _program->Init ( _renderer, renderPass, 0U ) &&
         _programExt->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT );
 
-    if ( !status ) [[likely]]
+    if ( status ) [[likely]]
         return;
 
     _program->Destroy ( _renderer.GetDevice () );
@@ -1076,9 +1076,7 @@ void RenderSession::OnRenderFrame () noexcept
         //vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
         vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
 
-        result = static_cast<bool> ( _fuckHelloTriangleGeometry ) & static_cast<bool> ( _fuckHelloTriangleGeometry );
-
-        if ( result ) [[likely]]
+        if ( static_cast<bool> ( _helloTriangleGeometry ) & static_cast<bool> ( _helloTriangleProgramExt ) ) [[likely]]
         {
             GXVec2 fuck {};
             // FUCK make replacement for vertex puuling
@@ -1093,6 +1091,23 @@ void RenderSession::OnRenderFrame () noexcept
 
             _helloTriangleProgram->Bind ( commandBuffer );
             vkCmdDraw ( commandBuffer, _fuckHelloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );*/
+
+            _helloTriangleProgramExt->Bind ( commandBuffer );
+
+            HelloTriangleProgramExt::PushConstants const geometry
+            {
+                ._bda = _helloTriangleGeometry->GetMeshBufferInfo ()._bdaStream0
+            };
+
+            vkCmdPushConstants ( commandBuffer,
+                _helloTriangleProgramExt->GetPipelineLayout (),
+                VK_SHADER_STAGE_VERTEX_BIT,
+                0U,
+                sizeof ( HelloTriangleProgramExt::PushConstants ),
+                &geometry
+            );
+
+            vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
         }
 
         //vkCmdEndRenderPass ( commandBuffer );

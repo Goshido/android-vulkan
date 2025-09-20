@@ -71,14 +71,20 @@ class ImageStorage final
 
         static void ReleaseImage ( uint16_t image ) noexcept;
 
-        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string const &asset ) noexcept;
-        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string_view asset ) noexcept;
+        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string const &asset, bool useMips ) noexcept;
+        [[nodiscard]] static std::optional<UIPass::Image> GetImage ( std::string_view asset, bool useMips ) noexcept;
 
         [[nodiscard]] static bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;
         static void OnDestroyDevice () noexcept;
 
         static void SetResourceHeap ( ResourceHeap &resourceHeap ) noexcept;
         [[nodiscard]] static bool SyncGPU () noexcept;
+
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
+
+        static void SetName ( uint16_t image, char const* name ) noexcept;
+
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     private:
         [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
@@ -118,12 +124,12 @@ void ImageStorage::ReleaseImage ( uint16_t image ) noexcept
     _assets.erase ( findResult );
 }
 
-std::optional<UIPass::Image> ImageStorage::GetImage ( std::string const &asset ) noexcept
+std::optional<UIPass::Image> ImageStorage::GetImage ( std::string const &asset, bool useMips ) noexcept
 {
-    return GetImage ( std::string_view ( asset ) );
+    return GetImage ( std::string_view ( asset ), useMips );
 }
 
-std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset ) noexcept
+std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset, bool useMips ) noexcept
 {
     if ( _commandBuffers.size () - _commandBufferIndex < COMMAND_BUFFERS_PER_TEXTURE )
     {
@@ -152,7 +158,7 @@ std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset ) n
     bool const result = ast._texture.UploadData ( *_renderer,
         asset,
         android_vulkan::eColorSpace::Unorm,
-        true,
+        useMips,
         _commandBuffers[ _commandBufferIndex ],
         _fences[ _commandBufferIndex ]
     );
@@ -297,6 +303,18 @@ bool ImageStorage::SyncGPU () noexcept
     _commandBufferIndex = 0U;
     return true;
 }
+
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
+
+void ImageStorage::SetName ( uint16_t image, char const* name ) noexcept
+{
+    android_vulkan::Texture2D const &tex = _assets.find ( image )->second._texture;
+    VkDevice device = _renderer->GetDevice ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, tex.GetImage (), VK_OBJECT_TYPE_IMAGE, "%s", name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, tex.GetImageView (), VK_OBJECT_TYPE_IMAGE_VIEW, "%s", name )
+}
+
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
 bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 {
@@ -644,12 +662,19 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
     if ( !status ) [[unlikely]]
         return false;
 
-    auto const probe = ImageStorage::GetImage ( std::string ( TEXT_LUT ) );
+    auto const probe = ImageStorage::GetImage ( std::string ( TEXT_LUT ), false );
 
     if ( !probe ) [[unlikely]]
         return false;
 
     _textLUT = static_cast<uint16_t> ( probe->_image );
+
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
+
+    ImageStorage::SetName ( _textLUT, "Text LUT" );
+
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
+
     _usedImages.reserve ( INITIAL_USED_IMAGE_CAPACITY );
     return true;
 }
@@ -942,7 +967,7 @@ void UIPass::ReleaseImage ( uint16_t image ) noexcept
 
 std::optional<UIPass::Image> UIPass::RequestImage ( std::string const &asset ) noexcept
 {
-    return ImageStorage::GetImage ( asset );
+    return ImageStorage::GetImage ( asset, true );
 }
 
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept

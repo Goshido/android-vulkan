@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
-#include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 
@@ -171,23 +170,73 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
 
     VkBufferCopy const* copy = _copy.data ();
     VkBuffer buffer = _stagingBuffer._buffer;
+    auto const countFirstPart = static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more );
+    VkBufferCopy const* copyFirstPart = copy + std::exchange ( _readIndex, _writeIndex );
 
     vkCmdCopyBuffer ( commandBuffer,
         buffer,
         descriptorBuffer,
-        static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
-        copy + std::exchange ( _readIndex, _writeIndex )
+        //static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
+        countFirstPart,
+        //copy + std::exchange ( _readIndex, _writeIndex )
+        copyFirstPart
     );
 
     if ( more >= 1U ) [[unlikely]]
-    {
         vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, static_cast<uint32_t> ( more ), copy );
+
+    VkBufferMemoryBarrier2 barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = nullptr,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+
+        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+
+        .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = buffer,
+        .offset = 0U,
+        .size = 0U
+    };
+
+    VkDependencyInfo const dependencies
+    {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .pNext = nullptr,
+        .dependencyFlags = 0U,
+        .memoryBarrierCount = 0U,
+        .pMemoryBarriers = nullptr,
+        .bufferMemoryBarrierCount = 1U,
+        .pBufferMemoryBarriers = &barrier,
+        .imageMemoryBarrierCount = 0U,
+        .pImageMemoryBarriers = nullptr
+    };
+
+    for ( uint32_t i = 0U; i < countFirstPart; ++i )
+    {
+        VkBufferCopy const &c = copyFirstPart[ i ];
+        barrier.offset = c.dstOffset;
+        barrier.size = c.size;
+        vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
+    }
+
+    for ( uint32_t i = 0U; i < more; ++i )
+    {
+        VkBufferCopy const &c = copy[ i ];
+        barrier.offset = c.dstOffset;
+        barrier.size = c.size;
+        vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
     }
 }
 
 void* ResourceHeap::Write::Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept
 {
-    VkDeviceSize const offset = _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
+    VkDeviceSize const offset = _resourceOffset + _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
 
     _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ] =
     {
@@ -219,6 +268,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     size_t const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     size_t const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
     ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+    ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
 
     size_t const a = renderer.GetDescriptorBufferOffsetAlignment ();
     size_t const resourceOffset = ( TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize () + a - 1U ) / a * a;
@@ -227,8 +277,9 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     _storageImageSize = renderer.GetStorageImageDescriptorSize ();
     _bufferSize = renderer.GetStorageBufferDescriptorSize ();
 
-    size_t const resourceSize = resourceCapacity * std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } );
-    size_t const bufferSize = resourceOffset + resourceSize;
+    size_t const resourceSize = std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } );
+    size_t const resourceBufferSize = resourceCapacity * resourceSize;
+    size_t const bufferSize = resourceOffset + resourceBufferSize;
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -256,6 +307,8 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     VkDevice device = renderer.GetDevice ();
 
     return
+        _layout.Init ( device ) &&
+        _layoutExt.Init ( device ) &&
         _descriptorBuffer.Init ( renderer,
             bufferSize,
 
@@ -286,6 +339,8 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
+    _layoutExt.Destroy ( device );
+    _layout.Destroy ( device );
 }
 
 void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
@@ -294,17 +349,12 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
     bool requireSamplers
 ) noexcept
 {
-    vkCmdBindDescriptorBuffersEXT ( commandBuffer, 2U, _bindingInfo );
+    auto const count = 1U + static_cast<uint32_t> ( requireSamplers );
+    vkCmdBindDescriptorBuffersEXT ( commandBuffer, count, _bindingInfo );
+
     constexpr uint32_t const indices[] = { 0U, 1U };
     constexpr VkDeviceSize const offsets[] = { 0U, 0U };
-
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
-        pipelineBindPoint,
-        layout,
-        0U,
-        1U + static_cast<uint32_t> ( requireSamplers ),
-        indices, offsets
-    );
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, pipelineBindPoint, layout, 0U, count, indices, offsets );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
@@ -592,6 +642,40 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
     };
 
     vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
+
+    VkBufferMemoryBarrier2 barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = nullptr,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+
+        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+
+        .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _descriptorBuffer._buffer,
+        .offset = 0U,
+        .size = copy.size
+    };
+
+    VkDependencyInfo const dependencies
+    {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .pNext = nullptr,
+        .dependencyFlags = 0U,
+        .memoryBarrierCount = 0U,
+        .pMemoryBarriers = nullptr,
+        .bufferMemoryBarrierCount = 1U,
+        .pBufferMemoryBarriers = &barrier,
+        .imageMemoryBarrierCount = 0U,
+        .pImageMemoryBarriers = nullptr
+    };
+
+    vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
     return true;
 }
 

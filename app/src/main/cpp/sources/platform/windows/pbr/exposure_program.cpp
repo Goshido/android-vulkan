@@ -31,7 +31,7 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
     VkComputePipelineCreateInfo pipelineInfo;
     pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
+    pipelineInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
@@ -57,12 +57,13 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
 void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
+    _layoutExt.Destroy ( device );
     _layout.Destroy ( device );
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout.Init ( device ) ) [[unlikely]]
+    if ( !_layout.Init ( device ) || !_layoutExt.Init ( device ) ) [[unlikely]]
         return false;
 
     constexpr VkPushConstantRange pushConstantRange
@@ -78,7 +79,8 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
         .pNext = nullptr,
         .flags = 0U,
         .setLayoutCount = 1U,
-        .pSetLayouts = &_layout.GetLayout (),
+        //.pSetLayouts = &_layout.GetLayout (),
+        .pSetLayouts = &_layoutExt.GetLayout (),
         .pushConstantRangeCount = 1U,
         .pPushConstantRanges = &pushConstantRange
     };

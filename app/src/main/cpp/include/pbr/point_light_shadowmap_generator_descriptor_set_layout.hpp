@@ -9,6 +9,9 @@ namespace pbr {
 
 class PointLightShadowmapGeneratorDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         explicit PointLightShadowmapGeneratorDescriptorSetLayout () = default;
 

@@ -9,6 +9,9 @@ namespace pbr {
 
 class ReflectionGlobalDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         explicit ReflectionGlobalDescriptorSetLayout () = default;
 

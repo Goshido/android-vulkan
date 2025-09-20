@@ -6,6 +6,7 @@
 
 #include "compute_program.hpp"
 #include "resource_heap_descriptor_set_layout.hpp"
+#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -19,22 +20,23 @@ class ExposureProgram final : public ComputeProgram
 
         struct PushConstants final
         {
-            [[maybe_unused]] uint32_t       _hdrImage;
-            [[maybe_unused]] uint32_t       _syncMip5;
-            [[maybe_unused]] uint32_t       _exposure;
-            [[maybe_unused]] uint32_t       _globalAtomic;
-            [[maybe_unused]] uint32_t       _temporalLuma;
+            [[maybe_unused]] uint32_t           _hdrImage;
+            [[maybe_unused]] uint32_t           _syncMip5;
+            [[maybe_unused]] uint32_t           _exposure;
+            [[maybe_unused]] uint32_t           _globalAtomic;
+            [[maybe_unused]] uint32_t           _temporalLuma;
 
-            [[maybe_unused]] float          _exposureCompensation;
-            [[maybe_unused]] float          _eyeAdaptation;
-            [[maybe_unused]] float          _maxLuma;
-            [[maybe_unused]] float          _minLuma;
+            [[maybe_unused]] float              _exposureCompensation;
+            [[maybe_unused]] float              _eyeAdaptation;
+            [[maybe_unused]] float              _maxLuma;
+            [[maybe_unused]] float              _minLuma;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        ResourceHeapDescriptorSetLayout     _layout {};
+        ResourceHeapDescriptorSetLayout         _layout {};
+        ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
 
     public:
         explicit ExposureProgram () noexcept;

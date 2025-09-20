@@ -99,11 +99,16 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 void GeometryPassInstanceDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
-    g_descriptorSetLayout.Destroy ( device );
+    if ( _init )
+    {
+        g_descriptorSetLayout.Destroy ( device );
+        _init = false;
+    }
 }
 
 bool GeometryPassInstanceDescriptorSetLayout::Init ( VkDevice device ) noexcept
 {
+    _init = true;
     return g_descriptorSetLayout.Init ( device );
 }
 

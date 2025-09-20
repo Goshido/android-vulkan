@@ -9,6 +9,9 @@ namespace pbr {
 
 class PointLightDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         PointLightDescriptorSetLayout () = default;
 

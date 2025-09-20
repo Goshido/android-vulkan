@@ -6,6 +6,8 @@
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
 #include "resource_heap.inc"
+#include "resource_heap_descriptor_set_layout.hpp"
+#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -124,6 +126,8 @@ class ResourceHeap final
         Sampler                                 _shadowSampler {};
 
         Buffer                                  _descriptorBuffer {};
+        ResourceHeapDescriptorSetLayout         _layout {};
+        ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
 
         Slots                                   _nonUISlots {};
         Slots                                   _uiSlots {};
@@ -157,7 +161,7 @@ class ResourceHeap final
         };
 
     public:
-        ResourceHeap () = default;
+        explicit ResourceHeap () = default;
 
         ResourceHeap ( ResourceHeap const & ) = delete;
         ResourceHeap &operator = ( ResourceHeap const & ) = delete;

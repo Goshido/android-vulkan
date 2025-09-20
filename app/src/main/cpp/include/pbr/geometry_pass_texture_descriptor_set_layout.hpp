@@ -9,6 +9,9 @@ namespace pbr {
 
 class GeometryPassTextureDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         GeometryPassTextureDescriptorSetLayout () = default;
 

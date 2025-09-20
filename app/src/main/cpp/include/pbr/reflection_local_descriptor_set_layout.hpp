@@ -9,6 +9,9 @@ namespace pbr {
 
 class ReflectionLocalDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         ReflectionLocalDescriptorSetLayout () = default;
 

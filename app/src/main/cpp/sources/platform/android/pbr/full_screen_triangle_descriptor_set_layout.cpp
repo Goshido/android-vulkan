@@ -80,6 +80,8 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 } // end of anonymous namespace
 
+//----------------------------------------------------------------------------------------------------------------------
+
 void FullScreenTriangleDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
 {
     if ( _init )

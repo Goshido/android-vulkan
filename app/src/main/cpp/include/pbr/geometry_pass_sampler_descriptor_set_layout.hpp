@@ -9,6 +9,9 @@ namespace pbr {
 
 class GeometryPassSamplerDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         GeometryPassSamplerDescriptorSetLayout () = default;
 

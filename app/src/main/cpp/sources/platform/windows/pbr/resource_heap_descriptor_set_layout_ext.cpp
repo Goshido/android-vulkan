@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
+#include <platform/windows/pbr/resource_heap_descriptor_set_layout_ext.hpp>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_utils.hpp>
 
@@ -10,7 +10,6 @@ namespace {
 
 // See https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#resourcedescriptorheaps-samplerdescriptorheaps
 constexpr uint32_t RESOURCE_BINDING = 0U;
-constexpr uint32_t SAMPLER_BINDING = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -50,18 +49,14 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
     if ( ++_references != 1U ) [[likely]]
         return true;
 
-    constexpr static VkDescriptorBindingFlags const bindingFlags[] =
-    {
-        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT,
-        0U
-    };
+    constexpr static VkDescriptorBindingFlags const bindingFlags = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
 
     constexpr static VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo
     {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
         .pNext = nullptr,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindingFlags ) ),
-        .pBindingFlags = bindingFlags
+        .bindingCount = 1U,
+        .pBindingFlags = &bindingFlags
     };
 
     constexpr static VkDescriptorType const descriptorTypes[] =
@@ -89,22 +84,13 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
         AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ) |
         AV_VK_FLAG ( VK_SHADER_STAGE_COMPUTE_BIT );
 
-    VkDescriptorSetLayoutBinding const bindings[] =
+    VkDescriptorSetLayoutBinding const bindings
     {
-        {
-            .binding = RESOURCE_BINDING,
-            .descriptorType = VK_DESCRIPTOR_TYPE_MUTABLE_EXT,
-            .descriptorCount = resourceCapacity,
-            .stageFlags = stages,
-            .pImmutableSamplers = nullptr
-        },
-        {
-            .binding = SAMPLER_BINDING,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .descriptorCount = TOTAL_SAMPLERS,
-            .stageFlags = stages,
-            .pImmutableSamplers = nullptr
-        }
+        .binding = RESOURCE_BINDING,
+        .descriptorType = VK_DESCRIPTOR_TYPE_MUTABLE_EXT,
+        .descriptorCount = resourceCapacity,
+        .stageFlags = stages,
+        .pImmutableSamplers = nullptr
     };
 
     VkDescriptorSetLayoutCreateInfo const info
@@ -112,20 +98,20 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .pNext = &mutableDescriptorTypeInfo,
         .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
-        .bindingCount = static_cast<uint32_t> ( std::size ( bindings ) ),
-        .pBindings = bindings
+        .bindingCount = 1U,
+        .pBindings = &bindings
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::windows::ResourceHeapDescriptorSetLayout::Init",
+        "pbr::windows::ResourceHeapDescriptorSetLayoutEXT::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Resource heap" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Resource heap ext" )
     return true;
 }
 
@@ -135,9 +121,9 @@ DescriptorSetLayout g_descriptorSetLayout {};
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t ResourceHeapDescriptorSetLayout::_resourceCapacity = 0U;
+uint32_t ResourceHeapDescriptorSetLayoutEXT::_resourceCapacity = 0U;
 
-void ResourceHeapDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void ResourceHeapDescriptorSetLayoutEXT::Destroy ( VkDevice device ) noexcept
 {
     if ( _init )
     {
@@ -146,18 +132,18 @@ void ResourceHeapDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
     }
 }
 
-bool ResourceHeapDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool ResourceHeapDescriptorSetLayoutEXT::Init ( VkDevice device ) noexcept
 {
     _init = true;
     return g_descriptorSetLayout.Init ( device, _resourceCapacity );
 }
 
-VkDescriptorSetLayout &ResourceHeapDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &ResourceHeapDescriptorSetLayoutEXT::GetLayout () const noexcept
 {
     return g_descriptorSetLayout._layout;
 }
 
-void ResourceHeapDescriptorSetLayout::SetResourceCapacity ( uint32_t capacity ) noexcept
+void ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( uint32_t capacity ) noexcept
 {
     _resourceCapacity = capacity;
 }

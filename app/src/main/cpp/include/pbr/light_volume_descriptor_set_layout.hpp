@@ -9,6 +9,9 @@ namespace pbr {
 
 class LightVolumeDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         LightVolumeDescriptorSetLayout () = default;
 

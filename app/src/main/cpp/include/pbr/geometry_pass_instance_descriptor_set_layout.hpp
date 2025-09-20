@@ -9,6 +9,9 @@ namespace pbr {
 
 class GeometryPassInstanceDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         GeometryPassInstanceDescriptorSetLayout () = default;
 

@@ -1033,6 +1033,8 @@ void RenderSession::OnRenderFrame () noexcept
         _toneMapper.UploadGPUData ( renderer, commandBuffer );
     }
 
+    _resourceHeap.UploadGPUData ( commandBuffer );
+
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
 
@@ -1113,7 +1115,7 @@ void RenderSession::OnRenderFrame () noexcept
 
         // FUCK - call Windows backend
         //_toneMapper.Execute ( commandBuffer );
-        _toneMapperEXT.Execute ( commandBuffer );
+        //_toneMapperEXT.Execute ( commandBuffer );
 
         //if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         //{

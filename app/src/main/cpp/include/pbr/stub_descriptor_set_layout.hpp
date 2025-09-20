@@ -9,6 +9,9 @@ namespace pbr {
 
 class StubDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         StubDescriptorSetLayout () = default;
 

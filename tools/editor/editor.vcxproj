@@ -876,6 +876,14 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
@@ -1141,6 +1149,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\present_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\text_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_program.hpp" />

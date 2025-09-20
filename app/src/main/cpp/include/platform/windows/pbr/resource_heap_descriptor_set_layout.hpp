@@ -11,6 +11,8 @@ namespace pbr::windows {
 class ResourceHeapDescriptorSetLayout final : public pbr::DescriptorSetLayout
 {
     private:
+        bool                _init = false;
+
         static uint32_t     _resourceCapacity;
 
     public:

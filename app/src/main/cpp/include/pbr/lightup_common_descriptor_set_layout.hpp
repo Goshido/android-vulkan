@@ -9,6 +9,9 @@ namespace pbr {
 
 class LightupCommonDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         LightupCommonDescriptorSetLayout () = default;
 

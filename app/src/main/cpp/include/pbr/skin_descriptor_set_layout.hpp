@@ -9,6 +9,9 @@ namespace pbr {
 
 class SkinDescriptorSetLayout final : public DescriptorSetLayout
 {
+    private:
+        bool    _init = false;
+
     public:
         SkinDescriptorSetLayout () = default;
 

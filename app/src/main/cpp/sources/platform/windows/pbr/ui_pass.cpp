@@ -607,15 +607,16 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
         return true;
     }
 
-    _program.Bind ( commandBuffer );
-    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout (), true );
+    // FUCK - restore rendering
+    //_program.Bind ( commandBuffer );
+    //_resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout (), true );
 
-    _pushConstants._bda =
-        _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );
+    //_pushConstants._bda =
+    //    _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );
 
-    _program.SetPushConstants ( commandBuffer, &_pushConstants );
+    //_program.SetPushConstants ( commandBuffer, &_pushConstants );
 
-    vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
+    //vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
 
     for ( uint16_t const image : _usedImages )
         _inUseImageTracker.MarkInUse ( image, commandBufferIndex );

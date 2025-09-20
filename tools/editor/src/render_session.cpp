@@ -22,11 +22,16 @@ constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 class HelloTriangleJob final
 {
     public:
-        // FUCK
+        // FUCK - remove it
         std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckGeometry {};
 
+        // FUCK - remove namespace
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _geometry {};
+
+        // FUCK - remove it
         std::unique_ptr<HelloTriangleProgram>                       _program {};
+
+        std::unique_ptr<HelloTriangleProgramExt>                    _programExt {};
 
     private:
         VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
@@ -307,12 +312,19 @@ void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
     AV_TRACE ( "Program" )
 
     _program = std::make_unique<HelloTriangleProgram> ();
+    _programExt = std::make_unique<HelloTriangleProgramExt> ();
 
-    if ( _program->Init ( _renderer, renderPass, 0U ) ) [[likely]]
+    bool const status = _program->Init ( _renderer, renderPass, 0U ) &&
+        _programExt->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT );
+
+    if ( !status ) [[likely]]
         return;
 
     _program->Destroy ( _renderer.GetDevice () );
     _program.reset ();
+
+    _programExt->Destroy ( _renderer.GetDevice () );
+    _programExt.reset ();
 }
 
 } // end of anonymous namespace
@@ -939,6 +951,7 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
     _messageQueue.DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
     _helloTriangleProgram = std::move ( job->_program );
+    _helloTriangleProgramExt = std::move ( job->_programExt );
     _fuckHelloTriangleGeometry = std::move ( job->_fuckGeometry );
     _helloTriangleGeometry = std::move ( job->_geometry );
     delete job;
@@ -1266,6 +1279,12 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     {
         _helloTriangleProgram->Destroy ( device );
         _helloTriangleProgram.reset ();
+    }
+
+    if ( _helloTriangleProgramExt ) [[likely]]
+    {
+        _helloTriangleProgramExt->Destroy ( device );
+        _helloTriangleProgramExt.reset ();
     }
 
     if ( _helloTriangleGeometry ) [[likely]]

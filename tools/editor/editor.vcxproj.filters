@@ -429,6 +429,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\hello_triangle_program_ext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -511,12 +514,6 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp">
       <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hello_triangle_vertex.hpp">
-      <Filter>Header Files\core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hello_triangle_program.hpp">
-      <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry.hpp">
       <Filter>Header Files\core</Filter>
@@ -893,6 +890,15 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="include\hello_triangle_program_ext.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hello_triangle_program.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hello_triangle_vertex.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -919,9 +925,6 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\vulkan_instance.in">
       <Filter>Header Files\core\platform\window</Filter>
-    </None>
-    <None Include="include\hello_triangle_program.inc">
-      <Filter>Header Files\core</Filter>
     </None>
     <None Include="include\blit_program.inc">
       <Filter>Header Files\core</Filter>
@@ -952,6 +955,9 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\android\pbr\tone_mapper.inc">
       <Filter>Header Files\core\platform\FUCK android\pbr</Filter>
+    </None>
+    <None Include="include\hello_triangle_program.inc">
+      <Filter>Header Files</Filter>
     </None>
   </ItemGroup>
 </Project>

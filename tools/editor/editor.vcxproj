@@ -1025,6 +1025,7 @@
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
+    <ClCompile Include="src\hello_triangle_program_ext.cpp" />
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />
     <ClCompile Include="src\keys.cpp" />
@@ -1176,6 +1177,7 @@
     <ClInclude Include="include\editor.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
+    <ClInclude Include="include\hello_triangle_program_ext.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />

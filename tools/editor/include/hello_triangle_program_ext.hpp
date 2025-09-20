@@ -1,55 +1,36 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_UI_PROGRAM_HPP
-#define PBR_WINDOWS_UI_PROGRAM_HPP
+#ifndef EDITOR_HELLO_TRIANGLE_PROGRAM_EXT_HPP
+#define EDITOR_HELLO_TRIANGLE_PROGRAM_EXT_HPP
 
 
-#include "graphics_program.hpp"
-#include <GXCommon/GXMath.hpp>
-#include <pbr/brightness_info.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
+#include <platform/windows/pbr/graphics_program.hpp>
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace editor {
 
-class UIProgram final : public windows::GraphicsProgram
+class HelloTriangleProgramExt final : public pbr::windows::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
 
         struct PushConstants final
         {
-            VkDeviceAddress                 _bda;
-            GXVec2                          _rotateScaleRow0;
-            GXVec2                          _rotateScaleRow1;
-            GXVec2                          _offset;
-            uint32_t                        _textLUT;
+            VkDeviceAddress     _bda;
         };
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
+        explicit HelloTriangleProgramExt () noexcept;
 
-    public:
-        explicit UIProgram () noexcept;
+        HelloTriangleProgramExt ( HelloTriangleProgramExt const & ) = delete;
+        HelloTriangleProgramExt &operator = ( HelloTriangleProgramExt const & ) = delete;
 
-        UIProgram ( UIProgram const & ) = delete;
-        UIProgram &operator = ( UIProgram const & ) = delete;
+        HelloTriangleProgramExt ( HelloTriangleProgramExt && ) = delete;
+        HelloTriangleProgramExt &operator = ( HelloTriangleProgramExt && ) = delete;
 
-        UIProgram ( UIProgram && ) = delete;
-        UIProgram &operator = ( UIProgram && ) = delete;
+        ~HelloTriangleProgramExt () override = default;
 
-        ~UIProgram () override = default;
-
-        void Destroy ( VkDevice device ) noexcept override;
-
-        [[nodiscard]] bool Init ( VkDevice device,
-            VkFormat swapchainFormat,
-            BrightnessInfo const &brightnessInfo,
-            VkExtent2D const &viewport
-        ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device, VkFormat renderTargetFormat ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -104,7 +85,7 @@ class UIProgram final : public windows::GraphicsProgram
         ) const noexcept override;
 };
 
-} // namespace pbr::windows
+} // namespace editor
 
 
-#endif // PBR_WINDOWS_UI_PROGRAM_HPP
+#endif // EDITOR_HELLO_TRIANGLE_PROGRAM_EXT_HPP

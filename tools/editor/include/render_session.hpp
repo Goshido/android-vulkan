@@ -3,6 +3,7 @@
 
 
 #include "hello_triangle_program.hpp"
+#include "hello_triangle_program_ext.hpp"
 #include "message_queue.hpp"
 #include <pbr/default_texture_manager.hpp>
 
@@ -44,11 +45,16 @@ class RenderSession final
 
         pbr::DefaultTextureManager                                  _defaultTextureManager {};
 
-        // FUCK - remove namespace
+        // FUCK - remove it
         pbr::android::ExposurePass                                  _exposurePass {};
+
+        // FUCK - remove namespace
         pbr::windows::ExposurePass                                  _exposurePassEXT {};
 
+        // FUCK - remote it
         std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
+
+        std::unique_ptr<HelloTriangleProgramExt>                    _helloTriangleProgramExt {};
 
         // FUCK
         std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};

@@ -13,6 +13,10 @@ scripts\windows\make-spv.ps1                                                    
     "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$EDITOR_HLSL_DIRECTORY\hello_triangle_ext.vs.hlsl"                                                                `
+    "$EDITOR_SHADER_DIRECTORY\hello_triangle_ext.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                       `
     "$CORE_SHADER_DIRECTORY\common_opaque.vs.spv"
 

@@ -66,7 +66,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
 
     if ( neededUIVertices == 0U )
     {
-        pass.RequestEmptyUI ();
+        //pass.RequestEmptyUI ();
         passEXT.RequestEmptyUI ();
         return;
     }
@@ -79,21 +79,29 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
     if ( !needRefill )
         return;
 
-    // FUCK - remove it
-    pbr::android::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
+    //// FUCK - remove it
+    //pbr::android::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
 
-    if ( !response )
-    {
-        pass.RequestEmptyUI ();
-        passEXT.RequestEmptyUI ();
-        return;
-    }
+    //if ( !response )
+    //{
+    //    pass.RequestEmptyUI ();
+    //    passEXT.RequestEmptyUI ();
+    //    return;
+    //}
 
     // FUCK - remove it
+    //pbr::android::UIElement::SubmitInfo info
+    //{
+    //    ._uiPass = &pass,
+    //    ._vertexBuffer = *response
+    //};
+
+    // FUCK - remove it
+    pbr::android::UIVertexBuffer fuckVB;
     pbr::android::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
-        ._vertexBuffer = *response
+        ._vertexBuffer = fuckVB
     };
 
     // FUCK - remove namespace
@@ -101,7 +109,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
 
     if ( !responseEXT )
     {
-        pass.RequestEmptyUI ();
+        //pass.RequestEmptyUI ();
         passEXT.RequestEmptyUI ();
         return;
     }

@@ -43,28 +43,28 @@ class RenderSession final
         CommandInfo                                                 _commandInfo[ pbr::FIF_COUNT ];
         size_t                                                      _writingCommandInfo = 0U;
 
-        pbr::DefaultTextureManager                                  _defaultTextureManager {};
+        //pbr::DefaultTextureManager                                  _defaultTextureManager {};
 
         // FUCK - remove it
-        pbr::android::ExposurePass                                  _exposurePass {};
+        //pbr::android::ExposurePass                                  _exposurePass {};
 
         // FUCK - remove namespace
         pbr::windows::ExposurePass                                  _exposurePassEXT {};
 
         // FUCK - remote it
-        std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
+        //std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
 
         std::unique_ptr<HelloTriangleProgramExt>                    _helloTriangleProgramExt {};
 
         // FUCK
-        std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
+        //std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;
 
         // FUCK - remove namespace
-        pbr::android::PresentPass                                   _presentRenderPass {};
+        //pbr::android::PresentPass                                   _presentRenderPass {};
         pbr::windows::PresentPass                                   _presentRenderPassEXT {};
 
         // FUCK - refactor
@@ -77,14 +77,14 @@ class RenderSession final
         pbr::windows::ResourceHeap                                  _resourceHeap {};
 
         // FUCK - remove
-        pbr::SamplerManager                                         _samplerManager {};
+        //pbr::SamplerManager                                         _samplerManager {};
 
         std::mutex                                                  _submitMutex {};
         std::thread                                                 _thread {};
         Timestamp                                                   _timestamp {};
 
         // FUCK - remove namespace
-        pbr::android::ToneMapperPass                                _toneMapper {};
+        //pbr::android::ToneMapperPass                                _toneMapper {};
         pbr::windows::ToneMapperPass                                _toneMapperEXT {};
 
         size_t                                                      _uiElements = 0U;

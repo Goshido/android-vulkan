@@ -347,10 +347,10 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
     VkPipelineLayout layout
 ) noexcept
 {
-    constexpr uint32_t const index = 0U;
-    constexpr VkDeviceSize const offset = 0U;
-
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
+
+    constexpr uint32_t index = 0U;
+    constexpr VkDeviceSize offset = 0U;
     vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
 }
 

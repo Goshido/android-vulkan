@@ -611,7 +611,8 @@ UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
     ImageStorage::SetResourceHeap ( resourceHeap );
 }
 
-bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+// FUCK - remove maybe_unused
+bool UIPass::Execute ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
     AV_VULKAN_GROUP ( commandBuffer, "UI" )

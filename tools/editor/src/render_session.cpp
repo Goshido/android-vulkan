@@ -23,13 +23,13 @@ class HelloTriangleJob final
 {
     public:
         // FUCK - remove it
-        std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckGeometry {};
+        //std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckGeometry {};
 
         // FUCK - remove namespace
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _geometry {};
 
         // FUCK - remove it
-        std::unique_ptr<HelloTriangleProgram>                       _program {};
+        //std::unique_ptr<HelloTriangleProgram>                       _program {};
 
         std::unique_ptr<HelloTriangleProgramExt>                    _programExt {};
 
@@ -200,25 +200,25 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
         }
 
         // FUCK
-        _fuckGeometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
+        //_fuckGeometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
 
-        result = _fuckGeometry->LoadMesh ( _renderer,
-            commandBuffer,
-            true,
-            VK_NULL_HANDLE,
-            { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
-            static_cast<uint32_t> ( std::size ( data ) )
-        );
+        //result = _fuckGeometry->LoadMesh ( _renderer,
+        //    commandBuffer,
+        //    true,
+        //    VK_NULL_HANDLE,
+        //    { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
+        //    static_cast<uint32_t> ( std::size ( data ) )
+        //);
 
-        if ( !result ) [[unlikely]]
-        {
-            _geometry->FreeResources ( _renderer );
-            _geometry.reset ();
+        //if ( !result ) [[unlikely]]
+        //{
+        //    _geometry->FreeResources ( _renderer );
+        //    _geometry.reset ();
 
-            _fuckGeometry->FreeResources ( _renderer );
-            _fuckGeometry.reset ();
-            return;
-        }
+        //    _fuckGeometry->FreeResources ( _renderer );
+        //    _fuckGeometry.reset ();
+        //    return;
+        //}
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -231,8 +231,8 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
 
-        _fuckGeometry->FreeResources ( _renderer );
-        _fuckGeometry.reset ();
+        //_fuckGeometry->FreeResources ( _renderer );
+        //_fuckGeometry.reset ();
         return;
     }
 
@@ -282,8 +282,8 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
 
-        _fuckGeometry->FreeResources ( _renderer );
-        _fuckGeometry.reset ();
+        //_fuckGeometry->FreeResources ( _renderer );
+        //_fuckGeometry.reset ();
         return;
     }
 
@@ -296,32 +296,32 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     if ( result ) [[likely]]
     {
         _geometry->FreeTransferResources ( _renderer );
-        _fuckGeometry->FreeTransferResources ( _renderer );
+        //_fuckGeometry->FreeTransferResources ( _renderer );
         return;
     }
 
     _geometry->FreeResources ( _renderer );
     _geometry.reset ();
 
-    _fuckGeometry->FreeResources ( _renderer );
-    _fuckGeometry.reset ();
+    //_fuckGeometry->FreeResources ( _renderer );
+    //_fuckGeometry.reset ();
 }
 
-void HelloTriangleJob::CreateProgram ( VkRenderPass renderPass ) noexcept
+void HelloTriangleJob::CreateProgram ( VkRenderPass /*renderPass*/ ) noexcept
 {
     AV_TRACE ( "Program" )
 
-    _program = std::make_unique<HelloTriangleProgram> ();
+    //_program = std::make_unique<HelloTriangleProgram> ();
     _programExt = std::make_unique<HelloTriangleProgramExt> ();
 
-    bool const status = _program->Init ( _renderer, renderPass, 0U ) &&
+    bool const status = /*_program->Init (_renderer, renderPass, 0U) &&*/
         _programExt->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT );
 
     if ( status ) [[likely]]
         return;
 
-    _program->Destroy ( _renderer.GetDevice () );
-    _program.reset ();
+    /*_program->Destroy ( _renderer.GetDevice () );
+    _program.reset ();*/
 
     _programExt->Destroy ( _renderer.GetDevice () );
     _programExt.reset ();
@@ -797,7 +797,7 @@ bool RenderSession::InitModules () noexcept
     new HelloTriangleJob ( _messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
 
     bool result = AllocateCommandBuffers ( device ) &&
-        _presentRenderPass.OnSwapchainCreated ( renderer ) &&
+        //_presentRenderPass.OnSwapchainCreated ( renderer ) &&
         _presentRenderPassEXT.OnSwapchainCreated ( renderer );
 
     if ( !result ) [[unlikely]]
@@ -844,8 +844,8 @@ bool RenderSession::InitModules () noexcept
     {
         std::lock_guard const lock ( _submitMutex );
 
-        result = _defaultTextureManager.Init ( renderer, pool ) &&
-            _exposurePass.Init ( renderer, pool ) &&
+        result = //_defaultTextureManager.Init ( renderer, pool ) &&
+            //_exposurePass.Init ( renderer, pool ) &&
             _resourceHeap.Init ( renderer, commandBuffer ) &&
             _exposurePassEXT.Init ( renderer, _resourceHeap, pool );
 
@@ -856,11 +856,11 @@ bool RenderSession::InitModules () noexcept
     }
 
     // FUCK - refactor
-    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
+    //VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
+    //constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
 
-    result = _samplerManager.Init ( device ) &&
-        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&
+    result = /*_samplerManager.Init (device) &&
+        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&*/
         _uiPassEXT.OnInitDevice ( renderer ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -909,9 +909,9 @@ bool RenderSession::InitModules () noexcept
     );
 
     result = CreateRenderTarget () &&
-        _exposurePass.SetTarget ( renderer, _renderTarget ) &&
+        //_exposurePass.SetTarget ( renderer, _renderTarget ) &&
         _exposurePassEXT.SetTarget ( renderer, _resourceHeap, _renderTarget, _renderTargetIdx ) &&
-        _toneMapper.Init ( renderer ) &&
+        /*_toneMapper.Init ( renderer ) &&
 
         _toneMapper.SetTarget ( renderer,
             renderPass,
@@ -919,13 +919,13 @@ bool RenderSession::InitModules () noexcept
             _renderTarget.GetImageView (),
             _exposurePass.GetExposure (),
             _samplerManager.GetClampToEdgeSampler ()
-        ) &&
+        ) &&*/
 
-        _toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        //_toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _toneMapperEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
+        //_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
         _uiPassEXT.OnSwapchainCreated ( renderer ) &&
-        _uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        //_uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPassEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
@@ -939,9 +939,9 @@ bool RenderSession::InitModules () noexcept
     _toneMapperEXT.SetTarget ( renderer, _renderTargetIdx, _exposurePassEXT.GetExposure () );
 
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
-    _exposurePass.FreeTransferResources ( device, pool );
+    //_exposurePass.FreeTransferResources ( device, pool );
     _exposurePassEXT.FreeTransferResources ( device, pool );
-    _defaultTextureManager.FreeTransferResources ( renderer, pool );
+    //_defaultTextureManager.FreeTransferResources ( renderer, pool );
     _timestamp = std::chrono::steady_clock::now ();
     return true;
 }
@@ -950,9 +950,9 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 {
     _messageQueue.DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
-    _helloTriangleProgram = std::move ( job->_program );
+    //_helloTriangleProgram = std::move ( job->_program );
     _helloTriangleProgramExt = std::move ( job->_programExt );
-    _fuckHelloTriangleGeometry = std::move ( job->_fuckGeometry );
+    //_fuckHelloTriangleGeometry = std::move ( job->_fuckGeometry );
     _helloTriangleGeometry = std::move ( job->_geometry );
     delete job;
 }
@@ -1034,7 +1034,7 @@ void RenderSession::OnRenderFrame () noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Upload" )
 
-        result = _uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&
+        result = /*_uiPass.UploadGPUData (renderer, commandBuffer, commandBufferIndex) &&*/
             _uiPassEXT.UploadGPUData ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
@@ -1044,7 +1044,7 @@ void RenderSession::OnRenderFrame () noexcept
             return;
         }
 
-        _toneMapper.UploadGPUData ( renderer, commandBuffer );
+        //_toneMapper.UploadGPUData ( renderer, commandBuffer );
     }
 
     resourceHeap.UploadGPUData ( commandBuffer );
@@ -1291,11 +1291,11 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
         vkDestroyFramebuffer ( device, std::exchange ( _renderPassInfo.framebuffer, VK_NULL_HANDLE ), nullptr );
 
-    if ( _helloTriangleProgram ) [[likely]]
-    {
-        _helloTriangleProgram->Destroy ( device );
-        _helloTriangleProgram.reset ();
-    }
+    //if ( _helloTriangleProgram ) [[likely]]
+    //{
+    //    _helloTriangleProgram->Destroy ( device );
+    //    _helloTriangleProgram.reset ();
+    //}
 
     if ( _helloTriangleProgramExt ) [[likely]]
     {
@@ -1309,11 +1309,11 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
         _helloTriangleGeometry.reset ();
     }
 
-    if ( _fuckHelloTriangleGeometry ) [[likely]]
+    /*if ( _fuckHelloTriangleGeometry ) [[likely]]
     {
         _fuckHelloTriangleGeometry->FreeResources ( renderer );
         _fuckHelloTriangleGeometry.reset ();
-    }
+    }*/
 
     if ( _renderTargetIdx ) [[likely]]
         _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
@@ -1323,24 +1323,24 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
         vkDestroyRenderPass ( device, std::exchange ( _renderPassInfo.renderPass, VK_NULL_HANDLE ), nullptr );
 
-    _uiPass.OnSwapchainDestroyed ();
+    //_uiPass.OnSwapchainDestroyed ();
     _uiPassEXT.OnSwapchainDestroyed ();
 
-    _uiPass.OnDestroyDevice ( renderer );
+    //_uiPass.OnDestroyDevice ( renderer );
     _uiPassEXT.OnDestroyDevice ( renderer );
 
-    _presentRenderPass.OnSwapchainDestroyed ( device );
-    _presentRenderPass.OnDestroyDevice ( device );
+    /*_presentRenderPass.OnSwapchainDestroyed ( device );
+    _presentRenderPass.OnDestroyDevice ( device );*/
 
     _presentRenderPassEXT.OnDestroyDevice ( device );
 
     _exposurePassEXT.Destroy ( renderer, _resourceHeap );
-    _exposurePass.Destroy ( renderer );
-    _toneMapper.Destroy ( renderer );
+    //_exposurePass.Destroy ( renderer );
+    //_toneMapper.Destroy ( renderer );
     _toneMapperEXT.Destroy ( device );
 
-    _defaultTextureManager.Destroy ( renderer );
-    _samplerManager.Destroy ( device );
+    //_defaultTextureManager.Destroy ( renderer );
+    //_samplerManager.Destroy ( device );
     _resourceHeap.Destroy ( renderer );
 
     _messageQueue.EnqueueFront (
@@ -1359,9 +1359,9 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     android_vulkan::Renderer &renderer = _renderer;
     VkDevice device = renderer.GetDevice ();
-    _presentRenderPass.OnSwapchainDestroyed ( device );
+    //_presentRenderPass.OnSwapchainDestroyed ( device );
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) || !_presentRenderPassEXT.OnSwapchainCreated ( renderer ) )
+    if ( /*!_presentRenderPass.OnSwapchainCreated (renderer) || */!_presentRenderPassEXT.OnSwapchainCreated ( renderer ) )
     {
          [[unlikely]]
         // FUCK
@@ -1401,16 +1401,16 @@ void RenderSession::OnSwapchainCreated () noexcept
         return;
     }
 
-    _uiPass.OnSwapchainDestroyed ();
+    //_uiPass.OnSwapchainDestroyed ();
     _uiPassEXT.OnSwapchainDestroyed ();
 
     // FUCK - refactor
-    VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
+    //VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
+    //constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
 
-    bool const result = _exposurePass.SetTarget ( renderer, _renderTarget ) &&
-        _uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
-        _uiPassEXT.OnSwapchainCreated ( renderer ) &&
+    bool const result = //_exposurePass.SetTarget ( renderer, _renderTarget ) &&
+        //_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
+        _uiPassEXT.OnSwapchainCreated ( renderer ) /* &&
 
         _toneMapper.SetTarget ( renderer,
             renderPass,
@@ -1418,7 +1418,7 @@ void RenderSession::OnSwapchainCreated () noexcept
             _renderTarget.GetImageView (),
             _exposurePass.GetExposure (),
             _samplerManager.GetClampToEdgeSampler ()
-        );
+        )*/;
 
     if ( result ) [[likely]]
     {

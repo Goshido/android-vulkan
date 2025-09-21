@@ -26,7 +26,7 @@
     - C++ core features
     - Windows 11 SDK (10.0.26100.0)
     - Windows Universal C Runtime
-* [_NVIDIA Nsight Graphics 2025.3.0.0 (build 36048000) (public-release)_](https://developer.nvidia.com/nsight-graphics)
+* [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2409.23 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
 * [_DirectX Shader Compiler 1.8.2505.10062_](https://github.com/microsoft/DirectXShaderCompiler) `94abfe972ad839185965f670329bcf33cd7bccbd`
 * [_libfreetype 2.13.3_](https://gitlab.freedesktop.org/freetype/freetype) `58be4879c5d3840315f037dca44e92384113f8f9`

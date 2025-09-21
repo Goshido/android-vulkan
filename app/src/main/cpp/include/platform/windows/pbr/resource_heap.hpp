@@ -137,8 +137,6 @@ class ResourceHeap final
 
         Write                                   _write {};
 
-        VkDeviceSize                            _offsets[ RESOURCE_HEAP_BINDS ] {};
-
         VkDescriptorBufferBindingInfoEXT        _bindingInfo
         {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
@@ -183,7 +181,7 @@ class ResourceHeap final
 
         [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,
-            size_t samplerOffset
+            VkDeviceSize samplerOffset
         ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterImage ( Slots &slots,

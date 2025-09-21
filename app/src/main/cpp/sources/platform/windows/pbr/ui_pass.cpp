@@ -474,7 +474,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
 
     constexpr VkBufferUsageFlags usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT ) |
+        AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT );
 
     size_t const size = MAX_VERTICES * _elementSize;

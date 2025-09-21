@@ -277,15 +277,15 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     if ( !_layout.Init ( device ) /* || !_layoutExt.Init ( device ) */ ) [[unlikely]]
         return false;
 
-    // Estimating without requesting is wrong???
-    // vkGetDescriptorSetLayoutSizeEXT
-    // vkGetDescriptorSetLayoutBindingOffsetEXT
     VkDescriptorSetLayout layout = _layout.GetLayout ();
     VkDeviceSize layoutSize = 0U;
     vkGetDescriptorSetLayoutSizeEXT ( device, layout, &layoutSize );
 
-    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_RESOURCES, _offsets + BIND_RESOURCES );
-    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_SAMPLERS, _offsets + BIND_SAMPLERS );
+    VkDeviceSize resourceOffset;
+    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_RESOURCES, &resourceOffset );
+
+    VkDeviceSize samplerOffset;
+    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_SAMPLERS, &samplerOffset );
 
     _sampledImageSize = renderer.GetSampledImageDescriptorSize ();
     _storageImageSize = renderer.GetStorageImageDescriptorSize ();
@@ -330,11 +330,11 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         _write.Init ( renderer,
             resourceCapacity,
             std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } ),
-            _offsets[ BIND_RESOURCES ]
+            resourceOffset
         ) &&
 
         InitInternalStructures ( device, resourceCapacity ) &&
-        InitSamplers ( renderer, commandBuffer, _offsets[ BIND_SAMPLERS ] );
+        InitSamplers ( renderer, commandBuffer, samplerOffset );
 }
 
 void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -488,7 +488,7 @@ bool ResourceHeap::InitInternalStructures ( VkDevice device, size_t resourceCapa
 
 bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     VkCommandBuffer commandBuffer,
-    size_t samplerOffset
+    VkDeviceSize samplerOffset
 ) noexcept
 {
     constexpr VkSamplerCreateInfo clampToEdgeSamplerInfo
@@ -612,7 +612,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    auto const samplerSize = static_cast<size_t> ( renderer.GetSamplerDescriptorSize () );
+    size_t const samplerSize = renderer.GetSamplerDescriptorSize ();
 
     VkDescriptorGetInfoEXT getInfo
     {
@@ -645,7 +645,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     VkBufferCopy const copy
     {
         .srcOffset = 0U,
-        .dstOffset = static_cast<VkDeviceSize> ( samplerOffset ),
+        .dstOffset = samplerOffset,
         .size = static_cast<VkDeviceSize> ( samplerSize * TOTAL_SAMPLERS )
     };
 

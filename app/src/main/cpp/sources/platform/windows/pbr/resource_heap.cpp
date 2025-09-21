@@ -122,11 +122,11 @@ bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
 {
     _resourceOffset = static_cast<VkDeviceSize> ( resourceOffset );
     _resourceSize = static_cast<VkDeviceSize> ( resourceSize );
-    _copy.resize ( pbr::FIF_COUNT * resourceCapacity );
+    _copy.resize ( resourceCapacity );
 
     return
         _stagingBuffer.Init ( renderer,
-            pbr::FIF_COUNT * bufferSize,
+            bufferSize,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
             "Descriptor buffer (staging)"
@@ -163,6 +163,8 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
     if ( _written == 0U ) [[likely]]
         return;
 
+    AV_VULKAN_GROUP ( commandBuffer, "Resource heap upload" )
+
     size_t const count = _copy.size ();
     size_t const idx = _readIndex + _written;
     size_t const cases[] = { 0U, idx - count };
@@ -185,6 +187,7 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
     if ( more >= 1U ) [[unlikely]]
         vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, static_cast<uint32_t> ( more ), copy );
 
+    // FUCK - optimize in single std::vector
     VkBufferMemoryBarrier2 barrier
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,

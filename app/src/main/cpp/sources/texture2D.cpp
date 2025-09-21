@@ -38,10 +38,6 @@ constexpr const size_t EXPANDER_THREADS = 4U;
 constexpr const size_t RGB_BYTES_PER_PIXEL = 3U;
 constexpr const size_t RGBA_BYTES_PER_PIXEL = 4U;
 
-constexpr VkImageUsageFlags IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
-    AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
-    AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
-
 std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
     { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
@@ -223,7 +219,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     bool result = CreateCommonResources ( imageInfo,
         resolution,
         ResolveFormat ( actualFormat, space ),
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( isGenerateMipmaps ),
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
@@ -293,7 +289,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     bool result = CreateCommonResources ( imageInfo,
         resolution,
         ResolveFormat ( actualFormat, space ),
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( isGenerateMipmaps ),
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
@@ -355,7 +351,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     bool const result = CreateCommonResources ( imageInfo,
         resolution,
         format,
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( isGenerateMipmaps ),
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
@@ -609,7 +605,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
     bool result = CreateCommonResources ( imageInfo,
         ktx.GetMip ( 0U )._resolution,
         ktx.GetFormat (),
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( false ),
         ktx.GetMipCount (),
         renderer
     );
@@ -1252,6 +1248,19 @@ VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noe
     );
 
     return VK_FORMAT_UNDEFINED;
+}
+
+VkImageUsageFlags Texture2D::ResolveUsage ( bool isGenerateMipmaps ) noexcept
+{
+    constexpr VkImageUsageFlags const cases[] =
+    {
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
+
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
+            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT )
+    };
+
+    return cases[ static_cast<size_t> ( isGenerateMipmaps ) ];
 }
 
 } // namespace android_vulkan

@@ -174,6 +174,7 @@ class Texture2D final
 
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
         [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noexcept;
+        [[nodiscard]] static VkImageUsageFlags ResolveUsage ( bool isGenerateMipmaps ) noexcept;
 };
 
 } // namespace android_vulkan

@@ -38,8 +38,8 @@ class UIEditBox final : public Widget
         std::u32string                              _content {};
 
         // FUCK - remove it
-        pbr::android::FontStorage::StringMetrics    _metrics {};
-        pbr::android::FontStorage                   &_fontStorage;
+        //pbr::android::FontStorage::StringMetrics    _metrics {};
+        //pbr::android::FontStorage                   &_fontStorage;
 
         // FUCK - remove namespace
         pbr::windows::FontStorage::StringMetrics    _metricsEXT {};

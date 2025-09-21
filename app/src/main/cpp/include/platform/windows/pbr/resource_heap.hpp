@@ -7,7 +7,7 @@
 #include <renderer.hpp>
 #include "resource_heap.inc"
 #include "resource_heap_descriptor_set_layout.hpp"
-#include "resource_heap_descriptor_set_layout_ext.hpp"
+//#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -85,6 +85,7 @@ class ResourceHeap final
                 size_t                          _writeIndex = 0U;
                 size_t                          _written = 0U;
 
+                VkDeviceSize                    _gpuResourceOffset = 0U;
                 VkDeviceSize                    _resourceSize = 0U;
 
                 Buffer                          _stagingBuffer {};
@@ -102,9 +103,9 @@ class ResourceHeap final
                 ~Write () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    size_t bufferSize,
                     size_t resourceCapacity,
-                    size_t resourceSize
+                    size_t resourceSize,
+                    VkDeviceSize gpuResourceOffset
                 ) noexcept;
 
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
@@ -125,7 +126,7 @@ class ResourceHeap final
 
         Buffer                                  _descriptorBuffer {};
         ResourceHeapDescriptorSetLayout         _layout {};
-        ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
+        //ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
 
         Slots                                   _nonUISlots {};
         Slots                                   _uiSlots {};
@@ -135,6 +136,8 @@ class ResourceHeap final
         size_t                                  _storageImageSize = 0U;
 
         Write                                   _write {};
+
+        VkDeviceSize                            _offsets[ RESOURCE_HEAP_BINDS ] {};
 
         VkDescriptorBufferBindingInfoEXT        _bindingInfo
         {

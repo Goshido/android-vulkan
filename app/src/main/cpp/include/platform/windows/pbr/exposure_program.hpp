@@ -6,7 +6,7 @@
 
 #include "compute_program.hpp"
 #include "resource_heap_descriptor_set_layout.hpp"
-#include "resource_heap_descriptor_set_layout_ext.hpp"
+//#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -36,7 +36,7 @@ class ExposureProgram final : public ComputeProgram
 
     private:
         ResourceHeapDescriptorSetLayout         _layout {};
-        ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
+        //ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
 
     public:
         explicit ExposureProgram () noexcept;

@@ -5,6 +5,8 @@
 #define UI_IMAGE_BITS           14
 
 // See https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#resourcedescriptorheaps-samplerdescriptorheaps
+#define RESOURCE_HEAP_BINDS     2
+
 #define SET_RESOURCE_HEAP       0
 #define BIND_RESOURCES          0
 #define BIND_SAMPLERS           1

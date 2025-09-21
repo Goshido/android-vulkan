@@ -1034,7 +1034,7 @@ void RenderSession::OnRenderFrame () noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Upload" )
 
-        result = /*_uiPass.UploadGPUData (renderer, commandBuffer, commandBufferIndex) &&*/
+        result = /*_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&*/
             _uiPassEXT.UploadGPUData ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
@@ -1361,9 +1361,14 @@ void RenderSession::OnSwapchainCreated () noexcept
     VkDevice device = renderer.GetDevice ();
     //_presentRenderPass.OnSwapchainDestroyed ( device );
 
-    if ( /*!_presentRenderPass.OnSwapchainCreated (renderer) || */!_presentRenderPassEXT.OnSwapchainCreated ( renderer ) )
+    /*if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
     {
-         [[unlikely]]
+         AV_ASSERT ( false )
+        return;
+    }*/
+
+    if ( !_presentRenderPassEXT.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    {
         // FUCK
          AV_ASSERT ( false )
         return;

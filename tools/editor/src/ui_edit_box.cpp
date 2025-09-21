@@ -26,7 +26,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     DIVUIElement &parent,
 
     // FUCK - remove namespace
-    pbr::android::FontStorage &fontStorage,
+    pbr::android::FontStorage &/*fontStorage*/,
 
     pbr::windows::FontStorage &fontStorageEXT,
 
@@ -36,7 +36,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
 ) noexcept:
     Widget ( messageQueue ),
     _committed ( value ),
-    _fontStorage ( fontStorage ),
+    //_fontStorage ( fontStorage ),
     _fontStorageEXT ( fontStorageEXT ),
 
     _lineDIV ( messageQueue,
@@ -716,7 +716,8 @@ int32_t UIEditBox::FindClosestSymbol ( int32_t x ) const noexcept
     float closest = std::numeric_limits<float>::max ();
     int32_t c = -1;
 
-    for ( float const offset : _metrics )
+    //for ( float const offset : _metrics )
+    for ( float const offset : _metricsEXT )
     {
         if ( float const len = std::abs ( rawOffset - offset ); len > std::exchange ( closest, len ) ) [[unlikely]]
             break;
@@ -769,8 +770,11 @@ void UIEditBox::OffsetCursor ( int32_t offset, KeyModifier modifier ) noexcept
     bool const shift = modifier.AnyShiftPressed ();
     bool const ctrl = modifier.AnyCtrlPressed ();
 
-    int32_t const cursorLimitCases[] = { static_cast<int32_t> ( _metrics.size () - 1U ), 0 };
-    int32_t const cursorLimit = cursorLimitCases[ static_cast<size_t> ( _metrics.empty () ) ];
+    /*int32_t const cursorLimitCases[] = { static_cast<int32_t> ( _metrics.size () - 1U ), 0 };
+    int32_t const cursorLimit = cursorLimitCases[ static_cast<size_t> ( _metrics.empty () ) ];*/
+
+    int32_t const cursorLimitCases[] = { static_cast<int32_t> ( _metricsEXT.size () - 1U ), 0 };
+    int32_t const cursorLimit = cursorLimitCases[ static_cast<size_t> ( _metricsEXT.empty () ) ];
 
     if ( shift )
     {
@@ -968,8 +972,10 @@ void UIEditBox::UpdateCursor () noexcept
 
     if ( !_content.empty () )
     {
-        auto const c = _metrics[ static_cast<size_t> ( _cursor ) ];
-        auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
+        //auto const c = _metrics[ static_cast<size_t> ( _cursor ) ];
+        //auto const s = _metrics[ static_cast<size_t> ( _selection ) ];
+        auto const c = _metricsEXT[ static_cast<size_t> ( _cursor ) ];
+        auto const s = _metricsEXT[ static_cast<size_t> ( _selection ) ];
 
         float const cases[ 2U ][ 2U ] = { { c, s }, { s, c } };
         auto const [from, to] = cases[ static_cast<size_t> ( _cursor > _selection ) ];
@@ -993,13 +999,13 @@ void UIEditBox::UpdateCursor () noexcept
 
 void UIEditBox::UpdateMetrics () noexcept
 {
-    pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
+    //pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
 
-    _fontStorage.GetStringMetrics ( _metrics,
-        css._fontFile,
-        static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
-        _content
-    );
+    //_fontStorage.GetStringMetrics ( _metrics,
+    //    css._fontFile,
+    //    static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
+    //    _content
+    //);
 
     pbr::CSSComputedValues const &cssEXT = _textDIV.GetCSSEXT ();
 

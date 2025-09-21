@@ -883,6 +883,12 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.obj</ObjectFileName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>

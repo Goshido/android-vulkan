@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
-#include <platform/windows/pbr/resource_heap.inc>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 
@@ -115,17 +114,18 @@ bool ResourceHeap::Slots::IsFull () const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
-    size_t bufferSize,
     size_t resourceCapacity,
-    size_t resourceSize
+    size_t resourceSize,
+    VkDeviceSize gpuResourceOffset
 ) noexcept
 {
+    _gpuResourceOffset = gpuResourceOffset;
     _resourceSize = static_cast<VkDeviceSize> ( resourceSize );
     _copy.resize ( resourceCapacity );
 
     return
         _stagingBuffer.Init ( renderer,
-            bufferSize,
+            resourceCapacity * resourceSize,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
             "Descriptor buffer (staging)"
@@ -243,7 +243,7 @@ void* ResourceHeap::Write::Push ( uint32_t resourceIndex, size_t descriptorSize 
     _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ] =
     {
         .srcOffset = offset,
-        .dstOffset = _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
+        .dstOffset = _gpuResourceOffset + _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
         .size = static_cast<VkDeviceSize> ( descriptorSize )
     };
 
@@ -270,15 +270,26 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     size_t const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     size_t const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
     ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
-    ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+    //ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+
+    VkDevice device = renderer.GetDevice ();
+
+    if ( !_layout.Init ( device ) /* || !_layoutExt.Init ( device ) */ ) [[unlikely]]
+        return false;
+
+    // Estimating without requesting is wrong???
+    // vkGetDescriptorSetLayoutSizeEXT
+    // vkGetDescriptorSetLayoutBindingOffsetEXT
+    VkDescriptorSetLayout layout = _layout.GetLayout ();
+    VkDeviceSize layoutSize = 0U;
+    vkGetDescriptorSetLayoutSizeEXT ( device, layout, &layoutSize );
+
+    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_RESOURCES, _offsets + BIND_RESOURCES );
+    vkGetDescriptorSetLayoutBindingOffsetEXT ( device, layout, BIND_SAMPLERS, _offsets + BIND_SAMPLERS );
 
     _sampledImageSize = renderer.GetSampledImageDescriptorSize ();
     _storageImageSize = renderer.GetStorageImageDescriptorSize ();
     _bufferSize = renderer.GetStorageBufferDescriptorSize ();
-
-    size_t const resourceSize = std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } );
-    size_t const resourceSectionSize = resourceCapacity * resourceSize;
-    size_t const bufferSize = resourceSectionSize + TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize ();
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -303,13 +314,9 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     VkPhysicalDeviceDescriptorBufferPropertiesEXT.
     */
 
-    VkDevice device = renderer.GetDevice ();
-
     return
-        _layout.Init ( device ) &&
-        _layoutExt.Init ( device ) &&
         _descriptorBuffer.Init ( renderer,
-            bufferSize,
+            static_cast<size_t> ( layoutSize ),
 
             AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
                 AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
@@ -320,9 +327,14 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
             "Descriptor buffer"
         ) &&
 
-        _write.Init ( renderer, bufferSize, resourceCapacity, resourceSize ) &&
+        _write.Init ( renderer,
+            resourceCapacity,
+            std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } ),
+            _offsets[ BIND_RESOURCES ]
+        ) &&
+
         InitInternalStructures ( device, resourceCapacity ) &&
-        InitSamplers ( renderer, commandBuffer, resourceSectionSize );
+        InitSamplers ( renderer, commandBuffer, _offsets[ BIND_SAMPLERS ] );
 }
 
 void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -338,7 +350,7 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
-    _layoutExt.Destroy ( device );
+    //_layoutExt.Destroy ( device );
     _layout.Destroy ( device );
 }
 
@@ -349,9 +361,12 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
 {
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
 
-    constexpr uint32_t index = 0U;
-    constexpr VkDeviceSize offset = 0U;
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
+    /*constexpr uint32_t const indices[ RESOURCE_HEAP_BINDS ] = { 0U, 0U };
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, indices, _offsets );*/
+
+    constexpr uint32_t i = 0U;
+    constexpr VkDeviceSize o = 0U;
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &i, &o );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
@@ -643,9 +658,9 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
 
-        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
-            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT ),
 
         .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,

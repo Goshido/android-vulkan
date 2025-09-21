@@ -57,13 +57,13 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
 void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
-    _layoutExt.Destroy ( device );
+    //_layoutExt.Destroy ( device );
     _layout.Destroy ( device );
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout.Init ( device ) || !_layoutExt.Init ( device ) ) [[unlikely]]
+    if ( !_layout.Init ( device )/* || !_layoutExt.Init ( device ) */ ) [[unlikely]]
         return false;
 
     constexpr VkPushConstantRange pushConstantRange
@@ -79,8 +79,8 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
         .pNext = nullptr,
         .flags = 0U,
         .setLayoutCount = 1U,
-        //.pSetLayouts = &_layout.GetLayout (),
-        .pSetLayouts = &_layoutExt.GetLayout (),
+        .pSetLayouts = &_layout.GetLayout (),
+        //.pSetLayouts = &_layoutExt.GetLayout (),
         .pushConstantRangeCount = 1U,
         .pPushConstantRanges = &pushConstantRange
     };

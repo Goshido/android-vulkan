@@ -12,10 +12,11 @@ void ToneMapperPass::Destroy ( VkDevice device ) noexcept
     _program.Destroy ( device );
 }
 
-void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
+void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer, ResourceHeap &resourceHeap ) noexcept
 {
     AV_VULKAN_GROUP ( commandBuffer, "Tone mapping" )
     _program.Bind ( commandBuffer );
+    resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
     _program.SetPushConstants ( commandBuffer, &_pushConstants );
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }

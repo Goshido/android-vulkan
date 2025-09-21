@@ -975,6 +975,7 @@ void RenderSession::OnRenderFrame () noexcept
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
     android_vulkan::Renderer &renderer = _renderer;
+    pbr::windows::ResourceHeap &resourceHeap = _resourceHeap;
     _uiManager.RenderUI ( renderer, _uiPass, _uiPassEXT );
 
     VkDevice device = renderer.GetDevice ();
@@ -1046,7 +1047,7 @@ void RenderSession::OnRenderFrame () noexcept
         _toneMapper.UploadGPUData ( renderer, commandBuffer );
     }
 
-    _resourceHeap.UploadGPUData ( commandBuffer );
+    resourceHeap.UploadGPUData ( commandBuffer );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
@@ -1134,7 +1135,7 @@ void RenderSession::OnRenderFrame () noexcept
     }
 
     //_exposurePass.Execute ( commandBuffer, deltaTime );
-    _exposurePassEXT.Execute ( commandBuffer, deltaTime, _resourceHeap );
+    _exposurePassEXT.Execute ( commandBuffer, deltaTime, resourceHeap );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
@@ -1143,7 +1144,7 @@ void RenderSession::OnRenderFrame () noexcept
 
         // FUCK - call Windows backend
         //_toneMapper.Execute ( commandBuffer );
-        //_toneMapperEXT.Execute ( commandBuffer );
+        //_toneMapperEXT.Execute ( commandBuffer, resourceHeap );
 
         //if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         //{

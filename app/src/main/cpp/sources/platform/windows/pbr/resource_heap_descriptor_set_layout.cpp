@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <platform/windows/pbr/resource_heap.inc>
 #include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_utils.hpp>
@@ -7,12 +8,6 @@
 namespace pbr::windows {
 
 namespace {
-
-// See https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst#resourcedescriptorheaps-samplerdescriptorheaps
-constexpr uint32_t RESOURCE_BINDING = 0U;
-constexpr uint32_t SAMPLER_BINDING = 1U;
-
-//----------------------------------------------------------------------------------------------------------------------
 
 class DescriptorSetLayout final
 {
@@ -92,14 +87,14 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
     VkDescriptorSetLayoutBinding const bindings[] =
     {
         {
-            .binding = RESOURCE_BINDING,
+            .binding = BIND_RESOURCES,
             .descriptorType = VK_DESCRIPTOR_TYPE_MUTABLE_EXT,
             .descriptorCount = resourceCapacity,
             .stageFlags = stages,
             .pImmutableSamplers = nullptr
         },
         {
-            .binding = SAMPLER_BINDING,
+            .binding = BIND_SAMPLERS,
             .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
             .descriptorCount = TOTAL_SAMPLERS,
             .stageFlags = stages,

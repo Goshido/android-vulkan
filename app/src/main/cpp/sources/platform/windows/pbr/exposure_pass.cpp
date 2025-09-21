@@ -31,7 +31,7 @@ void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime, Res
     SyncBefore ( commandBuffer );
 
     _program.Bind ( commandBuffer );
-    resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, _program.GetPipelineLayout (), false );
+    resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, _program.GetPipelineLayout () );
 
     _exposureInfo._eyeAdaptation = EyeAdaptationFactor ( deltaTime );
     _program.SetPushConstants ( commandBuffer, &_exposureInfo );

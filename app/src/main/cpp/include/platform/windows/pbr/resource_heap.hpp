@@ -85,7 +85,6 @@ class ResourceHeap final
                 size_t                          _writeIndex = 0U;
                 size_t                          _written = 0U;
 
-                VkDeviceSize                    _resourceOffset = 0U;
                 VkDeviceSize                    _resourceSize = 0U;
 
                 Buffer                          _stagingBuffer {};
@@ -105,7 +104,6 @@ class ResourceHeap final
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
                     size_t bufferSize,
                     size_t resourceCapacity,
-                    size_t resourceOffset,
                     size_t resourceSize
                 ) noexcept;
 
@@ -138,26 +136,15 @@ class ResourceHeap final
 
         Write                                   _write {};
 
-        VkDescriptorBufferBindingInfoEXT        _bindingInfo[ 2U ] =
+        VkDescriptorBufferBindingInfoEXT        _bindingInfo
         {
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
-                .pNext = nullptr,
-                .address = 0U,
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
+            .pNext = nullptr,
+            .address = 0U,
 
-                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT )
-            },
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
-                .pNext = nullptr,
-                .address = 0U,
-
-                .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
-                    AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT )
-            }
+            .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT )
         };
 
     public:
@@ -174,11 +161,7 @@ class ResourceHeap final
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
 
-        void Bind ( VkCommandBuffer commandBuffer,
-            VkPipelineBindPoint pipelineBindPoint,
-            VkPipelineLayout layout,
-            bool requireSamplers
-        ) noexcept;
+        void Bind ( VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint, VkPipelineLayout layout ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
             VkBuffer buffer,
@@ -193,12 +176,12 @@ class ResourceHeap final
         void UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept;
 
     private:
-        [[nodiscard]] bool InitInternalStructures ( VkDevice device,
-            size_t resourceCapacity,
-            size_t resourceOffset
-        ) noexcept;
+        [[nodiscard]] bool InitInternalStructures ( VkDevice device, size_t resourceCapacity ) noexcept;
 
-        [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool InitSamplers ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            size_t samplerOffset
+        ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterImage ( Slots &slots,
             char const* heap,

@@ -3,6 +3,7 @@
 #include <logger.hpp>
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
+#include <platform/windows/pbr/resource_heap.inc>
 #include <platform/windows/pbr/samplers.inc>
 #include <vulkan_api.hpp>
 
@@ -116,11 +117,9 @@ bool ResourceHeap::Slots::IsFull () const noexcept
 bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
     size_t bufferSize,
     size_t resourceCapacity,
-    size_t resourceOffset,
     size_t resourceSize
 ) noexcept
 {
-    _resourceOffset = static_cast<VkDeviceSize> ( resourceOffset );
     _resourceSize = static_cast<VkDeviceSize> ( resourceSize );
     _copy.resize ( resourceCapacity );
 
@@ -239,12 +238,12 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
 
 void* ResourceHeap::Write::Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept
 {
-    VkDeviceSize const offset = _resourceOffset + _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
+    VkDeviceSize const offset = _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
 
     _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ] =
     {
         .srcOffset = offset,
-        .dstOffset = _resourceOffset + _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
+        .dstOffset = _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
         .size = static_cast<VkDeviceSize> ( descriptorSize )
     };
 
@@ -273,16 +272,13 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
     ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
 
-    size_t const a = renderer.GetDescriptorBufferOffsetAlignment ();
-    size_t const resourceOffset = ( TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize () + a - 1U ) / a * a;
-
     _sampledImageSize = renderer.GetSampledImageDescriptorSize ();
     _storageImageSize = renderer.GetStorageImageDescriptorSize ();
     _bufferSize = renderer.GetStorageBufferDescriptorSize ();
 
     size_t const resourceSize = std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } );
-    size_t const resourceBufferSize = resourceCapacity * resourceSize;
-    size_t const bufferSize = resourceOffset + resourceBufferSize;
+    size_t const resourceSectionSize = resourceCapacity * resourceSize;
+    size_t const bufferSize = resourceSectionSize + TOTAL_SAMPLERS * renderer.GetSamplerDescriptorSize ();
 
     /*
     From Vulkan spec 1.4.320, "14.1.16. Mutable":
@@ -324,9 +320,9 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
             "Descriptor buffer"
         ) &&
 
-        _write.Init ( renderer, bufferSize, resourceCapacity, resourceOffset, resourceSize ) &&
-        InitInternalStructures ( device, resourceCapacity, resourceOffset ) &&
-        InitSamplers ( renderer, commandBuffer );
+        _write.Init ( renderer, bufferSize, resourceCapacity, resourceSize ) &&
+        InitInternalStructures ( device, resourceCapacity ) &&
+        InitSamplers ( renderer, commandBuffer, resourceSectionSize );
 }
 
 void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
@@ -347,17 +343,15 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 }
 
 void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
-    VkPipelineBindPoint pipelineBindPoint,
-    VkPipelineLayout layout,
-    bool requireSamplers
+    VkPipelineBindPoint bindPoint,
+    VkPipelineLayout layout
 ) noexcept
 {
-    auto const count = 1U + static_cast<uint32_t> ( requireSamplers );
-    vkCmdBindDescriptorBuffersEXT ( commandBuffer, count, _bindingInfo );
+    constexpr uint32_t const index = 0U;
+    constexpr VkDeviceSize const offset = 0U;
 
-    constexpr uint32_t const indices[] = { 0U, 1U };
-    constexpr VkDeviceSize const offsets[] = { 0U, 0U };
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, pipelineBindPoint, layout, 0U, count, indices, offsets );
+    vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
@@ -453,10 +447,7 @@ void ResourceHeap::UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept
     _write.Upload ( commandBuffer, _descriptorBuffer._buffer );
 }
 
-bool ResourceHeap::InitInternalStructures ( VkDevice device,
-    size_t resourceCapacity,
-    size_t resourceOffset
-) noexcept
+bool ResourceHeap::InitInternalStructures ( VkDevice device, size_t resourceCapacity ) noexcept
 {
     auto const cap = static_cast<uint32_t> ( resourceCapacity );
 
@@ -466,9 +457,6 @@ bool ResourceHeap::InitInternalStructures ( VkDevice device,
         return false;
     }
 
-    VkDescriptorBufferBindingInfoEXT &resources = _bindingInfo[ 0U ];
-    VkDescriptorBufferBindingInfoEXT &samplers = _bindingInfo[ 1U ];
-
     VkBufferDeviceAddressInfo const info
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
@@ -476,15 +464,17 @@ bool ResourceHeap::InitInternalStructures ( VkDevice device,
         .buffer = _descriptorBuffer._buffer
     };
 
-    samplers.address = vkGetBufferDeviceAddress ( device, &info );
-    resources.address = samplers.address + static_cast<VkDeviceAddress> ( resourceOffset );
+    _bindingInfo.address = vkGetBufferDeviceAddress ( device, &info );
 
     _uiSlots.Init ( 0U, UI_SLOTS );
     _nonUISlots.Init ( UI_SLOTS, cap - UI_SLOTS );
     return true;
 }
 
-bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    size_t samplerOffset
+) noexcept
 {
     constexpr VkSamplerCreateInfo clampToEdgeSamplerInfo
     {
@@ -640,7 +630,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
     VkBufferCopy const copy
     {
         .srcOffset = 0U,
-        .dstOffset = 0U,
+        .dstOffset = static_cast<VkDeviceSize> ( samplerOffset ),
         .size = static_cast<VkDeviceSize> ( samplerSize * TOTAL_SAMPLERS )
     };
 
@@ -661,7 +651,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer, VkCommandB
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = _descriptorBuffer._buffer,
-        .offset = 0U,
+        .offset = copy.dstOffset,
         .size = copy.size
     };
 

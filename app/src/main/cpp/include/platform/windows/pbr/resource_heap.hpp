@@ -89,6 +89,7 @@ class ResourceHeap final
                 VkDeviceSize                    _resourceSize = 0U;
 
                 Buffer                          _stagingBuffer {};
+                size_t                          _stagingBufferSize = 0U;
                 uint8_t*                        _stagingMemory = nullptr;
 
             public:
@@ -111,6 +112,7 @@ class ResourceHeap final
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
                 [[nodiscard]] VkBuffer GetStagingBuffer () const noexcept;
+                [[nodiscard]] size_t GetStagingBufferSize () const noexcept;
                 [[nodiscard]] uint8_t* GetStagingMemory () const noexcept;
 
                 void Upload ( VkCommandBuffer commandBuffer, VkBuffer descriptorBuffer ) noexcept;

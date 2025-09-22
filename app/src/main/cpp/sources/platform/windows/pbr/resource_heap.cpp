@@ -122,10 +122,11 @@ bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
     _gpuResourceOffset = gpuResourceOffset;
     _resourceSize = static_cast<VkDeviceSize> ( resourceSize );
     _copy.resize ( resourceCapacity );
+    _stagingBufferSize = resourceCapacity * resourceSize;
 
     return
         _stagingBuffer.Init ( renderer,
-            resourceCapacity * resourceSize,
+            _stagingBufferSize,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ),
             "Descriptor buffer (staging)"
@@ -150,6 +151,11 @@ void ResourceHeap::Write::Destroy ( android_vulkan::Renderer &renderer ) noexcep
 VkBuffer ResourceHeap::Write::GetStagingBuffer () const noexcept
 {
     return _stagingBuffer._buffer;
+}
+
+size_t ResourceHeap::Write::GetStagingBufferSize () const noexcept
+{
+    return _stagingBufferSize;
 }
 
 uint8_t* ResourceHeap::Write::GetStagingMemory () const noexcept
@@ -626,7 +632,16 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         }
     };
 
-    uint8_t* stagingMemory = _write.GetStagingMemory ();
+    size_t const blobSize = samplerSize * TOTAL_SAMPLERS;
+
+    VkBufferCopy const copy
+    {
+        .srcOffset = static_cast<VkDeviceSize> ( _write.GetStagingBufferSize () - blobSize ),
+        .dstOffset = samplerOffset,
+        .size = static_cast<VkDeviceSize> ( blobSize )
+    };
+
+    uint8_t* stagingMemory = _write.GetStagingMemory () + static_cast<size_t> ( copy.srcOffset );
     vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * CLAMP_TO_EDGE_SAMPLER );
 
     VkDescriptorDataEXT &data = getInfo.data;
@@ -642,16 +657,9 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     data.pSampler = &_shadowSampler.GetSampler ();
     vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * SHADOW_SAMPLER );
 
-    VkBufferCopy const copy
-    {
-        .srcOffset = 0U,
-        .dstOffset = samplerOffset,
-        .size = static_cast<VkDeviceSize> ( samplerSize * TOTAL_SAMPLERS )
-    };
-
     vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
 
-    VkBufferMemoryBarrier2 barrier
+    VkBufferMemoryBarrier2 const barrier
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
         .pNext = nullptr,

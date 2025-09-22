@@ -1144,7 +1144,7 @@ void RenderSession::OnRenderFrame () noexcept
 
         // FUCK - call Windows backend
         //_toneMapper.Execute ( commandBuffer );
-        //_toneMapperEXT.Execute ( commandBuffer, resourceHeap );
+        _toneMapperEXT.Execute ( commandBuffer, resourceHeap );
 
         //if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         //{

@@ -14,33 +14,33 @@ class TextUIElement final : public UIElement
     private:
         struct Glyph final
         {
-            int32_t                     _advance;
+            int32_t                         _advance;
 
-            android_vulkan::Half2       _atlasTopLeft;
-            android_vulkan::Half2       _atlasBottomRight;
-            uint16_t                    _atlas;
+            android_vulkan::Half2           _atlasTopLeft;
+            android_vulkan::Half2           _atlasBottomRight;
+            uint16_t                        _atlas;
 
-            int32_t                     _offsetX;
-            int32_t                     _offsetY;
-            size_t                      _parentLine;
+            int32_t                         _offsetX;
+            int32_t                         _offsetY;
+            size_t                          _parentLine;
 
-            int32_t                     _width;
-            int32_t                     _height;
+            int32_t                         _width;
+            int32_t                         _height;
         };
 
         struct Line final
         {
-            size_t                      _glyphs = 0U;
-            int32_t                     _length = 0;
+            size_t                          _glyphs = 0U;
+            int32_t                         _length = 0;
         };
 
         struct ApplyLayoutCache final
         {
-            bool                        _isTextChanged = true;
-            std::vector<float>          _lineHeights {};
-            GXVec2                      _penIn {};
-            GXVec2                      _penOut {};
-            size_t                      _vertices = 0U;
+            bool                            _isTextChanged = true;
+            std::vector<float>              _lineHeights {};
+            GXVec2                          _penIn {};
+            GXVec2                          _penOut {};
+            size_t                          _vertices = 0U;
 
             void Clear () noexcept;
             [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
@@ -48,17 +48,20 @@ class TextUIElement final : public UIElement
 
         struct SubmitCache final
         {
-            bool                        _isColorChanged = true;
-            bool                        _isTextChanged = true;
+            bool                            _isColorChanged = true;
+            bool                            _isTextChanged = true;
 
-            GXVec2                      _penIn {};
-            GXVec2                      _penOut {};
+            GXVec2                          _penIn {};
+            GXVec2                          _penOut {};
 
-            std::vector<float>          _parentLineHeights {};
-            GXVec2                      _parenSize {};
+            std::vector<float>              _parentLineHeights {};
+            GXVec2                          _parenSize {};
 
-            std::vector<UIVertex>       _uiVertices {};
-            size_t                      _uiVertexBufferBytes = 0U;
+            std::vector<UIVertexStream0>    _uiVertexStream0 {};
+            size_t                          _uiVertexStream0Bytes = 0U;
+
+            std::vector<UIVertexStream1>    _uiVertexStream1 {};
+            size_t                          _uiVertexStream1Bytes = 0U;
 
             void Clear () noexcept;
 
@@ -76,18 +79,24 @@ class TextUIElement final : public UIElement
         ) noexcept;
 
     private:
-        ApplyLayoutCache                _applyLayoutCache {};
-        SubmitCache                     _submitCache {};
+        ApplyLayoutCache                    _applyLayoutCache {};
+        SubmitCache                         _submitCache {};
 
         // Way the user could override color which arrived from CSS.
-        std::optional<GXColorUNORM>     _color {};
+        std::optional<GXColorUNORM>         _color {};
 
-        int32_t                         _baselineToBaseline = 0;
-        int32_t                         _contentAreaHeight = 0;
-        std::vector<Glyph>              _glyphs {};
+        int32_t                             _baselineToBaseline = 0;
+        int32_t                             _contentAreaHeight = 0;
+        std::vector<Glyph>                  _glyphs {};
 
-        std::vector<Line>               _lines {};
-        std::u32string                  _text {};
+        // Font storage uploads glyphs into GPU memory after text layout is calculated.
+        // Because of that glyph atlas image can not be resolved at text layout computation stage.
+        // This field is a connection between font storage glyph data and '_glyphs' field
+        // to write atlas image index when it's ready.
+        std::vector<uint16_t const*>        _atlasPromise {};
+
+        std::vector<Line>                   _lines {};
+        std::u32string                      _text {};
 
     public:
         TextUIElement () = delete;

@@ -119,9 +119,10 @@ bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
 
 TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept:
     UIElement ( visible, parent ),
+    _glyphs ( text.size () ),
     _text ( std::move ( text ) )
 {
-    _glyphs.resize ( _text.size () );
+    // NOTHING
 }
 
 TextUIElement::TextUIElement ( bool visible,
@@ -130,9 +131,10 @@ TextUIElement::TextUIElement ( bool visible,
     std::string &&name
 ) noexcept:
     UIElement ( visible, parent, std::move ( name ) ),
+    _glyphs ( text.size () ),
     _text ( std::move ( text ) )
 {
-    _glyphs.resize ( _text.size () );
+    // NOTHING
 }
 
 TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept:
@@ -224,8 +226,6 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _applyLayoutCache._lineHeights.reserve ( glyphCount );
 
     _glyphs.clear ();
-    _glyphs.reserve ( glyphCount );
-
     FontStorage &fontStorage = *info._fontStorage;
 
     auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (),

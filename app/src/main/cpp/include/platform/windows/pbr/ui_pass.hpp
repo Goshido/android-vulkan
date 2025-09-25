@@ -21,7 +21,7 @@ namespace pbr::windows {
 class UIPass final
 {
     public:
-        using UIBufferResponse = std::optional<UIVertexBuffer>;
+        using UIBufferResponse = std::optional<UIBufferStreams>;
 
         struct Image final
         {
@@ -50,29 +50,42 @@ class UIPass final
         class BufferStream final
         {
             private:
-                VkBufferMemoryBarrier       _barrier
+                VkBufferMemoryBarrier       _barriers[ 2U ]
                 {
-                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                    .pNext = nullptr,
-                    .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                    .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .buffer = VK_NULL_HANDLE,
-                    .offset = 0U,
-                    .size = 0U
+                    {
+                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                        .pNext = nullptr,
+                        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                        .buffer = VK_NULL_HANDLE,
+                        .offset = 0U,
+                        .size = 0U
+                    },
+                    {
+                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                        .pNext = nullptr,
+                        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+                        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                        .buffer = VK_NULL_HANDLE,
+                        .offset = 0U,
+                        .size = 0U
+                    }
                 };
 
                 uint8_t*                    _data = nullptr;
-                size_t const                _elementSize = 0U;
 
                 Buffer                      _staging {};
                 Buffer                      _gpuBuffer {};
 
-                VkDeviceAddress             _bda = 0U;
+                VkDeviceAddress             _bdaStream0 = 0U;
+                VkDeviceAddress             _bdaStream1 = 0U;
 
             public:
-                BufferStream () = delete;
+                explicit BufferStream () = default;
 
                 BufferStream ( BufferStream const & ) = delete;
                 BufferStream &operator = ( BufferStream const & ) = delete;
@@ -80,19 +93,14 @@ class UIPass final
                 BufferStream ( BufferStream && ) = delete;
                 BufferStream &operator = ( BufferStream && ) = delete;
 
-                explicit BufferStream ( size_t elementSize ) noexcept;
-
                 ~BufferStream () = default;
 
-                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    char const* gpuBufferName,
-                    char const* stagingName
-                ) noexcept;
-
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
 
-                [[nodiscard]] VkDeviceAddress GetBufferAddress () const noexcept;
-                [[nodiscard]] void *GetData ( size_t startIndex ) const noexcept;
+                [[nodiscard]] VkDeviceAddress GetStream0Address () const noexcept;
+                [[nodiscard]] VkDeviceAddress GetStream1Address () const noexcept;
+                [[nodiscard]] UIBufferStreams GetData ( size_t startIndex, size_t neededVertices ) const noexcept;
                 void UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept;
         };
 
@@ -131,7 +139,7 @@ class UIPass final
         bool                                _hasChanges = false;
         bool                                _isTransformChanged = false;
 
-        BufferStream                        _uiVertices { sizeof ( UIVertex ) };
+        BufferStream                        _uiVertices {};
 
         UIProgram                           _program {};
         UIProgram::PushConstants            _pushConstants {};
@@ -168,27 +176,34 @@ class UIPass final
         void SubmitImage ( uint16_t image ) noexcept;
         void SubmitNonImage () noexcept;
 
-        [[nodiscard]] bool UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadGPUFontData ( android_vulkan::Renderer &renderer,
+            VkCommandBuffer commandBuffer
+        ) noexcept;
+
+        void UploadGPUGeometryData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] constexpr static size_t GetVerticesPerRectangle () noexcept
         {
             return 6U;
         }
 
-        static void AppendImage ( UIVertex* uiVertices,
+        static void AppendImage ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,
             uint16_t image
         ) noexcept;
 
-        static void AppendRectangle ( UIVertex* uiVertices,
+        static void AppendRectangle ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
-        static void AppendText ( UIVertex* uiVertices,
+        static void AppendText ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,

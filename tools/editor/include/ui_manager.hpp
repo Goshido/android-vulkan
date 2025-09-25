@@ -39,6 +39,9 @@ class UIManager final
         Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
+        bool                                    _needRefill = false;
+        size_t                                  _neededUIVertices = 0U;
+
     public:
         UIManager () = delete;
 
@@ -60,7 +63,13 @@ class UIManager final
         void Destroy () noexcept;
 
         // FUCK - remove namespace
-        void RenderUI ( android_vulkan::Renderer &renderer,
+        void ComputeLayout ( android_vulkan::Renderer &renderer,
+            pbr::android::UIPass &pass,
+            pbr::windows::UIPass &passEXT
+        ) noexcept;
+
+        // FUCK - remove namespace
+        void Submit ( android_vulkan::Renderer &renderer,
             pbr::android::UIPass &pass,
             pbr::windows::UIPass &passEXT
         ) noexcept;

@@ -20,7 +20,8 @@ class UIProgram final : public windows::GraphicsProgram
 
         struct PushConstants final
         {
-            VkDeviceAddress                 _bda;
+            VkDeviceAddress                 _bdaStream0;
+            VkDeviceAddress                 _bdaStream1;
             GXVec2                          _rotateScaleRow0;
             GXVec2                          _rotateScaleRow1;
             GXVec2                          _offset;

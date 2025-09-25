@@ -87,6 +87,10 @@
   - ❌ Readme
     - ❌ Main page
     - ❌ Editor page
+- ❌ Vulkan SDK
+  - ❌ Install
+  - ❌ Check
+  - ❌ Editor page
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
 - ❌ Update NVIDIA Nsight Graphics version in documentation

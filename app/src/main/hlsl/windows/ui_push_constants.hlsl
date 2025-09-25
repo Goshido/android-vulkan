@@ -4,7 +4,8 @@
 
 struct PushConstants
 {
-    uint64_t        _bda;
+    uint64_t        _bdaStream0;
+    uint64_t        _bdaStream1;
     float32_t2x2    _rotateScale;
     float32_t2      _offset;
     uint32_t        _textLUT;

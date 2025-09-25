@@ -23,6 +23,8 @@ constexpr std::string_view TEXT_LUT = "pbr/system/text-lut.png";
 android_vulkan::Half2 const IMAGE_TOP_LEFT ( 0.0F, 0.0F );
 android_vulkan::Half2 const IMAGE_BOTTOM_RIGHT ( 1.0F, 1.0F );
 
+constexpr size_t STREAM_1_OFFSET = MAX_VERTICES * sizeof ( UIVertexBufferStream0 );
+
 //----------------------------------------------------------------------------------------------------------------------
 
 class ImageStorage final
@@ -459,16 +461,7 @@ void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIPass::BufferStream::BufferStream ( size_t elementSize ) noexcept:
-    _elementSize ( elementSize )
-{
-    // NOTHING
-}
-
-bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
-    char const* gpuBufferName,
-    char const* stagingName
-) noexcept
+bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr VkMemoryPropertyFlags stagingProps = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
@@ -477,10 +470,11 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
         AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT );
 
-    size_t const size = MAX_VERTICES * _elementSize;
+    static_assert ( sizeof ( UIVertexBufferStream1 ) % 2U == 0U );
+    constexpr size_t size = MAX_VERTICES * ( sizeof ( UIVertexBufferStream0 ) + sizeof ( UIVertexBufferStream1 ) );
 
     bool const result =
-        _staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) &&
+        _staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, "UI staging" ) &&
 
         renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
             _staging._memory,
@@ -492,7 +486,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
             "Can't map memory"
         ) &&
 
-        _gpuBuffer.Init ( renderer, size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, gpuBufferName );
+        _gpuBuffer.Init ( renderer, size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, "UI vertices" );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -504,8 +498,12 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
         .buffer = _gpuBuffer._buffer
     };
 
-    _bda = vkGetBufferDeviceAddress ( renderer.GetDevice (), &info );
-    _barrier.buffer = _gpuBuffer._buffer;
+    _bdaStream0 = vkGetBufferDeviceAddress ( renderer.GetDevice (), &info );
+    _bdaStream1 = _bdaStream0 + static_cast<VkDeviceAddress> ( STREAM_1_OFFSET );
+
+    _barriers[ 0U ].buffer = _gpuBuffer._buffer;
+    _barriers[ 1U ].buffer = _gpuBuffer._buffer;
+
     return true;
 }
 
@@ -521,32 +519,68 @@ void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexce
     _gpuBuffer.Destroy ( renderer );
 }
 
-VkDeviceAddress UIPass::BufferStream::GetBufferAddress () const noexcept
+VkDeviceAddress UIPass::BufferStream::GetStream0Address () const noexcept
 {
-    return _bda;
+    return _bdaStream0;
 }
 
-void *UIPass::BufferStream::GetData ( size_t startIndex ) const noexcept
+VkDeviceAddress UIPass::BufferStream::GetStream1Address () const noexcept
 {
-    return _data + startIndex * _elementSize;
+    return _bdaStream1;
+}
+
+UIBufferStreams UIPass::BufferStream::GetData ( size_t startIndex, size_t neededVertices ) const noexcept
+{
+    return
+    {
+        ._stream0
+        {
+            reinterpret_cast<UIVertexStream0*> ( _data + startIndex * sizeof ( UIVertexStream0 ) ),
+            neededVertices
+        },
+
+        ._stream1
+        {
+            reinterpret_cast<UIVertexStream1*> ( _data + STREAM_1_OFFSET + startIndex * sizeof ( UIVertexStream1 ) ),
+            neededVertices
+        }
+    };
 }
 
 void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept
 {
-    auto const offset = static_cast<VkDeviceSize> ( _elementSize * readIdx );
-    auto const size = static_cast<VkDeviceSize> ( _elementSize * ( writeIdx - readIdx ) );
+    auto const offset0 = static_cast<VkDeviceSize> ( readIdx * sizeof ( UIVertexStream0 ) );
+    auto const offset1 = static_cast<VkDeviceSize> ( STREAM_1_OFFSET + readIdx * sizeof ( UIVertexStream1 ) );
+    size_t const count = writeIdx - readIdx;
 
-    VkBufferCopy const copy
+    VkBufferCopy const copy[]
     {
-        .srcOffset = offset,
-        .dstOffset = offset,
-        .size = size
+        {
+            .srcOffset = offset0,
+            .dstOffset = offset0,
+            .size = static_cast<VkDeviceSize> ( count * sizeof ( UIVertexStream0 ) )
+        },
+        {
+            .srcOffset = offset1,
+            .dstOffset = offset1,
+            .size = static_cast<VkDeviceSize> ( count * sizeof ( UIVertexStream1 ) )
+        }
     };
 
-    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _gpuBuffer._buffer, 1U, &copy );
+    vkCmdCopyBuffer ( commandBuffer,
+        _staging._buffer,
+        _gpuBuffer._buffer,
+        static_cast<uint32_t> ( std::size ( copy ) ),
+        copy
+    );
 
-    _barrier.offset = offset;
-    _barrier.size = size;
+    VkBufferMemoryBarrier &b0 = _barriers[ 0U ];
+    b0.offset = offset0;
+    b0.size = copy[ 0U ].size;
+
+    VkBufferMemoryBarrier &b1 = _barriers[ 1U ];
+    b1.offset = offset1;
+    b1.size = copy[ 1U ].size;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -554,8 +588,8 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
         0U,
         0U,
         nullptr,
-        1U,
-        &_barrier,
+        std::size ( _barriers ),
+        _barriers,
         0U,
         nullptr
     );
@@ -626,16 +660,18 @@ bool UIPass::Execute ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t co
         return true;
     }
 
-    // FUCK - restore rendering
-    //_program.Bind ( commandBuffer );
-    //_resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout (), true );
+    _program.Bind ( commandBuffer );
+    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
-    //_pushConstants._bda =
-    //    _uiVertices.GetBufferAddress () + static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertex ) );
+    _pushConstants._bdaStream0 = _uiVertices.GetStream0Address () +
+        static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream0 ) );
 
-    //_program.SetPushConstants ( commandBuffer, &_pushConstants );
+    _pushConstants._bdaStream1 = _uiVertices.GetStream1Address () +
+        static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream1 ) );
 
-    //vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
+    _program.SetPushConstants ( commandBuffer, &_pushConstants );
+
+    vkCmdDraw ( commandBuffer, _vertices, 1U, 0U, 0U );
 
     for ( uint16_t const image : _usedImages )
         _inUseImageTracker.MarkInUse ( image, commandBufferIndex );
@@ -657,7 +693,7 @@ size_t UIPass::GetUsedVertexCount () const noexcept
 bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 {
     bool const status = _fontStorage.Init ( renderer ) &&
-        _uiVertices.Init ( renderer, "UI vertices", "UI staging" ) &&
+        _uiVertices.Init ( renderer ) &&
         ImageStorage::OnInitDevice ( renderer );
 
     if ( !status ) [[unlikely]]
@@ -728,6 +764,7 @@ void UIPass::RequestEmptyUI () noexcept
 {
     _hasChanges = _hasChanges | ( std::exchange ( _vertices, 0U ) > 0U );
     _usedImages.clear ();
+    _vertices = 0U;
 }
 
 UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexcept
@@ -752,8 +789,9 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     _readVertexIndex = nextIdx;
     _writeVertexIndex = nextIdx + neededVertices;
+    _vertices = static_cast<uint32_t> ( neededVertices );
 
-    return UIPass::UIBufferResponse { { static_cast<UIVertex*> ( _uiVertices.GetData ( nextIdx ) ), neededVertices } };
+    return UIPass::UIBufferResponse { _uiVertices.GetData ( nextIdx, neededVertices ) };
 }
 
 bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept
@@ -781,123 +819,155 @@ void UIPass::SubmitNonImage () noexcept
     _hasChanges = true;
 }
 
-bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+bool UIPass::UploadGPUFontData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "UI pass: Upload GPU data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
+    AV_TRACE ( "Upload GPU font data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload GPU font data" )
+    return _fontStorage.UploadGPUData ( renderer, commandBuffer );
+}
 
-    if ( !_fontStorage.UploadGPUData ( renderer, commandBuffer ) ) [[unlikely]]
-        return false;
+void UIPass::UploadGPUGeometryData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "Upload UI geometry data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload UI geometry data" )
 
     if ( _isTransformChanged ) [[unlikely]]
         UpdateTransform ( renderer );
 
     if ( _hasChanges )
+    {
         UpdateGeometry ( commandBuffer );
-
-    return true;
+    }
 }
 
-void UIPass::AppendImage ( UIVertex* uiVertices,
+void UIPass::AppendImage ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
     uint16_t image
 ) noexcept
 {
-    uiVertices[ 0U ] =
+    stream0[ 0U ] =
     {
         ._position = topLeft,
         ._uv = IMAGE_TOP_LEFT,
-        ._color = color,
-        ._image = image,
-        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+        ._color = color
     };
 
-    uiVertices[ 1U ] =
+    stream0[ 1U ] =
     {
         ._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] ),
-        ._color = color,
-        ._image = image,
-        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+        ._color = color
     };
 
-    uiVertices[ 2U ] =
+    stream0[ 2U ] =
     {
         ._position = bottomRight,
         ._uv = IMAGE_BOTTOM_RIGHT,
-        ._color = color,
-        ._image = image,
-        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+        ._color = color
     };
 
-    uiVertices[ 3U ] =
+    stream0[ 3U ] =
     {
         ._position = bottomRight,
         ._uv = IMAGE_BOTTOM_RIGHT,
-        ._color = color,
-        ._image = image,
-        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+        ._color = color
     };
 
-    uiVertices[ 4U ] =
+    stream0[ 4U ] =
     {
         ._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
         ._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] ),
-        ._color = color,
+        ._color = color
+    };
+
+    stream0[ 5U ] =
+    {
+        ._position = topLeft,
+        ._uv = IMAGE_TOP_LEFT,
+        ._color = color
+    };
+
+    stream1[ 0U ] =
+    {
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 
-    uiVertices[ 5U ] =
+    stream1[ 1U ] =
     {
-        ._position = topLeft,
-        ._uv = IMAGE_TOP_LEFT,
-        ._color = color,
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
+
+    stream1[ 2U ] =
+    {
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
+
+    stream1[ 3U ] =
+    {
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
+
+    stream1[ 4U ] =
+    {
+        ._image = image,
+        ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
+    };
+
+    stream1[ 5U ] =
+    {
         ._image = image,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE
     };
 }
 
-void UIPass::AppendRectangle ( UIVertex* uiVertices,
+void UIPass::AppendRectangle ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
 ) noexcept
 {
-    UIVertex &v0 = uiVertices[ 0U ];
-    v0._position = topLeft;
-    v0._color = color;
-    v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x0 = stream0[ 0U ];
+    x0._position = topLeft;
+    x0._color = color;
 
-    UIVertex &v1 = uiVertices[ 1U ];
-    v1._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
-    v1._color = color;
-    v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x1 = stream0[ 1U ];
+    x1._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
+    x1._color = color;
 
-    UIVertex &v2 = uiVertices[ 2U ];
-    v2._position = bottomRight;
-    v2._color = color;
-    v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x2 = stream0[ 2U ];
+    x2._position = bottomRight;
+    x2._color = color;
 
-    UIVertex &v3 = uiVertices[ 3U ];
-    v3._position = bottomRight;
-    v3._color = color;
-    v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x3 = stream0[ 3U ];
+    x3._position = bottomRight;
+    x3._color = color;
 
-    UIVertex &v4 = uiVertices[ 4U ];
-    v4._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
-    v4._color = color;
-    v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x4 = stream0[ 4U ];
+    x4._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+    x4._color = color;
 
-    UIVertex &v5 = uiVertices[ 5U ];
-    v5._position = topLeft;
-    v5._color = color;
-    v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    UIVertexStream0 &x5 = stream0[ 5U ];
+    x5._position = topLeft;
+    x5._color = color;
+
+    stream1[ 0U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    stream1[ 1U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    stream1[ 2U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    stream1[ 3U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    stream1[ 4U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
+    stream1[ 5U ]._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
 }
 
-void UIPass::AppendText ( UIVertex* uiVertices,
+void UIPass::AppendText ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
@@ -906,56 +976,80 @@ void UIPass::AppendText ( UIVertex* uiVertices,
     uint16_t atlas
 ) noexcept
 {
-    uiVertices[ 0U ] =
+    stream0[ 0U ] =
     {
         ._position = topLeft,
         ._uv = glyphTopLeft,
-        ._color = color,
+        ._color = color
+    };
+
+    stream0[ 1U ] =
+    {
+        ._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
+        ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
+        ._color = color
+    };
+
+    stream0[ 2U ] =
+    {
+        ._position = bottomRight,
+        ._uv = glyphBottomRight,
+        ._color = color
+    };
+
+    stream0[ 3U ] =
+    {
+        ._position = bottomRight,
+        ._uv = glyphBottomRight,
+        ._color = color
+    };
+
+    stream0[ 4U ] =
+    {
+        ._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
+        ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
+        ._color = color
+    };
+
+    stream0[ 5U ] =
+    {
+        ._position = topLeft,
+        ._uv = glyphTopLeft,
+        ._color = color
+    };
+
+    stream1[ 0U ] =
+    {
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    uiVertices[ 1U ] =
+    stream1[ 1U ] =
     {
-        ._position = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] ),
-        ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
-        ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT,
     };
 
-    uiVertices[ 2U ] =
+    stream1[ 2U ] =
     {
-        ._position = bottomRight,
-        ._uv = glyphBottomRight,
-        ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    uiVertices[ 3U ] =
+    stream1[ 3U ] =
     {
-        ._position = bottomRight,
-        ._uv = glyphBottomRight,
-        ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    uiVertices[ 4U ] =
+    stream1[ 4U ] =
     {
-        ._position = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] ),
-        ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
-        ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };
 
-    uiVertices[ 5U ] =
+    stream1[ 5U ] =
     {
-        ._position = topLeft,
-        ._uv = glyphTopLeft,
-        ._color = color,
         ._image = atlas,
         ._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_TEXT
     };

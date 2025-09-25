@@ -41,7 +41,8 @@ class DIVUIElement final : public UIElement
         std::vector<float>          _lineHeights {};
         size_t                      _parentLine = 0U;
 
-        UIVertex                    _uiVertices[ UIPass::GetVerticesPerRectangle() ] {};
+        UIVertexStream0             _uiVertexStream0[ UIPass::GetVerticesPerRectangle() ] {};
+        UIVertexStream1             _uiVertexStream1[ UIPass::GetVerticesPerRectangle() ] {};
 
     public:
         DIVUIElement () = delete;

@@ -186,7 +186,7 @@ void DIVUIElement::Show () noexcept
 
 bool DIVUIElement::IsVisible () const noexcept
 {
-    return _div->IsVisible () && _divEXT->IsVisible ();
+    return /*_div->IsVisible () && */_divEXT->IsVisible ();
 }
 
 void DIVUIElement::Update () noexcept
@@ -255,7 +255,7 @@ bool DIVUIElement::UpdateCache ( pbr::android::UIElement::UpdateInfo &/*info*/,
     pbr::windows::UIElement::UpdateInfo &infoEXT
 ) noexcept
 {
-    return /*_div->UpdateCache (info) &&*/ _divEXT->UpdateCache (infoEXT);
+    return /*_div->UpdateCache (info) &&*/ _divEXT->UpdateCache ( infoEXT );
 }
 
 } // namespace editor

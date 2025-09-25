@@ -250,10 +250,17 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     _isChanged = false;
     _isChangedEXT = false;
 
-    return
+    // FUCK - remove it
+    /*return
     {
         ._hasChanges = info._hasChanges,
         ._neededUIVertices = info._vertices
+    };*/
+
+    return
+    {
+        ._hasChanges = infoEXT._hasChanges,
+        ._neededUIVertices = infoEXT._vertices
     };
 }
 

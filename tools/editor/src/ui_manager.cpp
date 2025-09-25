@@ -44,39 +44,50 @@ void UIManager::Destroy () noexcept
 }
 
 // FUCK - remove namespace
-void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
-    pbr::android::UIPass &pass,
+void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer,
+    pbr::android::UIPass &/*pass*/,
     pbr::windows::UIPass &passEXT
 ) noexcept
 {
-    AV_TRACE ( "UI" )
+    AV_TRACE ( "Compute UI layout" )
 
     // FUCK - remove namespace
-    bool needRefill = false;
-    size_t neededUIVertices = 0U;
+    _needRefill = false;
+    _neededUIVertices = 0U;
 
     std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )
     {
         Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage, _fontStorageEXT );
-        needRefill |= status._hasChanges;
-        neededUIVertices += status._neededUIVertices;
+        _needRefill |= status._hasChanges;
+        _neededUIVertices += status._neededUIVertices;
     }
 
-    if ( neededUIVertices == 0U )
+    if ( _neededUIVertices == 0U )
     {
         //pass.RequestEmptyUI ();
         passEXT.RequestEmptyUI ();
-        return;
     }
+}
+
+// FUCK - remove namespace
+void UIManager::Submit ( android_vulkan::Renderer &renderer,
+    pbr::android::UIPass &pass,
+    pbr::windows::UIPass &passEXT
+) noexcept
+{
+    if ( !_neededUIVertices )
+        return;
+
+    AV_TRACE ( "Submit UI" )
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     for ( auto &widget : _widgets )
-        needRefill |= widget->UpdateCache ( _fontStorage, _fontStorageEXT, viewport );
+        _needRefill |= widget->UpdateCache ( _fontStorage, _fontStorageEXT, viewport );
 
-    if ( !needRefill )
+    if ( !_needRefill )
         return;
 
     //// FUCK - remove it
@@ -105,7 +116,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer,
     };
 
     // FUCK - remove namespace
-    pbr::windows::UIPass::UIBufferResponse responseEXT = passEXT.RequestUIBuffer ( neededUIVertices );
+    pbr::windows::UIPass::UIBufferResponse responseEXT = passEXT.RequestUIBuffer ( _neededUIVertices );
 
     if ( !responseEXT )
     {

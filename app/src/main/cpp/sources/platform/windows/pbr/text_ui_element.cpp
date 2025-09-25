@@ -48,8 +48,11 @@ void TextUIElement::SubmitCache::Clear () noexcept
     _isTextChanged = true;
     _parentLineHeights.clear ();
 
-    _uiVertices.clear ();
-    _uiVertexBufferBytes = 0U;
+    _uiVertexStream0.clear ();
+    _uiVertexStream0Bytes = 0U;
+
+    _uiVertexStream1.clear ();
+    _uiVertexStream1Bytes = 0U;
 }
 
 bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
@@ -118,7 +121,9 @@ TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32st
     UIElement ( visible, parent ),
     _text ( std::move ( text ) )
 {
+    size_t const count = _text.size ();
     _glyphs.resize ( _text.size () );
+    _atlasPromise.resize ( count );
 }
 
 TextUIElement::TextUIElement ( bool visible,
@@ -129,7 +134,9 @@ TextUIElement::TextUIElement ( bool visible,
     UIElement ( visible, parent, std::move ( name ) ),
     _text ( std::move ( text ) )
 {
-    _glyphs.resize ( _text.size () );
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    _atlasPromise.resize ( count );
 }
 
 TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept:
@@ -138,7 +145,9 @@ TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::strin
     if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
         _text = std::move ( *str );
 
-    _glyphs.resize ( _text.size () );
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    _atlasPromise.resize ( count );
 }
 
 TextUIElement::TextUIElement ( bool visible,
@@ -151,7 +160,9 @@ TextUIElement::TextUIElement ( bool visible,
     if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
         _text = std::move ( *str );
 
-    _glyphs.resize ( _text.size () );
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    _atlasPromise.resize ( count );
 }
 
 void TextUIElement::SetColor ( ColorValue const &color ) noexcept
@@ -179,7 +190,13 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
         return;
 
     _text = std::move ( *str );
-    _glyphs.resize ( _text.size () );
+
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+
+    _atlasPromise.resize ( count );
+    _atlasPromise.clear ();
+
     _applyLayoutCache._isTextChanged = true;
     _submitCache._isTextChanged = true;
 
@@ -193,7 +210,13 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
 void TextUIElement::SetText ( std::u32string_view text ) noexcept
 {
     _text = text;
-    _glyphs.resize ( _text.size () );
+
+    size_t const count = text.size ();
+    _glyphs.resize ( count );
+
+    _atlasPromise.resize ( count );
+    _atlasPromise.clear ();
+
     _applyLayoutCache._isTextChanged = true;
     _submitCache._isTextChanged = true;
 
@@ -221,7 +244,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _applyLayoutCache._lineHeights.reserve ( glyphCount );
 
     _glyphs.clear ();
-    _glyphs.reserve ( glyphCount );
+    _atlasPromise.clear ();
 
     FontStorage &fontStorage = *info._fontStorage;
 
@@ -272,6 +295,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     android_vulkan::Renderer &renderer = *info._renderer;
 
     auto const appendGlyph = [ this ] ( size_t line, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
+        _atlasPromise.emplace_back ( &glyphInfo._atlas );
+
         _glyphs.emplace_back (
             Glyph
             {
@@ -400,10 +425,19 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    size_t const vertices = _submitCache._uiVertices.size ();
-    UIVertexBuffer &uiVertexBuffer = info._uiVertexBuffer;
-    std::memcpy ( uiVertexBuffer.data (), _submitCache._uiVertices.data (), _submitCache._uiVertexBufferBytes );
-    uiVertexBuffer = uiVertexBuffer.subspan ( vertices );
+    UIBufferStreams &streams = info._uiVertexBuffer;
+
+    std::vector<UIVertexStream0> &uiVertexStream0 = _submitCache._uiVertexStream0;
+    size_t const vertices = uiVertexStream0.size ();
+
+    UIVertexBufferStream0 &s0 = streams._stream0;
+    std::memcpy ( s0.data (), uiVertexStream0.data (), _submitCache._uiVertexStream0Bytes );
+    s0 = s0.subspan ( vertices );
+
+    UIVertexBufferStream1 &s1 = streams._stream1;
+    std::memcpy ( s1.data (), _submitCache._uiVertexStream1.data (), _submitCache._uiVertexStream0Bytes );
+    s1 = s1.subspan ( vertices );
+
     info._uiPass->SubmitNonImage ();
 }
 
@@ -419,19 +453,33 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     if ( _submitCache.Run ( info, GetTextAlignment (), GetVerticalAlignment (), _applyLayoutCache._lineHeights ) )
         return needRefill;
 
+    Glyph* glyphs = _glyphs.data ();
+
+    if ( !_atlasPromise.empty () ) [[unlikely]]
+    {
+        uint16_t const** promise = _atlasPromise.data ();
+
+        for ( size_t i = 0U; i < glyphCount; ++i )
+        {
+            glyphs[ i ]._atlas = *promise[ i ];
+        }
+    }
+
     _submitCache._parenSize = info._parentSize;
     _submitCache._penIn = info._pen;
 
-    std::vector<UIVertex> &uiVertices = _submitCache._uiVertices;
-    uiVertices.clear ();
+    std::vector<UIVertexStream0> &s0 = _submitCache._uiVertexStream0;
+    std::vector<UIVertexStream1> &s1 = _submitCache._uiVertexStream1;
+    s0.clear ();
+    s1.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
-    uiVertices.resize ( vertexCount );
+    s0.resize ( vertexCount );
+    s1.resize ( vertexCount );
 
-    UIVertex* v = uiVertices.data ();
-
-    Glyph const* glyphs = _glyphs.data ();
+    UIVertexStream0* v0 = s0.data ();
+    UIVertexStream1* v1 = s1.data ();
     GXColorUNORM const color = ResolveColor ();
 
     size_t limit = 0U;
@@ -483,7 +531,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            UIPass::AppendText ( v,
+            UIPass::AppendText ( v0,
+                v1,
                 color,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
@@ -493,7 +542,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             );
 
             x += g._advance;
-            v += verticesPerGlyph;
+            v0 += verticesPerGlyph;
+            v1 += verticesPerGlyph;
         }
 
         pen._data[ 1U ] += *height;
@@ -507,7 +557,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._uiVertexBufferBytes = vertexCount * sizeof ( UIVertex );
+    _submitCache._uiVertexStream0Bytes = vertexCount * sizeof ( UIVertexStream0 );
+    _submitCache._uiVertexStream1Bytes = vertexCount * sizeof ( UIVertexStream1 );
     return true;
 }
 

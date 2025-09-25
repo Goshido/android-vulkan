@@ -976,7 +976,7 @@ void RenderSession::OnRenderFrame () noexcept
 
     android_vulkan::Renderer &renderer = _renderer;
     pbr::windows::ResourceHeap &resourceHeap = _resourceHeap;
-    _uiManager.RenderUI ( renderer, _uiPass, _uiPassEXT );
+    _uiManager.ComputeLayout ( renderer, _uiPass, _uiPassEXT );
 
     VkDevice device = renderer.GetDevice ();
 
@@ -1031,11 +1031,13 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
+    resourceHeap.UploadGPUData ( commandBuffer );
+
     {
         AV_VULKAN_GROUP ( commandBuffer, "Upload" )
 
         result = /*_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&*/
-            _uiPassEXT.UploadGPUData ( renderer, commandBuffer );
+            _uiPassEXT.UploadGPUFontData ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
         {
@@ -1044,10 +1046,11 @@ void RenderSession::OnRenderFrame () noexcept
             return;
         }
 
+        _uiManager.Submit ( renderer, _uiPass, _uiPassEXT );
+        _uiPassEXT.UploadGPUGeometryData ( renderer, commandBuffer );
+
         //_toneMapper.UploadGPUData ( renderer, commandBuffer );
     }
-
-    resourceHeap.UploadGPUData ( commandBuffer );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )

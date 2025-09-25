@@ -12,8 +12,10 @@ TextUIElement::TextUIElement ( MessageQueue &messageQueue,
 ) noexcept:
     UIElement ( messageQueue ),
 
-    // FUCK - remove namespace
+    // FUCK - remove it
     _text ( new pbr::android::TextUIElement ( true, &parent.GetNativeElement (), text, std::string ( name ) ) ),
+
+    // FUCK - remove namespace
     _textEXT ( new pbr::windows::TextUIElement ( true, &parent.GetNativeElementEXT (), text, std::move ( name ) ) )
 {
     // NOTHING

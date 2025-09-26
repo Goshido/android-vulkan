@@ -37,13 +37,9 @@ class UIEditBox final : public Widget
         std::string                                 _committed {};
         std::u32string                              _content {};
 
-        // FUCK - remove it
-        //pbr::android::FontStorage::StringMetrics    _metrics {};
-        //pbr::android::FontStorage                   &_fontStorage;
-
         // FUCK - remove namespace
-        pbr::windows::FontStorage::StringMetrics    _metricsEXT {};
-        pbr::windows::FontStorage                   &_fontStorageEXT;
+        pbr::windows::FontStorage::StringMetrics    _metrics {};
+        pbr::windows::FontStorage                   &_fontStorage;
 
         DIVUIElement                                _lineDIV;
         DIVUIElement                                _columnDIV;
@@ -88,9 +84,7 @@ class UIEditBox final : public Widget
             DIVUIElement &parent,
 
             // FUCK - remove namespace
-            pbr::android::FontStorage &fontStorage,
-
-            pbr::windows::FontStorage &fontStorageEXT,
+            pbr::windows::FontStorage &fontStorage,
 
             std::string_view caption,
             std::string_view value,

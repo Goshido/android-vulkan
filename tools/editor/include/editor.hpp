@@ -39,8 +39,7 @@ class Editor final
         UIManager                               _uiManager
         {
             _messageQueue,
-            _renderSession.GetFontStorage (),
-            _renderSession.GetFontStorageEXT ()
+            _renderSession.GetFontStorage ()
         };
 
         TimerManager                            _timerManager { _messageQueue };

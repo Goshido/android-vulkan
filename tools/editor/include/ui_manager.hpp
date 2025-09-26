@@ -3,11 +3,7 @@
 
 
 #include "message_queue.hpp"
-
-// FUCK - remove namespace
-#include <platform/android/pbr/ui_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
-
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -25,11 +21,8 @@ class UIManager final
     private:
         size_t                                  _eventID = 0U;
 
-        // FUCK - remove it
-        pbr::android::FontStorage               &_fontStorage;
-
         // FUCK - remove namespace
-        pbr::windows::FontStorage               &_fontStorageEXT;
+        pbr::windows::FontStorage               &_fontStorage;
 
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
@@ -52,10 +45,7 @@ class UIManager final
         UIManager &operator = ( UIManager && ) = delete;
 
         // FUCK - remove namespace
-        explicit UIManager ( MessageQueue &messageQueue,
-            pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT
-        ) noexcept;
+        explicit UIManager ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 
@@ -63,16 +53,10 @@ class UIManager final
         void Destroy () noexcept;
 
         // FUCK - remove namespace
-        void ComputeLayout ( android_vulkan::Renderer &renderer,
-            pbr::android::UIPass &pass,
-            pbr::windows::UIPass &passEXT
-        ) noexcept;
+        void ComputeLayout ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept;
 
         // FUCK - remove namespace
-        void Submit ( android_vulkan::Renderer &renderer,
-            pbr::android::UIPass &pass,
-            pbr::windows::UIPass &passEXT
-        ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept;
 
     private:
         void EventLoop () noexcept;

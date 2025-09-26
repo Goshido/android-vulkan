@@ -1,65 +1,75 @@
 #include <precompiled_headers.hpp>
+#include <file.hpp>
 #include <hello_triangle_program.hpp>
-#include <hello_triangle_program.inc>
-#include <hello_triangle_vertex.hpp>
-#include <vulkan_utils.hpp>
+#include <renderer.hpp>
 
 
 namespace editor {
 
 namespace {
 
-constexpr char const VERTEX_SHADER[] = "../editor-assets/shaders/hello_triangle.vs.spv";
+constexpr char const VERTEX_SHADER[] = "../editor-assets/shaders/hello_triangle_ext.vs.spv";
 constexpr char const FRAGMENT_SHADER[] = "../editor-assets/shaders/hello_triangle.ps.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr size_t VERTEX_ATTRIBUTE_COUNT = 2U;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 HelloTriangleProgram::HelloTriangleProgram () noexcept:
-    pbr::android::GraphicsProgram ( "editor::HelloTriangleProgram" )
+    pbr::windows::GraphicsProgram ( "editor::HelloTriangleProgram", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
 
-bool HelloTriangleProgram::Init ( android_vulkan::Renderer const &renderer,
-    VkRenderPass renderPass,
-    uint32_t subpass
-) noexcept
+bool HelloTriangleProgram::Init ( VkDevice device, VkFormat renderTargetFormat ) noexcept
 {
-    VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
+    VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
-    VkVertexInputAttributeDescription attributeDescriptions[ VERTEX_ATTRIBUTE_COUNT ];
-    VkVertexInputBindingDescription bindingDescription;
-    VkPipelineColorBlendStateCreateInfo blendInfo;
-    VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-    VkPipelineDynamicStateCreateInfo dynamicStateInfo;
-    VkPipelineMultisampleStateCreateInfo multisampleInfo;
-    VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+    VkPipelineColorBlendStateCreateInfo blendInfo {};
+    VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
+    VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
+    VkShaderModuleCreateInfo moduleInfo[ STAGE_COUNT ];
+    VkPipelineMultisampleStateCreateInfo multisampleInfo {};
+    VkPipelineRasterizationStateCreateInfo rasterizationInfo {};
+    VkPipelineRenderingCreateInfo renderingInfo {};
+    VkRect2D scissorDescription {};
     VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-    VkPipelineViewportStateCreateInfo viewportInfo;
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
+    VkViewport viewportDescription {};
+    VkPipelineViewportStateCreateInfo viewportInfo {};
+    std::vector<uint8_t> vs {};
+    std::vector<uint8_t> fs {};
 
     VkGraphicsPipelineCreateInfo pipelineInfo;
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
 
-    VkDevice device = renderer.GetDevice ();
-
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        &bindingDescription
+    pipelineInfo.pNext = InitRenderingInfo ( VK_FORMAT_UNDEFINED,
+        VK_FORMAT_UNDEFINED,
+        VK_FORMAT_UNDEFINED,
+        VK_FORMAT_UNDEFINED,
+        &renderTargetFormat,
+        renderingInfo
     );
 
+    pipelineInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
+    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
+
+    bool result = InitShaderInfo ( pipelineInfo.pStages,
+        vs,
+        fs,
+        nullptr,
+        nullptr,
+        moduleInfo,
+        stageInfo
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    pipelineInfo.pVertexInputState = InitVertexInputInfo ();
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
     pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, nullptr, nullptr, nullptr );
@@ -67,17 +77,17 @@ bool HelloTriangleProgram::Init ( android_vulkan::Renderer const &renderer,
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( & dynamicStateInfo );
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( &dynamicStateInfo );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
 
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
+    pipelineInfo.renderPass = VK_NULL_HANDLE;
+    pipelineInfo.subpass = 0U;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
     pipelineInfo.basePipelineIndex = -1;
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
+    result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "editor::HelloTriangleProgram::Init",
         "Can't create pipeline"
@@ -87,7 +97,6 @@ bool HelloTriangleProgram::Init ( android_vulkan::Renderer const &renderer,
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Hello triangle" )
-    DestroyShaderModules ( device );
     return true;
 }
 
@@ -119,7 +128,7 @@ VkPipelineColorBlendStateCreateInfo const* HelloTriangleProgram::InitColorBlendI
         .flags = 0U,
         .logicOpEnable = VK_FALSE,
         .logicOp = VK_LOGIC_OP_NO_OP,
-        .attachmentCount = COLOR_RENDER_TARGET_COUNT,
+        .attachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
         .pAttachments = attachments,
         .blendConstants = { 0.0F, 0.0F, 0.0F, 0.0F }
     };
@@ -207,6 +216,13 @@ VkPipelineInputAssemblyStateCreateInfo const* HelloTriangleProgram::InitInputAss
 
 bool HelloTriangleProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
+    constexpr VkPushConstantRange pushConstantRange
+    {
+        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ),
+        .offset = 0U,
+        .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
+    };
+
     VkPipelineLayoutCreateInfo const layoutInfo
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -214,8 +230,8 @@ bool HelloTriangleProgram::InitLayout ( VkDevice device, VkPipelineLayout &layou
         .flags = 0U,
         .setLayoutCount = 0U,
         .pSetLayouts = nullptr,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
+        .pushConstantRangeCount = 1U,
+        .pPushConstantRanges = &pushConstantRange
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
@@ -276,59 +292,6 @@ VkPipelineRasterizationStateCreateInfo const* HelloTriangleProgram::InitRasteriz
     return &info;
 }
 
-bool HelloTriangleProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
-    SpecializationData /*specializationData*/,
-    VkSpecializationInfo* /*specializationInfo*/,
-    VkPipelineShaderStageCreateInfo* sourceInfo
-) noexcept
-{
-    bool result = renderer.CreateShader ( _vertexShader,
-        VERTEX_SHADER,
-        "Can't create vertex shader (editor::HelloTriangleProgram)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
-
-    result = renderer.CreateShader ( _fragmentShader,
-        FRAGMENT_SHADER,
-        "Can't create fragment shader (editor::HelloTriangleProgram)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
-
-    sourceInfo[ 0U ] =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = _vertexShader,
-        .pName = pbr::VERTEX_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = nullptr
-    };
-
-    sourceInfo[ 1U ] =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = _fragmentShader,
-        .pName = pbr::FRAGMENT_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = nullptr
-    };
-
-    targetInfo = sourceInfo;
-    return true;
-}
-
 VkPipelineViewportStateCreateInfo const* HelloTriangleProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D* /*scissorInfo*/,
@@ -350,47 +313,88 @@ VkPipelineViewportStateCreateInfo const* HelloTriangleProgram::InitViewportInfo 
     return &info;
 }
 
-VkPipelineVertexInputStateCreateInfo const* HelloTriangleProgram::InitVertexInputInfo (
-    VkPipelineVertexInputStateCreateInfo &info,
-    VkVertexInputAttributeDescription* attributes,
-    VkVertexInputBindingDescription* binds
+VkPipelineRenderingCreateInfo const* HelloTriangleProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
+    VkFormat /*nativeDepth*/,
+    VkFormat /*nativeStencil*/,
+    VkFormat /*nativeDepthStencil*/,
+    VkFormat* colorAttachments,
+    VkPipelineRenderingCreateInfo &info
 ) const noexcept
 {
-    *binds =
-    {
-        .binding = 0U,
-        .stride = static_cast<uint32_t> ( sizeof ( HelloTriangleVertex ) ),
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
-    };
-
-    attributes[ 0U ] =
-    {
-        .location = IN_SLOT_VERTEX,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( HelloTriangleVertex, _vertex ) )
-    };
-
-    attributes[ 1U ] =
-    {
-        .location = IN_SLOT_COLOR,
-        .binding = 0U,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( HelloTriangleVertex, _color ) )
-    };
-
     info =
     {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .pNext = nullptr,
-        .flags = 0U,
-        .vertexBindingDescriptionCount = 1U,
-        .pVertexBindingDescriptions = binds,
-        .vertexAttributeDescriptionCount = static_cast<uint32_t> ( VERTEX_ATTRIBUTE_COUNT ),
-        .pVertexAttributeDescriptions = attributes
+        .viewMask = 0U,
+        .colorAttachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
+        .pColorAttachmentFormats = colorAttachments,
+        .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
+        .stencilAttachmentFormat = VK_FORMAT_UNDEFINED
     };
 
     return &info;
+}
+
+bool HelloTriangleProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+    std::vector<uint8_t> &vs,
+    std::vector<uint8_t> &fs,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
+    VkShaderModuleCreateInfo* moduleInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
+) const noexcept
+{
+    android_vulkan::File vsFile ( VERTEX_SHADER );
+    android_vulkan::File fsFile ( FRAGMENT_SHADER );
+
+    if ( !vsFile.LoadContent () || !fsFile.LoadContent () ) [[unlikely]]
+        return false;
+
+    vs = std::move ( vsFile.GetContent () );
+    fs = std::move ( fsFile.GetContent () );
+
+    moduleInfo[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = vs.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( vs.data () )
+    };
+
+    sourceInfo[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = moduleInfo,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = VK_NULL_HANDLE,
+        .pName = pbr::VERTEX_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
+
+    moduleInfo[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = fs.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( fs.data () )
+    };
+
+    sourceInfo[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = moduleInfo + 1U,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = VK_NULL_HANDLE,
+        .pName = pbr::FRAGMENT_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
+
+    targetInfo = sourceInfo;
+    return true;
 }
 
 } // namespace editor

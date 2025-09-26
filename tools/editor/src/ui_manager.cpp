@@ -10,12 +10,8 @@
 namespace editor {
 
 // FUCK - remove namespace
-UIManager::UIManager ( MessageQueue &messageQueue,
-    pbr::android::FontStorage &fontStorage,
-    pbr::windows::FontStorage &fontStorageEXT
-) noexcept:
+UIManager::UIManager ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept:
     _fontStorage ( fontStorage ),
-    _fontStorageEXT ( fontStorageEXT ),
     _messageQueue ( messageQueue )
 {
     // NOTHING
@@ -44,10 +40,7 @@ void UIManager::Destroy () noexcept
 }
 
 // FUCK - remove namespace
-void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer,
-    pbr::android::UIPass &/*pass*/,
-    pbr::windows::UIPass &passEXT
-) noexcept
+void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept
 {
     AV_TRACE ( "Compute UI layout" )
 
@@ -59,23 +52,19 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer,
 
     for ( auto &widget : _widgets )
     {
-        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage, _fontStorageEXT );
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage );
         _needRefill |= status._hasChanges;
         _neededUIVertices += status._neededUIVertices;
     }
 
     if ( _neededUIVertices == 0U )
     {
-        //pass.RequestEmptyUI ();
-        passEXT.RequestEmptyUI ();
+        pass.RequestEmptyUI ();
     }
 }
 
 // FUCK - remove namespace
-void UIManager::Submit ( android_vulkan::Renderer &renderer,
-    pbr::android::UIPass &pass,
-    pbr::windows::UIPass &passEXT
-) noexcept
+void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept
 {
     if ( !_neededUIVertices )
         return;
@@ -85,55 +74,29 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer,
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     for ( auto &widget : _widgets )
-        _needRefill |= widget->UpdateCache ( _fontStorage, _fontStorageEXT, viewport );
+        _needRefill |= widget->UpdateCache ( _fontStorage, viewport );
 
     if ( !_needRefill )
         return;
 
-    //// FUCK - remove it
-    //pbr::android::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
-
-    //if ( !response )
-    //{
-    //    pass.RequestEmptyUI ();
-    //    passEXT.RequestEmptyUI ();
-    //    return;
-    //}
-
-    // FUCK - remove it
-    //pbr::android::UIElement::SubmitInfo info
-    //{
-    //    ._uiPass = &pass,
-    //    ._vertexBuffer = *response
-    //};
-
-    // FUCK - remove it
-    pbr::android::UIVertexBuffer fuckVB;
-    pbr::android::UIElement::SubmitInfo info
-    {
-        ._uiPass = &pass,
-        ._vertexBuffer = fuckVB
-    };
-
     // FUCK - remove namespace
-    pbr::windows::UIPass::UIBufferResponse responseEXT = passEXT.RequestUIBuffer ( _neededUIVertices );
+    pbr::windows::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( _neededUIVertices );
 
-    if ( !responseEXT )
+    if ( !response )
     {
-        //pass.RequestEmptyUI ();
-        passEXT.RequestEmptyUI ();
+        pass.RequestEmptyUI ();
         return;
     }
 
-    pbr::windows::UIElement::SubmitInfo infoEXT
+    pbr::windows::UIElement::SubmitInfo info
     {
-        ._uiPass = &passEXT,
-        ._uiVertexBuffer = *responseEXT
+        ._uiPass = &pass,
+        ._uiVertexBuffer = *response
     };
 
     for ( auto &widget : _widgets )
     {
-        widget->Submit ( info, infoEXT );
+        widget->Submit ( info );
     }
 }
 
@@ -274,7 +237,7 @@ void UIManager::OnFontStorageReady () noexcept
     AV_TRACE ( "FontStorage ready" )
     _messageQueue.DequeueEnd ();
 
-    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage, _fontStorageEXT );
+    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
     dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
     dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),

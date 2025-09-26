@@ -22,16 +22,10 @@ constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 class HelloTriangleJob final
 {
     public:
-        // FUCK - remove it
-        //std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckGeometry {};
-
         // FUCK - remove namespace
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _geometry {};
 
-        // FUCK - remove it
-        //std::unique_ptr<HelloTriangleProgram>                       _program {};
-
-        std::unique_ptr<HelloTriangleProgramExt>                    _programExt {};
+        std::unique_ptr<HelloTriangleProgram>                       _program {};
 
     private:
         VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
@@ -49,29 +43,27 @@ class HelloTriangleJob final
 
         explicit HelloTriangleJob ( MessageQueue &messageQueue,
             android_vulkan::Renderer &renderer,
-            std::mutex &submitMutex,
-            VkRenderPass renderPass
+            std::mutex &submitMutex
         ) noexcept;
 
         ~HelloTriangleJob ();
 
     private:
         void CreateMesh ( std::mutex &submitMutex ) noexcept;
-        void CreateProgram ( VkRenderPass renderPass ) noexcept;
+        void CreateProgram () noexcept;
 };
 
 HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
     android_vulkan::Renderer &renderer,
-    std::mutex &submitMutex,
-    VkRenderPass renderPass
+    std::mutex &submitMutex
 ) noexcept:
     _renderer ( renderer )
 {
     std::thread (
-        [ this, &messageQueue, &submitMutex, renderPass ] () noexcept
+        [ this, &messageQueue, &submitMutex ] () noexcept
         {
             AV_THREAD_NAME ( "Hello triangle job" )
-            CreateProgram ( renderPass );
+            CreateProgram ();
             CreateMesh ( submitMutex );
 
             messageQueue.EnqueueBack (
@@ -198,27 +190,6 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
             _geometry.reset ();
             return;
         }
-
-        // FUCK
-        //_fuckGeometry = std::make_unique<android_vulkan::android::MeshGeometry> ();
-
-        //result = _fuckGeometry->LoadMesh ( _renderer,
-        //    commandBuffer,
-        //    true,
-        //    VK_NULL_HANDLE,
-        //    { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
-        //    static_cast<uint32_t> ( std::size ( data ) )
-        //);
-
-        //if ( !result ) [[unlikely]]
-        //{
-        //    _geometry->FreeResources ( _renderer );
-        //    _geometry.reset ();
-
-        //    _fuckGeometry->FreeResources ( _renderer );
-        //    _fuckGeometry.reset ();
-        //    return;
-        //}
     }
 
     result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
@@ -230,9 +201,6 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     {
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
-
-        //_fuckGeometry->FreeResources ( _renderer );
-        //_fuckGeometry.reset ();
         return;
     }
 
@@ -281,9 +249,6 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     {
         _geometry->FreeResources ( _renderer );
         _geometry.reset ();
-
-        //_fuckGeometry->FreeResources ( _renderer );
-        //_fuckGeometry.reset ();
         return;
     }
 
@@ -296,35 +261,24 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
     if ( result ) [[likely]]
     {
         _geometry->FreeTransferResources ( _renderer );
-        //_fuckGeometry->FreeTransferResources ( _renderer );
         return;
     }
 
     _geometry->FreeResources ( _renderer );
     _geometry.reset ();
-
-    //_fuckGeometry->FreeResources ( _renderer );
-    //_fuckGeometry.reset ();
 }
 
-void HelloTriangleJob::CreateProgram ( VkRenderPass /*renderPass*/ ) noexcept
+void HelloTriangleJob::CreateProgram () noexcept
 {
     AV_TRACE ( "Program" )
 
-    //_program = std::make_unique<HelloTriangleProgram> ();
-    _programExt = std::make_unique<HelloTriangleProgramExt> ();
+    _program = std::make_unique<HelloTriangleProgram> ();
 
-    bool const status = /*_program->Init (_renderer, renderPass, 0U) &&*/
-        _programExt->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT );
-
-    if ( status ) [[likely]]
+    if ( _program->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT ) ) [[likely]]
         return;
 
-    /*_program->Destroy ( _renderer.GetDevice () );
-    _program.reset ();*/
-
-    _programExt->Destroy ( _renderer.GetDevice () );
-    _programExt.reset ();
+    _program->Destroy ( _renderer.GetDevice () );
+    _program.reset ();
 }
 
 } // end of anonymous namespace
@@ -365,16 +319,10 @@ void RenderSession::Destroy () noexcept
     }
 }
 
-// FUCK - remove it
-pbr::android::FontStorage &RenderSession::GetFontStorage () noexcept
+// FUCK - remove namespace
+pbr::windows::FontStorage& RenderSession::GetFontStorage () noexcept
 {
     return _uiPass.GetFontStorage ();
-}
-
-// FUCK - remove EXT
-pbr::windows::FontStorage& RenderSession::GetFontStorageEXT () noexcept
-{
-    return _uiPassEXT.GetFontStorage ();
 }
 
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
@@ -497,148 +445,12 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
     }
 }
 
-bool RenderSession::CreateFramebuffer ( VkDevice device, VkExtent2D const &resolution ) noexcept
-{
-    VkFramebufferCreateInfo const info
-    {
-        .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .renderPass = _renderPassInfo.renderPass,
-        .attachmentCount = 1U,
-        .pAttachments = &_renderTarget.GetImageView (),
-        .width = resolution.width,
-        .height = resolution.height,
-        .layers = 1U
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFramebuffer ( device, &info, nullptr, &_renderPassInfo.framebuffer ),
-        "editor::RenderSession::CreateFramebuffer",
-        "Can't create framebuffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Render session" )
-    return true;
-}
-
-bool RenderSession::CreateRenderPass ( VkDevice device ) noexcept
-{
-    VkAttachmentDescription const attachment
-    {
-        .flags = 0U,
-        .format = RENDER_TARGET_FORMAT,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-    };
-
-    constexpr static VkAttachmentReference colorReference
-    {
-        .attachment = 0U,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-    };
-
-    constexpr VkSubpassDescription subpass
-    {
-        .flags = 0U,
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .inputAttachmentCount = 0U,
-        .pInputAttachments = nullptr,
-        .colorAttachmentCount = 1U,
-        .pColorAttachments = &colorReference,
-        .pResolveAttachments = nullptr,
-        .pDepthStencilAttachment = nullptr,
-        .preserveAttachmentCount = 0U,
-        .pPreserveAttachments = nullptr
-    };
-
-    constexpr VkSubpassDependency const dependencies[] =
-    {
-        {
-            .srcSubpass = VK_SUBPASS_EXTERNAL,
-            .dstSubpass = 0U,
-            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-        },
-        {
-            .srcSubpass = 0U,
-            .dstSubpass = VK_SUBPASS_EXTERNAL,
-            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-
-            .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-
-            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ),
-            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
-        }
-    };
-
-    VkRenderPassCreateInfo const renderPassInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .attachmentCount = 1U,
-        .pAttachments = &attachment,
-        .subpassCount = 1U,
-        .pSubpasses = &subpass,
-        .dependencyCount = static_cast<uint32_t> ( std::size ( dependencies ) ),
-        .pDependencies = dependencies
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateRenderPass ( device, &renderPassInfo, nullptr, &_renderPassInfo.renderPass ),
-        "editor::RenderSession::CreateRenderPass",
-        "Can't create render pass"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _renderPassInfo.renderPass, VK_OBJECT_TYPE_RENDER_PASS, "Render session" )
-
-    constexpr static VkClearValue clearValue
-    {
-        .color
-        {
-            .float32 = { 0.5F, 0.5F, 0.5F, 1.0F }
-        }
-    };
-
-    _renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    _renderPassInfo.pNext = nullptr;
-    _renderPassInfo.clearValueCount = 1U;
-    _renderPassInfo.pClearValues = &clearValue;
-
-    _renderPassInfo.renderArea.offset =
-    {
-        .x = 0,
-        .y = 0
-    };
-
-    return true;
-}
-
 bool RenderSession::CreateRenderTarget () noexcept
 {
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
     resolution = _renderer.GetSurfaceSize ();
-    _renderPassInfo.renderArea.extent = resolution;
-    VkDevice device = _renderer.GetDevice ();
 
-    if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
+    if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
         return false;
 
     _viewport =
@@ -735,20 +547,12 @@ void RenderSession::EventLoop () noexcept
                 OnUIDeleteElement ( std::move ( message ) );
             break;
 
-            case eMessageType::UIDeleteElementEXT:
-                OnUIDeleteElementEXT ( std::move ( message ) );
-            break;
-
             case eMessageType::UIElementCreated:
                 OnUIElementCreated ();
             break;
 
             case eMessageType::UIShowElement:
                 OnUIShowElement ( std::move ( message ) );
-            break;
-
-            case eMessageType::UIShowElementEXT:
-                OnUIShowElementEXT ( std::move ( message ) );
             break;
 
             case eMessageType::UIPrependChildElement:
@@ -759,20 +563,12 @@ void RenderSession::EventLoop () noexcept
                 OnUIHideElement ( std::move ( message ) );
             break;
 
-            case eMessageType::UIHideElementEXT:
-                OnUIHideElementEXT ( std::move ( message ) );
-            break;
-
             case eMessageType::UISetText:
                 OnUISetText ( std::move ( message ) );
             break;
 
             case eMessageType::UIUpdateElement:
                 OnUIUpdateElement ( std::move ( message ) );
-            break;
-
-            case eMessageType::UIUpdateElementEXT:
-                OnUIUpdateElementEXT ( std::move ( message ) );
             break;
 
             default:
@@ -791,16 +587,9 @@ bool RenderSession::InitModules () noexcept
     android_vulkan::Renderer &renderer = _renderer;
     VkDevice device = renderer.GetDevice ();
 
-    if ( !CreateRenderPass ( device ) ) [[unlikely]]
-        return false;
+    new HelloTriangleJob ( _messageQueue, renderer, _submitMutex );
 
-    new HelloTriangleJob ( _messageQueue, renderer, _submitMutex, _renderPassInfo.renderPass );
-
-    bool result = AllocateCommandBuffers ( device ) &&
-        //_presentRenderPass.OnSwapchainCreated ( renderer ) &&
-        _presentRenderPassEXT.OnSwapchainCreated ( renderer );
-
-    if ( !result ) [[unlikely]]
+    if ( !AllocateCommandBuffers ( device ) || !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
@@ -824,7 +613,7 @@ bool RenderSession::InitModules () noexcept
 
     VkCommandBuffer commandBuffer;
 
-    result =
+    bool result =
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateCommandBuffers ( device, &allocateInfo, &commandBuffer ),
             "editor::RenderSession::InitModules",
@@ -844,10 +633,8 @@ bool RenderSession::InitModules () noexcept
     {
         std::lock_guard const lock ( _submitMutex );
 
-        result = //_defaultTextureManager.Init ( renderer, pool ) &&
-            //_exposurePass.Init ( renderer, pool ) &&
-            _resourceHeap.Init ( renderer, commandBuffer ) &&
-            _exposurePassEXT.Init ( renderer, _resourceHeap, pool );
+        result = _resourceHeap.Init ( renderer, commandBuffer ) &&
+            _exposurePass.Init ( renderer, _resourceHeap, pool );
 
         if ( !result ) [[unlikely]]
         {
@@ -855,13 +642,7 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
-    // FUCK - refactor
-    //VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    //constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
-
-    result = /*_samplerManager.Init (device) &&
-        _uiPass.OnInitDevice ( renderer, _samplerManager, _defaultTextureManager.GetTransparent ()->GetImageView () ) &&*/
-        _uiPassEXT.OnInitDevice ( renderer ) &&
+    result = _uiPass.OnInitDevice ( renderer ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "editor::RenderSession::InitModules",
@@ -909,24 +690,10 @@ bool RenderSession::InitModules () noexcept
     );
 
     result = CreateRenderTarget () &&
-        //_exposurePass.SetTarget ( renderer, _renderTarget ) &&
-        _exposurePassEXT.SetTarget ( renderer, _resourceHeap, _renderTarget, _renderTargetIdx ) &&
-        /*_toneMapper.Init ( renderer ) &&
-
-        _toneMapper.SetTarget ( renderer,
-            renderPass,
-            subpass,
-            _renderTarget.GetImageView (),
-            _exposurePass.GetExposure (),
-            _samplerManager.GetClampToEdgeSampler ()
-        ) &&*/
-
-        //_toneMapper.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        _toneMapperEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        //_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
-        _uiPassEXT.OnSwapchainCreated ( renderer ) &&
-        //_uiPass.SetBrightness ( renderer, renderPass, subpass, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        _uiPassEXT.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        _exposurePass.SetTarget ( renderer, _resourceHeap, _renderTarget, _renderTargetIdx ) &&
+        _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        _uiPass.OnSwapchainCreated ( renderer ) &&
+        _uiPass.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
@@ -936,12 +703,10 @@ bool RenderSession::InitModules () noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    _toneMapperEXT.SetTarget ( renderer, _renderTargetIdx, _exposurePassEXT.GetExposure () );
+    _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () );
 
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
-    //_exposurePass.FreeTransferResources ( device, pool );
-    _exposurePassEXT.FreeTransferResources ( device, pool );
-    //_defaultTextureManager.FreeTransferResources ( renderer, pool );
+    _exposurePass.FreeTransferResources ( device, pool );
     _timestamp = std::chrono::steady_clock::now ();
     return true;
 }
@@ -950,9 +715,7 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 {
     _messageQueue.DequeueEnd ();
     auto* job = static_cast<HelloTriangleJob*> ( params );
-    //_helloTriangleProgram = std::move ( job->_program );
-    _helloTriangleProgramExt = std::move ( job->_programExt );
-    //_fuckHelloTriangleGeometry = std::move ( job->_fuckGeometry );
+    _helloTriangleProgram = std::move ( job->_program );
     _helloTriangleGeometry = std::move ( job->_geometry );
     delete job;
 }
@@ -976,7 +739,7 @@ void RenderSession::OnRenderFrame () noexcept
 
     android_vulkan::Renderer &renderer = _renderer;
     pbr::windows::ResourceHeap &resourceHeap = _resourceHeap;
-    _uiManager.ComputeLayout ( renderer, _uiPass, _uiPassEXT );
+    _uiManager.ComputeLayout ( renderer, _uiPass );
 
     VkDevice device = renderer.GetDevice ();
 
@@ -987,8 +750,7 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
-    //VkResult vulkanResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
-    VkResult vulkanResult = _presentRenderPassEXT.AcquirePresentTarget ( renderer, commandInfo._acquire );
+    VkResult vulkanResult = _presentRenderPass.AcquirePresentTarget ( renderer, commandInfo._acquire );
 
     if ( vulkanResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
     {
@@ -1036,26 +798,19 @@ void RenderSession::OnRenderFrame () noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Upload" )
 
-        result = /*_uiPass.UploadGPUData ( renderer, commandBuffer, commandBufferIndex ) &&*/
-            _uiPassEXT.UploadGPUFontData ( renderer, commandBuffer );
-
-        if ( !result ) [[unlikely]]
+        if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
         {
             // FUCK
             AV_ASSERT ( false )
             return;
         }
 
-        _uiManager.Submit ( renderer, _uiPass, _uiPassEXT );
-        _uiPassEXT.UploadGPUGeometryData ( renderer, commandBuffer );
-
-        //_toneMapper.UploadGPUData ( renderer, commandBuffer );
+        _uiManager.Submit ( renderer, _uiPass );
+        _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     }
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
-
-        //vkCmdBeginRenderPass ( commandBuffer, &_renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -1074,47 +829,29 @@ void RenderSession::OnRenderFrame () noexcept
         );
 
         vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
-
         vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
-
-        //vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderPassInfo.renderArea );
         vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
 
-        if ( static_cast<bool> ( _helloTriangleGeometry ) & static_cast<bool> ( _helloTriangleProgramExt ) ) [[likely]]
+        if ( static_cast<bool> ( _helloTriangleGeometry ) ) [[likely]]
         {
-            GXVec2 fuck {};
-            // FUCK make replacement for vertex puuling
-            /*constexpr VkDeviceSize const offsets = 0U;
-
-            vkCmdBindVertexBuffers ( commandBuffer,
-                0U,
-                1U,
-                &_fuckHelloTriangleGeometry->GetMeshBufferInfo ()._buffer,
-                &offsets
-            );
-
             _helloTriangleProgram->Bind ( commandBuffer );
-            vkCmdDraw ( commandBuffer, _fuckHelloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );*/
 
-            _helloTriangleProgramExt->Bind ( commandBuffer );
-
-            HelloTriangleProgramExt::PushConstants const geometry
+            HelloTriangleProgram::PushConstants const geometry
             {
                 ._bda = _helloTriangleGeometry->GetMeshBufferInfo ()._bdaStream0
             };
 
             vkCmdPushConstants ( commandBuffer,
-                _helloTriangleProgramExt->GetPipelineLayout (),
+                _helloTriangleProgram->GetPipelineLayout (),
                 VK_SHADER_STAGE_VERTEX_BIT,
                 0U,
-                sizeof ( HelloTriangleProgramExt::PushConstants ),
+                sizeof ( HelloTriangleProgram::PushConstants ),
                 &geometry
             );
 
             vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
         }
 
-        //vkCmdEndRenderPass ( commandBuffer );
         vkCmdEndRendering ( commandBuffer );
 
         _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -1137,26 +874,14 @@ void RenderSession::OnRenderFrame () noexcept
         );
     }
 
-    //_exposurePass.Execute ( commandBuffer, deltaTime );
-    _exposurePassEXT.Execute ( commandBuffer, deltaTime, resourceHeap );
+    _exposurePass.Execute ( commandBuffer, deltaTime, resourceHeap );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
-        //_presentRenderPass.Begin ( commandBuffer );
-        _presentRenderPassEXT.Begin ( renderer, commandBuffer );
+        _presentRenderPass.Begin ( renderer, commandBuffer );
+        _toneMapper.Execute ( commandBuffer, resourceHeap );
 
-        // FUCK - call Windows backend
-        //_toneMapper.Execute ( commandBuffer );
-        _toneMapperEXT.Execute ( commandBuffer, resourceHeap );
-
-        //if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
-        //{
-        //    // FUCK
-        //    AV_ASSERT ( false )
-        //    return;
-        //}
-
-        if ( !_uiPassEXT.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         {
             // FUCK
             AV_ASSERT ( false )
@@ -1164,14 +889,7 @@ void RenderSession::OnRenderFrame () noexcept
         }
     }
 
-    /*std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
-        commandBuffer,
-        commandInfo._acquire,
-        commandInfo._fence,
-        &_submitMutex
-    );*/
-
-    std::optional<VkResult> const presentResult = _presentRenderPassEXT.End ( renderer,
+    std::optional<VkResult> const presentResult = _presentRenderPass.End ( renderer,
         commandBuffer,
         commandInfo._acquire,
         commandInfo._fence,
@@ -1254,10 +972,6 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
                 OnUIDeleteElement ( std::move ( message ) );
             break;
 
-            case eMessageType::UIDeleteElementEXT:
-                OnUIDeleteElementEXT ( std::move ( message ) );
-            break;
-
             case eMessageType::UIElementCreated:
                 OnUIElementCreated ();
             break;
@@ -1291,19 +1005,10 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     VkDevice device = renderer.GetDevice ();
     FreeCommandBuffers ( device );
 
-    if ( _renderPassInfo.framebuffer != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyFramebuffer ( device, std::exchange ( _renderPassInfo.framebuffer, VK_NULL_HANDLE ), nullptr );
-
-    //if ( _helloTriangleProgram ) [[likely]]
-    //{
-    //    _helloTriangleProgram->Destroy ( device );
-    //    _helloTriangleProgram.reset ();
-    //}
-
-    if ( _helloTriangleProgramExt ) [[likely]]
+    if ( _helloTriangleProgram ) [[likely]]
     {
-        _helloTriangleProgramExt->Destroy ( device );
-        _helloTriangleProgramExt.reset ();
+        _helloTriangleProgram->Destroy ( device );
+        _helloTriangleProgram.reset ();
     }
 
     if ( _helloTriangleGeometry ) [[likely]]
@@ -1312,38 +1017,17 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
         _helloTriangleGeometry.reset ();
     }
 
-    /*if ( _fuckHelloTriangleGeometry ) [[likely]]
-    {
-        _fuckHelloTriangleGeometry->FreeResources ( renderer );
-        _fuckHelloTriangleGeometry.reset ();
-    }*/
-
     if ( _renderTargetIdx ) [[likely]]
         _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
 
     _renderTarget.FreeResources ( renderer );
 
-    if ( _renderPassInfo.renderPass != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyRenderPass ( device, std::exchange ( _renderPassInfo.renderPass, VK_NULL_HANDLE ), nullptr );
+    _uiPass.OnSwapchainDestroyed ();
+    _uiPass.OnDestroyDevice ( renderer );
 
-    //_uiPass.OnSwapchainDestroyed ();
-    _uiPassEXT.OnSwapchainDestroyed ();
-
-    //_uiPass.OnDestroyDevice ( renderer );
-    _uiPassEXT.OnDestroyDevice ( renderer );
-
-    /*_presentRenderPass.OnSwapchainDestroyed ( device );
-    _presentRenderPass.OnDestroyDevice ( device );*/
-
-    _presentRenderPassEXT.OnDestroyDevice ( device );
-
-    _exposurePassEXT.Destroy ( renderer, _resourceHeap );
-    //_exposurePass.Destroy ( renderer );
-    //_toneMapper.Destroy ( renderer );
-    _toneMapperEXT.Destroy ( device );
-
-    //_defaultTextureManager.Destroy ( renderer );
-    //_samplerManager.Destroy ( device );
+    _presentRenderPass.OnDestroyDevice ( device );
+    _exposurePass.Destroy ( renderer, _resourceHeap );
+    _toneMapper.Destroy ( device );
     _resourceHeap.Destroy ( renderer );
 
     _messageQueue.EnqueueFront (
@@ -1359,18 +1043,9 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
 void RenderSession::OnSwapchainCreated () noexcept
 {
     _messageQueue.DequeueEnd ();
-
     android_vulkan::Renderer &renderer = _renderer;
-    VkDevice device = renderer.GetDevice ();
-    //_presentRenderPass.OnSwapchainDestroyed ( device );
 
-    /*if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
-    {
-         AV_ASSERT ( false )
-        return;
-    }*/
-
-    if ( !_presentRenderPassEXT.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
     {
         // FUCK
          AV_ASSERT ( false )
@@ -1382,8 +1057,6 @@ void RenderSession::OnSwapchainCreated () noexcept
     // FUCK - ask resolution from exposure pass
     resolution = renderer.GetSurfaceSize ();
 
-    _renderPassInfo.renderArea.extent = resolution;
-
     _viewport =
     {
         .x = 0.0F,
@@ -1394,43 +1067,23 @@ void RenderSession::OnSwapchainCreated () noexcept
         .maxDepth = 1.0F
     };
 
-    vkDestroyFramebuffer ( device, _renderPassInfo.framebuffer, nullptr );
-    _renderPassInfo.framebuffer = VK_NULL_HANDLE;
-
     if ( _renderTargetIdx ) [[likely]]
         _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
 
     _renderTarget.FreeResources ( renderer );
 
-    if ( !CreateRenderTargetImage ( resolution ) || !CreateFramebuffer ( device, resolution ) ) [[unlikely]]
+    if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
     {
         // FUCK
         AV_ASSERT ( false )
         return;
     }
 
-    //_uiPass.OnSwapchainDestroyed ();
-    _uiPassEXT.OnSwapchainDestroyed ();
+    _uiPass.OnSwapchainDestroyed ();
 
-    // FUCK - refactor
-    //VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    //constexpr uint32_t subpass = pbr::android::PresentPass::GetSubpass ();
-
-    bool const result = //_exposurePass.SetTarget ( renderer, _renderTarget ) &&
-        //_uiPass.OnSwapchainCreated ( renderer, renderPass, subpass ) &&
-        _uiPassEXT.OnSwapchainCreated ( renderer ) /* &&
-
-        _toneMapper.SetTarget ( renderer,
-            renderPass,
-            subpass,
-            _renderTarget.GetImageView (),
-            _exposurePass.GetExposure (),
-            _samplerManager.GetClampToEdgeSampler ()
-        )*/;
-
-    if ( result ) [[likely]]
+    if ( _uiPass.OnSwapchainCreated ( renderer ) ) [[likely]]
     {
-        _toneMapperEXT.SetTarget ( renderer, _renderTargetIdx, _exposurePassEXT.GetExposure () );
+        _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () );
         return;
     }
 
@@ -1456,16 +1109,6 @@ void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
     _messageQueue.DequeueEnd ();
 
     // FUCK - remove namespace
-    delete static_cast<pbr::android::UIElement*> ( message._params );
-    --_uiElements;
-}
-
-void RenderSession::OnUIDeleteElementEXT ( Message &&message ) noexcept
-{
-    AV_TRACE ( "UI delete element" )
-    _messageQueue.DequeueEnd ();
-
-    // FUCK - remove namespace
     delete static_cast<pbr::windows::UIElement*> ( message._params );
     --_uiElements;
 }
@@ -1474,22 +1117,10 @@ void RenderSession::OnUIElementCreated () noexcept
 {
     AV_TRACE ( "UI element created" )
     _messageQueue.DequeueEnd ();
-
-    // FUCK - fix increment by 1
-    //++_uiElements;
-    _uiElements += 2U;
+    ++_uiElements;
 }
 
 void RenderSession::OnUIHideElement ( Message &&message ) noexcept
-{
-    AV_TRACE ( "UI hide element" )
-    _messageQueue.DequeueEnd ();
-
-    // FUCK - remove namespace
-    static_cast<pbr::android::UIElement*> ( message._params )->Hide ();
-}
-
-void RenderSession::OnUIHideElementEXT ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI hide element" )
     _messageQueue.DequeueEnd ();
@@ -1499,15 +1130,6 @@ void RenderSession::OnUIHideElementEXT ( Message &&message ) noexcept
 }
 
 void RenderSession::OnUIShowElement ( Message &&message ) noexcept
-{
-    AV_TRACE ( "UI show element" )
-    _messageQueue.DequeueEnd ();
-
-    // FUCK - remove namespace
-    static_cast<pbr::android::UIElement*> ( message._params )->Show ();
-}
-
-void RenderSession::OnUIShowElementEXT ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
     _messageQueue.DequeueEnd ();
@@ -1537,15 +1159,6 @@ void RenderSession::OnUISetText ( Message &&message ) noexcept
 }
 
 void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
-{
-    AV_TRACE ( "UI update element" )
-    _messageQueue.DequeueEnd ();
-
-    // FUCK - remove namespace
-    static_cast<pbr::android::DIVUIElement*> ( message._params )->Update ();
-}
-
-void RenderSession::OnUIUpdateElementEXT ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI update element" )
     _messageQueue.DequeueEnd ();

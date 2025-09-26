@@ -204,11 +204,6 @@ pbr::CSSComputedValues &UICloseButton::GetCSS () noexcept
     return _base.GetCSS ();
 }
 
-pbr::CSSComputedValues &UICloseButton::GetCSSEXT () noexcept
-{
-    return _base.GetCSSEXT ();
-}
-
 void UICloseButton::OnMouseLeave () noexcept
 {
     _backgroundText.SetColor ( theme::MAIN_COLOR );

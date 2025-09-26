@@ -5,8 +5,6 @@
 
 namespace editor {
 
-//----------------------------------------------------------------------------------------------------------------------
-
 UILabel::UILabel ( MessageQueue &messageQueue,
     DIVUIElement &parent,
     std::string_view text,
@@ -55,11 +53,6 @@ UILabel::UILabel ( MessageQueue &messageQueue,
 pbr::CSSComputedValues &UILabel::GetCSS () noexcept
 {
     return _div.GetCSS ();
-}
-
-pbr::CSSComputedValues &UILabel::GetCSSEXT () noexcept
-{
-    return _div.GetCSSEXT ();
 }
 
 } // namespace editor

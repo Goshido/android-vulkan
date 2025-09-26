@@ -356,10 +356,6 @@ void UISlider::UpdateProgress ( double progress ) noexcept
         100.0F * static_cast<float> ( progress )
     );
 
-    _progressDIV.GetCSSEXT ()._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent,
-        100.0F * static_cast<float> ( progress )
-    );
-
     char buf[ 128U ];
     _number.SetText ( { buf, static_cast<size_t> ( std::snprintf ( buf, std::size ( buf ), "%.05f", _value ) ) } );
 }

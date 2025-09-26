@@ -34,10 +34,7 @@ class UIProps final : public UIDialogBox
         UIProps &operator = ( UIProps && ) = delete;
 
         // FUCK - remove namespace
-        explicit UIProps ( MessageQueue &messageQueue,
-            pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT
-        ) noexcept;
+        explicit UIProps ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept;
 
         ~UIProps () override = default;
 
@@ -47,9 +44,7 @@ class UIProps final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
         // FUCK - remove namespace
-        void Submit ( pbr::android::UIElement::SubmitInfo &info,
-            pbr::windows::UIElement::SubmitInfo &infoEXT
-        ) noexcept override;
+        void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept override;
 
         void OnCheckBox ( UICheckBox::eState state ) noexcept;
         void OnComboBox ( UIComboBox::ID id ) noexcept;

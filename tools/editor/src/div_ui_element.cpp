@@ -14,8 +14,7 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     UIElement ( messageQueue ),
 
     // FUCK - remove namespace
-    _div ( new pbr::android::DIVUIElement ( nullptr, pbr::CSSComputedValues ( css ), std::string ( name ) ) ),
-    _divEXT ( new pbr::windows::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
+    _div ( new pbr::windows::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -28,13 +27,7 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     UIElement ( messageQueue ),
 
     // FUCK - remove namespace
-    _div (
-        new pbr::android::DIVUIElement ( &parent.GetNativeElement (),
-            pbr::CSSComputedValues ( css ),
-            std::string ( name ) )
-    ),
-
-    _divEXT ( new pbr::windows::DIVUIElement ( &parent.GetNativeElementEXT (), std::move ( css ), std::move ( name ) ) )
+    _div ( new pbr::windows::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -48,26 +41,12 @@ DIVUIElement::~DIVUIElement () noexcept
             ._serialNumber = 0U
         }
     );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIDeleteElementEXT,
-            ._params = std::exchange ( _divEXT, nullptr ),
-            ._serialNumber = 0U
-        }
-    );
-}
-
-// FUCK - remove it
-pbr::android::UIElement &DIVUIElement::GetNativeElement () noexcept
-{
-    return *_div;
 }
 
 // FUCK - remove namespace
-pbr::windows::UIElement &DIVUIElement::GetNativeElementEXT () noexcept
+pbr::windows::UIElement &DIVUIElement::GetNativeElement () noexcept
 {
-    return *_divEXT;
+    return *_div;
 }
 
 void DIVUIElement::AppendChildElement ( DIVUIElement &element ) noexcept
@@ -76,14 +55,6 @@ void DIVUIElement::AppendChildElement ( DIVUIElement &element ) noexcept
         {
             ._type = eMessageType::UIAppendChildElement,
             ._params = new AppendUIChildElementEvent ( *_div, element.GetNativeElement () ),
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAppendChildElement,
-            ._params = new AppendUIChildElementEvent ( *_divEXT, element.GetNativeElementEXT () ),
             ._serialNumber = 0U
         }
     );
@@ -98,14 +69,6 @@ void DIVUIElement::PrependChildElement ( DIVUIElement &element ) noexcept
             ._serialNumber = 0U
         }
     );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIPrependChildElement,
-            ._params = new PrependUIChildElementEvent ( *_divEXT, element.GetNativeElementEXT () ),
-            ._serialNumber = 0U
-        }
-    );
 }
 
 void DIVUIElement::AppendChildElement ( TextUIElement &element ) noexcept
@@ -114,14 +77,6 @@ void DIVUIElement::AppendChildElement ( TextUIElement &element ) noexcept
         {
             ._type = eMessageType::UIAppendChildElement,
             ._params = new AppendUIChildElementEvent ( *_div, element.GetNativeElement () ),
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAppendChildElement,
-            ._params = new AppendUIChildElementEvent ( *_divEXT, element.GetNativeElementEXT () ),
             ._serialNumber = 0U
         }
     );
@@ -136,14 +91,6 @@ void DIVUIElement::PrependChildElement ( TextUIElement &element ) noexcept
             ._serialNumber = 0U
         }
     );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIPrependChildElement,
-            ._params = new PrependUIChildElementEvent ( *_divEXT, element.GetNativeElementEXT () ),
-            ._serialNumber = 0U
-        }
-    );
 }
 
 void DIVUIElement::Hide () noexcept
@@ -152,14 +99,6 @@ void DIVUIElement::Hide () noexcept
         {
             ._type = eMessageType::UIHideElement,
             ._params = _div,
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIHideElementEXT,
-            ._params = _divEXT,
             ._serialNumber = 0U
         }
     );
@@ -174,19 +113,11 @@ void DIVUIElement::Show () noexcept
             ._serialNumber = 0U
         }
     );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIShowElementEXT,
-            ._params = _divEXT,
-            ._serialNumber = 0U
-        }
-    );
 }
 
 bool DIVUIElement::IsVisible () const noexcept
 {
-    return /*_div->IsVisible () && */_divEXT->IsVisible ();
+    return _div->IsVisible ();
 }
 
 void DIVUIElement::Update () noexcept
@@ -198,26 +129,12 @@ void DIVUIElement::Update () noexcept
             ._serialNumber = 0U
         }
     );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIUpdateElementEXT,
-            ._params = _divEXT,
-            ._serialNumber = 0U
-        }
-    );
-}
-
-// FUCK - remove it
-pbr::android::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
-{
-    return _div->GetAbsoluteRect ();
 }
 
 // FUCK - remove namespace
-pbr::windows::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRectEXT () const noexcept
+pbr::windows::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
 {
-    return _divEXT->GetAbsoluteRect ();
+    return _div->GetAbsoluteRect ();
 }
 
 // FUCK - remove it
@@ -226,36 +143,22 @@ pbr::CSSComputedValues &DIVUIElement::GetCSS () noexcept
     return _div->GetCSS ();
 }
 
-// FUCK - rename
-pbr::CSSComputedValues &DIVUIElement::GetCSSEXT () noexcept
+// FUCK - remove namespace
+void DIVUIElement::ApplyLayout ( pbr::windows::UIElement::ApplyInfo &info ) noexcept
 {
-    return _divEXT->GetCSS ();
+    _div->ApplyLayout ( info );
 }
 
 // FUCK - remove namespace
-void DIVUIElement::ApplyLayout ( pbr::android::UIElement::ApplyInfo &/*info*/,
-    pbr::windows::UIElement::ApplyInfo &infoEXT
-) noexcept
+void DIVUIElement::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
 {
-    //_div->ApplyLayout ( info );
-    _divEXT->ApplyLayout ( infoEXT );
+    _div->Submit ( info );
 }
 
 // FUCK - remove namespace
-void DIVUIElement::Submit ( pbr::android::UIElement::SubmitInfo &/*info*/,
-    pbr::windows::UIElement::SubmitInfo &infoEXT
-) noexcept
+bool DIVUIElement::UpdateCache ( pbr::windows::UIElement::UpdateInfo &info ) noexcept
 {
-    //_div->Submit ( info );
-    _divEXT->Submit ( infoEXT );
-}
-
-// FUCK - remove namespace
-bool DIVUIElement::UpdateCache ( pbr::android::UIElement::UpdateInfo &/*info*/,
-    pbr::windows::UIElement::UpdateInfo &infoEXT
-) noexcept
-{
-    return /*_div->UpdateCache (info) &&*/ _divEXT->UpdateCache ( infoEXT );
+    return _div->UpdateCache ( info );
 }
 
 } // namespace editor

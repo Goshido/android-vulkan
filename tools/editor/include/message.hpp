@@ -50,29 +50,13 @@ enum class eMessageType : uint32_t
     UIAddWidget,
     UIAppendChildElement,
     UIDeleteElement,
-
-    // FUCK - remove it
-    UIDeleteElementEXT,
-
     UIElementCreated,
     UIHideElement,
-
-    // FUCK - remove it
-    UIHideElementEXT,
-
     UIPrependChildElement,
     UIRemoveWidget,
     UISetText,
     UIShowElement,
-
-    // FUCK - remove it
-    UIShowElementEXT,
-
     UIUpdateElement,
-
-    // FUCK - remove it
-    UIUpdateElementEXT,
-
     VulkanInitReport,
     WindowVisibilityChanged,
     WriteClipboard,

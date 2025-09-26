@@ -3,15 +3,8 @@
 
 
 #include "hello_triangle_program.hpp"
-#include "hello_triangle_program_ext.hpp"
 #include "message_queue.hpp"
 #include <pbr/default_texture_manager.hpp>
-
-// FUCK - remove namespace
-#include <platform/android/pbr/exposure_pass.hpp>
-#include <platform/android/pbr/present_pass.hpp>
-#include <platform/android/pbr/tone_mapper_pass.hpp>
-
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
@@ -43,55 +36,34 @@ class RenderSession final
         CommandInfo                                                 _commandInfo[ pbr::FIF_COUNT ];
         size_t                                                      _writingCommandInfo = 0U;
 
-        //pbr::DefaultTextureManager                                  _defaultTextureManager {};
-
-        // FUCK - remove it
-        //pbr::android::ExposurePass                                  _exposurePass {};
-
         // FUCK - remove namespace
-        pbr::windows::ExposurePass                                  _exposurePassEXT {};
+        pbr::windows::ExposurePass                                  _exposurePass {};
 
-        // FUCK - remote it
-        //std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
-
-        std::unique_ptr<HelloTriangleProgramExt>                    _helloTriangleProgramExt {};
-
-        // FUCK
-        //std::unique_ptr<android_vulkan::android::MeshGeometry>      _fuckHelloTriangleGeometry {};
+        std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
         std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
 
         MessageQueue                                                &_messageQueue;
         android_vulkan::Renderer                                    &_renderer;
 
         // FUCK - remove namespace
-        //pbr::android::PresentPass                                   _presentRenderPass {};
-        pbr::windows::PresentPass                                   _presentRenderPassEXT {};
-
-        // FUCK - refactor
-        VkRenderPassBeginInfo                                       _renderPassInfo {};
+        pbr::windows::PresentPass                                   _presentRenderPass {};
 
         android_vulkan::Texture2D                                   _renderTarget {};
         uint32_t                                                    _renderTargetIdx = 0U;
 
-        // FUCK - call update GPU
         pbr::windows::ResourceHeap                                  _resourceHeap {};
-
-        // FUCK - remove
-        //pbr::SamplerManager                                         _samplerManager {};
 
         std::mutex                                                  _submitMutex {};
         std::thread                                                 _thread {};
         Timestamp                                                   _timestamp {};
 
         // FUCK - remove namespace
-        //pbr::android::ToneMapperPass                                _toneMapper {};
-        pbr::windows::ToneMapperPass                                _toneMapperEXT {};
+        pbr::windows::ToneMapperPass                                _toneMapper {};
 
         size_t                                                      _uiElements = 0U;
 
         // FUCK - remove namespace
-        pbr::android::UIPass                                        _uiPass {};
-        pbr::windows::UIPass                                        _uiPassEXT { _resourceHeap };
+        pbr::windows::UIPass                                        _uiPass { _resourceHeap };
 
         UIManager                                                   &_uiManager;
         VkViewport                                                  _viewport {};
@@ -187,18 +159,13 @@ class RenderSession final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        // FUCK - remove it
-        [[nodiscard]] pbr::android::FontStorage &GetFontStorage () noexcept;
-
         // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::FontStorage &GetFontStorageEXT () noexcept;
+        [[nodiscard]] pbr::windows::FontStorage &GetFontStorage () noexcept;
 
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;
         void FreeCommandBuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateFramebuffer ( VkDevice device, VkExtent2D const &resolution ) noexcept;
-        [[nodiscard]] bool CreateRenderPass ( VkDevice device ) noexcept;
         [[nodiscard]] bool CreateRenderTarget () noexcept;
         [[nodiscard]] bool CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept;
         void EventLoop () noexcept;
@@ -209,35 +176,13 @@ class RenderSession final
         void OnShutdown ( Message &&refund ) noexcept;
         void OnSwapchainCreated () noexcept;
         void OnUIAppendChildElement ( Message &&message ) noexcept;
-
-        // FUCK - remove it
         void OnUIDeleteElement ( Message &&message ) noexcept;
-
-        // FUCK - rename
-        void OnUIDeleteElementEXT ( Message &&message ) noexcept;
-
         void OnUIElementCreated () noexcept;
-
-        // FUCK - remove it
         void OnUIHideElement ( Message &&message ) noexcept;
-
-        // FUCK - rename
-        void OnUIHideElementEXT ( Message &&message ) noexcept;
-
-        // FUCK - remove it
         void OnUIShowElement ( Message &&message ) noexcept;
-
-        // FUCK - rename
-        void OnUIShowElementEXT ( Message &&message ) noexcept;
-
         void OnUIPrependChildElement ( Message &&message ) noexcept;
         void OnUISetText ( Message &&message ) noexcept;
-
-        // FUCK - remove it
         void OnUIUpdateElement ( Message &&message ) noexcept;
-
-        // FUCK - rename
-        void OnUIUpdateElementEXT ( Message &&message ) noexcept;
 
         void NotifyRecreateSwapchain () const noexcept;
 

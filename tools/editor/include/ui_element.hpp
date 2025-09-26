@@ -3,9 +3,6 @@
 
 
 #include "message_queue.hpp"
-
-// FUCK - remove namespace
-#include <platform/android/pbr/ui_element.hpp>
 #include <platform/windows/pbr/ui_element.hpp>
 
 
@@ -27,11 +24,8 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        // FUCK - remove it
-        [[nodiscard]] virtual pbr::android::UIElement &GetNativeElement () noexcept = 0;
-
         // FUCK - remove namespace
-        [[nodiscard]] virtual pbr::windows::UIElement &GetNativeElementEXT () noexcept = 0;
+        [[nodiscard]] virtual pbr::windows::UIElement &GetNativeElement () noexcept = 0;
 
     protected:
         explicit UIElement ( MessageQueue &messageQueue ) noexcept;

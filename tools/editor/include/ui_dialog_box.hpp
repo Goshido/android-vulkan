@@ -41,23 +41,14 @@ class UIDialogBox : public Widget
         bool                        _dragState = false;
 
     private:
-        // FUCK - remove it
         std::vector<float>          _lineHeights { 1U, 0.0F };
-
-        // FUCK - rename
-        std::vector<float>          _lineHeightsEXT { 1U, 0.0F };
-
         size_t                      _eventID = 0U;
 
         Rect                        _initialRect {};
         int32_t                     _initialX = 0;
         int32_t                     _initialY = 0;
 
-        // FUCK - remove it
         bool                        _isChanged = false;
-
-        // FUCK - rename
-        bool                        _isChangedEXT = false;
 
         uint32_t                    _leftMask = 0U;
         uint32_t                    _topMask = 0U;
@@ -104,20 +95,16 @@ class UIDialogBox : public Widget
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
         // FUCK - remove namespace
-        void Submit ( pbr::android::UIElement::SubmitInfo &info,
-            pbr::windows::UIElement::SubmitInfo &infoEXT
-        ) noexcept override;
+        void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept override;
 
     private:
         // FUCK - remove namespace
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT
+            pbr::windows::FontStorage &fontStorage
         ) noexcept override;
 
         // FUCK - remove namespace
-        [[nodiscard]] bool UpdateCache ( pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT,
+        [[nodiscard]] bool UpdateCache ( pbr::windows::FontStorage &fontStorage,
             VkExtent2D const &viewport
         ) noexcept override;
 

@@ -38,10 +38,7 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 //----------------------------------------------------------------------------------------------------------------------
 
 // FUCK - remove namespace
-UIProps::UIProps ( MessageQueue &messageQueue,
-    pbr::android::FontStorage &fontStorage,
-    pbr::windows::FontStorage &fontStorageEXT
-) noexcept:
+UIProps::UIProps ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
 
     _headerLine ( messageQueue,
@@ -82,7 +79,7 @@ UIProps::UIProps ( MessageQueue &messageQueue,
     _checkBox ( messageQueue, _div, "Shadows", "CheckBox" ),
     _comboBox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
     _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
-    _editBox ( messageQueue, _div, fontStorage, fontStorageEXT, "Name", "The quick brown fox jumps", "EditBox" )
+    _editBox ( messageQueue, _div, fontStorage, "Name", "The quick brown fox jumps", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -90,19 +87,9 @@ UIProps::UIProps ( MessageQueue &messageQueue,
     headerTextStyle._paddingTop = theme::HEADER_VERTICAL_PADDING;
     headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
 
-    pbr::CSSComputedValues &headerTextStyleEXT = _headerText.GetCSSEXT ();
-    headerTextStyleEXT._fontSize = theme::HEADER_FONT_SIZE;
-    headerTextStyleEXT._textAlign = pbr::TextAlignProperty::eValue::Center;
-    headerTextStyleEXT._paddingTop = theme::HEADER_VERTICAL_PADDING;
-    headerTextStyleEXT._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
-
     pbr::CSSComputedValues &closeButtonStyle = _closeButton.GetCSS ();
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
-
-    pbr::CSSComputedValues &closeButtonStyleEXT = _closeButton.GetCSSEXT ();
-    closeButtonStyleEXT._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
-    closeButtonStyleEXT._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
     _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
     _checkBox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
@@ -225,11 +212,9 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 }
 
 // FUCK - remove namespace
-void UIProps::Submit ( pbr::android::UIElement::SubmitInfo &info,
-    pbr::windows::UIElement::SubmitInfo &infoEXT
-) noexcept
+void UIProps::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
 {
-    UIDialogBox::Submit ( info, infoEXT );
+    UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();
     _checkBox.UpdatedRect ();
     _comboBox.UpdatedRect ();

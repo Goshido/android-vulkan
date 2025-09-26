@@ -3,9 +3,6 @@
 
 
 #include "div_ui_element.hpp"
-
-// FUCK - remove namespace
-#include <platform/android/pbr/text_ui_element.hpp>
 #include <platform/windows/pbr/text_ui_element.hpp>
 
 
@@ -14,11 +11,8 @@ namespace editor {
 class TextUIElement final : public UIElement
 {
     private:
-        // FUCK - remove it
-        pbr::android::TextUIElement*    _text = nullptr;
-
         // FUCK - remove namespace
-        pbr::windows::TextUIElement*    _textEXT = nullptr;
+        pbr::windows::TextUIElement*    _text = nullptr;
 
     public:
         TextUIElement () = delete;
@@ -37,11 +31,8 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () noexcept override;
 
-        // FUCK - remove it
-        [[nodiscard]] pbr::android::UIElement &GetNativeElement () noexcept override;
-
         // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::UIElement &GetNativeElementEXT () noexcept override;
+        [[nodiscard]] pbr::windows::UIElement &GetNativeElement () noexcept override;
 
         void SetColor ( pbr::ColorValue const &color ) noexcept;
         void SetText ( std::string_view text ) noexcept;

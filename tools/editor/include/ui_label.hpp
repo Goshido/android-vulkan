@@ -33,11 +33,8 @@ class UILabel final
 
         ~UILabel () = default;
 
-        // FUCK - remove it
-        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
-
         // FUCK - rename
-        [[nodiscard]] pbr::CSSComputedValues &GetCSSEXT () noexcept;
+        [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 };
 
 } // namespace editor

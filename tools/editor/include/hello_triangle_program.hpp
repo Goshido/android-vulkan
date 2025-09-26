@@ -2,15 +2,24 @@
 #define EDITOR_HELLO_TRIANGLE_PROGRAM_HPP
 
 
-// FUCK
-#include <platform/android/pbr/graphics_program.hpp>
+#include <platform/windows/pbr/graphics_program.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace editor {
 
-class HelloTriangleProgram final : public pbr::android::GraphicsProgram
+class HelloTriangleProgram final : public pbr::windows::GraphicsProgram
 {
     public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            VkDeviceAddress     _bda;
+        };
+
+        AV_DX_ALIGNMENT_END
+
         explicit HelloTriangleProgram () noexcept;
 
         HelloTriangleProgram ( HelloTriangleProgram const & ) = delete;
@@ -21,10 +30,7 @@ class HelloTriangleProgram final : public pbr::android::GraphicsProgram
 
         ~HelloTriangleProgram () override = default;
 
-        [[nodiscard]] bool Init ( android_vulkan::Renderer const &renderer,
-            VkRenderPass renderPass,
-            uint32_t subpass
-        ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device, VkFormat renderTargetFormat ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -54,13 +60,6 @@ class HelloTriangleProgram final : public pbr::android::GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
-            SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo
-        ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,
@@ -68,10 +67,21 @@ class HelloTriangleProgram final : public pbr::android::GraphicsProgram
             VkExtent2D const* viewport
         ) const noexcept override;
 
-        [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
-            VkPipelineVertexInputStateCreateInfo &info,
-            VkVertexInputAttributeDescription* attributes,
-            VkVertexInputBindingDescription* binds
+        [[nodiscard]] VkPipelineRenderingCreateInfo const* InitRenderingInfo ( VkFormat nativeColor,
+            VkFormat nativeDepth,
+            VkFormat nativeStencil,
+            VkFormat nativeDepthStencil,
+            VkFormat* colorAttachments,
+            VkPipelineRenderingCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+            std::vector<uint8_t> &vs,
+            std::vector<uint8_t> &fs,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkShaderModuleCreateInfo* moduleInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
         ) const noexcept override;
 };
 

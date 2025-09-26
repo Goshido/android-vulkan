@@ -6,10 +6,6 @@
 #include "message_queue.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
-
-// FUCK - change
-#include <platform/android/pbr/font_storage.hpp>
-#include <platform/android/pbr/ui_element.hpp>
 #include <platform/windows/pbr/font_storage.hpp>
 #include <platform/windows/pbr/ui_element.hpp>
 
@@ -63,18 +59,14 @@ class Widget
 
         // FUCK - remove namespace
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT
+            pbr::windows::FontStorage &fontStorage
         ) noexcept;
 
         // FUCK - remove namespace
-        virtual void Submit ( pbr::android::UIElement::SubmitInfo &info,
-            pbr::windows::UIElement::SubmitInfo &infoEXT
-        ) noexcept;
+        virtual void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept;
 
         // FUCK - remove namespace
-        [[nodiscard]] virtual bool UpdateCache ( pbr::android::FontStorage &fontStorage,
-            pbr::windows::FontStorage &fontStorageEXT,
+        [[nodiscard]] virtual bool UpdateCache ( pbr::windows::FontStorage &fontStorage,
             VkExtent2D const &viewport
         ) noexcept;
 

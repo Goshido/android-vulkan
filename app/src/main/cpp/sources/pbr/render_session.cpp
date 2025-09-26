@@ -149,8 +149,7 @@ void RenderSession::FreeTransferResources ( android_vulkan::Renderer &renderer )
     _exposurePass.FreeTransferResources ( renderer.GetDevice (), pool );
 }
 
-// FUCK - remove namespace
-android::UIPass &RenderSession::GetUIPass () noexcept
+UIPass &RenderSession::GetUIPass () noexcept
 {
     return _uiPass;
 }
@@ -234,8 +233,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    // FUCK - remove namespace
-    VkExtent2D const newResolution = android::ExposurePass::AdjustResolution ( resolution );
+    VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
     bool const hasChanges = ( currentResolution.width != newResolution.width ) |
@@ -273,8 +271,7 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
         return false;
 
-    // FUCK - remove namespace
-    constexpr uint32_t subpass = android::PresentPass::GetSubpass ();
+    constexpr uint32_t subpass = PresentPass::GetSubpass ();
     VkImageView hdrView = _gBuffer.GetHDRAccumulator ().GetImageView ();
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
 
@@ -813,8 +810,7 @@ bool RenderSession::UpdateBrightness ( android_vulkan::Renderer &renderer ) noex
         return false;
 
     VkRenderPass renderPass = _presentRenderPass.GetRenderPass ();
-    // FUCK - remove namespace
-    constexpr uint32_t subpass = android::PresentPass::GetSubpass ();
+    constexpr uint32_t subpass = PresentPass::GetSubpass ();
 
     result = _toneMapperPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance ) &&
         _uiPass.SetBrightness ( renderer, renderPass, subpass, _brightnessBalance );

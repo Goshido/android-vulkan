@@ -7,7 +7,7 @@
 
 namespace pbr {
 
-class DummyProgram : public android::GraphicsProgram
+class DummyProgram : public GraphicsProgram
 {
     private:
         std::string_view const      _fragmentShaderSource;

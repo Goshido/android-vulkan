@@ -83,8 +83,7 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
     css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 0U ] );
     css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, topLeft._data[ 1U ] );
 
-    // FUCK - remove namespace
-    pbr::windows::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
+    pbr::DIVUIElement::Rect const &widthRect = widthAnchor.GetAbsoluteRect ();
 
     css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX,
         devicePXtoCSSPX * ( widthRect._bottomRight._data[ 0U ] - widthRect._topLeft._data[ 0U ] )
@@ -195,9 +194,8 @@ void UIComboBox::Popup::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     _isChanged = true;
 }
 
-// FUCK - remove namespace
 Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::windows::FontStorage &fontStorage
+    pbr::FontStorage &fontStorage
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -205,8 +203,7 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    // FUCK - remove namespace
-    pbr::windows::UIElement::ApplyInfo info
+    pbr::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._fontStorage = &fontStorage,
@@ -228,17 +225,14 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
     };
 }
 
-// FUCK - remove namespace
-void UIComboBox::Popup::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
+void UIComboBox::Popup::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     _div.Submit ( info );
 }
 
-// FUCK - remove namespace
-bool UIComboBox::Popup::UpdateCache ( pbr::windows::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UIComboBox::Popup::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
-    // FUCK - remove namespace
-    pbr::windows::UIElement::UpdateInfo info
+    pbr::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,

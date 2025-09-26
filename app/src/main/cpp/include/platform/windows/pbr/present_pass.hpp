@@ -1,6 +1,5 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_PRESENT_PASS_HPP
-#define PBR_WINDOWS_PRESENT_PASS_HPP
+#ifndef PBR_PRESENT_PASS_HPP
+#define PBR_PRESENT_PASS_HPP
 
 
 #include <renderer.hpp>
@@ -12,8 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 class PresentPass final
 {
@@ -149,7 +147,7 @@ class PresentPass final
         ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_PRESENT_PASS_HPP
+#endif // PBR_PRESENT_PASS_HPP

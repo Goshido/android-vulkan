@@ -8,7 +8,7 @@
 
 namespace pbr {
 
-class LightLightupBaseProgram : public android::GraphicsProgram
+class LightLightupBaseProgram : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

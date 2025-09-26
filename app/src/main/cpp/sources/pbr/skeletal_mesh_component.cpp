@@ -103,7 +103,7 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     commandBuffers += consumed;
     fences += consumed;
 
-    MeshRef skinMesh = std::make_shared<android_vulkan::android::MeshGeometry> ();
+    MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
     if ( !skinMesh->LoadMesh ( *_renderer, *commandBuffers, false, *fences, mesh ) ) [[unlikely]]
         return;

@@ -64,11 +64,7 @@ class ReflectionLocalPass final
         ~ReflectionLocalPass () = default;
 
         void Append ( TextureCubeRef &prefilter, GXVec3 const &location, float size ) noexcept;
-
-        void Execute ( VkCommandBuffer commandBuffer,
-            android_vulkan::android::MeshGeometry &unitCube
-        ) noexcept;
-
+        void Execute ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube ) noexcept;
         [[nodiscard]] size_t GetReflectionLocalCount () const noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,

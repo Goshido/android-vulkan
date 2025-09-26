@@ -1,14 +1,14 @@
-#ifndef ANDROID_VULKAN_ANDROID_MESH_GEOMETRY_HPP
-#define ANDROID_VULKAN_ANDROID_MESH_GEOMETRY_HPP
+#ifndef ANDROID_VULKAN_MESH_GEOMETRY_HPP
+#define ANDROID_VULKAN_MESH_GEOMETRY_HPP
 
 
 #include "mesh_buffer_info.hpp"
-#include <mesh_geometry.hpp>
+#include <mesh_geometry_base.hpp>
 
 
-namespace android_vulkan::android {
+namespace android_vulkan {
 
-class MeshGeometry final : public android_vulkan::MeshGeometry
+class MeshGeometry final : public MeshGeometryBase
 {
     private:
         MeshBufferInfo      _meshBufferInfo {};
@@ -38,6 +38,6 @@ class MeshGeometry final : public android_vulkan::MeshGeometry
         [[nodiscard]] VkBuffer &GetDeviceBuffer () noexcept override;
 };
 
-} // namespace android_vulkan::android
+} // namespace android_vulkan
 
-#endif // ANDROID_VULKAN_ANDROID_MESH_GEOMETRY_HPP
+#endif // ANDROID_VULKAN_MESH_GEOMETRY_HPP

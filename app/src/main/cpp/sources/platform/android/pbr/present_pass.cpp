@@ -4,8 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 VkResult PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept
 {
@@ -72,8 +71,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     vkCmdEndRenderPass ( commandBuffer );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        // FUCK - remove namespace
-        "pbr::android::PresentPass::Execute",
+        "pbr::PresentPass::Execute",
         "Can't end command buffer"
     );
 
@@ -90,8 +88,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     auto const submit = [ & ]() noexcept -> bool
     {
         return android_vulkan::Renderer::CheckVkResult ( vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
-            // FUCK - remove namespace
-            "pbr::android::PresentPass::End",
+            "pbr::PresentPass::End",
             "Can't submit command buffer"
         );
     };
@@ -151,8 +148,7 @@ bool PresentPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
 
         bool result = android_vulkan::Renderer::CheckVkResult (
             vkCreateFramebuffer ( device, &framebufferInfo, nullptr, &info._framebuffer ),
-            // FUCK - remove namespace
-            "pbr::android::PresentPass::CreateFramebuffers",
+            "pbr::PresentPass::CreateFramebuffers",
             "Can't create a framebuffer"
         );
 
@@ -163,8 +159,7 @@ bool PresentPass::CreateFramebuffers ( android_vulkan::Renderer &renderer,
 
         result = android_vulkan::Renderer::CheckVkResult (
             vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &info._renderEnd ),
-            // FUCK - remove namespace
-            "pbr::android::PresentPass::CreateFramebuffers",
+            "pbr::PresentPass::CreateFramebuffers",
             "Can't create render target acquired semaphore"
         );
 
@@ -266,8 +261,7 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateRenderPass ( device, &info, nullptr, &_renderInfo.renderPass ),
-        // FUCK - remove namespace
-        "pbr::android::PresentPass::CreateRenderPass",
+        "pbr::PresentPass::CreateRenderPass",
         "Can't create render pass"
     );
 
@@ -278,4 +272,4 @@ bool PresentPass::CreateRenderPass ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-} // namespace pbr::android
+} // namespace pbr

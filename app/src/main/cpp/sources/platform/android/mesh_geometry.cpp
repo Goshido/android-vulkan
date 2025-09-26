@@ -4,7 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-namespace android_vulkan::android {
+namespace android_vulkan {
 
 MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 {
@@ -32,7 +32,7 @@ void MeshGeometry::CommitMeshInfo ( VkDevice /*device*/,
     }
 }
 
-android_vulkan::MeshGeometry::BufferSyncItem const &MeshGeometry::GetBufferSync (
+MeshGeometryBase::BufferSyncItem const &MeshGeometry::GetBufferSync (
     BufferSyncItem::eType type
 ) const noexcept
 {
@@ -77,4 +77,4 @@ VkBuffer &MeshGeometry::GetDeviceBuffer () noexcept
     return _meshBufferInfo._buffer;
 }
 
-} // namespace android_vulkan::android
+} // namespace android_vulkan

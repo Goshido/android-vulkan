@@ -1,6 +1,5 @@
-// FUCK - windows and android separation
-#ifndef PBR_ANDROID_TONE_MAPPER_PASS_HPP
-#define PBR_ANDROID_TONE_MAPPER_PASS_HPP
+#ifndef PBR_TONE_MAPPER_PASS_HPP
+#define PBR_TONE_MAPPER_PASS_HPP
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
@@ -8,8 +7,7 @@
 #include "tone_mapper_program.hpp"
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class ToneMapperPass final
 {
@@ -63,7 +61,7 @@ class ToneMapperPass final
         void UploadGPUData ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_TONE_MAPPER_PASS_HPP
+#endif // PBR_TONE_MAPPER_PASS_HPP

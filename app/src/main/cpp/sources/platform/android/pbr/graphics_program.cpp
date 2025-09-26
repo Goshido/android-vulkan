@@ -2,16 +2,16 @@
 #include <platform/android/pbr/graphics_program.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
 void GraphicsProgram::Destroy ( VkDevice device ) noexcept
 {
-    pbr::GraphicsProgram::Destroy ( device );
+    GraphicsProgramBase::Destroy ( device );
     DestroyShaderModules ( device );
 }
 
 GraphicsProgram::GraphicsProgram ( std::string_view name ) noexcept:
-    pbr::GraphicsProgram ( name )
+    GraphicsProgramBase ( name )
 {
     // NOTHING
 }
@@ -27,4 +27,4 @@ void GraphicsProgram::DestroyShaderModules ( VkDevice device ) noexcept
     }
 }
 
-} // namespace pbr::android
+} // namespace pbr

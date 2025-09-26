@@ -1,12 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <pbr/brightness_factor.inc>
-
-// FUCK - windows and android separation
 #include <platform/android/pbr/tone_mapper_program.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 namespace {
 
@@ -22,14 +19,14 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    android::GraphicsProgram ( "pbr::ToneMapperProgram" )
+    GraphicsProgram ( "pbr::ToneMapperProgram" )
 {
     // NOTHING
 }
 
 void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
 
     _fullScreenTriangleLayout.Destroy ( device );
     _toneMapperLayout.Destroy ( device );
@@ -92,10 +89,7 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer const &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-
-        // FUCK - remove namespace
-        "pbr::android::ToneMapperProgram::Init",
-
+        "pbr::ToneMapperProgram::Init",
         "Can't create pipeline"
     );
 
@@ -248,10 +242,7 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-
-        // FUCK - remove namespace
-        "pbr::android::ToneMapperProgram::InitLayout",
-
+        "pbr::ToneMapperProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
@@ -316,9 +307,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &rendere
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-
-        // FUCK - remove namespace
-        "Can't create vertex shader (pbr::android::ToneMapperProgram)"
+        "Can't create vertex shader (pbr::ToneMapperProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -332,9 +321,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &rendere
 
     result = renderer.CreateShader ( _fragmentShader,
         fs,
-
-        // FUCK - remove namespace
-        "Can't create fragment shader (pbr::android::ToneMapperProgram)"
+        "Can't create fragment shader (pbr::ToneMapperProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -444,4 +431,4 @@ VkPipelineVertexInputStateCreateInfo const* ToneMapperProgram::InitVertexInputIn
     return &info;
 }
 
-} // namespace pbr::android
+} // namespace pbr

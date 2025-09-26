@@ -1,6 +1,5 @@
-// FUCK - rename include guard
-#ifndef PBR_ANDROID_UI_PASS_HPP
-#define PBR_ANDROID_UI_PASS_HPP
+#ifndef PBR_UI_PASS_HPP
+#define PBR_UI_PASS_HPP
 
 
 #include "font_storage.hpp"
@@ -17,8 +16,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class UIPass final
 {
@@ -303,7 +301,7 @@ class UIPass final
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif //  PBR_ANDROID_UI_PASS_HPP
+#endif //  PBR_UI_PASS_HPP

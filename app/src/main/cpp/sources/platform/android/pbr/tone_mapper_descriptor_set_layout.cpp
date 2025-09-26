@@ -4,8 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 namespace {
 
@@ -116,4 +115,4 @@ VkDescriptorSetLayout &ToneMapperDescriptorSetLayout::GetLayout () const noexcep
     return g_descriptorSetLayout._layout;
 }
 
-} // namespace pbr::android
+} // namespace pbr

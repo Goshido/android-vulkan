@@ -1,13 +1,11 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_TEXT_UI_ELEMENT_HPP
-#define PBR_ANDROID_TEXT_UI_ELEMENT_HPP
+#ifndef PBR_TEXT_UI_ELEMENT_HPP
+#define PBR_TEXT_UI_ELEMENT_HPP
 
 
 #include "ui_element.hpp"
 
 
-namespace pbr::android {
+namespace pbr {
 
 class TextUIElement final : public UIElement
 {
@@ -157,7 +155,7 @@ class TextUIElement final : public UIElement
         ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_TEXT_UI_ELEMENT_HPP
+#endif // PBR_TEXT_UI_ELEMENT_HPP

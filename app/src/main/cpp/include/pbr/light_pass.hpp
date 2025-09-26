@@ -15,18 +15,18 @@ namespace pbr {
 class LightPass final
 {
     private:
-        VkCommandPool                               _commandPool = VK_NULL_HANDLE;
-        DummyLightProgram                           _dummyLightProgram {};
-        LightupCommonDescriptorSet                  _lightupCommonDescriptorSet {};
+        VkCommandPool                   _commandPool = VK_NULL_HANDLE;
+        DummyLightProgram               _dummyLightProgram {};
+        LightupCommonDescriptorSet      _lightupCommonDescriptorSet {};
 
-        UMAUniformPool                              _volumeDataPool {};
+        UMAUniformPool                  _volumeDataPool {};
 
-        PointLightPass                              _pointLightPass { _volumeDataPool };
-        ReflectionGlobalPass                        _reflectionGlobalPass {};
-        ReflectionLocalPass                         _reflectionLocalPass { _volumeDataPool };
-        android_vulkan::android::MeshGeometry       _unitCube {};
+        PointLightPass                  _pointLightPass { _volumeDataPool };
+        ReflectionGlobalPass            _reflectionGlobalPass {};
+        ReflectionLocalPass             _reflectionLocalPass { _volumeDataPool };
+        android_vulkan::MeshGeometry    _unitCube {};
 
-        bool                                        _hasWork = false;
+        bool                            _hasWork = false;
 
     public:
         LightPass () = default;

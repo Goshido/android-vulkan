@@ -10,9 +10,7 @@ namespace editor {
 class SetTextEvent final
 {
     private:
-        // FUCK - remove namespace
-        pbr::windows::TextUIElement                             &_element;
-
+        pbr::TextUIElement                             &_element;
         std::variant<std::string_view, std::u32string_view>     _text {};
 
     public:
@@ -28,24 +26,13 @@ class SetTextEvent final
 
         void Execute () noexcept;
 
-        // FUCK - remove namespace
-        [[nodiscard]] static SetTextEvent* Create ( pbr::windows::TextUIElement &element,
-            std::string_view text
-        ) noexcept;
-
-        // FUCK - remove namespace
-        [[nodiscard]] static SetTextEvent* Create ( pbr::windows::TextUIElement &element,
-            std::u32string_view text
-        ) noexcept;
-
+        [[nodiscard]] static SetTextEvent* Create ( pbr::TextUIElement &element, std::string_view text ) noexcept;
+        [[nodiscard]] static SetTextEvent* Create ( pbr::TextUIElement &element, std::u32string_view text ) noexcept;
         static void Destroy ( SetTextEvent &event ) noexcept;
 
     private:
-        // FUCK - remove namespace
-        explicit SetTextEvent ( pbr::windows::TextUIElement &element, std::string_view text ) noexcept;
-
-        // FUCK - remove namespace
-        explicit SetTextEvent ( pbr::windows::TextUIElement &element, std::u32string_view text ) noexcept;
+        explicit SetTextEvent ( pbr::TextUIElement &element, std::string_view text ) noexcept;
+        explicit SetTextEvent ( pbr::TextUIElement &element, std::u32string_view text ) noexcept;
 };
 
 } // namespace editor

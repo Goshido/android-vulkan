@@ -19,7 +19,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 HelloTriangleProgram::HelloTriangleProgram () noexcept:
-    pbr::windows::GraphicsProgram ( "editor::HelloTriangleProgram", sizeof ( PushConstants ) )
+    pbr::GraphicsProgram ( "editor::HelloTriangleProgram", sizeof ( PushConstants ) )
 {
     // NOTHING
 }

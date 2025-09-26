@@ -4,7 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -104,7 +104,7 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::windows::ResourceHeapDescriptorSetLayoutEXT::Init",
+        "pbr::ResourceHeapDescriptorSetLayoutEXT::Init",
         "Can't create descriptor set layout"
     );
 
@@ -148,4 +148,4 @@ void ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( uint32_t capacity
     _resourceCapacity = capacity;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

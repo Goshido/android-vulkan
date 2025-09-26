@@ -37,8 +37,7 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-// FUCK - remove namespace
-UIProps::UIProps ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept:
+UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
 
     _headerLine ( messageQueue,
@@ -211,8 +210,7 @@ void UIProps::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     UIDialogBox::OnMouseMove ( event );
 }
 
-// FUCK - remove namespace
-void UIProps::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
+void UIProps::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();

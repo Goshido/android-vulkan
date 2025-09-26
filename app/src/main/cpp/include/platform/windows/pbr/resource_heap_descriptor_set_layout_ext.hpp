@@ -1,12 +1,11 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP
-#define PBR_WINDOWS_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP
+#ifndef PBR_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP
+#define PBR_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP
 
 
 #include <pbr/descriptor_set_layout.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
 class ResourceHeapDescriptorSetLayoutEXT final : public pbr::DescriptorSetLayout
 {
@@ -34,7 +33,7 @@ class ResourceHeapDescriptorSetLayoutEXT final : public pbr::DescriptorSetLayout
         static void SetResourceCapacity ( uint32_t capacity ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP
+#endif // PBR_RESOURCE_HEAP_DESCRIPTOR_SET_LAYOUT_EXT_HPP

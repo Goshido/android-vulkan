@@ -2,9 +2,7 @@
 #define PBR_SCRIPTABLE_TEXT_UI_ELEMENT_HPP
 
 
-// FUCK - remove namespace
 #include <platform/android/pbr/text_ui_element.hpp>
-
 #include "scriptable_ui_element.hpp"
 
 
@@ -13,8 +11,7 @@ namespace pbr {
 class ScriptableTextUIElement final : public ScriptableUIElement
 {
     private:
-        // FUCK - remove namespace
-        android::TextUIElement      _text;
+        TextUIElement       _text;
 
     public:
         ScriptableTextUIElement () = delete;
@@ -26,10 +23,7 @@ class ScriptableTextUIElement final : public ScriptableUIElement
         ScriptableTextUIElement &operator = ( ScriptableTextUIElement && ) = delete;
 
         explicit ScriptableTextUIElement ( bool &success,
-
-            // FUCK - remove namespace
-            android::UIElement const* parent,
-
+            UIElement const* parent,
             lua_State &vm,
             int errorHandlerIdx,
             std::u32string &&text
@@ -37,9 +31,8 @@ class ScriptableTextUIElement final : public ScriptableUIElement
 
         ~ScriptableTextUIElement () override = default;
 
-        // FUCK - remove namespace
-        [[nodiscard]] android::UIElement &GetElement () noexcept override;
-        [[nodiscard]] android::UIElement const &GetElement () const noexcept override;
+        [[nodiscard]] UIElement &GetElement () noexcept override;
+        [[nodiscard]] UIElement const &GetElement () const noexcept override;
 
         static void Init ( lua_State &vm ) noexcept;
 

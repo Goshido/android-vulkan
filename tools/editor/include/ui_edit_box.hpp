@@ -34,42 +34,41 @@ class UIEditBox final : public Widget
         };
 
     private:
-        std::string                                 _committed {};
-        std::u32string                              _content {};
+        std::string                         _committed {};
+        std::u32string                      _content {};
 
-        // FUCK - remove namespace
-        pbr::windows::FontStorage::StringMetrics    _metrics {};
-        pbr::windows::FontStorage                   &_fontStorage;
+        pbr::FontStorage::StringMetrics     _metrics {};
+        pbr::FontStorage                    &_fontStorage;
 
-        DIVUIElement                                _lineDIV;
-        DIVUIElement                                _columnDIV;
+        DIVUIElement                        _lineDIV;
+        DIVUIElement                        _columnDIV;
 
-        DIVUIElement                                _captionDIV;
-        TextUIElement                               _captionText;
+        DIVUIElement                        _captionDIV;
+        TextUIElement                       _captionText;
 
-        DIVUIElement                                _valueDIV;
+        DIVUIElement                        _valueDIV;
 
-        DIVUIElement                                _cursorDIV;
-        DIVUIElement                                _selectionDIV;
+        DIVUIElement                        _cursorDIV;
+        DIVUIElement                        _selectionDIV;
 
-        DIVUIElement                                _textDIV;
-        TextUIElement                               _text;
+        DIVUIElement                        _textDIV;
+        TextUIElement                       _text;
 
         // rule: index before symbol
-        int32_t                                     _cursor = 0;
-        int32_t                                     _selection = 0;
-        bool                                        _leftMouseButtonPressed = false;
+        int32_t                             _cursor = 0;
+        int32_t                             _selection = 0;
+        bool                                _leftMouseButtonPressed = false;
 
-        size_t                                      _eventID = 0U;
-        MouseButtonHandler                          _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
-        MouseButtonHandler                          _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
-        MouseButtonHandler                          _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
-        MouseLeaveHandler                           _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
-        MouseMoveHandler                            _onMouseMove = &UIEditBox::OnMouseMoveNormal;
-        UpdateRectHandler                           _updateRect = &UIEditBox::UpdatedRectNormal;
+        size_t                              _eventID = 0U;
+        MouseButtonHandler                  _onDoubleClick = &UIEditBox::OnDoubleClickNormal;
+        MouseButtonHandler                  _onMouseKeyDown = &UIEditBox::OnMouseButtonDownNormal;
+        MouseButtonHandler                  _onMouseKeyUp = &UIEditBox::OnMouseButtonUpNormal;
+        MouseLeaveHandler                   _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
+        MouseMoveHandler                    _onMouseMove = &UIEditBox::OnMouseMoveNormal;
+        UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
 
-        std::unique_ptr<Timer>                      _blink {};
-        Callback                                    _callback {};
+        std::unique_ptr<Timer>              _blink {};
+        Callback                            _callback {};
 
     public:
         UIEditBox () = delete;
@@ -82,10 +81,7 @@ class UIEditBox final : public Widget
 
         explicit UIEditBox ( MessageQueue &messageQueue,
             DIVUIElement &parent,
-
-            // FUCK - remove namespace
-            pbr::windows::FontStorage &fontStorage,
-
+            pbr::FontStorage &fontStorage,
             std::string_view caption,
             std::string_view value,
             std::string &&name

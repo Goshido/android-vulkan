@@ -1,9 +1,8 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_GRAPHICS_PROGRAM_HPP
-#define PBR_WINDOWS_GRAPHICS_PROGRAM_HPP
+#ifndef PBR_GRAPHICS_PROGRAM_HPP
+#define PBR_GRAPHICS_PROGRAM_HPP
 
 
-#include <pbr/graphics_program.hpp>
+#include <pbr/graphics_program_base.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,10 +11,9 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
-class GraphicsProgram : public pbr::GraphicsProgram
+class GraphicsProgram : public GraphicsProgramBase
 {
     private:
         uint32_t    _pushConstantSize = 0U;
@@ -58,7 +56,7 @@ class GraphicsProgram : public pbr::GraphicsProgram
         [[nodiscard]] static VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo () noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_GRAPHICS_PROGRAM_HPP
+#endif // PBR_GRAPHICS_PROGRAM_HPP

@@ -27,7 +27,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
     app/src/main/cpp/sources/memory_allocator.cpp
-    app/src/main/cpp/sources/mesh_geometry.cpp
+    app/src/main/cpp/sources/mesh_geometry_base.cpp
     app/src/main/cpp/sources/pcm_streamer.cpp
     app/src/main/cpp/sources/pcm_streamer_ogg.cpp
     app/src/main/cpp/sources/pcm_streamer_wav.cpp
@@ -75,7 +75,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/color_value.cpp
     app/src/main/cpp/sources/pbr/common_css_rule.cpp
     app/src/main/cpp/sources/pbr/component.cpp
-    app/src/main/cpp/sources/pbr/compute_program.cpp
+    app/src/main/cpp/sources/pbr/compute_program_base.cpp
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
@@ -102,7 +102,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/geometry_pass_texture_descriptor_set_layout.cpp
     app/src/main/cpp/sources/pbr/geometry_pool.cpp
     app/src/main/cpp/sources/pbr/geometry_subpass_base.cpp
-    app/src/main/cpp/sources/pbr/graphics_program.cpp
+    app/src/main/cpp/sources/pbr/graphics_program_base.cpp
     app/src/main/cpp/sources/pbr/href_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/html5_element.cpp
     app/src/main/cpp/sources/pbr/html5_parser.cpp

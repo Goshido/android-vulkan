@@ -20,11 +20,11 @@ namespace pbr {
 class MeshManager final
 {
     private:
-        std::unordered_map<std::string_view, MeshRef>           _meshStorage {};
-        std::deque<android_vulkan::android::MeshGeometry*>      _toFreeTransferResource {};
+        std::unordered_map<std::string_view, MeshRef>       _meshStorage {};
+        std::deque<android_vulkan::MeshGeometry*>           _toFreeTransferResource {};
 
-        static MeshManager*                                     _instance;
-        static std::mutex                                       _mutex;
+        static MeshManager*                                 _instance;
+        static std::mutex                                   _mutex;
 
     public:
         MeshManager ( MeshManager const & ) = delete;

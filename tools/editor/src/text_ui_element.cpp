@@ -11,9 +11,7 @@ TextUIElement::TextUIElement ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     UIElement ( messageQueue ),
-
-    // FUCK - remove namespace
-    _text ( new pbr::windows::TextUIElement ( true, &parent.GetNativeElement (), text, std::move ( name ) ) )
+    _text ( new pbr::TextUIElement ( true, &parent.GetNativeElement (), text, std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -29,8 +27,7 @@ TextUIElement::~TextUIElement () noexcept
     );
 }
 
-// FUCK - remove namespace
-pbr::windows::UIElement &TextUIElement::GetNativeElement () noexcept
+pbr::UIElement &TextUIElement::GetNativeElement () noexcept
 {
     return *_text;
 }

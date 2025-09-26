@@ -97,7 +97,7 @@ constexpr char const INDENT_2[] = "        ";
 void Renderer::MakeVulkanMemorySnapshot () noexcept
 {
     AV_TRACE ( "Vulkan memory snapshot" )
-    _memoryAllocator.MakeSnapshot ( android::Core::GetCacheDirectory ().c_str () );
+    _memoryAllocator.MakeSnapshot ( Core::GetCacheDirectory ().c_str () );
 }
 
 bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept

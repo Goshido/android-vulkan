@@ -24,10 +24,7 @@ constexpr char32_t CTRL_X = 0x18;
 
 UIEditBox::UIEditBox ( MessageQueue &messageQueue,
     DIVUIElement &parent,
-
-    // FUCK - remove namespace
-    pbr::windows::FontStorage &fontStorage,
-
+    pbr::FontStorage &fontStorage,
     std::string_view caption,
     std::string_view value,
     std::string &&name

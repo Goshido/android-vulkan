@@ -1,13 +1,11 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_IMAGE_UI_ELEMENT_HPP
-#define PBR_ANDROID_IMAGE_UI_ELEMENT_HPP
+#ifndef PBR_IMAGE_UI_ELEMENT_HPP
+#define PBR_IMAGE_UI_ELEMENT_HPP
 
 
 #include "ui_element.hpp"
 
 
-namespace pbr::android {
+namespace pbr {
 
 class ImageUIElement final : public UIElement
 {
@@ -88,7 +86,7 @@ class ImageUIElement final : public UIElement
         [[nodiscard]] GXVec2 ResolveSizeByHeight ( float parentHeight ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_IMAGE_UI_ELEMENT_HPP
+#endif // PBR_IMAGE_UI_ELEMENT_HPP

@@ -2,7 +2,7 @@
 #include <platform/windows/pbr/compute_program.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
 VkPipelineLayout ComputeProgram::GetPipelineLayout () const noexcept
 {
@@ -10,9 +10,9 @@ VkPipelineLayout ComputeProgram::GetPipelineLayout () const noexcept
 }
 
 ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    pbr::ComputeProgram ( name, pushConstantSize )
+    ComputeProgramBase ( name, pushConstantSize )
 {
     // NOTHING
 }
 
-} // namespace pbr::windows
+} // namespace pbr

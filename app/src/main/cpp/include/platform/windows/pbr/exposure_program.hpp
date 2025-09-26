@@ -1,17 +1,13 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_WINDOWS_EXPOSURE_PROGRAM_HPP
-#define PBR_WINDOWS_EXPOSURE_PROGRAM_HPP
+#ifndef PBR_EXPOSURE_PROGRAM_HPP
+#define PBR_EXPOSURE_PROGRAM_HPP
 
 
 #include "compute_program.hpp"
 #include "resource_heap_descriptor_set_layout.hpp"
-//#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 class ExposureProgram final : public ComputeProgram
 {
@@ -20,23 +16,22 @@ class ExposureProgram final : public ComputeProgram
 
         struct PushConstants final
         {
-            [[maybe_unused]] uint32_t           _hdrImage;
-            [[maybe_unused]] uint32_t           _syncMip5;
-            [[maybe_unused]] uint32_t           _exposure;
-            [[maybe_unused]] uint32_t           _globalAtomic;
-            [[maybe_unused]] uint32_t           _temporalLuma;
+            [[maybe_unused]] uint32_t       _hdrImage;
+            [[maybe_unused]] uint32_t       _syncMip5;
+            [[maybe_unused]] uint32_t       _exposure;
+            [[maybe_unused]] uint32_t       _globalAtomic;
+            [[maybe_unused]] uint32_t       _temporalLuma;
 
-            [[maybe_unused]] float              _exposureCompensation;
-            [[maybe_unused]] float              _eyeAdaptation;
-            [[maybe_unused]] float              _maxLuma;
-            [[maybe_unused]] float              _minLuma;
+            [[maybe_unused]] float          _exposureCompensation;
+            [[maybe_unused]] float          _eyeAdaptation;
+            [[maybe_unused]] float          _maxLuma;
+            [[maybe_unused]] float          _minLuma;
         };
 
         AV_DX_ALIGNMENT_END
 
     private:
-        ResourceHeapDescriptorSetLayout         _layout {};
-        //ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
+        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit ExposureProgram () noexcept;
@@ -64,7 +59,7 @@ class ExposureProgram final : public ComputeProgram
         ) noexcept override;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_EXPOSURE_PROGRAM_HPP
+#endif // PBR_EXPOSURE_PROGRAM_HPP

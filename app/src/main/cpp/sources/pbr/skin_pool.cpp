@@ -196,7 +196,7 @@ void SkinPool::Destroy ( VkDevice device ) noexcept
 
 void SkinPool::Push ( android_vulkan::BufferInfo const &pose,
     android_vulkan::BufferInfo const &skin,
-    android_vulkan::android::MeshBufferInfo const &referenceMesh,
+    android_vulkan::MeshBufferInfo const &referenceMesh,
     VkBuffer skinMeshBuffer
 ) noexcept
 {

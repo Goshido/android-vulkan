@@ -9,8 +9,7 @@
 
 namespace editor {
 
-// FUCK - remove namespace
-UIManager::UIManager ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept:
+UIManager::UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
     _fontStorage ( fontStorage ),
     _messageQueue ( messageQueue )
 {
@@ -39,8 +38,7 @@ void UIManager::Destroy () noexcept
     }
 }
 
-// FUCK - remove namespace
-void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept
+void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
     AV_TRACE ( "Compute UI layout" )
 
@@ -63,8 +61,7 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::windows
     }
 }
 
-// FUCK - remove namespace
-void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept
+void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
     if ( !_neededUIVertices )
         return;
@@ -79,8 +76,7 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPas
     if ( !_needRefill )
         return;
 
-    // FUCK - remove namespace
-    pbr::windows::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( _neededUIVertices );
+    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( _neededUIVertices );
 
     if ( !response )
     {
@@ -88,7 +84,7 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPas
         return;
     }
 
-    pbr::windows::UIElement::SubmitInfo info
+    pbr::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
         ._uiVertexBuffer = *response

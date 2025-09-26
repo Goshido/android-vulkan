@@ -12,7 +12,7 @@
 
 namespace pbr {
 
-class GeometryPassProgram : public android::GraphicsProgram
+class GeometryPassProgram : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

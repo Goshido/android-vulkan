@@ -70,7 +70,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 isUniformBind = true;
             }
 
-            android_vulkan::android::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
             VkBuffer buffer = info._buffer;
             VkBuffer const vertexBuffers[] = { buffer, buffer };
 

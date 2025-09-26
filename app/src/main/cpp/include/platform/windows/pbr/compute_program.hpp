@@ -1,15 +1,14 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_COMPUTE_PROGRAM_HPP
-#define PBR_WINDOWS_COMPUTE_PROGRAM_HPP
+#ifndef PBR_COMPUTE_PROGRAM_HPP
+#define PBR_COMPUTE_PROGRAM_HPP
 
 
-#include <pbr/compute_program.hpp>
+#include <pbr/compute_program_base.hpp>
 #include <renderer.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
-class ComputeProgram : public pbr::ComputeProgram
+class ComputeProgram : public ComputeProgramBase
 {
     public:
         ComputeProgram () = delete;
@@ -36,7 +35,7 @@ class ComputeProgram : public pbr::ComputeProgram
         ) noexcept = 0;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_COMPUTE_PROGRAM_HPP
+#endif // PBR_COMPUTE_PROGRAM_HPP

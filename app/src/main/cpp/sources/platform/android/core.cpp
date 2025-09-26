@@ -17,7 +17,7 @@
 #include <rotating_mesh/game_lut.hpp>
 
 
-namespace android_vulkan::android {
+namespace android_vulkan {
 
 namespace {
 
@@ -67,7 +67,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     InitCommandHandlers ();
 
-    static std::map<android_vulkan::android::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    static std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
     {
         { eGame::CharacterSandbox, std::make_shared<pbr::UniversalGame> ( "pbr/assets/character-sandbox.scene" ) },
         { eGame::Collision, std::make_shared<pbr::collision::Collision> () },
@@ -465,4 +465,4 @@ JNIEXPORT void Java_com_goshidoInc_androidVulkan_Activity_doSurfaceDestroyed ( J
 
 } // extern "C"
 
-} // namespace android_vulkan::android
+} // namespace android_vulkan

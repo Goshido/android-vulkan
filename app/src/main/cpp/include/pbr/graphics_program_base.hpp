@@ -1,5 +1,5 @@
-#ifndef PBR_GRAPHICS_PROGRAM_HPP
-#define PBR_GRAPHICS_PROGRAM_HPP
+#ifndef PBR_GRAPHICS_PROGRAM_BASE_HPP
+#define PBR_GRAPHICS_PROGRAM_BASE_HPP
 
 
 #include <GXCommon/GXWarning.hpp>
@@ -19,7 +19,7 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class GraphicsProgram
+class GraphicsProgramBase
 {
     protected:
         using SpecializationData = void const*;
@@ -30,13 +30,13 @@ class GraphicsProgram
         VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
 
     public:
-        GraphicsProgram () = delete;
+        GraphicsProgramBase () = delete;
 
-        GraphicsProgram ( GraphicsProgram const & ) = delete;
-        GraphicsProgram &operator = ( GraphicsProgram const & ) = delete;
+        GraphicsProgramBase ( GraphicsProgramBase const & ) = delete;
+        GraphicsProgramBase &operator = ( GraphicsProgramBase const & ) = delete;
 
-        GraphicsProgram ( GraphicsProgram && ) = delete;
-        GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
+        GraphicsProgramBase ( GraphicsProgramBase && ) = delete;
+        GraphicsProgramBase &operator = ( GraphicsProgramBase && ) = delete;
 
         // Successor classes MUST call this method.
         virtual void Destroy ( VkDevice device ) noexcept;
@@ -45,8 +45,8 @@ class GraphicsProgram
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
     protected:
-        explicit GraphicsProgram ( std::string_view name ) noexcept;
-        virtual ~GraphicsProgram () = default;
+        explicit GraphicsProgramBase ( std::string_view name ) noexcept;
+        virtual ~GraphicsProgramBase () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
             VkPipelineColorBlendStateCreateInfo &info,
@@ -86,4 +86,4 @@ class GraphicsProgram
 } // namespace pbr
 
 
-#endif // PBR_GRAPHICS_PROGRAM_HPP
+#endif // PBR_GRAPHICS_PROGRAM_BASE_HPP

@@ -4,8 +4,7 @@
 #include <pbr/brightness_factor.inc>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -21,14 +20,14 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    windows::GraphicsProgram ( "UI", sizeof ( PushConstants ) )
+    GraphicsProgram ( "UI", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
 
 void UIProgram::Destroy ( VkDevice device ) noexcept
 {
-    windows::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 
@@ -106,10 +105,7 @@ bool UIProgram::Init ( VkDevice device,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIProgram::Init",
-
+        "pbr::UIProgram::Init",
         "Can't create pipeline"
     );
 
@@ -249,7 +245,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::windows::UIProgram::InitLayout",
+        "pbr::UIProgram::InitLayout",
         "Can't create pipeline layout"
     );
 

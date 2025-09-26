@@ -13,8 +13,7 @@ namespace pbr {
 class ScriptableImageUIElement final : public ScriptableUIElement
 {
     private:
-        // FUCK - remove namespace
-        android::ImageUIElement     _image;
+        ImageUIElement      _image;
 
     public:
         ScriptableImageUIElement () = delete;
@@ -26,10 +25,7 @@ class ScriptableImageUIElement final : public ScriptableUIElement
         ScriptableImageUIElement &operator = ( ScriptableImageUIElement && ) = delete;
 
         explicit ScriptableImageUIElement ( bool &success,
-
-            // FUCK - remove namespace
-            android::UIElement const* parent,
-
+            UIElement const* parent,
             lua_State &vm,
             int errorHandlerIdx,
             std::string &&asset,
@@ -38,9 +34,8 @@ class ScriptableImageUIElement final : public ScriptableUIElement
 
         ~ScriptableImageUIElement () override = default;
 
-        // FUCK - remove namespace
-        [[nodiscard]] android::UIElement &GetElement () noexcept override;
-        [[nodiscard]] android::UIElement const &GetElement () const noexcept override;
+        [[nodiscard]] UIElement &GetElement () noexcept override;
+        [[nodiscard]] UIElement const &GetElement () const noexcept override;
 };
 
 } // namespace pbr

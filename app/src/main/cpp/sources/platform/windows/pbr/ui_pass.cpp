@@ -2,11 +2,11 @@
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
+#include <texture2D.hpp>
 #include <trace.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -205,10 +205,7 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ImageStorage::OnInitDevice",
-
+        "pbr::ImageStorage::OnInitDevice",
         "Can't create command pool"
     );
 
@@ -223,8 +220,7 @@ void ImageStorage::OnDestroyDevice ( ) noexcept
 {
     if ( !_assets.empty () ) [[unlikely]]
     {
-        // FUCK - remove namespace
-        android_vulkan::LogWarning ( "pbr::windows::ImageStorage::OnDestroyDevice - Memory leak." );
+        android_vulkan::LogWarning ( "pbr::ImageStorage::OnDestroyDevice - Memory leak." );
         AV_ASSERT ( false )
     }
 
@@ -269,10 +265,7 @@ bool ImageStorage::SyncGPU () noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't wait fence"
     );
 
@@ -280,10 +273,7 @@ bool ImageStorage::SyncGPU () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't reset fence"
     );
 
@@ -292,10 +282,7 @@ bool ImageStorage::SyncGPU () noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkResetCommandPool ( device, _commandPool, 0U ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't reset command pool"
     );
 
@@ -337,10 +324,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ImageStorage::AllocateCommandBuffers",
-
+        "pbr::ImageStorage::AllocateCommandBuffers",
         "Can't allocate command buffer"
     );
 
@@ -361,10 +345,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
     for ( size_t i = current; i < size; ++i )
     {
         result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-        
-            // FUCK - remove namespace
-            "pbr::windows::ImageStorage::AllocateCommandBuffers",
-
+            "pbr::ImageStorage::AllocateCommandBuffers",
             "Can't create fence"
         );
 
@@ -413,10 +394,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::Init",
-
+        "pbr::UIPass::Init",
         ( std::string ( "Can't create buffer: " ) + _name ).c_str ()
     );
 
@@ -439,10 +417,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-
-        // FUCK - remove namespace
-        "pbr::windows::UIPass::Init",
-
+        "pbr::UIPass::Init",
         ( std::string ( "Can't bind memory: " ) + _name ).c_str ()
     );
 }
@@ -479,10 +454,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer ) noexcept
         renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
             _staging._memory,
             _staging._memoryOffset,
-
-            // FUCK - remove namespace
-            "pbr::windows::UIPass::BufferStream::Init",
-
+            "pbr::UIPass::BufferStream::Init",
             "Can't map memory"
         ) &&
 
@@ -645,8 +617,7 @@ UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
     ImageStorage::SetResourceHeap ( resourceHeap );
 }
 
-// FUCK - remove maybe_unused
-bool UIPass::Execute ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
 {
     AV_TRACE ( "UI pass: Execute" )
     AV_VULKAN_GROUP ( commandBuffer, "UI" )
@@ -773,9 +744,8 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     if ( neededVertices > MAX_VERTICES ) [[unlikely]]
     {
-        // FUCK - remove namespace
         android_vulkan::LogWarning (
-            "pbr::windows::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
+            "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
             neededVertices,
             GetVerticesPerRectangle ()
         );
@@ -1084,4 +1054,4 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
     _isTransformChanged = false;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

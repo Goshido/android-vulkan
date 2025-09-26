@@ -51,7 +51,7 @@ GeometryPassProgram::ColorData::ColorData ( GXColorUNORM color0,
 
 void GeometryPassProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
 
     _samplerLayout.Destroy ( device );
     _textureLayout.Destroy ( device );

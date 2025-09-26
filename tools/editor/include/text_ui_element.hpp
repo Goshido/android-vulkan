@@ -11,8 +11,7 @@ namespace editor {
 class TextUIElement final : public UIElement
 {
     private:
-        // FUCK - remove namespace
-        pbr::windows::TextUIElement*    _text = nullptr;
+        pbr::TextUIElement*    _text = nullptr;
 
     public:
         TextUIElement () = delete;
@@ -31,8 +30,7 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () noexcept override;
 
-        // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::UIElement &GetNativeElement () noexcept override;
+        [[nodiscard]] pbr::UIElement &GetNativeElement () noexcept override;
 
         void SetColor ( pbr::ColorValue const &color ) noexcept;
         void SetText ( std::string_view text ) noexcept;

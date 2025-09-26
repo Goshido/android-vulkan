@@ -55,8 +55,7 @@ class RenderSession final
 
         DefaultTextureManager       _defaultTextureManager {};
 
-        // FUCK - remove namespace
-        android::ExposurePass       _exposurePass {};
+        ExposurePass                _exposurePass {};
 
         GXProjectionClipPlanes      _frustum {};
 
@@ -69,16 +68,14 @@ class RenderSession final
         MeshHandler                 _meshHandlers[ 2U ] {};
         size_t                      _opaqueMeshCount = 0U;
 
-        // FUCK - remove namespace
-        android::PresentPass        _presentRenderPass {};
+        PresentPass                 _presentRenderPass {};
 
         VkRenderPassBeginInfo       _renderPassInfo {};
         RenderSessionStats          _renderSessionStats {};
         SamplerManager              _samplerManager {};
 
-        // FUCK - remove namespace
-        android::ToneMapperPass     _toneMapperPass {};
-        android::UIPass             _uiPass {};
+        ToneMapperPass              _toneMapperPass {};
+        UIPass                      _uiPass {};
 
     public:
         RenderSession () = default;
@@ -95,10 +92,7 @@ class RenderSession final
         [[nodiscard]] bool End ( android_vulkan::Renderer &renderer, double deltaTime ) noexcept;
 
         void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-
-        // FUCK - remove namespace
-        [[nodiscard]] android::UIPass &GetUIPass () noexcept;
-
+        [[nodiscard]] UIPass &GetUIPass () noexcept;
         [[nodiscard]] size_t GetWritingCommandBufferIndex () const noexcept;
 
         [[nodiscard]] bool OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept;

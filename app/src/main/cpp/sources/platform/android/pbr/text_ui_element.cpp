@@ -1,5 +1,3 @@
-// FUCK - windows and android separation
-
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
@@ -8,7 +6,7 @@
 #include <platform/android/pbr/text_ui_element.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
 void TextUIElement::ApplyLayoutCache::Clear () noexcept
 {
@@ -644,8 +642,7 @@ GXColorUNORM TextUIElement::ResolveColor () const noexcept
         }
     }
 
-    // FUCK - remove namespace
-    android_vulkan::LogError ( "pbr::android::TextUIElement::ResolveColor - No color was found!" );
+    android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
     constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
@@ -679,4 +676,4 @@ int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen,
     return pen + parentSize - lineSize - halfLeading;
 }
 
-} // namespace pbr::android
+} // namespace pbr

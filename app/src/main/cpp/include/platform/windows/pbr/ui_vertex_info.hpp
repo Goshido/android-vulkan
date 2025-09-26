@@ -1,6 +1,5 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_UI_VERTEX_INFO_HPP
-#define PBR_WINDOWS_UI_VERTEX_INFO_HPP
+#ifndef PBR_UI_VERTEX_INFO_HPP
+#define PBR_UI_VERTEX_INFO_HPP
 
 
 #include <half_types.hpp>
@@ -14,7 +13,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr::windows {
+namespace pbr {
 
 // [2025/09/25] The whole UI vertex is described by 18 bytes. There is no way to read float32_t from offset
 // non multiple of 4. So it's needed to use SoA pattern. One example where flexible vertex pulling is worse
@@ -46,7 +45,7 @@ struct UIBufferStreams final
     UIVertexBufferStream1       _stream1 {};
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_UI_VERTEX_INFO_HPP
+#endif // PBR_UI_VERTEX_INFO_HPP

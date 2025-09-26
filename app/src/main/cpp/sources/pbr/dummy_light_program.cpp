@@ -26,7 +26,7 @@ DummyLightProgram::DummyLightProgram () noexcept:
 
 void DummyLightProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 

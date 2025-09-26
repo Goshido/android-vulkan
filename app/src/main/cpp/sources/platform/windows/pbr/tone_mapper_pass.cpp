@@ -4,8 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 void ToneMapperPass::Destroy ( VkDevice device ) noexcept
 {
@@ -58,4 +57,4 @@ void ToneMapperPass::UpdateTransform ( android_vulkan::Renderer const &renderer 
     _pushConstants._transformRow1 = *reinterpret_cast<GXVec2 const*> ( orientation._data[ 1U ] );
 }
 
-} // namespace pbr::windows
+} // namespace pbr

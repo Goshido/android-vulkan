@@ -4,8 +4,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 VkResult PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer, VkSemaphore acquire ) noexcept
 {
@@ -54,8 +53,7 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 
         bool const result = android_vulkan::Renderer::CheckVkResult (
             vkCreateSemaphore ( device, &semaphoreInfo, nullptr, &semaphore ),
-            // FUCK - remove namespace
-            "pbr::windows::PresentPass::OnSwapchainCreated",
+            "pbr::PresentPass::OnSwapchainCreated",
             "Can't create render target acquired semaphore"
         );
 
@@ -120,8 +118,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        // FUCK - remove namespace
-        "pbr::windows::PresentPass::Execute",
+        "pbr::PresentPass::Execute",
         "Can't end command buffer"
     );
 
@@ -138,8 +135,7 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     auto const submit = [ & ]() noexcept -> bool
     {
         return android_vulkan::Renderer::CheckVkResult ( vkQueueSubmit ( queue, 1U, &_submitInfo, fence ),
-            // FUCK - remove namespace
-            "pbr::windows::PresentPass::End",
+            "pbr::PresentPass::End",
             "Can't submit command buffer"
         );
     };
@@ -163,4 +159,4 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     return std::optional<VkResult> { vkQueuePresentKHR ( queue, &_presentInfo ) };
 }
 
-} // namespace pbr::windows
+} // namespace pbr

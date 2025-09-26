@@ -5,9 +5,7 @@
 namespace editor {
 
 // FUCK - remove namespace
-PrependUIChildElementEvent::PrependUIChildElementEvent ( pbr::windows::DIVUIElement &parent,
-    pbr::windows::UIElement &element
-) noexcept:
+PrependUIChildElementEvent::PrependUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element ) noexcept:
     _element ( element ),
     _parent ( parent )
 {

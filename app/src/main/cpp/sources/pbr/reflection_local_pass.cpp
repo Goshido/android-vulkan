@@ -27,9 +27,7 @@ void ReflectionLocalPass::Append ( TextureCubeRef &prefilter, GXVec3 const &loca
     _calls.emplace_back ( location, prefilter, size );
 }
 
-void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer,
-    android_vulkan::android::MeshGeometry &unitCube
-) noexcept
+void ReflectionLocalPass::Execute ( VkCommandBuffer commandBuffer, android_vulkan::MeshGeometry &unitCube ) noexcept
 {
     if ( !_itemWritten )
         return;

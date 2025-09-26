@@ -22,15 +22,14 @@ constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 class HelloTriangleJob final
 {
     public:
-        // FUCK - remove namespace
-        std::unique_ptr<android_vulkan::windows::MeshGeometry>      _geometry {};
+        std::unique_ptr<android_vulkan::MeshGeometry>       _geometry {};
 
-        std::unique_ptr<HelloTriangleProgram>                       _program {};
+        std::unique_ptr<HelloTriangleProgram>               _program {};
 
     private:
-        VkCommandPool                                               _commandPool = VK_NULL_HANDLE;
-        VkFence                                                     _complete = VK_NULL_HANDLE;
-        android_vulkan::Renderer                                    &_renderer;
+        VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
+        VkFence                                             _complete = VK_NULL_HANDLE;
+        android_vulkan::Renderer                            &_renderer;
 
     public:
         HelloTriangleJob () = delete;
@@ -174,7 +173,7 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
             }
         };
 
-        _geometry = std::make_unique<android_vulkan::windows::MeshGeometry> ();
+        _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
 
         result = _geometry->LoadMesh ( _renderer,
             commandBuffer,
@@ -319,8 +318,7 @@ void RenderSession::Destroy () noexcept
     }
 }
 
-// FUCK - remove namespace
-pbr::windows::FontStorage& RenderSession::GetFontStorage () noexcept
+pbr::FontStorage& RenderSession::GetFontStorage () noexcept
 {
     return _uiPass.GetFontStorage ();
 }
@@ -738,7 +736,7 @@ void RenderSession::OnRenderFrame () noexcept
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
     android_vulkan::Renderer &renderer = _renderer;
-    pbr::windows::ResourceHeap &resourceHeap = _resourceHeap;
+    pbr::ResourceHeap &resourceHeap = _resourceHeap;
     _uiManager.ComputeLayout ( renderer, _uiPass );
 
     VkDevice device = renderer.GetDevice ();
@@ -1108,8 +1106,7 @@ void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
     AV_TRACE ( "UI delete element" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - remove namespace
-    delete static_cast<pbr::windows::UIElement*> ( message._params );
+    delete static_cast<pbr::UIElement*> ( message._params );
     --_uiElements;
 }
 
@@ -1125,8 +1122,7 @@ void RenderSession::OnUIHideElement ( Message &&message ) noexcept
     AV_TRACE ( "UI hide element" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - remove namespace
-    static_cast<pbr::windows::UIElement*> ( message._params )->Hide ();
+    static_cast<pbr::UIElement*> ( message._params )->Hide ();
 }
 
 void RenderSession::OnUIShowElement ( Message &&message ) noexcept
@@ -1134,8 +1130,7 @@ void RenderSession::OnUIShowElement ( Message &&message ) noexcept
     AV_TRACE ( "UI show element" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - remove namespace
-    static_cast<pbr::windows::UIElement*> ( message._params )->Show ();
+    static_cast<pbr::UIElement*> ( message._params )->Show ();
 }
 
 void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
@@ -1163,8 +1158,7 @@ void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
     AV_TRACE ( "UI update element" )
     _messageQueue.DequeueEnd ();
 
-    // FUCK - remove namespace
-    static_cast<pbr::windows::DIVUIElement*> ( message._params )->Update ();
+    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept

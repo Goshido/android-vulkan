@@ -4,11 +4,10 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 GraphicsProgram::GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    pbr::GraphicsProgram ( name ),
+    GraphicsProgramBase ( name ),
     _pushConstantSize ( static_cast<uint32_t> ( pushConstantSize ) )
 {
     // NOTHING
@@ -43,4 +42,4 @@ VkPipelineVertexInputStateCreateInfo const* GraphicsProgram::InitVertexInputInfo
     return &info;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

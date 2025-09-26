@@ -2,17 +2,17 @@
 #include <platform/android/pbr/compute_program.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
 ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    pbr::ComputeProgram ( name, pushConstantSize )
+    ComputeProgramBase ( name, pushConstantSize )
 {
     // NOTHING
 }
 
 void ComputeProgram::Destroy ( VkDevice device ) noexcept
 {
-    pbr::ComputeProgram::Destroy ( device );
+    ComputeProgramBase::Destroy ( device );
     DestroyShaderModule ( device );
 }
 
@@ -24,4 +24,4 @@ void ComputeProgram::DestroyShaderModule ( VkDevice device ) noexcept
     }
 }
 
-} // namespace pbr::android
+} // namespace pbr

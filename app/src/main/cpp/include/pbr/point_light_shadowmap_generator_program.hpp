@@ -10,7 +10,7 @@
 
 namespace pbr {
 
-class PointLightShadowmapGeneratorProgram final : public android::GraphicsProgram
+class PointLightShadowmapGeneratorProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

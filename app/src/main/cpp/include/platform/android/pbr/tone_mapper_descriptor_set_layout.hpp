@@ -5,8 +5,7 @@
 #include <pbr/descriptor_set_layout.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class ToneMapperDescriptorSetLayout final : public DescriptorSetLayout
 {
@@ -30,7 +29,7 @@ class ToneMapperDescriptorSetLayout final : public DescriptorSetLayout
         [[nodiscard]] VkDescriptorSetLayout &GetLayout () const noexcept override;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
 #endif // PBR_TONE_MAPPER_DESCRIPTOR_SET_LAYOUT_HPP

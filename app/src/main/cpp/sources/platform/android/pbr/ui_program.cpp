@@ -5,8 +5,7 @@
 #include <platform/android/pbr/ui_vertex_info.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 namespace {
 
@@ -24,14 +23,14 @@ constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    android::GraphicsProgram ( "UI" )
+    GraphicsProgram ( "UI" )
 {
     // NOTHING
 }
 
 void UIProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
 
     _imageLayout.Destroy ( device );
     _commonLayout.Destroy ( device );
@@ -101,7 +100,7 @@ bool UIProgram::Init ( android_vulkan::Renderer const &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::android::UIProgram::Init",
+        "pbr::UIProgram::Init",
         "Can't create pipeline"
     );
 
@@ -262,7 +261,7 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::android::UIProgram::InitLayout",
+        "pbr::UIProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
@@ -327,7 +326,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
 {
     bool result = renderer.CreateShader ( _vertexShader,
         VERTEX_SHADER,
-        "Can't create vertex shader (pbr::android::UIProgram)"
+        "Can't create vertex shader (pbr::UIProgram)"
     );
 
     if ( !result ) [[unlikely]]
@@ -338,7 +337,7 @@ bool UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
     auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
     char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
-    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::android::UIProgram)" );
+    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -444,7 +443,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     binds[ IN_BUFFER_REST ] =
     {
         .binding = IN_BUFFER_REST,
-        .stride = static_cast<uint32_t> ( sizeof ( android::UIVertex ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( UIVertex ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
@@ -461,9 +460,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_IMAGE_UV,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R16G16_SFLOAT,
-
-        // FUCK - remove namespace
-        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _uv ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _uv ) )
     };
 
     attributes[ IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE ] =
@@ -471,9 +468,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8_UNORM,
-
-        // FUCK - remove namespace
-        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _atlasLayer ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlasLayer ) )
     };
 
     attributes[ IN_SLOT_COLOR ] =
@@ -481,9 +476,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_COLOR,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8B8A8_UNORM,
-
-        // FUCK - remove namespace
-        .offset = static_cast<uint32_t> ( offsetof ( android::UIVertex, _color ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _color ) )
     };
 
     info =

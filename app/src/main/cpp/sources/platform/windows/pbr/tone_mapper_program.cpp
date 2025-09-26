@@ -1,17 +1,13 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <pbr/brightness_factor.inc>
-
-// FUCK - windows and android separation
 #include <platform/windows/pbr/tone_mapper_program.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
-// FUCK - change
 constexpr char const* VERTEX_SHADER = "shaders/windows/full_screen_triangle.vs.spv";
 
 constexpr char const* CUSTOM_BRIGHTNESS_FRAGMENT_SHADER = "shaders/windows/tone_mapper_custom_brightness.ps.spv";
@@ -25,14 +21,14 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    windows::GraphicsProgram ( "pbr::ToneMapperProgram", sizeof ( PushConstants ) )
+    GraphicsProgram ( "pbr::ToneMapperProgram", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
 
 void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 {
-    windows::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 
@@ -111,10 +107,7 @@ bool ToneMapperProgram::Init ( VkDevice device,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ToneMapperProgram::Init",
-
+        "pbr::ToneMapperProgram::Init",
         "Can't create pipeline"
     );
 
@@ -254,10 +247,7 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ToneMapperProgram::InitLayout",
-
+        "pbr::ToneMapperProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
@@ -455,4 +445,4 @@ bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* 
     return true;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

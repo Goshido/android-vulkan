@@ -26,7 +26,7 @@ ReflectionGlobalProgram::ReflectionGlobalProgram () noexcept:
 
 void ReflectionGlobalProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
 
     _reflectionLayout.Destroy ( device );
     _commonLayout.Destroy ( device );

@@ -10,11 +10,8 @@ namespace editor {
 class AppendUIChildElementEvent final
 {
     private:
-        // FUCK - remove namespace
-        pbr::windows::UIElement         &_element;
-
-        // FUCK - remove namespace
-        pbr::windows::DIVUIElement      &_parent;
+        pbr::UIElement         &_element;
+        pbr::DIVUIElement      &_parent;
 
     public:
         AppendUIChildElementEvent () = delete;
@@ -25,9 +22,8 @@ class AppendUIChildElementEvent final
         AppendUIChildElementEvent ( AppendUIChildElementEvent && ) = delete;
         AppendUIChildElementEvent &operator = ( AppendUIChildElementEvent && ) = delete;
 
-        // FUCK - remove namespace
-        explicit AppendUIChildElementEvent ( pbr::windows::DIVUIElement &parent,
-            pbr::windows::UIElement &element
+        explicit AppendUIChildElementEvent ( pbr::DIVUIElement &parent,
+            pbr::UIElement &element
         ) noexcept;
 
         ~AppendUIChildElementEvent () = default;

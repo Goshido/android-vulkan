@@ -1,14 +1,12 @@
-// FUCK - windows and android separation
-#ifndef PBR_WINDOWS_TONE_MAPPER_PASS_HPP
-#define PBR_WINDOWS_TONE_MAPPER_PASS_HPP
+#ifndef PBR_TONE_MAPPER_PASS_HPP
+#define PBR_TONE_MAPPER_PASS_HPP
 
 
 #include "resource_heap.hpp"
 #include "tone_mapper_program.hpp"
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 class ToneMapperPass final
 {
@@ -38,7 +36,7 @@ class ToneMapperPass final
         void UpdateTransform ( android_vulkan::Renderer const &renderer ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_TONE_MAPPER_PASS_HPP
+#endif // PBR_TONE_MAPPER_PASS_HPP

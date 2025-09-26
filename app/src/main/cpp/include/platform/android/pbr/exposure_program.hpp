@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_EXPOSURE_PROGRAM_HPP
-#define PBR_ANDROID_EXPOSURE_PROGRAM_HPP
+#ifndef PBR_EXPOSURE_PROGRAM_HPP
+#define PBR_EXPOSURE_PROGRAM_HPP
 
 
 #include "compute_program.hpp"
@@ -9,8 +7,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class ExposureProgram final : public ComputeProgram
 {
@@ -59,7 +56,7 @@ class ExposureProgram final : public ComputeProgram
         ) noexcept override;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_EXPOSURE_PROGRAM_HPP
+#endif // PBR_EXPOSURE_PROGRAM_HPP

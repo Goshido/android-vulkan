@@ -661,9 +661,8 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
 {
     AV_TRACE ( "UI" )
 
-    // FUCK - remove namespace
-    android::UIPass &uiPass = renderSession.GetUIPass ();
-    android::FontStorage &fontStorage = uiPass.GetFontStorage ();
+    UIPass &uiPass = renderSession.GetUIPass ();
+    FontStorage &fontStorage = uiPass.GetFontStorage ();
 
     bool needRefill = false;
     size_t neededUIVertices = 0U;
@@ -689,8 +688,7 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     if ( !needRefill )
         return;
 
-    // FUCK - remove namespace
-    android::UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
+    UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( neededUIVertices );
 
     if ( !response )
     {
@@ -698,8 +696,7 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
         return;
     }
 
-    // FUCK - remove namespace
-    android::UIElement::SubmitInfo info
+    UIElement::SubmitInfo info
     {
         ._uiPass = &uiPass,
         ._vertexBuffer = *response
@@ -849,7 +846,7 @@ int Scene::OnOverlapTestBoxBox ( lua_State* state )
 
 int Scene::OnQuit ( lua_State* /*state*/ )
 {
-    android_vulkan::android::Core::Quit ();
+    android_vulkan::Core::Quit ();
     return 0;
 }
 

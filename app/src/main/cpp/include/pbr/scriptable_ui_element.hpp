@@ -39,9 +39,8 @@ class ScriptableUIElement
 
         virtual ~ScriptableUIElement () = default;
 
-        // FUCK - remove namespace
-        [[nodiscard]] virtual android::UIElement &GetElement () noexcept = 0;
-        [[nodiscard]] virtual android::UIElement const &GetElement () const noexcept = 0;
+        [[nodiscard]] virtual UIElement &GetElement () noexcept = 0;
+        [[nodiscard]] virtual UIElement const &GetElement () const noexcept = 0;
 
         static void AppendElement ( ScriptableUIElement &element ) noexcept;
         static void InitCommon ( lua_State &vm ) noexcept;

@@ -1,5 +1,3 @@
-// FUCK - windows and android separation
-
 #ifndef PBR_TEXT_UI_ELEMENT_HPP
 #define PBR_TEXT_UI_ELEMENT_HPP
 
@@ -7,7 +5,7 @@
 #include "ui_element.hpp"
 
 
-namespace pbr::windows {
+namespace pbr {
 
 class TextUIElement final : public UIElement
 {

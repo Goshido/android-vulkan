@@ -197,15 +197,13 @@ void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     Widget::OnMouseMove ( event );
 }
 
-// FUCK - remove namespace
-void UIDialogBox::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
+void UIDialogBox::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     _div.Submit ( info );
 }
 
-// FUCK - remove namespace
 Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &renderer,
-    pbr::windows::FontStorage &fontStorage
+    pbr::FontStorage &fontStorage
 ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
@@ -213,8 +211,7 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    // FUCK - remove namespace
-    pbr::windows::UIElement::ApplyInfo info
+    pbr::UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._fontStorage = &fontStorage,
@@ -236,11 +233,9 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
     };
 }
 
-// FUCK - remove namespace
-bool UIDialogBox::UpdateCache ( pbr::windows::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
-    // FUCK - remove namespace
-    pbr::windows::UIElement::UpdateInfo info
+    pbr::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,

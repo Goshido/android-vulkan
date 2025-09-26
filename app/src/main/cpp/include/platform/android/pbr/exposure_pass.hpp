@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_EXPOSURE_PASS_HPP
-#define PBR_ANDROID_EXPOSURE_PASS_HPP
+#ifndef PBR_EXPOSURE_PASS_HPP
+#define PBR_EXPOSURE_PASS_HPP
 
 
 #include "exposure_descriptor_set_layout.hpp"
@@ -10,8 +8,7 @@
 #include <texture2D.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class ExposurePass final
 {
@@ -116,7 +113,7 @@ class ExposurePass final
         [[nodiscard]] static float ExposureValueToLuma ( float exposureValue ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_EXPOSURE_PASS_HPP
+#endif // PBR_EXPOSURE_PASS_HPP

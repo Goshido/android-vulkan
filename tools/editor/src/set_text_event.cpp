@@ -15,8 +15,7 @@ void SetTextEvent::Execute () noexcept
     _element.SetText ( std::get<std::u32string_view> ( _text ) );
 }
 
-// FUCK - remove namespace
-SetTextEvent* SetTextEvent::Create ( pbr::windows::TextUIElement &element, std::string_view text ) noexcept
+SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::string_view text ) noexcept
 {
     size_t const symbols = text.size ();
     bool const isEmpty = symbols < 1U;
@@ -34,8 +33,7 @@ SetTextEvent* SetTextEvent::Create ( pbr::windows::TextUIElement &element, std::
     return new ( data ) SetTextEvent ( element, { contentData, symbols } );
 }
 
-// FUCK - remove namespace
-SetTextEvent* SetTextEvent::Create ( pbr::windows::TextUIElement &element, std::u32string_view text ) noexcept
+SetTextEvent* SetTextEvent::Create ( pbr::TextUIElement &element, std::u32string_view text ) noexcept
 {
     size_t const symbols = text.size ();
     bool const isEmpty = symbols < 1U;
@@ -62,16 +60,14 @@ void SetTextEvent::Destroy ( SetTextEvent &event ) noexcept
     std::free ( &event );
 }
 
-// FUCK - remove namespace
-SetTextEvent::SetTextEvent ( pbr::windows::TextUIElement &element, std::string_view text ) noexcept:
+SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::string_view text ) noexcept:
     _element ( element ),
     _text ( text )
 {
     // NOTHING
 }
 
-// FUCK - remove namespace
-SetTextEvent::SetTextEvent ( pbr::windows::TextUIElement &element, std::u32string_view text ) noexcept:
+SetTextEvent::SetTextEvent ( pbr::TextUIElement &element, std::u32string_view text ) noexcept:
     _element ( element ),
     _text ( text )
 {

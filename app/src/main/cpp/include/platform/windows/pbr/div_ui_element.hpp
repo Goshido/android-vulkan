@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_WINDOWS_DIV_UI_ELEMENT_HPP
-#define PBR_WINDOWS_DIV_UI_ELEMENT_HPP
+#ifndef PBR_DIV_UI_ELEMENT_HPP
+#define PBR_DIV_UI_ELEMENT_HPP
 
 
 #include "ui_element.hpp"
@@ -13,7 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr::windows {
+namespace pbr {
 
 class DIVUIElement final : public UIElement
 {
@@ -69,7 +67,7 @@ class DIVUIElement final : public UIElement
         void Update () noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_DIV_UI_ELEMENT_HPP
+#endif // PBR_DIV_UI_ELEMENT_HPP

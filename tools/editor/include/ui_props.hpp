@@ -33,8 +33,7 @@ class UIProps final : public UIDialogBox
         UIProps ( UIProps && ) = delete;
         UIProps &operator = ( UIProps && ) = delete;
 
-        // FUCK - remove namespace
-        explicit UIProps ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept;
+        explicit UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIProps () override = default;
 
@@ -42,9 +41,7 @@ class UIProps final : public UIDialogBox
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
-
-        // FUCK - remove namespace
-        void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept override;
+        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
         void OnCheckBox ( UICheckBox::eState state ) noexcept;
         void OnComboBox ( UIComboBox::ID id ) noexcept;

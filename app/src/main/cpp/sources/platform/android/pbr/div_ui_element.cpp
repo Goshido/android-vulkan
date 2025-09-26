@@ -1,12 +1,10 @@
-// FUCK - windows and android separation
-
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <platform/android/pbr/div_ui_element.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
 DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
     UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
@@ -423,4 +421,4 @@ void DIVUIElement::Update () noexcept
     _hasChanges = true;
 }
 
-} // namespace pbr::android
+} // namespace pbr

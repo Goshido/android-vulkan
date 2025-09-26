@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_MESH_GEOMETRY_HPP
-#define ANDROID_VULKAN_MESH_GEOMETRY_HPP
+#ifndef ANDROID_VULKAN_MESH_GEOMETRY_BASE_HPP
+#define ANDROID_VULKAN_MESH_GEOMETRY_BASE_HPP
 
 
 #include "buffer_info.hpp"
@@ -18,7 +18,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace android_vulkan {
 
-class MeshGeometry
+class MeshGeometryBase
 {
     public:
         using AbstractData = std::span<uint8_t const>;
@@ -75,11 +75,11 @@ class MeshGeometry
         std::string                 _fileName {};
 
     public:
-        MeshGeometry ( MeshGeometry const & ) = delete;
-        MeshGeometry &operator = ( MeshGeometry const & ) = delete;
+        MeshGeometryBase ( MeshGeometryBase const & ) = delete;
+        MeshGeometryBase &operator = ( MeshGeometryBase const & ) = delete;
 
-        MeshGeometry ( MeshGeometry && ) = delete;
-        MeshGeometry &operator = ( MeshGeometry && ) = delete;
+        MeshGeometryBase ( MeshGeometryBase && ) = delete;
+        MeshGeometryBase &operator = ( MeshGeometryBase && ) = delete;
 
         void FreeResources ( Renderer &renderer ) noexcept;
         void FreeTransferResources ( Renderer &renderer ) noexcept;
@@ -148,8 +148,8 @@ class MeshGeometry
         ) noexcept;
 
     protected:
-        MeshGeometry () = default;
-        virtual ~MeshGeometry () = default;
+        MeshGeometryBase () = default;
+        virtual ~MeshGeometryBase () = default;
 
         [[nodiscard]] virtual BufferSyncItem const &GetBufferSync ( BufferSyncItem::eType type ) const noexcept = 0;
 
@@ -203,4 +203,4 @@ class MeshGeometry
 } // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_MESH_GEOMETRY_HPP
+#endif // ANDROID_VULKAN_MESH_GEOMETRY_BASE_HPP

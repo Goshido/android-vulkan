@@ -1,12 +1,10 @@
-// FUCK - windows and android separation
-
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <platform/windows/pbr/image_ui_element.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
 bool ImageUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 {
@@ -359,4 +357,4 @@ GXVec2 ImageUIElement::ResolveSizeByHeight ( float parentHeight ) noexcept
     return result;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

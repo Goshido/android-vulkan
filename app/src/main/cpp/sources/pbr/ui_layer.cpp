@@ -133,18 +133,14 @@ UILayer::UILayer ( bool &success, lua_State &vm ) noexcept
     lua_pop ( &vm, 4 );
 }
 
-// FUCK - remove namespace
-UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
-    android::FontStorage &fontStorage
-) noexcept
+UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer, FontStorage &fontStorage ) noexcept
 {
     VkExtent2D const viewport = renderer.GetViewportResolution ();
 
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
 
-    // FUCK - remove namespace
-    android::UIElement::ApplyInfo info
+    UIElement::ApplyInfo info
     {
         ._canvasSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._fontStorage = &fontStorage,
@@ -165,17 +161,14 @@ UILayer::LayoutStatus UILayer::ApplyLayout ( android_vulkan::Renderer &renderer,
     };
 }
 
-// FUCK - remove namespace
-void UILayer::Submit ( android::UIElement::SubmitInfo &info ) noexcept
+void UILayer::Submit ( UIElement::SubmitInfo &info ) noexcept
 {
     _body->GetElement ().Submit ( info );
 }
 
-// FUCK - remove namespace
-bool UILayer::UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+bool UILayer::UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
-    // FUCK - remove namespace
-    android::UIElement::UpdateInfo info
+    UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,

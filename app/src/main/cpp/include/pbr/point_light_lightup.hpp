@@ -2,7 +2,7 @@
 #define PBR_POINT_LIGHT_LIGHTUP_HPP
 
 
-#include "mesh_geometry.hpp"
+#include <platform/android/mesh_geometry.hpp>
 #include "point_light.hpp"
 #include "point_light_lightup_program.hpp"
 #include "uma_uniform_buffer.hpp"

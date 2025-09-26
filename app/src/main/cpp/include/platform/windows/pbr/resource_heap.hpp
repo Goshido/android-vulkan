@@ -1,13 +1,11 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_RESOURCE_HEAP_HPP
-#define PBR_WINDOWS_RESOURCE_HEAP_HPP
+#ifndef PBR_RESOURCE_HEAP_HPP
+#define PBR_RESOURCE_HEAP_HPP
 
 
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
 #include "resource_heap.inc"
 #include "resource_heap_descriptor_set_layout.hpp"
-//#include "resource_heap_descriptor_set_layout_ext.hpp"
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -17,7 +15,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace pbr::windows {
+namespace pbr {
 
 class ResourceHeap final
 {
@@ -128,7 +126,6 @@ class ResourceHeap final
 
         Buffer                                  _descriptorBuffer {};
         ResourceHeapDescriptorSetLayout         _layout {};
-        //ResourceHeapDescriptorSetLayoutEXT      _layoutExt {};
 
         Slots                                   _nonUISlots {};
         Slots                                   _uiSlots {};
@@ -195,7 +192,7 @@ class ResourceHeap final
         ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_RESOURCE_HEAP_HPP
+#endif // PBR_RESOURCE_HEAP_HPP

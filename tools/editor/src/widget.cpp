@@ -58,22 +58,19 @@ void Widget::OnTyping ( char32_t /*character*/ ) noexcept
     // NOTHING
 }
 
-// FUCK - remove namespace
 Widget::LayoutStatus Widget::ApplyLayout ( android_vulkan::Renderer &/*renderer*/,
-    pbr::windows::FontStorage &/*fontStorage*/
+    pbr::FontStorage &/*fontStorage*/
 ) noexcept
 {
     return {};
 }
 
-// FUCK - remove namespace
-void Widget::Submit ( pbr::windows::UIElement::SubmitInfo &/*info*/ ) noexcept
+void Widget::Submit ( pbr::UIElement::SubmitInfo &/*info*/ ) noexcept
 {
     // NOTHING
 }
 
-// FUCK - remove namespace
-bool Widget::UpdateCache ( pbr::windows::FontStorage &/*fontStorage*/, VkExtent2D const &/*viewport*/ ) noexcept
+bool Widget::UpdateCache ( pbr::FontStorage &/*fontStorage*/, VkExtent2D const &/*viewport*/ ) noexcept
 {
     return false;
 }

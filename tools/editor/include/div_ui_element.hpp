@@ -14,8 +14,7 @@ class TextUIElement;
 class DIVUIElement final : public UIElement
 {
     private:
-        // FUCK - remove namespace
-        pbr::windows::DIVUIElement*     _div = nullptr;
+        pbr::DIVUIElement*     _div = nullptr;
 
     public:
         DIVUIElement () = delete;
@@ -39,8 +38,7 @@ class DIVUIElement final : public UIElement
 
         ~DIVUIElement () noexcept override;
 
-        // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::UIElement &GetNativeElement () noexcept override;
+        [[nodiscard]] pbr::UIElement &GetNativeElement () noexcept override;
 
         void AppendChildElement ( DIVUIElement &element ) noexcept;
         void PrependChildElement ( DIVUIElement &element ) noexcept;
@@ -53,19 +51,12 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] bool IsVisible () const noexcept;
         void Update () noexcept;
 
-        // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
-
+        [[nodiscard]] pbr::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
-        // FUCK - remove namespace
-        void ApplyLayout ( pbr::windows::UIElement::ApplyInfo &info ) noexcept;
-
-        // FUCK - remove namespace
-        void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept;
-
-        // FUCK - remove namespace
-        [[nodiscard]] bool UpdateCache ( pbr::windows::UIElement::UpdateInfo &info ) noexcept;
+        void ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept;
+        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] bool UpdateCache ( pbr::UIElement::UpdateInfo &info ) noexcept;
 };
 
 } // namespace editor

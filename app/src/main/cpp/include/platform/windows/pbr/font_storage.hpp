@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_WINDOWS_FONT_STORAGE_HPP
-#define PBR_WINDOWS_FONT_STORAGE_HPP
+#ifndef PBR_FONT_STORAGE_HPP
+#define PBR_FONT_STORAGE_HPP
 
 
 #include <half_types.hpp>
@@ -20,8 +18,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 class FontStorage final
 {
@@ -300,7 +297,7 @@ class FontStorage final
         [[nodiscard]] static std::optional<EMFontMetrics> ResolveEMFontMetrics ( FT_Face face ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_FONT_STORAGE_HPP
+#endif // PBR_FONT_STORAGE_HPP

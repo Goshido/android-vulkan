@@ -12,9 +12,7 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     UIElement ( messageQueue ),
-
-    // FUCK - remove namespace
-    _div ( new pbr::windows::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
+    _div ( new pbr::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -25,9 +23,7 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
     std::string &&name
 ) noexcept:
     UIElement ( messageQueue ),
-
-    // FUCK - remove namespace
-    _div ( new pbr::windows::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
+    _div ( new pbr::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
@@ -43,8 +39,7 @@ DIVUIElement::~DIVUIElement () noexcept
     );
 }
 
-// FUCK - remove namespace
-pbr::windows::UIElement &DIVUIElement::GetNativeElement () noexcept
+pbr::UIElement &DIVUIElement::GetNativeElement () noexcept
 {
     return *_div;
 }
@@ -131,32 +126,27 @@ void DIVUIElement::Update () noexcept
     );
 }
 
-// FUCK - remove namespace
-pbr::windows::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
+pbr::DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
 {
     return _div->GetAbsoluteRect ();
 }
 
-// FUCK - remove it
 pbr::CSSComputedValues &DIVUIElement::GetCSS () noexcept
 {
     return _div->GetCSS ();
 }
 
-// FUCK - remove namespace
-void DIVUIElement::ApplyLayout ( pbr::windows::UIElement::ApplyInfo &info ) noexcept
+void DIVUIElement::ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept
 {
     _div->ApplyLayout ( info );
 }
 
-// FUCK - remove namespace
-void DIVUIElement::Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept
+void DIVUIElement::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     _div->Submit ( info );
 }
 
-// FUCK - remove namespace
-bool DIVUIElement::UpdateCache ( pbr::windows::UIElement::UpdateInfo &info ) noexcept
+bool DIVUIElement::UpdateCache ( pbr::UIElement::UpdateInfo &info ) noexcept
 {
     return _div->UpdateCache ( info );
 }

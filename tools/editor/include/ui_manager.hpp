@@ -20,9 +20,7 @@ class UIManager final
 {
     private:
         size_t                                  _eventID = 0U;
-
-        // FUCK - remove namespace
-        pbr::windows::FontStorage               &_fontStorage;
+        pbr::FontStorage                        &_fontStorage;
 
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
@@ -44,19 +42,15 @@ class UIManager final
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
 
-        // FUCK - remove namespace
-        explicit UIManager ( MessageQueue &messageQueue, pbr::windows::FontStorage &fontStorage ) noexcept;
+        explicit UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 
         void Init () noexcept;
         void Destroy () noexcept;
 
-        // FUCK - remove namespace
-        void ComputeLayout ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept;
-
-        // FUCK - remove namespace
-        void Submit ( android_vulkan::Renderer &renderer, pbr::windows::UIPass &pass ) noexcept;
+        void ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
 
     private:
         void EventLoop () noexcept;

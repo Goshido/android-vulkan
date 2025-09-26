@@ -57,19 +57,13 @@ class Widget
 
         virtual void OnTyping ( char32_t character ) noexcept;
 
-        // FUCK - remove namespace
         [[nodiscard]] virtual LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            pbr::windows::FontStorage &fontStorage
+            pbr::FontStorage &fontStorage
         ) noexcept;
 
-        // FUCK - remove namespace
-        virtual void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept;
+        virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
 
-        // FUCK - remove namespace
-        [[nodiscard]] virtual bool UpdateCache ( pbr::windows::FontStorage &fontStorage,
-            VkExtent2D const &viewport
-        ) noexcept;
-
+        [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
         virtual void UpdatedRect () noexcept;
 
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;

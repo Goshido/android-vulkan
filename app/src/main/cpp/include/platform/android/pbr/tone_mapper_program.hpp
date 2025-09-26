@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
-#define PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
+#ifndef PBR_TONE_MAPPER_PROGRAM_HPP
+#define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
@@ -11,10 +9,9 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
-class ToneMapperProgram final : public android::GraphicsProgram
+class ToneMapperProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -103,7 +100,7 @@ class ToneMapperProgram final : public android::GraphicsProgram
         ) const noexcept override;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_TONE_MAPPER_PROGRAM_HPP
+#endif // PBR_TONE_MAPPER_PROGRAM_HPP

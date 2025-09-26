@@ -4,7 +4,6 @@
 
 #include "hello_triangle_program.hpp"
 #include "message_queue.hpp"
-#include <pbr/default_texture_manager.hpp>
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
@@ -21,54 +20,50 @@ class RenderSession final
     private:
         struct CommandInfo final
         {
-            VkSemaphore                                             _acquire = VK_NULL_HANDLE;
-            VkCommandBuffer                                         _buffer = VK_NULL_HANDLE;
-            VkFence                                                 _fence = VK_NULL_HANDLE;
-            bool                                                    _inUse = false;
-            VkCommandPool                                           _pool = VK_NULL_HANDLE;
+            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
+            VkCommandBuffer                                 _buffer = VK_NULL_HANDLE;
+            VkFence                                         _fence = VK_NULL_HANDLE;
+            bool                                            _inUse = false;
+            VkCommandPool                                   _pool = VK_NULL_HANDLE;
         };
 
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
 
     private:
-        bool                                                        _broken = false;
+        bool                                                _broken = false;
 
-        CommandInfo                                                 _commandInfo[ pbr::FIF_COUNT ];
-        size_t                                                      _writingCommandInfo = 0U;
+        CommandInfo                                         _commandInfo[ pbr::FIF_COUNT ];
+        size_t                                              _writingCommandInfo = 0U;
 
-        // FUCK - remove namespace
-        pbr::windows::ExposurePass                                  _exposurePass {};
+        pbr::ExposurePass                                   _exposurePass {};
 
-        std::unique_ptr<HelloTriangleProgram>                       _helloTriangleProgram {};
-        std::unique_ptr<android_vulkan::windows::MeshGeometry>      _helloTriangleGeometry {};
+        std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
+        std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
 
-        MessageQueue                                                &_messageQueue;
-        android_vulkan::Renderer                                    &_renderer;
+        MessageQueue                                        &_messageQueue;
+        android_vulkan::Renderer                            &_renderer;
 
-        // FUCK - remove namespace
-        pbr::windows::PresentPass                                   _presentRenderPass {};
+        pbr::PresentPass                                    _presentRenderPass {};
 
-        android_vulkan::Texture2D                                   _renderTarget {};
-        uint32_t                                                    _renderTargetIdx = 0U;
+        android_vulkan::Texture2D                           _renderTarget {};
+        uint32_t                                            _renderTargetIdx = 0U;
 
-        pbr::windows::ResourceHeap                                  _resourceHeap {};
+        pbr::ResourceHeap                                   _resourceHeap {};
 
-        std::mutex                                                  _submitMutex {};
-        std::thread                                                 _thread {};
-        Timestamp                                                   _timestamp {};
+        std::mutex                                          _submitMutex {};
+        std::thread                                         _thread {};
+        Timestamp                                           _timestamp {};
 
-        // FUCK - remove namespace
-        pbr::windows::ToneMapperPass                                _toneMapper {};
+        pbr::ToneMapperPass                                 _toneMapper {};
 
-        size_t                                                      _uiElements = 0U;
+        size_t                                              _uiElements = 0U;
 
-        // FUCK - remove namespace
-        pbr::windows::UIPass                                        _uiPass { _resourceHeap };
+        pbr::UIPass                                         _uiPass { _resourceHeap };
 
-        UIManager                                                   &_uiManager;
-        VkViewport                                                  _viewport {};
+        UIManager                                           &_uiManager;
+        VkViewport                                          _viewport {};
 
-        VkRenderingAttachmentInfo                                   _colorAttachment
+        VkRenderingAttachmentInfo                           _colorAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -89,7 +84,7 @@ class RenderSession final
             }
         };
 
-        VkRenderingInfo                                             _renderingInfo
+        VkRenderingInfo                                     _renderingInfo
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = nullptr,
@@ -118,7 +113,7 @@ class RenderSession final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier                                        _barrier
+        VkImageMemoryBarrier                                _barrier
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
             .pNext = nullptr,
@@ -159,8 +154,7 @@ class RenderSession final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        // FUCK - remove namespace
-        [[nodiscard]] pbr::windows::FontStorage &GetFontStorage () noexcept;
+        [[nodiscard]] pbr::FontStorage &GetFontStorage () noexcept;
 
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;

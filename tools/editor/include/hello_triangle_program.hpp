@@ -8,7 +8,7 @@
 
 namespace editor {
 
-class HelloTriangleProgram final : public pbr::windows::GraphicsProgram
+class HelloTriangleProgram final : public pbr::GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

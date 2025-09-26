@@ -1,15 +1,14 @@
-// FUCK - remove namespace
-#ifndef PBR_ANDROID_GRAPHICS_PROGRAM_HPP
-#define PBR_ANDROID_GRAPHICS_PROGRAM_HPP
+#ifndef PBR_GRAPHICS_PROGRAM_HPP
+#define PBR_GRAPHICS_PROGRAM_HPP
 
 
-#include <pbr/graphics_program.hpp>
+#include <pbr/graphics_program_base.hpp>
 #include <renderer.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
-class GraphicsProgram : public pbr::GraphicsProgram
+class GraphicsProgram : public GraphicsProgramBase
 {
     protected:
         VkShaderModule      _fragmentShader = VK_NULL_HANDLE;
@@ -47,7 +46,7 @@ class GraphicsProgram : public pbr::GraphicsProgram
         void DestroyShaderModules ( VkDevice device ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_GRAPHICS_PROGRAM_HPP
+#endif // PBR_GRAPHICS_PROGRAM_HPP

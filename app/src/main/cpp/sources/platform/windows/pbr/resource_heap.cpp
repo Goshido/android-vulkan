@@ -7,7 +7,7 @@
 #include <vulkan_api.hpp>
 
 
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -41,7 +41,7 @@ bool ResourceHeap::Buffer::Init ( android_vulkan::Renderer &renderer,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "pbr::windows::ResourceHeap::Buffer::Init",
+        "pbr::ResourceHeap::Buffer::Init",
         "Can't create buffer"
     );
 
@@ -58,12 +58,12 @@ bool ResourceHeap::Buffer::Init ( android_vulkan::Renderer &renderer,
             _offset,
             memoryRequirements,
             memProps,
-            "Can't allocate memory (pbr::windows::ResourceHeap::Buffer::Init)"
+            "Can't allocate memory (pbr::ResourceHeap::Buffer::Init)"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkBindBufferMemory ( device, _buffer, _memory, _offset ),
-            "pbr::windows::ResourceHeap::Buffer::Init",
+            "pbr::ResourceHeap::Buffer::Init",
             "Can't bind memory"
         );
 }
@@ -135,7 +135,7 @@ bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
         renderer.MapMemory ( reinterpret_cast<void* &> ( _stagingMemory ),
             _stagingBuffer._memory,
             _stagingBuffer._offset,
-            "pbr::windows::ResourceHeap::Write::Init",
+            "pbr::ResourceHeap::Write::Init",
             "Can't map memory"
         );
 }
@@ -183,9 +183,7 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
     vkCmdCopyBuffer ( commandBuffer,
         buffer,
         descriptorBuffer,
-        //static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
         countFirstPart,
-        //copy + std::exchange ( _readIndex, _writeIndex )
         copyFirstPart
     );
 
@@ -266,7 +264,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     if ( perStage <= TOTAL_SAMPLERS ) [[unlikely]]
     {
         android_vulkan::LogError (
-            "pbr::windows::ResourceHeap::Init - Hardware supports too little per stage resources."
+            "pbr::ResourceHeap::Init - Hardware supports too little per stage resources."
         );
 
         return false;
@@ -276,11 +274,10 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     size_t const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     size_t const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
     ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
-    //ResourceHeapDescriptorSetLayoutEXT::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !_layout.Init ( device ) /* || !_layoutExt.Init ( device ) */ ) [[unlikely]]
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     VkDescriptorSetLayout layout = _layout.GetLayout ();
@@ -356,7 +353,6 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
-    //_layoutExt.Destroy ( device );
     _layout.Destroy ( device );
 }
 
@@ -367,12 +363,9 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
 {
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
 
-    /*constexpr uint32_t const indices[ RESOURCE_HEAP_BINDS ] = { 0U, 0U };
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, indices, _offsets );*/
-
-    constexpr uint32_t i = 0U;
-    constexpr VkDeviceSize o = 0U;
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &i, &o );
+    constexpr uint32_t index = 0U;
+    constexpr VkDeviceSize offset = 0U;
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
@@ -382,7 +375,7 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
 {
     if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterBuffer - Non UI heap is full." );
+        android_vulkan::LogError ( "pbr::ResourceHeap::RegisterBuffer - Non UI heap is full." );
         return std::nullopt;
     }
 
@@ -474,7 +467,7 @@ bool ResourceHeap::InitInternalStructures ( VkDevice device, size_t resourceCapa
 
     if ( cap <= UI_SLOTS ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::InitInternalStructures - No room for UI slots." );
+        android_vulkan::LogError ( "pbr::ResourceHeap::InitInternalStructures - No room for UI slots." );
         return false;
     }
 
@@ -705,7 +698,7 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
 {
     if ( slots.IsFull () ) [[unlikely]]
     {
-        android_vulkan::LogError ( "pbr::windows::ResourceHeap::RegisterImage - %s is full.", heap );
+        android_vulkan::LogError ( "pbr::ResourceHeap::RegisterImage - %s is full.", heap );
         AV_ASSERT ( false )
         return std::nullopt;
     }
@@ -750,4 +743,4 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
     return std::optional<uint32_t> { index };
 }
 
-} // namespace pbr::windows
+} // namespace pbr

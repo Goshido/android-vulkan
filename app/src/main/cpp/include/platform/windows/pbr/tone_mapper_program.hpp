@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP
-#define PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP
+#ifndef PBR_TONE_MAPPER_PROGRAM_HPP
+#define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
 #include "graphics_program.hpp"
@@ -10,10 +8,9 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
-class ToneMapperProgram final : public windows::GraphicsProgram
+class ToneMapperProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -103,7 +100,7 @@ class ToneMapperProgram final : public windows::GraphicsProgram
         ) const noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_TONE_MAPPER_PROGRAM_HPP
+#endif // PBR_TONE_MAPPER_PROGRAM_HPP

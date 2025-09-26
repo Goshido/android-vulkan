@@ -9,7 +9,7 @@
 
 namespace pbr {
 
-class SkinProgram final : public android::ComputeProgram
+class SkinProgram final : public ComputeProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN

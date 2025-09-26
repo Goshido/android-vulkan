@@ -26,7 +26,7 @@ DummyGeometryProgram::DummyGeometryProgram () noexcept:
 
 void DummyGeometryProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 

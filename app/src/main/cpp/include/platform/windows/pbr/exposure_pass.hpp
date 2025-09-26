@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_WINDOWS_EXPOSURE_PASS_HPP
-#define PBR_WINDOWS_EXPOSURE_PASS_HPP
+#ifndef PBR_EXPOSURE_PASS_HPP
+#define PBR_EXPOSURE_PASS_HPP
 
 
 #include "exposure_program.hpp"
@@ -10,8 +8,7 @@
 #include <texture2D.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 class ExposurePass final
 {
@@ -133,7 +130,7 @@ class ExposurePass final
         [[nodiscard]] static float ExposureValueToLuma ( float exposureValue ) noexcept;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_EXPOSURE_PASS_HPP
+#endif // PBR_EXPOSURE_PASS_HPP

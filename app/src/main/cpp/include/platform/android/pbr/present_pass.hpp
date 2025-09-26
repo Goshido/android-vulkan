@@ -1,6 +1,5 @@
-// FUCK - remove namespace
-#ifndef PBR_ANDROID_PRESENT_PASS_HPP
-#define PBR_ANDROID_PRESENT_PASS_HPP
+#ifndef PBR_PRESENT_PASS_HPP
+#define PBR_PRESENT_PASS_HPP
 
 
 #include <renderer.hpp>
@@ -12,8 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 class PresentPass final
 {
@@ -81,7 +79,7 @@ class PresentPass final
         };
 
     public:
-        PresentPass () = default;
+        explicit PresentPass () = default;
 
         PresentPass ( PresentPass const & ) = delete;
         PresentPass &operator = ( PresentPass const & ) = delete;
@@ -132,4 +130,4 @@ class PresentPass final
 } // namespace pbr
 
 
-#endif // PBR_ANDROID_PRESENT_PASS_HPP
+#endif // PBR_PRESENT_PASS_HPP

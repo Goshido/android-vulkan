@@ -98,16 +98,13 @@ class UIComboBox final : public Widget
 
                 void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
 
-                // FUCK - remove namespace
                 [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-                    pbr::windows::FontStorage &fontStorage
+                    pbr::FontStorage &fontStorage
                 ) noexcept override;
 
-                // FUCK - remove namespace
-                void Submit ( pbr::windows::UIElement::SubmitInfo &info ) noexcept override;
+                void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-                // FUCK - remove namespace
-                [[nodiscard]] bool UpdateCache ( pbr::windows::FontStorage &fontStorage,
+                [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
                     VkExtent2D const &viewport
                 ) noexcept override;
 

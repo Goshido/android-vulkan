@@ -5,8 +5,7 @@
 #include <platform/windows/pbr/exposure_program.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -40,10 +39,7 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
 
         android_vulkan::Renderer::CheckVkResult (
             vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-
-            // FUCK - remove namespace
-            "pbr::windows::ExposureProgram::Init",
-
+            "pbr::ExposureProgram::Init",
             "Can't create pipeline"
         );
 
@@ -57,13 +53,12 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
 void ExposureProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
-    //_layoutExt.Destroy ( device );
     _layout.Destroy ( device );
 }
 
 bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
-    if ( !_layout.Init ( device )/* || !_layoutExt.Init ( device ) */ ) [[unlikely]]
+    if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
 
     constexpr VkPushConstantRange pushConstantRange
@@ -80,17 +75,13 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
         .flags = 0U,
         .setLayoutCount = 1U,
         .pSetLayouts = &_layout.GetLayout (),
-        //.pSetLayouts = &_layoutExt.GetLayout (),
         .pushConstantRangeCount = 1U,
         .pPushConstantRanges = &pushConstantRange
     };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposureProgram::InitLayout",
-
+        "pbr::ExposureProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
@@ -180,4 +171,4 @@ bool ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
     return true;
 }
 
-} // namespace pbr::windows
+} // namespace pbr

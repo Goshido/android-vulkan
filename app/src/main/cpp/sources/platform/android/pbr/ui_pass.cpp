@@ -7,8 +7,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 namespace {
 
@@ -150,10 +149,7 @@ bool ImageStorage::OnInitDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateCommandPool ( renderer.GetDevice (), &createInfo, nullptr, &_commandPool ),
-
-        // FUCK - remove namespace
-        "pbr::android::ImageStorage::OnInitDevice",
-
+        "pbr::ImageStorage::OnInitDevice",
         "Can't create command pool"
     );
 
@@ -169,8 +165,7 @@ void ImageStorage::OnDestroyDevice () noexcept
 {
     if ( !_textures.empty () ) [[unlikely]]
     {
-        // FUCK - remove namespace
-        android_vulkan::LogWarning ( "pbr::android::ImageStorage::OnDestroyDevice - Memory leak." );
+        android_vulkan::LogWarning ( "pbr::ImageStorage::OnDestroyDevice - Memory leak." );
         AV_ASSERT ( false )
     }
 
@@ -206,10 +201,7 @@ bool ImageStorage::SyncGPU () noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-
-        // FUCK - remove namespace
-        "pbr::android::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't wait fence"
     );
 
@@ -217,10 +209,7 @@ bool ImageStorage::SyncGPU () noexcept
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-
-        // FUCK - remove namespace
-        "pbr::android::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't reset fence"
     );
 
@@ -229,10 +218,7 @@ bool ImageStorage::SyncGPU () noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkResetCommandPool ( device, _commandPool, 0U ),
-
-        // FUCK - remove namespace
-        "pbr::android::ImageStorage::SyncGPU",
-
+        "pbr::ImageStorage::SyncGPU",
         "Can't reset command pool"
     );
 
@@ -262,10 +248,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffers[ current ] ),
-
-        // FUCK - remove namespace
-        "pbr::android::ImageStorage::AllocateCommandBuffers",
-
+        "pbr::ImageStorage::AllocateCommandBuffers",
         "Can't allocate command buffer"
     );
 
@@ -286,10 +269,7 @@ bool ImageStorage::AllocateCommandBuffers ( size_t amount ) noexcept
     for ( size_t i = current; i < size; ++i )
     {
         result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-
-            // FUCK - remove namespace
-            "pbr::android::ImageStorage::AllocateCommandBuffers",
-
+            "pbr::ImageStorage::AllocateCommandBuffers",
             "Can't create fence"
         );
 
@@ -340,18 +320,12 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     bool result =
         android_vulkan::Renderer::CheckVkResult (
             vkCreateCommandPool ( device, &poolInfo, nullptr, &_pool ),
-
-            // FUCK - remove namespace
-            "pbr::android::UIPass::CommonDescriptorSet::Init",
-
+            "pbr::UIPass::CommonDescriptorSet::Init",
             "Can't create command pool"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, &_fence ),
-
-            // FUCK - remove namespace
-            "pbr::android::UIPass::CommonDescriptorSet::Init",
-
+            "pbr::UIPass::CommonDescriptorSet::Init",
             "Can't create fence"
         ) &&
 
@@ -386,19 +360,13 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     result =
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateDescriptorSets ( device, &allocateInfo, &_descriptorSet ),
-
-            // FUCK - remove namespace
-            "pbr::android::UIPass::CommonDescriptorSet::Init",
-
+            "pbr::UIPass::CommonDescriptorSet::Init",
             "Can't allocate descriptor sets"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
-
-            // FUCK - remove namespace
-            "pbr::android::UIPass::CommonDescriptorSet::Init",
-
+            "pbr::UIPass::CommonDescriptorSet::Init",
             "Can't allocate command buffer"
         );
 
@@ -558,10 +526,7 @@ bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Render
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkWaitForFences ( device, 1U, &_fence, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-
-        // FUCK - remove namespace
-        "pbr::android::UIPass::CommonDescriptorSet::UploadTextLUT",
-
+        "pbr::UIPass::CommonDescriptorSet::UploadTextLUT",
         "Can't wait for fence"
     );
 
@@ -602,10 +567,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-
-        // FUCK - remove namespace
-        "pbr::android::UIPass::Init",
-
+        "pbr::UIPass::Init",
         ( std::string ( "Can't create buffer: " ) + _name ).c_str ()
     );
 
@@ -628,10 +590,7 @@ bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
         return false;
 
     return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-
-        // FUCK - remove namespace
-        "pbr::android::UIPass::Init",
-
+        "pbr::UIPass::Init",
         ( std::string ( "Can't bind memory: " ) + _name ).c_str ()
     );
 }
@@ -675,10 +634,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
         renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
             _staging._memory,
             _staging._memoryOffset,
-
-            // FUCK - remove namespace
-            "pbr::android::UIPass::BufferStream::Init",
-
+            "pbr::UIPass::BufferStream::Init",
             "Can't map memory"
         ) &&
 
@@ -770,10 +726,7 @@ bool UIPass::ImageDescriptorSets::Init ( VkDevice device,
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, ds ),
-
-        // FUCK - remove namespace
-        "pbr::android::UIPass::ImageDescriptorSets::Init",
-
+        "pbr::UIPass::ImageDescriptorSets::Init",
         "Can't allocate descriptor sets"
     );
 
@@ -1027,10 +980,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-
-        // FUCK - remove namespace
-        "pbr::android::UIPass::OnInitDevice",
-
+        "pbr::UIPass::OnInitDevice",
         "Can't create descriptor pool"
     );
 
@@ -1046,9 +996,7 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
         _uniformPool.Init ( renderer,
             _transformLayout,
-
-            // FUCK - remove namespace, one liner
-            sizeof ( android::UIProgram::Transform ),
+            sizeof ( UIProgram::Transform ),
             BIND_TRANSFORM,
             "UI pass"
         );
@@ -1123,9 +1071,8 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     if ( neededVertices > MAX_VERTICES ) [[unlikely]]
     {
-        // FUCK - remove namespace
         android_vulkan::LogWarning (
-            "pbr::android::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
+            "pbr::UIPass::RequestUIBuffer - Too many vertices was requested: %zu + %zu.",
             neededVertices,
             GetVerticesPerRectangle ()
         );
@@ -1451,4 +1398,4 @@ void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuff
     _isTransformChanged = false;
 }
 
-} // namespace pbr::android
+} // namespace pbr

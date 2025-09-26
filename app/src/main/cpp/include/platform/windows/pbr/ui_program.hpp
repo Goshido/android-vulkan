@@ -1,6 +1,5 @@
-// FUCK - remove namespace
-#ifndef PBR_WINDOWS_UI_PROGRAM_HPP
-#define PBR_WINDOWS_UI_PROGRAM_HPP
+#ifndef PBR_UI_PROGRAM_HPP
+#define PBR_UI_PROGRAM_HPP
 
 
 #include "graphics_program.hpp"
@@ -10,10 +9,9 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
-class UIProgram final : public windows::GraphicsProgram
+class UIProgram final : public GraphicsProgram
 {
     public:
         AV_DX_ALIGNMENT_BEGIN
@@ -105,7 +103,7 @@ class UIProgram final : public windows::GraphicsProgram
         ) const noexcept override;
 };
 
-} // namespace pbr::windows
+} // namespace pbr
 
 
-#endif // PBR_WINDOWS_UI_PROGRAM_HPP
+#endif // PBR_UI_PROGRAM_HPP

@@ -1,15 +1,14 @@
-// FUCK - remove namespace
-#ifndef PBR_ANDROID_COMPUTE_PROGRAM_HPP
-#define PBR_ANDROID_COMPUTE_PROGRAM_HPP
+#ifndef PBR_COMPUTE_PROGRAM_HPP
+#define PBR_COMPUTE_PROGRAM_HPP
 
 
-#include <pbr/compute_program.hpp>
+#include <pbr/compute_program_base.hpp>
 #include <renderer.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
-class ComputeProgram : public pbr::ComputeProgram
+class ComputeProgram : public ComputeProgramBase
 {
     protected:
         VkShaderModule      _computeShader = VK_NULL_HANDLE;
@@ -43,7 +42,7 @@ class ComputeProgram : public pbr::ComputeProgram
         void DestroyShaderModule ( VkDevice device ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_COMPUTE_PROGRAM_HPP
+#endif // PBR_COMPUTE_PROGRAM_HPP

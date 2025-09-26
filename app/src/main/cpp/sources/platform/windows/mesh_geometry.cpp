@@ -5,7 +5,7 @@
 #include <vulkan_utils.hpp>
 
 
-namespace android_vulkan::windows {
+namespace android_vulkan {
 
 MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 {
@@ -96,4 +96,4 @@ VkBuffer &MeshGeometry::GetDeviceBuffer () noexcept
     return _meshBufferInfo._buffer;
 }
 
-} // namespace android_vulkan::windows
+} // namespace android_vulkan

@@ -1,5 +1,3 @@
-// FUCK - windows and android separation
-
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <pbr/exposure.inc>
@@ -7,8 +5,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -214,10 +211,7 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     VkBuffer &buffer = _exposureBeforeBarrier.buffer;
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::CreateExposureResources",
-
+        "pbr::ExposurePass::CreateExposureResources",
         "Can't create buffer"
     );
 
@@ -234,17 +228,12 @@ bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
             _exposureMemory._offset,
             memoryRequirements,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-
-            // FUCK - remove namespace
-            "Can't allocate memory (pbr::windows::ExposurePass::CreateExposureResources)"
+            "Can't allocate memory (pbr::ExposurePass::CreateExposureResources)"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkBindBufferMemory ( device, buffer, _exposureMemory._memory, _exposureMemory._offset ),
-
-            // FUCK - remove namespace
-            "pbr::windows::ExposurePass::CreateExposureResources",
-
+            "pbr::ExposurePass::CreateExposureResources",
             "Can't memory"
         );
 
@@ -313,10 +302,7 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer,
     VkBuffer &buffer = barrier.buffer;
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::CreateGlobalCounter",
-
+        "pbr::ExposurePass::CreateGlobalCounter",
         "Can't create global counter buffer"
     );
 
@@ -333,17 +319,12 @@ bool ExposurePass::CreateGlobalCounter ( android_vulkan::Renderer &renderer,
             _globalCounterMemory._offset,
             memoryRequirements,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-
-            // FUCK - remove namespace
-            "Can't allocate global counter memory (pbr::windows::ExposurePass::CreateGlobalCounter)"
+            "Can't allocate global counter memory (pbr::ExposurePass::CreateGlobalCounter)"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkBindBufferMemory ( device, buffer, _globalCounterMemory._memory, _globalCounterMemory._offset ),
-
-            // FUCK - remove namespace
-            "pbr::windows::ExposurePass::CreateGlobalCounter",
-
+            "pbr::ExposurePass::CreateGlobalCounter",
             "Can't bind global counter memory"
         );
 
@@ -426,10 +407,7 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateBuffer ( device, &bufferInfo, nullptr, &buffer ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::CreateLumaResources",
-
+        "pbr::ExposurePass::CreateLumaResources",
         "Can't create buffer"
     );
 
@@ -446,17 +424,12 @@ bool ExposurePass::CreateLumaResources ( android_vulkan::Renderer &renderer,
             _lumaMemory._offset,
             memoryRequirements,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-
-            // FUCK - remove namespace
-            "Can't allocate memory (pbr::windows::ExposurePass::CreateLumaResources)"
+            "Can't allocate memory (pbr::ExposurePass::CreateLumaResources)"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkBindBufferMemory ( device, buffer, _lumaMemory._memory, _lumaMemory._offset ),
-
-            // FUCK - remove namespace
-            "pbr::windows::ExposurePass::CreateLumaResources",
-
+            "pbr::ExposurePass::CreateLumaResources",
             "Can't memory"
         );
 
@@ -542,10 +515,7 @@ bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice devi
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateCommandBuffers ( device, &allocateInfo, &_commandBuffer ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::StartCommandBuffer",
-
+        "pbr::ExposurePass::StartCommandBuffer",
         "Can't allocate command buffer"
     );
 
@@ -563,10 +533,7 @@ bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice devi
     };
 
     return android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( _commandBuffer, &beginInfo ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::StartCommandBuffer",
-
+        "pbr::ExposurePass::StartCommandBuffer",
         "Can't begin command buffer"
     );
 }
@@ -574,7 +541,7 @@ bool ExposurePass::StartCommandBuffer ( VkCommandPool commandPool, VkDevice devi
 bool ExposurePass::SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept
 {
     bool const result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( _commandBuffer ),
-        "pbr::windows::ExposurePass::SubmitCommandBuffer",
+        "pbr::ExposurePass::SubmitCommandBuffer",
         "Can't end command buffer"
     );
 
@@ -596,10 +563,7 @@ bool ExposurePass::SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) no
 
     return android_vulkan::Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, VK_NULL_HANDLE ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::SubmitCommandBuffer",
-
+        "pbr::ExposurePass::SubmitCommandBuffer",
         "Can't submit command"
     );
 }
@@ -736,10 +700,7 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateImage ( device, &imageInfo, nullptr, &_syncMip5 ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::UpdateSyncMip5",
-
+        "pbr::ExposurePass::UpdateSyncMip5",
         "Can't create image"
     );
 
@@ -756,17 +717,12 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
             _syncMip5Memory._offset,
             memoryRequirements,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-
-            // FUCK - remove namespace
-            "Can't allocate image memory (pbr::windows::ExposurePass::UpdateSyncMip5)"
+            "Can't allocate image memory (pbr::ExposurePass::UpdateSyncMip5)"
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
             vkBindImageMemory ( device, _syncMip5, _syncMip5Memory._memory, _syncMip5Memory._offset ),
-
-            // FUCK - remove namespace
-            "pbr::windows::ExposurePass::UpdateSyncMip5",
-
+            "pbr::ExposurePass::UpdateSyncMip5",
             "Can't bind image memory"
         );
 
@@ -801,10 +757,7 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
     };
 
     result = android_vulkan::Renderer::CheckVkResult ( vkCreateImageView ( device, &viewInfo, nullptr, &_syncMip5View ),
-
-        // FUCK - remove namespace
-        "pbr::windows::ExposurePass::UpdateSyncMip5",
-
+        "pbr::ExposurePass::UpdateSyncMip5",
         "Can't create view"
     );
 
@@ -830,4 +783,4 @@ float ExposurePass::ExposureValueToLuma ( float exposureValue ) noexcept
     return 0.125F * std::exp2 ( exposureValue );
 }
 
-} // namespace pbr::windows
+} // namespace pbr

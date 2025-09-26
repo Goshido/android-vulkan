@@ -6,8 +6,7 @@
 #include <vulkan_utils.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::android {
+namespace pbr {
 
 bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
@@ -41,10 +40,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = android_vulkan::Renderer::CheckVkResult (
         vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_resourceDescriptorPool ),
-
-        // FUCK - remove namespace
-        "pbr::android::ToneMapperPass::Init",
-
+        "pbr::ToneMapperPass::Init",
         "Can't create descriptor pool"
     );
 
@@ -67,10 +63,7 @@ bool ToneMapperPass::Init ( android_vulkan::Renderer &renderer ) noexcept
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkAllocateDescriptorSets ( device, &allocateInfo, _descriptorSets + SET_RESOURCE ),
-
-        // FUCK - remove namespace
-        "pbr::android::ToneMapperPass::Init",
-
+        "pbr::ToneMapperPass::Init",
         "Can't create descriptor set"
     );
 
@@ -240,4 +233,4 @@ void ToneMapperPass::UploadGPUData ( android_vulkan::Renderer const &renderer, V
     _transformUpdated = false;
 }
 
-} // namespace pbr::android
+} // namespace pbr

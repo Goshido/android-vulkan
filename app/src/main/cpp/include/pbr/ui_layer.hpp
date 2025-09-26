@@ -3,10 +3,7 @@
 
 
 #include "html5_element.hpp"
-
-// FUCK - remove namespace
 #include <platform/android/pbr/ui_pass.hpp>
-
 #include "scriptable_div_ui_element.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -49,16 +46,11 @@ class UILayer final
         ~UILayer () = default;
 
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
-            // FUCK - remove namespace
-            android::FontStorage &fontStorage
+            FontStorage &fontStorage
         ) noexcept;
 
-        // FUCK - remove namespace
-        void Submit ( android::UIElement::SubmitInfo &info ) noexcept;
-
-        // FUCK - remove namespace
-        [[nodiscard]] bool UpdateCache ( android::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
-
+        void Submit ( UIElement::SubmitInfo &info ) noexcept;
+        [[nodiscard]] bool UpdateCache ( FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
         static void InitLuaFrontend ( lua_State &vm ) noexcept;
         static void Destroy () noexcept;
 

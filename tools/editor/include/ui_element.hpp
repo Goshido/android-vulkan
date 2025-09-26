@@ -24,8 +24,7 @@ class UIElement
 
         virtual ~UIElement () = default;
 
-        // FUCK - remove namespace
-        [[nodiscard]] virtual pbr::windows::UIElement &GetNativeElement () noexcept = 0;
+        [[nodiscard]] virtual pbr::UIElement &GetNativeElement () noexcept = 0;
 
     protected:
         explicit UIElement ( MessageQueue &messageQueue ) noexcept;

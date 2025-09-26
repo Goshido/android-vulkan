@@ -1,5 +1,5 @@
-#ifndef ANDROID_VULKAN_WINDOWS_MESH_BUFFER_INFO_HPP
-#define ANDROID_VULKAN_WINDOWS_MESH_BUFFER_INFO_HPP
+#ifndef ANDROID_VULKAN_MESH_BUFFER_INFO_HPP
+#define ANDROID_VULKAN_MESH_BUFFER_INFO_HPP
 
 
 #include <GXCommon/GXWarning.hpp>
@@ -11,7 +11,7 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-namespace android_vulkan::windows {
+namespace android_vulkan {
 
 // Note if index buffer is present '_indexType' must not be VK_INDEX_TYPE_NONE_KHR.
 // Index data offset is implicitly 0. Vertex data could contain:
@@ -30,7 +30,7 @@ struct MeshBufferInfo final
     VkIndexType         _indexType = VK_INDEX_TYPE_NONE_KHR;
 };
 
-} // namespace android_vulkan::windows
+} // namespace android_vulkan
 
 
-#endif // ANDROID_VULKAN_WINDOWS_MESH_BUFFER_INFO_HPP
+#endif // ANDROID_VULKAN_MESH_BUFFER_INFO_HPP

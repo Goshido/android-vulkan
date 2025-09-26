@@ -1,7 +1,5 @@
-// FUCK - windows and android separation
-
-#ifndef PBR_ANDROID_UI_ELEMENT_HPP
-#define PBR_ANDROID_UI_ELEMENT_HPP
+#ifndef PBR_UI_ELEMENT_HPP
+#define PBR_UI_ELEMENT_HPP
 
 
 #include <pbr/css_computed_values.hpp>
@@ -9,7 +7,7 @@
 #include "ui_pass.hpp"
 
 
-namespace pbr::android {
+namespace pbr {
 
 class UIElement
 {
@@ -114,7 +112,7 @@ class UIElement
         [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;
 };
 
-} // namespace pbr::android
+} // namespace pbr
 
 
-#endif // PBR_ANDROID_UI_ELEMENT_HPP
+#endif // PBR_UI_ELEMENT_HPP

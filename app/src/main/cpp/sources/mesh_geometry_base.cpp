@@ -3,7 +3,7 @@
 #include <av_assert.hpp>
 #include <file.hpp>
 #include <logger.hpp>
-#include <mesh_geometry.hpp>
+#include <mesh_geometry_base.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -18,14 +18,14 @@ constexpr size_t const INDEX_SIZES[] = { sizeof ( uint16_t ), sizeof ( uint32_t 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void MeshGeometry::FreeResources ( Renderer &renderer ) noexcept
+void MeshGeometryBase::FreeResources ( Renderer &renderer ) noexcept
 {
     FreeTransferResources ( renderer );
     FreeResourceInternal ( renderer );
     _fileName.clear ();
 }
 
-void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
+void MeshGeometryBase::FreeTransferResources ( Renderer &renderer ) noexcept
 {
     if ( _transferBuffer != VK_NULL_HANDLE )
     {
@@ -43,37 +43,37 @@ void MeshGeometry::FreeTransferResources ( Renderer &renderer ) noexcept
     allocation._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
-GXAABB const &MeshGeometry::GetBounds () const noexcept
+GXAABB const &MeshGeometryBase::GetBounds () const noexcept
 {
     return _bounds;
 }
 
-uint32_t MeshGeometry::GetVertexBufferVertexCount () const noexcept
+uint32_t MeshGeometryBase::GetVertexBufferVertexCount () const noexcept
 {
     return _vertexBufferVertexCount;
 }
 
-std::string const &MeshGeometry::GetName () const noexcept
+std::string const &MeshGeometryBase::GetName () const noexcept
 {
     return _fileName;
 }
 
-uint32_t MeshGeometry::GetVertexCount () const noexcept
+uint32_t MeshGeometryBase::GetVertexCount () const noexcept
 {
     return _vertexCount;
 }
 
-bool MeshGeometry::IsUnique () const noexcept
+bool MeshGeometryBase::IsUnique () const noexcept
 {
     return _fileName.empty ();
 }
 
-void MeshGeometry::MakeUnique () noexcept
+void MeshGeometryBase::MakeUnique () noexcept
 {
     _fileName.clear ();
 }
 
-bool MeshGeometry::LoadMesh ( Renderer &renderer,
+bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -82,7 +82,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
 {
     if ( fileName.empty () ) [[unlikely]]
     {
-        LogError ( "LoadMesh::LoadMesh - Can't upload data. Filename is empty." );
+        LogError ( "MeshGeometryBase::LoadMesh - Can't upload data. Filename is empty." );
         return false;
     }
 
@@ -91,14 +91,14 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
 
     if ( !std::regex_match ( fileName, match, isMesh2 ) ) [[unlikely]]
     {
-        LogError ( "LoadMesh::LoadMesh - Mesh format is not supported: %s", fileName.c_str () );
+        LogError ( "MeshGeometryBase::LoadMesh - Mesh format is not supported: %s", fileName.c_str () );
         return false;
     }
 
     return LoadFromMesh2 ( renderer, commandBuffer, externalCommandBuffer, fence, std::move ( fileName ) );
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
+[[maybe_unused]] bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -164,7 +164,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::LoadMesh ( Renderer &renderer,
+bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -199,7 +199,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::LoadMesh ( Renderer &renderer,
+bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -234,7 +234,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::LoadMesh ( Renderer &renderer,
+bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -273,7 +273,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::LoadMesh ( Renderer &renderer,
+bool MeshGeometryBase::LoadMesh ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -312,7 +312,7 @@ bool MeshGeometry::LoadMesh ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::CreateBuffer ( Renderer &renderer,
+bool MeshGeometryBase::CreateBuffer ( Renderer &renderer,
     VkBuffer &buffer,
     Allocation &allocation,
     VkBufferCreateInfo const &createInfo,
@@ -323,7 +323,7 @@ bool MeshGeometry::CreateBuffer ( Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool const result = Renderer::CheckVkResult ( vkCreateBuffer ( device, &createInfo, nullptr, &buffer ),
-        "MeshGeometry::CreateBuffer",
+        "MeshGeometryBase::CreateBuffer",
         "Can't create buffer"
     );
 
@@ -341,17 +341,17 @@ bool MeshGeometry::CreateBuffer ( Renderer &renderer,
             allocation._offset,
             memoryRequirements,
             memoryProperty,
-            "Can't allocate memory (MeshGeometry::CreateBuffer)"
+            "Can't allocate memory (MeshGeometryBase::CreateBuffer)"
         ) &&
 
         Renderer::CheckVkResult (
             vkBindBufferMemory ( device, buffer, allocation._memory, allocation._offset ),
-            "MeshGeometry::CreateBuffer",
+            "MeshGeometryBase::CreateBuffer",
             "Can't bind memory"
         );
 }
 
-void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
+void MeshGeometryBase::FreeResourceInternal ( Renderer &renderer ) noexcept
 {
     _vertexCount = 0U;
 
@@ -365,7 +365,7 @@ void MeshGeometry::FreeResourceInternal ( Renderer &renderer ) noexcept
     _gpuAllocation._offset = std::numeric_limits<VkDeviceSize>::max ();
 }
 
-bool MeshGeometry::GPUTransfer ( Renderer &renderer,
+bool MeshGeometryBase::GPUTransfer ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -412,7 +412,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     result = renderer.MapMemory ( transferData,
         _transferAllocation._memory,
         _transferAllocation._offset,
-        "MeshGeometry::GPUTransfer",
+        "MeshGeometryBase::GPUTransfer",
         "Can't map data"
     );
 
@@ -440,7 +440,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         };
 
         result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
-            "MeshGeometry::GPUTransfer",
+            "MeshGeometryBase::GPUTransfer",
             "Can't begin command buffer"
         );
 
@@ -451,7 +451,6 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     }
 
     // Note most extreme case is 3 upload jobs: index buffer, position buffer and 'rest data' buffer.
-    //VkBufferMemoryBarrier barrierInfo[ 3U ];
     VkBufferCopy bufferCopy[ 3U ];
     size_t const jobCount = jobs.size ();
     AV_ASSERT ( jobCount <= std::size ( bufferCopy ) )
@@ -508,7 +507,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         return true;
 
     result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "MeshGeometry::GPUTransfer",
+        "MeshGeometryBase::GPUTransfer",
         "Can't end command buffer"
     );
 
@@ -530,12 +529,12 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
 
     return Renderer::CheckVkResult (
         vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
-        "MeshGeometry::GPUTransfer",
+        "MeshGeometryBase::GPUTransfer",
         "Can't submit command"
     );
 }
 
-bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
+bool MeshGeometryBase::LoadFromMesh2 ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,
@@ -596,7 +595,7 @@ bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
     return true;
 }
 
-bool MeshGeometry::Upload ( Renderer &renderer,
+bool MeshGeometryBase::Upload ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
     bool externalCommandBuffer,
     VkFence fence,

@@ -31,7 +31,7 @@ PointLightLightupProgram::PointLightLightupProgram () noexcept:
 
 void PointLightLightupProgram::Destroy ( VkDevice device ) noexcept
 {
-    android::GraphicsProgram::Destroy ( device );
+    GraphicsProgram::Destroy ( device );
 
     _pointLightLayout.Destroy ( device );
     _lightVolumeLayout.Destroy ( device );

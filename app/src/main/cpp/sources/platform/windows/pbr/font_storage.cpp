@@ -5,8 +5,7 @@
 #include <platform/windows/pbr/font_storage.hpp>
 
 
-// FUCK - remove namespace
-namespace pbr::windows {
+namespace pbr {
 
 namespace {
 
@@ -42,7 +41,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer ) noe
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "pbr::windows::FontStorage::StagingBuffer::Init",
+        "pbr::FontStorage::StagingBuffer::Init",
         "Can't create buffer"
     );
 
@@ -58,14 +57,14 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer ) noe
         _memoryOffset,
         memoryRequirements,
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ),
-        "Can't allocate device memory (pbr::windows::FontStorage::StagingBuffer::Init)"
+        "Can't allocate device memory (pbr::FontStorage::StagingBuffer::Init)"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-        "pbr::windows::FontStorage::StagingBuffer",
+        "pbr::FontStorage::StagingBuffer",
         "Can't bind memory"
     );
 
@@ -77,7 +76,7 @@ bool FontStorage::StagingBuffer::Init ( android_vulkan::Renderer &renderer ) noe
     result = renderer.MapMemory ( data,
         _memory,
         _memoryOffset,
-        "pbr::windows::FontStorage::StagingBuffer::Init",
+        "pbr::FontStorage::StagingBuffer::Init",
         "Can't map memory"
     );
 
@@ -220,7 +219,7 @@ bool FontStorage::Atlas::AddPages ( android_vulkan::Renderer &renderer,
 
         bool result = android_vulkan::Renderer::CheckVkResult (
             vkCreateImage ( device, &imageInfo, nullptr, &resource._image ),
-            "pbr::windows::FontStorage::Atlas::AddLayer",
+            "pbr::FontStorage::Atlas::AddLayer",
             "Can't create image"
         );
 
@@ -238,19 +237,19 @@ bool FontStorage::Atlas::AddPages ( android_vulkan::Renderer &renderer,
                 resource._memoryOffset,
                 memoryRequirements,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                "Can't allocate image memory (pbr::windows::FontStorage::Atlas::AddLayer)"
+                "Can't allocate image memory (pbr::FontStorage::Atlas::AddLayer)"
             ) &&
 
 
             android_vulkan::Renderer::CheckVkResult (
                 vkBindImageMemory ( device, resource._image, resource._memory, resource._memoryOffset ),
-                "pbr::windows::FontStorage::Atlas::AddLayer",
+                "pbr::FontStorage::Atlas::AddLayer",
                 "Can't bind image memory"
             ) &&
 
             android_vulkan::Renderer::CheckVkResult (
                 vkCreateImageView ( device, &viewInfo, nullptr, &resource._view ),
-                "pbr::windows::FontStorage::Atlas::AddLayer",
+                "pbr::FontStorage::Atlas::AddLayer",
                 "Can't create image view"
             );
 
@@ -311,7 +310,7 @@ FontStorage::FontStorage ( ResourceHeap& resourceHeap ) noexcept:
 
 bool FontStorage::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
-    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::windows::FontStorage::Init", "Can't init FreeType" ) &&
+    return CheckFTResult ( FT_Init_FreeType ( &_library ), "pbr::FontStorage::Init", "Can't init FreeType" ) &&
         MakeTransparentGlyph ( renderer );
 }
 
@@ -323,7 +322,7 @@ void FontStorage::Destroy ( android_vulkan::Renderer &renderer ) noexcept
         return;
 
     bool const result = CheckFTResult ( FT_Done_FreeType ( _library ),
-        "pbr::windows::FontStorage::Destroy",
+        "pbr::FontStorage::Destroy",
         "Can't close FreeType"
     );
 
@@ -447,7 +446,7 @@ void FontStorage::GetStringMetrics ( StringMetrics &result,
 
         bool const status = CheckFTResult (
             FT_Load_Char ( face, static_cast<FT_ULong> ( symbol ), FT_LOAD_BITMAP_METRICS_ONLY ),
-            "pbr::windows::FontStorage::GetStringMetrics",
+            "pbr::FontStorage::GetStringMetrics",
             "Can't get glyph metrics"
         );
 
@@ -630,7 +629,7 @@ int32_t FontStorage::GetKerning ( Font font, char32_t left, char32_t right ) noe
             &delta
         ),
 
-        "pbr::windows::FontStorage::GetKerning",
+        "pbr::FontStorage::GetKerning",
         "Can't resolve kerning"
     );
 
@@ -894,7 +893,7 @@ bool FontStorage::MakeFont ( FontHash hash, std::string_view font, uint32_t size
 
     bool const result = CheckFTResult (
         FT_New_Memory_Face ( _library, fontAsset.data (), static_cast<FT_Long> ( fontAsset.size () ), 0, &face ),
-        "pbr::windows::FontStorage::MakeFont",
+        "pbr::FontStorage::MakeFont",
         "Can't load face"
     );
 
@@ -915,7 +914,7 @@ bool FontStorage::MakeFont ( FontHash hash, std::string_view font, uint32_t size
 
     auto const s = static_cast<FT_UInt> ( size );
 
-    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::windows::FontStorage::MakeFont", "Can't set size" ) )
+    if ( !CheckFTResult ( FT_Set_Pixel_Sizes ( face, s, s ), "pbr::FontStorage::MakeFont", "Can't set size" ) )
     {
         [[unlikely]]
         return false;
@@ -1200,7 +1199,7 @@ std::optional<FontStorage::EMFontMetrics> FontStorage::ResolveEMFontMetrics ( FT
     }
 
     bool result = CheckFTResult ( FT_Set_Pixel_Sizes ( face, em, em ),
-        "pbr::windows::FontStorage::ResolveEMFontMetrics",
+        "pbr::FontStorage::ResolveEMFontMetrics",
         "Can't set size"
     );
 
@@ -1231,4 +1230,4 @@ std::optional<FontStorage::EMFontMetrics> FontStorage::ResolveEMFontMetrics ( FT
     return std::optional<FontStorage::EMFontMetrics> { std::move ( metrics ) };
 }
 
-} // namespace pbr::windows
+} // namespace pbr

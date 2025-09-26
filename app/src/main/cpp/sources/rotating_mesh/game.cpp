@@ -300,8 +300,8 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
             &item._descriptorSet, 0U, nullptr
         );
 
-        android_vulkan::android::MeshGeometry &mesh = item._mesh;
-        android_vulkan::android::MeshBufferInfo const &bufferInfo = mesh.GetMeshBufferInfo ();
+        android_vulkan::MeshGeometry &mesh = item._mesh;
+        android_vulkan::MeshBufferInfo const &bufferInfo = mesh.GetMeshBufferInfo ();
         VkBuffer buffer = bufferInfo._buffer;
         VkBuffer const buffers[] = { buffer, buffer };
 

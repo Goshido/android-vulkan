@@ -5,7 +5,7 @@
 #include <platform/android/pbr/ui_element.hpp>
 
 
-namespace pbr::android {
+namespace pbr {
 
 void UIElement::Hide () noexcept
 {
@@ -91,8 +91,7 @@ float UIElement::ResolveFontSize () const noexcept
 
     if ( !target ) [[unlikely]]
     {
-        // FUCK - remove namespace
-        android_vulkan::LogError ( "pbr::android::UIElement::ResolveFontSize - Everything is inherit." );
+        android_vulkan::LogError ( "pbr::UIElement::ResolveFontSize - Everything is inherit." );
         AV_ASSERT ( false )
         return 0.0F;
     }
@@ -162,8 +161,7 @@ float UIElement::ResolveLineHeight ( FontStorage::Font font) const noexcept
         }
     }
 
-    // FUCK - remove namespace
-    android_vulkan::LogError ( "pbr::android::UIElement::ResolveLineHeight - Everything is inherit." );
+    android_vulkan::LogError ( "pbr::UIElement::ResolveLineHeight - Everything is inherit." );
     AV_ASSERT ( false )
     return 0.0F;
 }
@@ -274,8 +272,7 @@ UIElement::AlignHandler UIElement::ResolveTextAlignment ( UIElement const &paren
             break;
 
             default:
-                // FUCK - remove namespace
-                android_vulkan::LogError ( "pbr::android::UIElement::ResolveTextAlignment - Unknown alignment." );
+                android_vulkan::LogError ( "pbr::UIElement::ResolveTextAlignment - Unknown alignment." );
                 AV_ASSERT ( false )
             break;
         }
@@ -305,8 +302,7 @@ UIElement::AlignHandler UIElement::ResolveVerticalAlignment ( UIElement const &p
             break;
 
             default:
-                // FUCK - remove namespace
-                android_vulkan::LogError ( "pbr::android::UIElement::ResolveVerticalAlignment - Unknown alignment." );
+                android_vulkan::LogError ( "pbr::UIElement::ResolveVerticalAlignment - Unknown alignment." );
                 AV_ASSERT ( false )
             break;
         }
@@ -331,4 +327,4 @@ float UIElement::AlignToEnd ( float pen, float parentSize, float lineSize ) noex
     return pen + parentSize - lineSize;
 }
 
-} // namespace pbr::android
+} // namespace pbr

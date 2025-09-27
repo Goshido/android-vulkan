@@ -233,14 +233,14 @@ bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
 
 std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 {
-    constexpr static char const* extensions[] =
+    constexpr static char const* const extensions[] =
     {
 
-#ifdef AV_ENABLE_NSIGHT
+#if defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_RENDERDOC )
 
         VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
 
-#endif // AV_ENABLE_NSIGHT
+#endif // AV_ENABLE_NSIGHT || AV_ENABLE_RENDERDOC
 
         VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
         VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
@@ -252,14 +252,14 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 
 std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 {
-    constexpr static char const* extensions[] =
+    constexpr static char const* const extensions[] =
     {
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_NSIGHT )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_RENDERDOC )
 
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_NSIGHT
+#endif // AV_ENABLE_VVL || AV_ENABLE_NSIGHT || AV_ENABLE_RENDERDOC
 
         VK_KHR_SURFACE_EXTENSION_NAME,
         VK_KHR_WIN32_SURFACE_EXTENSION_NAME

@@ -327,9 +327,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\tone_mapper_pass.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.cpp">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="src\hello_triangle_program.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -708,9 +705,6 @@
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp">
-      <Filter>Header Files\core\platform\window\pbr</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout_ext.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
     <ClInclude Include="include\hello_triangle_vertex.hpp">

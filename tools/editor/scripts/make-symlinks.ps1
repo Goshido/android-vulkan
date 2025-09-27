@@ -44,6 +44,7 @@ AV-Create-Symlink                                       `
     -Target "$projectDir\app\src\main\assets"
 
 [string[]] $configs = @(
+    "Aftermath",
     "Debug - GPU select",
     "Debug",
     "Nsight",

@@ -7,14 +7,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "editor", "editor.vcxproj", 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Aftermath|x64 = Aftermath|x64
 		Debug - GPU select|x64 = Debug - GPU select|x64
 		Debug|x64 = Debug|x64
 		Nsight|x64 = Nsight|x64
 		Profile|x64 = Profile|x64
 		Release + ASAN|x64 = Release + ASAN|x64
 		Release|x64 = Release|x64
+		RenderDoc|x64 = RenderDoc|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{540B70E1-6E86-4394-A22E-501BF6548048}.Aftermath|x64.ActiveCfg = Aftermath|x64
+		{540B70E1-6E86-4394-A22E-501BF6548048}.Aftermath|x64.Build.0 = Aftermath|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Debug - GPU select|x64.ActiveCfg = Debug - GPU select|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Debug - GPU select|x64.Build.0 = Debug - GPU select|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Debug|x64.ActiveCfg = Debug|x64
@@ -27,6 +31,8 @@ Global
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Release + ASAN|x64.Build.0 = Release + ASAN|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Release|x64.ActiveCfg = Release|x64
 		{540B70E1-6E86-4394-A22E-501BF6548048}.Release|x64.Build.0 = Release|x64
+		{540B70E1-6E86-4394-A22E-501BF6548048}.RenderDoc|x64.ActiveCfg = RenderDoc|x64
+		{540B70E1-6E86-4394-A22E-501BF6548048}.RenderDoc|x64.Build.0 = RenderDoc|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -334,8 +334,8 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pool, VK_OBJECT_TYPE_COMMAND_POOL, "Text LUT" );
-    AV_SET_VULKAN_OBJECT_NAME ( device, _fence, VK_OBJECT_TYPE_FENCE, "Text LUT" );
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pool, VK_OBJECT_TYPE_COMMAND_POOL, "Text LUT" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _fence, VK_OBJECT_TYPE_FENCE, "Text LUT" )
 
     VkDescriptorSetAllocateInfo const allocateInfo
     {
@@ -355,7 +355,7 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         .commandBufferCount = 1U
     };
 
-    VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+    VkCommandBuffer commandBuffer;
 
     result =
         android_vulkan::Renderer::CheckVkResult (
@@ -544,159 +544,97 @@ bool UIPass::CommonDescriptorSet::FreeTransferResources ( android_vulkan::Render
 
 //----------------------------------------------------------------------------------------------------------------------
 
-bool UIPass::Buffer::Init ( android_vulkan::Renderer &renderer,
-    size_t size,
-    VkBufferUsageFlags usage,
-    VkMemoryPropertyFlags memoryProperties,
-    char const* name
-) noexcept
+void UIPass::BufferStream::Bind ( VkCommandBuffer commandBuffer ) noexcept
 {
+    VkBuffer const buffers[] = { _buffer, _buffer };
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, static_cast<uint32_t> ( std::size ( buffers ) ), buffers, _offsets );
+}
+
+bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer ) noexcept
+{
+    constexpr VkDeviceSize alignment = 4U;
+    _offsets[ UI_VERTEX_INDEX ] = ( MAX_VERTICES * sizeof ( GXVec2 ) + alignment - 1U ) / alignment * alignment;
+    VkDevice device = renderer.GetDevice ();
+
     VkBufferCreateInfo const bufferInfo
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = size,
-        .usage = usage,
+        .size = static_cast<VkDeviceSize> ( _offsets[ UI_VERTEX_INDEX ] + MAX_VERTICES * sizeof ( UIVertex ) ),
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr
     };
 
-    _name = name;
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
-        "pbr::UIPass::Init",
-        ( std::string ( "Can't create buffer: " ) + _name ).c_str ()
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
+        "pbr::UIPass::BufferStream::Init",
+        "Can't create buffer"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", _name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "UI vertices" )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
 
-    result = renderer.TryAllocateMemory ( _memory,
-        _memoryOffset,
-        memoryRequirements,
-        memoryProperties,
-        ( std::string ( "pbr::UIPass::Init - Can't allocate device memory: " ) + _name ).c_str ()
-    );
+    return
+        renderer.TryAllocateMemory ( _memory,
+            _memoryOffset,
+            memoryRequirements,
 
-    if ( !result ) [[unlikely]]
-        return false;
+            AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
+                AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+                AV_VK_FLAG ( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ),
 
-    return android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
-        "pbr::UIPass::Init",
-        ( std::string ( "Can't bind memory: " ) + _name ).c_str ()
-    );
-}
-
-void UIPass::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
-{
-    if ( _buffer != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( _buffer, VK_NULL_HANDLE ), nullptr );
-
-    if ( _memory == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    renderer.FreeMemory ( std::exchange ( _memory, VK_NULL_HANDLE ), _memoryOffset );
-    _memoryOffset = 0U;
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
-UIPass::BufferStream::BufferStream ( size_t elementSize ) noexcept:
-    _elementSize ( elementSize )
-{
-    // NOTHING
-}
-
-bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer,
-    char const* gpuBufferName,
-    char const* stagingName
-) noexcept
-{
-    constexpr VkMemoryPropertyFlags stagingProps = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-    constexpr VkBufferUsageFlags usage = AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-        AV_VK_FLAG ( VK_BUFFER_USAGE_VERTEX_BUFFER_BIT );
-
-    size_t const size = MAX_VERTICES * _elementSize;
-
-    bool const result =
-        _staging.Init ( renderer, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, stagingProps, stagingName ) &&
-
-        renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
-            _staging._memory,
-            _staging._memoryOffset,
-            "pbr::UIPass::BufferStream::Init",
-            "Can't map memory"
+            "pbr::UIPass::BufferStream::Init - Can't allocate device memory"
         ) &&
 
-        _gpuBuffer.Init ( renderer, size, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, gpuBufferName );
+        android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _memoryOffset ),
+            "pbr::UIPass::BufferStream::Init",
+            "Can't bind memory"
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _barrier.buffer = _gpuBuffer._buffer;
-    return true;
+        renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
+            _memory,
+            _memoryOffset,
+            "pbr::UIPass::BufferStream::Init",
+            "Can't map memory"
+        );
 }
 
 void UIPass::BufferStream::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _data ) [[likely]]
+    if ( std::exchange ( _data, nullptr ) ) [[likely]]
+        renderer.UnmapMemory ( _memory );
+
+    if ( _buffer != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( _buffer, VK_NULL_HANDLE ), nullptr );
+
+    if ( _memory != VK_NULL_HANDLE ) [[likely]]
     {
-        renderer.UnmapMemory ( _staging._memory );
-        _data = nullptr;
+        renderer.FreeMemory ( std::exchange ( _memory, VK_NULL_HANDLE ), std::exchange ( _memoryOffset, 0U ) );
     }
-
-    _staging.Destroy ( renderer );
-    _gpuBuffer.Destroy ( renderer );
 }
 
-VkBuffer UIPass::BufferStream::GetBuffer () const noexcept
+UIPass::UIBufferResponse UIPass::BufferStream::GetData ( size_t startIndex, size_t neededVertices ) const noexcept
 {
-    return _gpuBuffer._buffer;
-}
-
-void *UIPass::BufferStream::GetData ( size_t startIndex ) const noexcept
-{
-    return _data + startIndex * _elementSize;
-}
-
-void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept
-{
-    auto const offset = static_cast<VkDeviceSize> ( _elementSize * readIdx );
-    auto const size = static_cast<VkDeviceSize> ( _elementSize * ( writeIdx - readIdx ) );
-
-    VkBufferCopy const copy
+    return
     {
-        .srcOffset = offset,
-        .dstOffset = offset,
-        .size = size
+        {
+            ._positions { reinterpret_cast<GXVec2*> ( _data + startIndex * sizeof ( GXVec2 ) ), neededVertices },
+
+            ._vertices
+            {
+                reinterpret_cast<UIVertex*> ( _data + _offsets[ UI_VERTEX_INDEX ] + startIndex * sizeof ( UIVertex ) ),
+                neededVertices
+            }
+        }
     };
-
-    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _gpuBuffer._buffer, 1U, &copy );
-
-    _barrier.offset = offset;
-    _barrier.size = size;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &_barrier,
-        0U,
-        nullptr
-    );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -893,12 +831,7 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
 
     VkDescriptorSet const sets[] = { _transformDescriptorSet, _commonDescriptorSet._descriptorSet };
     _program.SetDescriptorSet ( commandBuffer, sets, 0U, static_cast<uint32_t> ( std::size ( sets ) ) );
-
-    VkBuffer const buffers[] = { _positions.GetBuffer (), _rest.GetBuffer () };
-    constexpr VkDeviceSize const offsets[] = { 0U, 0U };
-    static_assert ( std::size ( buffers ) == std::size ( offsets ) );
-
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, static_cast<uint32_t> ( std::size ( buffers ) ), buffers, offsets );
+    _uiVertices.Bind ( commandBuffer );
 
     auto start = static_cast<uint32_t> ( _readVertexIndex );
     size_t imageIdx = _imageDescriptorSets._commitIndex;
@@ -940,13 +873,6 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
     VkImageView transparent
 ) noexcept
 {
-    bool result = _fontStorage.Init ( renderer ) &&
-        _positions.Init ( renderer, "UI positions", "UI position staging" ) &&
-        _rest.Init ( renderer, "UI rest", "UI rest staging" );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
     constexpr size_t commonDescriptorSetCount = 1U;
     constexpr size_t descriptorSetCount = commonDescriptorSetCount + MAX_IMAGES + TRANSPARENT_DESCRIPTOR_SET_COUNT;
 
@@ -978,11 +904,14 @@ bool UIPass::OnInitDevice ( android_vulkan::Renderer &renderer,
 
     VkDevice device = renderer.GetDevice ();
 
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
-        "pbr::UIPass::OnInitDevice",
-        "Can't create descriptor pool"
-    );
+    bool result = _uiVertices.Init ( renderer ) &&
+        _fontStorage.Init ( renderer ) &&
+
+        android_vulkan::Renderer::CheckVkResult (
+            vkCreateDescriptorPool ( device, &poolInfo, nullptr, &_descriptorPool ),
+            "pbr::UIPass::OnInitDevice",
+            "Can't create descriptor pool"
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -1016,9 +945,7 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _program.Destroy ( device );
 
-    _positions.Destroy ( renderer );
-    _rest.Destroy ( renderer );
-
+    _uiVertices.Destroy ( renderer );
     _inUseImageTracker.Destroy ();
     _fontStorage.Destroy ( renderer );
 
@@ -1027,8 +954,6 @@ void UIPass::OnDestroyDevice ( android_vulkan::Renderer &renderer ) noexcept
 
     _jobs.clear ();
     _jobs.shrink_to_fit ();
-
-    _hasChanges = false;
 
     ImageStorage::OnDestroyDevice ();
 }
@@ -1059,9 +984,6 @@ void UIPass::OnSwapchainDestroyed () noexcept
 
 void UIPass::RequestEmptyUI () noexcept
 {
-    if ( !_jobs.empty () )
-        _hasChanges = true;
-
     _jobs.clear ();
 }
 
@@ -1086,14 +1008,7 @@ UIPass::UIBufferResponse UIPass::RequestUIBuffer ( size_t neededVertices ) noexc
 
     _readVertexIndex = nextIdx;
     _writeVertexIndex = nextIdx + neededVertices;
-
-    return UIPass::UIBufferResponse
-    {
-        {
-            ._positions { static_cast<GXVec2*> ( _positions.GetData ( nextIdx ) ), neededVertices },
-            ._vertices { static_cast<UIVertex*> ( _rest.GetData ( nextIdx ) ), neededVertices }
-        }
-    };
+    return _uiVertices.GetData ( nextIdx, neededVertices );
 }
 
  bool UIPass::SetBrightness ( android_vulkan::Renderer &renderer,
@@ -1123,8 +1038,6 @@ void UIPass::SubmitImage ( Texture2DRef const &texture ) noexcept
             ._vertices = static_cast<uint32_t> ( GetVerticesPerRectangle () )
         }
     );
-
-    _hasChanges = true;
 }
 
 void UIPass::SubmitRectangle () noexcept
@@ -1157,9 +1070,6 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
 
     if ( _isTransformChanged )
         UpdateTransform ( renderer, commandBuffer );
-
-    if ( _hasChanges )
-        UpdateGeometry ( commandBuffer );
 
     return true;
 }
@@ -1341,8 +1251,6 @@ std::optional<Texture2DRef const> UIPass::RequestImage ( std::string const &asse
 
 void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
 {
-    _hasChanges = true;
-
     if ( _jobs.empty () )
     {
         _jobs.push_back (
@@ -1369,13 +1277,6 @@ void UIPass::SubmitNonImage ( size_t usedVertices ) noexcept
             ._vertices = static_cast<uint32_t> ( usedVertices )
         }
     );
-}
-
-void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
-{
-    _positions.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
-    _rest.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
-    _hasChanges = false;
 }
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept

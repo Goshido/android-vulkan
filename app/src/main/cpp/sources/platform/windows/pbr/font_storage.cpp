@@ -226,7 +226,7 @@ bool FontStorage::Atlas::AddPages ( android_vulkan::Renderer &renderer,
         if ( !result ) [[unlikely]]
             return false;
 
-        AV_SET_VULKAN_OBJECT_NAME ( device, resource._image, VK_OBJECT_TYPE_IMAGE, "Font storage atlas page #%u", i )
+        AV_SET_VULKAN_OBJECT_NAME ( device, resource._image, VK_OBJECT_TYPE_IMAGE, "Font atlas page #%u", i )
         viewInfo.image = resource._image;
 
         VkMemoryRequirements memoryRequirements;

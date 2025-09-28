@@ -36,7 +36,7 @@ class UIPass final
                 android_vulkan::Texture2D               _textLUT {};
 
             public:
-                CommonDescriptorSet () = default;
+                explicit CommonDescriptorSet () = default;
 
                 CommonDescriptorSet ( CommonDescriptorSet const & ) = delete;
                 CommonDescriptorSet &operator = ( CommonDescriptorSet const & ) = delete;
@@ -58,47 +58,20 @@ class UIPass final
                 [[nodiscard]] bool FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
-        struct Buffer final
-        {
-            VkBuffer                                    _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory                              _memory = VK_NULL_HANDLE;
-            char const*                                 _name = nullptr;
-            VkDeviceSize                                _memoryOffset = 0U;
-
-            [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                size_t size,
-                VkBufferUsageFlags usage,
-                VkMemoryPropertyFlags memoryProperties,
-                char const* name
-            ) noexcept;
-
-            void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-        };
-
         class BufferStream final
         {
             private:
-                VkBufferMemoryBarrier                   _barrier
-                {
-                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                    .pNext = nullptr,
-                    .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                    .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
-                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .buffer = VK_NULL_HANDLE,
-                    .offset = 0U,
-                    .size = 0U
-                };
+                constexpr static size_t UI_VERTEX_INDEX = 1U;
 
+            private:
+                VkBuffer                                _buffer = VK_NULL_HANDLE;
                 uint8_t*                                _data = nullptr;
-                size_t const                            _elementSize = 0U;
-
-                Buffer                                  _staging {};
-                Buffer                                  _gpuBuffer {};
+                VkDeviceMemory                          _memory = VK_NULL_HANDLE;
+                VkDeviceSize                            _memoryOffset = 0U;
+                VkDeviceSize                            _offsets[ 2U ] = { 0U, 0U };
 
             public:
-                BufferStream () = delete;
+                explicit BufferStream () = default;
 
                 BufferStream ( BufferStream const & ) = delete;
                 BufferStream &operator = ( BufferStream const & ) = delete;
@@ -106,20 +79,12 @@ class UIPass final
                 BufferStream ( BufferStream && ) = delete;
                 BufferStream &operator = ( BufferStream && ) = delete;
 
-                explicit BufferStream ( size_t elementSize ) noexcept;
-
                 ~BufferStream () = default;
 
-                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    char const* gpuBufferName,
-                    char const* stagingName
-                ) noexcept;
-
+                void Bind ( VkCommandBuffer commandBuffer ) noexcept;
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer ) noexcept;
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-
-                [[nodiscard]] VkBuffer GetBuffer () const noexcept;
-                [[nodiscard]] void *GetData ( size_t startIndex ) const noexcept;
-                void UpdateGeometry ( VkCommandBuffer commandBuffer, size_t readIdx, size_t writeIdx ) noexcept;
+                [[nodiscard]] UIBufferResponse GetData ( size_t startIndex, size_t neededVertices ) const noexcept;
         };
 
         class ImageDescriptorSets final
@@ -138,7 +103,7 @@ class UIPass final
                 VkDescriptorSet                         _transparent = VK_NULL_HANDLE;
 
             public:
-                ImageDescriptorSets () = default;
+                explicit ImageDescriptorSets () = default;
 
                 ImageDescriptorSets ( ImageDescriptorSets const & ) = delete;
                 ImageDescriptorSets &operator = ( ImageDescriptorSets const & ) = delete;
@@ -199,12 +164,10 @@ class UIPass final
 
         FontStorage                                     _fontStorage {};
 
-        bool                                            _hasChanges = false;
         bool                                            _isTransformChanged = false;
         std::vector<Job>                                _jobs {};
 
-        BufferStream                                    _positions { sizeof ( GXVec2 ) };
-        BufferStream                                    _rest { sizeof ( UIVertex ) };
+        BufferStream                                    _uiVertices {};
 
         UIProgram                                       _program {};
         VkDescriptorSet                                 _transformDescriptorSet = VK_NULL_HANDLE;
@@ -216,7 +179,7 @@ class UIPass final
         };
 
     public:
-        UIPass () = default;
+        explicit UIPass () = default;
 
         UIPass ( UIPass const & ) = delete;
         UIPass &operator = ( UIPass const & ) = delete;
@@ -297,7 +260,6 @@ class UIPass final
 
     private:
         void SubmitNonImage ( size_t usedVertices ) noexcept;
-        void UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept;
         void UpdateTransform ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
 };
 

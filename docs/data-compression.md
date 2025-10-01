@@ -808,7 +808,7 @@ _World 1-1_ | 10.504 ms | +1.027🔺 | +10.8%🔺 | <img src="./images/compressi
 
 **Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | ---
-_PBR_ | 16.661 ms ms | -0.25 ms🟢 | -1.5%🟢 | <img src="./images/compression-pbr.png" width="100">
+_PBR_ | 16.661 ms | -0.25 ms🟢 | -1.5%🟢 | <img src="./images/compression-pbr.png" width="100">
 _Skeletal mesh_ | 15.055 ms | -0.246 ms🟢 | -1.6%🟢 | <img src="./images/compression-skeletal.png" width="100">
 _World 1-1_ | 10.504 ms | -0.647 ms🟢 | -5.8%🟢 | <img src="./images/compression-world1x1.png" width="100">
 

@@ -189,11 +189,9 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     _camera.SetLocation ( GXVec3 ( 0.77F, 20.8F, -55.4F ) );
     _camera.Update ( 0.0F );
 
-    constexpr size_t cubeBuffers = 1U;
     constexpr size_t defaultMaterialBuffers = 5U;
-    constexpr size_t sphereBuffers = 1U;
     constexpr size_t unlitMaterialBuffers = 5U;
-    constexpr size_t totalBuffers = cubeBuffers + defaultMaterialBuffers + sphereBuffers + unlitMaterialBuffers;
+    constexpr size_t totalBuffers = defaultMaterialBuffers + unlitMaterialBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -225,11 +223,15 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( totalBuffers, VK_NULL_HANDLE );
+    VkFence const* fncs = fences.data ();
+
     size_t consumed = 0U;
     _cubes.resize ( 2U );
 
     result = AppendCuboid ( renderer,
         commandBuffers,
+        fncs,
         consumed,
         "Floor",
         _cubes[ 0U ]._component,
@@ -251,10 +253,11 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     result = AppendCuboid ( renderer,
         commandBuffers,
+        fncs,
         consumed,
         "Cube #0",
         _cubes[ 1U ]._component,
-        "pbr/assets/System/Default.mtl",
+        MaterialManager::DEFAULT_MATERIAL,
         GXColorUNORM ( 99U, 211U, 222U, 255U ),
         _cubes[ 1U ]._body,
         0.0F,
@@ -270,21 +273,14 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     commandBuffers += consumed;
 
-    _contactMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
-        consumed,
-        "pbr/system/unit-sphere.mesh2",
-        *commandBuffers,
-        VK_NULL_HANDLE
-    );
+    _contactMesh = MeshManager::GetInstance ().LoadMesh ( renderer, "pbr/system/unit-sphere.mesh2" );
 
     if ( !_contactMesh ) [[unlikely]]
         return false;
 
-    consumed += consumed;
-
     _contactMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         consumed,
-        "pbr/assets/System/Default.mtl",
+        MaterialManager::DEFAULT_MATERIAL,
         commandBuffers,
         nullptr
     );
@@ -310,8 +306,6 @@ bool Collision::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         auto &renderableComponent = static_cast<RenderableComponent &> ( *cube._component );
         renderableComponent.FreeTransferResources ( renderer );
     }
-
-    _contactMesh->FreeTransferResources ( renderer );
 
     // NOLINTNEXTLINE - downcast.
     auto &m = static_cast<GeometryPassMaterial &> ( *_contactMaterial );
@@ -348,6 +342,7 @@ void Collision::DestroyScene ( android_vulkan::Renderer &renderer ) noexcept
 
 bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers,
+    VkFence const* fences,
     size_t &commandBufferConsumed,
     std::string &&tag,
     ComponentRef &visual,
@@ -370,7 +365,7 @@ bool Collision::AppendCuboid ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers,
-        nullptr,
+        fences,
         "Mesh"
     );
 

@@ -56,8 +56,6 @@ android_vulkan::ShapeRef const &ActorSweep::GetShape () noexcept
 }
 
 bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
-    size_t &commandBufferConsumed,
-    VkCommandBuffer const* commandBuffers,
     GXVec3 const &location,
     GXVec3 const &size
 ) noexcept
@@ -74,11 +72,8 @@ bool ActorSweep::Init ( android_vulkan::Renderer &renderer,
 
     _mesh = std::make_shared<StaticMeshComponent> ( renderer,
         success,
-        commandBufferConsumed,
         "pbr/system/unit-cube.mesh2",
-        material,
-        commandBuffers,
-        nullptr
+        material
     );
 
     if ( !success )

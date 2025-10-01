@@ -20,6 +20,9 @@
 # NVIDIA Nsight Graphics config
 /app/src/main/assets/imgui.ini
 
+# Profiling
+/app/src/main/profiling/.~lock.results.ods#
+
 # Tools
 /tools/html-validator/.vscode/
 /tools/html-validator/build/

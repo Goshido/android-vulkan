@@ -109,9 +109,7 @@ class Game : public android_vulkan::Game
             VkCommandBuffer* commandBuffers
         ) noexcept;
 
-        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer,
-            VkCommandBuffer* commandBuffers
-        ) noexcept;
+        [[nodiscard]] bool CreateMeshes ( android_vulkan::Renderer &renderer ) noexcept;
 
     private:
         [[nodiscard]] bool IsReady () noexcept override;

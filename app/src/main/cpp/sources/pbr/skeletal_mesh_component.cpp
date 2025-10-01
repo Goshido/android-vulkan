@@ -25,44 +25,25 @@ namespace pbr {
 
 namespace {
 
-constexpr size_t ALLOCATE_COMMAND_BUFFERS = 8U;
-constexpr size_t INITIAL_COMMAND_BUFFERS = 32U;
-
 constexpr GXColorUNORM DEFAULT_COLOR ( 255U, 255U, 255U, 255U );
 constexpr GXColorUNORM DEFAULT_EMISSION ( 255U, 255U, 255U, 255U );
-
-constexpr char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
-
-// clang-format off
-constexpr auto MIN_COMMAND_BUFFERS =
-    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
-    static_cast<size_t> ( MeshManager::MaxCommandBufferPerMesh () ) +
-    static_cast<size_t> ( android_vulkan::SkinData::MaxCommandBufferPerSkin () );
-// clang-format on
-
-static_assert ( ALLOCATE_COMMAND_BUFFERS >= MIN_COMMAND_BUFFERS );
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SkeletalMeshComponent::CommandBufferInfo SkeletalMeshComponent::_cbInfo {};
 size_t SkeletalMeshComponent::_lastCommandBufferIndex = 0U;
 SkinProgram SkeletalMeshComponent::_program {};
 android_vulkan::Renderer* SkeletalMeshComponent::_renderer = nullptr;
 SkeletalMeshComponent::SkeletalMeshes SkeletalMeshComponent::_skeletalMeshes {};
 SkinPool SkeletalMeshComponent::_skinPool {};
 std::list<SkeletalMeshComponent::Usage> SkeletalMeshComponent::_toDelete[ FIF_COUNT ] {};
-std::deque<SkeletalMeshComponent::Usage*> SkeletalMeshComponent::_transferQueue {};
 
 // NOLINTNEXTLINE - no initialization for some fields
 SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
-    size_t &commandBufferConsumed,
     char const* mesh,
     char const* skin,
     char const* skeleton,
-    VkCommandBuffer const* commandBuffers,
-    VkFence const* fences,
     std::string &&name
 ) noexcept:
     RenderableComponent ( ClassID::SkeletalMesh, std::move ( name ) ),
@@ -75,59 +56,36 @@ SkeletalMeshComponent::SkeletalMeshComponent ( bool &success,
     _localMatrix.Identity ();
     size_t consumed;
 
+    // Default material already loaded
     _material = MaterialManager::GetInstance ().LoadMaterial ( *_renderer,
         consumed,
-        DEFAULT_MATERIAL,
-        commandBuffers,
-        fences
+        MaterialManager::DEFAULT_MATERIAL,
+        nullptr,
+        nullptr
     );
 
     if ( !_material ) [[unlikely]]
         return;
 
-    commandBufferConsumed = consumed;
-    commandBuffers += consumed;
-    fences += consumed;
-
-    _referenceMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer,
-        consumed,
-        mesh,
-        *commandBuffers,
-        *fences
-    );
-
-    if ( !_referenceMesh ) [[unlikely]]
+    if ( _referenceMesh = MeshManager::GetInstance ().LoadMesh ( *_renderer, mesh ); !_referenceMesh ) [[unlikely]]
         return;
-
-    commandBufferConsumed += consumed;
-    commandBuffers += consumed;
-    fences += consumed;
 
     MeshRef skinMesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
-    if ( !skinMesh->LoadMesh ( *_renderer, *commandBuffers, false, *fences, mesh ) ) [[unlikely]]
+    if ( !skinMesh->LoadMesh ( *_renderer, mesh ) ) [[unlikely]]
         return;
 
     skinMesh->MakeUnique ();
-
-    ++commandBufferConsumed;
-    ++commandBuffers;
-    ++fences;
 
     _usage._skinMesh = std::move ( skinMesh );
 
     bool const result = _usage._skinData.LoadSkin ( skin,
         skeleton,
-        *_renderer,
-        *commandBuffers,
-        *fences
+        *_renderer
     );
 
     if ( !result ) [[unlikely]]
         return;
-
-    ++commandBufferConsumed;
-    _transferQueue.push_back ( &_usage );
 
     VkExtent3D const &maxDispatch = _renderer->GetMaxComputeDispatchSize ();
     uint32_t const vertices = _referenceMesh->GetVertexCount ();
@@ -189,9 +147,6 @@ bool SkeletalMeshComponent::ApplySkin ( VkCommandBuffer commandBuffer, size_t co
         return true;
 
     _lastCommandBufferIndex = commandBufferIndex;
-
-    if ( !WaitGPUUploadComplete () ) [[unlikely]]
-        return false;
 
     FreeUnusedResources ( commandBufferIndex );
     VkDevice device = _renderer->GetDevice ();
@@ -309,31 +264,7 @@ bool SkeletalMeshComponent::Init ( lua_State &vm, android_vulkan::Renderer &rend
         lua_register ( &vm, extension.name, extension.func );
 
     _renderer = &renderer;
-
-    if ( !_program.Init ( renderer, nullptr ) ) [[unlikely]]
-        return false;
-
-    VkCommandPoolCreateInfo const createInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .queueFamilyIndex = renderer.GetQueueFamilyIndex ()
-    };
-
-    VkDevice device = renderer.GetDevice ();
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &createInfo, nullptr, &_cbInfo._commandPool ),
-        "pbr::SkeletalMeshComponent::Init",
-        "Can't create command pool"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _cbInfo._commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Skeletal mesh component" )
-    return AllocateCommandBuffers ( INITIAL_COMMAND_BUFFERS ) && _skinPool.Init ( device );
+    return _program.Init ( renderer, nullptr ) && _skinPool.Init ( renderer.GetDevice () );
 }
 
 void SkeletalMeshComponent::Destroy () noexcept
@@ -344,37 +275,14 @@ void SkeletalMeshComponent::Destroy () noexcept
         AV_ASSERT ( false )
     }
 
-    if ( !WaitGPUUploadComplete () )
-    {
-        android_vulkan::LogWarning ( "pbr::SkeletalMeshComponent::Destroy - Can't wait upload complete." );
-        AV_ASSERT ( false )
-    }
-
     FreeUnusedResources ( 0U );
     FreeUnusedResources ( 1U );
 
     VkDevice device = _renderer->GetDevice ();
 
-    if ( _cbInfo._commandPool != VK_NULL_HANDLE )
-    {
-        vkDestroyCommandPool ( device, _cbInfo._commandPool, nullptr );
-        _cbInfo._commandPool = VK_NULL_HANDLE;
-    }
-
-    constexpr auto clean = [] ( auto &v ) noexcept {
-        v.clear ();
-        v.shrink_to_fit ();
-    };
-
-    clean ( _cbInfo._buffers );
-
-    for ( auto fence : _cbInfo._fences )
-        vkDestroyFence ( device, fence, nullptr );
-
     _skinPool.Destroy ( device );
     _program.Destroy ( device );
 
-    clean ( _cbInfo._fences );
     _lastCommandBufferIndex = 0U;
     _renderer = nullptr;
 }
@@ -388,9 +296,6 @@ ComponentRef &SkeletalMeshComponent::GetReference () noexcept
 
 void SkeletalMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _referenceMesh )
-        _referenceMesh->FreeTransferResources ( renderer );
-
     if ( !_material )
         return;
 
@@ -479,115 +384,6 @@ void SkeletalMeshComponent::UpdateColorData () noexcept
     }
 }
 
-bool SkeletalMeshComponent::AllocateCommandBuffers ( size_t amount ) noexcept
-{
-    size_t const current = _cbInfo._buffers.size ();
-    size_t const size = current + amount;
-    _cbInfo._buffers.resize ( size );
-
-    VkCommandBufferAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _cbInfo._commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = static_cast<uint32_t> ( amount )
-    };
-
-    VkDevice device = _renderer->GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &allocateInfo, &_cbInfo._buffers[ current ] ),
-        "pbr::SkeletalMeshComponent::AllocateCommandBuffers",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _cbInfo._fences.resize ( size );
-
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    VkFence* const fences = _cbInfo._fences.data ();
-
-    for ( size_t i = current; i < size; ++i )
-    {
-        result = android_vulkan::Renderer::CheckVkResult ( vkCreateFence ( device, &fenceInfo, nullptr, fences + i ),
-            "pbr::SkeletalMeshComponent::AllocateCommandBuffers",
-            "Can't create fence"
-        );
-
-        if ( !result ) [[unlikely]]
-            return false;
-
-        AV_SET_VULKAN_OBJECT_NAME ( device, fences[ i ], VK_OBJECT_TYPE_FENCE, "Skeletal mesh #%zu", i )
-    }
-
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
-
-    VkCommandBuffer* const buffer = _cbInfo._buffers.data ();
-
-    for ( size_t i = current; i < size; ++i )
-        AV_SET_VULKAN_OBJECT_NAME ( device, buffer[ i ], VK_OBJECT_TYPE_COMMAND_BUFFER, "Skeletal mesh #%zu", i )
-
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
-
-    return true;
-}
-
-bool SkeletalMeshComponent::WaitGPUUploadComplete () noexcept
-{
-    if ( !_cbInfo._index ) [[likely]]
-        return true;
-
-    VkDevice device = _renderer->GetDevice ();
-    auto const fenceCount = static_cast<uint32_t> ( _cbInfo._index );
-    VkFence* fences = _cbInfo._fences.data ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, fenceCount, fences, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
-        "Can't wait fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkResetFences ( device, fenceCount, fences ),
-        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
-        "Can't reset fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkResetCommandPool ( device, _cbInfo._commandPool, 0U ),
-        "pbr::SkeletalMeshComponent::WaitGPUUploadComplete",
-        "Can't reset command pool"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _cbInfo._index = 0U;
-
-    for ( auto* item : _transferQueue )
-    {
-        item->_skinData.FreeTransferResources ( *_renderer );
-        item->_skinMesh->FreeTransferResources ( *_renderer );
-    }
-
-    _transferQueue.clear ();
-    return true;
-}
-
 int SkeletalMeshComponent::OnCreate ( lua_State* state )
 {
     if ( !lua_checkstack ( state, 1 ) )
@@ -628,27 +424,12 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
         return 1;
     }
 
-    size_t const available = _cbInfo._buffers.size () - _cbInfo._index;
-
-    if ( available < MIN_COMMAND_BUFFERS ) [[likely]]
-    {
-        if ( !AllocateCommandBuffers ( ALLOCATE_COMMAND_BUFFERS ) ) [[unlikely]]
-        {
-            lua_pushnil ( state );
-            return 1;
-        }
-    }
-
-    size_t consumed;
     bool success;
 
     ComponentRef component = std::make_shared<SkeletalMeshComponent> ( success,
-        consumed,
         mesh,
         skin,
         skeleton,
-        &_cbInfo._buffers[ _cbInfo._index ],
-        &_cbInfo._fences[ _cbInfo._index ],
         name
     );
 
@@ -661,7 +442,6 @@ int SkeletalMeshComponent::OnCreate ( lua_State* state )
     Component* handle = component.get ();
     _skeletalMeshes.emplace ( handle, std::move ( component ) );
 
-    _cbInfo._index += consumed;
     lua_pushlightuserdata ( state, handle );
     return 1;
 }

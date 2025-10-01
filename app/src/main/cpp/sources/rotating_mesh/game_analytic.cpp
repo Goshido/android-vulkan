@@ -251,7 +251,7 @@ bool GameAnalytic::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) no
 bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     constexpr size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
-    VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
+    VkCommandBuffer commandBuffers[ commandBufferCount ] {};
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -271,7 +271,7 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkComman
     if ( !result || !CreateCommonTextures ( renderer, commandBuffers ) ) [[unlikely]]
         return false;
 
-    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) ) [[unlikely]]
+    if ( !CreateMeshes ( renderer ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
@@ -284,7 +284,6 @@ bool GameAnalytic::LoadGPUContent ( android_vulkan::Renderer &renderer, VkComman
 
     for ( auto &item : _drawcalls )
     {
-        item._mesh.FreeTransferResources ( renderer );
         item._diffuse.FreeTransferResources ( renderer );
         item._normal.FreeTransferResources ( renderer );
     }

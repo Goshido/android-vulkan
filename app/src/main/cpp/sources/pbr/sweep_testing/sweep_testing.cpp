@@ -233,6 +233,8 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( comBuffs, VK_NULL_HANDLE );
+
     _overlay = std::make_shared<android_vulkan::Texture2D> ();
     android_vulkan::Texture2D &t = *_overlay;
     constexpr uint8_t const color[ 4U ] = { 255U, 255U, 255U, 255U };
@@ -250,6 +252,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         VK_FORMAT_R8G8B8A8_SRGB,
         false,
         *cb,
+        false,
         VK_NULL_HANDLE
     );
 
@@ -281,6 +284,7 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     GXVec3 location ( 0.0F, 0.0F, 0.0F );
     size_t consumed;
+    VkFence const* fncs = fences.data ();
 
     for ( size_t x = 0U, ind = 0U; x < GRID_X; ++x, ind += GRID_Z )
     {
@@ -290,14 +294,14 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         {
             location._data[ 2U ] = anchor._data[ 1U ] + static_cast<float> ( z ) * offset._data[ 1U ];
 
-            if ( !_bodies[ ind + z ].Init ( renderer, _physics, consumed, cb, location, blockSize ) )
+            if ( !_bodies[ ind + z ].Init ( renderer, _physics, consumed, cb, fncs, location, blockSize ) ) [[unlikely]]
                 return false;
 
             cb += consumed;
         }
     }
 
-    if ( !_sweep.Init ( renderer, consumed, cb, GXVec3 ( 0.0F, 0.5F, 0.0F ), GXVec3 ( 0.6F, 0.2F, 0.7F ) ) )
+    if ( !_sweep.Init ( renderer, GXVec3 ( 0.0F, 0.5F, 0.0F ), GXVec3 ( 0.6F, 0.2F, 0.7F ) ) )
     {
         [[unlikely]]
         return false;

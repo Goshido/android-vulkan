@@ -210,6 +210,7 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
     size_t consumed = 0U;
     size_t read = 0U;
     uint64_t const actors = sceneDesc->_actorCount;
+    std::vector<VkFence> const fences ( comBuffs, VK_NULL_HANDLE );
 
     for ( uint64_t actorIdx = 0U; actorIdx < actors; ++actorIdx )
     {
@@ -224,7 +225,8 @@ bool PBRGame::UploadGPUContent ( android_vulkan::Renderer &renderer ) noexcept
                 read,
                 *reinterpret_cast<ComponentDesc const*> ( readPointer ),
                 data,
-                commandBuffers
+                commandBuffers,
+                fences.data ()
             );
 
             if ( component )

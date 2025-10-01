@@ -82,6 +82,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -93,6 +94,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -104,6 +106,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -115,6 +118,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -125,6 +129,7 @@ class Texture2D final
             VkFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -151,6 +156,7 @@ class Texture2D final
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -160,6 +166,7 @@ class Texture2D final
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 

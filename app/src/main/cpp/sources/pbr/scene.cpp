@@ -294,10 +294,11 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
 
 void Scene::OnDestroyDevice () noexcept
 {
-    ScriptEngine::Destroy ();
     ScriptableSweepTestResult::Destroy ( *_vm );
     _scriptableRaycastResult.Destroy ( *_vm );
     _scriptablePenetration.Destroy ( *_vm );
+
+    ScriptEngine::Destroy ();
     _gamepad.Destroy ();
     _renderableList.clear ();
     _actors.clear ();
@@ -312,6 +313,8 @@ void Scene::OnDestroyDevice () noexcept
 
     _shapeBoxes[ 0U ] = nullptr;
     _shapeBoxes[ 1U ] = nullptr;
+
+    _defaultMaterial = nullptr;
 
     _appendActorFromNativeIndex = std::numeric_limits<int>::max ();
     _onAnimationUpdateIndex = std::numeric_limits<int>::max ();
@@ -449,7 +452,9 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
     static_assert ( sizeof ( GXVec3 ) == sizeof ( desc._viewerLocation ) );
     AV_ASSERT ( desc._formatVersion == SCENE_DESC_FORMAT_VERSION )
 
-    auto const comBuffs = static_cast<size_t> ( desc._textureCount + desc._meshCount + desc._envMapCount );
+    auto const comBuffs = static_cast<size_t> (
+        desc._textureCount + desc._meshCount + desc._envMapCount + MaterialManager::MaxCommandBufferPerMaterial ()
+    );
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -481,6 +486,7 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( comBuffs, VK_NULL_HANDLE );
     uint8_t const* readPointer = data + sizeof ( pbr::SceneDesc );
 
     size_t consumed = 0U;
@@ -503,7 +509,8 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
                 read,
                 *reinterpret_cast<ComponentDesc const*> ( readPointer ),
                 data,
-                cb
+                cb,
+                fences.data ()
             );
 
             if ( component )
@@ -515,6 +522,13 @@ bool Scene::LoadScene ( android_vulkan::Renderer &renderer, char const* scene, V
 
         AppendActor ( actor );
     }
+
+    _defaultMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
+        consumed,
+        MaterialManager::DEFAULT_MATERIAL,
+        cb,
+        fences.data ()
+    );
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::Scene::LoadScene",
@@ -711,7 +725,6 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
 void Scene::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
     MaterialManager::GetInstance ().FreeTransferResources ( renderer );
-    MeshManager::GetInstance ().FreeTransferResources ( renderer );
 }
 
 int Scene::OnAppendActor ( lua_State* state )

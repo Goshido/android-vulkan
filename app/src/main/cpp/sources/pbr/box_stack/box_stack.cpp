@@ -207,6 +207,7 @@ void BoxStack::OnSwapchainDestroyed ( android_vulkan::Renderer &renderer ) noexc
 
 bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
     VkCommandBuffer const* commandBuffers,
+    VkFence const* fences,
     size_t &commandBufferConsumed,
     std::string &&tag,
     ComponentRef &visual,
@@ -229,7 +230,7 @@ bool BoxStack::AppendCuboid ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         material,
         commandBuffers,
-        nullptr,
+        fences,
         "Mesh"
     );
 
@@ -288,13 +289,9 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         return false;
     }
 
-    constexpr size_t const CUBE_COMMAND_BUFFERS = 1U;
-    constexpr size_t const DEFAULT_MATERIAL_COMMAND_BUFFERS = 5U;
-    constexpr size_t const SPHERE_COMMAND_BUFFERS = 1U;
-    constexpr size_t const UNLIT_MATERIAL_COMMAND_BUFFERS = 5U;
-
-    constexpr size_t const comBuffs = CUBE_COMMAND_BUFFERS + DEFAULT_MATERIAL_COMMAND_BUFFERS + SPHERE_COMMAND_BUFFERS +
-        UNLIT_MATERIAL_COMMAND_BUFFERS;
+    constexpr size_t const defaultMaterialCommandBuffers = 5U;
+    constexpr size_t const unlitMaterialCommandBuffers = 5U;
+    constexpr size_t const comBuffs = defaultMaterialCommandBuffers + unlitMaterialCommandBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -326,12 +323,16 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( comBuffs, VK_NULL_HANDLE );
+    VkFence const* fncs = fences.data ();
+
     size_t consumed = 0U;
     ComponentRef cuboid {};
     android_vulkan::RigidBodyRef body {};
 
     result = AppendCuboid ( renderer,
         commandBuffers,
+        fncs,
         consumed,
         "Floor",
         cuboid,
@@ -361,10 +362,11 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     {
         result = AppendCuboid ( renderer,
             commandBuffers,
+            fncs,
             consumed,
             "Cube #" + std::to_string ( i ),
             _cubes[ i ],
-            "pbr/assets/System/Default.mtl",
+            MaterialManager::DEFAULT_MATERIAL,
             _colors[ i % paletteSize ],
             _cubeBodies[ i ],
             0.0F,
@@ -384,18 +386,11 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
         b.SetMass ( 7.77F, true );
     }
 
-    _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer,
-        consumed,
-        "pbr/system/unit-sphere.mesh2",
-        *commandBuffers,
-        VK_NULL_HANDLE
-    );
-
-    commandBuffers += consumed;
+    _sphereMesh = MeshManager::GetInstance ().LoadMesh ( renderer, "pbr/system/unit-sphere.mesh2" );
 
     _sphereMaterial = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         consumed,
-        "pbr/assets/System/Default.mtl",
+        MaterialManager::DEFAULT_MATERIAL,
         commandBuffers,
         nullptr
     );
@@ -424,7 +419,6 @@ bool BoxStack::CreateSceneManual ( android_vulkan::Renderer &renderer ) noexcept
     }
 
     MaterialManager::GetInstance ().FreeTransferResources ( renderer );
-    _sphereMesh->FreeTransferResources ( renderer );
     return true;
 }
 

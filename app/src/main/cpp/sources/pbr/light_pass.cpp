@@ -80,7 +80,6 @@ size_t LightPass::GetReflectionLocalCount () const noexcept
 
 void LightPass::OnFreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    _unitCube.FreeTransferResources ( renderer );
     _lightupCommonDescriptorSet.OnFreeTransferResources ( renderer );
 
     if ( _commandPool == VK_NULL_HANDLE )
@@ -225,36 +224,7 @@ bool LightPass::CreateUnitCube ( android_vulkan::Renderer &renderer ) noexcept
     bounds.AddVertex ( positions[ 0U ] );
     bounds.AddVertex ( positions[ 7U ] );
 
-    VkCommandBufferAllocateInfo const bufferAllocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    VkCommandBuffer commandBuffer;
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( renderer.GetDevice (), &bufferAllocateInfo, &commandBuffer ),
-        "pbr::LightPass::CreateUnitCube",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
-        commandBuffer,
-        VK_OBJECT_TYPE_COMMAND_BUFFER,
-        "Light pass Unit cube"
-    )
-
-    return _unitCube.LoadMesh ( renderer,
-        commandBuffer,
-        false,
-        VK_NULL_HANDLE,
+   return _unitCube.LoadMesh ( renderer,
         { indices, std::size ( indices ) },
         { positions, std::size ( positions ) },
         bounds

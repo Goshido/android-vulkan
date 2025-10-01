@@ -41,6 +41,7 @@ class ActorBody final
             android_vulkan::Physics &physics,
             size_t &commandBufferConsumed,
             VkCommandBuffer const* commandBuffers,
+            VkFence const* fences,
             GXVec3 const &location,
             GXVec3 const &size
         ) noexcept;

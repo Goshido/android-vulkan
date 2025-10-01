@@ -20,6 +20,9 @@ namespace pbr {
 class MaterialManager final
 {
     public:
+        constexpr static char const DEFAULT_MATERIAL[] = "pbr/assets/System/Default.mtl";
+
+    public:
         // Forward declaration. This will init '_handlers' static field.
         class StaticInitializer;
 

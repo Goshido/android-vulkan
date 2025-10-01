@@ -7,27 +7,8 @@ namespace pbr {
 MeshManager* MeshManager::_instance = nullptr;
 std::mutex MeshManager::_mutex;
 
-void MeshManager::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
+MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer, char const* fileName ) noexcept
 {
-    std::lock_guard const lock ( _mutex );
-
-    if ( _toFreeTransferResource.empty () )
-        return;
-
-    for ( auto* mesh : _toFreeTransferResource )
-        mesh->FreeTransferResources ( renderer );
-
-    _toFreeTransferResource.clear ();
-}
-
-MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
-    size_t &commandBufferConsumed,
-    char const* fileName,
-    VkCommandBuffer commandBuffer,
-    VkFence fence
-) noexcept
-{
-    commandBufferConsumed = 0U;
     MeshRef mesh = std::make_shared<android_vulkan::MeshGeometry> ();
 
     if ( !fileName )
@@ -39,17 +20,11 @@ MeshRef MeshManager::LoadMesh ( android_vulkan::Renderer &renderer,
     if ( findResult != _meshStorage.cend () )
         return findResult->second;
 
-    if ( !mesh->LoadMesh ( renderer, commandBuffer, false, fence, fileName ) ) [[unlikely]]
-    {
+    if ( !mesh->LoadMesh ( renderer, fileName ) ) [[unlikely]]
         mesh = nullptr;
-    }
     else
-    {
         _meshStorage.insert ( std::make_pair ( std::string_view ( mesh->GetName () ), mesh ) );
-        _toFreeTransferResource.push_back ( mesh.get () );
-    }
 
-    commandBufferConsumed = 1U;
     return mesh;
 }
 

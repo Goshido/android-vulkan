@@ -48,6 +48,7 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
     android_vulkan::Physics &physics,
     size_t &commandBufferConsumed,
     VkCommandBuffer const* commandBuffers,
+    VkFence const* fences,
     GXVec3 const &location,
     GXVec3 const &size
 ) noexcept
@@ -65,7 +66,7 @@ bool ActorBody::Init ( android_vulkan::Renderer &renderer,
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
         commandBuffers,
-        nullptr,
+        fences,
         "Mesh"
     );
 

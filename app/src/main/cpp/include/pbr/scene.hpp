@@ -22,6 +22,7 @@ class Scene final
 
         CameraComponent*                                _camera = nullptr;
         CameraComponent                                 _defaultCamera { "Default Camera" };
+        MaterialRef                                     _defaultMaterial {};
 
         android_vulkan::EPA                             _epa {};
         ScriptableGamepad                               _gamepad {};

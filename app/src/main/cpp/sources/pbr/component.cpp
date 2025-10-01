@@ -71,13 +71,14 @@ ComponentRef Component::Create ( android_vulkan::Renderer &renderer,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     AV_ASSERT ( desc._classID < ClassID::COUNT )
 
     Handler const handler = _handlers[ static_cast<size_t> ( desc._classID ) ];
-    return handler ( renderer, commandBufferConsumed, dataRead, desc, data, commandBuffers );
+    return handler ( renderer, commandBufferConsumed, dataRead, desc, data, commandBuffers, fences );
 }
 
 void Component::Register ( lua_State &vm ) noexcept
@@ -103,7 +104,8 @@ ComponentRef Component::CreateCamera ( android_vulkan::Renderer &/*renderer*/,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -120,7 +122,8 @@ ComponentRef Component::CreateStaticMesh ( android_vulkan::Renderer &renderer,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* fences
 ) noexcept
 {
     dataRead = sizeof ( StaticMeshComponentDesc );
@@ -136,7 +139,7 @@ ComponentRef Component::CreateStaticMesh ( android_vulkan::Renderer &renderer,
         d,
         data,
         commandBuffers,
-        nullptr
+        fences
     );
 
     return success ? result : ComponentRef {};
@@ -147,7 +150,8 @@ ComponentRef Component::CreatePointLight ( android_vulkan::Renderer &/*renderer*
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -164,7 +168,8 @@ ComponentRef Component::CreateReflection ( android_vulkan::Renderer &renderer,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* commandBuffers
+    VkCommandBuffer const* commandBuffers,
+    VkFence const* /*fences*/
 ) noexcept
 {
     dataRead = sizeof ( ReflectionComponentDesc );
@@ -180,7 +185,8 @@ ComponentRef Component::CreateRigidBody ( android_vulkan::Renderer &/*renderer*/
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -197,7 +203,8 @@ ComponentRef Component::CreateScript ( android_vulkan::Renderer &/*renderer*/,
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -214,7 +221,8 @@ ComponentRef Component::CreateSoundEmitterGlobal ( android_vulkan::Renderer &/*r
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -233,7 +241,8 @@ ComponentRef Component::CreateSoundEmitterSpatial ( android_vulkan::Renderer &/*
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -252,7 +261,8 @@ ComponentRef Component::CreateTransform ( android_vulkan::Renderer &/*renderer*/
     size_t &dataRead,
     ComponentDesc const &desc,
     uint8_t const* data,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;
@@ -269,7 +279,8 @@ ComponentRef Component::CreateUnknown ( android_vulkan::Renderer &/*renderer*/,
     size_t &dataRead,
     ComponentDesc const &/*desc*/,
     uint8_t const* /*data*/,
-    VkCommandBuffer const* /*commandBuffers*/
+    VkCommandBuffer const* /*commandBuffers*/,
+    VkFence const* /*fences*/
 ) noexcept
 {
     commandBufferConsumed = 0U;

@@ -23,14 +23,6 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
             MeshRef                                         _skinMesh {};
         };
 
-        struct CommandBufferInfo final
-        {
-            std::vector<VkCommandBuffer>                    _buffers {};
-            VkCommandPool                                   _commandPool = VK_NULL_HANDLE;
-            size_t                                          _index = 0U;
-            std::vector<VkFence>                            _fences {};
-        };
-
         using SkeletalMeshes = std::unordered_map<Component const*, ComponentRef>;
 
     private:
@@ -53,14 +45,12 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         MeshRef                                             _referenceMesh;
         Usage                                               _usage;
 
-        static CommandBufferInfo                            _cbInfo;
         static size_t                                       _lastCommandBufferIndex;
         static SkinProgram                                  _program;
         static android_vulkan::Renderer*                    _renderer;
         static SkeletalMeshes                               _skeletalMeshes;
         static SkinPool                                     _skinPool;
         static std::list<Usage>                             _toDelete[ FIF_COUNT ];
-        static std::deque<Usage*>                           _transferQueue;
 
     public:
         SkeletalMeshComponent () = delete;
@@ -72,12 +62,9 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         SkeletalMeshComponent &operator = ( SkeletalMeshComponent && ) = delete;
 
         SkeletalMeshComponent ( bool &success,
-            size_t &commandBufferConsumed,
             char const* mesh,
             char const* skin,
             char const* skeleton,
-            VkCommandBuffer const* commandBuffers,
-            VkFence const* fences,
             std::string &&name
         ) noexcept;
 
@@ -106,9 +93,7 @@ class SkeletalMeshComponent final : public RenderableComponent, public Transform
         void SetTransform ( GXMat4 const &transform ) noexcept;
         void UpdateColorData () noexcept;
 
-        [[nodiscard]] static bool AllocateCommandBuffers ( size_t amount ) noexcept;
         static void FreeUnusedResources ( size_t commandBufferIndex ) noexcept;
-        [[nodiscard]] static bool WaitGPUUploadComplete () noexcept;
 
         [[nodiscard]] static int OnCreate ( lua_State* state );
         [[nodiscard]] static int OnDestroy ( lua_State* state );

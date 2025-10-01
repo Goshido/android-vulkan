@@ -113,6 +113,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
             android_vulkan::eColorSpace::Unorm,
             true,
             commandBuffers[ i ],
+            false,
             VK_NULL_HANDLE
         );
 
@@ -129,6 +130,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         android_vulkan::eColorSpace::Unorm,
         true,
         commandBuffers[ 3U ],
+        false,
         VK_NULL_HANDLE
     );
 
@@ -142,6 +144,7 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         android_vulkan::eColorSpace::Unorm,
         true,
         commandBuffers[ 4U ],
+        false,
         VK_NULL_HANDLE
     );
 
@@ -158,27 +161,21 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
         VK_FORMAT_R8G8B8A8_UNORM,
         false,
         commandBuffers[ 5U ],
+        false,
         VK_NULL_HANDLE
     );
 }
 
-bool Game::CreateMeshes ( android_vulkan::Renderer &renderer, VkCommandBuffer* commandBuffers ) noexcept
+bool Game::CreateMeshes ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr char const* meshFiles[ MATERIAL_COUNT ] = { MATERIAL_1_MESH, MATERIAL_2_MESH, MATERIAL_3_MESH };
 
     for ( size_t i = 0U; i < MATERIAL_COUNT; ++i )
     {
-        bool const result = _drawcalls[ i ]._mesh.LoadMesh ( renderer,
-            commandBuffers[ i ],
-            false,
-            VK_NULL_HANDLE,
-            meshFiles[ i ]
-        );
-
-        if ( result ) [[likely]]
-            continue;
-
-        return false;
+        if ( bool const result = _drawcalls[ i ]._mesh.LoadMesh ( renderer, meshFiles[ i ] ); !result ) [[unlikely]]
+        {
+            return false;
+        }
     }
 
     return true;

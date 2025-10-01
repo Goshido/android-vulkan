@@ -24,18 +24,58 @@ class MeshGeometry final : public MeshGeometryBase
 
         ~MeshGeometry () override = default;
 
+        void FreeResources ( Renderer &renderer ) noexcept;
         [[nodiscard]] MeshBufferInfo const &GetMeshBufferInfo () const noexcept;
 
-    private:
-        [[nodiscard]] BufferSyncItem const &GetBufferSync ( BufferSyncItem::eType type ) const noexcept override;
+        [[nodiscard]] bool LoadMesh ( Renderer &renderer, std::string &&fileName ) noexcept;
 
-        void CommitMeshInfo ( VkDevice device,
-            VkIndexType indexType,
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
+            AbstractData data,
+            uint32_t vertexCount
+        ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
+            Indices16 indices,
+            Positions positions,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
+            Indices32 indices,
+            Positions positions,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
+            Indices16 indices,
+            Positions positions,
+            Vertices vertices,
+            GXAABB const &bounds
+        ) noexcept;
+
+        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
+            Indices32 indices,
+            Positions positions,
+            Vertices vertices,
+            GXAABB const &bounds
+        ) noexcept;
+
+    private:
+        void CommitMeshInfo ( VkIndexType indexType,
             StreamInfo &&stream0,
             std::optional<StreamInfo> &&stream1
-        ) noexcept override;
+        ) noexcept;
 
-        [[nodiscard]] VkBuffer &GetDeviceBuffer () noexcept override;
+        [[nodiscard]] bool GPUTransfer ( Renderer &renderer, UploadJobs jobs ) noexcept;
+        [[nodiscard]] bool LoadFromMesh2 ( Renderer &renderer, std::string &&fileName ) noexcept;
+
+        [[nodiscard]] bool Upload ( Renderer &renderer,
+            AbstractData indices,
+            VkIndexType indexType,
+            AbstractData vertexStream0,
+            Vertices vertexStream1,
+            uint32_t vertexCount
+        ) noexcept;
 };
 
 } // namespace android_vulkan

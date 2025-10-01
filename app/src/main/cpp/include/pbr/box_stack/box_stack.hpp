@@ -61,6 +61,7 @@ class BoxStack final : public android_vulkan::Game
 
         [[nodiscard]] bool AppendCuboid ( android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers,
+            VkFence const* fences,
             size_t &commandBufferConsumed,
             std::string &&tag,
             ComponentRef &visual,

@@ -200,16 +200,9 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _camera.SetMovingSpeed ( 1.67F );
     _camera.Update ( 0.0F );
 
-    constexpr size_t cubeMeshCommandBuffers = 1U;
-    constexpr size_t cubeMaterialCommandBuffers = 5U;
-    constexpr size_t cubeCommandBuffers = cubeMeshCommandBuffers + cubeMaterialCommandBuffers;
-
+    constexpr size_t cubeCommandBuffers = 5U;
     constexpr size_t normalMaterialCommandBuffers = 1U;
-
-    constexpr size_t rayMeshCommandBuffers = 1U;
-    constexpr size_t rayTextureCommandBuffers = 2U;
-    constexpr size_t rayCommandBuffers = rayMeshCommandBuffers + rayTextureCommandBuffers;
-
+    constexpr size_t rayCommandBuffers = 2U;
     constexpr size_t comBuffs = cubeCommandBuffers + normalMaterialCommandBuffers + rayCommandBuffers;
 
     VkCommandBufferAllocateInfo const allocateInfo
@@ -242,6 +235,8 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( comBuffs, VK_NULL_HANDLE );
+
     size_t consumed;
     bool success;
 
@@ -251,7 +246,7 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/Props/PBR/DefaultCSGEmissiveBright.mtl",
         cb,
-        nullptr,
+        fences.data (),
         "Mesh"
     );
 
@@ -357,9 +352,6 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     android_vulkan::MeshGeometry &lineMesh = *_lineMesh.get ();
 
     result = lineMesh.LoadMesh ( renderer,
-        *cb,
-        false,
-        VK_NULL_HANDLE,
         { indices, std::size ( indices ) },
         { positions, std::size ( positions ) },
         { vertices, std::size ( vertices ) },
@@ -368,8 +360,6 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
 
     if ( !result ) [[unlikely]]
         return false;
-
-    cb += 1U;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "pbr::ray_casting::RayCasting::LoadResources",
@@ -386,7 +376,6 @@ bool RayCasting::LoadResources ( android_vulkan::Renderer &renderer ) noexcept
     _rayTextureHit->FreeTransferResources ( renderer );
     _rayTextureNoHit->FreeTransferResources ( renderer );
     _normalTexture->FreeTransferResources ( renderer );
-    lineMesh.FreeTransferResources ( renderer );
     MaterialManager::GetInstance ().FreeTransferResources ( renderer );
 
     return true;
@@ -492,6 +481,7 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
         VK_FORMAT_R8G8B8A8_SRGB,
         false,
         *commandBuffers,
+        false,
         VK_NULL_HANDLE
     );
 

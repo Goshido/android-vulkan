@@ -21,7 +21,6 @@ class MeshManager final
 {
     private:
         std::unordered_map<std::string_view, MeshRef>       _meshStorage {};
-        std::deque<android_vulkan::MeshGeometry*>           _toFreeTransferResource {};
 
         static MeshManager*                                 _instance;
         static std::mutex                                   _mutex;
@@ -33,14 +32,7 @@ class MeshManager final
         MeshManager ( MeshManager && ) = delete;
         MeshManager &operator = ( MeshManager && ) = delete;
 
-        void FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept;
-
-        [[nodiscard]] MeshRef LoadMesh ( android_vulkan::Renderer &renderer,
-            size_t &commandBufferConsumed,
-            char const* fileName,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
-        ) noexcept;
+        [[nodiscard]] MeshRef LoadMesh ( android_vulkan::Renderer &renderer, char const* fileName ) noexcept;
 
         [[nodiscard]] static MeshManager &GetInstance () noexcept;
         static void Destroy ( android_vulkan::Renderer &renderer ) noexcept;

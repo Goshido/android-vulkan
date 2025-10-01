@@ -20,6 +20,8 @@
   - [_Further UI vertex compression_](#opt-4-ui-compression)
 - [_Optimization #5_](#optimization-5)
   - [_Proper UI_](#opt-5-proper-ui)
+- [_Optimization #6_](#optimization-6)
+  - [_Using more UMA_](#opt-6-more-uma)
 
 ## <a id="brief">Brief</a>
 
@@ -791,5 +793,83 @@ struct UIVertexInfo
                                                 uint32_t        _color;
 };                                          };
 ```
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="optimization-6">Optimization #6</a>
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.661 ms | -1.185 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.055 ms | -2.289 ms🟢 | -13.2%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 10.504 ms | +1.027🔺 | +10.8%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+⁘ Frame time comparison with _Optimization #5_:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.661 ms ms | -0.25 ms🟢 | -1.5%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.055 ms | -0.246 ms🟢 | -1.6%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 10.504 ms | -0.647 ms🟢 | -5.8%🟢 | <img src="./images/compression-world1x1.png" width="100">
+
+---
+
+⁘ Maximum instances comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | +42🟢 | +100%🟢
+
+⁘ Maximum instances comparison with _Optimization #5_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | 0 | 0%
+
+---
+
+⁘ Bytes per scene vertex comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -140🟢 | -56.5%🟢
+
+⁘ Bytes per scene vertex comparison with _Optimization #5_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | 0 | 0%
+
+---
+
+⁘ Bytes per _UI_ vertex comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | -32🟢 | -64%🟢
+
+⁘ Bytes per _UI_ vertex comparison with _Optimization #5_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | 0 | 0%🟢
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-6-more-uma">Using more _UMA_</a>
+
+_Android_ devices mostly use unified memory architecture (_UMA_). It could be used for index, vertex and storage buffers. This significantly simplifies _Vulkan_ code and allows zero-copy patterns:
+
+- `vkCmdPipelineBarrier` for transfer operations are removed
+- no copy overhead related to staging buffers
+- upload operations do not require `VkCommandBuffer` handle
+
+Previously the following systems used _PC_ approach with staging buffers, transfer command and additional pipeline barrier to make sure that data was uploaded:
+
+- static meshes
+- skeletal meshes
+- _UI_ rendering
+
+Now all systems above were refactored to _UMA_ usage.
 
 [↬ table of content ⇧](#table-of-content)

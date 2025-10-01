@@ -120,6 +120,7 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
         android_vulkan::eColorSpace::Unorm,
         true,
         _commandBuffers[ _commandBufferIndex ],
+        false,
         _fences[ _commandBufferIndex ]
     );
 
@@ -381,6 +382,7 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         android_vulkan::eColorSpace::Unorm,
         false,
         commandBuffer,
+        false,
         _fence
     );
 

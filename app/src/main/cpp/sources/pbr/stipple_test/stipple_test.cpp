@@ -198,6 +198,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
 #endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
 
+    std::vector<VkFence> const fences ( commandBufferCount, VK_NULL_HANDLE );
     size_t consumed;
     bool success;
 
@@ -207,7 +208,7 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
         "pbr/system/unit-cube.mesh2",
         "pbr/assets/System/DefaultCSG.mtl",
         cb,
-        nullptr,
+        fences.data (),
         "Floor"
     );
 
@@ -241,11 +242,8 @@ bool StippleTest::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
 
     _stipple = std::make_unique<StaticMeshComponent> ( renderer,
         success,
-        consumed,
         "pbr/system/unit-cube.mesh2",
-        stippleMaterial,
-        cb,
-        nullptr
+        stippleMaterial
     );
 
     if ( !success ) [[unlikely]]

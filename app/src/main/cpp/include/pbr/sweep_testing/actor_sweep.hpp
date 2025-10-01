@@ -36,8 +36,6 @@ class ActorSweep final
         [[nodiscard]] android_vulkan::ShapeRef const &GetShape () noexcept;
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-            size_t &commandBufferConsumed,
-            VkCommandBuffer const* commandBuffers,
             GXVec3 const &location,
             GXVec3 const &size
         ) noexcept;

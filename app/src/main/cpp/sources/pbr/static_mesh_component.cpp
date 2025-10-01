@@ -90,38 +90,24 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     AV_ASSERT ( desc._formatVersion == STATIC_MESH_COMPONENT_DESC_FORMAT_VERSION )
 
     _name = reinterpret_cast<char const*> ( data + desc._name );
-
     std::memcpy ( _localMatrix._data, &desc._localMatrix, sizeof ( _localMatrix ) );
-    success = true;
 
     _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         commandBufferConsumed,
         reinterpret_cast<char const*> ( data + desc._material ),
         commandBuffers,
-        nullptr
+        fences
     );
 
-    if ( !_material ) [[unlikely]]
-    {
-        success = false;
+    if ( success = static_cast<bool> ( _material ); !success ) [[unlikely]]
         return;
-    }
 
-    size_t consumed = 0U;
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer, reinterpret_cast<char const*> ( data + desc._mesh ) );
 
-    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
-        consumed,
-        reinterpret_cast<char const*> ( data + desc._mesh ),
-        commandBuffers[ commandBufferConsumed ],
-        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
-    );
+    if ( success = static_cast<bool> ( _mesh ); !success ) [[unlikely]]
+        return;
 
-    if ( !_mesh ) [[unlikely]]
-        success = false;
-    else
-        _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
-
-    commandBufferConsumed += consumed;
+    _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
 }
 
 // NOLINTNEXTLINE - no initialization for some fields
@@ -141,46 +127,30 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _emission ( DEFAULT_EMISSION )
 {
     _localMatrix.Identity ();
-    success = true;
 
     _material = MaterialManager::GetInstance ().LoadMaterial ( renderer,
         commandBufferConsumed,
         material,
         commandBuffers,
-        nullptr
+        fences
     );
 
-    if ( !_material ) [[unlikely]]
-    {
-        success = false;
+    if ( success = static_cast<bool> ( _material ); !success ) [[unlikely]]
         return;
-    }
 
-    size_t consumed = 0U;
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer, mesh );
 
-    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
-        consumed,
-        mesh,
-        commandBuffers[ commandBufferConsumed ],
-        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
-    );
+    if ( success = static_cast<bool> ( _mesh ); !success ) [[unlikely]]
+        return;
 
-    if ( !_mesh ) [[unlikely]]
-        success = false;
-    else
-        _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
-
-    commandBufferConsumed += consumed;
+    _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
 }
 
 // NOLINTNEXTLINE - no initialization for some fields
 StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     bool &success,
-    size_t &commandBufferConsumed,
     char const* mesh,
-    MaterialRef &material,
-    VkCommandBuffer const* commandBuffers,
-    VkFence const* fences
+    MaterialRef &material
 ) noexcept:
     RenderableComponent ( ClassID::StaticMesh, android_vulkan::GUID::GenerateAsString ( "StaticMesh" ) ),
     _color0 ( DEFAULT_COLOR ),
@@ -189,19 +159,10 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
     _emission ( DEFAULT_EMISSION ),
     _material ( material )
 {
-    success = true;
     _localMatrix.Identity ();
+    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer, mesh );
 
-    _mesh = MeshManager::GetInstance ().LoadMesh ( renderer,
-        commandBufferConsumed,
-        mesh,
-        commandBuffers[ commandBufferConsumed ],
-        fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE
-    );
-
-    success = static_cast<bool> ( _mesh );
-
-    if ( success ) [[likely]]
+    if ( success = static_cast<bool> ( _mesh ); success ) [[likely]]
     {
         _mesh->GetBounds ().Transform ( _worldBounds, _localMatrix );
     }
@@ -209,9 +170,6 @@ StaticMeshComponent::StaticMeshComponent ( android_vulkan::Renderer &renderer,
 
 void StaticMeshComponent::FreeTransferResources ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( _mesh )
-        _mesh->FreeTransferResources ( renderer );
-
     if ( !_material )
         return;
 

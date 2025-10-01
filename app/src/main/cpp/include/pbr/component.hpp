@@ -30,7 +30,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
     protected:
@@ -61,7 +62,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         static void Register ( lua_State &vm ) noexcept;
@@ -76,7 +78,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateStaticMesh ( android_vulkan::Renderer &renderer,
@@ -84,7 +87,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreatePointLight ( android_vulkan::Renderer &renderer,
@@ -92,7 +96,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateReflection ( android_vulkan::Renderer &renderer,
@@ -100,7 +105,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateRigidBody ( android_vulkan::Renderer &renderer,
@@ -108,7 +114,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateScript ( android_vulkan::Renderer &renderer,
@@ -116,7 +123,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateSoundEmitterGlobal ( android_vulkan::Renderer &renderer,
@@ -124,7 +132,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateSoundEmitterSpatial ( android_vulkan::Renderer &renderer,
@@ -132,7 +141,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateTransform ( android_vulkan::Renderer &renderer,
@@ -140,7 +150,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static ComponentRef CreateUnknown ( android_vulkan::Renderer &renderer,
@@ -148,7 +159,8 @@ class Component
             size_t &dataRead,
             ComponentDesc const &desc,
             uint8_t const* data,
-            VkCommandBuffer const* commandBuffers
+            VkCommandBuffer const* commandBuffers,
+            VkFence const* fences
         ) noexcept;
 
         [[nodiscard]] static int OnGetName ( lua_State* state );

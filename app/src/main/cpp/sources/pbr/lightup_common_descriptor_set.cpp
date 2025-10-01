@@ -169,6 +169,7 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
         android_vulkan::eColorSpace::Unorm,
         false,
         textureCommandBuffer,
+        false,
         VK_NULL_HANDLE
     );
 

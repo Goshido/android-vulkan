@@ -70,6 +70,7 @@ class Collision final : public android_vulkan::Game
 
         [[nodiscard]] static bool AppendCuboid ( android_vulkan::Renderer &renderer,
             VkCommandBuffer const* commandBuffers,
+            VkFence const* fences,
             size_t &commandBufferConsumed,
             std::string &&tag,
             ComponentRef &visual,

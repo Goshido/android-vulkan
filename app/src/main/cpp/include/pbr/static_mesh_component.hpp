@@ -63,14 +63,10 @@ class StaticMeshComponent final : public RenderableComponent, public Transformab
             std::string &&name
         ) noexcept;
 
-        // "commandBuffer" array MUST contain at least 1 free command buffers.
         explicit StaticMeshComponent ( android_vulkan::Renderer &renderer,
             bool &success,
-            size_t &commandBufferConsumed,
             char const* mesh,
-            MaterialRef &material,
-            VkCommandBuffer const* commandBuffers,
-            VkFence const* fences
+            MaterialRef &material
         ) noexcept;
 
         ~StaticMeshComponent () override = default;

@@ -64,13 +64,13 @@ MaterialRef MaterialManager::LoadMaterial ( android_vulkan::Renderer &renderer,
 {
     commandBufferConsumed = 0U;
 
-    if ( !fileName )
+    if ( !fileName ) [[unlikely]]
         return std::make_shared<OpaqueMaterial> ();
 
     std::lock_guard const lock ( _mutex );
     android_vulkan::File file ( fileName );
 
-    if ( !file.LoadContent () )
+    if ( !file.LoadContent () ) [[unlikely]]
         return std::make_shared<OpaqueMaterial> ();
 
     std::vector<uint8_t> const &content = file.GetContent ();
@@ -341,10 +341,11 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
         return findResult->second;
 
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
-    VkFence fnc = fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE;
+    VkFence fence = fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE;
 
-    if ( !texture->UploadData ( renderer, name, space, true, commandBuffers[ commandBufferConsumed ], fnc ) )
+    if ( !texture->UploadData ( renderer, name, space, true, commandBuffers[ commandBufferConsumed ], false, fence ) )
     {
+        [[unlikely]]
         texture = nullptr;
     }
     else

@@ -254,7 +254,7 @@ bool GameLUT::CreateDescriptorSet ( android_vulkan::Renderer &renderer ) noexcep
 bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool commandPool ) noexcept
 {
     constexpr size_t commandBufferCount = TEXTURE_COMMAND_BUFFERS + MATERIAL_COUNT;
-    VkCommandBuffer commandBuffers[ commandBufferCount ] = { VK_NULL_HANDLE };
+    VkCommandBuffer commandBuffers[ commandBufferCount ] {};
 
     VkCommandBufferAllocateInfo const allocateInfo
     {
@@ -277,7 +277,7 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool
     if ( !CreateSpecularLUTTexture ( renderer, commandBuffers[ 6U ] ) ) [[unlikely]]
         return false;
 
-    if ( !CreateMeshes ( renderer, commandBuffers + TEXTURE_COMMAND_BUFFERS ) ) [[unlikely]]
+    if ( !CreateMeshes ( renderer ) ) [[unlikely]]
         return false;
 
     result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
@@ -290,7 +290,6 @@ bool GameLUT::LoadGPUContent ( android_vulkan::Renderer &renderer, VkCommandPool
 
     for ( auto &item : _drawcalls )
     {
-        item._mesh.FreeTransferResources ( renderer );
         item._diffuse.FreeTransferResources ( renderer );
         item._normal.FreeTransferResources ( renderer );
     }
@@ -350,6 +349,7 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
         VK_FORMAT_R16_SFLOAT,
         false,
         commandBuffer,
+        false,
         VK_NULL_HANDLE
     );
 }

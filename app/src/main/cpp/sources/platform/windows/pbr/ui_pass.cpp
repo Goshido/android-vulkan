@@ -162,6 +162,7 @@ std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset, bo
         android_vulkan::eColorSpace::Unorm,
         useMips,
         _commandBuffers[ _commandBufferIndex ],
+        false,
         _fences[ _commandBufferIndex ]
     );
 

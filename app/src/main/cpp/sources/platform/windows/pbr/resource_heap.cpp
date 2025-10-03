@@ -177,66 +177,23 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
 
     VkBufferCopy const* copy = _copy.data ();
     VkBuffer buffer = _stagingBuffer._buffer;
-    auto const countFirstPart = static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more );
-    VkBufferCopy const* copyFirstPart = copy + std::exchange ( _readIndex, _writeIndex );
 
     vkCmdCopyBuffer ( commandBuffer,
         buffer,
         descriptorBuffer,
-        countFirstPart,
-        copyFirstPart
+        static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
+        copy + std::exchange ( _readIndex, _writeIndex )
     );
 
+    // Note the sync barrier is not needed according to Vulkan spec.
+    // From 'vkCmdSetDescriptorBufferOffsetsEXT' definition:
+    //      For descriptors written by the host, visibility is implied through the automatic visibility operation on
+    //      queue submit, and there is no need to consider VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT. Explicit
+    //      synchronization for descriptors is only required when descriptors are updated on the device.
+
     if ( more >= 1U ) [[unlikely]]
+    {
         vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, static_cast<uint32_t> ( more ), copy );
-
-    // FUCK - optimize in single std::vector
-    VkBufferMemoryBarrier2 barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-        .pNext = nullptr,
-        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-
-        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
-            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-
-        .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = buffer,
-        .offset = 0U,
-        .size = 0U
-    };
-
-    VkDependencyInfo const dependencies
-    {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .pNext = nullptr,
-        .dependencyFlags = 0U,
-        .memoryBarrierCount = 0U,
-        .pMemoryBarriers = nullptr,
-        .bufferMemoryBarrierCount = 1U,
-        .pBufferMemoryBarriers = &barrier,
-        .imageMemoryBarrierCount = 0U,
-        .pImageMemoryBarriers = nullptr
-    };
-
-    for ( uint32_t i = 0U; i < countFirstPart; ++i )
-    {
-        VkBufferCopy const &c = copyFirstPart[ i ];
-        barrier.offset = c.dstOffset;
-        barrier.size = c.size;
-        vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
-    }
-
-    for ( uint32_t i = 0U; i < more; ++i )
-    {
-        VkBufferCopy const &c = copy[ i ];
-        barrier.offset = c.dstOffset;
-        barrier.size = c.size;
-        vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
     }
 }
 

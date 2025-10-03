@@ -165,7 +165,7 @@ class FontStorage final
                 Line                                    _line {};
 
             public:
-                Atlas () = default;
+                explicit Atlas () = default;
 
                 Atlas ( Atlas const & ) = delete;
                 Atlas &operator = ( Atlas const & ) = delete;

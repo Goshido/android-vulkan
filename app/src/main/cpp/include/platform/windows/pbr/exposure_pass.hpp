@@ -50,7 +50,7 @@ class ExposurePass final
         };
 
     public:
-        ExposurePass () = default;
+        explicit ExposurePass () = default;
 
         ExposurePass ( ExposurePass const & ) = delete;
         ExposurePass &operator = ( ExposurePass const & ) = delete;

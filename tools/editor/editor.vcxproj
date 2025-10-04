@@ -691,6 +691,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\exposure_specialization.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\exposure_specialization.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\font_storage_base.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\font_storage_base.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\graphics_program_base.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
@@ -1151,6 +1161,8 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_specialization.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\light.hpp" />

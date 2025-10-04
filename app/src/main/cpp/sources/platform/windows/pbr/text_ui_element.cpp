@@ -292,8 +292,8 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     char32_t leftCharacter = 0;
     android_vulkan::Renderer &renderer = *info._renderer;
 
-    auto const appendGlyph = [ this ] ( size_t line, FontStorage::GlyphInfo const &glyphInfo ) noexcept {
-        _atlasPromise.emplace_back ( &glyphInfo._atlas );
+    auto const appendGlyph = [ this ] ( size_t line, GlyphInfo const &glyphInfo ) noexcept {
+        _atlasPromise.emplace_back ( &glyphInfo._pageID );
 
         _glyphs.emplace_back (
             Glyph
@@ -301,7 +301,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
                 ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
                 ._atlasBottomRight = glyphInfo._bottomRight,
-                ._atlas = glyphInfo._atlas,
+                ._atlas = glyphInfo._pageID,
                 ._offsetX = glyphInfo._offsetX,
                 ._offsetY = glyphInfo._offsetY,
                 ._parentLine = line,
@@ -311,7 +311,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         );
     };
 
-    FontStorage::GlyphInfo const* gi;
+    GlyphInfo const* gi;
     int32_t previousX;
 
     {

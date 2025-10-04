@@ -3,6 +3,7 @@
 
 
 #include "font_storage.hpp"
+#include <pbr/fif_count.hpp>
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
 

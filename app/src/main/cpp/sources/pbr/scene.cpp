@@ -713,7 +713,7 @@ void Scene::SubmitUI ( android_vulkan::Renderer &renderer, RenderSession &render
     UIElement::SubmitInfo info
     {
         ._uiPass = &uiPass,
-        ._vertexBuffer = *response
+        ._uiBufferStreams = *response
     };
 
     for ( auto &uiLayer : _uiLayerList )

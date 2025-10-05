@@ -87,7 +87,7 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
     pbr::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
-        ._uiVertexBuffer = *response
+        ._uiBufferStreams = *response
     };
 
     for ( auto &widget : _widgets )

@@ -423,7 +423,7 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     if ( !_visible )
         return;
 
-    UIBufferStreams &streams = info._uiVertexBuffer;
+    UIBufferStreams &streams = info._uiBufferStreams;
 
     std::vector<UIVertexStream0> &uiVertexStream0 = _submitCache._uiVertexStream0;
     size_t const vertices = uiVertexStream0.size ();

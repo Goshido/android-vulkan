@@ -21,7 +21,7 @@ namespace pbr {
 class UIPass final
 {
     public:
-        using UIBufferResponse = std::optional<UIVertexBuffer>;
+        using UIBufferResponse = std::optional<UIBufferStreams>;
 
     private:
         class CommonDescriptorSet final

@@ -267,7 +267,7 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
         constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
         constexpr size_t uiVertexStream0Bytes = vertices * sizeof ( UIVertexStream0 );
 
-        UIBufferStreams &streams = info._uiVertexBuffer;
+        UIBufferStreams &streams = info._uiBufferStreams;
         UIVertexBufferStream0 &s0 = streams._stream0;
         std::memcpy ( s0.data (), _uiVertexStream0, uiVertexStream0Bytes );
         s0 = s0.subspan ( vertices );

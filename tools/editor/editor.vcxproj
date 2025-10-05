@@ -209,7 +209,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -255,7 +255,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -302,7 +302,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -352,7 +352,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -398,7 +398,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -444,7 +444,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -490,7 +490,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
@@ -536,7 +536,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -940,16 +940,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\tone_mapper_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\tone_mapper_program.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_element.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\ui_element.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_pass.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\ui_pass.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\ui_pass.obj</ObjectFileName>
@@ -1162,7 +1152,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_specialization.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\light.hpp" />
@@ -1171,6 +1160,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler_manager.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\types.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf16_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\mesh_buffer_info.hpp" />
@@ -1209,6 +1199,8 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp" />
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp" />
     <ClInclude Include="include\action.hpp" />
     <ClInclude Include="include\actor.hpp" />
     <ClInclude Include="include\append_ui_child_element_event.hpp" />

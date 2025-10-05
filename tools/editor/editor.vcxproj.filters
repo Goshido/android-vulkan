@@ -64,6 +64,12 @@
     <Filter Include="Header Files\core\platform\window\pbr">
       <UniqueIdentifier>{5a490ce3-25de-4ab1-95ae-2cda9717a719}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Templates">
+      <UniqueIdentifier>{225b48de-44c5-44df-9ba8-8131ec32eb43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Templates\pbr">
+      <UniqueIdentifier>{e1adb553-27e9-4884-ae51-95a8b17459e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -304,9 +310,6 @@
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_element.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\present_pass.cpp">
@@ -728,8 +731,14 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.ipp">
-      <Filter>Source Files\core\pbr</Filter>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp">
+      <Filter>Templates\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp">
+      <Filter>Templates\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -26,7 +26,7 @@ struct UIVertex final
 
 #pragma pack ( pop )
 
-struct UIVertexBuffer final
+struct UIBufferStreams final
 {
     std::span<GXVec2>       _positions {};
     std::span<UIVertex>     _vertices {};

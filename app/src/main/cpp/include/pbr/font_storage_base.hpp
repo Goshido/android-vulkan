@@ -227,7 +227,7 @@ class FontStorageBase
 } // namespace pbr
 
 
-#include "font_storage_base.ipp"
+#include <pbr/font_storage_base.ipp>
 
 
 #endif // PBR_FONT_STORAGE_BASE_HPP

@@ -403,7 +403,7 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
 
     size_t const vertices = _submitCache._positions.size ();
 
-    UIVertexBuffer &uiVertexBuffer = info._vertexBuffer;
+    UIBufferStreams &uiVertexBuffer = info._uiBufferStreams;
     std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
     std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
 

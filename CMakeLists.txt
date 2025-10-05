@@ -242,7 +242,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_descriptor_set_layout.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_program.cpp
-    app/src/main/cpp/sources/platform/android/pbr/ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/ui_program.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp
@@ -264,6 +263,7 @@ target_precompile_headers ( android-vulkan PRIVATE
 target_include_directories ( android-vulkan PRIVATE
     app/src/main/cpp/include
     app/src/main/cpp/include/freetype2
+    app/src/main/cpp/templates
 )
 
 # Disable libandroid-vulkan.so symbol publishing

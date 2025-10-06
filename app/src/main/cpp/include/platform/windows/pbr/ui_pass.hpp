@@ -172,6 +172,7 @@ class UIPass final
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer &renderer, float brightnessBalance ) noexcept;
 
         void SubmitImage ( uint16_t image ) noexcept;
+        void SubmitRectangle () noexcept;
         void SubmitNonImage () noexcept;
 
         [[nodiscard]] bool UploadGPUFontData ( android_vulkan::Renderer &renderer,

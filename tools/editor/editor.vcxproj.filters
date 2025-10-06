@@ -303,9 +303,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\ui_pass.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\div_ui_element.cpp">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\image_ui_element.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>

@@ -1,28 +1,36 @@
-#include <precompiled_headers.hpp>
+#ifndef PBR_DIV_UI_ELEMENT_BASE_IPP
+#define PBR_DIV_UI_ELEMENT_BASE_IPP
+
+
 #include <av_assert.hpp>
 #include <file.hpp>
-#include <platform/windows/pbr/div_ui_element.hpp>
 
 
 namespace pbr {
 
-DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
+template<typename E, typename S0, typename S1, typename U>
+DIVUIElementBase<E, S0, S1, U>::DIVUIElementBase ( E const* parent, CSSComputedValues &&css ) noexcept:
+    E ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ) )
 {
-    _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
+    E::_css._fontFile = std::move ( android_vulkan::File ( std::move ( E::_css._fontFile ) ).GetPath () );
 }
 
-DIVUIElement::DIVUIElement ( UIElement const* parent, CSSComputedValues &&css, std::string &&name ) noexcept:
-    UIElement ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ), std::move ( name ) )
+template<typename E, typename S0, typename S1, typename U>
+DIVUIElementBase<E, S0, S1, U>::DIVUIElementBase ( E const* parent,
+    CSSComputedValues &&css,
+    std::string &&name
+) noexcept:
+    E ( css._display != DisplayProperty::eValue::None, parent, std::move ( css ), std::move ( name ) )
 {
-    _css._fontFile = std::move ( android_vulkan::File ( std::move ( _css._fontFile ) ).GetPath () );
+    E::_css._fontFile = std::move ( android_vulkan::File ( std::move ( E::_css._fontFile ) ).GetPath () );
 }
 
-void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
+template<typename E, typename S0, typename S1, typename U>
+void DIVUIElementBase<E, S0, S1, U>::ApplyLayout ( E::ApplyInfo &info ) noexcept
 {
     info._hasChanges |= std::exchange ( _hasChanges, false );
 
-    if ( !_visible )
+    if ( !E::_visible )
         return;
 
     // Method contains a lot of branchless optimizations.
@@ -32,20 +40,20 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     size_t const oldVertices = info._vertices;
     GXVec2 const &canvasSize = info._canvasSize;
 
-    _marginTopLeft = GXVec2 ( ResolvePixelLength ( _css._marginLeft, canvasSize._data[ 0U ], false ),
-        ResolvePixelLength ( _css._marginTop, canvasSize._data[ 1U ], true )
+    _marginTopLeft = GXVec2 ( E::ResolvePixelLength ( E::_css._marginLeft, canvasSize._data[ 0U ], false ),
+        E::ResolvePixelLength ( E::_css._marginTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingTopLeft ( ResolvePixelLength ( _css._paddingLeft, canvasSize._data[ 0U ], false ),
-        ResolvePixelLength ( _css._paddingTop, canvasSize._data[ 1U ], true )
+    GXVec2 const paddingTopLeft ( E::ResolvePixelLength ( E::_css._paddingLeft, canvasSize._data[ 0U ], false ),
+        E::ResolvePixelLength ( E::_css._paddingTop, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 marginBottomRight ( ResolvePixelLength ( _css._marginRight, canvasSize._data[ 0U ], false ),
-        ResolvePixelLength ( _css._marginBottom, canvasSize._data[ 1U ], true )
+    GXVec2 marginBottomRight ( E::ResolvePixelLength ( E::_css._marginRight, canvasSize._data[ 0U ], false ),
+        E::ResolvePixelLength ( E::_css._marginBottom, canvasSize._data[ 1U ], true )
     );
 
-    GXVec2 const paddingBottomRight ( ResolvePixelLength ( _css._paddingRight, canvasSize._data[ 0U ], false ),
-        ResolvePixelLength ( _css._paddingBottom, canvasSize._data[ 1U ], true )
+    GXVec2 const paddingBottomRight ( E::ResolvePixelLength ( E::_css._paddingRight, canvasSize._data[ 0U ], false ),
+        E::ResolvePixelLength ( E::_css._paddingBottom, canvasSize._data[ 1U ], true )
     );
 
     _canvasTopLeftOffset.Sum ( _marginTopLeft, paddingTopLeft );
@@ -58,10 +66,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     };
 
     GXVec2 &penOut = info._pen;
-    bool const isInlineBlock = _css._display == DisplayProperty::eValue::InlineBlock;
+    bool const isInlineBlock = E::_css._display == DisplayProperty::eValue::InlineBlock;
     GXVec2 referenceSize = canvasSize;
 
-    switch ( _css._position )
+    switch ( E::_css._position )
     {
         case PositionProperty::eValue::Absolute:
             pen = _canvasTopLeftOffset;
@@ -103,22 +111,22 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     float const widthCases[] =
     {
-        ResolvePixelLength ( _css._width, parentWidth, false ),
+        E::ResolvePixelLength ( E::_css._width, parentWidth, false ),
         parentWidth - ( pen._data[ 0U ] + paddingRight + marginRight )
     };
 
-    bool const isAutoWidth = _css._width.GetType () == LengthValue::eType::Auto;
-    auto selector = static_cast<size_t> ( isAutoWidth | ( _css._display == DisplayProperty::eValue::None ) );
+    bool const isAutoWidth = E::_css._width.GetType () == LengthValue::eType::Auto;
+    auto selector = static_cast<size_t> ( isAutoWidth | ( E::_css._display == DisplayProperty::eValue::None ) );
 
     _canvasSize = GXVec2 ( widthCases[ selector ],
-        ResolvePixelLength ( _css._height, referenceSize._data[ 1U ], true )
+        E::ResolvePixelLength ( E::_css._height, referenceSize._data[ 1U ], true )
     );
 
     if ( _canvasSize._data[ 0U ] == 0.0F )
     {
         // Trying to resolve recursion with 'auto' width from parent and 'percentage' width from child.
-        bool const isPercent = _css._width.GetType () == LengthValue::eType::Percent;
-        float const cases[] = { 0.0F, 1.0e-2F * parentWidth * _css._width.GetValue () };
+        bool const isPercent = E::_css._width.GetType () == LengthValue::eType::Percent;
+        float const cases[] = { 0.0F, 1.0e-2F * parentWidth * E::_css._width.GetValue () };
         _canvasSize._data[ 0U ] = cases[ static_cast<size_t> ( isPercent & !isInlineBlock ) ];
     }
 
@@ -128,7 +136,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     GXVec2 parentPaddingExtent ( paddingTopLeft );
     parentPaddingExtent.Sum ( parentPaddingExtent, paddingBottomRight );
 
-    ApplyInfo childInfo
+    typename E::ApplyInfo childInfo
     {
         ._canvasSize = _canvasSize,
         ._fontStorage = info._fontStorage,
@@ -145,7 +153,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     bool const hasLines = !_lineHeights.empty ();
 
-    if ( ( _css._height.GetType () == LengthValue::eType::Auto ) & hasLines )
+    if ( ( E::_css._height.GetType () == LengthValue::eType::Auto ) & hasLines )
         _canvasSize._data[ 1U ] = childInfo._pen._data[ 1U ] + _lineHeights.back ();
 
     float const finalWidth[] =
@@ -180,10 +188,10 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     size_t const vertices[] =
     {
         childInfo._vertices,
-        childInfo._vertices + UIPass::GetVerticesPerRectangle ()
+        childInfo._vertices + U::GetVerticesPerRectangle ()
     };
 
-    bool const hasBackgroundColor = _css._backgroundColor.GetSRGB()._data[ 3U ] != 0U;
+    bool const hasBackgroundColor = E::_css._backgroundColor.GetSRGB()._data[ 3U ] != 0U;
     bool const hasBackgroundArea = sizeCheck ( _borderSize );
     _hasBackground = hasBackgroundColor & hasBackgroundArea;
     info._vertices += vertices[ static_cast<size_t> ( _hasBackground ) ];
@@ -196,7 +204,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     _blockSize.Sum ( beta, gamma );
 
-    if ( _css._position == PositionProperty::eValue::Absolute )
+    if ( E::_css._position == PositionProperty::eValue::Absolute )
     {
         info._hasChanges |= childInfo._hasChanges;
         return;
@@ -205,7 +213,7 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     if ( !sizeCheck ( _blockSize ) )
         return;
 
-    if ( _css._display == DisplayProperty::eValue::Block )
+    if ( E::_css._display == DisplayProperty::eValue::Block )
     {
         // Block starts from new line and consumes whole parent block line.
         float const currentLineHeight = lineHeights.back ();
@@ -257,28 +265,29 @@ void DIVUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     ApplyLayout ( info );
 }
 
-void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
+template<typename E, typename S0, typename S1, typename U>
+void DIVUIElementBase<E, S0, S1, U>::Submit ( E::SubmitInfo &info ) noexcept
 {
-    if ( !_visible )
+    if ( !E::_visible )
         return;
 
     if ( _hasBackground )
     {
-        constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-        constexpr size_t uiVertexStream0Bytes = vertices * sizeof ( UIVertexStream0 );
+        constexpr size_t vertices = U::GetVerticesPerRectangle ();
+        constexpr size_t stream0Bytes = vertices * sizeof ( S0 );
+        constexpr size_t stream1Bytes = vertices * sizeof ( S1 );
 
-        UIBufferStreams &streams = info._uiBufferStreams;
-        UIVertexBufferStream0 &s0 = streams._stream0;
-        std::memcpy ( s0.data (), _uiVertexStream0, uiVertexStream0Bytes );
+        auto &streams = info._uiBufferStreams;
+        auto &s0 = streams._stream0;
+        auto &s1 = streams._stream1;
+
+        std::memcpy ( s0.data (), _stream0, stream0Bytes );
+        std::memcpy ( s1.data (), _stream1, stream1Bytes );
+
         s0 = s0.subspan ( vertices );
-
-        constexpr size_t uiVertexStream1Bytes = vertices * sizeof ( UIVertexStream1 );
-
-        UIVertexBufferStream1 &s1 = streams._stream1;
-        std::memcpy ( s1.data (), _uiVertexStream1, uiVertexStream1Bytes );
         s1 = s1.subspan ( vertices );
 
-        info._uiPass->SubmitNonImage ();
+        info._uiPass->SubmitRectangle ();
     }
 
     for ( auto* child : _children )
@@ -287,22 +296,23 @@ void DIVUIElement::Submit ( SubmitInfo &info ) noexcept
     }
 }
 
-bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
+template<typename E, typename S0, typename S1, typename U>
+bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcept
 {
-    bool needRefill = std::exchange ( _visibilityChanged, false );
+    bool needRefill = std::exchange ( E::_visibilityChanged, false );
 
-    if ( !_visible )
+    if ( !E::_visible )
         return needRefill;
 
     GXVec2 pen {};
-    AlignHandler verticalAlign = &UIElement::AlignToStart;
+    auto verticalAlign = &E::AlignToStart;
     float parentHeight = 0.0F;
-    PositionProperty::eValue const position = _css._position;
+    PositionProperty::eValue const position = E::_css._position;
 
     if ( ( position == PositionProperty::eValue::Static ) | ( position == PositionProperty::eValue::Relative ) )
     {
         pen = info._pen;
-        verticalAlign = ResolveVerticalAlignment ( *this );
+        verticalAlign = E::ResolveVerticalAlignment ( *this );
         parentHeight = info._parentLineHeights[ _parentLine ];
 
         if ( info._line != _parentLine )
@@ -319,7 +329,7 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
         // 'absolute' block territory.
         pen = info._parentTopLeft;
 
-        for ( UIElement const* p = _parent; p; p = p->_parent )
+        for ( E const* p = E::_parent; p; p = p->E::_parent )
         {
             // According to CSS calculations should be done relative Nearest Positioned Ancestor.
             // Long story short: it's needed to work relative closest 'position: absolute or relative' element.
@@ -327,16 +337,16 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
                 continue;
 
             // NOLINTNEXTLINE - downcast
-            pen = static_cast<DIVUIElement const*> ( p )->_absoluteRect._topLeft;
+            pen = static_cast<DIVUIElementBase<E, S0, S1, U> const*> ( p )->_absoluteRect._topLeft;
             break;
         }
 
-        if ( _css._top.GetType () != LengthValue::eType::Auto )
-            pen._data[ 1U ] += ResolvePixelLength ( _css._top, info._parentSize._data[ 1U ], true );
+        if ( E::_css._top.GetType () != LengthValue::eType::Auto )
+            pen._data[ 1U ] += E::ResolvePixelLength ( E::_css._top, info._parentSize._data[ 1U ], true );
 
-        if ( _css._bottom.GetType () != LengthValue::eType::Auto )
+        if ( E::_css._bottom.GetType () != LengthValue::eType::Auto )
         {
-            float const offset = ResolvePixelLength ( _css._bottom,
+            float const offset = E::ResolvePixelLength ( E::_css._bottom,
                 info._parentSize._data[ 1U ],
                 true
             );
@@ -344,12 +354,12 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             pen._data[ 1U ] += info._parentSize._data[ 1U ] - ( _blockSize._data[ 1U ] + offset );
         }
 
-        if ( _css._left.GetType () != LengthValue::eType::Auto )
-            pen._data[ 0U ] += ResolvePixelLength ( _css._left, info._parentSize._data[ 0U ], false );
+        if ( E::_css._left.GetType () != LengthValue::eType::Auto )
+            pen._data[ 0U ] += E::ResolvePixelLength ( E::_css._left, info._parentSize._data[ 0U ], false );
 
-        if ( _css._right.GetType () != LengthValue::eType::Auto )
+        if ( E::_css._right.GetType () != LengthValue::eType::Auto )
         {
-            float const offset = ResolvePixelLength ( _css._right,
+            float const offset = E::ResolvePixelLength ( E::_css._right,
                 info._parentSize._data[ 0U ],
                 false
             );
@@ -365,9 +375,9 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
     if ( _hasBackground )
     {
-        UIPass::AppendRectangle ( _uiVertexStream0,
-            _uiVertexStream1,
-            _css._backgroundColor.GetSRGB (),
+        U::AppendRectangle ( _stream0,
+            _stream1,
+            E::_css._backgroundColor.GetSRGB (),
             _absoluteRect._topLeft,
             _absoluteRect._bottomRight
         );
@@ -376,16 +386,16 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     GXVec2 topLeft {};
     topLeft.Sum ( pen, _canvasTopLeftOffset );
 
-    auto fontProbe = info._fontStorage->GetFont ( ResolveFont (), static_cast<uint32_t> ( ResolveFontSize () ) );
+    auto fontProbe = info._fontStorage->GetFont ( E::ResolveFont (), static_cast<uint32_t> ( E::ResolveFontSize () ) );
 
     if ( !fontProbe ) [[unlikely]]
         return needRefill;
 
-    UpdateInfo updateInfo
+    typename E::UpdateInfo updateInfo
     {
         ._fontStorage = info._fontStorage,
         ._line = 0U,
-        ._lineHeight = ResolveLineHeight ( fontProbe->_font ),
+        ._lineHeight = E::ResolveLineHeight ( fontProbe->_font ),
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = _canvasSize,
         ._parentTopLeft = topLeft,
@@ -401,24 +411,31 @@ bool DIVUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     return needRefill;
 }
 
-void DIVUIElement::AppendChildElement ( UIElement &element ) noexcept
+template<typename E, typename S0, typename S1, typename U>
+void DIVUIElementBase<E, S0, S1, U>::AppendChildElement ( E &element ) noexcept
 {
     _children.emplace_back ( &element );
 }
 
-void DIVUIElement::PrependChildElement ( UIElement& element ) noexcept
+template<typename E, typename S0, typename S1, typename U>
+void DIVUIElementBase<E, S0, S1, U>::PrependChildElement ( E &element ) noexcept
 {
     _children.emplace_front ( &element );
 }
 
-DIVUIElement::Rect const &DIVUIElement::GetAbsoluteRect () const noexcept
+template<typename E, typename S0, typename S1, typename U>
+DIVUIElementBase<E, S0, S1, U>::Rect const &DIVUIElementBase<E, S0, S1, U>::GetAbsoluteRect () const noexcept
 {
     return _absoluteRect;
 }
 
-void DIVUIElement::Update () noexcept
+template<typename E, typename S0, typename S1, typename U>
+void DIVUIElementBase<E, S0, S1, U>::Update () noexcept
 {
     _hasChanges = true;
 }
 
 } // namespace pbr
+
+
+#endif // PBR_DIV_UI_ELEMENT_BASE_IPP

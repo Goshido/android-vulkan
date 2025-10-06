@@ -555,7 +555,9 @@ void UIPass::BufferStream::Bind ( VkCommandBuffer commandBuffer ) noexcept
 bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer ) noexcept
 {
     constexpr VkDeviceSize alignment = 4U;
-    _offsets[ UI_VERTEX_INDEX ] = ( MAX_VERTICES * sizeof ( GXVec2 ) + alignment - 1U ) / alignment * alignment;
+    _offsets[ UI_VERTEX_INDEX ] =
+        ( MAX_VERTICES * sizeof ( UIVertexStream0 ) + alignment - 1U ) / alignment * alignment;
+
     VkDevice device = renderer.GetDevice ();
 
     VkBufferCreateInfo const bufferInfo
@@ -563,7 +565,7 @@ bool UIPass::BufferStream::Init ( android_vulkan::Renderer &renderer ) noexcept
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( _offsets[ UI_VERTEX_INDEX ] + MAX_VERTICES * sizeof ( UIVertex ) ),
+        .size = static_cast<VkDeviceSize> ( _offsets[ UI_VERTEX_INDEX ] + MAX_VERTICES * sizeof ( UIVertexStream1 ) ),
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -628,11 +630,18 @@ UIPass::UIBufferResponse UIPass::BufferStream::GetData ( size_t startIndex, size
     return
     {
         {
-            ._positions { reinterpret_cast<GXVec2*> ( _data + startIndex * sizeof ( GXVec2 ) ), neededVertices },
-
-            ._vertices
+            ._stream0
             {
-                reinterpret_cast<UIVertex*> ( _data + _offsets[ UI_VERTEX_INDEX ] + startIndex * sizeof ( UIVertex ) ),
+                reinterpret_cast<UIVertexStream0*> ( _data + startIndex * sizeof ( UIVertexStream0 ) ),
+                neededVertices
+            },
+
+            ._stream1
+            {
+                reinterpret_cast<UIVertexStream1*> (
+                    _data + _offsets[ UI_VERTEX_INDEX ] + startIndex * sizeof ( UIVertexStream1 )
+                ),
+
                 neededVertices
             }
         }
@@ -1076,102 +1085,102 @@ bool UIPass::UploadGPUData ( android_vulkan::Renderer &renderer,
     return true;
 }
 
-void UIPass::AppendImage ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendImage ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
+    stream0[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
+    UIVertexStream1 &v0 = stream1[ 0U ];
     v0._uv = IMAGE_TOP_LEFT;
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v0._color = color;
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
+    stream0[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
+    UIVertexStream1 &v1 = stream1[ 1U ];
     v1._uv = android_vulkan::Half2 ( IMAGE_BOTTOM_RIGHT._data[ 0U ], IMAGE_TOP_LEFT._data[ 1U ] );
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v1._color = color;
 
-    targetPositions[ 2U ] = bottomRight;
+    stream0[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
+    UIVertexStream1 &v2 = stream1[ 2U ];
     v2._uv = IMAGE_BOTTOM_RIGHT;
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v2._color = color;
 
-    targetPositions[ 3U ] = bottomRight;
+    stream0[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
+    UIVertexStream1 &v3 = stream1[ 3U ];
     v3._uv = IMAGE_BOTTOM_RIGHT;
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v3._color = color;
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+    stream0[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
+    UIVertexStream1 &v4 = stream1[ 4U ];
     v4._uv = android_vulkan::Half2 ( IMAGE_TOP_LEFT._data[ 0U ], IMAGE_BOTTOM_RIGHT._data[ 1U ] );
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v4._color = color;
 
-    targetPositions[ 5U ] = topLeft;
+    stream0[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
+    UIVertexStream1 &v5 = stream1[ 5U ];
     v5._uv = IMAGE_TOP_LEFT;
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_IMAGE;
     v5._color = color;
 }
 
-void UIPass::AppendRectangle ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendRectangle ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
+    stream0[ 0U ] = topLeft;
 
-    UIVertex &v0 = targetVertices[ 0U ];
+    UIVertexStream1 &v0 = stream1[ 0U ];
     v0._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v0._color = color;
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
+    stream0[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    UIVertex &v1 = targetVertices[ 1U ];
+    UIVertexStream1 &v1 = stream1[ 1U ];
     v1._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v1._color = color;
 
-    targetPositions[ 2U ] = bottomRight;
+    stream0[ 2U ] = bottomRight;
 
-    UIVertex &v2 = targetVertices[ 2U ];
+    UIVertexStream1 &v2 = stream1[ 2U ];
     v2._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v2._color = color;
 
-    targetPositions[ 3U ] = bottomRight;
+    stream0[ 3U ] = bottomRight;
 
-    UIVertex &v3 = targetVertices[ 3U ];
+    UIVertexStream1 &v3 = stream1[ 3U ];
     v3._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v3._color = color;
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+    stream0[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    UIVertex &v4 = targetVertices[ 4U ];
+    UIVertexStream1 &v4 = stream1[ 4U ];
     v4._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v4._color = color;
 
-    targetPositions[ 5U ] = topLeft;
+    stream0[ 5U ] = topLeft;
 
-    UIVertex &v5 = targetVertices[ 5U ];
+    UIVertexStream1 &v5 = stream1[ 5U ];
     v5._uiPrimitiveType = PBR_UI_PRIMITIVE_TYPE_GEOMETRY;
     v5._color = color;
 }
 
-void UIPass::AppendText ( GXVec2* targetPositions,
-    UIVertex* targetVertices,
+void UIPass::AppendText ( UIVertexStream0* stream0,
+    UIVertexStream1* stream1,
     GXColorUNORM color,
     GXVec2 const &topLeft,
     GXVec2 const &bottomRight,
@@ -1180,9 +1189,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
     uint8_t atlasLayer
 ) noexcept
 {
-    targetPositions[ 0U ] = topLeft;
+    stream0[ 0U ] = topLeft;
 
-    targetVertices[ 0U ] =
+    stream1[ 0U ] =
     {
         ._uv = glyphTopLeft,
         ._atlasLayer = atlasLayer,
@@ -1190,9 +1199,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
         ._color = color
     };
 
-    targetPositions[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
+    stream0[ 1U ] = GXVec2 ( bottomRight._data[ 0U ], topLeft._data[ 1U ] );
 
-    targetVertices[ 1U ] =
+    stream1[ 1U ] =
     {
         ._uv = android_vulkan::Half2 ( glyphBottomRight._data[ 0U ], glyphTopLeft._data[ 1U ] ),
         ._atlasLayer = atlasLayer,
@@ -1200,9 +1209,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
         ._color = color
     };
 
-    targetPositions[ 2U ] = bottomRight;
+    stream0[ 2U ] = bottomRight;
 
-    targetVertices[ 2U ] =
+    stream1[ 2U ] =
     {
         ._uv = glyphBottomRight,
         ._atlasLayer = atlasLayer,
@@ -1210,9 +1219,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
         ._color = color
     };
 
-    targetPositions[ 3U ] = bottomRight;
+    stream0[ 3U ] = bottomRight;
 
-    targetVertices[ 3U ] =
+    stream1[ 3U ] =
     {
         ._uv = glyphBottomRight,
         ._atlasLayer = atlasLayer,
@@ -1220,9 +1229,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
         ._color = color
     };
 
-    targetPositions[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
+    stream0[ 4U ] = GXVec2 ( topLeft._data[ 0U ], bottomRight._data[ 1U ] );
 
-    targetVertices[ 4U ] =
+    stream1[ 4U ] =
     {
         ._uv = android_vulkan::Half2 ( glyphTopLeft._data[ 0U ], glyphBottomRight._data[ 1U ] ),
         ._atlasLayer = atlasLayer,
@@ -1230,9 +1239,9 @@ void UIPass::AppendText ( GXVec2* targetPositions,
         ._color = color
     };
 
-    targetPositions[ 5U ] = topLeft;
+    stream0[ 5U ] = topLeft;
 
-    targetVertices[ 5U ] =
+    stream1[ 5U ] =
     {
         ._uv = glyphTopLeft,
         ._atlasLayer = atlasLayer,

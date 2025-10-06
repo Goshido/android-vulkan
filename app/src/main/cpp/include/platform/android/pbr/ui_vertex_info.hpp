@@ -16,7 +16,9 @@ namespace pbr {
 
 #pragma pack ( push, 1 )
 
-struct UIVertex final
+using UIVertexStream0 = GXVec2;
+
+struct UIVertexStream1 final
 {
     android_vulkan::Half2       _uv {};
     uint8_t                     _atlasLayer = 0U;
@@ -26,10 +28,13 @@ struct UIVertex final
 
 #pragma pack ( pop )
 
+using UIVertexBufferStream0 = std::span<UIVertexStream0>;
+using UIVertexBufferStream1 = std::span<UIVertexStream1>;
+
 struct UIBufferStreams final
 {
-    std::span<GXVec2>       _positions {};
-    std::span<UIVertex>     _vertices {};
+    UIVertexBufferStream0       _stream0 {};
+    UIVertexBufferStream1       _stream1 {};
 };
 
 } // namespace pbr

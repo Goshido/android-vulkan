@@ -404,8 +404,8 @@ void TextUIElement::Submit ( SubmitInfo &info ) noexcept
     size_t const vertices = _submitCache._positions.size ();
 
     UIBufferStreams &uiVertexBuffer = info._uiBufferStreams;
-    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+    UIVertexBufferStream0 &uiPositions = uiVertexBuffer._stream0;
+    UIVertexBufferStream1 &uiVertices = uiVertexBuffer._stream1;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
@@ -431,10 +431,10 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._parenSize = info._parentSize;
     _submitCache._penIn = info._pen;
 
-    std::vector<GXVec2> &positionBuffer = _submitCache._positions;
+    std::vector<UIVertexStream0> &positionBuffer = _submitCache._positions;
     positionBuffer.clear ();
 
-    std::vector<UIVertex> &vertexBuffer = _submitCache._vertices;
+    std::vector<UIVertexStream1> &vertexBuffer = _submitCache._vertices;
     vertexBuffer.clear ();
 
     constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
@@ -442,8 +442,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     positionBuffer.resize ( vertexCount );
     vertexBuffer.resize ( vertexCount );
 
-    GXVec2* p = positionBuffer.data ();
-    UIVertex* v = vertexBuffer.data ();
+    UIVertexStream0* p = positionBuffer.data ();
+    UIVertexStream1* v = vertexBuffer.data ();
 
     Glyph const* glyphs = _glyphs.data ();
     GXColorUNORM const color = ResolveColor ();
@@ -524,8 +524,8 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._positionBufferBytes = vertexCount * sizeof ( GXVec2 );
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertex );
+    _submitCache._positionBufferBytes = vertexCount * sizeof ( UIVertexStream0 );
+    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertexStream1 );
     return true;
 }
 

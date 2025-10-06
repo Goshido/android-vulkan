@@ -821,16 +821,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\compute_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\compute_program.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\div_ui_element.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\div_ui_element.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\exposure_pass.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\exposure_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\exposure_program.obj</ObjectFileName>

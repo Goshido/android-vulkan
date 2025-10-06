@@ -260,12 +260,12 @@ void ImageUIElement::Submit ( SubmitInfo &info ) noexcept
         return;
 
     constexpr size_t vertices = UIPass::GetVerticesPerRectangle ();
-    constexpr size_t positionBytes = vertices * sizeof ( GXVec2 );
-    constexpr size_t verticesBytes = vertices * sizeof ( UIVertex);
+    constexpr size_t positionBytes = vertices * sizeof ( UIVertexStream0 );
+    constexpr size_t verticesBytes = vertices * sizeof ( UIVertexStream1);
 
     UIBufferStreams &uiVertexBuffer = info._uiBufferStreams;
-    std::span<GXVec2> &uiPositions = uiVertexBuffer._positions;
-    std::span<UIVertex> &uiVertices = uiVertexBuffer._vertices;
+    UIVertexBufferStream0 &uiPositions = uiVertexBuffer._stream0;
+    UIVertexBufferStream1 &uiVertices = uiVertexBuffer._stream1;
 
     std::memcpy ( uiPositions.data (), _submitCache._positions, positionBytes );
     std::memcpy ( uiVertices.data (), _submitCache._vertices, verticesBytes );

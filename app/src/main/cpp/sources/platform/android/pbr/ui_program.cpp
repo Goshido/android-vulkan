@@ -436,14 +436,14 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
     binds[ IN_BUFFER_POSITION ] =
     {
         .binding = IN_BUFFER_POSITION,
-        .stride = static_cast<uint32_t> ( sizeof ( GXVec2 ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( UIVertexStream0 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
     binds[ IN_BUFFER_REST ] =
     {
         .binding = IN_BUFFER_REST,
-        .stride = static_cast<uint32_t> ( sizeof ( UIVertex ) ),
+        .stride = static_cast<uint32_t> ( sizeof ( UIVertexStream1 ) ),
         .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
     };
 
@@ -460,7 +460,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_IMAGE_UV,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R16G16_SFLOAT,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _uv ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertexStream1, _uv ) )
     };
 
     attributes[ IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE ] =
@@ -468,7 +468,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_ATLAS_LAYER_AND_UI_PRIMITIVE_TYPE,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8_UNORM,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _atlasLayer ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertexStream1, _atlasLayer ) )
     };
 
     attributes[ IN_SLOT_COLOR ] =
@@ -476,7 +476,7 @@ VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (
         .location = IN_SLOT_COLOR,
         .binding = IN_BUFFER_REST,
         .format = VK_FORMAT_R8G8B8A8_UNORM,
-        .offset = static_cast<uint32_t> ( offsetof ( UIVertex, _color ) )
+        .offset = static_cast<uint32_t> ( offsetof ( UIVertexStream1, _color ) )
     };
 
     info =

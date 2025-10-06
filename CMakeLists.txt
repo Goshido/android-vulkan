@@ -229,7 +229,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
-    app/src/main/cpp/sources/platform/android/pbr/div_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/exposure_descriptor_set_layout.cpp
     app/src/main/cpp/sources/platform/android/pbr/exposure_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/exposure_program.cpp

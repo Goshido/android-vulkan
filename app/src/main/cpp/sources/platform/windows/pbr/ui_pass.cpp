@@ -785,6 +785,11 @@ void UIPass::SubmitImage ( uint16_t image ) noexcept
     _hasChanges = true;
 }
 
+void UIPass::SubmitRectangle () noexcept
+{
+    _hasChanges = true;
+}
+
 void UIPass::SubmitNonImage () noexcept
 {
     _hasChanges = true;

@@ -231,22 +231,22 @@ class UIPass final
             return 6U;
         }
 
-        static void AppendImage ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendImage ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
-        static void AppendRectangle ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendRectangle ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight
         ) noexcept;
 
-        static void AppendText ( GXVec2* targetPositions,
-            UIVertex* targetVertices,
+        static void AppendText ( UIVertexStream0* stream0,
+            UIVertexStream1* stream1,
             GXColorUNORM color,
             GXVec2 const &topLeft,
             GXVec2 const &bottomRight,

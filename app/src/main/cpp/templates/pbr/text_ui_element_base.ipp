@@ -1,21 +1,25 @@
-#include <precompiled_headers.hpp>
+#ifndef PBR_TEXT_UI_ELEMENT_BASE_IPP
+#define PBR_TEXT_UI_ELEMENT_BASE_IPP
+
+
 #include <av_assert.hpp>
 #include <logger.hpp>
 #include <pbr/utf8_parser.hpp>
-#include <platform/android/pbr/div_ui_element.hpp>
-#include <platform/android/pbr/text_ui_element.hpp>
+#include <renderer.hpp>
 
 
 namespace pbr {
 
-void TextUIElement::ApplyLayoutCache::Clear () noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::ApplyLayoutCache::Clear () noexcept
 {
     _isTextChanged = true;
     _lineHeights.clear ();
     _vertices = 0U;
 }
 
-bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+bool TextUIElementBase<E, G, GI, S0, S1, U, F>::ApplyLayoutCache::Run ( E::ApplyInfo &info ) noexcept
 {
     if ( _lineHeights.empty () )
         return false;
@@ -41,19 +45,17 @@ bool TextUIElement::ApplyLayoutCache::Run ( ApplyInfo &info ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void TextUIElement::SubmitCache::Clear () noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SubmitCache::Clear () noexcept
 {
     _isTextChanged = true;
     _parentLineHeights.clear ();
-
-    _positions.clear ();
-    _positionBufferBytes = 0U;
-
-    _vertices.clear ();
-    _vertexBufferBytes = 0U;
+    _stream0.clear ();
+    _stream1.clear ();
 }
 
-bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+bool TextUIElementBase<E, G, GI, S0, S1, U, F>::SubmitCache::Run ( E::UpdateInfo &info,
     TextAlignProperty::eValue horizontal,
     VerticalAlignProperty::eValue vertical,
     std::vector<float> const &cachedLineHeight
@@ -115,66 +117,84 @@ bool TextUIElement::SubmitCache::Run ( UpdateInfo &info,
 
 //----------------------------------------------------------------------------------------------------------------------
 
-TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::u32string &&text ) noexcept:
-    UIElement ( visible, parent ),
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::TextUIElementBase ( bool visible,
+    E const* parent,
+    std::u32string &&text
+) noexcept:
+    E ( visible, parent ),
     _glyphs ( text.size () ),
     _text ( std::move ( text ) )
 {
-    // NOTHING
+    OnGlyphResized ( text.size () );
 }
 
-TextUIElement::TextUIElement ( bool visible,
-    UIElement const* parent,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::TextUIElementBase ( bool visible,
+    E const* parent,
     std::u32string &&text,
     std::string &&name
 ) noexcept:
-    UIElement ( visible, parent, std::move ( name ) ),
+    E ( visible, parent, std::move ( name ) ),
     _glyphs ( text.size () ),
     _text ( std::move ( text ) )
 {
-    // NOTHING
+    OnGlyphResized ( _glyphs.size () );
 }
 
-TextUIElement::TextUIElement ( bool visible, UIElement const* parent, std::string_view text ) noexcept:
-    UIElement ( visible, parent )
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::TextUIElementBase ( bool visible,
+    E const* parent,
+    std::string_view text
+) noexcept:
+    E ( visible, parent )
 {
     if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
         _text = std::move ( *str );
 
-    _glyphs.resize ( _text.size () );
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    OnGlyphResized ( count );
 }
 
-TextUIElement::TextUIElement ( bool visible,
-    UIElement const* parent,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::TextUIElementBase ( bool visible,
+    E const* parent,
     std::string_view text,
     std::string &&name
 ) noexcept:
-    UIElement ( visible, parent, std::move ( name ) )
+    E ( visible, parent, std::move ( name ) )
 {
     if ( auto str = UTF8Parser::ToU32String ( text ); str ) [[likely]]
         _text = std::move ( *str );
 
-    _glyphs.resize ( _text.size () );
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    OnGlyphResized ( count );
 }
 
-void TextUIElement::SetColor ( ColorValue const &color ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SetColor ( ColorValue const &color ) noexcept
 {
     _color = color.GetSRGB ();
     _submitCache._isColorChanged = true;
 }
 
-void TextUIElement::SetColor ( GXColorUNORM color ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SetColor ( GXColorUNORM color ) noexcept
 {
     _color = color;
     _submitCache._isColorChanged = true;
 }
 
-void TextUIElement::SetText ( char const* text ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SetText ( char const* text ) noexcept
 {
     SetText ( std::string_view ( text ) );
 }
 
-void TextUIElement::SetText ( std::string_view text ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SetText ( std::string_view text ) noexcept
 {
     auto str = UTF8Parser::ToU32String ( text );
 
@@ -182,7 +202,11 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
         return;
 
     _text = std::move ( *str );
-    _glyphs.resize ( _text.size () );
+
+    size_t const count = _text.size ();
+    _glyphs.resize ( count );
+    OnGlyphResized ( count );
+
     _applyLayoutCache._isTextChanged = true;
     _submitCache._isTextChanged = true;
 
@@ -193,10 +217,15 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
     _applyLayoutCache.Clear ();
 }
 
-void TextUIElement::SetText ( std::u32string_view text ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::SetText ( std::u32string_view text ) noexcept
 {
     _text = text;
-    _glyphs.resize ( _text.size () );
+
+    size_t const count = text.size ();
+    _glyphs.resize ( count );
+    OnGlyphResized ( count );
+
     _applyLayoutCache._isTextChanged = true;
     _submitCache._isTextChanged = true;
 
@@ -207,11 +236,36 @@ void TextUIElement::SetText ( std::u32string_view text ) noexcept
     _applyLayoutCache.Clear ();
 }
 
-void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::OnCacheUpdated ( std::span<G> /*glyphs*/ ) noexcept
+{
+    // NOTHING
+}
+
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::OnGlyphAdded ( GI const &/*glyphInfo*/ ) noexcept
+{
+    // NOTHING
+}
+
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::OnGlyphCleared () noexcept
+{
+    // NOTHING
+}
+
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::OnGlyphResized ( size_t /*count*/ ) noexcept
+{
+    // NOTHING
+}
+
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::ApplyLayout ( E::ApplyInfo &info ) noexcept
 {
     bool const isEmpty = _text.empty ();
 
-    if ( ( !_visible | isEmpty ) || _applyLayoutCache.Run ( info ) )
+    if ( ( !E::_visible | isEmpty ) || _applyLayoutCache.Run ( info ) )
         return;
 
     info._hasChanges = true;
@@ -224,15 +278,17 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     _applyLayoutCache._lineHeights.reserve ( glyphCount );
 
     _glyphs.clear ();
-    FontStorage &fontStorage = *info._fontStorage;
+    OnGlyphCleared ();
 
-    auto const fontProbe = fontStorage.GetFont ( _parent->ResolveFont (),
-        static_cast<uint32_t> ( _parent->ResolveFontSize () ) );
+    F &fontStorage = *info._fontStorage;
+
+    auto const fontProbe = fontStorage.GetFont ( E::_parent->ResolveFont (),
+        static_cast<uint32_t> ( E::_parent->ResolveFontSize () ) );
 
     if ( !fontProbe ) [[unlikely]]
         return;
 
-    FontStorage::Font const font = fontProbe->_font;
+    typename F::Font const font = fontProbe->_font;
     constexpr size_t firstLineHeightIdx = 1U;
 
     std::vector<float> &divLineHeights = *info._lineHeights;
@@ -244,7 +300,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
 
     auto const currentLineHeightInteger = static_cast<int32_t> ( currentLineHeight );
 
-    FontStorage::PixelFontMetrics const &metrics = FontStorage::GetFontPixelMetrics ( font );
+    typename F::PixelFontMetrics const &metrics = F::GetFontPixelMetrics ( font );
     _baselineToBaseline = metrics._baselineToBaseline;
     _contentAreaHeight = metrics._contentAreaHeight;
     auto const baselineToBaselineF = static_cast<float> ( _baselineToBaseline );
@@ -272,14 +328,16 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     char32_t leftCharacter = 0;
     android_vulkan::Renderer &renderer = *info._renderer;
 
-    auto const appendGlyph = [ this ] ( size_t line, GlyphInfo const &glyphInfo ) noexcept {
+    auto const appendGlyph = [ this ] ( size_t line, GI const &glyphInfo ) noexcept {
+        OnGlyphAdded ( glyphInfo );
+
         _glyphs.emplace_back (
-            Glyph
+            G
             {
                 ._advance = 0,
                 ._atlasTopLeft = glyphInfo._topLeft,
                 ._atlasBottomRight = glyphInfo._bottomRight,
-                ._atlasLayer = glyphInfo._pageID,
+                ._atlasPage = glyphInfo._pageID,
                 ._offsetX = glyphInfo._offsetX,
                 ._offsetY = glyphInfo._offsetY,
                 ._parentLine = line,
@@ -289,7 +347,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         );
     };
 
-    GlyphInfo const* gi;
+    GI const* gi;
     int32_t previousX;
 
     {
@@ -300,7 +358,7 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         previousX = x;
 
-        x += gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+        x += gi->_advance + F::GetKerning ( font, leftCharacter, rightCharacter );
         leftCharacter = rightCharacter;
         ++glyphsPerLine;
 
@@ -327,14 +385,14 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
         }
     }
 
-    Glyph* glyph = _glyphs.data ();
+    G* glyph = _glyphs.data ();
 
     for ( char32_t const rightCharacter : text )
     {
         gi = &fontStorage.GetGlyphInfo ( renderer, font, rightCharacter );
         int32_t const baseX = x;
 
-        int32_t const advance = gi->_advance + FontStorage::GetKerning ( font, leftCharacter, rightCharacter );
+        int32_t const advance = gi->_advance + F::GetKerning ( font, leftCharacter, rightCharacter );
         x += advance;
         leftCharacter = rightCharacter;
 
@@ -391,61 +449,60 @@ void TextUIElement::ApplyLayout ( ApplyInfo &info ) noexcept
     pen._data[ 1U ] = static_cast<float> ( y ) + fraction;
     _applyLayoutCache._penOut = pen;
 
-    size_t const vertices = _text.size () * UIPass::GetVerticesPerRectangle ();
+    size_t const vertices = _text.size () * U::GetVerticesPerRectangle ();
     _applyLayoutCache._vertices = vertices;
     info._vertices += vertices;
 }
 
-void TextUIElement::Submit ( SubmitInfo &info ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+void TextUIElementBase<E, G, GI, S0, S1, U, F>::Submit ( E::SubmitInfo &info ) noexcept
 {
-    if ( !_visible )
+    if ( !E::_visible )
         return;
 
-    size_t const vertices = _submitCache._positions.size ();
+    size_t const vertices = _submitCache._stream0.size ();
 
-    UIBufferStreams &uiVertexBuffer = info._uiBufferStreams;
-    UIVertexBufferStream0 &uiPositions = uiVertexBuffer._stream0;
-    UIVertexBufferStream1 &uiVertices = uiVertexBuffer._stream1;
+    auto &streams = info._uiBufferStreams;
+    auto &s0 = streams._stream0;
+    auto &s1 = streams._stream1;
 
-    std::memcpy ( uiPositions.data (), _submitCache._positions.data (), _submitCache._positionBufferBytes );
-    std::memcpy ( uiVertices.data (), _submitCache._vertices.data (), _submitCache._vertexBufferBytes );
+    std::memcpy ( s0.data (), _submitCache._stream0.data (), vertices * sizeof ( S0 ) );
+    std::memcpy ( s1.data (), _submitCache._stream1.data (), vertices * sizeof ( S1 ) );
 
-    uiPositions = uiPositions.subspan ( vertices );
-    uiVertices = uiVertices.subspan ( vertices );
+    s0 = s0.subspan ( vertices );
+    s1 = s1.subspan ( vertices );
 
     info._uiPass->SubmitText ( vertices );
 }
 
-bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+bool TextUIElementBase<E, G, GI, S0, S1, U, F>::UpdateCache ( E::UpdateInfo &info ) noexcept
 {
     size_t const glyphCount = _glyphs.size ();
-    bool const needRefill = _visibilityChanged;
-    _visibilityChanged = false;
+    bool const needRefill = std::exchange ( E::_visibilityChanged, false );
 
-    if ( !_visible | ( glyphCount == 0U ) )
+    if ( !E::_visible | ( glyphCount == 0U ) )
         return needRefill;
 
     if ( _submitCache.Run ( info, GetTextAlignment (), GetVerticalAlignment (), _applyLayoutCache._lineHeights ) )
         return needRefill;
 
+    G* glyphs = _glyphs.data ();
+    OnCacheUpdated ( { glyphs, glyphCount } );
+
     _submitCache._parenSize = info._parentSize;
     _submitCache._penIn = info._pen;
 
-    std::vector<UIVertexStream0> &positionBuffer = _submitCache._positions;
-    positionBuffer.clear ();
+    std::vector<S0> &s0 = _submitCache._stream0;
+    std::vector<S1> &s1 = _submitCache._stream1;
 
-    std::vector<UIVertexStream1> &vertexBuffer = _submitCache._vertices;
-    vertexBuffer.clear ();
-
-    constexpr size_t verticesPerGlyph = UIPass::GetVerticesPerRectangle ();
+    constexpr size_t verticesPerGlyph = U::GetVerticesPerRectangle ();
     size_t const vertexCount = glyphCount * verticesPerGlyph;
-    positionBuffer.resize ( vertexCount );
-    vertexBuffer.resize ( vertexCount );
+    s0.resize ( vertexCount );
+    s1.resize ( vertexCount );
 
-    UIVertexStream0* p = positionBuffer.data ();
-    UIVertexStream1* v = vertexBuffer.data ();
-
-    Glyph const* glyphs = _glyphs.data ();
+    S0* v0 = s0.data ();
+    S1* v1 = s1.data ();
     GXColorUNORM const color = ResolveColor ();
 
     size_t limit = 0U;
@@ -488,7 +545,7 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
 
         for ( ; i < limit; ++i )
         {
-            Glyph const &g = glyphs[ i ];
+            G const &g = glyphs[ i ];
 
             int32_t const offsetX[] = { 0, g._offsetX };
             int32_t const penX = x + offsetX[ std::exchange ( isFirst, notFirstSymbolOffsetX ) ];
@@ -497,20 +554,19 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
             int32_t const glyphBottom = glyphTop + g._height;
             int32_t const glyphRight = penX + g._width;
 
-            UIPass::AppendText ( p,
-                v,
+            U::AppendText ( v0,
+                v1,
                 color,
                 GXVec2 ( static_cast<float> ( penX ), static_cast<float> ( glyphTop ) ),
                 GXVec2 ( static_cast<float> ( glyphRight ), static_cast<float> ( glyphBottom ) ),
                 g._atlasTopLeft,
                 g._atlasBottomRight,
-                g._atlasLayer
+                g._atlasPage
             );
 
             x += g._advance;
-
-            p += verticesPerGlyph;
-            v += verticesPerGlyph;
+            v0 += verticesPerGlyph;
+            v1 += verticesPerGlyph;
         }
 
         pen._data[ 1U ] += *height;
@@ -524,19 +580,18 @@ bool TextUIElement::UpdateCache ( UpdateInfo &info ) noexcept
     _submitCache._penOut = penOut;
     info._pen = penOut;
 
-    _submitCache._positionBufferBytes = vertexCount * sizeof ( UIVertexStream0 );
-    _submitCache._vertexBufferBytes = vertexCount * sizeof ( UIVertexStream1 );
     return true;
 }
 
-TextAlignProperty::eValue TextUIElement::GetTextAlignment () const noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextAlignProperty::eValue TextUIElementBase<E, G, GI, S0, S1, U, F>::GetTextAlignment () const noexcept
 {
-    for ( UIElement const* p = _parent; p; )
+    for ( E const* p = E::_parent; p; )
     {
         switch ( TextAlignProperty::eValue const align = p->GetCSS ()._textAlign; align )
         {
             case TextAlignProperty::eValue::Inherit:
-                p = p->_parent;
+                p = p->E::_parent;
             break;
 
             case TextAlignProperty::eValue::Center:
@@ -552,14 +607,15 @@ TextAlignProperty::eValue TextUIElement::GetTextAlignment () const noexcept
     return TextAlignProperty::eValue::Left;
 }
 
-VerticalAlignProperty::eValue TextUIElement::GetVerticalAlignment () const noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+VerticalAlignProperty::eValue TextUIElementBase<E, G, GI, S0, S1, U, F>::GetVerticalAlignment () const noexcept
 {
-    for ( UIElement const* p = _parent; p; )
+    for ( E const* p = E::_parent; p; )
     {
         switch ( VerticalAlignProperty::eValue const align = p->GetCSS ()._verticalAlign; align )
         {
             case VerticalAlignProperty::eValue::Inherit:
-                p = p->_parent;
+                p = p->E::_parent;
             break;
 
             case VerticalAlignProperty::eValue::Bottom:
@@ -575,81 +631,83 @@ VerticalAlignProperty::eValue TextUIElement::GetVerticalAlignment () const noexc
     return VerticalAlignProperty::eValue::Top;
 }
 
-TextUIElement::AlignIntegerHandler TextUIElement::GetIntegerTextAlignment () const noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::AlignIntegerHandler
+TextUIElementBase<E, G, GI, S0, S1, U, F>::GetIntegerTextAlignment () const noexcept
 {
-    for ( UIElement const* p = _parent; p; )
+    for ( E const* p = E::_parent; p; )
     {
         switch ( p->GetCSS ()._textAlign )
         {
             case TextAlignProperty::eValue::Center:
-            return &TextUIElement::AlignIntegerToCenter;
+            return &TextUIElementBase::AlignIntegerToCenter;
 
             case TextAlignProperty::eValue::Left:
-            return &TextUIElement::AlignIntegerToStart;
+            return &TextUIElementBase::AlignIntegerToStart;
 
             case TextAlignProperty::eValue::Right:
-            return &TextUIElement::AlignIntegerToEnd;
+            return &TextUIElementBase::AlignIntegerToEnd;
 
             case TextAlignProperty::eValue::Inherit:
-                p = p->_parent;
+                p = p->E::_parent;
             break;
         }
     }
 
     AV_ASSERT ( false )
-    return &TextUIElement::AlignIntegerToStart;
+    return &TextUIElementBase::AlignIntegerToStart;
 }
 
-TextUIElement::AlignIntegerHandler TextUIElement::GetIntegerVerticalAlignment () const noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+TextUIElementBase<E, G, GI, S0, S1, U, F>::AlignIntegerHandler
+TextUIElementBase<E, G, GI, S0, S1, U, F>::GetIntegerVerticalAlignment () const noexcept
 {
-    for ( UIElement const* p = _parent; p; )
+    for ( E const* p = E::_parent; p; )
     {
         switch ( p->GetCSS ()._verticalAlign )
         {
             case VerticalAlignProperty::eValue::Bottom:
-            return &TextUIElement::AlignIntegerToEnd;
+            return &TextUIElementBase::AlignIntegerToEnd;
 
             case VerticalAlignProperty::eValue::Middle:
-            return &TextUIElement::AlignIntegerToCenter;
+            return &TextUIElementBase::AlignIntegerToCenter;
 
             case VerticalAlignProperty::eValue::Top:
-            return &TextUIElement::AlignIntegerToStart;
+            return &TextUIElementBase::AlignIntegerToStart;
 
             case VerticalAlignProperty::eValue::Inherit:
-                p = p->_parent;
+                p = p->E::_parent;
             break;
         }
     }
 
     AV_ASSERT ( false )
-    return &TextUIElement::AlignIntegerToStart;
+    return &TextUIElementBase::AlignIntegerToStart;
 }
 
-GXColorUNORM TextUIElement::ResolveColor () const noexcept
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+GXColorUNORM TextUIElementBase<E, G, GI, S0, S1, U, F>::ResolveColor () const noexcept
 {
     if ( _color )
         return _color.value ();
 
-    for ( UIElement const* p = _parent; p; p = p->_parent )
+    for ( E const* p = E::_parent; p; p = p->E::_parent )
     {
-        // NOLINTNEXTLINE - downcast.
-        auto const &div = *static_cast<DIVUIElement const*> ( p );
-        ColorValue const &color = div.GetCSS ()._color;
-
-        if ( !color.IsInherit () )
+        if ( ColorValue const &color = p->GetCSS ()._color; !color.IsInherit () )
         {
             return color.GetSRGB ();
         }
     }
 
-    android_vulkan::LogError ( "pbr::TextUIElement::ResolveColor - No color was found!" );
+    android_vulkan::LogError ( "pbr::TextUIElementBase::ResolveColor - No color was found!" );
     AV_ASSERT ( false )
 
     constexpr GXColorUNORM nullColor ( 0U, 0U, 0U, 0xFFU );
     return nullColor;
 }
 
-int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+int32_t TextUIElementBase<E, G, GI, S0, S1, U, F>::AlignIntegerToCenter ( int32_t pen,
     int32_t parentSize,
     int32_t lineSize,
     int32_t /*halfLeading*/
@@ -658,7 +716,8 @@ int32_t TextUIElement::AlignIntegerToCenter ( int32_t pen,
     return pen + ( ( parentSize - lineSize ) >> 1 );
 }
 
-int32_t TextUIElement::AlignIntegerToStart ( int32_t pen,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+int32_t TextUIElementBase<E, G, GI, S0, S1, U, F>::AlignIntegerToStart ( int32_t pen,
     int32_t /*parentSize*/,
     int32_t /*lineLength*/,
     int32_t halfLeading
@@ -667,7 +726,8 @@ int32_t TextUIElement::AlignIntegerToStart ( int32_t pen,
     return pen + halfLeading;
 }
 
-int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen,
+template<typename E, typename G, typename GI, typename S0, typename S1, typename U, typename F>
+int32_t TextUIElementBase<E, G, GI, S0, S1, U, F>::AlignIntegerToEnd ( int32_t pen,
     int32_t parentSize,
     int32_t lineSize,
     int32_t halfLeading
@@ -677,3 +737,6 @@ int32_t TextUIElement::AlignIntegerToEnd ( int32_t pen,
 }
 
 } // namespace pbr
+
+
+#endif // PBR_TEXT_UI_ELEMENT_BASE_IPP

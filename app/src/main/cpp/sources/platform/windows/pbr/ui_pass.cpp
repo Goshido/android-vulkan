@@ -790,7 +790,7 @@ void UIPass::SubmitRectangle () noexcept
     _hasChanges = true;
 }
 
-void UIPass::SubmitNonImage () noexcept
+void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
 {
     _hasChanges = true;
 }

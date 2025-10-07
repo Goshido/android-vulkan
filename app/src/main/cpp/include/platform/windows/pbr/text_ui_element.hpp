@@ -2,99 +2,37 @@
 #define PBR_TEXT_UI_ELEMENT_HPP
 
 
+#include <pbr/text_ui_element_base.hpp>
 #include "ui_element.hpp"
 
 
 namespace pbr {
 
-class TextUIElement final : public UIElement
+struct TextGlyph final
+{
+    int32_t                     _advance = 0;
+
+    android_vulkan::Half2       _atlasTopLeft {};
+    android_vulkan::Half2       _atlasBottomRight {};
+    uint16_t                    _atlasPage = 0U;
+
+    int32_t                     _offsetX = 0;
+    int32_t                     _offsetY = 0;
+    size_t                      _parentLine = 0U;
+
+    int32_t                     _width = 0;
+    int32_t                     _height = 0;
+};
+
+class TextUIElement final :
+    public TextUIElementBase<UIElement, TextGlyph, GlyphInfo, UIVertexStream0, UIVertexStream1, UIPass, FontStorage>
 {
     private:
-        struct Glyph final
-        {
-            int32_t                         _advance;
-
-            android_vulkan::Half2           _atlasTopLeft;
-            android_vulkan::Half2           _atlasBottomRight;
-            uint16_t                        _atlas;
-
-            int32_t                         _offsetX;
-            int32_t                         _offsetY;
-            size_t                          _parentLine;
-
-            int32_t                         _width;
-            int32_t                         _height;
-        };
-
-        struct Line final
-        {
-            size_t                          _glyphs = 0U;
-            int32_t                         _length = 0;
-        };
-
-        struct ApplyLayoutCache final
-        {
-            bool                            _isTextChanged = true;
-            std::vector<float>              _lineHeights {};
-            GXVec2                          _penIn {};
-            GXVec2                          _penOut {};
-            size_t                          _vertices = 0U;
-
-            void Clear () noexcept;
-            [[nodiscard]] bool Run ( ApplyInfo &info ) noexcept;
-        };
-
-        struct SubmitCache final
-        {
-            bool                            _isColorChanged = true;
-            bool                            _isTextChanged = true;
-
-            GXVec2                          _penIn {};
-            GXVec2                          _penOut {};
-
-            std::vector<float>              _parentLineHeights {};
-            GXVec2                          _parenSize {};
-
-            std::vector<UIVertexStream0>    _uiVertexStream0 {};
-            size_t                          _uiVertexStream0Bytes = 0U;
-
-            std::vector<UIVertexStream1>    _uiVertexStream1 {};
-            size_t                          _uiVertexStream1Bytes = 0U;
-
-            void Clear () noexcept;
-
-            [[nodiscard]] bool Run ( UpdateInfo &info,
-                TextAlignProperty::eValue horizontal,
-                VerticalAlignProperty::eValue vertical,
-                std::vector<float> const &cachedLineHeight
-            ) noexcept;
-        };
-
-        using AlignIntegerHandler = int32_t ( * ) ( int32_t pen,
-            int32_t parentSize,
-            int32_t lineSize,
-            int32_t leading
-        ) noexcept;
-
-    private:
-        ApplyLayoutCache                    _applyLayoutCache {};
-        SubmitCache                         _submitCache {};
-
-        // Way the user could override color which arrived from CSS.
-        std::optional<GXColorUNORM>         _color {};
-
-        int32_t                             _baselineToBaseline = 0;
-        int32_t                             _contentAreaHeight = 0;
-        std::vector<Glyph>                  _glyphs {};
-
         // Font storage uploads glyphs into GPU memory after text layout is calculated.
         // Because of that glyph atlas image can not be resolved at text layout computation stage.
         // This field is a connection between font storage glyph data and '_glyphs' field
         // to write atlas image index when it's ready.
-        std::vector<uint16_t const*>        _atlasPromise {};
-
-        std::vector<Line>                   _lines {};
-        std::u32string                      _text {};
+        std::vector<uint16_t const*>    _atlasPromise {};
 
     public:
         TextUIElement () = delete;
@@ -123,42 +61,12 @@ class TextUIElement final : public UIElement
 
         ~TextUIElement () override = default;
 
-        void SetColor ( ColorValue const &color ) noexcept;
-        void SetColor ( GXColorUNORM color ) noexcept;
-        void SetText ( char const* text ) noexcept;
-        void SetText ( std::string_view text ) noexcept;
-        void SetText ( std::u32string_view text ) noexcept;
-
     private:
-        void ApplyLayout ( ApplyInfo &info ) noexcept override;
-        void Submit ( SubmitInfo &info ) noexcept override;
-        [[nodiscard]] bool UpdateCache ( UpdateInfo &info ) noexcept override;
+        void OnCacheUpdated ( std::span<TextGlyph> glyphs ) noexcept override;
 
-        [[nodiscard]] TextAlignProperty::eValue GetTextAlignment () const noexcept;
-        [[nodiscard]] VerticalAlignProperty::eValue GetVerticalAlignment () const noexcept;
-
-        [[nodiscard]] AlignIntegerHandler GetIntegerTextAlignment () const noexcept;
-        [[nodiscard]] AlignIntegerHandler GetIntegerVerticalAlignment () const noexcept;
-
-        [[nodiscard]] GXColorUNORM ResolveColor () const noexcept;
-
-        [[nodiscard]] static int32_t AlignIntegerToCenter ( int32_t pen,
-            int32_t parentSize,
-            int32_t lineSize,
-            int32_t halfLeading
-        ) noexcept;
-
-        [[nodiscard]] static int32_t AlignIntegerToStart ( int32_t pen,
-            int32_t parentSize,
-            int32_t lineSize,
-            int32_t halfLeading
-        ) noexcept;
-
-        [[nodiscard]] static int32_t AlignIntegerToEnd ( int32_t pen,
-            int32_t parentSize,
-            int32_t lineSize,
-            int32_t halfLeading
-        ) noexcept;
+        void OnGlyphAdded ( GlyphInfo const &glyphInfo ) noexcept override;
+        void OnGlyphCleared () noexcept override;
+        void OnGlyphResized ( size_t count ) noexcept override;
 };
 
 } // namespace pbr

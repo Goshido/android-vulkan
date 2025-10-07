@@ -173,7 +173,7 @@ class UIPass final
 
         void SubmitImage ( uint16_t image ) noexcept;
         void SubmitRectangle () noexcept;
-        void SubmitNonImage () noexcept;
+        void SubmitText ( size_t usedVertices ) noexcept;
 
         [[nodiscard]] bool UploadGPUFontData ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer

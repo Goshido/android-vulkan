@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
-#include <pbr/sweep_testing/sweep_testing.hpp>
-#include <pbr/coordinate_system.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
 #include <gamepad.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <pbr/sweep_testing/sweep_testing.hpp>
+#include <platform/android/pbr/material_manager.hpp>
+#include <platform/android/pbr/mesh_manager.hpp>
 
 
 namespace pbr::sweep_testing {

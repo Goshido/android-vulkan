@@ -2,7 +2,7 @@
 #define LIGHTUP_COMMON_HLSL
 
 
-#include "pbr/lightup_common.inc"
+#include "platform/android/pbr/lightup_common.inc"
 
 
 #define MINIMUM_F0              4.0e-2H

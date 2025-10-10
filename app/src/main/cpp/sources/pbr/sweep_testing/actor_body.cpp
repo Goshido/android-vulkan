@@ -1,8 +1,8 @@
 #include <precompiled_headers.hpp>
-#include <pbr/sweep_testing/actor_body.hpp>
 #include <pbr/coordinate_system.hpp>
-#include <pbr/opaque_material.hpp>
-#include <pbr/static_mesh_component.hpp>
+#include <pbr/sweep_testing/actor_body.hpp>
+#include <platform/android/pbr/opaque_material.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 #include <shape_box.hpp>
 
 

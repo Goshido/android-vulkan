@@ -3,9 +3,9 @@
 
 
 #include "font_storage.hpp"
-#include <pbr/sampler_manager.hpp>
-#include <pbr/types.hpp>
-#include <pbr/uniform_pool.hpp>
+#include "sampler_manager.hpp"
+#include "types.hpp"
+#include "uniform_pool.hpp"
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
 

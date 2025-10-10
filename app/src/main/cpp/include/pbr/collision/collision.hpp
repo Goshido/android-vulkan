@@ -2,12 +2,12 @@
 #define PBR_COLLISION_HPP
 
 
-#include <pbr/collision/manipulator.hpp>
-#include <pbr/camera.hpp>
-#include <pbr/point_light_component.hpp>
-#include <pbr/render_session.hpp>
 #include <game.hpp>
 #include <physics.hpp>
+#include <pbr/collision/manipulator.hpp>
+#include <platform/android/pbr/camera.hpp>
+#include <platform/android/pbr/point_light_component.hpp>
+#include <platform/android/pbr/render_session.hpp>
 
 
 namespace pbr::collision {

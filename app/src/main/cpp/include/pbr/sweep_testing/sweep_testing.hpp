@@ -4,9 +4,9 @@
 
 #include "actor_body.hpp"
 #include "actor_sweep.hpp"
-#include <pbr/camera.hpp>
-#include <pbr/point_light_component.hpp>
 #include <game.hpp>
+#include <platform/android/pbr/camera.hpp>
+#include <platform/android/pbr/point_light_component.hpp>
 
 
 namespace pbr::sweep_testing {

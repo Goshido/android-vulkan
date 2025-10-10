@@ -1,13 +1,13 @@
 #include <precompiled_headers.hpp>
-#include <pbr/box_stack/box_stack.hpp>
-#include <pbr/coordinate_system.hpp>
-#include <pbr/component.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
-#include <pbr/static_mesh_component.hpp>
 #include <gamepad.hpp>
 #include <global_force_gravity.hpp>
 #include <logger.hpp>
+#include <pbr/box_stack/box_stack.hpp>
+#include <pbr/coordinate_system.hpp>
+#include <platform/android/pbr/component.hpp>
+#include <platform/android/pbr/material_manager.hpp>
+#include <platform/android/pbr/mesh_manager.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 #include <shape_box.hpp>
 #include <shape_sphere.hpp>
 

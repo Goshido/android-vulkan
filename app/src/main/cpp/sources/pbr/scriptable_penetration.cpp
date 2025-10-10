@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
-#include <pbr/rigid_body_component.hpp>
+#include <logger.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_penetration.hpp>
-#include <logger.hpp>
+#include <platform/android/pbr/rigid_body_component.hpp>
 
 
 namespace pbr {

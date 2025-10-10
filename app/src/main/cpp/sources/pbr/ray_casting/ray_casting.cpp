@@ -1,10 +1,10 @@
 #include <precompiled_headers.hpp>
-#include <pbr/ray_casting/ray_casting.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
-#include <pbr/opaque_material.hpp>
-#include <pbr/static_mesh_component.hpp>
 #include <logger.hpp>
+#include <pbr/ray_casting/ray_casting.hpp>
+#include <platform/android/pbr/material_manager.hpp>
+#include <platform/android/pbr/mesh_manager.hpp>
+#include <platform/android/pbr/opaque_material.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 #include <shape_box.hpp>
 #include <vertex_info.hpp>
 

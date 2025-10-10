@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
+#include <gamepad.hpp>
 #include <pbr/sweep_testing/actor_sweep.hpp>
 #include <pbr/coordinate_system.hpp>
-#include <pbr/static_mesh_component.hpp>
-#include <pbr/stipple_material.hpp>
-#include <gamepad.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
+#include <platform/android/pbr/stipple_material.hpp>
 #include <shape_box.hpp>
 
 

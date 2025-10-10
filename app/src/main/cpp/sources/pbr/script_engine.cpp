@@ -1,31 +1,31 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
+#include <file.hpp>
+#include <logger.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/animation_blend_node.hpp>
 #include <pbr/animation_graph.hpp>
 #include <pbr/animation_player_node.hpp>
-#include <pbr/actor.hpp>
 #include <pbr/bit_field.hpp>
-#include <pbr/camera_component.hpp>
-#include <pbr/component.hpp>
-#include <pbr/rigid_body_component.hpp>
-#include <pbr/script_component.hpp>
 #include <pbr/scriptable_gxmat3.hpp>
 #include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxquat.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
 #include <pbr/scriptable_gxvec4.hpp>
 #include <pbr/scriptable_logger.hpp>
-#include <pbr/scriptable_material.hpp>
-#include <pbr/scriptable_text_ui_element.hpp>
-#include <pbr/skeletal_mesh_component.hpp>
-#include <pbr/sound_emitter_global_component.hpp>
-#include <pbr/sound_emitter_spatial_component.hpp>
-#include <pbr/static_mesh_component.hpp>
-#include <pbr/transform_component.hpp>
-#include <pbr/ui_layer.hpp>
-#include <av_assert.hpp>
-#include <file.hpp>
-#include <logger.hpp>
+#include <platform/android/pbr/actor.hpp>
+#include <platform/android/pbr/camera_component.hpp>
+#include <platform/android/pbr/component.hpp>
+#include <platform/android/pbr/transform_component.hpp>
+#include <platform/android/pbr/scriptable_material.hpp>
+#include <platform/android/pbr/scriptable_text_ui_element.hpp>
+#include <platform/android/pbr/skeletal_mesh_component.hpp>
+#include <platform/android/pbr/script_component.hpp>
+#include <platform/android/pbr/sound_emitter_global_component.hpp>
+#include <platform/android/pbr/sound_emitter_spatial_component.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
+#include <platform/android/pbr/rigid_body_component.hpp>
+#include <platform/android/pbr/ui_layer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

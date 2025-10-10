@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
-#include <pbr/stipple_test/stipple_test.hpp>
 #include <pbr/coordinate_system.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
-#include <pbr/stipple_material.hpp>
+#include <pbr/stipple_test/stipple_test.hpp>
+#include <platform/android/pbr/material_manager.hpp>
+#include <platform/android/pbr/mesh_manager.hpp>
+#include <platform/android/pbr/stipple_material.hpp>
 
 
 namespace pbr::stipple_test {

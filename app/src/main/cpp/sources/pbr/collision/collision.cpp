@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <pbr/collision/collision.hpp>
 #include <pbr/coordinate_system.hpp>
-#include <pbr/material_manager.hpp>
-#include <pbr/mesh_manager.hpp>
-#include <pbr/static_mesh_component.hpp>
+#include <platform/android/pbr/material_manager.hpp>
+#include <platform/android/pbr/mesh_manager.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 #include <shape_box.hpp>
 
 

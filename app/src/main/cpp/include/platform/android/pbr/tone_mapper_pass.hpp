@@ -3,8 +3,8 @@
 
 
 #include "full_screen_triangle_descriptor_set_layout.hpp"
-#include <pbr/uniform_pool.hpp>
 #include "tone_mapper_program.hpp"
+#include "uniform_pool.hpp"
 
 
 namespace pbr {

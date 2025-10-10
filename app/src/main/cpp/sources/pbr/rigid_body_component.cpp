@@ -1,14 +1,14 @@
 #include <precompiled_headers.hpp>
-#include <pbr/rigid_body_component.hpp>
-#include <pbr/actor.hpp>
+#include <av_assert.hpp>
+#include <guid_generator.hpp>
+#include <logger.hpp>
 #include <pbr/coordinate_system.hpp>
 #include <pbr/script_engine.hpp>
 #include <pbr/scriptable_gxmat4.hpp>
 #include <pbr/scriptable_gxvec3.hpp>
-#include <guid_generator.hpp>
+#include <platform/android/pbr/actor.hpp>
+#include <platform/android/pbr/rigid_body_component.hpp>
 #include <physics.hpp>
-#include <av_assert.hpp>
-#include <logger.hpp>
 #include <shape_box.hpp>
 #include <shape_sphere.hpp>
 

@@ -2,8 +2,8 @@
 #define OBJECT_DATA_HLSL
 
 
-#include "pbr/geometry_pass_binds.inc"
-#include "pbr/gpgpu_limits.inc"
+#include "platform/android/pbr/geometry_pass_binds.inc"
+#include "platform/android/pbr/gpgpu_limits.inc"
 #include "tbn64.hlsl"
 
 

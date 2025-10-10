@@ -2,7 +2,7 @@
 #define PBR_DEFAULT_TEXTURE_MANAGER_HPP
 
 
-#include "types.hpp"
+#include <platform/android/pbr/types.hpp>
 
 
 namespace pbr {

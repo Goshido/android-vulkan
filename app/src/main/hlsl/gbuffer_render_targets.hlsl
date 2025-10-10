@@ -2,7 +2,7 @@
 #define GBUFFER_RENDER_TARGETS_HLSL
 
 
-#include "pbr/geometry_pass_binds.inc"
+#include "platform/android/pbr/geometry_pass_binds.inc"
 
 
 struct OutputData

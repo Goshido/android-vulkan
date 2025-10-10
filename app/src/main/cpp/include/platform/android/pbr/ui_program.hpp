@@ -3,10 +3,10 @@
 
 
 #include <pbr/brightness_info.hpp>
-#include <pbr/ui_pass_common_descriptor_set_layout.hpp>
-#include <pbr/ui_pass_image_descriptor_set_layout.hpp>
-#include <pbr/ui_pass_transform_descriptor_set_layout.hpp>
 #include <platform/android/pbr/graphics_program.hpp>
+#include "ui_pass_common_descriptor_set_layout.hpp"
+#include "ui_pass_image_descriptor_set_layout.hpp"
+#include "ui_pass_transform_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 

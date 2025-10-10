@@ -4,14 +4,14 @@
 #include <logger.hpp>
 #include <mandelbrot/mandelbrot_analytic_color.hpp>
 #include <mandelbrot/mandelbrot_lut_color.hpp>
-#include <platform/android/core.hpp>
-#include <pbr/pbr_game.hpp>
 #include <pbr/box_stack/box_stack.hpp>
 #include <pbr/collision/collision.hpp>
 #include <pbr/ray_casting/ray_casting.hpp>
 #include <pbr/stipple_test/stipple_test.hpp>
 #include <pbr/sweep_testing/sweep_testing.hpp>
-#include <pbr/universal_game.hpp>
+#include <platform/android/core.hpp>
+#include <platform/android/pbr/pbr_game.hpp>
+#include <platform/android/pbr/universal_game.hpp>
 #include <rainbow/rainbow.hpp>
 #include <rotating_mesh/game_analytic.hpp>
 #include <rotating_mesh/game_lut.hpp>

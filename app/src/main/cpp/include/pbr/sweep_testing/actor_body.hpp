@@ -2,7 +2,7 @@
 #define PBR_SWEEP_TESTING_ACTOR_BODY_HPP
 
 
-#include <pbr/render_session.hpp>
+#include <platform/android/pbr/render_session.hpp>
 #include <physics.hpp>
 
 

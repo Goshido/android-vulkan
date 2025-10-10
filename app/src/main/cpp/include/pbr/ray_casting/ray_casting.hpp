@@ -2,10 +2,10 @@
 #define PBR_RAY_CASTING_HPP
 
 
-#include <pbr/camera.hpp>
-#include <pbr/opaque_material.hpp>
-#include <pbr/render_session.hpp>
 #include <game.hpp>
+#include <platform/android/pbr/camera.hpp>
+#include <platform/android/pbr/opaque_material.hpp>
+#include <platform/android/pbr/render_session.hpp>
 #include <physics.hpp>
 
 

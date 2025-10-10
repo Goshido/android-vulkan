@@ -3,10 +3,10 @@
 
 
 #include <game.hpp>
-#include <pbr/camera.hpp>
-#include <pbr/point_light_component.hpp>
-#include <pbr/render_session.hpp>
-#include <pbr/static_mesh_component.hpp>
+#include <platform/android/pbr/camera.hpp>
+#include <platform/android/pbr/point_light_component.hpp>
+#include <platform/android/pbr/render_session.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 
 
 namespace pbr::stipple_test {

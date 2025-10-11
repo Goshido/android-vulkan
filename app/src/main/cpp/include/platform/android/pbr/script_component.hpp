@@ -3,8 +3,8 @@
 
 
 #include "actor.hpp"
-#include "component.hpp"
 #include <android_vulkan_sdk/pbr/script_component_desc.hpp>
+#include "component.hpp"
 
 
 namespace pbr {

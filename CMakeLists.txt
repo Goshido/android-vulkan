@@ -30,22 +30,13 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/half_types.cpp
     app/src/main/cpp/sources/intrinsics/pcm_streamer_neon.cpp
     app/src/main/cpp/sources/ktx_media_container.cpp
-    app/src/main/cpp/sources/mandelbrot/mandelbrot_analytic_color.cpp
-    app/src/main/cpp/sources/mandelbrot/mandelbrot_base.cpp
-    app/src/main/cpp/sources/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/memory_allocator.cpp
     app/src/main/cpp/sources/mesh_geometry_base.cpp
-    app/src/main/cpp/sources/pbr/animation_blend_node.cpp
-    app/src/main/cpp/sources/pbr/animation_graph.cpp
-    app/src/main/cpp/sources/pbr/animation_player_node.cpp
     app/src/main/cpp/sources/pbr/ascii_string.cpp
     app/src/main/cpp/sources/pbr/attribute_checker.cpp
     app/src/main/cpp/sources/pbr/attribute_parser.cpp
     app/src/main/cpp/sources/pbr/bit_field.cpp
-    app/src/main/cpp/sources/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/pbr/brightness_info.cpp
-    app/src/main/cpp/sources/pbr/collision/collision.cpp
-    app/src/main/cpp/sources/pbr/collision/manipulator.cpp
     app/src/main/cpp/sources/pbr/color_property_checker.cpp
     app/src/main/cpp/sources/pbr/color_property.cpp
     app/src/main/cpp/sources/pbr/color_value.cpp
@@ -54,7 +45,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/css_computed_values.cpp
     app/src/main/cpp/sources/pbr/css_parser.cpp
     app/src/main/cpp/sources/pbr/cube_map_manager.cpp
-    app/src/main/cpp/sources/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/pbr/display_property_checker.cpp
     app/src/main/cpp/sources/pbr/display_property.cpp
     app/src/main/cpp/sources/pbr/div_html5_element.cpp
@@ -86,27 +76,11 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/property_checker.cpp
     app/src/main/cpp/sources/pbr/property_parser.cpp
     app/src/main/cpp/sources/pbr/property.cpp
-    app/src/main/cpp/sources/pbr/ray_casting/ray_casting.cpp
-    app/src/main/cpp/sources/pbr/rigid_body_component.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp
-    app/src/main/cpp/sources/pbr/script_engine.cpp
-    app/src/main/cpp/sources/pbr/scriptable_gxmat3.cpp
-    app/src/main/cpp/sources/pbr/scriptable_gxmat4.cpp
-    app/src/main/cpp/sources/pbr/scriptable_gxquat.cpp
-    app/src/main/cpp/sources/pbr/scriptable_gxvec3.cpp
-    app/src/main/cpp/sources/pbr/scriptable_gxvec4.cpp
-    app/src/main/cpp/sources/pbr/scriptable_logger.cpp
-    app/src/main/cpp/sources/pbr/scriptable_penetration.cpp
-    app/src/main/cpp/sources/pbr/scriptable_raycast_result.cpp
-    app/src/main/cpp/sources/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/pbr/set_attribute_checker.cpp
     app/src/main/cpp/sources/pbr/src_property_checker.cpp
-    app/src/main/cpp/sources/pbr/stipple_test/stipple_test.cpp
     app/src/main/cpp/sources/pbr/stream.cpp
     app/src/main/cpp/sources/pbr/stylesheet_rel_attribute_checker.cpp
-    app/src/main/cpp/sources/pbr/sweep_testing/actor_body.cpp
-    app/src/main/cpp/sources/pbr/sweep_testing/actor_sweep.cpp
-    app/src/main/cpp/sources/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/pbr/tag_parser.cpp
     app/src/main/cpp/sources/pbr/text_align_property_checker.cpp
     app/src/main/cpp/sources/pbr/text_align_property.cpp
@@ -123,12 +97,22 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/core.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
+    app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_analytic_color.cpp
+    app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_base.cpp
+    app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_lut_color.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/actor.cpp
+    app/src/main/cpp/sources/platform/android/pbr/animation_blend_node.cpp
+    app/src/main/cpp/sources/platform/android/pbr/animation_graph.cpp
+    app/src/main/cpp/sources/platform/android/pbr/animation_player_node.cpp
+    app/src/main/cpp/sources/platform/android/pbr/box_stack/box_stack.cpp
     app/src/main/cpp/sources/platform/android/pbr/camera_component.cpp
     app/src/main/cpp/sources/platform/android/pbr/camera.cpp
+    app/src/main/cpp/sources/platform/android/pbr/collision/collision.cpp
+    app/src/main/cpp/sources/platform/android/pbr/collision/manipulator.cpp
     app/src/main/cpp/sources/platform/android/pbr/component.cpp
     app/src/main/cpp/sources/platform/android/pbr/compute_program.cpp
+    app/src/main/cpp/sources/platform/android/pbr/default_texture_manager.cpp
     app/src/main/cpp/sources/platform/android/pbr/dummy_geometry_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/dummy_light_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/dummy_program.cpp
@@ -173,6 +157,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/point_light_shadowmap_generator_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/point_light.cpp
     app/src/main/cpp/sources/platform/android/pbr/present_pass.cpp
+    app/src/main/cpp/sources/platform/android/pbr/ray_casting/ray_casting.cpp
     app/src/main/cpp/sources/platform/android/pbr/reflection_component.cpp
     app/src/main/cpp/sources/platform/android/pbr/reflection_global_descriptor_set_layout.cpp
     app/src/main/cpp/sources/platform/android/pbr/reflection_global_pass.cpp
@@ -186,13 +171,24 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/render_session_stats.cpp
     app/src/main/cpp/sources/platform/android/pbr/render_session.cpp
     app/src/main/cpp/sources/platform/android/pbr/renderable_component.cpp
+    app/src/main/cpp/sources/platform/android/pbr/rigid_body_component.cpp
     app/src/main/cpp/sources/platform/android/pbr/sampler_manager.cpp
     app/src/main/cpp/sources/platform/android/pbr/scene.cpp
     app/src/main/cpp/sources/platform/android/pbr/script_component.cpp
+    app/src/main/cpp/sources/platform/android/pbr/script_engine.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_div_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_gamepad.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_gxmat3.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_gxmat4.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_gxquat.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_gxvec3.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_gxvec4.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_image_ui_element.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_logger.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_material.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_penetration.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_raycast_result.cpp
+    app/src/main/cpp/sources/platform/android/pbr/scriptable_sweep_test_result.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_text_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/scriptable_ui_element.cpp
     app/src/main/cpp/sources/platform/android/pbr/shadowmap_pool.cpp
@@ -206,7 +202,11 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/stipple_material.cpp
     app/src/main/cpp/sources/platform/android/pbr/stipple_program.cpp
     app/src/main/cpp/sources/platform/android/pbr/stipple_subpass.cpp
+    app/src/main/cpp/sources/platform/android/pbr/stipple_test/stipple_test.cpp
     app/src/main/cpp/sources/platform/android/pbr/stub_descriptor_set_layout.cpp
+    app/src/main/cpp/sources/platform/android/pbr/sweep_testing/actor_body.cpp
+    app/src/main/cpp/sources/platform/android/pbr/sweep_testing/actor_sweep.cpp
+    app/src/main/cpp/sources/platform/android/pbr/sweep_testing/sweep_testing.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_descriptor_set_layout.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_pass.cpp
     app/src/main/cpp/sources/platform/android/pbr/tone_mapper_program.cpp
@@ -222,16 +222,16 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/pbr/uniform_buffer.cpp
     app/src/main/cpp/sources/platform/android/pbr/uniform_pool.cpp
     app/src/main/cpp/sources/platform/android/pbr/universal_game.cpp
+    app/src/main/cpp/sources/platform/android/rainbow/rainbow.cpp
     app/src/main/cpp/sources/platform/android/renderer.cpp
+    app/src/main/cpp/sources/platform/android/rotating_mesh/game_analytic.cpp
+    app/src/main/cpp/sources/platform/android/rotating_mesh/game_lut.cpp
+    app/src/main/cpp/sources/platform/android/rotating_mesh/game.cpp
     app/src/main/cpp/sources/platform/android/trace.cpp
     app/src/main/cpp/sources/platform/android/vulkan_loader.cpp
-    app/src/main/cpp/sources/rainbow/rainbow.cpp
     app/src/main/cpp/sources/ray_caster.cpp
     app/src/main/cpp/sources/renderer.cpp
     app/src/main/cpp/sources/rigid_body.cpp
-    app/src/main/cpp/sources/rotating_mesh/game_analytic.cpp
-    app/src/main/cpp/sources/rotating_mesh/game_lut.cpp
-    app/src/main/cpp/sources/rotating_mesh/game.cpp
     app/src/main/cpp/sources/shape_box.cpp
     app/src/main/cpp/sources/shape_sphere.cpp
     app/src/main/cpp/sources/shape.cpp

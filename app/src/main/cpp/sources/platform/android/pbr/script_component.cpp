@@ -1,8 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-#include <pbr/script_engine.hpp>
 #include <platform/android/pbr/script_component.hpp>
+#include <platform/android/pbr/script_engine.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

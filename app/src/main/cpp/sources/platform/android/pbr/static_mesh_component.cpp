@@ -3,14 +3,14 @@
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
 #include <logger.hpp>
-#include <pbr/script_engine.hpp>
-#include <pbr/scriptable_gxmat4.hpp>
-#include <pbr/scriptable_gxvec3.hpp>
-#include <pbr/scriptable_gxvec4.hpp>
-#include <platform/android/pbr/scriptable_material.hpp>
-#include <platform/android/pbr/static_mesh_component.hpp>
 #include <platform/android/pbr/material_manager.hpp>
 #include <platform/android/pbr/mesh_manager.hpp>
+#include <platform/android/pbr/script_engine.hpp>
+#include <platform/android/pbr/scriptable_gxmat4.hpp>
+#include <platform/android/pbr/scriptable_gxvec3.hpp>
+#include <platform/android/pbr/scriptable_gxvec4.hpp>
+#include <platform/android/pbr/scriptable_material.hpp>
+#include <platform/android/pbr/static_mesh_component.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

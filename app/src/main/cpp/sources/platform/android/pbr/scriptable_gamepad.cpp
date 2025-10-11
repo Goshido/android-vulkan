@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <logger.hpp>
-#include <pbr/script_engine.hpp>
+#include <platform/android/pbr/script_engine.hpp>
 #include <platform/android/pbr/scriptable_gamepad.hpp>
 
 

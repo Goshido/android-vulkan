@@ -3,7 +3,7 @@
 
 
 #include "actor.hpp"
-#include <pbr/animation_graph.hpp>
+#include "animation_graph.hpp"
 #include <pbr/fif_count.hpp>
 #include "renderable_component.hpp"
 #include "skin_data.hpp"

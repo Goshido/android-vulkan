@@ -5,9 +5,9 @@
 #include <pbr/div_html5_element.hpp>
 #include <pbr/html5_parser.hpp>
 #include <pbr/img_html5_element.hpp>
-#include <pbr/script_engine.hpp>
 #include <pbr/text_html5_element.hpp>
 #include <pbr/utf8_parser.hpp>
+#include <platform/android/pbr/script_engine.hpp>
 #include <platform/android/pbr/scriptable_image_ui_element.hpp>
 #include <platform/android/pbr/scriptable_text_ui_element.hpp>
 #include <platform/android/pbr/ui_layer.hpp>

@@ -2,9 +2,9 @@
 #define PBR_OPAQUE_SUBPASS_HPP
 
 
+#include "default_texture_manager.hpp"
 #include "geometry_subpass_base.hpp"
 #include "opaque_program.hpp"
-#include <pbr/default_texture_manager.hpp>
 #include "sampler_manager.hpp"
 
 

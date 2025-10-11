@@ -1,5 +1,5 @@
-#include "pbr/point_light_shadowmap_generator.inc"
 #include "platform/android/pbr/gpgpu_limits.inc"
+#include "platform/android/pbr/point_light_shadowmap_generator.inc"
 
 
 struct ObjectData

@@ -1,7 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-#include <pbr/animation_graph.hpp>
+#include <platform/android/pbr/animation_graph.hpp>
 #include <platform/android/pbr/render_session.hpp>
 #include <platform/android/pbr/point_light.hpp>
 #include <platform/android/pbr/reflection_probe_global.hpp>

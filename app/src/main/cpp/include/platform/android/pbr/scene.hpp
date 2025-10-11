@@ -5,8 +5,8 @@
 #include "actor.hpp"
 #include "camera_component.hpp"
 #include <platform/android/pbr/font_storage.hpp>
-#include <pbr/scriptable_penetration.hpp>
-#include <pbr/scriptable_raycast_result.hpp>
+#include <platform/android/pbr/scriptable_penetration.hpp>
+#include <platform/android/pbr/scriptable_raycast_result.hpp>
 #include "render_session.hpp"
 #include "renderable_component.hpp"
 #include "scriptable_gamepad.hpp"

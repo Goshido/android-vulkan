@@ -1,5 +1,5 @@
 #include "color_space.hlsl"
-#include "rotating_mesh/bindings.inc"
+#include "platform/android/rotating_mesh/bindings.inc"
 
 
 // Main reference is Source Engine

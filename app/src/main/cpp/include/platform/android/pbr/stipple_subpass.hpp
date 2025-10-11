@@ -2,8 +2,8 @@
 #define PBR_STIPPLE_SUBPASS_HPP
 
 
+#include "default_texture_manager.hpp"
 #include "geometry_subpass_base.hpp"
-#include <pbr/default_texture_manager.hpp>
 #include "sampler_manager.hpp"
 #include "stipple_program.hpp"
 

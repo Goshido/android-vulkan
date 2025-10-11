@@ -1,4 +1,4 @@
-#include "pbr/skin.inc"
+#include "platform/android/pbr/skin.inc"
 #include "tbn.hlsl"
 
 

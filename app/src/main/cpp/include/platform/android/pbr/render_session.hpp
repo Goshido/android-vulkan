@@ -2,6 +2,7 @@
 #define PBR_RENDER_SESSION_HPP
 
 
+#include "default_texture_manager.hpp"
 #include "exposure_pass.hpp"
 #include "geometry_pass.hpp"
 #include "light_pass.hpp"
@@ -10,7 +11,6 @@
 #include "shadow_casters.hpp"
 #include "tone_mapper_pass.hpp"
 #include "ui_pass.hpp"
-#include <pbr/default_texture_manager.hpp>
 #include <pbr/fif_count.hpp>
 
 

@@ -2,8 +2,8 @@
 #define PBR_MATERIAL_POOL_HPP
 
 
+#include "default_texture_manager.hpp"
 #include "geometry_pass_material.hpp"
-#include <pbr/default_texture_manager.hpp>
 
 
 namespace pbr {

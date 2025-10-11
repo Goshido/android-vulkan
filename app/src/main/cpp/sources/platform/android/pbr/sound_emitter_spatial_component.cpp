@@ -1,8 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <logger.hpp>
-#include <pbr/script_engine.hpp>
-#include <pbr/scriptable_gxvec3.hpp>
+#include <platform/android/pbr/script_engine.hpp>
+#include <platform/android/pbr/scriptable_gxvec3.hpp>
 #include <platform/android/pbr/sound_emitter_spatial_component.hpp>
 
 GX_DISABLE_COMMON_WARNINGS

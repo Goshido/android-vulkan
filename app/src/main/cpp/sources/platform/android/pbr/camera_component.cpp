@@ -3,8 +3,8 @@
 #include <guid_generator.hpp>
 #include <logger.hpp>
 #include <platform/android/pbr/camera_component.hpp>
-#include <pbr/scriptable_gxmat4.hpp>
-#include <pbr/script_engine.hpp>
+#include <platform/android/pbr/scriptable_gxmat4.hpp>
+#include <platform/android/pbr/script_engine.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

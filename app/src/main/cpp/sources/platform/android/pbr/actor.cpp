@@ -2,7 +2,6 @@
 #include <av_assert.hpp>
 #include <guid_generator.hpp>
 #include <logger.hpp>
-#include <pbr/script_engine.hpp>
 #include <platform/android/pbr/actor.hpp>
 #include <platform/android/pbr/camera_component.hpp>
 #include <platform/android/pbr/point_light_component.hpp>
@@ -10,6 +9,7 @@
 #include <platform/android/pbr/rigid_body_component.hpp>
 #include <platform/android/pbr/scene.hpp>
 #include <platform/android/pbr/script_component.hpp>
+#include <platform/android/pbr/script_engine.hpp>
 #include <platform/android/pbr/skeletal_mesh_component.hpp>
 #include <platform/android/pbr/sound_emitter_global_component.hpp>
 #include <platform/android/pbr/sound_emitter_spatial_component.hpp>

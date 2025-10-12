@@ -100,6 +100,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_base.cpp
     app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_lut_color.cpp
+    app/src/main/cpp/sources/platform/android/memory_allocator.cpp
     app/src/main/cpp/sources/platform/android/mesh_geometry.cpp
     app/src/main/cpp/sources/platform/android/pbr/actor.cpp
     app/src/main/cpp/sources/platform/android/pbr/animation_blend_node.cpp

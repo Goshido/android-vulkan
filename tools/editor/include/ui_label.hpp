@@ -33,7 +33,6 @@ class UILabel final
 
         ~UILabel () = default;
 
-        // FUCK - rename
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 };
 

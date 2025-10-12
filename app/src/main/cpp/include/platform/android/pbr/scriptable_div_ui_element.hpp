@@ -11,7 +11,6 @@ namespace pbr {
 class ScriptableDIVUIElement final : public ScriptableUIElement
 {
     private:
-        // FUCK - remove namespace
         DIVUIElement    _div;
 
     public:

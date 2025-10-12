@@ -416,9 +416,6 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
 #endif // AV_ENABLE_NSIGHT
 
-        // FUCK - remove after vertex pulling
-        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32" ) ) &
-
         AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy" ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64" ) ) &
@@ -701,10 +698,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .features
         {
             .robustBufferAccess = VK_FALSE,
-
-            // FUCK - remove after vertex pulling
-            .fullDrawIndexUint32 = VK_TRUE,
-
+            .fullDrawIndexUint32 = VK_FALSE,
             .imageCubeArray = VK_FALSE,
             .independentBlend = VK_FALSE,
             .geometryShader = VK_FALSE,

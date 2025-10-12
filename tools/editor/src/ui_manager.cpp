@@ -42,10 +42,8 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 {
     AV_TRACE ( "Compute UI layout" )
 
-    // FUCK - remove namespace
     _needRefill = false;
     _neededUIVertices = 0U;
-
     std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )

@@ -19,7 +19,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace pbr {
 
-constexpr uint16_t FONT_ATLAS_RESOLUTION = 1024U;
+constexpr static inline uint16_t FONT_ATLAS_RESOLUTION = 1024U;
 
 template <typename G>
 using GlyphStorage = std::unordered_map<char32_t, G>;

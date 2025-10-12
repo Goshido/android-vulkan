@@ -2,9 +2,7 @@
 #define PBR_SCRIPTABLE_IMAGE_UI_ELEMENT_HPP
 
 
-// FUCK - remove namespace
 #include <platform/android/pbr/image_ui_element.hpp>
-
 #include "scriptable_ui_element.hpp"
 
 

@@ -60,9 +60,7 @@ class ExposurePass final
 
         ~ExposurePass () = default;
 
-        // FUCK - resourceHeap as field
         void Execute ( VkCommandBuffer commandBuffer, float deltaTime, ResourceHeap &resourceHeap ) noexcept;
-
         void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
         [[nodiscard]] uint32_t GetExposure () const noexcept;
 

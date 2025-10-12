@@ -446,7 +446,7 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
 bool RenderSession::CreateRenderTarget () noexcept
 {
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
-    resolution = _renderer.GetSurfaceSize ();
+    resolution = pbr::ExposurePass::AdjustResolution ( _renderer.GetSurfaceSize () );
 
     if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
         return false;
@@ -743,7 +743,6 @@ void RenderSession::OnRenderFrame () noexcept
 
     if ( !PrepareCommandBuffer ( device, commandInfo ) ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -763,7 +762,6 @@ void RenderSession::OnRenderFrame () noexcept
             "Can't acquire present image"
         );
 
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -786,7 +784,6 @@ void RenderSession::OnRenderFrame () noexcept
 
     if ( !result ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -798,7 +795,6 @@ void RenderSession::OnRenderFrame () noexcept
 
         if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
         {
-            // FUCK
             AV_ASSERT ( false )
             return;
         }
@@ -881,7 +877,6 @@ void RenderSession::OnRenderFrame () noexcept
 
         if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
         {
-            // FUCK
             AV_ASSERT ( false )
             return;
         }
@@ -896,7 +891,6 @@ void RenderSession::OnRenderFrame () noexcept
 
     if ( !presentResult ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -922,7 +916,6 @@ void RenderSession::OnRenderFrame () noexcept
                 "Can't present frame"
             );
 
-            // FUCK
             AV_ASSERT ( false )
         return;
     }
@@ -1045,15 +1038,12 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
     {
-        // FUCK
          AV_ASSERT ( false )
         return;
     }
 
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
-
-    // FUCK - ask resolution from exposure pass
-    resolution = renderer.GetSurfaceSize ();
+    resolution = pbr::ExposurePass::AdjustResolution ( _renderer.GetSurfaceSize () );
 
     _viewport =
     {
@@ -1072,7 +1062,6 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -1085,7 +1074,6 @@ void RenderSession::OnSwapchainCreated () noexcept
         return;
     }
 
-    // FUCK
     android_vulkan::LogError ( "editor::RenderSession::OnSwapchainCreated - Can't create UI pass." );
     AV_ASSERT ( false )
 }

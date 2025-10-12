@@ -339,7 +339,6 @@ void Editor::OnRecreateSwapchain () noexcept
 
     if ( !waitResult ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
@@ -364,9 +363,7 @@ void Editor::OnRecreateSwapchain () noexcept
         break;
 
         case android_vulkan::Renderer::eSwapchainResult::ZeroExtend:
-            std::printf ( "FUCK" );
-        break;
-
+            [[fallthrough]];
         case android_vulkan::Renderer::eSwapchainResult::Fail:
             [[fallthrough]];
         default:

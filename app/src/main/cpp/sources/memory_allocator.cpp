@@ -1,7 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <memory_allocator.hpp>
 #include <bitwise.hpp>
+#include <memory_allocator_sizes.hpp>
+#include <memory_allocator.hpp>
 #include <renderer.hpp>
 #include <vulkan_utils.hpp>
 
@@ -9,15 +10,6 @@
 namespace android_vulkan {
 
 namespace {
-
-constexpr VkDeviceSize BYTES_PER_KILOBYTE = 1024U;
-constexpr VkDeviceSize BYTES_PER_MEGABYTE = 1024U * BYTES_PER_KILOBYTE;
-constexpr VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
-
-constexpr VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
-constexpr VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
-
-constexpr size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
 
 constexpr uint32_t STAGING_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
     AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
@@ -307,56 +299,6 @@ bool MemoryAllocator::Chunk::TryAllocateMemory ( VkDeviceMemory &memory,
     }
 
     return false;
-}
-
-bool MemoryAllocator::Chunk::Allocate ( VkDevice device,
-    size_t memoryTypeIndex,
-    [[maybe_unused]] VkMemoryPropertyFlags properties
-) noexcept
-{
-    // FUCK - refactor this when Windows/Android separation will be finished
-#ifndef VK_USE_PLATFORM_WIN32_KHR
-
-    VkMemoryAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = BYTES_PER_CHUNK,
-        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
-    };
-
-#else
-
-    constexpr static VkMemoryAllocateFlagsInfo bda
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
-        .pNext = nullptr,
-        .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
-        .deviceMask = 0U
-    };
-
-    constexpr void const* const cases[] = { nullptr, &bda };
-
-    VkMemoryAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = cases[ static_cast<size_t> ( properties & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) ],
-        .allocationSize = BYTES_PER_CHUNK,
-        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
-    };
-
-#endif // VK_USE_PLATFORM_WIN32_KHR
-
-    bool const result = Renderer::CheckVkResult ( vkAllocateMemory ( device, &allocateInfo, nullptr, &_memory ),
-        "MemoryAllocator::Chunk::Allocate",
-        "Can't allocate memory"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _memory, VK_OBJECT_TYPE_DEVICE_MEMORY, "Device memory" )
-    return true;
 }
 
 MemoryAllocator::Chunk::Block* MemoryAllocator::Chunk::AppendFreeBlock ( Offset offset, VkDeviceSize size ) noexcept

@@ -14,7 +14,7 @@
 
 ## <a id="compile-tool">Compile tool</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10062_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10149_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -63,7 +63,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T vs_6_9                                                   ^
+    -T vs_6_10                                                  ^
     -E VS                                                       ^
     -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
@@ -87,7 +87,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T ps_6_9                                                   ^
+    -T ps_6_10                                                  ^
     -E PS                                                       ^
     -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
@@ -111,7 +111,7 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T cs_6_9                                                   ^
+    -T cs_6_10                                                  ^
     -E CS                                                       ^
     -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
@@ -158,7 +158,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2025-06-28\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2025-10-12\bin`
 
 [↬ table of content ⇧](#table-of-content)
 

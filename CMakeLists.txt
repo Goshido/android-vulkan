@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.31.1 )
+cmake_minimum_required ( VERSION 4.1.2 )
 set ( CMAKE_CXX_STANDARD 20 )
 project ( android-vulkan )
 
@@ -291,6 +291,7 @@ target_compile_definitions ( android-vulkan PRIVATE
     AV_FREETYPE
     AV_NATIVE_MODE_PORTRAIT
     AV_STRICT_MODE
+    LUA_32BITS
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR
 )

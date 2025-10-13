@@ -90,7 +90,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
         { eGame::World1x1, std::make_shared<pbr::UniversalGame> ( "pbr/assets/world-1-1.scene" ) }
     };
 
-    _game = games.find ( eGame::World1x1 )->second.get ();
+    _game = games.find ( eGame::PBR )->second.get ();
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {

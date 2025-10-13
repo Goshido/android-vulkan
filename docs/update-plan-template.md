@@ -38,6 +38,8 @@
     - ❌ _Android_
     - ❌ _Windows_
   - ❌ Check new validation errors
+    - ❌ _Android_
+    - ❌ _Windows_
   - ❌ Compilation script repo
   - ❌ VVL docs
   - ❌ Readme
@@ -91,9 +93,16 @@
   - ❌ Install
   - ❌ Check
   - ❌ Editor page
+- ❌ NVIDIA Nsight Graphics
+  - ❌ Install
+  - ❌ Check
+  - ❌ Editor page
+- ❌ PIX
+  - ❌ Install
+  - ❌ Check
+  - ❌ Editor page
 - ❌ Code checks
 - ❌ Update RenderDoc version in documentation
-- ❌ Update NVIDIA Nsight Graphics version in documentation
 - ❌ Set starting project as PBR
 - ❌ Set VSYNC on
 - ❌ Remove old binaries
@@ -108,28 +117,29 @@ Documentation:
 - 3ds Max exporter page has been updated
 - RenderDoc page has been updated
 - Editor page has been updated
+- Release build page has been updated
 - build requirements have been updated
 
 Project:
-- Android Studio Narwhal | 2025.1.1 support
-- Android Studio Gradle Plugin has been updated to 8.11.0
-- Android NDK has been updated to 28.1.13356709
-- Android SDK Build-Tools updated to 36.0.0
+- Android Studio Narwhal 4 Feature Drop | 2025.1.4 support
+- Android Studio Gradle Plugin has been updated to 8.13.0
+- Android NDK has been updated to 29.0.1420686
+- Android SDK Build-Tools updated to 36.1.0
 - Android SDK Platform-Tools updated to 36.0.0
-- Kotlin has been updated to 2.2.0
-- Kotlin Gradle plugin has been updated to 2.2.0
-- Gradle has been updated to 8.14.2-bin
-- CMake has been updated to 4.0.2
-- DirectX Shader Compiler has been updated to 1.8.2505.10062, d39324e0635130e834a68e33b0c603cf5fc9fb4f
+- Kotlin has been updated to 2.2.20
+- Kotlin Gradle plugin has been updated to 2.2.20
+- Gradle has been updated to 9.1.0-bin
+- CMake has been updated to 4.1.2
+- DirectX Shader Compiler has been updated to 1.8.2505.10149, 0bf8434bc3b57a0b99477162dfe54673d9b5153b
 - SPIR-V shader blobs have been recompiled
-- FreeType 2.13.3 has been updated to 58be4879c5d3840315f037dca44e92384113f8f9
-- VVL has been updated to 1.4.320, 7d29258f5e5bb765057929b217d9a9662315e610
-- Ogg 1.3.6 has been updated to fe20a3ed04b9e4de8d2b4c753077d9a7c2a7e588
-- Vorbis 1.3.7 has been updated to 43bbff0141028e58d476c1d5fd45dd5573db576d
-- Vorbisfile 1.3.7 has been updated to 43bbff0141028e58d476c1d5fd45dd5573db576d
-- Lua 5.5.0 has been updated to cfce6f4b20afe85ede2182b3df3ab2bfcdb0e692
-- stb_image has been updated to 2.30, f58f558c120e9b32c217290b80bad1a0729fbb2c
-- PowerShell has been updated to 7.5.2
+- FreeType 2.14.1 has been updated to 4334f009e7d20789cc7ee1224290ea1e22a17b5b
+- VVL has been updated to 1.4.329, 62d79257ac9b93ba3f6fa7507fb172cb9cf8e7ff
+- Ogg 1.3.6 has been updated to 0288fadac3ac62d453409dfc83e9c4ab617d2472
+- Vorbis 1.3.7 has been updated to 851cce991da34adf5e1f3132588683758a6369ec
+- Vorbisfile 1.3.7 has been updated to 851cce991da34adf5e1f3132588683758a6369ec
+- Lua 5.5.0 has been updated to 9ea06e61f20ae34974226074fc6123dbb54a07c2
+- stb_image has been updated to 2.30, fede005abaf93d9d7f3a679d1999b2db341b360f
+- PowerShell has been updated to 7.5.3
 - Shader model has been changed to 6_9
 
 3rd-party:
@@ -149,19 +159,23 @@ Editor:
 - Visual Studio 2022 Community 17.14.7 support
 - Windows 11 SDK has been changed to 10.0.26100.3916
 - MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14
+- Vulkan SDK has been changed to 1.4.328.1
+- NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) support
+- NVIDIA Aftermath support
 - PIX has been updated to 2409.23
+* RenderDoc 1.40 support
 - WinPixEventRuntime.(dll|lib) has been updated to 1.0.240308001
 
 HTML validator:
-- HTML validator has been updated to 1.0.1.14
+- HTML validator has been updated to 1.0.1.15
 - Windows 11 support
-- Visual Studio 2022 Community 17.14.7 support
-- Windows 11 SDK has been changed to 10.0.26100.3916
+- Visual Studio 2022 Community 17.14.16 support
+- Windows 11 SDK has been changed to 10.0.26100.4654
 - MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14
-- CMake has been updated to 4.0.2
+- CMake has been updated to 4.1.2
 
 3ds Max exporter:
-- 3ds Max exporter has been updated to 1.0.1.10
-- Visual Studio 2022 Community 17.14.7 support
-- Windows 11 SDK has been changed to 10.0.26100.3916
+- 3ds Max exporter has been updated to 1.0.1.11
+- Visual Studio 2022 Community 17.14.16 support
+- Windows 11 SDK has been changed to 10.0.26100.4654
 - MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14

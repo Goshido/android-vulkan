@@ -8,7 +8,7 @@ namespace editor {
 
 namespace {
 
-constexpr char const VERTEX_SHADER[] = "../editor-assets/shaders/hello_triangle_ext.vs.spv";
+constexpr char const VERTEX_SHADER[] = "../editor-assets/shaders/hello_triangle.vs.spv";
 constexpr char const FRAGMENT_SHADER[] = "../editor-assets/shaders/hello_triangle.ps.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;

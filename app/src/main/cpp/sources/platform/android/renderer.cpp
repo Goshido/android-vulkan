@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <bitwise.hpp>
+#include <file.hpp>
 #include <logger.hpp>
 #include <platform/android/core.hpp>
 #include <renderer.hpp>
@@ -93,6 +94,33 @@ constexpr char const INDENT_2[] = "        ";
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+bool Renderer::CreateShader ( VkShaderModule &shader,
+    std::string &&shaderFile,
+    char const* errorMessage
+) const noexcept
+{
+    File vertexShader ( shaderFile );
+
+    if ( !vertexShader.LoadContent () ) [[unlikely]]
+        return false;
+
+    std::vector<uint8_t> const &spirV = vertexShader.GetContent ();
+
+    VkShaderModuleCreateInfo const shaderModuleCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = spirV.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( spirV.data () )
+    };
+
+    return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
+        "Renderer::CreateShader",
+        errorMessage
+    );
+}
 
 void Renderer::MakeVulkanMemorySnapshot () noexcept
 {

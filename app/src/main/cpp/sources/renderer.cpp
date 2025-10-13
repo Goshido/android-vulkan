@@ -1,7 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <bitwise.hpp>
-#include <file.hpp>
 #include <logger.hpp>
 #include <renderer.hpp>
 #include <trace.hpp>
@@ -745,33 +744,6 @@ bool Renderer::CheckSwapchainStatus () noexcept
         ( _surfaceTransform == caps.currentTransform ) &
         ( _surfaceSize.width == caps.currentExtent.width ) &
         ( _surfaceSize.height == caps.currentExtent.height );
-}
-
-bool Renderer::CreateShader ( VkShaderModule &shader,
-    std::string &&shaderFile,
-    char const* errorMessage
-) const noexcept
-{
-    File vertexShader ( shaderFile );
-
-    if ( !vertexShader.LoadContent () ) [[unlikely]]
-        return false;
-
-    std::vector<uint8_t> const &spirV = vertexShader.GetContent ();
-
-    VkShaderModuleCreateInfo const shaderModuleCreateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .codeSize = spirV.size (),
-        .pCode = reinterpret_cast<uint32_t const*> ( spirV.data () )
-    };
-
-    return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
-        "Renderer::CreateShader",
-        errorMessage
-    );
 }
 
 bool Renderer::FinishAllJobs () noexcept

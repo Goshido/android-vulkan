@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <bitwise.hpp>
 #include <os_utils.hpp>
 #include <logger.hpp>
@@ -96,6 +97,21 @@ constexpr char const INDENT_2[] = "        ";
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+bool Renderer::CreateShader ( VkShaderModule &/*shader*/,
+    std::string &&shaderFile,
+    char const* errorMessage
+) const noexcept
+{
+    LogError ( "Renderer::CreateShader - Trying to create shader module for '%s'. Provide SPIR-V blobs directly! "
+        "Error: %s.",
+        shaderFile.c_str (),
+        errorMessage
+    );
+
+    AV_ASSERT ( false )
+    return false;
+}
 
 void Renderer::MakeVulkanMemorySnapshot () noexcept
 {

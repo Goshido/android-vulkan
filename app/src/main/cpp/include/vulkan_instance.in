@@ -11,7 +11,6 @@ X ( vkGetPhysicalDeviceFeatures2 )
 X ( vkGetPhysicalDeviceFormatProperties )
 X ( vkGetPhysicalDeviceMemoryProperties )
 X ( vkGetPhysicalDeviceProperties )
-X ( vkGetPhysicalDeviceProperties2 )
 X ( vkGetPhysicalDeviceQueueFamilyProperties )
 X ( vkGetPhysicalDeviceSurfaceCapabilitiesKHR )
 X ( vkGetPhysicalDeviceSurfaceFormatsKHR )
@@ -26,4 +25,4 @@ X ( vkGetPhysicalDeviceSurfaceSupportKHR )
 
 #include "platform/windows/vulkan_instance.in"
 
-#endif
+#endif // VK_USE_PLATFORM_WIN32_KHR | VK_USE_PLATFORM_WIN32_KHR

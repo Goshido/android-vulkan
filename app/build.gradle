@@ -7,16 +7,13 @@ plugins {
 }
 
 android {
-    // It's deprecated now. But I have no clue how to specify explicit build tool version.
-    // noinspection GrDeprecatedAPIUsage
-    buildToolsVersion "36.0.0"
-
-    ndkVersion "28.1.13356709"
+    buildToolsVersion "36.1.0"
+    ndkVersion "29.0.14206865"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
-        compileSdk 36
+        compileSdkVersion 36
         minSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -56,18 +53,18 @@ android {
     externalNativeBuild {
         cmake {
             path file('../CMakeLists.txt')
-            version "4.0.2"
+            version "4.1.2"
         }
     }
 
     sourceSets {
         main {
-            ext.makePrebuildLibraryPath = { _ ->
+            ext.makePrebuiltLibraryPath = { _ ->
                 return project.rootDir.toString() + "/third-party/jniLibs"
             }
 
             jniLibs {
-                srcDir makePrebuildLibraryPath(null)
+                srcDir makePrebuiltLibraryPath(null)
             }
 
             java.srcDirs += "src/main/kotlin"

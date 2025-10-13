@@ -25,7 +25,12 @@ class Texture2D final
         VkImageView         _imageView = VK_NULL_HANDLE;
 
         uint8_t             _mipLevels = 0U;
-        VkExtent2D          _resolution { .width = 0U, .height = 0U };
+
+        VkExtent2D          _resolution
+        {
+            .width = 0U,
+            .height = 0U
+        };
 
         VkBuffer            _transfer = VK_NULL_HANDLE;
         VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
@@ -39,8 +44,8 @@ class Texture2D final
         Texture2D ( Texture2D const & ) = delete;
         Texture2D &operator = ( Texture2D const & ) = delete;
 
-        Texture2D ( Texture2D && ) = delete;
-        Texture2D &operator = ( Texture2D && ) = delete;
+        Texture2D ( Texture2D &&other ) noexcept;
+        Texture2D &operator = ( Texture2D &&other ) noexcept;
 
         ~Texture2D () = default;
 
@@ -77,6 +82,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -88,6 +94,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -99,6 +106,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -110,6 +118,7 @@ class Texture2D final
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -120,6 +129,7 @@ class Texture2D final
             VkFormat format,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -146,6 +156,7 @@ class Texture2D final
         [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
             std::string const &fileName,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -155,6 +166,7 @@ class Texture2D final
             bool isGenerateMipmaps,
             VkImageCreateInfo const &imageInfo,
             VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
 
@@ -169,6 +181,7 @@ class Texture2D final
 
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
         [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noexcept;
+        [[nodiscard]] static VkImageUsageFlags ResolveUsage ( bool isGenerateMipmaps ) noexcept;
 };
 
 } // namespace android_vulkan

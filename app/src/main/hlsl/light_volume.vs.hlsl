@@ -1,4 +1,4 @@
-#include "pbr/light_volume.inc"
+#include "platform/android/pbr/light_volume.inc"
 
 
 [[vk::binding ( BIND_VOLUME_DATA, SET_VOLUME_DATA )]]

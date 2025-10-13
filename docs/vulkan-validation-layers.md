@@ -17,15 +17,16 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## <a id="compatible-version">Compatible version</a>
 
-The manual is based on `7d29258f5e5bb765057929b217d9a9662315e610` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `62d79257ac9b93ba3f6fa7507fb172cb9cf8e7ff` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="requirements">Requirements</a>
 
 - _Windows 11_
-- _Android NDK 28.1.13356709_
-- _CMake 4.0.2_
+- _PowerShell 7.5.3_
+- _Android NDK 29.0.14206865_
+- _CMake 4.1.2_
 - _Ninja 1.21.1_
 - _Python 3.11.1_
 
@@ -67,8 +68,8 @@ Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process 
 [string] $ANDROID_SDK_DIR = "D:\Programs\Android\Sdk"
 [string] $ANDROID_VULKAN_DIR = "D:\Development\android-vulkan"
 [string] $BUILD_THREADS = "16"
-[string] $CMAKE = "4.0.2"
-[string] $NDK = "28.1.13356709"
+[string] $CMAKE = "4.1.2"
+[string] $NDK = "29.0.14206865"
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -149,5 +150,6 @@ No resource type and name in error message | [#8139](https://github.com/KhronosG
 `VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT` regression | [#8467](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467) | 🛡️ Not an issue
 VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8970) | 🛡️ Not an issue
 Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted
+`vkCmdSetDescriptorBufferOffsetsEXT` crash | [#10697](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/10697) | 🛡️ Not an issue
 
 [↬ table of content ⇧](#table-of-content)

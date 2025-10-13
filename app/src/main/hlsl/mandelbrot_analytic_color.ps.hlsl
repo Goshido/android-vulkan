@@ -1,4 +1,4 @@
-#include "mandelbrot.ps.hlsl"
+#include "mandelbrot.hlsl"
 
 
 #define TWO_PI                  6.28318F

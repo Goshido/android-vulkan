@@ -105,7 +105,8 @@ class UIComboBox final : public Widget
                 void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
                 [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
-                    VkExtent2D const &viewport ) noexcept override;
+                    VkExtent2D const &viewport
+                ) noexcept override;
 
                 // Returns true if popup menu should be closed. Otherwise the method returns false.
                 [[nodiscard]] bool HandleMouseButtonDown ( MouseButtonEvent const &event ) noexcept;
@@ -146,7 +147,7 @@ class UIComboBox final : public Widget
         UpdateRectHandler                           _updateRect = &UIComboBox::UpdatedRectNormal;
 
         Popup*                                      _popup = nullptr;
-        bool                                        _cancelNextLeftMouseKeyDownEvent = false;
+        bool                                        _cancelNextLeftMouseButtonDownEvent = false;
 
     public:
         UIComboBox () = delete;

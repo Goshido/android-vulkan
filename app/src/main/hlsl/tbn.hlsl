@@ -1,5 +1,5 @@
-#ifndef TBN_INC_HLSL
-#define TBN_INC_HLSL
+#ifndef TBN_HLSL
+#define TBN_HLSL
 
 
 #include "tbn64.hlsl"
@@ -116,4 +116,4 @@ float16_t4 ToTBN ( in float16_t3x3 m )
 }
 
 
-#endif // TBN_INC_HLSL
+#endif // TBN_HLSL

@@ -307,9 +307,7 @@ void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
     if ( handled )
         return;
 
-    size_t const eventID = event._eventID;
-
-    if ( eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
+    if ( size_t const eventID = event._eventID; eventID - std::exchange ( _eventID, eventID ) > 1U ) [[unlikely]]
     {
         ChangeCursor ( eCursor::Arrow );
     }

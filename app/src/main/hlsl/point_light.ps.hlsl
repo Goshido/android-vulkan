@@ -1,5 +1,5 @@
-#include "lightup_common.ps.hlsl"
-#include "pbr/point_light.inc"
+#include "lightup_common.hlsl"
+#include "platform/android/pbr/point_light.inc"
 
 
 // The implementation is based on ideas from following resources:

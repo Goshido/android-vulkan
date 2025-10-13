@@ -5,8 +5,6 @@
 
 namespace editor {
 
-//----------------------------------------------------------------------------------------------------------------------
-
 UILabel::UILabel ( MessageQueue &messageQueue,
     DIVUIElement &parent,
     std::string_view text,

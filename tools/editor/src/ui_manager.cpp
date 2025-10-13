@@ -38,38 +38,43 @@ void UIManager::Destroy () noexcept
     }
 }
 
-void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
+void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
-    AV_TRACE ( "UI" )
+    AV_TRACE ( "Compute UI layout" )
 
-    pbr::FontStorage &fontStorage = pass.GetFontStorage ();
-    bool needRefill = false;
-    size_t neededUIVertices = 0U;
-
+    _needRefill = false;
+    _neededUIVertices = 0U;
     std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )
     {
-        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, fontStorage );
-        needRefill |= status._hasChanges;
-        neededUIVertices += status._neededUIVertices;
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage );
+        _needRefill |= status._hasChanges;
+        _neededUIVertices += status._neededUIVertices;
     }
 
-    if ( neededUIVertices == 0U )
+    if ( _neededUIVertices == 0U )
     {
         pass.RequestEmptyUI ();
-        return;
     }
+}
+
+void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
+{
+    if ( !_neededUIVertices )
+        return;
+
+    AV_TRACE ( "Submit UI" )
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     for ( auto &widget : _widgets )
-        needRefill |= widget->UpdateCache ( fontStorage, viewport );
+        _needRefill |= widget->UpdateCache ( _fontStorage, viewport );
 
-    if ( !needRefill )
+    if ( !_needRefill )
         return;
 
-    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( neededUIVertices );
+    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( _neededUIVertices );
 
     if ( !response )
     {
@@ -80,7 +85,7 @@ void UIManager::RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass
     pbr::UIElement::SubmitInfo info
     {
         ._uiPass = &pass,
-        ._vertexBuffer = *response
+        ._uiBufferStreams = *response
     };
 
     for ( auto &widget : _widgets )

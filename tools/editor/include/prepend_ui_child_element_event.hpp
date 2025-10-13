@@ -2,7 +2,7 @@
 #define EDITOR_PREPEND_UI_CHILD_ELEMENT_EVENT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
 
 
 namespace editor {
@@ -10,8 +10,8 @@ namespace editor {
 class PrependUIChildElementEvent final
 {
     private:
-        pbr::UIElement          &_element;
-        pbr::DIVUIElement       &_parent;
+        pbr::UIElement         &_element;
+        pbr::DIVUIElement      &_parent;
 
     public:
         PrependUIChildElementEvent () = delete;
@@ -22,7 +22,7 @@ class PrependUIChildElementEvent final
         PrependUIChildElementEvent ( PrependUIChildElementEvent && ) = delete;
         PrependUIChildElementEvent &operator = ( PrependUIChildElementEvent && ) = delete;
 
-        explicit PrependUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element  ) noexcept;
+        explicit PrependUIChildElementEvent ( pbr::DIVUIElement &parent, pbr::UIElement &element ) noexcept;
 
         ~PrependUIChildElementEvent () = default;
 

@@ -1,0 +1,52 @@
+#ifndef PBR_GRAPHICS_PROGRAM_HPP
+#define PBR_GRAPHICS_PROGRAM_HPP
+
+
+#include <pbr/graphics_program_base.hpp>
+#include <renderer.hpp>
+
+
+namespace pbr {
+
+class GraphicsProgram : public GraphicsProgramBase
+{
+    protected:
+        VkShaderModule      _fragmentShader = VK_NULL_HANDLE;
+        VkShaderModule      _vertexShader = VK_NULL_HANDLE;
+
+    public:
+        GraphicsProgram () = delete;
+
+        GraphicsProgram ( GraphicsProgram const & ) = delete;
+        GraphicsProgram &operator = ( GraphicsProgram const & ) = delete;
+
+        GraphicsProgram ( GraphicsProgram && ) = delete;
+        GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
+
+        // Successor classes MUST call this method.
+        void Destroy ( VkDevice device ) noexcept override;
+
+    protected:
+        explicit GraphicsProgram ( std::string_view name ) noexcept;
+        ~GraphicsProgram () override = default;
+
+        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
+            VkPipelineShaderStageCreateInfo const* &targetInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
+        ) noexcept = 0;
+
+        [[nodiscard]] virtual VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
+            VkPipelineVertexInputStateCreateInfo &info,
+            VkVertexInputAttributeDescription* attributes,
+            VkVertexInputBindingDescription* binds
+        ) const noexcept = 0;
+
+        void DestroyShaderModules ( VkDevice device ) noexcept;
+};
+
+} // namespace pbr
+
+
+#endif // PBR_GRAPHICS_PROGRAM_HPP

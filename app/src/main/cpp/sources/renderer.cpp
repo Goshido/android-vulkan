@@ -1,7 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <bitwise.hpp>
-#include <file.hpp>
 #include <logger.hpp>
 #include <renderer.hpp>
 #include <trace.hpp>
@@ -17,14 +16,6 @@ constexpr char const ENGINE_NAME[] = "renderer";
 constexpr char const INDENT_1[] = "    ";
 constexpr char const INDENT_2[] = "        ";
 constexpr char const INDENT_3[] = "            ";
-
-constexpr uint32_t MAJOR = 1U;
-constexpr uint32_t MINOR = 1U;
-constexpr uint32_t PATCH = 131U;
-
-// Note vulkan_core.h is a little bit dirty from clang-tidy point of view.
-// So suppress this third-party mess via "NOLINT" control comment.
-constexpr uint32_t TARGET_VULKAN_VERSION = VK_MAKE_VERSION ( MAJOR, MINOR, PATCH ); // NOLINT
 
 constexpr char const* UNKNOWN_RESULT = "UNKNOWN";
 
@@ -743,49 +734,16 @@ bool Renderer::CheckSwapchainStatus () noexcept
 {
     VkSurfaceCapabilitiesKHR caps {};
 
-    bool tmp = CheckVkResult (
+    bool const status = CheckVkResult (
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
         "Renderer::CheckSwapchainStatus",
         "Can't get Vulkan surface capabilities"
     );
 
-    if ( !tmp )
-        return false;
-
-    if ( _surfaceTransform != caps.currentTransform )
-        tmp = false;
-
-    if ( std::memcmp ( &_surfaceSize, &caps.currentExtent, sizeof ( _surfaceSize ) ) != 0 )
-        tmp = false;
-
-    return tmp;
-}
-
-bool Renderer::CreateShader ( VkShaderModule &shader,
-    std::string &&shaderFile,
-    char const* errorMessage
-) const noexcept
-{
-    File vertexShader ( shaderFile );
-
-    if ( !vertexShader.LoadContent () ) [[unlikely]]
-        return false;
-
-    std::vector<uint8_t> const &spirV = vertexShader.GetContent ();
-
-    VkShaderModuleCreateInfo const shaderModuleCreateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .codeSize = spirV.size (),
-        .pCode = reinterpret_cast<uint32_t const*> ( spirV.data () )
-    };
-
-    return CheckVkResult ( vkCreateShaderModule ( _device, &shaderModuleCreateInfo, nullptr, &shader ),
-        "Renderer::CreateShader",
-        errorMessage
-    );
+    return status &
+        ( _surfaceTransform == caps.currentTransform ) &
+        ( _surfaceSize.width == caps.currentExtent.width ) &
+        ( _surfaceSize.height == caps.currentExtent.height );
 }
 
 bool Renderer::FinishAllJobs () noexcept
@@ -806,6 +764,11 @@ VkFormat Renderer::GetDefaultDepthStencilFormat () const noexcept
     return _depthStencilImageFormat;
 }
 
+size_t Renderer::GetDescriptorBufferOffsetAlignment () const noexcept
+{
+    return _descriptorBufferOffsetAlignment;
+}
+
 VkDevice Renderer::GetDevice () const noexcept
 {
     return _device;
@@ -824,6 +787,31 @@ float Renderer::GetDPI () const noexcept
 VkExtent3D const &Renderer::GetMaxComputeDispatchSize () const noexcept
 {
     return _maxComputeDispatchSize;
+}
+
+size_t Renderer::GetMaxDescriptorSetSampledImages () const noexcept
+{
+    return _maxDescriptorSetSampledImages;
+}
+
+size_t Renderer::GetMaxDescriptorSetStorageBuffers () const noexcept
+{
+    return _maxDescriptorSetStorageBuffers;
+}
+
+size_t Renderer::GetMaxDescriptorSetStorageImages () const noexcept
+{
+    return _maxDescriptorSetStorageImages;
+}
+
+float Renderer::GetMaxSamplerAnisotropy () const noexcept
+{
+    return _maxSamplerAnisotropy;
+}
+
+size_t Renderer::GetMaxPerStageResources () const noexcept
+{
+    return _maxPerStageResources;
 }
 
 size_t Renderer::GetMaxUniformBufferRange () const noexcept
@@ -851,6 +839,11 @@ size_t Renderer::GetPresentImageCount () const noexcept
     return _swapchainImageViews.size ();
 }
 
+[[maybe_unused]] VkImage const &Renderer::GetPresentImage ( size_t imageIndex ) const noexcept
+{
+    return _swapchainImages[ imageIndex ];
+}
+
 VkImageView const &Renderer::GetPresentImageView ( size_t imageIndex ) const noexcept
 {
     return _swapchainImageViews[ imageIndex ];
@@ -869,6 +862,26 @@ VkQueue Renderer::GetQueue () const noexcept
 uint32_t Renderer::GetQueueFamilyIndex () const noexcept
 {
     return _queueFamilyIndex;
+}
+
+size_t Renderer::GetSamplerDescriptorSize () const noexcept
+{
+    return _samplerDescriptorSize;
+}
+
+size_t Renderer::GetSampledImageDescriptorSize () const noexcept
+{
+    return _sampledImageDescriptorSize;
+}
+
+size_t Renderer::GetStorageBufferDescriptorSize () const noexcept
+{
+    return _storageBufferDescriptorSize;
+}
+
+size_t Renderer::GetStorageImageDescriptorSize () const noexcept
+{
+    return _storageImageDescriptorSize;
 }
 
 VkFormat Renderer::GetSurfaceFormat () const noexcept
@@ -896,41 +909,75 @@ bool Renderer::GetVSync () const noexcept
     return _vSync;
 }
 
-bool Renderer::OnCreateSwapchain ( WindowHandle nativeWindow, bool vSync ) noexcept
+Renderer::eSwapchainResult Renderer::OnCreateSwapchain ( bool preserveSurface, WindowHandle nativeWindow, bool vSync ) noexcept
 {
     AV_TRACE ( "Creating swapchain" )
-    return DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync );
+    constexpr eSwapchainResult const cases[] = { eSwapchainResult::Fail, eSwapchainResult::Success };
+
+    if ( ( !preserveSurface ) | ( _surface == VK_NULL_HANDLE ) )
+        return cases[ static_cast<size_t> ( DeploySurface ( nativeWindow ) && DeploySwapchain ( vSync ) ) ];
+
+    VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
+
+    bool result = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+        "Renderer::OnCreateSwapchain",
+        "Can't get Vulkan surface capabilities"
+    );
+
+    if ( !result ) [[unlikely]]
+        return eSwapchainResult::Fail;
+
+    _surfaceSize = caps.currentExtent;
+
+    if ( _surfaceSize.width * _surfaceSize.height == 0U ) [[unlikely]]
+        return eSwapchainResult::ZeroExtend;
+
+    return cases[ static_cast<size_t> ( DeploySwapchain ( vSync ) ) ];
 }
 
 void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
 {
-    DestroySwapchain ( preserveSurface );
+    size_t const count = _swapchainImageViews.size ();
 
-    if ( !preserveSurface ) [[unlikely]]
+    for ( size_t i = 0U; i < count; ++i )
+        vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
+
+    if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
+        return;
+
+    if ( preserveSurface ) [[unlikely]]
     {
-        DestroySurface ();
+        _oldSwapchain = std::exchange ( _swapchain, VK_NULL_HANDLE );
+        AV_SET_VULKAN_OBJECT_NAME ( _device, _oldSwapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Old swapchain" )
+        return;
     }
+
+    vkDestroySwapchainKHR ( _device, std::exchange ( _swapchain, VK_NULL_HANDLE ), nullptr );
+    vkDestroySurfaceKHR ( _instance, std::exchange ( _surface, VK_NULL_HANDLE ), nullptr );
+    _oldSwapchain = VK_NULL_HANDLE;
 }
 
 bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
 {
     AV_TRACE ( "Creating Vulkan device" )
 
-    if ( !_vulkanLoader.AcquireBootstrapFunctions () ) [[unlikely]]
-        return false;
-
-    if ( !PrintInstanceLayerInfo () ) [[unlikely]]
-        return false;
-
-    if ( !DeployInstance () ) [[unlikely]]
-        return false;
+    bool result = _vulkanLoader.AcquireBootstrapFunctions () &&
+        PrintInstanceLayerInfo () &&
+        DeployInstance ()
 
 #ifdef AV_ENABLE_VVL
 
-    if ( !DeployDebugFeatures () ) [[unlikely]]
-        return false;
+        && DeployDebugFeatures ()
 
 #endif // AV_ENABLE_VVL
+        ;
+
+    if ( !result ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        return false;
+    }
 
     uint32_t physicalDeviceCount = 0U;
     vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, nullptr );
@@ -938,6 +985,7 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
     if ( !physicalDeviceCount ) [[unlikely]]
     {
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device." );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -946,18 +994,22 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
     std::vector<VkPhysicalDevice> physicalDevices ( static_cast<size_t> ( physicalDeviceCount ) );
     VkPhysicalDevice* deviceList = physicalDevices.data ();
 
-    bool result = CheckVkResult ( vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, deviceList ),
+    result = CheckVkResult ( vkEnumeratePhysicalDevices ( _instance, &physicalDeviceCount, deviceList ),
         "Renderer::OnCreateDevice",
         "Can't get Vulkan physical devices"
     );
 
     if ( !result ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
         if ( !PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[unlikely]]
         {
+            AV_ASSERT ( false )
             return false;
         }
     }
@@ -968,6 +1020,7 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
     if ( !physicalDeviceGroupCount ) [[unlikely]]
     {
         LogError ( "Renderer::OnCreateDevice - There is no any Vulkan physical device groups." );
+        AV_ASSERT ( false )
         return false;
     }
 
@@ -985,7 +1038,10 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
     );
 
     if ( !result ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
     for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
         PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
@@ -1062,6 +1118,22 @@ bool Renderer::MapMemory ( void* &ptr,
 void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
 {
     _memoryAllocator.UnmapMemory ( _device, memory );
+}
+
+bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,
+    char const* extension
+) noexcept
+{
+    LogInfo ( "%sChecking %s...", INDENT_1, extension );
+
+    if ( allExtensions.count ( extension ) < 1U ) [[unlikely]]
+    {
+        LogError ( "%sFAIL: unsupported", INDENT_2 );
+        return false;
+    }
+
+    LogInfo ( "%sOK: presented", INDENT_2 );
+    return true;
 }
 
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
@@ -1206,113 +1278,6 @@ message: %s
 
 #endif // AV_ENABLE_VVL
 
-bool Renderer::CheckExtensionScalarBlockLayout ( std::set<std::string> const &allExtensions ) noexcept
-{
-    if ( !CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-        .pNext = nullptr,
-        .scalarBlockLayout = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-
-    if ( hardwareSupport.scalarBlockLayout ) [[likely]]
-    {
-        LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: scalarBlockLayout", INDENT_2 );
-    return false;
-}
-
-bool Renderer::CheckExtensionShaderFloat16Int8 ( std::set<std::string> const &allExtensions ) noexcept
-{
-    if ( !CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = nullptr,
-        .shaderFloat16 = VK_FALSE,
-        .shaderInt8 = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( _physicalDevice, &probe );
-
-    if ( hardwareSupport.shaderFloat16 ) [[likely]]
-    {
-        LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: shaderFloat16", INDENT_2 );
-    return false;
-}
-
-bool Renderer::CheckRequiredFeatures ( VkPhysicalDevice physicalDevice,
-    std::span<size_t const> const &features
-) noexcept
-{
-    auto const &featureInfo = _physicalDeviceInfo[ physicalDevice ];
-
-    LogInfo ( "Renderer::CheckRequiredFeatures - Checking required features..." );
-
-    if ( features.empty () ) [[unlikely]]
-    {
-        LogInfo ( "%sOK: No extra features are required", INDENT_1 );
-        return true;
-    }
-
-    // std::set is for alphabetical ordering.
-    std::set<std::string_view> supportedFeatures;
-    std::set<std::string_view> unsupportedFeatures;
-
-    for ( size_t offset : features )
-    {
-        auto const enable = *reinterpret_cast<VkBool32 const*> (
-            reinterpret_cast<uint8_t const*> ( &featureInfo._features ) + offset
-        );
-
-        auto const &featureName = g_vkFeatureMap.find ( offset )->second;
-
-        if ( enable ) [[likely]]
-        {
-            supportedFeatures.emplace ( featureName );
-            continue;
-        }
-
-        unsupportedFeatures.emplace ( featureName );
-    }
-
-    for ( auto const &feature : supportedFeatures )
-        LogInfo ( "%sOK: %s", INDENT_1, feature.data () );
-
-    for ( auto const &feature : unsupportedFeatures )
-        LogError ( "%sFAIL: %s", INDENT_1, feature.data () );
-
-    return unsupportedFeatures.empty ();
-}
-
 bool Renderer::CheckRequiredFormats () noexcept
 {
     LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
@@ -1364,12 +1329,11 @@ bool Renderer::DeployDebugFeatures () noexcept
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkCreateDebugUtilsMessengerEXT" ) )
     );
 
-    AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
-
     vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT> (
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( _instance, "vkDestroyDebugUtilsMessengerEXT" ) )
     );
 
+    AV_ASSERT ( vkCreateDebugUtilsMessengerEXT )
     AV_ASSERT ( vkDestroyDebugUtilsMessengerEXT )
 
     return CheckVkResult (
@@ -1386,32 +1350,38 @@ bool Renderer::DeployDebugFeatures () noexcept
 
 void Renderer::DestroyDebugFeatures () noexcept
 {
-    if ( _debugUtilsMessenger == VK_NULL_HANDLE )
-        return;
-
-    vkDestroyDebugUtilsMessengerEXT ( _instance, _debugUtilsMessenger, nullptr );
-    _debugUtilsMessenger = VK_NULL_HANDLE;
+    if ( _debugUtilsMessenger != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyDebugUtilsMessengerEXT ( _instance, std::exchange ( _debugUtilsMessenger, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 #endif // AV_ENABLE_VVL
 
 bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
 {
-    constexpr float priorities = 1.0F;
+    constexpr float priority = 1.0F;
 
-    VkDeviceQueueCreateInfo deviceQueueCreateInfo;
-    deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    deviceQueueCreateInfo.pNext = nullptr;
-    deviceQueueCreateInfo.flags = 0U;
-    deviceQueueCreateInfo.queueCount = 1U;
-    deviceQueueCreateInfo.pQueuePriorities = &priorities;
+    VkDeviceQueueCreateInfo deviceQueueCreateInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .queueFamilyIndex = std::numeric_limits<uint32_t>::max (),
+        .queueCount = 1U,
+        .pQueuePriorities = &priority
+    };
 
     if ( !SelectTargetHardware ( userGPU ) ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
     VkPhysicalDeviceProperties props;
     vkGetPhysicalDeviceProperties ( _physicalDevice, &props );
-    auto const &maxComputeWorkGroupCount = props.limits.maxComputeWorkGroupCount;
+    VkPhysicalDeviceLimits const &limits = props.limits;
+    auto const &maxComputeWorkGroupCount = limits.maxComputeWorkGroupCount;
 
     _maxComputeDispatchSize = VkExtent3D
     {
@@ -1420,55 +1390,34 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .depth = maxComputeWorkGroupCount[ 2U ]
     };
 
+    _maxDescriptorSetSampledImages = static_cast<size_t> ( limits.maxDescriptorSetSampledImages );
+    _maxDescriptorSetStorageBuffers = static_cast<size_t> ( limits.maxDescriptorSetStorageBuffers );
+    _maxDescriptorSetStorageImages = static_cast<size_t> ( limits.maxDescriptorSetStorageImages );
+    _maxSamplerAnisotropy = limits.maxSamplerAnisotropy;
+    _maxPerStageResources = static_cast<size_t> ( limits.maxPerStageResources );
+    _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
+    _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
+    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
+    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
+
+    GetPlatformFeatureProperties ();
+
     deviceQueueCreateInfo.queueFamilyIndex = _queueFamilyIndex;
     auto const &caps = _physicalDeviceInfo[ _physicalDevice ];
 
-    if ( !CheckRequiredDeviceExtensions ( caps._extensions ) ) [[unlikely]]
+    if ( !CheckRequiredFeatures ( caps._extensions ) || !CheckRequiredFormats () ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
-    if ( !CheckRequiredFeatures ( _physicalDevice, GetRequiredFeatures () ) ) [[unlikely]]
-        return false;
-
-    if ( !CheckRequiredFormats () ) [[unlikely]]
-        return false;
-
-    constexpr static VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures separateDSLayoutFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES,
-        .pNext = nullptr,
-        .separateDepthStencilLayouts = VK_TRUE
-    };
-
-    constexpr static VkPhysicalDeviceMultiviewFeatures multiviewFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES,
-        .pNext = const_cast<VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures*> ( &separateDSLayoutFeatures ),
-        .multiview = VK_TRUE,
-        .multiviewGeometryShader = VK_FALSE,
-        .multiviewTessellationShader = VK_FALSE
-    };
-
-    constexpr static VkPhysicalDeviceFloat16Int8FeaturesKHR float16Int8Features
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT16_INT8_FEATURES_KHR,
-        .pNext = const_cast<VkPhysicalDeviceMultiviewFeatures*> ( &multiviewFeatures ),
-        .shaderFloat16 = VK_TRUE,
-        .shaderInt8 = VK_FALSE
-    };
-
-    constexpr static VkPhysicalDeviceScalarBlockLayoutFeaturesEXT scalarBlockFeatures
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES_EXT,
-        .pNext = const_cast<VkPhysicalDeviceFloat16Int8FeaturesKHR*> ( &float16Int8Features ),
-        .scalarBlockLayout = VK_TRUE
-    };
-
+    VkPhysicalDeviceFeatures2 const physicalDeviceFeatures = GetRequiredPhysicalDeviceFeatures ();
     std::span<char const* const> const extensions = GetDeviceExtensions ();
 
     VkDeviceCreateInfo const deviceCreateInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-        .pNext = &scalarBlockFeatures,
+        .pNext = &physicalDeviceFeatures,
         .flags = 0U,
         .queueCreateInfoCount = 1U,
         .pQueueCreateInfos = &deviceQueueCreateInfo,
@@ -1476,7 +1425,7 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
         .ppEnabledLayerNames = nullptr,
         .enabledExtensionCount = static_cast<uint32_t> ( extensions.size () ),
         .ppEnabledExtensionNames = extensions.data (),
-        .pEnabledFeatures = &caps._features
+        .pEnabledFeatures = nullptr
     };
 
     bool const result = CheckVkResult ( vkCreateDevice ( _physicalDevice, &deviceCreateInfo, nullptr, &_device ),
@@ -1485,17 +1434,23 @@ bool Renderer::DeployDevice ( std::string_view const &userGPU ) noexcept
     );
 
     if ( !result ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
     InitVulkanDebugUtils ( _instance );
     AV_SET_VULKAN_OBJECT_NAME ( _device, _device, VK_OBJECT_TYPE_DEVICE, "Main device" )
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT
 
     if ( !_vulkanLoader.AcquireDeviceFunctions ( _device ) ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
     vkGetDeviceQueue ( _device, _queueFamilyIndex, 0U, &_queue );
     _memoryAllocator.Init ( _physicalDeviceMemoryProperties );
@@ -1510,8 +1465,7 @@ void Renderer::DestroyDevice () noexcept
     _memoryAllocator.Destroy ( _device );
 
     // Note it's intentional to unregister device BEFORE destruction for correct memory leak check stuff.
-    vkDestroyDevice ( _device, nullptr );
-    _device = VK_NULL_HANDLE;
+    vkDestroyDevice ( std::exchange ( _device, VK_NULL_HANDLE ), nullptr );
     _queue = VK_NULL_HANDLE;
 }
 
@@ -1525,26 +1479,33 @@ bool Renderer::DeployInstance () noexcept
     );
 
     if ( !result ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
         return false;
+    }
 
-    //                                                                            major      minor      patch
-    constexpr uint32_t const targetVersion = TARGET_VULKAN_VERSION & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+    VulkanVersion const v = GetRequiredVulkanVersion ();
+    uint32_t const version = VK_MAKE_VERSION ( v._major, v._minor, v._patch );
 
-    if ( targetVersion > supportedVersion )
+    //                                                    major      minor      patch
+    uint32_t const targetVersion = version & UINT32_C ( 0b1111111111'1111111111'000000000000 );
+
+    if ( targetVersion > supportedVersion ) [[unlikely]]
     {
         LogError ( "Renderer::DeployInstance - Requested Vulkan version %u.%u.%u is not supported by hardware "
             "which is capable of only %u.%u.xxx.",
-            MAJOR,
-            MINOR,
-            PATCH,
+            v._major,
+            v._minor,
+            v._patch,
             ( supportedVersion & UINT32_C ( 0b1111111111'0000000000'000000000000 ) ) >> 22U,
             ( supportedVersion & UINT32_C ( 0b0000000000'1111111111'000000000000 ) ) >> 12U
         );
 
+        AV_ASSERT ( false )
         return false;
     }
 
-    constexpr VkApplicationInfo const applicationInfo
+    VkApplicationInfo const applicationInfo
     {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pNext = nullptr,
@@ -1552,7 +1513,7 @@ bool Renderer::DeployInstance () noexcept
         .applicationVersion = 1U,
         .pEngineName = ENGINE_NAME,
         .engineVersion = 1U,
-        .apiVersion = TARGET_VULKAN_VERSION
+        .apiVersion = version
     };
 
     VkInstanceCreateInfo instanceCreateInfo {};
@@ -1619,81 +1580,46 @@ bool Renderer::DeployInstance () noexcept
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t> ( extensions.size () );
     instanceCreateInfo.ppEnabledExtensionNames = extensions.data ();
 
-    result = CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
-        "Renderer::DeployInstance",
-        "Can't create Vulkan instance"
-    );
+    result =
+        CheckVkResult ( vkCreateInstance ( &instanceCreateInfo, nullptr, &_instance ),
+            "Renderer::DeployInstance",
+            "Can't create Vulkan instance"
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
+        _vulkanLoader.AcquireInstanceFunctions ( _instance );
 
-    return _vulkanLoader.AcquireInstanceFunctions ( _instance );
+    if ( result ) [[likely]]
+        return true;
+
+    AV_ASSERT ( false )
+    return false;
 }
 
 void Renderer::DestroyInstance () noexcept
 {
-    if ( _instance == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroyInstance ( _instance, nullptr );
-    _instance = VK_NULL_HANDLE;
+    if ( _instance != VK_NULL_HANDLE ) [[likely]]
+    {
+        vkDestroyInstance ( std::exchange ( _instance, VK_NULL_HANDLE ), nullptr );
+    }
 }
 
 bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 {
-    auto const getCaps = [ this ] () noexcept -> std::optional<VkSurfaceCapabilitiesKHR const*> {
-        VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
-
-        bool const result = CheckVkResult (
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
-            "Renderer::DeploySurface",
-            "Can't get Vulkan surface capabilities"
-        );
-
-        if ( !result ) [[unlikely]]
-            return std::nullopt;
-
-        return { &caps };
-    };
-
-    if ( _surface != VK_NULL_HANDLE ) [[likely]]
-    {
-        std::optional<VkSurfaceCapabilitiesKHR const *> const caps = getCaps ();
-
-        if ( !caps )
-            return false;
-
-        _surfaceSize = caps.value ()->currentExtent;
-
-#ifdef AV_NATIVE_MODE_PORTRAIT
-
-        _viewportResolution.width = _surfaceSize.height;
-        _viewportResolution.height = _surfaceSize.width;
-
-#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
-
-        _viewportResolution = _surfaceSize;
-
-#else
-
-#error Please specify AV_NATIVE_MODE_PORTRAIT or AV_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
-
-#endif
-
-        return true;
-    }
-
     if ( !DeployNativeSurface ( nativeWindow ) ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( _device, _surface, VK_OBJECT_TYPE_SURFACE_KHR, "Main surface" )
 
-    std::optional<VkSurfaceCapabilitiesKHR const *> const capsResult = getCaps ();
+    VkSurfaceCapabilitiesKHR &caps = _physicalDeviceInfo[ _physicalDevice ]._surfaceCapabilities;
 
-    if ( !capsResult ) [[unlikely]]
+    bool result = CheckVkResult ( vkGetPhysicalDeviceSurfaceCapabilitiesKHR ( _physicalDevice, _surface, &caps ),
+        "Renderer::DeploySurface",
+        "Can't get Vulkan surface capabilities"
+    );
+
+    if ( !result ) [[unlikely]]
         return false;
 
-    VkSurfaceCapabilitiesKHR const &caps = *capsResult.value ();
     PrintVkSurfaceCapabilities ( caps );
     _surfaceSize = caps.currentExtent;
     _surfaceTransform = caps.currentTransform;
@@ -1707,23 +1633,15 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
         return false;
     }
 
-#ifdef AV_NATIVE_MODE_PORTRAIT
-
-    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
-    _viewportResolution.width = _surfaceSize.height;
-    _viewportResolution.height = _surfaceSize.width;
-
-#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
-
-    _presentationEngineTransform.Identity ();
-    _viewportResolution = _surfaceSize;
-
-#endif // AV_NATIVE_MODE_PORTRAIT | AV_NATIVE_MODE_LANDSCAPE
-
     VkBool32 isSupported = VK_FALSE;
 
-    bool result = CheckVkResult (
-        vkGetPhysicalDeviceSurfaceSupportKHR ( _physicalDevice, _queueFamilyIndex, _surface, &isSupported ),
+    result = CheckVkResult (
+        vkGetPhysicalDeviceSurfaceSupportKHR ( _physicalDevice,
+            _queueFamilyIndex,
+            _surface,
+            &isSupported
+        ),
+
         "Renderer::DeploySurface",
         "Can't check Vulkan surface support by physical device"
     );
@@ -1766,15 +1684,6 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     return true;
 }
 
-void Renderer::DestroySurface () noexcept
-{
-    if ( _surface == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    vkDestroySurfaceKHR ( _instance, _surface, nullptr );
-    _surface = VK_NULL_HANDLE;
-}
-
 bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 {
     VkPresentModeKHR presentMode;
@@ -1795,9 +1704,8 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     VkColorSpaceKHR colorSpace;
 
-    if ( !SelectTargetSurfaceFormat ( colorSpace ) )
+    if ( !SelectTargetSurfaceFormat ( colorSpace ) ) [[unlikely]]
     {
-        [[unlikely]]
         LogError ( "Renderer::DeploySwapchain - Can't select image format and color space." );
         return false;
     }
@@ -1829,21 +1737,36 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .oldSwapchain = _oldSwapchain
     };
 
-    bool result = CheckVkResult ( vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
+    bool result = CheckVkResult (
+        vkCreateSwapchainKHR ( _device, &swapchainInfo, nullptr, &_swapchain ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
-
-    if ( _oldSwapchain != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroySwapchainKHR ( _device, _oldSwapchain, nullptr );
-        _oldSwapchain = VK_NULL_HANDLE;
-    }
 
     if ( !result ) [[unlikely]]
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( _device, _swapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Main swapchain" )
+
+    if ( _oldSwapchain != VK_NULL_HANDLE ) [[likely]]
+        vkDestroySwapchainKHR ( _device, std::exchange ( _oldSwapchain, VK_NULL_HANDLE ), nullptr );
+
+#ifdef AV_NATIVE_MODE_PORTRAIT
+
+    _presentationEngineTransform.RotationZ ( GX_MATH_HALF_PI );
+    _viewportResolution.width = _surfaceSize.height;
+    _viewportResolution.height = _surfaceSize.width;
+
+#elif defined ( AV_NATIVE_MODE_LANDSCAPE )
+
+    _presentationEngineTransform.Identity ();
+    _viewportResolution = _surfaceSize;
+
+#else
+
+#error Please specify AV_NATIVE_MODE_PORTRAIT or AV_NATIVE_MODE_LANDSCAPE in the preprocessor macros.
+
+#endif // AV_NATIVE_MODE_PORTRAIT | AV_NATIVE_MODE_LANDSCAPE
 
     uint32_t imageCount = 0U;
     vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, nullptr );
@@ -1858,7 +1781,8 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
 
     _swapchainImages.resize ( static_cast<size_t> ( imageCount ) );
 
-    result = CheckVkResult ( vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, _swapchainImages.data () ),
+    result = CheckVkResult (
+        vkGetSwapchainImagesKHR ( _device, _swapchain, &imageCount, _swapchainImages.data () ),
         "Renderer::DeploySwapchain",
         "Can't create swapchain"
     );
@@ -1906,42 +1830,15 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
             "Can't create swapchain image view"
         );
 
-        if ( result ) [[likely]]
-        {
-            AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain #%u", i )
-            _swapchainImageViews.push_back ( imageView );
-            continue;
-        }
+        if ( !result ) [[unlikely]]
+            return false;
 
-        return false;
+        AV_SET_VULKAN_OBJECT_NAME ( _device, imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain #%u", i )
+        _swapchainImageViews.push_back ( imageView );
     }
 
     _vSync = vSync;
     return true;
-}
-
-void Renderer::DestroySwapchain ( bool preserveSurface ) noexcept
-{
-    size_t const count = _swapchainImageViews.size ();
-
-    for ( size_t i = 0U; i < count; ++i )
-        vkDestroyImageView ( _device, _swapchainImageViews[ i ], nullptr );
-
-    if ( _swapchain == VK_NULL_HANDLE ) [[unlikely]]
-        return;
-
-    if ( preserveSurface ) [[likely]]
-    {
-        _oldSwapchain = _swapchain;
-        AV_SET_VULKAN_OBJECT_NAME ( _device, _oldSwapchain, VK_OBJECT_TYPE_SWAPCHAIN_KHR, "Old swapchain" )
-    }
-    else
-    {
-        vkDestroySwapchainKHR ( _device, _swapchain, nullptr );
-        _oldSwapchain = VK_NULL_HANDLE;
-    }
-
-    _swapchain = VK_NULL_HANDLE;
 }
 
 bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept
@@ -2037,8 +1934,6 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
     PrintUINT32Prop ( INDENT_1, "maxImageDimensionCube", limits.maxImageDimensionCube );
     PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", limits.maxImageArrayLayers );
     PrintUINT32Prop ( INDENT_1, "maxTexelBufferElements", limits.maxTexelBufferElements );
-
-    _maxUniformBufferRange = static_cast<size_t> ( limits.maxUniformBufferRange );
     PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
     std::this_thread::sleep_for ( ANTISPAM_DELAY );
 
@@ -2146,10 +2041,6 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
         "minUniformBufferOffsetAlignment",
         static_cast<size_t> ( limits.minUniformBufferOffsetAlignment )
     );
-
-    _minStorageBufferOffsetAlignment = static_cast<size_t> ( limits.minStorageBufferOffsetAlignment );
-    _minUniformBufferOffsetAlignment = static_cast<size_t> ( limits.minUniformBufferOffsetAlignment );
-    _nonCoherentAtomSize = static_cast<size_t> ( limits.nonCoherentAtomSize );
 
     PrintSizeProp ( INDENT_1,
         "minStorageBufferOffsetAlignment",
@@ -2260,25 +2151,26 @@ void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits 
 
 void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept
 {
-    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &_physicalDeviceMemoryProperties );
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &memProps );
 
     LogInfo ( ">>> Memory properties:" );
-    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", _physicalDeviceMemoryProperties.memoryTypeCount );
+    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", memProps.memoryTypeCount );
 
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryTypeCount; ++i )
+    for ( uint32_t i = 0U; i < memProps.memoryTypeCount; ++i )
     {
-        VkMemoryType const &type = _physicalDeviceMemoryProperties.memoryTypes[ i ];
+        VkMemoryType const &type = memProps.memoryTypes[ i ];
         LogInfo ( "%smemoryType: #%u", INDENT_2, i );
 
         PrintVkFlagsProp ( INDENT_3, "memoryTypes", type.propertyFlags, g_vkMemoryPropertyFlagBitsMapper );
         PrintUINT32Prop ( INDENT_3, "heapIndex", type.heapIndex );
     }
 
-    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", _physicalDeviceMemoryProperties.memoryHeapCount );
+    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", memProps.memoryHeapCount );
 
-    for ( uint32_t i = 0U; i < _physicalDeviceMemoryProperties.memoryHeapCount; ++i )
+    for ( uint32_t i = 0U; i < memProps.memoryHeapCount; ++i )
     {
-        VkMemoryHeap const &heap = _physicalDeviceMemoryProperties.memoryHeaps[ i ];
+        VkMemoryHeap const &heap = memProps.memoryHeaps[ i ];
 
         LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
         PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
@@ -2410,13 +2302,10 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
 
     for ( uint32_t i = 0U; i < modeCount; ++i )
     {
-        VkPresentModeKHR const mode = modeList[ i ];
-        PrintVkPresentModeProp ( i, mode );
-
-        if ( mode != desirableMode )
-            continue;
-
-        targetPresentMode = mode;
+        VkPresentModeKHR const m = modeList[ i ];
+        PrintVkPresentModeProp ( i, m );
+        VkPresentModeKHR const cases[] = { targetPresentMode, m };
+        targetPresentMode = cases[ static_cast<size_t> ( m == desirableMode ) ];
     }
 
     LogInfo ( "Renderer::SelectTargetPresentMode - Presented mode selected: %s.",
@@ -2523,20 +2412,18 @@ bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) n
     return true;
 }
 
-bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,
-    char const* extension
-) noexcept
+bool Renderer::CheckFeature ( VkBool32 feature, char const* name ) noexcept
 {
-    LogInfo ( "%sChecking %s...", INDENT_1, extension );
+    LogInfo ( "%sChecking %s...", INDENT_1, name );
 
-    if ( allExtensions.count ( extension ) < 1U ) [[unlikely]]
+    if ( feature ) [[likely]]
     {
-        LogError ( "%sFAIL: unsupported", INDENT_2 );
-        return false;
+        LogInfo ( "%sOK: presented", INDENT_2 );
+        return true;
     }
 
-    LogInfo ( "%sOK: presented", INDENT_2 );
-    return true;
+    LogError ( "%sFAIL: unsupported", INDENT_2 );
+    return false;
 }
 
 bool Renderer::PrintCoreExtensions () noexcept

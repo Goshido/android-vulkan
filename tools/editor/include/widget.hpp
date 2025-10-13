@@ -6,8 +6,9 @@
 #include "message_queue.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
-#include <pbr/font_storage.hpp>
-#include <pbr/ui_element.hpp>
+#include <platform/windows/pbr/font_storage.hpp>
+#include <platform/windows/pbr/ui_element.hpp>
+
 #include "rect.hpp"
 
 
@@ -61,6 +62,7 @@ class Widget
         ) noexcept;
 
         virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
+
         [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
         virtual void UpdatedRect () noexcept;
 

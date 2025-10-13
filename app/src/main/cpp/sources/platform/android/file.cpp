@@ -30,7 +30,11 @@ namespace {
 
 } // end of anonymous namespace
 
+//----------------------------------------------------------------------------------------------------------------------
+
 extern AAssetManager* g_AssetManager;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 File::File ( std::string &&filePath ) noexcept:
     _filePath ( NormalizeAssetPath ( std::move ( filePath ) ) )

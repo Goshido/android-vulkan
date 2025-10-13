@@ -17,20 +17,13 @@ namespace android_vulkan {
 class SkinData final
 {
     private:
-        struct Buffer final
-        {
-            VkBuffer            _buffer = VK_NULL_HANDLE;
-            VkDeviceMemory      _memory = VK_NULL_HANDLE;
-            VkDeviceSize        _offset = std::numeric_limits<VkDeviceSize>::max ();
-        };
-
-    private:
-        GXAABB                  _bounds {};
-        VkDeviceSize            _bufferSize = 0U;
-        std::string             _fileName {};
-        Buffer                  _skin {};
-        Buffer                  _transfer {};
-        VkDeviceSize            _minPoseRange = 0U;
+        GXAABB              _bounds {};
+        VkBuffer            _buffer = VK_NULL_HANDLE;
+        VkDeviceSize        _bufferSize = 0U;
+        std::string         _fileName {};
+        VkDeviceMemory      _memory = VK_NULL_HANDLE;
+        VkDeviceSize        _minPoseRange = 0U;
+        VkDeviceSize        _offset = std::numeric_limits<VkDeviceSize>::max ();
 
     public:
         SkinData () = default;
@@ -44,7 +37,6 @@ class SkinData final
         ~SkinData () = default;
 
         void FreeResources ( Renderer &renderer ) noexcept;
-        void FreeTransferResources ( Renderer &renderer ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] BufferInfo GetSkinInfo () const noexcept;
@@ -53,9 +45,7 @@ class SkinData final
 
         [[nodiscard]] bool LoadSkin ( std::string &&skinFilename,
             std::string &&skeletonFilename,
-            Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            VkFence fence
+            Renderer &renderer
         ) noexcept;
 
         [[nodiscard]] constexpr static uint32_t MaxCommandBufferPerSkin () noexcept

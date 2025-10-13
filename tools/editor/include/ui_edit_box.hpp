@@ -2,7 +2,6 @@
 #define EDITOR_UI_EDIT_BOX_HPP
 
 
-#include <pbr/font_storage.hpp>
 #include "text_ui_element.hpp"
 #include "timer.hpp"
 #include "widget.hpp"
@@ -37,6 +36,7 @@ class UIEditBox final : public Widget
     private:
         std::string                         _committed {};
         std::u32string                      _content {};
+
         pbr::FontStorage::StringMetrics     _metrics {};
         pbr::FontStorage                    &_fontStorage;
 

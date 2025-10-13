@@ -3,6 +3,7 @@
 
 
 #include "command_line.hpp"
+#include "history.hpp"
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
@@ -29,11 +30,18 @@ class Editor final
     private:
         CommandLine                             _commandLine {};
         bool                                    _frameComplete = true;
+        History                                 _history {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};
         RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
-        UIManager                               _uiManager { _messageQueue, _renderSession.GetFontStorage () };
+
+        UIManager                               _uiManager
+        {
+            _messageQueue,
+            _renderSession.GetFontStorage ()
+        };
+
         TimerManager                            _timerManager { _messageQueue };
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;

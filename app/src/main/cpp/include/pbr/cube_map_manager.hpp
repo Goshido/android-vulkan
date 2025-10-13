@@ -2,7 +2,7 @@
 #define PBR_CUBE_MAP_MANAGER_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
+#include <platform/android/pbr/types.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -12,8 +12,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <unordered_set>
 
 GX_RESTORE_WARNING_STATE
-
-#include "types.hpp"
 
 
 namespace pbr {

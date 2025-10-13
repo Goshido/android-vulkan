@@ -1,13 +1,18 @@
 #include "hello_triangle_program.inc"
 
 
-struct InputData
+struct PushConstants
 {
-    [[vk::location ( IN_SLOT_VERTEX )]]
-    float32_t2                  _vertex:        VERTEX;
+    uint64_t                    _bda;
+};
 
-    [[vk::location ( IN_SLOT_COLOR )]]
-    float32_t3                  _color:         COLOR;
+[[vk::push_constant]]
+PushConstants                   g_pushConstants;
+
+struct Vertex
+{
+    float32_t2                  _vertex;
+    float32_t3                  _color;
 };
 
 struct OutputData
@@ -20,10 +25,12 @@ struct OutputData
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputData VS ( in InputData inputData )
+OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
+    Vertex const vertex = vk::RawBufferLoad<Vertex> ( g_pushConstants._bda + vertexID * sizeof ( Vertex ), 4U );
+
     OutputData result;
-    result._vertexH = float32_t4 ( inputData._vertex, 0.5F, 1.0F );
-    result._color = inputData._color;
+    result._vertexH = float32_t4 ( vertex._vertex, 0.5F, 1.0F );
+    result._color = vertex._color;
     return result;
 }

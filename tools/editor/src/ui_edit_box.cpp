@@ -969,6 +969,7 @@ void UIEditBox::UpdateCursor () noexcept
     pbr::CSSComputedValues &selectionCSS = _selectionDIV.GetCSS ();
     selectionCSS._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 0U ] );
     selectionCSS._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 1U ] );
+
     _selectionDIV.Update ();
 
     _cursorDIV.GetCSS ()._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, offsets._data[ 2U ] );

@@ -1,4 +1,4 @@
-// version 1.94
+// version 1.95
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -702,7 +702,9 @@ struct [[maybe_unused]] GXMat3 final
 
 struct [[maybe_unused]] GXMat4 final
 {
-    GXFloat     _data[ 4U ][ 4U ];
+    [[maybe_unused]] static GXMat4 const        IDENTITY;
+
+    GXFloat                                     _data[ 4U ][ 4U ];
 
     [[maybe_unused]] GXMat4 () = default;
 
@@ -711,6 +713,30 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXMat4 ( GXMat4 && ) = default;
     [[maybe_unused]] GXMat4 &operator = ( GXMat4 && ) = default;
+
+    // constexpr constructor is implicitly inline
+    // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
+    [[maybe_unused]] constexpr GXMat4 ( GXFloat m00,
+        GXFloat m01,
+        GXFloat m02,
+        GXFloat m03,
+        GXFloat m10,
+        GXFloat m11,
+        GXFloat m12,
+        GXFloat m13,
+        GXFloat m20,
+        GXFloat m21,
+        GXFloat m22,
+        GXFloat m23,
+        GXFloat m30,
+        GXFloat m31,
+        GXFloat m32,
+        GXFloat m33
+    ) noexcept:
+        _data { { m00, m01, m02, m03 }, { m10, m11, m12, m13 }, { m20, m21, m22, m23 }, { m30, m31, m32, m33 } }
+    {
+        // NOTHING
+    }
 
     [[maybe_unused]] ~GXMat4 () = default;
 

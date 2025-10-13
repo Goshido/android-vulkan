@@ -4,8 +4,6 @@
 #include <pbr/html5_parser.hpp>
 
 
-//----------------------------------------------------------------------------------------------------------------------
-
 namespace {
 
 constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );
@@ -19,7 +17,7 @@ constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );
     // Make sure that string to number parsers will be consistent.
     std::locale::global ( std::locale::classic () );
 
-    if ( argc < 2 )
+    if ( argc < 2 ) [[unlikely]]
     {
         android_vulkan::LogError ( "Specify HTML file to check. Abort." );
         system ( "pause" );
@@ -34,7 +32,7 @@ constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );
         std::system ( "cls" );
         android_vulkan::File htmlFile ( html );
 
-        if ( !htmlFile.LoadContent () )
+        if ( !htmlFile.LoadContent () ) [[unlikely]]
             return EXIT_FAILURE;
 
         std::vector<uint8_t> &data = htmlFile.GetContent ();

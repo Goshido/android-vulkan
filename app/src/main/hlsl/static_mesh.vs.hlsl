@@ -1,4 +1,4 @@
-#include "rotating_mesh/bindings.inc"
+#include "platform/android/rotating_mesh/bindings.inc"
 #include "tbn.hlsl"
 
 

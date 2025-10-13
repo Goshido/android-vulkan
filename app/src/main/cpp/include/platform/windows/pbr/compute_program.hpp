@@ -1,0 +1,41 @@
+#ifndef PBR_COMPUTE_PROGRAM_HPP
+#define PBR_COMPUTE_PROGRAM_HPP
+
+
+#include <pbr/compute_program_base.hpp>
+#include <renderer.hpp>
+
+
+namespace pbr {
+
+class ComputeProgram : public ComputeProgramBase
+{
+    public:
+        ComputeProgram () = delete;
+
+        ComputeProgram ( ComputeProgram const & ) = delete;
+        ComputeProgram &operator = ( ComputeProgram const & ) = delete;
+
+        ComputeProgram ( ComputeProgram && ) = delete;
+        ComputeProgram &operator = ( ComputeProgram && ) = delete;
+
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
+
+    protected:
+        explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
+        ~ComputeProgram () override = default;
+
+        [[nodiscard]] virtual bool Init ( VkDevice device, SpecializationData specializationData ) noexcept = 0;
+
+        [[nodiscard]] virtual bool InitShaderInfo ( std::vector<uint8_t> &cs,
+            VkShaderModuleCreateInfo &moduleInfo,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkPipelineShaderStageCreateInfo &targetInfo
+        ) noexcept = 0;
+};
+
+} // namespace pbr
+
+
+#endif // PBR_COMPUTE_PROGRAM_HPP

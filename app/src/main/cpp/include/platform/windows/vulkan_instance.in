@@ -1,1 +1,2 @@
 X ( vkCreateWin32SurfaceKHR )
+X ( vkGetPhysicalDeviceProperties2 )

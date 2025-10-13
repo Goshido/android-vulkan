@@ -1,7 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <memory_allocator.hpp>
 #include <bitwise.hpp>
+#include <memory_allocator_sizes.hpp>
+#include <memory_allocator.hpp>
 #include <renderer.hpp>
 #include <vulkan_utils.hpp>
 
@@ -9,15 +10,6 @@
 namespace android_vulkan {
 
 namespace {
-
-constexpr VkDeviceSize BYTES_PER_KILOBYTE = 1024U;
-constexpr VkDeviceSize BYTES_PER_MEGABYTE = 1024U * BYTES_PER_KILOBYTE;
-constexpr VkDeviceSize BYTES_PER_GIGABYTE = 1024U * BYTES_PER_MEGABYTE;
-
-constexpr VkDeviceSize MEGABYTES_PER_CHUNK = 128U;
-constexpr VkDeviceSize BYTES_PER_CHUNK = MEGABYTES_PER_CHUNK * BYTES_PER_MEGABYTE;
-
-constexpr size_t SNAPSHOT_INITIAL_SIZE_MEGABYTES = 16U;
 
 constexpr uint32_t STAGING_MEMORY_MASK = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
     AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
@@ -72,25 +64,10 @@ void MemoryAllocator::Chunk::FreeMemory ( VkDeviceSize offset ) noexcept
     LinkFreeBlock ( *block );
 }
 
-bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) noexcept
+bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex, VkMemoryPropertyFlags properties ) noexcept
 {
-    VkMemoryAllocateInfo const allocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .allocationSize = BYTES_PER_CHUNK,
-        .memoryTypeIndex = static_cast<uint32_t> ( memoryTypeIndex )
-    };
-
-    bool const result = Renderer::CheckVkResult ( vkAllocateMemory ( device, &allocateInfo, nullptr, &_memory ),
-        "MemoryAllocator::Chunk::Init",
-        "Can't allocate memory"
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !Allocate ( device, memoryTypeIndex, properties ) ) [[unlikely]]
         return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _memory, VK_OBJECT_TYPE_DEVICE_MEMORY, "Device memory" )
 
     _blockChain = new Block
     {
@@ -110,11 +87,10 @@ bool MemoryAllocator::Chunk::Init ( VkDevice device, size_t memoryTypeIndex ) no
 
 void MemoryAllocator::Chunk::Destroy ( VkDevice device ) noexcept
 {
-    if ( _memory == VK_NULL_HANDLE )
+    if ( _memory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
-    vkFreeMemory ( device, _memory, nullptr );
-    _memory = VK_NULL_HANDLE;
+    vkFreeMemory ( device, std::exchange ( _memory, VK_NULL_HANDLE ), nullptr );
     Block* b = _blockChain;
 
     while ( b )
@@ -644,7 +620,7 @@ bool MemoryAllocator::TryAllocateMemory ( VkDeviceMemory &memory,
 
     Chunk &chunk = chunks.emplace_front ();
 
-    bool const result = chunk.Init ( device, memoryTypeIndex ) &&
+    bool const result = chunk.Init ( device, memoryTypeIndex, properties ) &&
         chunk.TryAllocateMemory ( memory, offset, requirements );
 
     if ( !result ) [[unlikely]]

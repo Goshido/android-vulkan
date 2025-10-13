@@ -75,6 +75,8 @@ class UIDialogBox : public Widget
         Gizmo                       _resizeBottomRight { eCursor::NorthWestSouthEast };
 
     public:
+        UIDialogBox () = delete;
+
         UIDialogBox ( UIDialogBox const & ) = delete;
         UIDialogBox &operator = ( UIDialogBox const & ) = delete;
 
@@ -91,6 +93,7 @@ class UIDialogBox : public Widget
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
     private:
@@ -98,7 +101,9 @@ class UIDialogBox : public Widget
             pbr::FontStorage &fontStorage
         ) noexcept override;
 
-        [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
+        [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
+            VkExtent2D const &viewport
+        ) noexcept override;
 
         void DoDrag ( MouseMoveEvent const &event ) noexcept;
         void DoHover ( MouseMoveEvent const &event ) noexcept;

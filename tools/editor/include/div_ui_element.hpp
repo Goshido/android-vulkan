@@ -2,7 +2,8 @@
 #define EDITOR_DIV_UI_ELEMENT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
+
 #include "ui_element.hpp"
 
 
@@ -13,7 +14,7 @@ class TextUIElement;
 class DIVUIElement final : public UIElement
 {
     private:
-        pbr::DIVUIElement*      _div = nullptr;
+        pbr::DIVUIElement*     _div = nullptr;
 
     public:
         DIVUIElement () = delete;

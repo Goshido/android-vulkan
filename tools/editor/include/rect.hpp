@@ -2,7 +2,7 @@
 #define EDITOR_RECT_HPP
 
 
-#include <pbr/div_ui_element.hpp>
+#include <platform/windows/pbr/div_ui_element.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 

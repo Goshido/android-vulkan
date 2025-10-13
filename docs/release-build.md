@@ -49,6 +49,7 @@ target_compile_definitions ( android-vulkan PRIVATE
     AV_FREETYPE
     AV_NATIVE_MODE_PORTRAIT
 #    AV_STRICT_MODE
+    LUA_32BITS
     VK_NO_PROTOTYPES
     VK_USE_PLATFORM_ANDROID_KHR
 )

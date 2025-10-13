@@ -3,7 +3,7 @@
 
 
 #include "div_ui_element.hpp"
-#include <pbr/text_ui_element.hpp>
+#include <platform/windows/pbr/text_ui_element.hpp>
 
 
 namespace editor {
@@ -11,7 +11,7 @@ namespace editor {
 class TextUIElement final : public UIElement
 {
     private:
-        pbr::TextUIElement*     _text = nullptr;
+        pbr::TextUIElement*    _text = nullptr;
 
     public:
         TextUIElement () = delete;

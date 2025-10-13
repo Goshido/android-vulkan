@@ -2,7 +2,13 @@
 #define PBR_SAMPLER_HPP
 
 
-#include <renderer.hpp>
+#include <GXCommon/GXWarning.hpp>
+
+GX_DISABLE_COMMON_WARNINGS
+
+#include <vulkan/vulkan_core.h>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace pbr {
@@ -26,7 +32,7 @@ class Sampler final
         [[nodiscard]] bool Init ( VkDevice device, VkSamplerCreateInfo const &info, char const* name ) noexcept;
         void Destroy ( VkDevice device ) noexcept;
 
-        [[nodiscard]] VkSampler GetSampler () const noexcept;
+        [[nodiscard]] VkSampler const &GetSampler () const noexcept;
 };
 
 } // namespace pbr

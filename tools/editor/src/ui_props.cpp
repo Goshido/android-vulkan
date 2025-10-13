@@ -39,7 +39,6 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 
 UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
     UIDialogBox ( messageQueue, "Properties" ),
-    _fontStorage ( fontStorage ),
 
     _headerLine ( messageQueue,
         _div,

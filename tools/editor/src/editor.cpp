@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <component.hpp>
 #include <editor.hpp>
 #include <logger.hpp>
 #include <save_state.hpp>
@@ -43,6 +44,7 @@ bool Editor::Run () noexcept
     if ( !InitModules () ) [[unlikely]]
         return false;
 
+    Component::InitSpawners ();
     EventLoop ();
     DestroyModules ();
     return true;
@@ -94,7 +96,8 @@ bool Editor::InitModules () noexcept
             break;
 
             case eMessageType::WindowVisibilityChanged:
-                OnWindowVisibilityChanged ( std::move ( message ) );
+                _messageQueue.DequeueEnd ();
+                _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) );
             break;
 
             default:
@@ -116,12 +119,12 @@ bool Editor::InitModules () noexcept
     _renderer.OnSetDPI ( dpi );
     pbr::CSSUnitToDevicePixel::Init ( dpi, COMFORTABLE_VIEW_DISTANCE_METERS );
 
-    result = _renderer.OnCreateSwapchain (
+    android_vulkan::Renderer::eSwapchainResult const status = _renderer.OnCreateSwapchain ( false,
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
         config._vSync
     );
 
-    if ( !result ) [[unlikely]]
+    if ( status != android_vulkan::Renderer::eSwapchainResult::Success ) [[unlikely]]
         return false;
 
     _uiManager.Init ();
@@ -329,39 +332,44 @@ void Editor::OnRecreateSwapchain () noexcept
     AV_TRACE ( "Recreate swapchain" )
     _messageQueue.DequeueEnd ();
 
-    bool result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+    bool const waitResult = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
         "editor::Editor::OnRecreateSwapchain",
         "Can't wait queue idle"
     );
 
-    if ( !result ) [[unlikely]]
+    if ( !waitResult ) [[unlikely]]
     {
-        // FUCK
         AV_ASSERT ( false )
         return;
     }
 
     _renderer.OnDestroySwapchain ( true );
 
-    result = _renderer.OnCreateSwapchain (
+    android_vulkan::Renderer::eSwapchainResult const swapchainResult = _renderer.OnCreateSwapchain ( true,
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
         _renderer.GetVSync ()
     );
 
-    if ( !result ) [[unlikely]]
+    switch ( swapchainResult )
     {
-        // FUCK
-        AV_ASSERT ( false )
-        return;
-    }
+        case android_vulkan::Renderer::eSwapchainResult::Success:
+            _messageQueue.EnqueueBack (
+                {
+                    ._type = eMessageType::SwapchainCreated,
+                    ._params = nullptr,
+                    ._serialNumber = 0U
+                }
+            );
+        break;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::SwapchainCreated,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+        case android_vulkan::Renderer::eSwapchainResult::ZeroExtend:
+            [[fallthrough]];
+        case android_vulkan::Renderer::eSwapchainResult::Fail:
+            [[fallthrough]];
+        default:
+            AV_ASSERT ( false )
+        break;
+    }
 }
 
 void Editor::OnRunEvent () noexcept
@@ -439,7 +447,33 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
 {
     AV_TRACE ( "Main window visibility changed" )
     _messageQueue.DequeueEnd ();
-    _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) );
+
+    bool const old = std::exchange ( _stopRendering,
+        static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) )
+    );
+
+    if ( ( ( old == _stopRendering ) | _stopRendering ) || _renderer.GetSwapchain () != VK_NULL_HANDLE )
+        return;
+
+    android_vulkan::Renderer::eSwapchainResult const result = _renderer.OnCreateSwapchain ( true,
+        reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
+        _renderer.GetVSync ()
+    );
+
+    if ( result != android_vulkan::Renderer::eSwapchainResult::Success ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "Editor: Can't create swapchain!" );
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::SwapchainCreated,
+            ._params = nullptr,
+            ._serialNumber = 0U
+        }
+    );
 }
 
 void Editor::OnWriteClipboard ( Message &&message ) noexcept

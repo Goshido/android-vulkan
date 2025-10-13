@@ -16,24 +16,24 @@ namespace editor {
 class UIProps final : public UIDialogBox
 {
     private:
-        pbr::FontStorage    &_fontStorage;
-
-        DIVUIElement        _headerLine;
-        UILabel             _headerText;
-        UICloseButton       _closeButton;
-        UICheckBox          _checkBox;
-        UIComboBox          _comboBox;
-        UISlider            _slider;
-        UIEditBox           _editBox;
+        DIVUIElement                    _headerLine;
+        UILabel                         _headerText;
+        UICloseButton                   _closeButton;
+        UICheckBox                      _checkBox;
+        UIComboBox                      _comboBox;
+        UISlider                        _slider;
+        UIEditBox                       _editBox;
 
     public:
-        explicit UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
+        UIProps () = delete;
 
         UIProps ( UIProps const & ) = delete;
         UIProps &operator = ( UIProps const & ) = delete;
 
         UIProps ( UIProps && ) = delete;
         UIProps &operator = ( UIProps && ) = delete;
+
+        explicit UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIProps () override = default;
 

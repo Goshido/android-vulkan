@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 
-#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_VVL ) || defined ( AV_ENABLE_RENDERDOC ) || defined ( AV_ENABLE_NSIGHT )
 
 #include <av_assert.hpp>
 #include <renderer.hpp>
@@ -29,22 +29,20 @@ void InitVulkanDebugUtils ( VkInstance instance ) noexcept
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkCmdBeginDebugUtilsLabelEXT" ) )
     );
 
-    AV_ASSERT ( vkCmdBeginDebugUtilsLabelEXT )
-
     vkCmdEndDebugUtilsLabelEXT = reinterpret_cast<PFN_vkCmdEndDebugUtilsLabelEXT> (
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkCmdEndDebugUtilsLabelEXT" ) )
     );
-
-    AV_ASSERT ( vkCmdEndDebugUtilsLabelEXT )
 
     vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT> (
         reinterpret_cast<void*> ( vkGetInstanceProcAddr ( instance, "vkSetDebugUtilsObjectNameEXT" ) )
     );
 
+    AV_ASSERT ( vkCmdBeginDebugUtilsLabelEXT )
+    AV_ASSERT ( vkCmdEndDebugUtilsLabelEXT )
     AV_ASSERT ( vkSetDebugUtilsObjectNameEXT )
 }
 
-void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const *name ) noexcept
+void SetVulkanObjectName ( VkDevice device, uint64_t handle, VkObjectType type, char const* name ) noexcept
 {
     VkDebugUtilsObjectNameInfoEXT const info
     {
@@ -92,4 +90,4 @@ void VulkanGroup::IssueGroup ( char const* name ) noexcept
 } // namespace android_vulkan
 
 
-#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_VVL || AV_ENABLE_RENDERDOC || AV_ENABLE_NSIGHT

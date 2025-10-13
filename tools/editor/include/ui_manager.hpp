@@ -3,7 +3,7 @@
 
 
 #include "message_queue.hpp"
-#include <pbr/ui_pass.hpp>
+#include <platform/windows/pbr/ui_pass.hpp>
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -21,6 +21,7 @@ class UIManager final
     private:
         size_t                                  _eventID = 0U;
         pbr::FontStorage                        &_fontStorage;
+
         Widget*                                 _hoverWidget = nullptr;
         MessageQueue                            &_messageQueue;
         Widget*                                 _mouseCapture = nullptr;
@@ -28,6 +29,9 @@ class UIManager final
         std::thread                             _thread {};
         Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
+
+        bool                                    _needRefill = false;
+        size_t                                  _neededUIVertices = 0U;
 
     public:
         UIManager () = delete;
@@ -45,7 +49,8 @@ class UIManager final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        void RenderUI ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
+        void ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
+        void Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
 
     private:
         void EventLoop () noexcept;

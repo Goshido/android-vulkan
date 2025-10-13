@@ -14,7 +14,7 @@
 
 ## <a id="compile-tool">Compile tool</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10062_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10149_**.
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -63,8 +63,9 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T vs_6_9                                                   ^
+    -T vs_6_10                                                  ^
     -E VS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.vs.spv    ^
@@ -86,8 +87,9 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T ps_6_9                                                   ^
+    -T ps_6_10                                                  ^
     -E PS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.ps.spv    ^
@@ -109,8 +111,9 @@ dxc.exe                                                         ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
     -O3                                                         ^
-    -T cs_6_9                                                   ^
+    -T cs_6_10                                                  ^
     -E CS                                                       ^
+    -I <android-vulkan directory>\app\src\main\hlsl             ^
     -I <android-vulkan directory>\tools\editor\include          ^
     -I <android-vulkan directory>\app\src\main\cpp\include      ^
     -Fo <core or editor shader directory>\<file name>.cs.spv    ^
@@ -135,6 +138,7 @@ The [_DXC_](https://github.com/microsoft/DirectXShaderCompiler) has special flag
 
 ```txt
 -Od
+-Zi
 -fspv-debug=vulkan-with-source
 ```
 
@@ -154,7 +158,7 @@ For example:
 
 Variable name | Value
 --- | ---
-`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2025-06-28\bin`
+`ANDROID_VULKAN_DXC_ROOT` | `D:\Development\DXC-builds\Release-2025-10-12\bin`
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -168,6 +172,8 @@ SPIR-V degradation 1.7.2212.10204 compare to 1.7.2212.10142 | [#5342](https://gi
 Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShaderCompiler/issues/5608) | ✔️ Fixed
 [SPIR-V] Define-only include files are missing in `-fspv-debug=vulkan-with-source` | [#6907](https://github.com/microsoft/DirectXShaderCompiler/issues/6907) | ✔️ Fixed
 [SPIR-V] Non semantic shader information issue (-fspv-debug=vulkan-with-source) | [#6939](https://github.com/microsoft/DirectXShaderCompiler/issues/6939) | ✔️ Fixed
-[SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | 🛡️ not an issue
+[SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | 🛡️ Not an issue
+[SPIR-V] Incorrect ignoring `globallycoherent` with buffer device address approach | [#7661](https://github.com/microsoft/DirectXShaderCompiler/issues/7661) | ⚠️ Submitted
+[SPIR-V] Incorrect ignoring `globallycoherent` with `ResourceDescriptorHeap` approach | [#7740](https://github.com/microsoft/DirectXShaderCompiler/issues/7740) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

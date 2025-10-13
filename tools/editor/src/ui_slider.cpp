@@ -4,6 +4,7 @@
 #include <theme.hpp>
 #include <ui_slider.hpp>
 
+
 namespace editor {
 
 UISlider::UISlider ( MessageQueue &messageQueue,

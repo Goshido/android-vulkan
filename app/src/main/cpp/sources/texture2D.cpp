@@ -38,10 +38,6 @@ constexpr const size_t EXPANDER_THREADS = 4U;
 constexpr const size_t RGB_BYTES_PER_PIXEL = 3U;
 constexpr const size_t RGBA_BYTES_PER_PIXEL = 4U;
 
-constexpr VkImageUsageFlags IMMUTABLE_TEXTURE_USAGE = AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) |
-    AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
-    AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
-
 std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 {
     { VK_FORMAT_ASTC_6x6_UNORM_BLOCK, VK_FORMAT_ASTC_6x6_UNORM_BLOCK },
@@ -53,6 +49,60 @@ std::unordered_map<VkFormat, VkFormat> const g_FormatMapper =
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+Texture2D::Texture2D ( Texture2D &&other ) noexcept:
+    _format ( std::exchange ( other._format, VK_FORMAT_UNDEFINED ) ),
+    _image ( std::exchange ( other._image, VK_NULL_HANDLE ) ),
+    _imageDeviceMemory ( std::exchange ( other._imageDeviceMemory, VK_NULL_HANDLE ) ),
+    _imageMemoryOffset ( std::exchange ( other._imageMemoryOffset, 0U ) ),
+    _imageView ( std::exchange ( other._imageView, VK_NULL_HANDLE ) ),
+    _mipLevels ( std::exchange ( other._mipLevels, static_cast<uint8_t> ( 0U ) ) ),
+
+    _resolution (
+        std::exchange ( other._resolution,
+            VkExtent2D
+            {
+                .width = 0U,
+                .height = 0U
+            }
+        )
+    ),
+
+    _transfer ( std::exchange ( other._transfer, VK_NULL_HANDLE ) ),
+    _transferDeviceMemory ( std::exchange ( other._transferDeviceMemory, VK_NULL_HANDLE ) ),
+    _transferMemoryOffset ( std::exchange ( other._transferMemoryOffset, 0U ) ),
+    _fileName ( std::move ( other._fileName ) )
+{
+    // NOTHING
+}
+
+Texture2D &Texture2D::operator = ( Texture2D &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _format = std::exchange ( other._format, VK_FORMAT_UNDEFINED );
+    _image = std::exchange ( other._image, VK_NULL_HANDLE );
+    _imageDeviceMemory = std::exchange ( other._imageDeviceMemory, VK_NULL_HANDLE );
+    _imageMemoryOffset = std::exchange ( other._imageMemoryOffset, 0U );
+    _imageView = std::exchange ( other._imageView, VK_NULL_HANDLE );
+    _mipLevels = std::exchange ( other._mipLevels, static_cast<uint8_t> ( 0U ) );
+
+    _resolution = std::exchange ( other._resolution,
+
+        VkExtent2D
+        {
+            .width = 0U,
+            .height = 0U
+        }
+    );
+
+    _transfer = std::exchange ( other._transfer, VK_NULL_HANDLE );
+    _transferDeviceMemory = std::exchange ( other._transferDeviceMemory, VK_NULL_HANDLE );
+    _transferMemoryOffset = std::exchange ( other._transferMemoryOffset, 0U );
+    _fileName = std::move ( other._fileName );
+    return *this;
+}
 
 void Texture2D::AssignName ( std::string &&name ) noexcept
 {
@@ -138,6 +188,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
@@ -169,7 +220,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     bool result = CreateCommonResources ( imageInfo,
         resolution,
         ResolveFormat ( actualFormat, space ),
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( isGenerateMipmaps ),
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
@@ -183,6 +234,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
         isGenerateMipmaps,
         imageInfo,
         commandBuffer,
+        externalCommandBuffer,
         fence
     );
 
@@ -198,6 +250,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
@@ -211,7 +264,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 
     if ( IsCompressed ( fileName ) )
     {
-        if ( !UploadCompressed ( renderer, fileName, commandBuffer, fence ) ) [[unlikely]]
+        if ( !UploadCompressed ( renderer, fileName, commandBuffer, externalCommandBuffer, fence ) ) [[unlikely]]
             return false;
 
         _fileName = std::move ( fileName );
@@ -227,7 +280,6 @@ bool Texture2D::UploadData ( Renderer &renderer,
     if ( !LoadImage ( pixelData, fileName, width, height, channels ) ) [[unlikely]]
         return false;
 
-    VkFormat const actualFormat = PickupFormat ( channels );
     VkImageCreateInfo imageInfo;
 
     VkExtent2D const resolution
@@ -236,25 +288,24 @@ bool Texture2D::UploadData ( Renderer &renderer,
         .height = static_cast<uint32_t> ( height )
     };
 
-    bool result = CreateCommonResources ( imageInfo,
-        resolution,
-        ResolveFormat ( actualFormat, space ),
-        IMMUTABLE_TEXTURE_USAGE,
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
-        renderer
-    );
+    bool const result =
+        CreateCommonResources ( imageInfo,
+            resolution,
+            ResolveFormat ( PickupFormat ( channels ), space ),
+            ResolveUsage ( isGenerateMipmaps ),
+            isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
+            renderer
+        ) &&
 
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = UploadDataInternal ( renderer,
-        pixelData.data (),
-        pixelData.size (),
-        isGenerateMipmaps,
-        imageInfo,
-        commandBuffer,
-        fence
-    );
+        UploadDataInternal ( renderer,
+            pixelData.data (),
+            pixelData.size (),
+            isGenerateMipmaps,
+            imageInfo,
+            commandBuffer,
+            externalCommandBuffer,
+            fence
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -268,10 +319,18 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), space, isGenerateMipmaps, commandBuffer, fence );
+    return UploadData ( renderer,
+        std::string ( fileName ),
+        space,
+        isGenerateMipmaps,
+        commandBuffer,
+        externalCommandBuffer,
+        fence
+    );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
@@ -279,10 +338,18 @@ bool Texture2D::UploadData ( Renderer &renderer,
     eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
-    return UploadData ( renderer, std::string ( fileName ), space, isGenerateMipmaps, commandBuffer, fence );
+    return UploadData ( renderer,
+        std::string ( fileName ),
+        space,
+        isGenerateMipmaps,
+        commandBuffer,
+        externalCommandBuffer,
+        fence
+    );
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
@@ -292,6 +359,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkFormat format,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
@@ -301,7 +369,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
     bool const result = CreateCommonResources ( imageInfo,
         resolution,
         format,
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( isGenerateMipmaps ),
         isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
         renderer
     );
@@ -309,7 +377,15 @@ bool Texture2D::UploadData ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    return UploadDataInternal ( renderer, data, size, isGenerateMipmaps, imageInfo, commandBuffer, fence );
+    return UploadDataInternal ( renderer,
+        data,
+        size,
+        isGenerateMipmaps,
+        imageInfo,
+        commandBuffer,
+        externalCommandBuffer,
+        fence
+    );
 }
 
 uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
@@ -525,13 +601,13 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
     _mipLevels = 0U;
     VkDevice device = renderer.GetDevice ();
 
-    if ( _imageView != VK_NULL_HANDLE )
+    if ( _imageView != VK_NULL_HANDLE ) [[likely]]
         vkDestroyImageView ( device, std::exchange ( _imageView, VK_NULL_HANDLE ), nullptr );
 
-    if ( _image != VK_NULL_HANDLE )
+    if ( _image != VK_NULL_HANDLE ) [[likely]]
         vkDestroyImage ( device, std::exchange ( _image, VK_NULL_HANDLE ), nullptr );
 
-    if ( _imageDeviceMemory == VK_NULL_HANDLE )
+    if ( _imageDeviceMemory == VK_NULL_HANDLE ) [[unlikely]]
         return;
 
     renderer.FreeMemory ( std::exchange ( _imageDeviceMemory, VK_NULL_HANDLE ), _imageMemoryOffset );
@@ -541,6 +617,7 @@ void Texture2D::FreeResourceInternal ( Renderer &renderer ) noexcept
 bool Texture2D::UploadCompressed ( Renderer &renderer,
     std::string const &fileName,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
@@ -555,7 +632,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
     bool result = CreateCommonResources ( imageInfo,
         ktx.GetMip ( 0U )._resolution,
         ktx.GetFormat (),
-        IMMUTABLE_TEXTURE_USAGE,
+        ResolveUsage ( false ),
         ktx.GetMipCount (),
         renderer
     );
@@ -580,23 +657,26 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
 
     renderer.UnmapMemory ( _transferDeviceMemory );
 
-    constexpr VkCommandBufferBeginInfo beginInfo
+    if ( !externalCommandBuffer )
     {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
+        constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr
+        };
 
-    result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
-        "Texture2D::UploadCompressed",
-        "Can't begin command buffer"
-    );
+        result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+            "Texture2D::UploadCompressed",
+            "Can't begin command buffer"
+        );
 
-    if ( !result ) [[unlikely]]
-    {
-        FreeResources ( renderer );
-        return false;
+        if ( !result ) [[unlikely]]
+        {
+            FreeResources ( renderer );
+            return false;
+        }
     }
 
     VkImageMemoryBarrier barrierInfo
@@ -684,6 +764,9 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         &barrierInfo
     );
 
+    if ( externalCommandBuffer )
+        return true;
+
     result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Texture2D::UploadCompressed",
         "Can't end command buffer"
@@ -729,6 +812,7 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     bool isGenerateMipmaps,
     VkImageCreateInfo const &imageInfo,
     VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
     VkFence fence
 ) noexcept
 {
@@ -740,23 +824,26 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     std::memcpy ( mappedBuffer, data, size );
     renderer.UnmapMemory ( _transferDeviceMemory );
 
-    constexpr VkCommandBufferBeginInfo beginInfo
+    if ( !externalCommandBuffer )
     {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
+        constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr
+        };
 
-    bool result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
-        "Texture2D::UploadDataInternal",
-        "Can't begin command buffer"
-    );
+        bool const result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+            "Texture2D::UploadDataInternal",
+            "Can't begin command buffer"
+        );
 
-    if ( !result ) [[unlikely]]
-    {
-        FreeResources ( renderer );
-        return false;
+        if ( !result ) [[unlikely]]
+        {
+            FreeResources ( renderer );
+            return false;
+        }
     }
 
     VkImageMemoryBarrier barrierInfo
@@ -843,7 +930,10 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
             &barrierInfo
         );
 
-        result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        if ( externalCommandBuffer )
+            return true;
+
+        bool result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
             "Texture2D::UploadDataInternal",
             "Can't end command buffer"
         );
@@ -1013,7 +1103,10 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
         &barrierInfo
     );
 
-    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+    if ( externalCommandBuffer )
+        return true;
+
+    bool result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "Texture2D::UploadDataInternal",
         "Can't end command buffer"
     );
@@ -1198,6 +1291,19 @@ VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noe
     );
 
     return VK_FORMAT_UNDEFINED;
+}
+
+VkImageUsageFlags Texture2D::ResolveUsage ( bool isGenerateMipmaps ) noexcept
+{
+    constexpr VkImageUsageFlags const cases[] =
+    {
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
+
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
+            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT )
+    };
+
+    return cases[ static_cast<size_t> ( isGenerateMipmaps ) ];
 }
 
 } // namespace android_vulkan

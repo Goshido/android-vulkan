@@ -2,7 +2,7 @@
 #define EDITOR_SET_TEXT_EVENT_HPP
 
 
-#include <pbr/text_ui_element.hpp>
+#include <platform/windows/pbr/text_ui_element.hpp>
 
 
 namespace editor {
@@ -10,7 +10,7 @@ namespace editor {
 class SetTextEvent final
 {
     private:
-        pbr::TextUIElement                                      &_element;
+        pbr::TextUIElement                             &_element;
         std::variant<std::string_view, std::u32string_view>     _text {};
 
     public:

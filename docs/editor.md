@@ -193,7 +193,7 @@ The build artifacts will be located in directory:
 
 Build features:
 
-- all _CPU_ optimization are enabled
+- all _CPU_ optimizations are enabled
 - _VVL_ are disabled
 
 [↬ table of content ⇧](#table-of-content)

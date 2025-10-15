@@ -1924,260 +1924,6 @@ void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     }
 }
 
-void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept
-{
-    LogInfo ( ">>> Limits:" );
-
-    PrintUINT32Prop ( INDENT_1, "maxImageDimension1D", limits.maxImageDimension1D );
-    PrintUINT32Prop ( INDENT_1, "maxImageDimension2D", limits.maxImageDimension2D );
-    PrintUINT32Prop ( INDENT_1, "maxImageDimension3D", limits.maxImageDimension3D );
-    PrintUINT32Prop ( INDENT_1, "maxImageDimensionCube", limits.maxImageDimensionCube );
-    PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", limits.maxImageArrayLayers );
-    PrintUINT32Prop ( INDENT_1, "maxTexelBufferElements", limits.maxTexelBufferElements );
-    PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
-    PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
-    PrintUINT32Prop ( INDENT_1, "maxMemoryAllocationCount", limits.maxMemoryAllocationCount );
-    PrintUINT32Prop ( INDENT_1, "maxSamplerAllocationCount", limits.maxSamplerAllocationCount );
-    PrintSizeProp ( INDENT_1, "bufferImageGranularity", static_cast<size_t> ( limits.bufferImageGranularity ) );
-    PrintSizeProp ( INDENT_1, "sparseAddressSpaceSize", static_cast<size_t> ( limits.sparseAddressSpaceSize ) );
-    PrintUINT32Prop ( INDENT_1, "maxBoundDescriptorSets", limits.maxBoundDescriptorSets );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSamplers", limits.maxPerStageDescriptorSamplers );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorUniformBuffers", limits.maxPerStageDescriptorUniformBuffers );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageBuffers", limits.maxPerStageDescriptorStorageBuffers );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
-    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetUniformBuffers", limits.maxDescriptorSetUniformBuffers );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetUniformBuffersDynamic", limits.maxDescriptorSetUniformBuffersDynamic );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageBuffers", limits.maxDescriptorSetStorageBuffers );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageBuffersDynamic", limits.maxDescriptorSetStorageBuffersDynamic );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSampledImages", limits.maxDescriptorSetSampledImages );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageImages", limits.maxDescriptorSetStorageImages );
-    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetInputAttachments", limits.maxDescriptorSetInputAttachments );
-    PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributes", limits.maxVertexInputAttributes );
-    PrintUINT32Prop ( INDENT_1, "maxVertexInputBindings", limits.maxVertexInputBindings );
-    PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
-    PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
-    PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
-    PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationControlPerVertexInputComponents",
-        limits.maxTessellationControlPerVertexInputComponents
-    );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationControlPerVertexOutputComponents",
-        limits.maxTessellationControlPerVertexOutputComponents
-    );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationControlPerPatchOutputComponents",
-        limits.maxTessellationControlPerPatchOutputComponents
-    );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationControlTotalOutputComponents",
-        limits.maxTessellationControlTotalOutputComponents
-    );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationEvaluationInputComponents",
-        limits.maxTessellationEvaluationInputComponents
-    );
-
-    PrintUINT32Prop ( INDENT_1,
-        "maxTessellationEvaluationOutputComponents",
-        limits.maxTessellationEvaluationOutputComponents
-    );
-
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
-    PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
-    PrintUINT32Prop ( INDENT_1, "maxGeometryOutputComponents", limits.maxGeometryOutputComponents );
-    PrintUINT32Prop ( INDENT_1, "maxGeometryOutputVertices", limits.maxGeometryOutputVertices );
-    PrintUINT32Prop ( INDENT_1, "maxGeometryTotalOutputComponents", limits.maxGeometryTotalOutputComponents );
-    PrintUINT32Prop ( INDENT_1, "maxFragmentInputComponents", limits.maxFragmentInputComponents );
-    PrintUINT32Prop ( INDENT_1, "maxFragmentOutputAttachments", limits.maxFragmentOutputAttachments );
-    PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
-    PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
-    PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
-    PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
-    PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupSize", limits.maxComputeWorkGroupSize );
-    PrintUINT32Prop ( INDENT_1, "subPixelPrecisionBits", limits.subPixelPrecisionBits );
-    PrintUINT32Prop ( INDENT_1, "subTexelPrecisionBits", limits.subTexelPrecisionBits );
-    PrintUINT32Prop ( INDENT_1, "mipmapPrecisionBits", limits.mipmapPrecisionBits );
-    PrintUINT32Prop ( INDENT_1, "maxDrawIndexedIndexValue", limits.maxDrawIndexedIndexValue );
-    PrintUINT32Prop ( INDENT_1, "maxDrawIndirectCount", limits.maxDrawIndirectCount );
-    PrintFloatProp ( INDENT_1, "maxSamplerLodBias", limits.maxSamplerLodBias );
-    PrintFloatProp ( INDENT_1, "maxSamplerAnisotropy", limits.maxSamplerAnisotropy );
-    PrintUINT32Prop ( INDENT_1, "maxViewports", limits.maxViewports );
-    PrintUINT32Vec2Prop ( INDENT_1, "maxViewportDimensions", limits.maxViewportDimensions );
-    PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
-    PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
-    PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintSizeProp ( INDENT_1,
-        "minTexelBufferOffsetAlignment",
-        static_cast<size_t> ( limits.minTexelBufferOffsetAlignment )
-    );
-
-    PrintSizeProp ( INDENT_1,
-        "minUniformBufferOffsetAlignment",
-        static_cast<size_t> ( limits.minUniformBufferOffsetAlignment )
-    );
-
-    PrintSizeProp ( INDENT_1,
-        "minStorageBufferOffsetAlignment",
-        static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
-    );
-
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
-    PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
-    PrintINT32Prop ( INDENT_1, "minTexelGatherOffset", limits.minTexelGatherOffset );
-    PrintUINT32Prop ( INDENT_1, "maxTexelGatherOffset", limits.maxTexelGatherOffset );
-    PrintFloatProp ( INDENT_1, "minInterpolationOffset", limits.minInterpolationOffset );
-    PrintFloatProp ( INDENT_1, "maxInterpolationOffset", limits.maxInterpolationOffset );
-    PrintUINT32Prop ( INDENT_1, "subPixelInterpolationOffsetBits", limits.subPixelInterpolationOffsetBits );
-    PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
-    PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
-    PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "framebufferColorSampleCounts",
-        limits.framebufferColorSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "framebufferDepthSampleCounts",
-        limits.framebufferDepthSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "framebufferStencilSampleCounts",
-        limits.framebufferStencilSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "framebufferNoAttachmentsSampleCounts",
-        limits.framebufferNoAttachmentsSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintUINT32Prop ( INDENT_1, "maxColorAttachments", limits.maxColorAttachments );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "sampledImageColorSampleCounts",
-        limits.sampledImageColorSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "sampledImageIntegerSampleCounts",
-        limits.sampledImageIntegerSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "sampledImageDepthSampleCounts",
-        limits.sampledImageDepthSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "sampledImageStencilSampleCounts",
-        limits.sampledImageStencilSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    PrintVkFlagsProp ( INDENT_1,
-        "storageImageSampleCounts",
-        limits.storageImageSampleCounts,
-        g_vkSampleCountFlagMapper
-    );
-
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
-    PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
-    PrintFloatProp ( INDENT_1, "timestampPeriod", limits.timestampPeriod );
-    PrintUINT32Prop ( INDENT_1, "maxClipDistances", limits.maxClipDistances );
-    PrintUINT32Prop ( INDENT_1, "maxCullDistances", limits.maxCullDistances );
-    PrintUINT32Prop ( INDENT_1, "maxCombinedClipAndCullDistances", limits.maxCombinedClipAndCullDistances );
-    PrintUINT32Prop ( INDENT_1, "discreteQueuePriorities", limits.discreteQueuePriorities );
-    PrintFloatVec2Prop ( INDENT_1, "pointSizeRange", limits.pointSizeRange );
-    PrintFloatVec2Prop ( INDENT_1, "lineWidthRange", limits.lineWidthRange );
-    PrintFloatProp ( INDENT_1, "pointSizeGranularity", limits.pointSizeGranularity );
-    PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
-    PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
-    PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
-    std::this_thread::sleep_for ( ANTISPAM_DELAY );
-
-    PrintSizeProp ( INDENT_1,
-        "optimalBufferCopyOffsetAlignment",
-        static_cast<size_t> ( limits.optimalBufferCopyOffsetAlignment )
-    );
-
-    PrintSizeProp ( INDENT_1,
-        "optimalBufferCopyRowPitchAlignment",
-        static_cast<size_t> ( limits.optimalBufferCopyRowPitchAlignment )
-    );
-
-    PrintSizeProp ( INDENT_1, "nonCoherentAtomSize", static_cast<size_t> ( limits.nonCoherentAtomSize ) );
-}
-
-void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept
-{
-    VkPhysicalDeviceMemoryProperties memProps;
-    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &memProps );
-
-    LogInfo ( ">>> Memory properties:" );
-    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", memProps.memoryTypeCount );
-
-    for ( uint32_t i = 0U; i < memProps.memoryTypeCount; ++i )
-    {
-        VkMemoryType const &type = memProps.memoryTypes[ i ];
-        LogInfo ( "%smemoryType: #%u", INDENT_2, i );
-
-        PrintVkFlagsProp ( INDENT_3, "memoryTypes", type.propertyFlags, g_vkMemoryPropertyFlagBitsMapper );
-        PrintUINT32Prop ( INDENT_3, "heapIndex", type.heapIndex );
-    }
-
-    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", memProps.memoryHeapCount );
-
-    for ( uint32_t i = 0U; i < memProps.memoryHeapCount; ++i )
-    {
-        VkMemoryHeap const &heap = memProps.memoryHeaps[ i ];
-
-        LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
-        PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
-        PrintVkFlagsProp ( INDENT_3, "memoryTypes", heap.flags, g_vkMemoryHeapFlagBitsMapper );
-    }
-}
-
 bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept
 {
     LogInfo ( "Renderer::PrintPhysicalDeviceInfo - Vulkan physical device #%u", deviceIndex );
@@ -2573,6 +2319,260 @@ bool Renderer::PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) 
         PrintVkLayerProperties ( i, layerList[ i ] );
 
     return true;
+}
+
+void Renderer::PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept
+{
+    LogInfo ( ">>> Limits:" );
+
+    PrintUINT32Prop ( INDENT_1, "maxImageDimension1D", limits.maxImageDimension1D );
+    PrintUINT32Prop ( INDENT_1, "maxImageDimension2D", limits.maxImageDimension2D );
+    PrintUINT32Prop ( INDENT_1, "maxImageDimension3D", limits.maxImageDimension3D );
+    PrintUINT32Prop ( INDENT_1, "maxImageDimensionCube", limits.maxImageDimensionCube );
+    PrintUINT32Prop ( INDENT_1, "maxImageArrayLayers", limits.maxImageArrayLayers );
+    PrintUINT32Prop ( INDENT_1, "maxTexelBufferElements", limits.maxTexelBufferElements );
+    PrintUINT32Prop ( INDENT_1, "maxUniformBufferRange", limits.maxUniformBufferRange );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Prop ( INDENT_1, "maxStorageBufferRange", limits.maxStorageBufferRange );
+    PrintUINT32Prop ( INDENT_1, "maxPushConstantsSize", limits.maxPushConstantsSize );
+    PrintUINT32Prop ( INDENT_1, "maxMemoryAllocationCount", limits.maxMemoryAllocationCount );
+    PrintUINT32Prop ( INDENT_1, "maxSamplerAllocationCount", limits.maxSamplerAllocationCount );
+    PrintSizeProp ( INDENT_1, "bufferImageGranularity", static_cast<size_t> ( limits.bufferImageGranularity ) );
+    PrintSizeProp ( INDENT_1, "sparseAddressSpaceSize", static_cast<size_t> ( limits.sparseAddressSpaceSize ) );
+    PrintUINT32Prop ( INDENT_1, "maxBoundDescriptorSets", limits.maxBoundDescriptorSets );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSamplers", limits.maxPerStageDescriptorSamplers );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorUniformBuffers", limits.maxPerStageDescriptorUniformBuffers );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageBuffers", limits.maxPerStageDescriptorStorageBuffers );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorSampledImages", limits.maxPerStageDescriptorSampledImages );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorStorageImages", limits.maxPerStageDescriptorStorageImages );
+    PrintUINT32Prop ( INDENT_1, "maxPerStageDescriptorInputAttachments", limits.maxPerStageDescriptorInputAttachments );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Prop ( INDENT_1, "maxPerStageResources", limits.maxPerStageResources );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSamplers", limits.maxDescriptorSetSamplers );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetUniformBuffers", limits.maxDescriptorSetUniformBuffers );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetUniformBuffersDynamic", limits.maxDescriptorSetUniformBuffersDynamic );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageBuffers", limits.maxDescriptorSetStorageBuffers );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageBuffersDynamic", limits.maxDescriptorSetStorageBuffersDynamic );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetSampledImages", limits.maxDescriptorSetSampledImages );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetStorageImages", limits.maxDescriptorSetStorageImages );
+    PrintUINT32Prop ( INDENT_1, "maxDescriptorSetInputAttachments", limits.maxDescriptorSetInputAttachments );
+    PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributes", limits.maxVertexInputAttributes );
+    PrintUINT32Prop ( INDENT_1, "maxVertexInputBindings", limits.maxVertexInputBindings );
+    PrintUINT32Prop ( INDENT_1, "maxVertexInputAttributeOffset", limits.maxVertexInputAttributeOffset );
+    PrintUINT32Prop ( INDENT_1, "maxVertexInputBindingStride", limits.maxVertexInputBindingStride );
+    PrintUINT32Prop ( INDENT_1, "maxVertexOutputComponents", limits.maxVertexOutputComponents );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Prop ( INDENT_1, "maxTessellationGenerationLevel", limits.maxTessellationGenerationLevel );
+    PrintUINT32Prop ( INDENT_1, "maxTessellationPatchSize", limits.maxTessellationPatchSize );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationControlPerVertexInputComponents",
+        limits.maxTessellationControlPerVertexInputComponents
+    );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationControlPerVertexOutputComponents",
+        limits.maxTessellationControlPerVertexOutputComponents
+    );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationControlPerPatchOutputComponents",
+        limits.maxTessellationControlPerPatchOutputComponents
+    );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationControlTotalOutputComponents",
+        limits.maxTessellationControlTotalOutputComponents
+    );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationEvaluationInputComponents",
+        limits.maxTessellationEvaluationInputComponents
+    );
+
+    PrintUINT32Prop ( INDENT_1,
+        "maxTessellationEvaluationOutputComponents",
+        limits.maxTessellationEvaluationOutputComponents
+    );
+
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Prop ( INDENT_1, "maxGeometryShaderInvocations", limits.maxGeometryShaderInvocations );
+    PrintUINT32Prop ( INDENT_1, "maxGeometryInputComponents", limits.maxGeometryInputComponents );
+    PrintUINT32Prop ( INDENT_1, "maxGeometryOutputComponents", limits.maxGeometryOutputComponents );
+    PrintUINT32Prop ( INDENT_1, "maxGeometryOutputVertices", limits.maxGeometryOutputVertices );
+    PrintUINT32Prop ( INDENT_1, "maxGeometryTotalOutputComponents", limits.maxGeometryTotalOutputComponents );
+    PrintUINT32Prop ( INDENT_1, "maxFragmentInputComponents", limits.maxFragmentInputComponents );
+    PrintUINT32Prop ( INDENT_1, "maxFragmentOutputAttachments", limits.maxFragmentOutputAttachments );
+    PrintUINT32Prop ( INDENT_1, "maxFragmentDualSrcAttachments", limits.maxFragmentDualSrcAttachments );
+    PrintUINT32Prop ( INDENT_1, "maxFragmentCombinedOutputResources", limits.maxFragmentCombinedOutputResources );
+    PrintUINT32Prop ( INDENT_1, "maxComputeSharedMemorySize", limits.maxComputeSharedMemorySize );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupCount", limits.maxComputeWorkGroupCount );
+    PrintUINT32Prop ( INDENT_1, "maxComputeWorkGroupInvocations", limits.maxComputeWorkGroupInvocations );
+    PrintUINT32Vec3Prop ( INDENT_1, "maxComputeWorkGroupSize", limits.maxComputeWorkGroupSize );
+    PrintUINT32Prop ( INDENT_1, "subPixelPrecisionBits", limits.subPixelPrecisionBits );
+    PrintUINT32Prop ( INDENT_1, "subTexelPrecisionBits", limits.subTexelPrecisionBits );
+    PrintUINT32Prop ( INDENT_1, "mipmapPrecisionBits", limits.mipmapPrecisionBits );
+    PrintUINT32Prop ( INDENT_1, "maxDrawIndexedIndexValue", limits.maxDrawIndexedIndexValue );
+    PrintUINT32Prop ( INDENT_1, "maxDrawIndirectCount", limits.maxDrawIndirectCount );
+    PrintFloatProp ( INDENT_1, "maxSamplerLodBias", limits.maxSamplerLodBias );
+    PrintFloatProp ( INDENT_1, "maxSamplerAnisotropy", limits.maxSamplerAnisotropy );
+    PrintUINT32Prop ( INDENT_1, "maxViewports", limits.maxViewports );
+    PrintUINT32Vec2Prop ( INDENT_1, "maxViewportDimensions", limits.maxViewportDimensions );
+    PrintFloatVec2Prop ( INDENT_1, "viewportBoundsRange", limits.viewportBoundsRange );
+    PrintUINT32Prop ( INDENT_1, "viewportSubPixelBits", limits.viewportSubPixelBits );
+    PrintSizeProp ( INDENT_1, "minMemoryMapAlignment", limits.minMemoryMapAlignment );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintSizeProp ( INDENT_1,
+        "minTexelBufferOffsetAlignment",
+        static_cast<size_t> ( limits.minTexelBufferOffsetAlignment )
+    );
+
+    PrintSizeProp ( INDENT_1,
+        "minUniformBufferOffsetAlignment",
+        static_cast<size_t> ( limits.minUniformBufferOffsetAlignment )
+    );
+
+    PrintSizeProp ( INDENT_1,
+        "minStorageBufferOffsetAlignment",
+        static_cast<size_t> ( limits.minStorageBufferOffsetAlignment )
+    );
+
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintINT32Prop ( INDENT_1, "minTexelOffset", limits.minTexelOffset );
+    PrintUINT32Prop ( INDENT_1, "maxTexelOffset", limits.maxTexelOffset );
+    PrintINT32Prop ( INDENT_1, "minTexelGatherOffset", limits.minTexelGatherOffset );
+    PrintUINT32Prop ( INDENT_1, "maxTexelGatherOffset", limits.maxTexelGatherOffset );
+    PrintFloatProp ( INDENT_1, "minInterpolationOffset", limits.minInterpolationOffset );
+    PrintFloatProp ( INDENT_1, "maxInterpolationOffset", limits.maxInterpolationOffset );
+    PrintUINT32Prop ( INDENT_1, "subPixelInterpolationOffsetBits", limits.subPixelInterpolationOffsetBits );
+    PrintUINT32Prop ( INDENT_1, "maxFramebufferWidth", limits.maxFramebufferWidth );
+    PrintUINT32Prop ( INDENT_1, "maxFramebufferHeight", limits.maxFramebufferHeight );
+    PrintUINT32Prop ( INDENT_1, "maxFramebufferLayers", limits.maxFramebufferLayers );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "framebufferColorSampleCounts",
+        limits.framebufferColorSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "framebufferDepthSampleCounts",
+        limits.framebufferDepthSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "framebufferStencilSampleCounts",
+        limits.framebufferStencilSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "framebufferNoAttachmentsSampleCounts",
+        limits.framebufferNoAttachmentsSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintUINT32Prop ( INDENT_1, "maxColorAttachments", limits.maxColorAttachments );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "sampledImageColorSampleCounts",
+        limits.sampledImageColorSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "sampledImageIntegerSampleCounts",
+        limits.sampledImageIntegerSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "sampledImageDepthSampleCounts",
+        limits.sampledImageDepthSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "sampledImageStencilSampleCounts",
+        limits.sampledImageStencilSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    PrintVkFlagsProp ( INDENT_1,
+        "storageImageSampleCounts",
+        limits.storageImageSampleCounts,
+        g_vkSampleCountFlagMapper
+    );
+
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintUINT32Prop ( INDENT_1, "maxSampleMaskWords", limits.maxSampleMaskWords );
+    PrintVkBool32Prop ( INDENT_1, "timestampComputeAndGraphics", limits.timestampComputeAndGraphics );
+    PrintFloatProp ( INDENT_1, "timestampPeriod", limits.timestampPeriod );
+    PrintUINT32Prop ( INDENT_1, "maxClipDistances", limits.maxClipDistances );
+    PrintUINT32Prop ( INDENT_1, "maxCullDistances", limits.maxCullDistances );
+    PrintUINT32Prop ( INDENT_1, "maxCombinedClipAndCullDistances", limits.maxCombinedClipAndCullDistances );
+    PrintUINT32Prop ( INDENT_1, "discreteQueuePriorities", limits.discreteQueuePriorities );
+    PrintFloatVec2Prop ( INDENT_1, "pointSizeRange", limits.pointSizeRange );
+    PrintFloatVec2Prop ( INDENT_1, "lineWidthRange", limits.lineWidthRange );
+    PrintFloatProp ( INDENT_1, "pointSizeGranularity", limits.pointSizeGranularity );
+    PrintFloatProp ( INDENT_1, "lineWidthGranularity", limits.lineWidthGranularity );
+    PrintVkBool32Prop ( INDENT_1, "strictLines", limits.strictLines );
+    PrintVkBool32Prop ( INDENT_1, "standardSampleLocations", limits.standardSampleLocations );
+    std::this_thread::sleep_for ( ANTISPAM_DELAY );
+
+    PrintSizeProp ( INDENT_1,
+        "optimalBufferCopyOffsetAlignment",
+        static_cast<size_t> ( limits.optimalBufferCopyOffsetAlignment )
+    );
+
+    PrintSizeProp ( INDENT_1,
+        "optimalBufferCopyRowPitchAlignment",
+        static_cast<size_t> ( limits.optimalBufferCopyRowPitchAlignment )
+    );
+
+    PrintSizeProp ( INDENT_1, "nonCoherentAtomSize", static_cast<size_t> ( limits.nonCoherentAtomSize ) );
+}
+
+void Renderer::PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept
+{
+    VkPhysicalDeviceMemoryProperties memProps;
+    vkGetPhysicalDeviceMemoryProperties ( physicalDevice, &memProps );
+
+    LogInfo ( ">>> Memory properties:" );
+    PrintUINT32Prop ( INDENT_1, "memoryTypeCount", memProps.memoryTypeCount );
+
+    for ( uint32_t i = 0U; i < memProps.memoryTypeCount; ++i )
+    {
+        VkMemoryType const &type = memProps.memoryTypes[ i ];
+        LogInfo ( "%smemoryType: #%u", INDENT_2, i );
+
+        PrintVkFlagsProp ( INDENT_3, "memoryTypes", type.propertyFlags, g_vkMemoryPropertyFlagBitsMapper );
+        PrintUINT32Prop ( INDENT_3, "heapIndex", type.heapIndex );
+    }
+
+    PrintUINT32Prop ( INDENT_1, "memoryHeapCount", memProps.memoryHeapCount );
+
+    for ( uint32_t i = 0U; i < memProps.memoryHeapCount; ++i )
+    {
+        VkMemoryHeap const &heap = memProps.memoryHeaps[ i ];
+
+        LogInfo ( "%smemoryHeap: #%u", INDENT_2, i );
+        PrintSizeProp ( INDENT_3, "size", static_cast<size_t> ( heap.size ) );
+        PrintVkFlagsProp ( INDENT_3, "memoryTypes", heap.flags, g_vkMemoryHeapFlagBitsMapper );
+    }
 }
 
 void Renderer::PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,

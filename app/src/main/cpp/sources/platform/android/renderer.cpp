@@ -185,6 +185,8 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
         VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
         VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
         VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME,
+        VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+        VK_KHR_SPIRV_1_4_EXTENSION_NAME,
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
@@ -249,8 +251,10 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
     return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions ) ) &
         AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SPIRV_1_4_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
         AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32" ) );
         AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) );

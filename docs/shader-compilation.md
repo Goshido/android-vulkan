@@ -45,7 +45,7 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 **Note:** the project is using `Vulkan 1.1` as target platform. To enable this feature you have to specify the following _DXC_ flag:
 
 ```txt
--fspv-target-env=vulkan1.1
+-fspv-target-env=vulkan1.1spirv1.4
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -58,7 +58,7 @@ dxc.exe                                                         ^
     -spirv                                                      ^
     -fvk-use-dx-layout                                          ^
     -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1                                  ^
+    -fspv-target-env=vulkan1.1spirv1.4                          ^
     -ffinite-math-only                                          ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
@@ -82,7 +82,7 @@ dxc.exe                                                         ^
     -spirv                                                      ^
     -fvk-use-dx-layout                                          ^
     -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1                                  ^
+    -fspv-target-env=vulkan1.1spirv1.4                          ^
     -ffinite-math-only                                          ^
     -enable-16bit-types                                         ^
     -WX                                                         ^
@@ -106,7 +106,7 @@ dxc.exe                                                         ^
     -spirv                                                      ^
     -fvk-use-dx-layout                                          ^
     -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1                                  ^
+    -fspv-target-env=vulkan1.1spirv1.4                          ^
     -ffinite-math-only                                          ^
     -enable-16bit-types                                         ^
     -WX                                                         ^

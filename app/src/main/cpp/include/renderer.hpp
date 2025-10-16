@@ -292,9 +292,6 @@ class Renderer final
 
         [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
         void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
-
-        void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept;
-        void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept;
         [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept;
 
         [[nodiscard]] bool SelectTargetCompositeAlpha (
@@ -324,6 +321,8 @@ class Renderer final
         ) noexcept;
 
         [[nodiscard]] static bool PrintPhysicalDeviceLayerInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        static void PrintPhysicalDeviceLimits ( VkPhysicalDeviceLimits const &limits ) noexcept;
+        static void PrintPhysicalDeviceMemoryProperties ( VkPhysicalDevice physicalDevice ) noexcept;
 
         static void PrintPhysicalDeviceQueueFamilyInfo ( uint32_t queueFamilyIndex,
             VkQueueFamilyProperties const &props

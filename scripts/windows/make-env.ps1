@@ -21,7 +21,7 @@ $global:FLAGS =
     "-spirv",
     "-fvk-use-dx-layout",
     "-fspv-reduce-load-size",
-    "-fspv-target-env=vulkan1.1",
+    "-fspv-target-env=vulkan1.1spirv1.4",
     "-ffinite-math-only",
     "-enable-16bit-types",
     "-WX",

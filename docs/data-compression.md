@@ -37,9 +37,9 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.911 ms | -0.934 ms🟢 | -5.2%🟢 | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.301 ms | -2.043 ms🟢 | -11.8%🟢 | <img src="./images/compression-skeletal.png" width="100">
-_World 1-1_ | 9.477 ms | 11.152 ms | +1.675 ms🔺 | +17.7%🔺 | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 17.846 ms | 16.661 ms | -1.185 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.055 ms | -2.289 ms🟢 | -13.2%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.477 ms | 10.504 ms | +1.027🔺 | +10.8%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
 

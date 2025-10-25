@@ -7,7 +7,7 @@ namespace pbr {
 class ExposureSpecialization final
 {
     public:
-        uint32_t        _workgroupCount = 0U;
+        uint32_t        _lastWorkgroupIndex = 0U;
 
         VkExtent2D      _mip5Resolution
         {

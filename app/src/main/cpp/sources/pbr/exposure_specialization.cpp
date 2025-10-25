@@ -18,7 +18,7 @@ ExposureSpecialization::ExposureSpecialization ( VkExtent3D &dispatch,
         .depth = 1U
     };
 
-    _workgroupCount = dispatch.width * dispatch.height;
+    _lastWorkgroupIndex = dispatch.width * dispatch.height - 1U;
 
     // mip 0
     VkExtent2D r

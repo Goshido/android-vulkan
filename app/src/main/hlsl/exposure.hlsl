@@ -13,8 +13,8 @@
 // It prevents log2 ( 0.0H ).
 #define SAFE_LUMA           9.7656e-4H
 
-[[vk::constant_id ( CONST_WORKGROUP_COUNT )]]
-uint32_t const              g_workgroupCount = 256U;
+[[vk::constant_id ( CONST_LAST_WORKGROUP_INDEX )]]
+uint32_t const              g_lastWorkgroupIndex = 256U;
 
 [[vk::constant_id ( CONST_MIP_5_W )]]
 uint32_t const              g_mip5W = 32U;
@@ -132,7 +132,7 @@ bool ExitWorkgroup ( in globallycoherent RWStructuredBuffer<uint32_t> globalAtom
         InterlockedAdd ( globalAtomic[ 0U ], 1U, s_counter );
 
     GroupMemoryBarrierWithGroupSync ();
-    return s_counter != g_workgroupCount;
+    return s_counter != g_lastWorkgroupIndex;
 }
 
 void DownsampleMips01 ( in Texture2D<float32_t4> hdrImage,
@@ -309,7 +309,10 @@ void Execute ( in Texture2D<float32_t4> hdrImage,
 
     float32_t const luma = clamp ( eyeLuma - exposureCompensation, minLuma, maxLuma );
     float32_t const keyValue = 1.03F + ( -2.0F / ( log10 ( eyeLuma + 1.0F ) + 2.0F ) );
-    exposure[ 0U ] = max ( keyValue / luma, SAFE_EXPOSURE );
+
+    // Trick to avoid NaN leaking and ruin HDR pipeline due to numeric precision rounding errors.
+    float32_t const rawExposure[ 2U ] = { max ( keyValue / luma, SAFE_EXPOSURE ), SAFE_EXPOSURE };
+    exposure[ 0U ] = rawExposure[ (uint16_t)isnan ( rawExposure[ 0U ] ) ];
 
     // Reset the global atomic counter back to 0 for the next SPD dispatch.
     globalAtomic[ 0U ] = 0U;

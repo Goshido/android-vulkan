@@ -130,9 +130,9 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     constexpr static VkSpecializationMapEntry const entries[] =
     {
         {
-            .constantID = CONST_WORKGROUP_COUNT,
-            .offset = static_cast<uint32_t> ( offsetof ( ExposureSpecialization, _workgroupCount ) ),
-            .size = sizeof ( ExposureSpecialization::_workgroupCount )
+            .constantID = CONST_LAST_WORKGROUP_INDEX,
+            .offset = static_cast<uint32_t> ( offsetof ( ExposureSpecialization, _lastWorkgroupIndex ) ),
+            .size = sizeof ( ExposureSpecialization::_lastWorkgroupIndex )
         },
         {
             .constantID = CONST_MIP_5_W,

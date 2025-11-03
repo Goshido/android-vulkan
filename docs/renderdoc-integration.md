@@ -73,7 +73,7 @@ Here's a step-by-step guide on how to do this with minimal system intervention:
 # Forcing RenderDoc to use custom dxc.exe
 $env:Path = "$env:ANDROID_VULKAN_DXC_ROOT;$env:Path"
 
-Push-Location <path to dxc.exe directory>
+Push-Location <path to RenderDoc's directory>
 
 # For example:
 # Push-Location "D:\Programs\RenderDoc"

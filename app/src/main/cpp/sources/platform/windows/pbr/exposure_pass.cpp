@@ -143,36 +143,11 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer,
     uint32_t hdrImageIndex
 ) noexcept
 {
-    VkDevice device = renderer.GetDevice ();
     _exposureInfo._hdrImage = hdrImageIndex;
 
-    VkExtent2D mipResolution;
-    ExposureSpecialization const specData ( _dispatch, mipResolution, hdrImage.GetResolution () );
-
-    return UpdateSyncMip5 ( renderer, device, resourceHeap, specData._mip5Resolution ) &&
-
-        UpdateMipCount ( device,
-            static_cast<uint32_t> ( android_vulkan::Texture2D::CountMipLevels ( mipResolution ) ),
-            specData
-        );
-}
-
-VkExtent2D ExposurePass::AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept
-{
-    constexpr auto adjust = [] ( uint32_t size ) constexpr -> uint32_t {
-        constexpr uint32_t blockSize64Shift = 6U;
-        constexpr uint32_t roundUP = ( 1U << blockSize64Shift ) - 1U;
-
-        return std::max ( 512U,
-            std::min ( 4095U, std::max ( 1U, ( size + roundUP ) >> blockSize64Shift ) << blockSize64Shift )
-        );
-    };
-
-    return VkExtent2D
-    {
-        .width = adjust ( desiredResolution.width ),
-        .height = adjust ( desiredResolution.height )
-    };
+    ExposureSpecialization const specData ( hdrImage.GetResolution () );
+    _dispatch = specData._dispatch;
+    return UpdateSyncMip5 ( renderer, resourceHeap, specData );
 }
 
 bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
@@ -644,32 +619,17 @@ void ExposurePass::SyncBefore ( VkCommandBuffer commandBuffer ) noexcept
     _isNeedTransitLayout = false;
 }
 
-bool ExposurePass::UpdateMipCount ( VkDevice device,
-    uint32_t mipCount,
+bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
+    ResourceHeap &resourceHeap,
     ExposureSpecialization const &specInfo
 ) noexcept
 {
-    if ( mipCount == _mipCount )
+    VkExtent2D const &mip5 = specInfo._mip5Resolution;
+
+    if ( ( mip5.width == _mip5resolution.width ) & ( mip5.height == _mip5resolution.height ) ) [[unlikely]]
         return true;
 
-    _program.Destroy ( device );
-
-    if ( !_program.Init ( device, &specInfo ) ) [[unlikely]]
-        return false;
-
-    _mipCount = mipCount;
-    return true;
-}
-
-bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
-    VkDevice device,
-    ResourceHeap &resourceHeap,
-    VkExtent2D const &resolution
-) noexcept
-{
-    if ( resolution.width == _mip5resolution.width && resolution.height == _mip5resolution.height ) [[unlikely]]
-        return true;
-
+    VkDevice device = renderer.GetDevice ();
     FreeTargetResources ( renderer, device, resourceHeap );
 
     VkImageCreateInfo const imageInfo
@@ -682,8 +642,8 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
 
         .extent
         {
-            .width = resolution.width,
-            .height = resolution.height,
+            .width = mip5.width,
+            .height = mip5.height,
             .depth = 1U
         },
 
@@ -773,8 +733,10 @@ bool ExposurePass::UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _syncMip5View, VK_OBJECT_TYPE_IMAGE_VIEW, "Exposure mip #5" )
     _isNeedTransitLayout = true;
-    _mip5resolution = resolution;
-    return true;
+    _mip5resolution = mip5;
+
+    _program.Destroy ( device );
+    return _program.Init ( device, &specInfo );
 }
 
 float ExposurePass::ExposureValueToLuma ( float exposureValue ) noexcept

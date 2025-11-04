@@ -32,6 +32,7 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 {
     size_t const imageCount = renderer.GetPresentImageCount ();
     size_t const semaphoreCount = _renderEnd.size ();
+    _renderingInfo.renderArea.extent = renderer.GetSurfaceSize ();
 
     if ( imageCount <= semaphoreCount ) [[likely]]
         return true;
@@ -63,7 +64,6 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
         AV_SET_VULKAN_OBJECT_NAME ( device, semaphore, VK_OBJECT_TYPE_SEMAPHORE, "Swapchain image #%zu", i )
     }
 
-    _renderingInfo.renderArea.extent = renderer.GetSurfaceSize ();
     return true;
 }
 

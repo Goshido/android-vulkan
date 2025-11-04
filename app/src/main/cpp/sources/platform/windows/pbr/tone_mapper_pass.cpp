@@ -24,30 +24,37 @@ bool ToneMapperPass::SetBrightness ( android_vulkan::Renderer const &renderer, f
 {
     _brightnessInfo = BrightnessInfo ( brightnessBalance );
 
-    VkDevice device = renderer.GetDevice ();
-    _program.Destroy ( device );
-
-    bool const result = _program.Init ( device,
-        renderer.GetSurfaceFormat (),
-        _brightnessInfo,
-        renderer.GetSurfaceSize ()
-    );
-
-    if ( !result ) [[unlikely]]
+    if ( !RecreateProgram ( renderer ) ) [[unlikely]]
         return false;
 
     UpdateTransform ( renderer );
     return true;
 }
 
-void ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
+bool ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
     uint32_t hdrImage,
     uint32_t exposure
 ) noexcept
 {
+    if ( !RecreateProgram ( renderer ) ) [[unlikely]]
+        return false;
+
     _pushConstants._exposure = exposure;
     _pushConstants._hdrImage = hdrImage;
     UpdateTransform ( renderer );
+    return true;
+}
+
+bool ToneMapperPass::RecreateProgram ( android_vulkan::Renderer const& renderer ) noexcept
+{
+    VkDevice device = renderer.GetDevice ();
+    _program.Destroy ( device );
+
+    return _program.Init ( device,
+        renderer.GetSurfaceFormat (),
+        _brightnessInfo,
+        renderer.GetSurfaceSize ()
+    );
 }
 
 void ToneMapperPass::UpdateTransform ( android_vulkan::Renderer const &renderer ) noexcept

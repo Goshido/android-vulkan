@@ -9,6 +9,19 @@ class ExposureSpecialization final
     public:
         uint32_t        _lastWorkgroupIndex = 0U;
 
+        VkExtent3D      _dispatch
+        {
+            .width = 0U,
+            .height = 0U,
+            .depth = 0U
+        };
+
+        VkExtent2D      _mip0Resolution
+        {
+            .width = 0U,
+            .height = 0U
+        };
+
         VkExtent2D      _mip5Resolution
         {
             .width = 0U,
@@ -27,10 +40,7 @@ class ExposureSpecialization final
         ExposureSpecialization ( ExposureSpecialization && ) = delete;
         ExposureSpecialization &operator = ( ExposureSpecialization && ) = delete;
 
-        explicit ExposureSpecialization ( VkExtent3D &dispatch,
-            VkExtent2D &mipChainResolution,
-            VkExtent2D const &imageResolution
-        ) noexcept;
+        explicit ExposureSpecialization ( VkExtent2D const &imageResolution ) noexcept;
 
         ~ExposureSpecialization () = default;
 };

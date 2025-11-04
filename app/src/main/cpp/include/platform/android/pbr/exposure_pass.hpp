@@ -33,7 +33,6 @@ class ExposurePass final
         ExposureProgram::PushConstants      _exposureInfo {};
         float                               _eyeAdaptationSpeed = 1.0F;
 
-        uint32_t                            _mipCount = 0U;
         VkImage                             _syncMip5 = VK_NULL_HANDLE;
         VkImageView                         _syncMip5View = VK_NULL_HANDLE;
         Memory                              _syncMip5Memory {};
@@ -80,10 +79,6 @@ class ExposurePass final
             android_vulkan::Texture2D const &hdrImage
         ) noexcept;
 
-        // This method makes sure that target resolution will be compatible with internal implementation.
-        // Hint: Resolution should be multiple of 64 pixels, not less than 512 and not bigger that 4095.
-        [[nodiscard]] static VkExtent2D AdjustResolution ( VkExtent2D const &desiredResolution ) noexcept;
-
     private:
         [[nodiscard]] bool CreateDescriptorSet ( VkDevice device ) noexcept;
         [[nodiscard]] bool CreateExposureResources ( android_vulkan::Renderer &renderer, VkDevice device ) noexcept;
@@ -99,15 +94,9 @@ class ExposurePass final
 
         void SyncBefore ( VkCommandBuffer commandBuffer ) noexcept;
 
-        [[nodiscard]] bool UpdateMipCount ( android_vulkan::Renderer &renderer,
-            VkDevice device,
-            uint32_t mipCount,
-            ExposureSpecialization const &specInfo
-        ) noexcept;
-
         [[nodiscard]] bool UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
             VkDevice device,
-            VkExtent2D const &resolution
+            ExposureSpecialization const &specInfo
         ) noexcept;
 
         [[nodiscard]] static float ExposureValueToLuma ( float exposureValue ) noexcept;

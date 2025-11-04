@@ -446,7 +446,8 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
 bool RenderSession::CreateRenderTarget () noexcept
 {
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
-    resolution = pbr::ExposurePass::AdjustResolution ( _renderer.GetSurfaceSize () );
+    pbr::ExposureSpecialization const specData ( _renderer.GetSurfaceSize () );
+    resolution = specData._mip0Resolution;
 
     if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
         return false;
@@ -692,6 +693,7 @@ bool RenderSession::InitModules () noexcept
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
+        _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
@@ -700,8 +702,6 @@ bool RenderSession::InitModules () noexcept
 
     if ( !result ) [[unlikely]]
         return false;
-
-    _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () );
 
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
@@ -1042,8 +1042,9 @@ void RenderSession::OnSwapchainCreated () noexcept
         return;
     }
 
+    pbr::ExposureSpecialization const specData ( renderer.GetSurfaceSize () );
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
-    resolution = pbr::ExposurePass::AdjustResolution ( _renderer.GetSurfaceSize () );
+    resolution = specData._mip0Resolution;
 
     _viewport =
     {
@@ -1068,11 +1069,11 @@ void RenderSession::OnSwapchainCreated () noexcept
 
     _uiPass.OnSwapchainDestroyed ();
 
-    if ( _uiPass.OnSwapchainCreated ( renderer ) ) [[likely]]
-    {
+    bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
         _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () );
+
+    if ( result ) [[likely]]
         return;
-    }
 
     android_vulkan::LogError ( "editor::RenderSession::OnSwapchainCreated - Can't create UI pass." );
     AV_ASSERT ( false )

@@ -233,7 +233,8 @@ bool RenderSession::OnSwapchainCreated ( android_vulkan::Renderer &renderer,
     VkExtent2D const &resolution
 ) noexcept
 {
-    VkExtent2D const newResolution = ExposurePass::AdjustResolution ( resolution );
+    pbr::ExposureSpecialization const specData ( resolution );
+    VkExtent2D const newResolution = specData._mip0Resolution;
     VkExtent2D const &currentResolution = _gBuffer.GetResolution ();
 
     bool const hasChanges = ( currentResolution.width != newResolution.width ) |

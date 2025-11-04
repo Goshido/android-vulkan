@@ -30,9 +30,10 @@ class ToneMapperPass final
         void Execute ( VkCommandBuffer commandBuffer, ResourceHeap &resourceHeap ) noexcept;
 
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer const &renderer, float brightnessBalance ) noexcept;
-        void SetTarget ( android_vulkan::Renderer const &renderer, uint32_t hdrImage, uint32_t exposure ) noexcept;
+        [[nodiscard]] bool SetTarget ( android_vulkan::Renderer const &renderer, uint32_t hdrImage, uint32_t exposure ) noexcept;
 
     private:
+        [[nodiscard]] bool RecreateProgram ( android_vulkan::Renderer const &renderer ) noexcept;
         void UpdateTransform ( android_vulkan::Renderer const &renderer ) noexcept;
 };
 

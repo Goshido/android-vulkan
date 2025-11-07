@@ -151,5 +151,7 @@ No resource type and name in error message | [#8139](https://github.com/KhronosG
 VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8970) | 🛡️ Not an issue
 Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted
 `vkCmdSetDescriptorBufferOffsetsEXT` crash | [#10697](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/10697) | 🛡️ Not an issue
+Breakpoint option does not work | [#11010](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11010) | ⚠️ Submitted
+Sync validation does not work anymore | [#11011](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11011) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

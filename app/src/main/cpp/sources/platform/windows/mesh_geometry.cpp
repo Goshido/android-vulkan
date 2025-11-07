@@ -483,7 +483,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         .size = last._dstOffset + last._size
     };
 
-    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT ) |
+    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
         AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT );
 
     vkCmdPipelineBarrier ( commandBuffer,

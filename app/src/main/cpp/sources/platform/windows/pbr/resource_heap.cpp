@@ -607,41 +607,12 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     data.pSampler = &_shadowSampler.GetSampler ();
     vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * SHADOW_SAMPLER );
 
+    // Note the sync barrier is not needed according to Vulkan spec.
+    // From 'vkCmdSetDescriptorBufferOffsetsEXT' definition:
+    //      For descriptors written by the host, visibility is implied through the automatic visibility operation on
+    //      queue submit, and there is no need to consider VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT. Explicit
+    //      synchronization for descriptors is only required when descriptors are updated on the device.
     vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
-
-    VkBufferMemoryBarrier2 const barrier
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-        .pNext = nullptr,
-        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-
-        .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT ),
-
-        .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .buffer = _descriptorBuffer._buffer,
-        .offset = copy.dstOffset,
-        .size = copy.size
-    };
-
-    VkDependencyInfo const dependencies
-    {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .pNext = nullptr,
-        .dependencyFlags = 0U,
-        .memoryBarrierCount = 0U,
-        .pMemoryBarriers = nullptr,
-        .bufferMemoryBarrierCount = 1U,
-        .pBufferMemoryBarriers = &barrier,
-        .imageMemoryBarrierCount = 0U,
-        .pImageMemoryBarriers = nullptr
-    };
-
-    vkCmdPipelineBarrier2 ( commandBuffer, &dependencies );
     return true;
 }
 

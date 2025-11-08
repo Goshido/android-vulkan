@@ -209,7 +209,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -255,7 +255,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -302,7 +302,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -352,7 +352,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -398,7 +398,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -444,7 +444,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
@@ -490,7 +490,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
@@ -536,7 +536,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(SoludtionDir)..\..\app\src\main\cpp\include;$(SoludtionDir)..\..\app\src\main\cpp\include\freetype2;$(SoludtionDir)..\..\app\src\main\cpp\templates;$(SoludtionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\include\freetype2;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;$(VULKAN_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>

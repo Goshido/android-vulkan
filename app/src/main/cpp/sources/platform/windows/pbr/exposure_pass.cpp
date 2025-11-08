@@ -36,15 +36,15 @@ void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime, Res
     vkCmdDispatch ( commandBuffer, _dispatch.width, _dispatch.height, _dispatch.depth );
 
     vkCmdPipelineBarrier ( commandBuffer,
-       VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-       0U,
-       0U,
-       nullptr,
-       1U,
-       &_exposureAfterBarrier,
-       0U,
-       nullptr
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &_exposureAfterBarrier,
+        0U,
+        nullptr
     );
 }
 

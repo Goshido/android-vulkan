@@ -6,7 +6,7 @@ buildscript {
         mavenCentral()
     }
 
-    ext.kotlin_version = "2.2.20"
+    ext.kotlin_version = "2.2.21"
 
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'

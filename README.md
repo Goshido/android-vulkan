@@ -38,7 +38,7 @@ Pay attention that all 3<sup>rd</sup> party libraries are prebuilt already and p
 * _Kotlin 2.2.20_
 * _Kotlin Gradle plugin 2.2.20_
 * _CMake 4.1.2_
-* [_PowerShell 7.5.3_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.3)
+* [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
 * [_Gradle 9.1.0-bin_](https://services.gradle.org/distributions/)
 * [_DirectX Shader Compiler 1.8.2505.10149_](https://github.com/microsoft/DirectXShaderCompiler) `0bf8434bc3b57a0b99477162dfe54673d9b5153b`
 * [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `4334f009e7d20789cc7ee1224290ea1e22a17b5b`

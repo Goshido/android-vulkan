@@ -28,6 +28,7 @@
     - C++ core features
     - Windows 11 SDK (10.0.26100.0)
     - Windows Universal C Runtime
+* [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
 * [_RenderDoc v1.40_](https://renderdoc.org/)
 * [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2509.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
@@ -51,7 +52,15 @@ This script gonna create symbolic links for:
 - [_PIX_](https://devblogs.microsoft.com/pix/) tooling library for _CPU_ tracing
 - 3rd-party libraries
 
-Next step is to compile project via _Visual Studio_ as usual.
+Open and compile `<repo>\tools\editor\editor.sln` solution via _Visual Studio_ as usual.
+
+Last step is to edit _Visual Studio_ active configuration and specify working directory for `editor.exe`:
+
+**_`editor` project properties_** → **_Debugging_** → **_Working Directory_** → **_Set to_** `$(OutputPath)`
+
+ℹ️ Note: You need to do this once for every configuration.
+
+That's it.
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -114,6 +114,7 @@ bool ResourceHeap::Slots::IsFull () const noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
+    VkBuffer descriptorBuffer,
     size_t resourceCapacity,
     size_t resourceSize,
     VkDeviceSize gpuResourceOffset
@@ -121,6 +122,27 @@ bool ResourceHeap::Write::Init ( android_vulkan::Renderer &renderer,
 {
     _gpuResourceOffset = gpuResourceOffset;
     _resourceSize = static_cast<VkDeviceSize> ( resourceSize );
+
+    _barriers.resize ( resourceCapacity,
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+
+            .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+                VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+                VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+
+            .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = descriptorBuffer,
+            .offset = 0U,
+            .size = 0U
+        }
+    );
+
     _copy.resize ( resourceCapacity );
     _stagingBufferSize = resourceCapacity * resourceSize;
 
@@ -163,7 +185,7 @@ uint8_t* ResourceHeap::Write::GetStagingMemory () const noexcept
     return _stagingMemory;
 }
 
-void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descriptorBuffer ) noexcept
+void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( _written == 0U ) [[likely]]
         return;
@@ -175,41 +197,51 @@ void ResourceHeap::Write::Upload ( VkCommandBuffer commandBuffer, VkBuffer descr
     size_t const cases[] = { 0U, idx - count };
     size_t const more = cases[ static_cast<size_t> ( idx > count ) ];
 
+    VkBufferMemoryBarrier2 const* barriers = _barriers.data ();
     VkBufferCopy const* copy = _copy.data ();
+
     VkBuffer buffer = _stagingBuffer._buffer;
+    VkBuffer descriptorBuffer = barriers->buffer;
+    uint32_t const writeCount = static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more );
+    size_t const offset = std::exchange ( _readIndex, _writeIndex );
 
-    vkCmdCopyBuffer ( commandBuffer,
-        buffer,
-        descriptorBuffer,
-        static_cast<uint32_t> ( std::exchange ( _written, 0U ) - more ),
-        copy + std::exchange ( _readIndex, _writeIndex )
-    );
+    vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, writeCount, copy + offset );
 
-    // Note the sync barrier is not needed according to Vulkan spec.
-    // From 'vkCmdSetDescriptorBufferOffsetsEXT' definition:
-    //      For descriptors written by the host, visibility is implied through the automatic visibility operation on
-    //      queue submit, and there is no need to consider VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT. Explicit
-    //      synchronization for descriptors is only required when descriptors are updated on the device.
+    _dependency.bufferMemoryBarrierCount = writeCount;
+    _dependency.pBufferMemoryBarriers = barriers + offset;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_dependency );
 
-    if ( more >= 1U ) [[unlikely]]
-    {
-        vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, static_cast<uint32_t> ( more ), copy );
-    }
+    if ( more < 1U ) [[likely]]
+        return;
+
+    auto const left = static_cast<uint32_t> ( more );
+    vkCmdCopyBuffer ( commandBuffer, buffer, descriptorBuffer, left, copy );
+
+    _dependency.bufferMemoryBarrierCount = left;
+    _dependency.pBufferMemoryBarriers = barriers;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_dependency );
 }
 
 void* ResourceHeap::Write::Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept
 {
-    VkDeviceSize const offset = _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
+    VkDeviceSize const srcOffset = _resourceSize * static_cast<VkDeviceSize> ( _writeIndex );
+    VkDeviceSize const dstOffset = _gpuResourceOffset + _resourceSize * static_cast<VkDeviceSize> ( resourceIndex );
+    auto const size = static_cast<VkDeviceSize> ( descriptorSize );
+    size_t const idx = std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () );
 
-    _copy[ std::exchange ( _writeIndex, ( _writeIndex + 1U ) % _copy.size () ) ] =
+    _copy[ idx ] =
     {
-        .srcOffset = offset,
-        .dstOffset = _gpuResourceOffset + _resourceSize * static_cast<VkDeviceSize> ( resourceIndex ),
-        .size = static_cast<VkDeviceSize> ( descriptorSize )
+        .srcOffset = srcOffset,
+        .dstOffset = dstOffset,
+        .size = size
     };
 
+    VkBufferMemoryBarrier2 &b = _barriers[ idx ];
+    b.offset = dstOffset;
+    b.size = size;
+
     ++_written;
-    return _stagingMemory + static_cast<size_t> ( offset );
+    return _stagingMemory + static_cast<size_t> ( srcOffset );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -288,6 +320,7 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
         ) &&
 
         _write.Init ( renderer,
+            _descriptorBuffer._buffer,
             resourceCapacity,
             std::max ( { _sampledImageSize, _storageImageSize, _bufferSize } ),
             resourceOffset
@@ -415,7 +448,7 @@ void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
 
 void ResourceHeap::UploadGPUData ( VkCommandBuffer commandBuffer ) noexcept
 {
-    _write.Upload ( commandBuffer, _descriptorBuffer._buffer );
+    _write.Upload ( commandBuffer );
 }
 
 bool ResourceHeap::InitInternalStructures ( VkDevice device, size_t resourceCapacity ) noexcept
@@ -607,12 +640,41 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
     data.pSampler = &_shadowSampler.GetSampler ();
     vkGetDescriptorEXT ( device, &getInfo, samplerSize, stagingMemory + samplerSize * SHADOW_SAMPLER );
 
-    // Note the sync barrier is not needed according to Vulkan spec.
-    // From 'vkCmdSetDescriptorBufferOffsetsEXT' definition:
-    //      For descriptors written by the host, visibility is implied through the automatic visibility operation on
-    //      queue submit, and there is no need to consider VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT. Explicit
-    //      synchronization for descriptors is only required when descriptors are updated on the device.
     vkCmdCopyBuffer ( commandBuffer, _write.GetStagingBuffer (), _descriptorBuffer._buffer, 1U, &copy );
+
+    VkBufferMemoryBarrier2 const barrier
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = nullptr,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+
+        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+
+        .dstAccessMask = VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .buffer = _descriptorBuffer._buffer,
+        .offset = samplerOffset,
+        .size = copy.size
+    };
+
+    VkDependencyInfo const dependency
+    {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .pNext = nullptr,
+        .dependencyFlags = 0U,
+        .memoryBarrierCount = 0U,
+        .pMemoryBarriers = nullptr,
+        .bufferMemoryBarrierCount = 1U,
+        .pBufferMemoryBarriers = &barrier,
+        .imageMemoryBarrierCount = 0U,
+        .pImageMemoryBarriers = nullptr
+    };
+
+    vkCmdPipelineBarrier2 ( commandBuffer, &dependency );
     return true;
 }
 

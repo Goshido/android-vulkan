@@ -26,9 +26,9 @@ class ResourceHeap final
         class Buffer final
         {
             public:
-                VkBuffer                        _buffer = VK_NULL_HANDLE;
-                VkDeviceMemory                  _memory = VK_NULL_HANDLE;
-                VkDeviceSize                    _offset = 0U;
+                VkBuffer                                _buffer = VK_NULL_HANDLE;
+                VkDeviceMemory                          _memory = VK_NULL_HANDLE;
+                VkDeviceSize                            _offset = 0U;
 
             public:
                 explicit Buffer () = default;
@@ -54,8 +54,8 @@ class ResourceHeap final
         class Slots final
         {
             private:
-                std::list<uint32_t>             _free {};
-                std::list<uint32_t>             _used {};
+                std::list<uint32_t>                     _free {};
+                std::list<uint32_t>                     _used {};
 
             public:
                 explicit Slots () = default;
@@ -78,17 +78,32 @@ class ResourceHeap final
         class Write final
         {
             private:
-                std::vector<VkBufferCopy>       _copy {};
-                size_t                          _readIndex = 0U;
-                size_t                          _writeIndex = 0U;
-                size_t                          _written = 0U;
+                std::vector<VkBufferMemoryBarrier2>     _barriers {};
+                std::vector<VkBufferCopy>               _copy {};
 
-                VkDeviceSize                    _gpuResourceOffset = 0U;
-                VkDeviceSize                    _resourceSize = 0U;
+                size_t                                  _readIndex = 0U;
+                size_t                                  _writeIndex = 0U;
+                size_t                                  _written = 0U;
 
-                Buffer                          _stagingBuffer {};
-                size_t                          _stagingBufferSize = 0U;
-                uint8_t*                        _stagingMemory = nullptr;
+                VkDeviceSize                            _gpuResourceOffset = 0U;
+                VkDeviceSize                            _resourceSize = 0U;
+
+                Buffer                                  _stagingBuffer {};
+                size_t                                  _stagingBufferSize = 0U;
+                uint8_t*                                _stagingMemory = nullptr;
+
+                VkDependencyInfo                        _dependency
+                {
+                    .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+                    .pNext = nullptr,
+                    .dependencyFlags = 0U,
+                    .memoryBarrierCount = 0U,
+                    .pMemoryBarriers = nullptr,
+                    .bufferMemoryBarrierCount = 0U,
+                    .pBufferMemoryBarriers = nullptr,
+                    .imageMemoryBarrierCount = 0U,
+                    .pImageMemoryBarriers = nullptr
+                };
 
             public:
                 explicit Write () = default;
@@ -102,6 +117,7 @@ class ResourceHeap final
                 ~Write () = default;
 
                 [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+                    VkBuffer descriptorBuffer,
                     size_t resourceCapacity,
                     size_t resourceSize,
                     VkDeviceSize gpuResourceOffset
@@ -113,30 +129,30 @@ class ResourceHeap final
                 [[nodiscard]] size_t GetStagingBufferSize () const noexcept;
                 [[nodiscard]] uint8_t* GetStagingMemory () const noexcept;
 
-                void Upload ( VkCommandBuffer commandBuffer, VkBuffer descriptorBuffer ) noexcept;
+                void Upload ( VkCommandBuffer commandBuffer ) noexcept;
                 [[nodiscard]] void* Push ( uint32_t resourceIndex, size_t descriptorSize ) noexcept;
         };
 
     private:
-        Sampler                                 _clampToEdgeSampler {};
-        Sampler                                 _cubemapSampler {};
-        Sampler                                 _materialSampler {};
-        Sampler                                 _pointSampler {};
-        Sampler                                 _shadowSampler {};
+        Sampler                                         _clampToEdgeSampler {};
+        Sampler                                         _cubemapSampler {};
+        Sampler                                         _materialSampler {};
+        Sampler                                         _pointSampler {};
+        Sampler                                         _shadowSampler {};
 
-        Buffer                                  _descriptorBuffer {};
-        ResourceHeapDescriptorSetLayout         _layout {};
+        Buffer                                          _descriptorBuffer {};
+        ResourceHeapDescriptorSetLayout                 _layout {};
 
-        Slots                                   _nonUISlots {};
-        Slots                                   _uiSlots {};
+        Slots                                           _nonUISlots {};
+        Slots                                           _uiSlots {};
 
-        size_t                                  _bufferSize = 0U;
-        size_t                                  _sampledImageSize = 0U;
-        size_t                                  _storageImageSize = 0U;
+        size_t                                          _bufferSize = 0U;
+        size_t                                          _sampledImageSize = 0U;
+        size_t                                          _storageImageSize = 0U;
 
-        Write                                   _write {};
+        Write                                           _write {};
 
-        VkDescriptorBufferBindingInfoEXT        _bindingInfo
+        VkDescriptorBufferBindingInfoEXT                _bindingInfo
         {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT,
             .pNext = nullptr,

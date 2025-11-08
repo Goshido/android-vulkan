@@ -8,7 +8,7 @@
 
 ## <a id="brief">Brief</a>
 
-The project supports integration with [_RenderDoc v1.40_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
+The project supports integration with [_RenderDoc v1.41_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
 
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
 - `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT`
@@ -18,7 +18,7 @@ You could refer to [this thread](https://github.com/baldurk/renderdoc/issues/268
 So it's needed to make proper build of the project:
 
 - disable [_Vulkan Validation layers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) feature: `AV_ENABLE_VVL`. [How to](preprocessor-macros.md#macro-av-enable-vvl)
-- activate [_RenderDoc v1.40_](https://renderdoc.org/) compatibility feature: `AV_ENABLE_RENDERDOC`. [How to](preprocessor-macros.md#macro-av-enable-renderdoc)
+- activate [_RenderDoc v1.41_](https://renderdoc.org/) compatibility feature: `AV_ENABLE_RENDERDOC`. [How to](preprocessor-macros.md#macro-av-enable-renderdoc)
 
 For example the `CMakeLists.txt` should look like this:
 

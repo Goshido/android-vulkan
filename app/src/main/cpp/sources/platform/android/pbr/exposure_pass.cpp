@@ -19,7 +19,7 @@ constexpr float DEFAULT_MAX_LUMA_EV = 15.0F;
 constexpr size_t GLOBAL_COUNTER_IDX = 0U;
 constexpr size_t LUMA_IDX = 1U;
 
-} // end of anonymous
+} // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 

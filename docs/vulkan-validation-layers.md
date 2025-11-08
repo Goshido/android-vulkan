@@ -17,14 +17,14 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## <a id="compatible-version">Compatible version</a>
 
-The manual is based on `62d79257ac9b93ba3f6fa7507fb172cb9cf8e7ff` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on `fc24b1981d8e11ed35ee2af0d9f43b92285e38a8` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="requirements">Requirements</a>
 
 - _Windows 11_
-- _PowerShell 7.5.3_
+- _PowerShell 7.5.4_
 - _Android NDK 29.0.14206865_
 - _CMake 4.1.2_
 - _Ninja 1.21.1_
@@ -110,8 +110,7 @@ cmake                                                                           
     -D CMAKE_INSTALL_LIBDIR="third-party\jniLibs\$ABI"                                          `
     -D CMAKE_TOOLCHAIN_FILE="$ANDROID_SDK_DIR\ndk\$NDK\build\cmake\android.toolchain.cmake"     `
     -D CMAKE_BUILD_TYPE=Release                                                                 `
-    -D UPDATE_DEPS=ON                                                                           `
-    -D UPDATE_DEPS_DIR=$buildDir
+    -D UPDATE_DEPS=ON
 
 # Building projects...
 
@@ -152,6 +151,6 @@ VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/Kh
 Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted
 `vkCmdSetDescriptorBufferOffsetsEXT` crash | [#10697](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/10697) | 🛡️ Not an issue
 Breakpoint option does not work | [#11010](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11010) | ⚠️ Submitted
-Sync validation does not work anymore | [#11011](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11011) | ⚠️ Submitted
+Sync validation does not work anymore | [#11011](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11011) | ⚡ Confirmed<br>Next year fix
 
 [↬ table of content ⇧](#table-of-content)

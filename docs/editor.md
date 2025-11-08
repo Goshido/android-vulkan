@@ -19,23 +19,24 @@
 ### <a id="requirements">Requirements</a>
 
 * _Windows 11_+
-* _Visual Studio 2022 Community 17.12.1_
+* _Visual Studio 2022 Community 17.14.19_
   - Workloads: Desktop development with C++
   - Individual components
     - MSBuild
     - _MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.42-17.12)_
     - Windows Universal CRT SDK
     - C++ core features
-    - Windows 11 SDK (10.0.26100.0)
+    - Windows 11 SDK (10.0.26100.6584)
     - Windows Universal C Runtime
-* [_RenderDoc v1.40_](https://renderdoc.org/)
+* [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
+* [_RenderDoc v1.41_](https://renderdoc.org/)
 * [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2509.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
-* [_DirectX Shader Compiler 1.8.2505.10149_](https://github.com/microsoft/DirectXShaderCompiler) `0bf8434bc3b57a0b99477162dfe54673d9b5153b`
-* [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `4334f009e7d20789cc7ee1224290ea1e22a17b5b`
-* [_stb_image 2.30_](https://github.com/nothings/stb) `fede005abaf93d9d7f3a679d1999b2db341b360f`
+* [_DirectX Shader Compiler 1.8.2505.10178_](https://github.com/microsoft/DirectXShaderCompiler) `b1cf2cad8f19f2ce733bd108e63485b33fbd4774`
+* [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `f1c79c02822848a9bed4315b12c8c8f3761e1296`
 * [_Vulkan SDK 1.4.328.1_](https://vulkan.lunarg.com/sdk/home)
-* [_Vulkan Validation Layers 1.4.329_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `62d79257ac9b93ba3f6fa7507fb172cb9cf8e7ff`
+* [_Vulkan Validation Layers 1.4.332_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `fc24b1981d8e11ed35ee2af0d9f43b92285e38a8`
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -51,7 +52,15 @@ This script gonna create symbolic links for:
 - [_PIX_](https://devblogs.microsoft.com/pix/) tooling library for _CPU_ tracing
 - 3rd-party libraries
 
-Next step is to compile project via _Visual Studio_ as usual.
+Open and compile `<repo>\tools\editor\editor.sln` solution via _Visual Studio_ as usual.
+
+Last step is to edit _Visual Studio_ active configuration and specify working directory for `editor.exe`:
+
+**_`editor` project properties_** → **_Debugging_** → **_Working Directory_** → **_Set to_** `$(OutputPath)`
+
+ℹ️ Note: You need to do this once for every configuration.
+
+That's it.
 
 [↬ table of content ⇧](#table-of-content)
 

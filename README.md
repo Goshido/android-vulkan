@@ -29,7 +29,7 @@ Pay attention that all 3<sup>rd</sup> party libraries are prebuilt already and p
 
 * _Windows 10+_
 * [_Android Studio Otter | 2025.2.1_](https://developer.android.com/studio)
-* _Android Studio Gradle Plugin 8.13.0_
+* _Android Studio Gradle Plugin 8.13.1_
 * _Android NDK 29.0.14206865 (side by side)_
 * _Minimum _Android SDK_ version: Android 11 (API level 30)_
 * _Compile _Android SDK_ version: Android 16 (API level 36.1)_

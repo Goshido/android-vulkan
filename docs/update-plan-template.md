@@ -123,7 +123,7 @@ Documentation:
 
 Project:
 - Android Studio Otter | 2025.2.1 support
-- Android Studio Gradle Plugin has been updated to 8.13.0
+- Android Studio Gradle Plugin has been updated to 8.13.1
 - Android NDK has been updated to 29.0.1420686
 - Android SDK Build-Tools updated to 36.1.0
 - Android SDK Platform-Tools updated to 36.0.0

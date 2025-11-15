@@ -151,7 +151,7 @@ std::optional<std::u32string> UTF8Parser::ToU32String ( std::string_view string 
         auto const probe = Parse ( "UTF8Parser::ToU32String", stream );
 
         if ( !probe )
-            return nullptr;
+            return std::nullopt;
 
         result.push_back ( probe->_character );
         stream = probe->_newStream;

@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="3ds-max-plugin.vcxproj" Id="702c77f6-259d-40ab-89d8-dc34a694eaa7" />
+</Solution>

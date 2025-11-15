@@ -37,14 +37,14 @@ Take a note that exporter will calculate approximate bounds if the artist will i
 
 - [_3ds Max 2023 SDK_](https://aps.autodesk.com/developer/overview/3ds-max#3dsmax-sdk)
 - [_MikkTSpace_](https://github.com/mmikk/MikkTSpace) `3e895b49d05ea07e4c2133156cfa94369e19e409`
-- _Visual Studio 2022 Community 17.14.19_
+- _Visual Studio 2026 Community 18.0.0_
   - Workloads: Desktop development with C++
   - Individual components
     - _MSBuild_
-    - _MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.44-17.14)_
+    - _MSVC Build Tools v14.50 for x64/x86_
     - _Windows Universal CRT SDK_
     - _C++ core features_
-    - _Windows 11 SDK (10.0.26100.6584)_
+    - _Windows 11 SDK (10.0.26100.6901)_
     - _Windows Universal C Runtime_
 
 In order to build plugin binary you should open solution file inside _Visual Studio_:

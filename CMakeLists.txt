@@ -1,5 +1,5 @@
 cmake_minimum_required ( VERSION 4.1.2 )
-set ( CMAKE_CXX_STANDARD 20 )
+set ( CMAKE_CXX_STANDARD 23 )
 project ( android-vulkan )
 
 # Enable link time optimization for release build via native flag.

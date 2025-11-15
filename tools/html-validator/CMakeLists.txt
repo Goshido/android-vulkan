@@ -1,9 +1,9 @@
-cmake_minimum_required ( VERSION 3.31.1 )
+cmake_minimum_required ( VERSION 4.2 )
 
 project ( html-validator LANGUAGES CXX )
 
 # Using C++ 20 standard.
-set ( CMAKE_CXX_STANDARD 20 )
+set ( CMAKE_CXX_STANDARD 23 )
 set ( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 add_executable ( html-validator

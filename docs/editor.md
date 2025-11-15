@@ -19,14 +19,14 @@
 ### <a id="requirements">Requirements</a>
 
 * _Windows 11_+
-* _Visual Studio 2022 Community 17.14.19_
+* _Visual Studio 2026 Community 18.0.0_
   - Workloads: Desktop development with C++
   - Individual components
     - MSBuild
-    - _MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.42-17.12)_
+    - _MSVC Build Tools v14.50 for x64/x86_
     - Windows Universal CRT SDK
     - C++ core features
-    - Windows 11 SDK (10.0.26100.6584)
+    - Windows 11 SDK (10.0.26100.6901)
     - Windows Universal C Runtime
 * [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
 * [_RenderDoc v1.41_](https://renderdoc.org/)

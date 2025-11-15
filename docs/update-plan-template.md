@@ -142,6 +142,7 @@ Project:
 - stb_image has been updated to 2.30, f1c79c02822848a9bed4315b12c8c8f3761e1296
 - PowerShell has been updated to 7.5.3
 - Shader model has been changed to 6_10
+- Switch to C++23
 
 3rd-party:
 - FreeType headers have been updated
@@ -156,9 +157,9 @@ Project:
 - libvorbis and libvorbisfile header files have been updated
 
 Editor:
-- Visual Studio 2022 Community 17.14.19 support
-- Windows 11 SDK has been changed to 10.0.26100.6584
-- MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14
+- Visual Studio 2026 Community 18.0.0 support
+- Windows 11 SDK has been changed to 10.0.26100.6901
+- MSVC Build Tools for x64/x86 has been updated to v14.50
 - Vulkan SDK has been changed to 1.4.328.1
 - NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) support
 - NVIDIA Aftermath support
@@ -167,15 +168,14 @@ Editor:
 - WinPixEventRuntime.(dll|lib) has been updated to 1.0.240308001
 
 HTML validator:
-- HTML validator has been updated to 1.0.1.16
-- Windows 11 support
-- Visual Studio 2022 Community 17.14.19 support
-- Windows 11 SDK has been updated to 10.0.26100.6584
-- MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14
-- CMake has been updated to 4.1.2
+- HTML validator has been updated to 1.0.1.17
+- Visual Studio 2026 Community 18.0.0 support
+- Windows 11 SDK has been updated to 10.0.26100.6901
+- MSVC Build Tools for x64/x86 has been updated to v14.50
+- CMake has been updated to 4.2
 
 3ds Max exporter:
-- 3ds Max exporter has been updated to 1.0.1.12
-- Visual Studio 2022 Community 17.14.19 support
-- Windows 11 SDK has been updated to 10.0.26100.6584
-- MSVC v143 - VS 2022 C++ x64/x86 build tools has been updated to v14.44-17.14
+- 3ds Max exporter has been updated to 1.0.1.13
+- Visual Studio 2026 Community 18.0.0 support
+- Windows 11 SDK has been updated to 10.0.26100.6901
+- MSVC Build Tools for x64/x86 has been updated to v14.50

@@ -1,0 +1,14 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Aftermath" />
+    <BuildType Name="Debug - GPU select" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Nsight" />
+    <BuildType Name="Profile" />
+    <BuildType Name="Release + ASAN" />
+    <BuildType Name="Release" />
+    <BuildType Name="RenderDoc" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="editor.vcxproj" Id="540b70e1-6e86-4394-a22e-501bf6548048" />
+</Solution>

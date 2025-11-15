@@ -1,4 +1,4 @@
-// version 1.8
+// version 1.9
 // No include guard allowed
 // Not include this explicitly! Use GXCommon/GXWarning.h instead.
 
@@ -30,6 +30,7 @@
     GX_DISABLE_WARNING ( 4668 )     /* 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives' */ \
     GX_DISABLE_WARNING ( 4710 )     /* 'function' : function not inlined */ \
     GX_DISABLE_WARNING ( 4774 )     /* 'string' : format string expected in argument number is not a string literal */ \
+    GX_DISABLE_WARNING ( 4865 )     /* underlying type will change from 'int' to '__int64' when '/Zc:enumTypes' is specified on the command line */ \
     GX_DISABLE_WARNING ( 4917 )     /* 'declarator' : a GUID can only be associated with a class, interface or namespace */ \
     GX_DISABLE_WARNING ( 5026 )     /* move constructor was implicitly defined as deleted */ \
     GX_DISABLE_WARNING ( 5027 )     /* move assignment operator was implicitly defined as deleted */ \

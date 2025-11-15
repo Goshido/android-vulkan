@@ -43,13 +43,13 @@ Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 ### <a id="requirements">Requirements</a>
 
 - _Windows 11+_
-- _Visual Studio 2022 Community 17.14.19_
+- _Visual Studio 2026 Community 18.0.0_
 - _Desktop development with C++_
 - _MSBuild_
 - _MSVC v143 - VS 2022 C++ x64/x86 build tools (v14.44-17.14)_
 - _Windows Universal CRT SDK_
 - _C++ core features_
-- _Windows 11 SDK (10.0.26100.6584)_
+- _Windows 11 SDK (10.0.26100.6901)_
 - _Windows Universal C Runtime_
 - _CMake 4.1.2_
 

@@ -286,11 +286,13 @@ void HelloTriangleJob::CreateProgram () noexcept
 
 RenderSession::RenderSession ( MessageQueue &messageQueue,
     android_vulkan::Renderer &renderer,
-    UIManager &uiManager
+    UIManager &uiManager,
+    Workspace &workspace
 ) noexcept:
     _messageQueue ( messageQueue ),
     _renderer ( renderer ),
-    _uiManager ( uiManager )
+    _uiManager ( uiManager ),
+    _workspace ( workspace )
 {
    // NOTHING
 }
@@ -802,6 +804,8 @@ void RenderSession::OnRenderFrame () noexcept
         _uiManager.Submit ( renderer, _uiPass );
         _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     }
+
+    _workspace.Draw ( commandBuffer );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )

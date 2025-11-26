@@ -9,6 +9,7 @@
 #include <renderer.hpp>
 #include "timer_manager.hpp"
 #include "ui_manager.hpp"
+#include "workspace.hpp"
 
 
 namespace editor {
@@ -34,7 +35,8 @@ class Editor final
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};
-        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
+        Workspace                               _workspace { _messageQueue };
+        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager, _workspace };
 
         UIManager                               _uiManager
         {

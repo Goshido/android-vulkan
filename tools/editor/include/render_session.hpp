@@ -11,6 +11,7 @@
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
 #include "ui_manager.hpp"
+#include "workspace.hpp"
 
 
 namespace editor {
@@ -62,6 +63,7 @@ class RenderSession final
 
         UIManager                                           &_uiManager;
         VkViewport                                          _viewport {};
+        Workspace                                           &_workspace;
 
         VkRenderingAttachmentInfo                           _colorAttachment
         {
@@ -146,7 +148,8 @@ class RenderSession final
 
         explicit RenderSession ( MessageQueue &messageQueue,
             android_vulkan::Renderer &renderer,
-            UIManager &uiManager
+            UIManager &uiManager,
+            Workspace &workspace
         ) noexcept;
 
         ~RenderSession () = default;

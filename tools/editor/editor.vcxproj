@@ -1179,12 +1179,14 @@
     <ClInclude Include="include\keyboard_key_event.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
+    <ClInclude Include="include\mesh_geometry_ref.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\mouse_button_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
     <ClInclude Include="include\opaque_mesh_node.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\pbr_material.hpp" />
     <ClInclude Include="include\point_light_component.hpp" />
     <ClInclude Include="include\prepend_ui_child_element_event.hpp" />
     <ClInclude Include="include\rect.hpp" />
@@ -1197,6 +1199,7 @@
     <ClInclude Include="include\skeletal_mesh_component.hpp" />
     <ClInclude Include="include\sound_emitter_component.hpp" />
     <ClInclude Include="include\static_mesh_component.hpp" />
+    <ClInclude Include="include\texture2D_ref.hpp" />
     <ClInclude Include="include\text_ui_element.hpp" />
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\timer.hpp" />

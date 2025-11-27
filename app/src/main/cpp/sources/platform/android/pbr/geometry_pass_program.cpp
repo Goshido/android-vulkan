@@ -30,17 +30,11 @@ GeometryPassProgram::ColorData::ColorData ( GXColorUNORM color0,
     float emissionIntensity
 ) noexcept
 {
-    _emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color0 ) << 8U );
+    _emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) | ( std::bit_cast<uint32_t> ( color0 ) << 8U );
+    _emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) | ( std::bit_cast<uint32_t> ( color1 ) << 8U );
+    _emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) | ( std::bit_cast<uint32_t> ( color2 ) << 8U );
 
-    _emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color1 ) << 8U );
-
-    _emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color2 ) << 8U );
-
-    // Emission intensity should take range from 0 to 6000.
-    // Emission intensity is packed as 24bit fixed point value.
+    // Emission intensity should take range from 0 to 6000. Emission intensity is packed as 24bit fixed point value.
     constexpr double maxIntensity = 6.0e+3;
     constexpr double convertFactor = static_cast<double> ( 0x00FFFFFFU ) / maxIntensity;
     double const beta = convertFactor * std::clamp ( static_cast<double> ( emissionIntensity ), 0.0, maxIntensity );

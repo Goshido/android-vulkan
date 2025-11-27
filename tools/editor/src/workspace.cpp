@@ -45,7 +45,7 @@ void Workspace::Pick ( Rect const &/*rect*/, GXMat4 const &/*viewer*/, GXMat4 co
     // FUCK
 }
 
-OpaqueMeshNode Workspace::RegisterOpaqueMesh ( android_vulkan::MeshGeometry &/*mesh*/ ) noexcept
+OpaqueMeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &/*mesh*/ ) noexcept
 {
     AV_TRACE ( "Workspace register opaque mesh" )
     // FUCK

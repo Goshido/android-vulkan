@@ -3,9 +3,9 @@
 
 
 #include <GXCommon/GXMath.hpp>
+#include "mesh_geometry_ref.hpp"
 #include "message_queue.hpp"
 #include "opaque_mesh_node.hpp"
-#include <platform/windows/mesh_geometry.hpp>
 #include "rect.hpp"
 #include <vulkan/vulkan_core.h>
 
@@ -40,7 +40,7 @@ class Workspace final
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
         void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
 
-        [[nodiscard]] OpaqueMeshNode RegisterOpaqueMesh ( android_vulkan::MeshGeometry &mesh ) noexcept;
+        [[nodiscard]] OpaqueMeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         void Unregister ( OpaqueMeshNode &node ) noexcept;
 
     private:

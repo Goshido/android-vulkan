@@ -734,6 +734,15 @@
     <ClInclude Include="include\opaque_mesh_node.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\texture2D_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh_geometry_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pbr_material.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">

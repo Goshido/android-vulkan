@@ -1166,6 +1166,7 @@
     <ClInclude Include="include\actor.hpp" />
     <ClInclude Include="include\append_ui_child_element_event.hpp" />
     <ClInclude Include="include\camera_component.hpp" />
+    <ClInclude Include="include\color_data.hpp" />
     <ClInclude Include="include\component.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
@@ -1180,11 +1181,12 @@
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\mesh_geometry_ref.hpp" />
+    <ClInclude Include="include\mesh_info.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\mouse_button_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
-    <ClInclude Include="include\opaque_mesh_node.hpp" />
+    <ClInclude Include="include\mesh_node.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
     <ClInclude Include="include\pbr_material.hpp" />
     <ClInclude Include="include\point_light_component.hpp" />

@@ -1,26 +1,27 @@
 #include <precompiled_headers.hpp>
-#include <opaque_mesh_node.hpp>
+#include <av_assert.hpp>
+#include <mesh_node.hpp>
 #include <workspace.hpp>
 
 
 namespace editor {
 
-OpaqueMeshNode::OpaqueMeshNode ( OpaqueMeshNode &&other ) noexcept:
-    _bounds ( std::move ( other._bounds ) ),
-    _local ( std::move ( other._local ) ),
+MeshNode::MeshNode ( MeshNode &&other ) noexcept:
+    _internal ( std::move ( other._internal ) ),
     _workspace ( std::move ( other._workspace ) ),
+    _meshInfo ( std::move ( other._meshInfo ) ),
     _hasChanges ( std::move ( other._hasChanges ) )
 {
     _lock.store ( other._lock.load () );
 }
 
-OpaqueMeshNode &OpaqueMeshNode::operator = ( OpaqueMeshNode &&other ) noexcept
+MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
 {
     if ( this == &other ) [[unlikely]]
         return *this;
 
-    _bounds = std::move ( other._bounds );
-    _local = std::move ( other._local );
+    _internal = std::move ( other._internal );
+    _meshInfo = std::move ( other._meshInfo );
     _workspace = std::move ( other._workspace );
     _hasChanges = std::move ( other._hasChanges );
     _lock.store ( other._lock.load () );
@@ -28,13 +29,14 @@ OpaqueMeshNode &OpaqueMeshNode::operator = ( OpaqueMeshNode &&other ) noexcept
     return *this;
 }
 
-OpaqueMeshNode::OpaqueMeshNode ( Workspace &workspace ) noexcept:
+MeshNode::MeshNode ( Workspace &workspace, MeshInfo const &internal ) noexcept:
+    _internal ( &internal ),
     _workspace ( &workspace )
 {
     // NOTHING
 }
 
-OpaqueMeshNode::~OpaqueMeshNode () noexcept
+MeshNode::~MeshNode () noexcept
 {
     if ( _workspace ) [[likely]]
     {
@@ -42,23 +44,29 @@ OpaqueMeshNode::~OpaqueMeshNode () noexcept
     }
 }
 
-void OpaqueMeshNode::Commit ( GXMat4 &local, GXAABB &bounds, ColorData &color, PBRMaterial &material ) noexcept
+MeshInfo const &MeshNode::GetInternalMeshInfo () const noexcept
+{
+    AV_ASSERT ( _internal )
+    return *_internal;
+}
+
+void MeshNode::Commit ( GXMat4 &local, GXAABB &bounds, ColorData &color, PBRMaterial &material ) noexcept
 {
     if ( !_hasChanges ) [[likely]]
         return;
 
     Lock ();
 
-    local = _local;
-    bounds = _bounds;
-    color = _color;
-    material = _material;
+    local = _meshInfo._local;
+    bounds = _meshInfo._bounds;
+    color = _meshInfo._color;
+    material = _meshInfo._material;
     _hasChanges = false;
 
     _lock.store ( false );
 }
 
-void OpaqueMeshNode::SetColor ( GXColorUNORM color0,
+void MeshNode::SetColor ( GXColorUNORM color0,
     GXColorUNORM color1,
     GXColorUNORM color2,
     GXColorUNORM emission,
@@ -80,29 +88,34 @@ void OpaqueMeshNode::SetColor ( GXColorUNORM color0,
 
     Lock ();
 
-    _color = c;
+    _meshInfo._color = c;
     _hasChanges = true;
 
     _lock.store ( false );
 }
 
-void OpaqueMeshNode::SetLocal ( GXMat4 const &local, GXAABB const &localBounds ) noexcept
+void MeshNode::SetLocal ( GXMat4 const &local, GXAABB const &localBounds ) noexcept
 {
     Lock ();
 
-    _local = local;
-    localBounds.Transform ( _bounds, local );
+    _meshInfo._local = local;
+    localBounds.Transform ( _meshInfo._bounds, local );
     _hasChanges = true;
 
     _lock.store ( false );
 }
 
-void OpaqueMeshNode::SetMaterial ( PBRMaterial const &/*material*/ ) noexcept
+void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
 {
-    // FUCK
+    Lock ();
+
+    _meshInfo._material = material;
+    _hasChanges = true;
+
+    _lock.store ( false );
 }
 
-void OpaqueMeshNode::Lock () noexcept
+void MeshNode::Lock () noexcept
 {
     bool expected = false;
 

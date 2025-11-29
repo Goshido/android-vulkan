@@ -8,6 +8,7 @@
 #include "mesh_info.hpp"
 #include "message_queue.hpp"
 #include "mesh_node.hpp"
+#include "point_light_node.hpp"
 #include "rect.hpp"
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
@@ -23,17 +24,20 @@ class Workspace final
         using Meshes = std::deque<MeshInfo*>;
         using MeshQueue = std::unordered_map<MeshGeometryRef, Meshes>;
         using MeshMap = std::unordered_map<MeshInfo const*, MeshGeometryRef::weak_type>;
+        using PointLightQueue = std::unordered_set<PointLightInfo*>;
 
     private:
-        MessageQueue    &_messageQueue;
+        MessageQueue        &_messageQueue;
 
-        MeshQueue       _opaqueQueue {};
-        MeshMap         _opaqueMap {};
+        MeshQueue           _opaqueQueue {};
+        MeshMap             _opaqueMap {};
 
-        MeshQueue       _stippleQueue {};
-        MeshMap         _stippleMap {};
+        MeshQueue           _stippleQueue {};
+        MeshMap             _stippleMap {};
 
-        std::mutex      _mutex {};
+        PointLightQueue     _pointLightQueue {};
+
+        std::mutex          _mutex {};
 
     public:
         Workspace () = delete;
@@ -57,7 +61,10 @@ class Workspace final
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
+
         void Unregister ( MeshNode const &node ) noexcept;
+        void Unregister ( PointLightNode &node ) noexcept;
 
     private:
         void DrawOpaque ( VkCommandBuffer commandBuffer );

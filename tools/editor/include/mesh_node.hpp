@@ -3,20 +3,18 @@
 
 
 #include "mesh_info.hpp"
+#include "workspace_node.hpp"
 
 
 namespace editor {
 
 class Workspace;
 
-class MeshNode final
+class MeshNode final : public WorkspaceNode
 {
     private:
-        MeshInfo const*     _internal = nullptr;
-        Workspace*          _workspace = nullptr;
-        MeshInfo            _meshInfo {};
-        std::atomic_bool    _lock = false;
-        bool                _hasChanges = true;
+        MeshInfo*       _internal = nullptr;
+        MeshInfo        _meshInfo {};
 
     public:
         MeshNode () = default;
@@ -27,12 +25,12 @@ class MeshNode final
         MeshNode ( MeshNode &&other ) noexcept;
         MeshNode &operator = ( MeshNode &&other ) noexcept;
 
-        explicit MeshNode ( Workspace &workspace, MeshInfo const &internal ) noexcept;
+        explicit MeshNode ( Workspace &workspace, MeshInfo &internal ) noexcept;
 
-        ~MeshNode () noexcept;
+        ~MeshNode () noexcept override;
 
-        [[nodiscard]] MeshInfo const &GetInternalMeshInfo () const noexcept;
-        void Commit ( GXMat4 &local, GXAABB &bounds, ColorData &color, PBRMaterial &material ) noexcept;
+        void Commit () noexcept;
+        [[nodiscard]] MeshInfo const &GetInternalInfo () const noexcept;
 
         void SetColor ( GXColorUNORM color0,
             GXColorUNORM color1,
@@ -43,9 +41,6 @@ class MeshNode final
 
         void SetLocal ( GXMat4 const &local, GXAABB const &localBounds ) noexcept;
         void SetMaterial ( PBRMaterial const &material ) noexcept;
-
-    private:
-        void Lock () noexcept;
 };
 
 } // namespace editor

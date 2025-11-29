@@ -37,6 +37,7 @@ void Workspace::Destroy () noexcept
     std::lock_guard const lock ( _mutex );
     clear ( _opaqueQueue, _opaqueMap );
     clear ( _stippleQueue, _stippleMap );
+    _pointLightQueue.clear ();
 }
 
 void Workspace::Draw ( VkCommandBuffer commandBuffer ) noexcept
@@ -79,17 +80,44 @@ MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
     return Register ( mesh, _stippleQueue, _stippleMap, m );
 }
 
+PointLightNode Workspace::RegisterPointLight () noexcept
+{
+    AV_TRACE ( "Workspace register point light" )
+
+    auto &node = *new PointLightInfo;
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _pointLightQueue.insert ( &node );
+    }
+
+    return PointLightNode ( *this, node );
+}
+
 void Workspace::Unregister ( MeshNode const &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
-    MeshInfo const &m = node.GetInternalMeshInfo ();
+    MeshInfo const &n = node.GetInternalInfo ();
 
-    if ( m._material._isStipple )
-        Unregister ( _stippleQueue, _stippleMap, m );
+    if ( n._material._isStipple )
+        Unregister ( _stippleQueue, _stippleMap, n );
     else
-        Unregister ( _opaqueQueue, _opaqueMap, m );
+        Unregister ( _opaqueQueue, _opaqueMap, n );
 
-    delete &m;
+    delete &n;
+}
+
+void Workspace::Unregister ( PointLightNode &node ) noexcept
+{
+    AV_TRACE ( "Workspace unregister point light" )
+    PointLightInfo &n = node.GetInternalInfo ();
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _pointLightQueue.erase ( &n );
+    }
+
+    delete &n;
 }
 
 void Workspace::DrawOpaque ( VkCommandBuffer commandBuffer )

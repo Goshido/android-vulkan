@@ -6,13 +6,16 @@
 
 namespace editor {
 
-MeshNode::MeshNode ( MeshNode &&other ) noexcept:
-    _internal ( std::move ( other._internal ) ),
-    _workspace ( std::move ( other._workspace ) ),
-    _meshInfo ( std::move ( other._meshInfo ) ),
-    _hasChanges ( std::move ( other._hasChanges ) )
+MeshNode::MeshNode ( MeshNode &&other ) noexcept
 {
-    _lock.store ( other._lock.load () );
+    other.Lock ();
+
+    _workspace = std::exchange ( other._workspace, nullptr );
+    _hasChanges = std::move ( other._hasChanges );
+    _internal = std::exchange ( other._internal, nullptr );
+    _meshInfo = std::move ( other._meshInfo );
+
+    other._lock.store ( false );
 }
 
 MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
@@ -20,18 +23,20 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
     if ( this == &other ) [[unlikely]]
         return *this;
 
-    _internal = std::move ( other._internal );
-    _meshInfo = std::move ( other._meshInfo );
-    _workspace = std::move ( other._workspace );
-    _hasChanges = std::move ( other._hasChanges );
-    _lock.store ( other._lock.load () );
+    other.Lock ();
 
+    _workspace = std::exchange ( other._workspace, nullptr );
+    _hasChanges = std::move ( other._hasChanges );
+    _internal = std::exchange ( other._internal, nullptr );
+    _meshInfo = std::move ( other._meshInfo );
+
+    other._lock.store ( false );
     return *this;
 }
 
-MeshNode::MeshNode ( Workspace &workspace, MeshInfo const &internal ) noexcept:
-    _internal ( &internal ),
-    _workspace ( &workspace )
+MeshNode::MeshNode ( Workspace &workspace, MeshInfo &internal ) noexcept:
+    WorkspaceNode ( workspace ),
+    _internal ( &internal )
 {
     // NOTHING
 }
@@ -44,26 +49,23 @@ MeshNode::~MeshNode () noexcept
     }
 }
 
-MeshInfo const &MeshNode::GetInternalMeshInfo () const noexcept
-{
-    AV_ASSERT ( _internal )
-    return *_internal;
-}
-
-void MeshNode::Commit ( GXMat4 &local, GXAABB &bounds, ColorData &color, PBRMaterial &material ) noexcept
+void MeshNode::Commit () noexcept
 {
     if ( !_hasChanges ) [[likely]]
         return;
 
     Lock ();
 
-    local = _meshInfo._local;
-    bounds = _meshInfo._bounds;
-    color = _meshInfo._color;
-    material = _meshInfo._material;
+    *_internal = _meshInfo;
     _hasChanges = false;
 
     _lock.store ( false );
+}
+
+MeshInfo const &MeshNode::GetInternalInfo () const noexcept
+{
+    AV_ASSERT ( _internal )
+    return *_internal;
 }
 
 void MeshNode::SetColor ( GXColorUNORM color0,
@@ -113,16 +115,6 @@ void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
     _hasChanges = true;
 
     _lock.store ( false );
-}
-
-void MeshNode::Lock () noexcept
-{
-    bool expected = false;
-
-    while ( !_lock.compare_exchange_weak ( expected, true ) ) [[unlikely]]
-        expected = false;
-
-    AV_ASSERT ( !expected )
 }
 
 } // namespace editor

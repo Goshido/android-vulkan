@@ -339,7 +339,13 @@
     <ClCompile Include="src\workspace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\opaque_mesh_node.cpp">
+    <ClCompile Include="src\mesh_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\point_light_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\workspace_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -747,6 +753,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\mesh_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\point_light_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\point_light_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\workspace_node.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

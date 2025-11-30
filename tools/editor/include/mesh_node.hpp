@@ -14,7 +14,7 @@ class MeshNode final : public WorkspaceNode
 {
     private:
         MeshInfo*       _internal = nullptr;
-        MeshInfo        _meshInfo {};
+        MeshInfo        _info {};
 
     public:
         MeshNode () = default;
@@ -39,7 +39,8 @@ class MeshNode final : public WorkspaceNode
             float emissionIntensity
         ) noexcept;
 
-        void SetLocal ( GXMat4 const &local, GXAABB const &localBounds ) noexcept;
+        void SetLocal ( GXMat4 const &local ) noexcept;
+        void SetBounds ( GXAABB const &boundLocal ) noexcept;
         void SetMaterial ( PBRMaterial const &material ) noexcept;
 };
 

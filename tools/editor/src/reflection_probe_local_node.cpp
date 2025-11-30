@@ -1,11 +1,11 @@
 #include <precompiled_headers.hpp>
-#include <point_light_node.hpp>
+#include <reflection_probe_local_node.hpp>
 #include <workspace.hpp>
 
 
 namespace editor {
 
-PointLightNode::PointLightNode ( PointLightNode &&other ) noexcept
+ReflectionProbeLocalNode::ReflectionProbeLocalNode ( ReflectionProbeLocalNode &&other ) noexcept
 {
     std::ignore = other.TryLock ();
 
@@ -17,7 +17,7 @@ PointLightNode::PointLightNode ( PointLightNode &&other ) noexcept
     other.Unlock ();
 }
 
-PointLightNode &PointLightNode::operator = ( PointLightNode &&other ) noexcept
+ReflectionProbeLocalNode &ReflectionProbeLocalNode::operator = ( ReflectionProbeLocalNode &&other ) noexcept
 {
     if ( this == &other || !other.TryLock () ) [[unlikely]]
         return *this;
@@ -31,14 +31,16 @@ PointLightNode &PointLightNode::operator = ( PointLightNode &&other ) noexcept
     return *this;
 }
 
-PointLightNode::PointLightNode ( Workspace &workspace, PointLightInfo &internal ) noexcept:
+ReflectionProbeLocalNode::ReflectionProbeLocalNode ( Workspace &workspace,
+    ReflectionProbeLocalInfo &internal
+) noexcept:
     WorkspaceNode ( workspace ),
     _internal ( &internal )
 {
     // NOTHING
 }
 
-PointLightNode::~PointLightNode () noexcept
+ReflectionProbeLocalNode::~ReflectionProbeLocalNode () noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -48,7 +50,7 @@ PointLightNode::~PointLightNode () noexcept
     Unlock ();
 }
 
-void PointLightNode::Commit () noexcept
+void ReflectionProbeLocalNode::Commit () noexcept
 {
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
@@ -59,24 +61,13 @@ void PointLightNode::Commit () noexcept
     Unlock ();
 }
 
-PointLightInfo &PointLightNode::GetInternalInfo () noexcept
+ReflectionProbeLocalInfo &ReflectionProbeLocalNode::GetInternalInfo () noexcept
 {
     AV_ASSERT ( _internal )
     return *_internal;
 }
 
-void PointLightNode::SetColor ( GXColorUNORM color ) noexcept
-{
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _info._color = color;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void PointLightNode::SetIntensity ( float intensity ) noexcept
+void ReflectionProbeLocalNode::SetIntensity ( float intensity ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -87,18 +78,7 @@ void PointLightNode::SetIntensity ( float intensity ) noexcept
     Unlock ();
 }
 
-void PointLightNode::SetLocation ( GXVec3 const &location ) noexcept
-{
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _info._location = location;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void PointLightNode::SetRadius ( float radius ) noexcept
+void ReflectionProbeLocalNode::SetRadius ( float radius ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;

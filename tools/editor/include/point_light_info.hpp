@@ -9,7 +9,12 @@ namespace editor {
 
 struct PointLightInfo final
 {
-    GXAABB      _bounds {};
+    GXMat4          _projection[ 6U ];
+    GXAABB          _bounds {};
+    GXVec3          _location {};
+    float           _radius = 7.0F;
+    float           _intensity = 1.0F;
+    GXColorUNORM    _color { 255U, 255U, 255U, 255U };
 };
 
 } // namespace editor

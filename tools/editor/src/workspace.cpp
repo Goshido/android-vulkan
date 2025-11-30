@@ -21,7 +21,7 @@ void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
 
-    constexpr auto clear = [] ( MeshQueue &meshQueue, MeshMap &meshMap ) noexcept {
+    constexpr auto clearAlpha = [] ( MeshQueue &meshQueue, MeshMap &meshMap ) noexcept {
         for ( auto const &item : meshQueue )
         {
             for ( auto const mesh : item.second )
@@ -34,10 +34,21 @@ void Workspace::Destroy () noexcept
         meshQueue.clear ();
     };
 
+    constexpr auto clearBeta = [] ( auto &queue ) noexcept {
+        for ( auto const item : queue )
+            delete item;
+
+        queue.clear ();
+    };
+
     std::lock_guard const lock ( _mutex );
-    clear ( _opaqueQueue, _opaqueMap );
-    clear ( _stippleQueue, _stippleMap );
-    _pointLightQueue.clear ();
+
+    clearAlpha ( _opaqueQueue, _opaqueMap );
+    clearAlpha ( _stippleQueue, _stippleMap );
+
+    clearBeta ( _pointLightQueue );
+    clearBeta ( _reflectionProbeLocalQueue );
+    clearBeta ( _reflectionProbeGlobalQueue );
 }
 
 void Workspace::Draw ( VkCommandBuffer commandBuffer ) noexcept
@@ -94,6 +105,34 @@ PointLightNode Workspace::RegisterPointLight () noexcept
     return PointLightNode ( *this, node );
 }
 
+ReflectionProbeLocalNode Workspace::RegisterReflectionProbeLocal () noexcept
+{
+    AV_TRACE ( "Workspace register reflection probe local" )
+
+    auto &node = *new ReflectionProbeLocalInfo;
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _reflectionProbeLocalQueue.insert ( &node );
+    }
+
+    return ReflectionProbeLocalNode ( *this, node );
+}
+
+ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
+{
+    AV_TRACE ( "Workspace register reflection probe global" )
+
+    auto &node = *new ReflectionProbeGlobalInfo;
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _reflectionProbeGlobalQueue.insert ( &node );
+    }
+
+    return ReflectionProbeGlobalNode ( *this, node );
+}
+
 void Workspace::Unregister ( MeshNode const &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
@@ -115,6 +154,32 @@ void Workspace::Unregister ( PointLightNode &node ) noexcept
     {
         std::lock_guard const lock ( _mutex );
         _pointLightQueue.erase ( &n );
+    }
+
+    delete &n;
+}
+
+void Workspace::Unregister ( ReflectionProbeLocalNode &node ) noexcept
+{
+    AV_TRACE ( "Workspace unregister reflection probe local" )
+    ReflectionProbeLocalInfo &n = node.GetInternalInfo ();
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _reflectionProbeLocalQueue.erase ( &n );
+    }
+
+    delete &n;
+}
+
+void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
+{
+    AV_TRACE ( "Workspace unregister reflection probe global" )
+    ReflectionProbeGlobalInfo &n = node.GetInternalInfo ();
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _reflectionProbeGlobalQueue.erase ( &n );
     }
 
     delete &n;

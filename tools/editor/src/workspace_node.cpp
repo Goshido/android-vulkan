@@ -11,7 +11,7 @@ WorkspaceNode::WorkspaceNode ( Workspace &workspace ) noexcept:
     // NOTHING
 }
 
-void WorkspaceNode::Lock () noexcept
+bool WorkspaceNode::TryLock () noexcept
 {
     bool expected = false;
 
@@ -19,6 +19,17 @@ void WorkspaceNode::Lock () noexcept
         expected = false;
 
     AV_ASSERT ( !expected )
+
+    if ( _workspace ) [[likely]]
+        return true;
+
+    _lock.store ( false );
+    return false;
+}
+
+void WorkspaceNode::Unlock () noexcept
+{
+    _lock.store ( false );
 }
 
 } // namespace editor

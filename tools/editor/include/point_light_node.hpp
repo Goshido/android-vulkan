@@ -14,7 +14,7 @@ class PointLightNode final : public WorkspaceNode
 {
     private:
         PointLightInfo*     _internal = nullptr;
-        PointLightInfo      _lightInfo {};
+        PointLightInfo      _info {};
 
     public:
         PointLightNode () = default;
@@ -31,6 +31,11 @@ class PointLightNode final : public WorkspaceNode
 
         void Commit () noexcept;
         [[nodiscard]] PointLightInfo &GetInternalInfo () noexcept;
+
+        void SetColor ( GXColorUNORM color ) noexcept;
+        void SetIntensity ( float intensity ) noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetRadius ( float radius ) noexcept;
 };
 
 } // namespace editor

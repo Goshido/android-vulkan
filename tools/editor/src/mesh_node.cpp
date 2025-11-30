@@ -8,29 +8,27 @@ namespace editor {
 
 MeshNode::MeshNode ( MeshNode &&other ) noexcept
 {
-    other.Lock ();
+    std::ignore = other.TryLock ();
 
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::move ( other._hasChanges );
     _internal = std::exchange ( other._internal, nullptr );
-    _meshInfo = std::move ( other._meshInfo );
+    _info = std::move ( other._info );
 
-    other._lock.store ( false );
+    other.Unlock ();
 }
 
 MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
 {
-    if ( this == &other ) [[unlikely]]
+    if ( this == &other || !other.TryLock () ) [[unlikely]]
         return *this;
-
-    other.Lock ();
 
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::move ( other._hasChanges );
     _internal = std::exchange ( other._internal, nullptr );
-    _meshInfo = std::move ( other._meshInfo );
+    _info = std::move ( other._info );
 
-    other._lock.store ( false );
+    other.Unlock ();
     return *this;
 }
 
@@ -43,23 +41,23 @@ MeshNode::MeshNode ( Workspace &workspace, MeshInfo &internal ) noexcept:
 
 MeshNode::~MeshNode () noexcept
 {
-    if ( _workspace ) [[likely]]
-    {
-        _workspace->Unregister ( *this );
-    }
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _workspace->Unregister ( *this );
+    _workspace = nullptr;
+    Unlock ();
 }
 
 void MeshNode::Commit () noexcept
 {
-    if ( !_hasChanges ) [[likely]]
+    if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
 
-    Lock ();
-
-    *_internal = _meshInfo;
+    *_internal = _info;
     _hasChanges = false;
 
-    _lock.store ( false );
+    Unlock ();
 }
 
 MeshInfo const &MeshNode::GetInternalInfo () const noexcept
@@ -88,33 +86,46 @@ void MeshNode::SetColor ( GXColorUNORM color0,
         ._col0aEmiIntens = static_cast<uint32_t> ( color0._data[ 3U ] ) | ( static_cast<uint32_t> ( beta ) << 8U )
     };
 
-    Lock ();
+    if ( !TryLock () ) [[unlikely]]
+        return;
 
-    _meshInfo._color = c;
+   _info._color = c;
     _hasChanges = true;
 
-    _lock.store ( false );
+    Unlock ();
 }
 
-void MeshNode::SetLocal ( GXMat4 const &local, GXAABB const &localBounds ) noexcept
+void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
 {
-    Lock ();
+    if ( !TryLock () ) [[unlikely]]
+        return;
 
-    _meshInfo._local = local;
-    localBounds.Transform ( _meshInfo._bounds, local );
+    _info._local = local;
     _hasChanges = true;
 
-    _lock.store ( false );
+    Unlock ();
+}
+
+void MeshNode::SetBounds ( GXAABB const &boundLocal ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _info._boundLocal = boundLocal;
+    _hasChanges = true;
+
+    Unlock ();
 }
 
 void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
 {
-    Lock ();
+    if ( !TryLock () ) [[unlikely]]
+        return;
 
-    _meshInfo._material = material;
+    _info._material = material;
     _hasChanges = true;
 
-    _lock.store ( false );
+    Unlock ();
 }
 
 } // namespace editor

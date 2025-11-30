@@ -29,7 +29,8 @@ class WorkspaceNode
         explicit WorkspaceNode ( Workspace &workspace ) noexcept;
         virtual ~WorkspaceNode () = default;
 
-        void Lock () noexcept;
+        [[nodiscard]] bool TryLock () noexcept;
+        void Unlock () noexcept;
 };
 
 } // namespace editor

@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <GXCommon/GXMath.hpp>
+#include "gizmo_node.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "message_queue.hpp"
@@ -26,6 +27,11 @@ class Workspace final
         using Meshes = std::deque<MeshInfo*>;
         using MeshQueue = std::unordered_map<MeshGeometryRef, Meshes>;
         using MeshMap = std::unordered_map<MeshInfo const*, MeshGeometryRef::weak_type>;
+
+        using Gizmos = std::deque<GizmoInfo*>;
+        using GizmoQueue = std::unordered_map<MeshGeometryRef, Gizmos>;
+        using GizmoMap = std::unordered_map<GizmoInfo const*, MeshGeometryRef::weak_type>;
+
         using PointLightQueue = std::unordered_set<PointLightInfo*>;
         using ReflectionProbeLocalQueue = std::unordered_set<ReflectionProbeLocalInfo*>;
         using ReflectionProbeGlobalQueue = std::unordered_set<ReflectionProbeGlobalInfo*>;
@@ -38,6 +44,9 @@ class Workspace final
 
         MeshQueue                       _stippleQueue {};
         MeshMap                         _stippleMap {};
+
+        GizmoQueue                      _gizmoQueue {};
+        GizmoMap                        _gizmoMap {};
 
         PointLightQueue                 _pointLightQueue {};
         ReflectionProbeLocalQueue       _reflectionProbeLocalQueue {};
@@ -67,11 +76,13 @@ class Workspace final
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] GizmoNode RegisterGizmo ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;
 
         void Unregister ( MeshNode const &node ) noexcept;
+        void Unregister ( GizmoNode const &node ) noexcept;
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
         void Unregister ( ReflectionProbeGlobalNode &node ) noexcept;
@@ -81,12 +92,14 @@ class Workspace final
         void DrawGizmo ( VkCommandBuffer commandBuffer );
         void DrawUI ( VkCommandBuffer commandBuffer );
 
+        // FUCK move to ipp
         [[nodiscard]] MeshNode Register ( MeshGeometryRef &mesh,
             MeshQueue &meshQueue,
             MeshMap &meshMap,
             MeshInfo &node
         ) noexcept;
 
+        // FUCK move to ipp
         void Unregister ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &node ) noexcept;
 };
 

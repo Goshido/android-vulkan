@@ -1036,6 +1036,7 @@
     <ClCompile Include="src\crash_dump.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\gizmo_node.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />
@@ -1176,6 +1177,8 @@
     <ClInclude Include="include\cursor.hpp" />
     <ClInclude Include="include\div_ui_element.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\gizmo_info.hpp" />
+    <ClInclude Include="include\gizmo_node.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\hello_triangle_program.hpp" />
     <ClInclude Include="include\hello_triangle_vertex.hpp" />

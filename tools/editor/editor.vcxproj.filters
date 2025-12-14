@@ -354,6 +354,9 @@
     <ClCompile Include="src\reflection_probe_local_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gizmo_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -780,6 +783,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\reflection_probe_local_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_node.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

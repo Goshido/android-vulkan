@@ -2,6 +2,7 @@
 
 ## Used algorithms
 
+1) [_Analytical Anti-Aliasing for SDF_](./aaa-for-sdf.md)
 1) [_Auto exposure_](./auto-exposure.md)
 1) [_Data compression_](./data-compression.md)
 1) [_Proper UI_](./proper-ui.md)

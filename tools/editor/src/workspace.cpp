@@ -21,17 +21,17 @@ void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
 
-    constexpr auto clearAlpha = [] ( MeshQueue &meshQueue, MeshMap &meshMap ) noexcept {
-        for ( auto const &item : meshQueue )
+    constexpr auto clearAlpha = [] ( auto &queue, auto &map ) noexcept {
+        for ( auto const &item : queue )
         {
-            for ( auto const mesh : item.second )
+            for ( auto const info : item.second )
             {
-                delete mesh;
+                delete info;
             }
         }
 
-        meshMap.clear ();
-        meshQueue.clear ();
+        map.clear ();
+        queue.clear ();
     };
 
     constexpr auto clearBeta = [] ( auto &queue ) noexcept {
@@ -45,6 +45,7 @@ void Workspace::Destroy () noexcept
 
     clearAlpha ( _opaqueQueue, _opaqueMap );
     clearAlpha ( _stippleQueue, _stippleMap );
+    clearAlpha ( _gizmoQueue, _gizmoMap );
 
     clearBeta ( _pointLightQueue );
     clearBeta ( _reflectionProbeLocalQueue );
@@ -89,6 +90,24 @@ MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
     auto &m = *new MeshInfo;
     m._material._isStipple = true;
     return Register ( mesh, _stippleQueue, _stippleMap, m );
+}
+
+GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
+{
+    AV_TRACE ( "Workspace register gizmo" )
+
+    auto &g = *new GizmoInfo;
+
+    // FUCK move to ipp
+    auto w = MeshGeometryRef::weak_type ( mesh );
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _gizmoQueue[ mesh ].push_back ( &g );
+        _gizmoMap[ &g ] = std::move ( w );
+    }
+
+    return GizmoNode ( *this, g );
 }
 
 PointLightNode Workspace::RegisterPointLight () noexcept
@@ -144,6 +163,33 @@ void Workspace::Unregister ( MeshNode const &node ) noexcept
         Unregister ( _opaqueQueue, _opaqueMap, n );
 
     delete &n;
+}
+
+// FUCK move to ipp
+void Workspace::Unregister ( GizmoNode const &node ) noexcept
+{
+    GizmoInfo const &g = node.GetInternalInfo ();
+
+    std::lock_guard const lock ( _mutex );
+    auto const findResult = _gizmoQueue.find ( _gizmoMap.extract ( &g ).mapped ().lock () );
+    Gizmos &gizmos = findResult->second;
+
+    if ( gizmos.size () == 1U )
+    {
+        AV_ASSERT ( gizmos.front () == &g )
+        _gizmoQueue.erase ( findResult );
+        return;
+    }
+
+    for ( auto &gizmo : gizmos )
+    {
+        if ( gizmo != &g )
+            continue;
+
+        gizmo = gizmos.back ();
+        gizmos.pop_back ();
+        break;
+    }
 }
 
 void Workspace::Unregister ( PointLightNode &node ) noexcept

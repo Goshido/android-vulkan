@@ -23,6 +23,36 @@ The most tricky task is to estimate pixel coverage. The _SDF_ shape is defined i
 
 <img src="./images/pixel-size.svg"/>
 
+$$
+\begin{aligned}
+    &\tan{\frac{\varphi}{2}}=\frac{\left|CD\right|}{\left|OC\right|}                                                  \\
+    &\left|OC\right|=\widehat{OC}\cdot\overrightarrow{OE}                                                             \\
+    &\left|CD\right|=\left(\widehat{OC}\cdot\overrightarrow{OE}\right)\tan{\frac{\varphi}{2}}
+\end{aligned}
+$$
+
+Note that we are using a half of field of view angle. No magic here. It's literally on the picture above.
+
+$\widehat{OC}$ is the *"forward"* vector of the camera, [unit vector](https://en.wikipedia.org/wiki/Unit_vector).
+
+Please note that the $\left|CD\right|$ is equivalent to half the vertical pixel count $\left(h\right)$. So each pixel represents a physical length of $\eta$ units:
+
+$$
+\begin{aligned}
+    &\eta=\dfrac{h\cdot\left|CD\right|}{2}                                                                            \\
+    &\eta=\dfrac{h\left(\widehat{OC}\cdot\overrightarrow{OE}\right)\tan{\frac{\varphi}{2}}}{2}
+\end{aligned}
+$$
+
+The formula above could be simplified. $\tan{\frac{\varphi}{2}}$ and $\dfrac{h}{2}$ could be precomputed and combined:
+
+$$
+\begin{aligned}
+    &\alpha=\dfrac{h\tan{\frac{\varphi}{2}}}{2}                                                                       \\
+    &\eta=\alpha\left(\widehat{OC}\cdot\overrightarrow{OE}\right)
+\end{aligned}
+$$
+
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="decal-case">_SDF_ decal in _3D_ space case</a>

@@ -17,6 +17,13 @@
      id="title145">Pixel size and coverage</title>
   <defs
      id="defs1">
+    <linearGradient
+       id="swatch6">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop6" />
+    </linearGradient>
     <color-profile
        name="sRGB-IEC61966-2.1"
        xlink:href="file:///C:/WINDOWS/system32/spool/drivers/color/sRGB%20Color%20Space%20Profile.icm"
@@ -219,38 +226,6 @@
     </linearGradient>
     <marker
        style="overflow:visible"
-       id="marker11"
-       refX="0"
-       refY="0"
-       orient="auto-start-reverse"
-       markerWidth="1"
-       markerHeight="1"
-       viewBox="0 0 1 1"
-       preserveAspectRatio="xMidYMid">
-      <path
-         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
-         d="M 0,0 5,-5 -12.5,0 5,5 Z"
-         transform="scale(-0.5)"
-         id="path11" />
-    </marker>
-    <marker
-       style="overflow:visible"
-       id="marker10"
-       refX="0"
-       refY="0"
-       orient="auto-start-reverse"
-       markerWidth="1"
-       markerHeight="1"
-       viewBox="0 0 1 1"
-       preserveAspectRatio="xMidYMid">
-      <path
-         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
-         d="M 0,0 5,-5 -12.5,0 5,5 Z"
-         transform="scale(-0.5)"
-         id="path10" />
-    </marker>
-    <marker
-       style="overflow:visible"
        id="marker5"
        refX="0"
        refY="0"
@@ -335,17 +310,9 @@
     <rect
        x="452.54834"
        y="395.27271"
-       width="181.72646"
-       height="43.133514"
+       width="378.30212"
+       height="54.447224"
        id="rect5" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient5"
-       x1="265.87366"
-       y1="255.41396"
-       x2="669.4895"
-       y2="255.41396"
-       gradientUnits="userSpaceOnUse" />
     <rect
        x="452.54834"
        y="395.27271"
@@ -494,75 +461,19 @@
        id="rect5-5-7-1-8-21-7" />
     <linearGradient
        xlink:href="#swatch5"
-       id="linearGradient4"
-       gradientTransform="scale(0.18616249,5.3716514)"
-       x1="1361.1443"
-       y1="20.711716"
-       x2="1426.9504"
-       y2="20.711716"
-       gradientUnits="userSpaceOnUse" />
+       id="linearGradient17"
+       gradientUnits="userSpaceOnUse"
+       x1="265.87366"
+       y1="255.41396"
+       x2="669.4895"
+       y2="255.41396" />
     <linearGradient
        xlink:href="#swatch5"
        id="linearGradient6"
-       gradientTransform="scale(8.5012537,0.11762971)"
-       x1="30.526815"
-       y1="4195.8486"
-       x2="78.686417"
-       y2="4195.8486"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient7"
-       gradientTransform="scale(8.5012537,0.11762971)"
-       x1="30.526815"
-       y1="4195.8486"
-       x2="78.686417"
-       y2="4195.8486"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient8"
-       gradientTransform="scale(0.0577757,17.308314)"
-       x1="4481.8442"
-       y1="12.786578"
-       x2="4501.4546"
-       y2="12.786578"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient9"
-       gradientTransform="scale(0.06434425,15.541403)"
-       x1="10387.192"
-       y1="18.494665"
-       x2="10404.813"
-       y2="18.494665"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient10"
-       gradientTransform="scale(1.311889,0.76225964)"
-       x1="346.29962"
-       y1="524.37103"
-       x2="375.50964"
-       y2="524.37103"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient11"
-       gradientTransform="scale(3.0737933,0.32533092)"
-       x1="147.8"
-       y1="1226.8153"
-       x2="218.04099"
-       y2="1226.8153"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#swatch5"
-       id="linearGradient12"
-       gradientTransform="scale(2.6503991,0.37730167)"
-       x1="171.41064"
-       y1="1057.8298"
-       x2="231.97641"
-       y2="1057.8298"
+       x1="259.51083"
+       y1="496.38895"
+       x2="668.93854"
+       y2="496.38895"
        gradientUnits="userSpaceOnUse" />
   </defs>
   <rect
@@ -638,7 +549,7 @@
      style="display:inline;stroke-width:0.752338">
     <path
        id="rect36-3"
-       style="fill:url(#linearGradient4);stroke-width:0.999999"
+       style="fill:url(#swatch5);stroke-width:0.999999"
        d="m 253.39401,111.25611 12.25064,4.96971 v 343.49412 l -12.25064,5.02396 z"
        transform="matrix(1.1111098,0,0,0.56601165,137.58898,124.92933)" />
     <path
@@ -712,9 +623,9 @@
        id="path145" />
   </g>
   <path
-     style="fill:url(#linearGradient6);fill-opacity:1;stroke:url(#linearGradient7);stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-start:url(#marker10);marker-end:url(#marker11);paint-order:stroke fill markers"
+     style="fill:none;stroke:url(#linearGradient6);stroke-width:1.13386;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1;stroke-dasharray:none;marker-start:url(#marker125);marker-end:url(#marker125)"
      d="m 266.59745,496.38896 h 395.2545"
-     id="path9" />
+     id="path3" />
   <path
      style="mix-blend-mode:normal;fill:none;fill-opacity:1;stroke:url(#linearGradient144);stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker125);paint-order:stroke fill markers"
      d="M 668.92301,288 28.284271,426.30359"
@@ -728,11 +639,11 @@
      style="fill:url(#linearGradient2);fill-opacity:1;stroke:none;stroke-width:4.31818;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:34.5454, 12.9545;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
      d="m 125.75365,282.36987 a 48.502629,47.855634 37.074015 0 0 9.84944,67.42225 48.502629,47.855634 37.074015 0 0 67.5461,-8.9436 l 70.71908,-93.59554 a 48.502629,47.855634 37.074015 0 0 -9.84695,-67.42037 48.502629,47.855634 37.074015 0 0 -67.5486,8.94172 l -0.0281,0.0374 -70.66459,93.52346 a 48.502629,47.855634 37.074015 0 0 -0.0262,0.0347 z" />
   <path
-     style="fill:url(#linearGradient8);fill-opacity:1;stroke:#000000;stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:1.133, 3.399;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+     style="fill:url(#swatch5);fill-opacity:1;stroke:#000000;stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:1.133, 3.399;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
      d="M 259.50819,221.88061 V 560.73568"
      id="path12" />
   <path
-     style="fill:url(#linearGradient9);fill-opacity:1;stroke:#000000;stroke-width:1.13386;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:1.13386, 3.40157;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+     style="fill:url(#swatch5);fill-opacity:1;stroke:#000000;stroke-width:1.13386;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:1.13386, 3.40157;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
      d="m 668.92301,288 10e-6,272.73568"
      id="path13" />
   <ellipse
@@ -744,7 +655,7 @@
      ry="8.9140139"
      transform="matrix(1,0,-0.47032385,0.88249389,0,0)" />
   <path
-     style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient5);stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5);paint-order:stroke fill markers"
+     style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient17);stroke-width:1.133;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#marker5);paint-order:stroke fill markers"
      d="M 668.92301,288 266.44016,222.8279"
      id="path36-8" />
   <path
@@ -756,33 +667,33 @@
     <text
        xml:space="preserve"
        id="text5-1"
-       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5);display:inline;fill:url(#linearGradient10);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5);display:inline;fill:url(#swatch5);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        transform="translate(-114.59091,-193.47986)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan12"><tspan
+         id="tspan24"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan11">Ray</tspan></tspan></text>
+           id="tspan23">Ray</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3"
-       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5-7);display:inline;fill:url(#linearGradient11);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5-7);display:inline;fill:url(#swatch5);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        transform="translate(-98.044166,71.583945)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan14"><tspan
+         id="tspan26"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan13">Projection distance</tspan></tspan></text>
+           id="tspan25">Projection distance</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2"
-       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5-7-1);display:inline;fill:url(#linearGradient12);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
+       style="font-size:24px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect5-5-7-1);display:inline;fill:url(#swatch5);fill-opacity:1;stroke:#294300;stroke-width:2.707;stroke-linecap:round;stroke-linejoin:bevel;stroke-dasharray:21.656, 8.12099;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke fill markers"
        transform="translate(-200.91263,-310.7164)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan16"><tspan
+         id="tspan28"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan15">Pixel coverage</tspan></tspan></text>
+           id="tspan27">Pixel coverage</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5"
@@ -790,9 +701,11 @@
        transform="translate(9.192388,-224.73863)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan18"><tspan
+         id="tspan31"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan17">Field of view</tspan></tspan></text>
+           id="tspan29">Field of view, </tspan><tspan
+           style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
+           id="tspan30">φ</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text4"
@@ -800,9 +713,9 @@
        transform="translate(-21.557291,-2.2426407)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan20"><tspan
+         id="tspan33"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';fill:url(#swatch3);stroke:none"
-           id="tspan19">Display pixels</tspan></tspan></text>
+           id="tspan32">Display pixels</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1"
@@ -810,9 +723,9 @@
        transform="translate(217.65127,-155.6003)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan22"><tspan
+         id="tspan35"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan21">O</tspan></tspan></text>
+           id="tspan34">O</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1-5-3"
@@ -820,9 +733,9 @@
        transform="translate(-218.69299,-198.71655)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan24"><tspan
+         id="tspan37"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan23">E</tspan></tspan></text>
+           id="tspan36">E</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1-1"
@@ -830,9 +743,9 @@
        transform="translate(-181.89252,-267.83133)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan26"><tspan
+         id="tspan39"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan25">D</tspan></tspan></text>
+           id="tspan38">D</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1-4"
@@ -840,9 +753,9 @@
        transform="translate(-181.95733,-134.50091)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan28"><tspan
+         id="tspan41"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan27">C</tspan></tspan></text>
+           id="tspan40">C</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1-5"
@@ -850,9 +763,9 @@
        transform="translate(-2.3974558,-194.45602)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan30"><tspan
+         id="tspan43"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan29">B</tspan></tspan></text>
+           id="tspan42">B</tspan></tspan></text>
     <text
        xml:space="preserve"
        id="text5-1-3-2-1-3"
@@ -860,9 +773,9 @@
        transform="translate(-2.8289281,-134.20794)"><tspan
          x="452.54883"
          y="417.05064"
-         id="tspan32"><tspan
+         id="tspan45"><tspan
            style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS Bold';stroke:none"
-           id="tspan31">A</tspan></tspan></text>
+           id="tspan44">A</tspan></tspan></text>
   </g>
   <metadata
      id="metadata145">

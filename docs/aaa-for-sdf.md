@@ -39,7 +39,7 @@ Please note that the $\left|CD\right|$ is equivalent to half the vertical pixel 
 
 $$
 \begin{aligned}
-    &\eta=\left|CD\right|\div\dfrac{h}{2}                                                                            \\
+    &\eta=\left|CD\right|\div\dfrac{h}{2}                                                                             \\
     &\eta=\dfrac{2\cdot\left|CD\right|}{h}                                                                            \\
     &\eta=\dfrac{2\left(\widehat{OC}\cdot\overrightarrow{OE}\right)\tan{\frac{\varphi}{2}}}{h}
 \end{aligned}
@@ -82,12 +82,17 @@ $$
     &h - \text{vertical pixel count}                                                                                  \\
     &\varphi - \text{camera field of view angle}                                                                      \\
     &\widehat{OC} - \text{camera forward direction, unit vector}                                                      \\
-    &\overrightarrow{OE} - \text{SDF ray vector}                                                                      \\
-
+    &\overrightarrow{OE} - \textit{SDF}\text{ ray vector}                                                             \\
 \end{aligned}
 $$
 
 <img src="./images/pixel-size.svg"/>
+
+At this point, a rule can be established to map _SDF_ proximity to the pixel center and transparency:
+
+- Fully Transparent: If the _SDF_ shape proximity is greater than the pixel size relative to the pixel center.
+- Fully Opaque: If the _SDF_ shape touches the pixel center.
+- In all other cases, apply linear interpolation clamped between 0 and 1 to determine the final alpha.
 
 [↬ table of content ⇧](#table-of-content)
 

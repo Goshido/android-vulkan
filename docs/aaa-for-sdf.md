@@ -44,7 +44,7 @@ $$
 \end{aligned}
 $$
 
-The formula above could be simplified. $\tan{\frac{\varphi}{2}}$ and $\dfrac{h}{2}$ could be precomputed and combined:
+The equation above could be simplified. $\tan{\frac{\varphi}{2}}$ and $\dfrac{h}{2}$ could be precomputed and combined:
 
 $$
 \begin{aligned}
@@ -52,6 +52,41 @@ $$
     &\eta=\alpha\left(\widehat{OC}\cdot\overrightarrow{OE}\right)
 \end{aligned}
 $$
+
+Another runtime optimization happens around dot product:
+
+$$
+\overrightarrow{a}\cdot\overrightarrow{b}=a_xb_x+a_yb_y+a_zb_z
+$$
+
+Imagine that $\overrightarrow{a}$ is scaled by $\lambda$:
+
+$$
+\begin{aligned}
+    &\lambda\overrightarrow{a}\cdot\overrightarrow{b}=\lambda{a_x}b_x+\lambda{a_y}b_y+\lambda{a_z}b_z                 \\
+    &\lambda\overrightarrow{a}\cdot\overrightarrow{b}=\lambda\left(a_xb_x+a_yb_y+a_zb_z\right)                        \\
+    &\lambda\overrightarrow{a}\cdot\overrightarrow{b}=\lambda\left(\overrightarrow{a}\cdot\overrightarrow{b}\right)
+\end{aligned}
+$$
+
+It's exactly the same scenario which happens with $\eta$. So it's possible to precompute $\alpha$ and $\widehat{OC}$ as $\overrightarrow{v}$. Pay attention that $\overrightarrow{v}$ is a **uniform constant** in fact. This will simplify whole equation to single dot product:
+
+$$
+\begin{aligned}
+    &\overrightarrow{v}=\dfrac{h\tan{\frac{\varphi}{2}}}{2}\widehat{OC}                                               \\
+    &\eta=\overrightarrow{v}\cdot\overrightarrow{OE}                                                                  \\
+    &                                                                                                                 \\
+    &\text{where:}                                                                                                    \\
+    &\eta - \text{pixel size in scene units}                                                                          \\
+    &h - \text{vertical pixel count}                                                                                  \\
+    &\varphi - \text{camera field of view angle}                                                                      \\
+    &\widehat{OC} - \text{camera forward direction, unit vector}                                                      \\
+    &\overrightarrow{OE} - \text{SDF ray vector}                                                                      \\
+
+\end{aligned}
+$$
+
+<img src="./images/pixel-size.svg"/>
 
 [↬ table of content ⇧](#table-of-content)
 

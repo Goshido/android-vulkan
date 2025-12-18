@@ -39,16 +39,17 @@ Please note that the $\left|CD\right|$ is equivalent to half the vertical pixel 
 
 $$
 \begin{aligned}
-    &\eta=\dfrac{h\cdot\left|CD\right|}{2}                                                                            \\
-    &\eta=\dfrac{h\left(\widehat{OC}\cdot\overrightarrow{OE}\right)\tan{\frac{\varphi}{2}}}{2}
+    &\eta=\left|CD\right|\div\dfrac{h}{2}                                                                            \\
+    &\eta=\dfrac{2\cdot\left|CD\right|}{h}                                                                            \\
+    &\eta=\dfrac{2\left(\widehat{OC}\cdot\overrightarrow{OE}\right)\tan{\frac{\varphi}{2}}}{h}
 \end{aligned}
 $$
 
-The equation above could be simplified. $\tan{\frac{\varphi}{2}}$ and $\dfrac{h}{2}$ could be precomputed and combined:
+The equation above could be simplified. $\tan{\frac{\varphi}{2}}$ and $\dfrac{2}{h}$ could be precomputed and combined:
 
 $$
 \begin{aligned}
-    &\alpha=\dfrac{h\tan{\frac{\varphi}{2}}}{2}                                                                       \\
+    &\alpha=\dfrac{2\tan{\frac{\varphi}{2}}}{h}                                                                       \\
     &\eta=\alpha\left(\widehat{OC}\cdot\overrightarrow{OE}\right)
 \end{aligned}
 $$
@@ -73,7 +74,7 @@ It's exactly the same scenario which happens with $\eta$. So it's possible to pr
 
 $$
 \begin{aligned}
-    &\overrightarrow{v}=\dfrac{h\tan{\frac{\varphi}{2}}}{2}\widehat{OC}                                               \\
+    &\overrightarrow{v}=\dfrac{2\tan{\frac{\varphi}{2}}}{h}\widehat{OC}                                               \\
     &\eta=\overrightarrow{v}\cdot\overrightarrow{OE}                                                                  \\
     &                                                                                                                 \\
     &\text{where:}                                                                                                    \\

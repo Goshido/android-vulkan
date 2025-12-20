@@ -94,6 +94,8 @@ At this point, a rule can be established to map _SDF_ proximity to the pixel cen
 - Fully Opaque: If the _SDF_ shape touches the pixel center.
 - In all other cases, apply linear interpolation clamped between 0 and 1 to determine the final alpha.
 
+<img src="./images/sdf-threshold.svg"/>
+
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="decal-case">_SDF_ decal in _3D_ space case</a>

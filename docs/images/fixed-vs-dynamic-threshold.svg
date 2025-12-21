@@ -5,68 +5,13 @@
    width="591pt"
    version="1.1"
    id="svg2829"
-   sodipodi:docname="fixed-vs-dynamic-threshold.svg"
-   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
    xml:space="preserve"
-   inkscape:export-filename="..\images\fixed-vs-dynamic-threshold.svg"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:dc="http://purl.org/dc/elements/1.1/"><sodipodi:namedview
-     id="namedview2829"
-     pagecolor="#505050"
-     bordercolor="#eeeeee"
-     borderopacity="1"
-     inkscape:showpageshadow="0"
-     inkscape:pageopacity="0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#505050"
-     inkscape:document-units="pt"
-     showguides="true"
-     inkscape:zoom="1.1635814"
-     inkscape:cx="305.95195"
-     inkscape:cy="592.13734"
-     inkscape:window-width="1920"
-     inkscape:window-height="1057"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="g2829"
-     showgrid="false"><sodipodi:guide
-       position="28.360715,241.64755"
-       orientation="1,0"
-       id="guide2829"
-       inkscape:locked="false" /><sodipodi:guide
-       position="415.7423,1.5483164"
-       orientation="1,0"
-       id="guide2830"
-       inkscape:locked="false" /><sodipodi:guide
-       position="243.96661,27.653066"
-       orientation="1,0"
-       id="guide2831"
-       inkscape:locked="false" /><sodipodi:guide
-       position="71.868631,32.809559"
-       orientation="1,0"
-       id="guide2832"
-       inkscape:locked="false" /><sodipodi:guide
-       position="392.53808,7.0270909"
-       orientation="1,0"
-       id="guide2833"
-       inkscape:locked="false" /><sodipodi:guide
-       position="219.22727,28.802825"
-       orientation="1,0"
-       id="guide2834"
-       inkscape:locked="false" /><sodipodi:guide
-       position="47.053005,16.373236"
-       orientation="1,0"
-       id="guide2835"
-       inkscape:locked="false" /></sodipodi:namedview><title
+   xmlns:dc="http://purl.org/dc/elements/1.1/"><title
      id="title1">Figure 1</title><desc
      id="desc1">
 Creator: GL2PS 1.4.2, (C) 1999-2020 C. Geuzaine
@@ -74,21 +19,16 @@ For: Octave
 CreationDate: Sun Dec 21 12:08:22 2025
 </desc><defs
      id="defs1"><linearGradient
-       id="swatch47"
-       inkscape:swatch="solid"><stop
+       id="swatch47"><stop
          style="stop-color:#000000;stop-opacity:1;"
          offset="0"
          id="stop47" /></linearGradient></defs><polygon
      fill="#ffffff"
      points="591,371 0,371 0,0 591,0 "
      id="polygon1"
-     inkscape:label="background"
      style="fill:#fdffca;fill-opacity:1;stroke-width:0.792306"
-     transform="scale(1,1.5929919)"
-     sodipodi:insensitive="true" /><g
-     inkscape:groupmode="layer"
+     transform="scale(1,1.5929919)" /><g
      id="layer3"
-     inkscape:label="Graphs"
      transform="translate(-0.74310346,219.79554)"><g
        id="g2829"><clipPath
          id="cp00591371"><polygon
@@ -141,7 +81,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="-3.4106051e-13"
    y="8.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272"
    id="text7"
-   style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -201,7 +141,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon18" /><polygon
            fill="#20908c"
-           points="107.32,152.998 107.32,153.013 107.642,153.013 107.964,153.013 107.964,152.998 107.642,152.998 "
+           points="107.964,152.998 107.642,152.998 107.32,152.998 107.32,153.013 107.642,153.013 107.964,153.013 "
            shape-rendering="crispEdges"
            id="polygon19" /><polygon
            fill="#20908c"
@@ -241,7 +181,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon28" /><polygon
            fill="#20908c"
-           points="111.512,152.998 111.512,153.013 111.834,153.013 112.157,153.013 112.157,152.998 111.834,152.998 "
+           points="112.157,152.998 111.834,152.998 111.512,152.998 111.512,153.013 111.834,153.013 112.157,153.013 "
            shape-rendering="crispEdges"
            id="polygon29" /><polygon
            fill="#20908c"
@@ -521,7 +461,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon98" /><polygon
            fill="#20908c"
-           points="135.375,152.368 135.375,153.013 135.698,153.013 136.02,153.013 136.02,152.368 135.698,152.368 "
+           points="136.02,152.368 135.698,152.368 135.375,152.368 135.375,153.013 135.698,153.013 136.02,153.013 "
            shape-rendering="crispEdges"
            id="polygon99" /><polygon
            fill="#20908c"
@@ -665,7 +605,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon134" /><polygon
            fill="#20908c"
-           points="148.597,152.989 148.597,153.013 148.919,153.013 149.242,153.013 149.242,152.989 148.919,152.989 "
+           points="149.242,152.989 148.919,152.989 148.597,152.989 148.597,153.013 148.919,153.013 149.242,153.013 "
            shape-rendering="crispEdges"
            id="polygon135" /><polygon
            fill="#20908c"
@@ -705,7 +645,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon144" /><polygon
            fill="#20908c"
-           points="153.111,152.998 153.111,153.013 153.434,153.013 153.756,153.013 153.756,152.998 153.434,152.998 "
+           points="153.756,152.998 153.434,152.998 153.111,152.998 153.111,153.013 153.434,153.013 153.756,153.013 "
            shape-rendering="crispEdges"
            id="polygon145" /><polygon
            fill="#20908c"
@@ -753,11 +693,11 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon156" /><polygon
            fill="#20908c"
-           points="158.916,153.005 158.916,153.013 159.238,153.013 159.561,153.013 159.561,153.005 159.238,153.005 "
+           points="159.561,153.005 159.238,153.005 158.916,153.005 158.916,153.013 159.238,153.013 159.561,153.013 "
            shape-rendering="crispEdges"
            id="polygon157" /><polygon
            fill="#20908c"
-           points="159.883,153.009 159.883,153.013 160.206,153.013 160.528,153.013 160.528,153.009 160.206,153.009 "
+           points="160.528,153.009 160.206,153.009 159.883,153.009 159.883,153.013 160.206,153.013 160.528,153.013 "
            shape-rendering="crispEdges"
            id="polygon158" /><polygon
            fill="#20908c"
@@ -793,7 +733,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon166" /><polygon
            fill="#20908c"
-           points="168.913,153.009 168.913,153.013 169.235,153.013 169.558,153.013 169.558,153.009 169.235,153.009 "
+           points="169.558,153.009 169.235,153.009 168.913,153.009 168.913,153.013 169.235,153.013 169.558,153.013 "
            shape-rendering="crispEdges"
            id="polygon167" /><polygon
            fill="#20908c"
@@ -2424,7 +2364,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="1.7053026e-13"
    y="8.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921"
    id="text383"
-   style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -2452,7 +2392,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon386" /><polygon
            fill="#20908c"
-           points="275.993,153 275.993,153.013 276.315,153.013 276.638,153.013 276.638,153 276.315,153 "
+           points="276.638,153 276.315,153 275.993,153 275.993,153.013 276.315,153.013 276.638,153.013 "
            shape-rendering="crispEdges"
            id="polygon387" /><polygon
            fill="#20908c"
@@ -2488,7 +2428,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon395" /><polygon
            fill="#20908c"
-           points="279.217,152.98 279.217,153.013 279.54,153.013 279.862,153.013 279.862,152.98 279.54,152.98 "
+           points="279.862,152.98 279.54,152.98 279.217,152.98 279.217,153.013 279.54,153.013 279.862,153.013 "
            shape-rendering="crispEdges"
            id="polygon396" /><polygon
            fill="#20908c"
@@ -2572,7 +2512,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon416" /><polygon
            fill="#20908c"
-           points="286.312,152.974 286.312,153.013 286.634,153.013 286.957,153.013 286.957,152.974 286.634,152.974 "
+           points="286.957,152.974 286.634,152.974 286.312,152.974 286.312,153.013 286.634,153.013 286.957,153.013 "
            shape-rendering="crispEdges"
            id="polygon417" /><polygon
            fill="#20908c"
@@ -3076,7 +3016,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon542" /><polygon
            fill="#20908c"
-           points="327.267,152.947 327.267,153.013 327.589,153.013 327.912,153.013 327.912,152.947 327.589,152.947 "
+           points="327.912,152.947 327.589,152.947 327.267,152.947 327.267,153.013 327.589,153.013 327.912,153.013 "
            shape-rendering="crispEdges"
            id="polygon543" /><polygon
            fill="#20908c"
@@ -3208,7 +3148,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon575" /><polygon
            fill="#20908c"
-           points="338.231,152.987 338.231,153.013 338.553,153.013 338.876,153.013 338.876,152.987 338.553,152.987 "
+           points="338.876,152.987 338.553,152.987 338.231,152.987 338.231,153.013 338.553,153.013 338.876,153.013 "
            shape-rendering="crispEdges"
            id="polygon576" /><polygon
            fill="#20908c"
@@ -3216,11 +3156,11 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon577" /><polygon
            fill="#20908c"
-           points="339.198,152.987 339.198,153.013 339.521,153.013 339.843,153.013 339.843,152.987 339.521,152.987 "
+           points="339.843,152.987 339.521,152.987 339.198,152.987 339.198,153.013 339.521,153.013 339.843,153.013 "
            shape-rendering="crispEdges"
            id="polygon578" /><polygon
            fill="#20908c"
-           points="339.843,152.974 339.843,153.013 340.166,153.013 340.488,153.013 340.488,152.974 340.166,152.974 "
+           points="340.488,152.974 340.166,152.974 339.843,152.974 339.843,153.013 340.166,153.013 340.488,153.013 "
            shape-rendering="crispEdges"
            id="polygon579" /><polygon
            fill="#20908c"
@@ -3280,7 +3220,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon593" /><polygon
            fill="#20908c"
-           points="345.003,152.98 345.003,153.013 345.325,153.013 345.648,153.013 345.648,152.98 345.325,152.98 "
+           points="345.648,152.98 345.325,152.98 345.003,152.98 345.003,153.013 345.325,153.013 345.648,153.013 "
            shape-rendering="crispEdges"
            id="polygon594" /><polygon
            fill="#20908c"
@@ -5308,14 +5248,14 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="0"
    y="-18"
    id="text863"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 64</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 64</text>
     <text
    fill="#000000"
    font-family="'*', FreeSans"
    x="17"
    y="-2"
    id="text864"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 252</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 252</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -5329,7 +5269,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="-3.9790393e-13"
    y="9.9122019 10.912202 10.912202 10.912202 10.912202 10.912202 10.912202 10.912202 10.912202 10.912202 10.912202"
    id="text865"
-   style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -5357,7 +5297,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon868" /><polygon
            fill="#20908c"
-           points="447.891,153 447.891,153.013 448.213,153.013 448.536,153.013 448.536,153 448.213,153 "
+           points="448.536,153 448.213,153 447.891,153 447.891,153.013 448.213,153.013 448.536,153.013 "
            shape-rendering="crispEdges"
            id="polygon869" /><polygon
            fill="#20908c"
@@ -5393,7 +5333,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon877" /><polygon
            fill="#20908c"
-           points="451.115,152.98 451.115,153.013 451.438,153.013 451.76,153.013 451.76,152.98 451.438,152.98 "
+           points="451.76,152.98 451.438,152.98 451.115,152.98 451.115,153.013 451.438,153.013 451.76,153.013 "
            shape-rendering="crispEdges"
            id="polygon878" /><polygon
            fill="#20908c"
@@ -5477,7 +5417,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon898" /><polygon
            fill="#20908c"
-           points="458.21,152.974 458.21,153.013 458.532,153.013 458.854,153.013 458.854,152.974 458.532,152.974 "
+           points="458.854,152.974 458.532,152.974 458.21,152.974 458.21,153.013 458.532,153.013 458.854,153.013 "
            shape-rendering="crispEdges"
            id="polygon899" /><polygon
            fill="#20908c"
@@ -5753,7 +5693,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon967" /><polygon
            fill="#20908c"
-           points="480.783,151.658 480.783,153.013 481.105,153.013 481.428,153.013 481.428,151.658 481.105,151.658 "
+           points="481.428,151.658 481.105,151.658 480.783,151.658 480.783,153.013 481.105,153.013 481.428,153.013 "
            shape-rendering="crispEdges"
            id="polygon968" /><polygon
            fill="#20908c"
@@ -5881,7 +5821,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon999" /><polygon
            fill="#20908c"
-           points="491.425,152.814 491.425,153.013 491.748,153.013 492.07,153.013 492.07,152.814 491.748,152.814 "
+           points="492.07,152.814 491.748,152.814 491.425,152.814 491.425,153.013 491.748,153.013 492.07,153.013 "
            shape-rendering="crispEdges"
            id="polygon1000" /><polygon
            fill="#20908c"
@@ -5981,7 +5921,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1024" /><polygon
            fill="#20908c"
-           points="499.81,152.9 499.81,153.013 500.132,153.013 500.454,153.013 500.454,152.9 500.132,152.9 "
+           points="500.454,152.9 500.132,152.9 499.81,152.9 499.81,153.013 500.132,153.013 500.454,153.013 "
            shape-rendering="crispEdges"
            id="polygon1025" /><polygon
            fill="#20908c"
@@ -6113,7 +6053,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1057" /><polygon
            fill="#20908c"
-           points="510.773,152.974 510.773,153.013 511.096,153.013 511.418,153.013 511.418,152.974 511.096,152.974 "
+           points="511.418,152.974 511.096,152.974 510.773,152.974 510.773,153.013 511.096,153.013 511.418,153.013 "
            shape-rendering="crispEdges"
            id="polygon1058" /><polygon
            fill="#20908c"
@@ -6181,7 +6121,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1074" /><polygon
            fill="#20908c"
-           points="516.578,152.974 516.578,153.013 516.901,153.013 517.223,153.013 517.223,152.974 516.901,152.974 "
+           points="517.223,152.974 516.901,152.974 516.578,152.974 516.578,153.013 516.901,153.013 517.223,153.013 "
            shape-rendering="crispEdges"
            id="polygon1075" /><polygon
            fill="#20908c"
@@ -8278,14 +8218,14 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="0"
    y="-18"
    id="text1355"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 67</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 67</text>
     <text
    fill="#000000"
    font-family="'*', FreeSans"
    x="17"
    y="-2"
    id="text1356"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -8299,7 +8239,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="-6.8212103e-13"
    y="8.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272 9.2223272"
    id="text1357"
-   style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -8327,7 +8267,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1360" /><polygon
            fill="#20908c"
-           points="104.095,330.377 104.095,330.393 104.417,330.393 104.74,330.393 104.74,330.377 104.417,330.377 "
+           points="104.74,330.377 104.417,330.377 104.095,330.377 104.095,330.393 104.417,330.393 104.74,330.393 "
            shape-rendering="crispEdges"
            id="polygon1361" /><polygon
            fill="#20908c"
@@ -8363,7 +8303,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1369" /><polygon
            fill="#20908c"
-           points="107.32,330.354 107.32,330.393 107.642,330.393 107.964,330.393 107.964,330.354 107.642,330.354 "
+           points="107.964,330.354 107.642,330.354 107.32,330.354 107.32,330.393 107.642,330.393 107.964,330.393 "
            shape-rendering="crispEdges"
            id="polygon1370" /><polygon
            fill="#20908c"
@@ -8447,7 +8387,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1390" /><polygon
            fill="#20908c"
-           points="114.414,330.345 114.414,330.393 114.737,330.393 115.059,330.393 115.059,330.345 114.737,330.345 "
+           points="115.059,330.345 114.737,330.345 114.414,330.345 114.414,330.393 114.737,330.393 115.059,330.393 "
            shape-rendering="crispEdges"
            id="polygon1391" /><polygon
            fill="#20908c"
@@ -8707,7 +8647,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1455" /><polygon
            fill="#20908c"
-           points="135.698,328.073 135.698,330.393 136.02,330.393 136.343,330.393 136.343,328.073 136.02,328.073 "
+           points="136.343,328.073 136.02,328.073 135.698,328.073 135.698,330.393 136.02,330.393 136.343,330.393 "
            shape-rendering="crispEdges"
            id="polygon1456" /><polygon
            fill="#20908c"
@@ -8799,7 +8739,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1478" /><polygon
            fill="#20908c"
-           points="143.437,329.429 143.437,330.393 143.76,330.393 144.082,330.393 144.082,329.429 143.76,329.429 "
+           points="144.082,329.429 143.76,329.429 143.437,329.429 143.437,330.393 143.76,330.393 144.082,330.393 "
            shape-rendering="crispEdges"
            id="polygon1479" /><polygon
            fill="#20908c"
@@ -8859,7 +8799,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1493" /><polygon
            fill="#20908c"
-           points="148.597,330.082 148.597,330.393 148.919,330.393 149.242,330.393 149.242,330.082 148.919,330.082 "
+           points="149.242,330.082 148.919,330.082 148.597,330.082 148.597,330.393 148.919,330.393 149.242,330.393 "
            shape-rendering="crispEdges"
            id="polygon1494" /><polygon
            fill="#20908c"
@@ -9011,7 +8951,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1531" /><polygon
            fill="#20908c"
-           points="161.173,330.29 161.173,330.393 161.496,330.393 161.818,330.393 161.818,330.29 161.496,330.29 "
+           points="161.818,330.29 161.496,330.29 161.173,330.29 161.173,330.393 161.496,330.393 161.818,330.393 "
            shape-rendering="crispEdges"
            id="polygon1532" /><polygon
            fill="#20908c"
@@ -9019,7 +8959,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1533" /><polygon
            fill="#20908c"
-           points="162.141,330.282 162.141,330.393 162.463,330.393 162.786,330.393 162.786,330.282 162.463,330.282 "
+           points="162.786,330.282 162.463,330.282 162.141,330.282 162.141,330.393 162.463,330.393 162.786,330.393 "
            shape-rendering="crispEdges"
            id="polygon1534" /><polygon
            fill="#20908c"
@@ -9039,7 +8979,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1538" /><polygon
            fill="#20908c"
-           points="164.076,330.33 164.076,330.393 164.398,330.393 164.721,330.393 164.721,330.33 164.398,330.33 "
+           points="164.721,330.33 164.398,330.33 164.076,330.33 164.076,330.393 164.398,330.393 164.721,330.393 "
            shape-rendering="crispEdges"
            id="polygon1539" /><polygon
            fill="#20908c"
@@ -9075,11 +9015,11 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1547" /><polygon
            fill="#20908c"
-           points="167.3,330.33 167.3,330.393 167.623,330.393 167.945,330.393 167.945,330.33 167.623,330.33 "
+           points="167.945,330.33 167.623,330.33 167.3,330.33 167.3,330.393 167.623,330.393 167.945,330.393 "
            shape-rendering="crispEdges"
            id="polygon1548" /><polygon
            fill="#20908c"
-           points="167.945,330.321 167.945,330.393 168.268,330.393 168.59,330.393 168.59,330.321 168.268,330.321 "
+           points="168.59,330.321 168.268,330.321 167.945,330.321 167.945,330.393 168.268,330.393 168.59,330.393 "
            shape-rendering="crispEdges"
            id="polygon1549" /><polygon
            fill="#20908c"
@@ -9095,7 +9035,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1552" /><polygon
            fill="#20908c"
-           points="169.558,330.297 169.558,330.393 169.88,330.393 170.203,330.393 170.203,330.297 169.88,330.297 "
+           points="170.203,330.297 169.88,330.297 169.558,330.297 169.558,330.393 169.88,330.393 170.203,330.393 "
            shape-rendering="crispEdges"
            id="polygon1553" /><polygon
            fill="#20908c"
@@ -9131,7 +9071,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1561" /><polygon
            fill="#20908c"
-           points="173.428,330.321 173.105,330.321 172.783,330.321 172.783,330.393 173.105,330.393 173.428,330.393 173.75,330.393 173.75,330.321 "
+           points="173.105,330.393 173.428,330.393 173.75,330.393 173.75,330.321 173.428,330.321 173.105,330.321 172.783,330.321 172.783,330.393 "
            shape-rendering="crispEdges"
            id="polygon1562" /><polygon
            fill="#20908c"
@@ -9139,7 +9079,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1563" /><polygon
            fill="#20908c"
-           points="174.072,330.297 174.072,330.393 174.395,330.393 174.717,330.393 174.717,330.297 174.395,330.297 "
+           points="174.717,330.297 174.395,330.297 174.072,330.297 174.072,330.393 174.395,330.393 174.717,330.393 "
            shape-rendering="crispEdges"
            id="polygon1564" /><polygon
            fill="#20908c"
@@ -11202,14 +11142,14 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="0"
    y="-18"
    id="text1841"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 70</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 38, average: 70</text>
     <text
    fill="#000000"
    font-family="'*', FreeSans"
    x="17"
    y="-2"
    id="text1842"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -11224,7 +11164,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="6.8212103e-13"
    y="8.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921 9.4983921"
    id="text13"
-   style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text></g><g
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">Pixel count</text></g><g
            font-family="FreeSans"
            font-size="11px"
            font-style="normal"
@@ -11251,7 +11191,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1846" /><polygon
            fill="#20908c"
-           points="275.993,330.377 275.993,330.393 276.315,330.393 276.638,330.393 276.638,330.377 276.315,330.377 "
+           points="276.638,330.377 276.315,330.377 275.993,330.377 275.993,330.393 276.315,330.393 276.638,330.393 "
            shape-rendering="crispEdges"
            id="polygon1847" /><polygon
            fill="#20908c"
@@ -11287,7 +11227,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1855" /><polygon
            fill="#20908c"
-           points="279.217,330.354 279.217,330.393 279.54,330.393 279.862,330.393 279.862,330.354 279.54,330.354 "
+           points="279.862,330.354 279.54,330.354 279.217,330.354 279.217,330.393 279.54,330.393 279.862,330.393 "
            shape-rendering="crispEdges"
            id="polygon1856" /><polygon
            fill="#20908c"
@@ -11371,7 +11311,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon1876" /><polygon
            fill="#20908c"
-           points="286.312,330.345 286.312,330.393 286.634,330.393 286.957,330.393 286.957,330.345 286.634,330.345 "
+           points="286.957,330.345 286.634,330.345 286.312,330.345 286.312,330.393 286.634,330.393 286.957,330.393 "
            shape-rendering="crispEdges"
            id="polygon1877" /><polygon
            fill="#20908c"
@@ -11903,7 +11843,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2009" /><polygon
            fill="#20908c"
-           points="329.524,330.162 329.524,330.393 329.846,330.393 330.169,330.393 330.169,330.162 329.846,330.162 "
+           points="330.169,330.162 329.846,330.162 329.524,330.162 329.524,330.393 329.846,330.393 330.169,330.393 "
            shape-rendering="crispEdges"
            id="polygon2010" /><polygon
            fill="#20908c"
@@ -12051,7 +11991,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2046" /><polygon
            fill="#20908c"
-           points="342.423,330.313 342.101,330.313 341.778,330.313 341.778,330.393 342.101,330.393 342.423,330.393 342.746,330.393 342.746,330.313 "
+           points="342.101,330.393 342.423,330.393 342.746,330.393 342.746,330.313 342.423,330.313 342.101,330.313 341.778,330.313 341.778,330.393 "
            shape-rendering="crispEdges"
            id="polygon2047" /><polygon
            fill="#20908c"
@@ -12071,7 +12011,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2051" /><polygon
            fill="#20908c"
-           points="344.035,330.321 344.035,330.393 344.358,330.393 344.68,330.393 344.68,330.321 344.358,330.321 "
+           points="344.68,330.321 344.358,330.321 344.035,330.321 344.035,330.393 344.358,330.393 344.68,330.393 "
            shape-rendering="crispEdges"
            id="polygon2052" /><polygon
            fill="#20908c"
@@ -12079,7 +12019,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2053" /><polygon
            fill="#20908c"
-           points="345.003,330.313 345.003,330.393 345.325,330.393 345.648,330.393 345.648,330.313 345.325,330.313 "
+           points="345.648,330.313 345.325,330.313 345.003,330.313 345.003,330.393 345.325,330.393 345.648,330.393 "
            shape-rendering="crispEdges"
            id="polygon2054" /><polygon
            fill="#20908c"
@@ -14165,14 +14105,14 @@ CreationDate: Sun Dec 21 12:08:22 2025
    x="0"
    y="-18"
    id="text2336"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 42, average: 73</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">popular: 42, average: 73</text>
     <text
    fill="#000000"
    font-family="'*', FreeSans"
    x="17"
    y="-2"
    id="text2337"
-   style="-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000024px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
+   style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">min: 13, max: 255</text>
    </g><g
            font-family="FreeSans"
            font-size="11px"
@@ -14209,7 +14149,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2341" /><polygon
            fill="#20908c"
-           points="447.891,330.377 447.891,330.393 448.213,330.393 448.536,330.393 448.536,330.377 448.213,330.377 "
+           points="448.536,330.377 448.213,330.377 447.891,330.377 447.891,330.393 448.213,330.393 448.536,330.393 "
            shape-rendering="crispEdges"
            id="polygon2342" /><polygon
            fill="#20908c"
@@ -14245,7 +14185,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2350" /><polygon
            fill="#20908c"
-           points="451.115,330.354 451.115,330.393 451.438,330.393 451.76,330.393 451.76,330.354 451.438,330.354 "
+           points="451.76,330.354 451.438,330.354 451.115,330.354 451.115,330.393 451.438,330.393 451.76,330.393 "
            shape-rendering="crispEdges"
            id="polygon2351" /><polygon
            fill="#20908c"
@@ -14329,7 +14269,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2371" /><polygon
            fill="#20908c"
-           points="458.21,330.345 458.21,330.393 458.532,330.393 458.854,330.393 458.854,330.345 458.532,330.345 "
+           points="458.854,330.345 458.532,330.345 458.21,330.345 458.21,330.393 458.532,330.393 458.854,330.393 "
            shape-rendering="crispEdges"
            id="polygon2372" /><polygon
            fill="#20908c"
@@ -14761,7 +14701,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2479" /><polygon
            fill="#20908c"
-           points="493.36,329.867 493.36,330.393 493.682,330.393 494.005,330.393 494.005,329.867 493.682,329.867 "
+           points="494.005,329.867 493.682,329.867 493.36,329.867 493.36,330.393 493.682,330.393 494.005,330.393 "
            shape-rendering="crispEdges"
            id="polygon2480" /><polygon
            fill="#20908c"
@@ -14925,7 +14865,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2520" /><polygon
            fill="#20908c"
-           points="506.904,330.266 506.904,330.393 507.227,330.393 507.549,330.393 507.549,330.266 507.227,330.266 "
+           points="507.549,330.266 507.227,330.266 506.904,330.266 506.904,330.393 507.227,330.393 507.549,330.393 "
            shape-rendering="crispEdges"
            id="polygon2521" /><polygon
            fill="#20908c"
@@ -15037,11 +14977,11 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2548" /><polygon
            fill="#20908c"
-           points="516.256,330.313 516.256,330.393 516.578,330.393 516.901,330.393 516.901,330.313 516.578,330.313 "
+           points="516.901,330.313 516.578,330.313 516.256,330.313 516.256,330.393 516.578,330.393 516.901,330.393 "
            shape-rendering="crispEdges"
            id="polygon2549" /><polygon
            fill="#20908c"
-           points="516.901,330.297 516.901,330.393 517.223,330.393 517.545,330.393 517.545,330.297 517.223,330.297 "
+           points="517.545,330.297 517.223,330.297 516.901,330.297 516.901,330.393 517.223,330.393 517.545,330.393 "
            shape-rendering="crispEdges"
            id="polygon2550" /><polygon
            fill="#20908c"
@@ -15053,11 +14993,11 @@ CreationDate: Sun Dec 21 12:08:22 2025
            shape-rendering="crispEdges"
            id="polygon2552" /><polygon
            fill="#20908c"
-           points="518.19,330.29 518.19,330.393 518.513,330.393 518.835,330.393 518.835,330.29 518.513,330.29 "
+           points="518.835,330.29 518.513,330.29 518.19,330.29 518.19,330.393 518.513,330.393 518.835,330.393 "
            shape-rendering="crispEdges"
            id="polygon2553" /><polygon
            fill="#20908c"
-           points="518.835,330.25 518.835,330.393 519.158,330.393 519.48,330.393 519.48,330.25 519.158,330.25 "
+           points="519.48,330.25 519.158,330.25 518.835,330.25 518.835,330.393 519.158,330.393 519.48,330.393 "
            shape-rendering="crispEdges"
            id="polygon2554" /><polygon
            fill="#20908c"
@@ -17118,9 +17058,7 @@ CreationDate: Sun Dec 21 12:08:22 2025
          transform="rotate(-90)">Pixel count</text></g></g><metadata
      id="metadata2829"><rdf:RDF><cc:Work
          rdf:about=""><dc:title>Figure 1</dc:title></cc:Work></rdf:RDF></metadata><g
-     inkscape:groupmode="layer"
      id="layer1"
-     inkscape:label="Preview"
      transform="translate(0,10.312987)"><text
        fill="#000000"
        font-family="'*', FreeSans"
@@ -17138,5 +17076,4 @@ CreationDate: Sun Dec 21 12:08:22 2025
        id="image1"
        x="179.02858"
        y="-200.53694"
-       inkscape:label="preview"
        transform="translate(-0.74310346,219.79554)" /></g></svg>

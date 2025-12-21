@@ -30,11 +30,11 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:zoom="0.97325391"
-     inkscape:cx="337.52754"
-     inkscape:cy="346.26113"
+     inkscape:cx="349.34357"
+     inkscape:cy="273.30997"
      inkscape:window-width="1920"
-     inkscape:window-height="1009"
-     inkscape:window-x="1912"
+     inkscape:window-height="1057"
+     inkscape:window-x="-8"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1"
@@ -64,7 +64,8 @@ CreationDate: Sat Dec 20 09:55:17 2025
        y1="101.09399"
        x2="346.77539"
        y2="101.09399"
-       gradientUnits="userSpaceOnUse" /></defs><polygon
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="rotate(180,287.82314,99.408796)" /></defs><polygon
      fill="#ffffff"
      points="0,222 0,0 540,0 540,222 "
      id="polygon1"
@@ -190,7 +191,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g55">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text55"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.5</text>
@@ -218,7 +219,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g57">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text57"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">1.5</text>
@@ -372,7 +373,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g72">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text72"
    style="fill:#262626"><tspan
@@ -392,7 +393,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g73">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text73"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.001</text>
@@ -406,7 +407,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g74">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text74"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.0015</text>
@@ -420,7 +421,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g75">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text75"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.002</text>
@@ -434,7 +435,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g76">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text76"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.0025</text>
@@ -448,7 +449,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g77">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text77"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.003</text>
@@ -478,14 +479,14 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g78">
     <text
    fill="#262626"
-   x="0 8 10 13 16 22 24 29 32 38 44 50 56 59 65 71 76 82 84 90 93"
+   x="0"
    y="-1"
    id="text78"
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:142.862;display:inline;fill:#262626"
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan1">Hit distance absolute</tspan></text>
+     id="tspan5">Hit distance absolute</tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"
@@ -510,7 +511,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g80">
     <text
    fill="rgb(0,0,0)"
-   x="0 7 10 16 22 25 28 34 41 47 53 57 63 70 76 79 83"
+   x="0"
    y="-3"
    id="text80"
    style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:190.504;display:inline;fill:#04ab8f;fill-opacity:1"
@@ -518,7 +519,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-3"
-     id="tspan2">Pixel coverage - absolute</tspan></text>
+     id="tspan6">Pixel coverage - absolute</tspan></text>
    </g><polyline
          fill="none"
          points="315.07,191.671 317.411,188.935 319.751,186.198 322.092,183.461 324.432,180.725 326.773,177.988 329.113,175.251 331.454,172.514 333.794,169.777 336.135,167.041 338.475,164.304 340.816,161.567 343.156,158.831 345.497,156.094 347.837,153.357 350.178,150.62 352.518,147.884 354.859,145.147 357.199,142.41 359.54,139.673 361.88,136.937 364.221,134.2 366.561,131.463 368.902,128.727 371.242,125.99 373.583,123.253 375.923,120.516 378.264,117.779 380.604,115.042 382.945,112.306 385.285,109.569 387.625,106.833 389.966,104.096 392.307,101.359 394.647,98.6221 396.988,95.8853 399.328,93.1489 401.668,90.4121 404.009,87.6753 406.35,84.9385"
@@ -664,7 +665,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g16">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text16"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.2</text>
@@ -678,7 +679,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g17">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text17"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.4</text>
@@ -692,7 +693,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g18">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text18"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.6</text>
@@ -706,7 +707,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g19">
     <text
    fill="#262626"
-   x="0 6 9"
+   x="0"
    y="0"
    id="text19"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.8</text>
@@ -859,7 +860,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g34">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text34"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.0005</text>
@@ -873,7 +874,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g35">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text35"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.001</text>
@@ -887,7 +888,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g36">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text36"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.0015</text>
@@ -901,7 +902,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g37">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text37"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.002</text>
@@ -915,7 +916,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g38">
     <text
    fill="#262626"
-   x="0 6 9 15 21 27"
+   x="0"
    y="0"
    id="text38"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.0025</text>
@@ -929,7 +930,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g39">
     <text
    fill="#262626"
-   x="0 6 9 15 21"
+   x="0"
    y="0"
    id="text39"
    style="-inkscape-font-specification:'Trebuchet MS, Normal';font-family:'Trebuchet MS';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0.003</text>
@@ -959,16 +960,16 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g40">
     <text
    fill="#262626"
-   x="0 8 10 13 16 22 24 29 32 38 44 50 56 59"
+   x="0"
    y="-1"
    id="text40"
    style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:111.671;display:inline;fill:#262626"
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan4"><tspan
+     id="tspan11"><tspan
        style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS, Bold'"
-       id="tspan3">Hit distance %</tspan></tspan></text>
+       id="tspan7">Hit distance %</tspan></tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"
@@ -994,7 +995,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="g42">
     <text
    fill="rgb(0,0,0)"
-   x="0 7 10 16 22 25 28 34 41 47 53 57 63 70 76 79 83 86 93 100 104 114 120 123 126 132 138"
+   x="0"
    y="-3"
    id="text42"
    style="fill:#04ab8f;fill-opacity:1;-inkscape-font-specification:'Trebuchet MS, Bold';font-family:'Trebuchet MS';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal">Pixel coverage - normalized</text>
@@ -1024,7 +1025,8 @@ CreationDate: Sat Dec 20 09:55:17 2025
          rdf:about=""><dc:title>Figure 1</dc:title></cc:Work></rdf:RDF></metadata><g
      inkscape:groupmode="layer"
      id="layer1"
-     inkscape:label="Preview"><rect
+     inkscape:label="Preview"
+     transform="rotate(180,287.82314,99.408796)"><rect
        style="display:inline;fill:#160c1d;fill-opacity:1;stroke:#000000;stroke-width:0.850395;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1"
        id="rect1"
        width="200.35881"
@@ -1034,7 +1036,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
        inkscape:label="background" /><path
        id="path1"
        style="opacity:1;fill:url(#linearGradient3);fill-opacity:1;stroke:none;stroke-width:1.41732;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1;stroke-dasharray:none"
-       d="M 321.63428 36.603516 A 25.141178 25.141178 0 0 0 304.94238 42.943359 L 248.63672 91.706543 A 40.50523 40.50523 0 0 0 242.56934 96.962402 L 241.84131 97.592285 L 241.91748 97.646484 A 40.50523 40.50523 0 0 0 231.08643 125.08008 A 40.50523 40.50523 0 0 0 271.59229 165.58447 A 40.50523 40.50523 0 0 0 307.20557 144.22998 L 307.2627 144.271 L 307.87354 143.09033 A 40.50523 40.50523 0 0 0 307.875 143.08594 L 343.75342 73.694824 A 25.141178 25.141178 0 0 0 346.77539 61.744629 A 25.141178 25.141178 0 0 0 321.63428 36.603516 z "
+       d="m 321.63428,36.603516 a 25.141178,25.141178 0 0 0 -16.6919,6.339843 l -56.30566,48.763184 a 40.50523,40.50523 0 0 0 -6.06738,5.255859 l -0.72803,0.629883 0.0762,0.0542 a 40.50523,40.50523 0 0 0 -10.83105,27.433596 40.50523,40.50523 0 0 0 40.50586,40.50439 40.50523,40.50523 0 0 0 35.61328,-21.35449 l 0.0571,0.041 0.61084,-1.18067 a 40.50523,40.50523 0 0 0 0.001,-0.004 l 35.87842,-69.391116 a 25.141178,25.141178 0 0 0 3.02197,-11.950195 25.141178,25.141178 0 0 0 -25.14111,-25.141113 z"
        inkscape:label="sdf" /><rect
        style="opacity:1;fill:#cc302a;fill-opacity:1;stroke:#ffffff;stroke-width:1.41732;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1;stroke-dasharray:none"
        id="rect6"

@@ -138,6 +138,9 @@ The number of alpha quantization levels clearly affects performance. Since this 
 The reference shader implementation:
 
 ```cpp
+// 1 / 255
+#define ALPHA_8_BIT     3.92156e-3F
+
 // From https://iquilezles.org/articles/distfunctions/
 float SDFLineSegment(in float3 p, in float3 a, in float3 b, in float r)
 {

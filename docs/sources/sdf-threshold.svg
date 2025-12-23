@@ -29,15 +29,15 @@
      inkscape:deskcolor="#505050"
      inkscape:document-units="px"
      showgrid="false"
-     inkscape:zoom="0.97325391"
-     inkscape:cx="349.34357"
-     inkscape:cy="273.30997"
+     inkscape:zoom="1.3763889"
+     inkscape:cx="344.01615"
+     inkscape:cy="393.78406"
      inkscape:window-width="1920"
-     inkscape:window-height="1057"
-     inkscape:window-x="-8"
+     inkscape:window-height="1009"
+     inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g83"
      showguides="true" /><title
      id="title1">Figure 1</title><desc
      id="desc1">
@@ -83,7 +83,12 @@ CreationDate: Sat Dec 20 09:55:17 2025
          id="polygon3" /></clipPath><clipPath
        id="clipPath44"><polygon
          points="0,222 540,222 540,0 0,0 "
-         id="polygon44" /></clipPath><g
+         id="polygon44" /></clipPath><text
+       fill="#262626"
+       x="53.648064"
+       y="195.15829"
+       id="text1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10px;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#262626">0</text><g
        clip-path="url(#cp00540222)"
        id="g82"
        inkscape:label="World"
@@ -486,7 +491,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan5">Hit distance absolute</tspan></text>
+     id="tspan1">Hit distance absolute</tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"
@@ -519,7 +524,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-3"
-     id="tspan6">Pixel coverage - absolute</tspan></text>
+     id="tspan2">Pixel coverage - absolute</tspan></text>
    </g><polyline
          fill="none"
          points="315.07,191.671 317.411,188.935 319.751,186.198 322.092,183.461 324.432,180.725 326.773,177.988 329.113,175.251 331.454,172.514 333.794,169.777 336.135,167.041 338.475,164.304 340.816,161.567 343.156,158.831 345.497,156.094 347.837,153.357 350.178,150.62 352.518,147.884 354.859,145.147 357.199,142.41 359.54,139.673 361.88,136.937 364.221,134.2 366.561,131.463 368.902,128.727 371.242,125.99 373.583,123.253 375.923,120.516 378.264,117.779 380.604,115.042 382.945,112.306 385.285,109.569 387.625,106.833 389.966,104.096 392.307,101.359 394.647,98.6221 396.988,95.8853 399.328,93.1489 401.668,90.4121 404.009,87.6753 406.35,84.9385"
@@ -845,11 +850,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
          transform="translate(59.2805,195.672)"
          xml:space="preserve"
          id="g33">
-    <text
-   fill="#262626"
-   x="0"
-   y="0"
-   id="text33">0</text>
+    
    </g><g
          font-family="FreeSans"
          font-size="10px"
@@ -967,9 +968,9 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan11"><tspan
+     id="tspan4"><tspan
        style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS, Bold'"
-       id="tspan7">Hit distance %</tspan></tspan></text>
+       id="tspan3">Hit distance %</tspan></tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"

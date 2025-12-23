@@ -194,9 +194,9 @@ float4 PS(in VertexToPixel inputData,
         beta.x = beta.y * dynamicThresholdFactor;
 
         if (any(alpha < beta))
+        {
             break;
-
-        ++steps;
+        }
     }
 
     const float insideProbe = SDFLineSegment(mad(ray, mad(pixelScale, beta.y, closest.y), inputData._camera),

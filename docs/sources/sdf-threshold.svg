@@ -30,14 +30,14 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:zoom="1.3763889"
-     inkscape:cx="344.01615"
-     inkscape:cy="393.78406"
+     inkscape:cx="338.5671"
+     inkscape:cy="219.41473"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="1912"
      inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g83"
+     inkscape:current-layer="layer1"
      showguides="true" /><title
      id="title1">Figure 1</title><desc
      id="desc1">
@@ -491,7 +491,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan1">Hit distance absolute</tspan></text>
+     id="tspan5">Hit distance absolute</tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"
@@ -524,7 +524,7 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-3"
-     id="tspan2">Pixel coverage - absolute</tspan></text>
+     id="tspan6">Pixel coverage - absolute</tspan></text>
    </g><polyline
          fill="none"
          points="315.07,191.671 317.411,188.935 319.751,186.198 322.092,183.461 324.432,180.725 326.773,177.988 329.113,175.251 331.454,172.514 333.794,169.777 336.135,167.041 338.475,164.304 340.816,161.567 343.156,158.831 345.497,156.094 347.837,153.357 350.178,150.62 352.518,147.884 354.859,145.147 357.199,142.41 359.54,139.673 361.88,136.937 364.221,134.2 366.561,131.463 368.902,128.727 371.242,125.99 373.583,123.253 375.923,120.516 378.264,117.779 380.604,115.042 382.945,112.306 385.285,109.569 387.625,106.833 389.966,104.096 392.307,101.359 394.647,98.6221 396.988,95.8853 399.328,93.1489 401.668,90.4121 404.009,87.6753 406.35,84.9385"
@@ -968,9 +968,9 @@ CreationDate: Sat Dec 20 09:55:17 2025
    xml:space="preserve"><tspan
      x="0"
      y="-1"
-     id="tspan4"><tspan
+     id="tspan11"><tspan
        style="font-weight:bold;-inkscape-font-specification:'Trebuchet MS, Bold'"
-       id="tspan3">Hit distance %</tspan></tspan></text>
+       id="tspan7">Hit distance %</tspan></tspan></text>
    </g><g
          font-family="FreeSans"
          font-size="11px"
@@ -1043,20 +1043,23 @@ CreationDate: Sat Dec 20 09:55:17 2025
        id="rect6"
        width="12"
        height="12"
-       x="294.2482"
-       y="83.915237"
-       inkscape:label="center mark" /><rect
+       x="-302.43387"
+       y="-98.36731"
+       inkscape:label="center mark"
+       transform="scale(-1)" /><rect
        style="opacity:1;fill:#2acc52;fill-opacity:1;stroke:#ffffff;stroke-width:1.41732;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1;stroke-dasharray:none"
        id="rect7"
        width="12"
        height="12"
-       x="251.20078"
-       y="137.0434"
-       inkscape:label="bottom right mark" /><rect
+       x="-337.85263"
+       y="-53.412712"
+       inkscape:label="bottom right mark"
+       transform="scale(-1)" /><rect
        style="opacity:1;fill:#2a42cc;fill-opacity:1;stroke:#ffffff;stroke-width:1.41732;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1;stroke-dasharray:none"
        id="rect5"
        width="12"
        height="12"
-       x="328.03226"
-       y="41.412712"
-       inkscape:label="top left mark" /></g></svg>
+       x="-258.84152"
+       y="-150.13321"
+       inkscape:label="top left mark"
+       transform="scale(-1)" /></g></svg>

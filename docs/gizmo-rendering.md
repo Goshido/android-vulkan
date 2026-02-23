@@ -12,8 +12,6 @@
   - [_Line segment_](#line-segment)
 - [_Known limitations_](#limitations)
 
-[↬ table of content ⇧](#table-of-content
-
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
 
 The core principle of anti-aliasing Signed Distance Fields (_SDF_) is the analytical estimation of how close a given pixel's center is to the shape's boundary. The objective is to determine an accurate sub-pixel coverage value for pixels that straddle the edge of the shape.

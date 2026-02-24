@@ -156,8 +156,8 @@ float32_t SDFLineSegment ( in float32_t3 p, in float32_t3 a, in float32_t3 b, in
 
 float32_t LinearStep ( in float32_t step, in float32_t x )
 {
-    const float32_t s = -step;
-    return saturate((x + s) / s);
+    float32_t const s = -step;
+    return saturate ( ( x + s ) / s );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -203,14 +203,14 @@ float32_t4 PS(in VertexToPixel inputData,
         }
     }
 
-    const float32_t insideProbe = SDFLineSegment (
+    float32_t const insideProbe = SDFLineSegment (
         mad ( ray, mad ( pixelScale, beta.y, closest.y ), inputData._camera ),
         segmentA,
         segmentB,
         segmentRadius
     );
 
-    const float32_t2 cases = float32_t2 (
+    float32_t2 const cases = float32_t2 (
         // inside SDF shape
         color.w,
 

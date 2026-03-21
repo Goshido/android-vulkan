@@ -143,7 +143,10 @@ The reference shader implementation:
 
 ```cpp
 // 1 / 255
-#define ALPHA_8_BIT     3.92156e-3F
+#define ALPHA_8_BIT             3.92156e-3F
+
+// 2.0F * ALPHA_8_BIT
+#define INSIDE_TEST_FACTOR      7.84314e-3F
 
 // From https://iquilezles.org/articles/distfunctions/
 float32_t SDFLineSegment ( in float32_t3 p, in float32_t3 a, in float32_t3 b, in float32_t r )
@@ -162,7 +165,7 @@ float32_t LinearStep ( in float32_t step, in float32_t x )
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float32_t4 PS(in VertexToPixel inputData,
+float32_t4 PS( in VertexToPixel inputData,
     in float32_t4 color,
     in float32_t3 segmentA,
     in float32_t3 segmentB,
@@ -204,7 +207,7 @@ float32_t4 PS(in VertexToPixel inputData,
     }
 
     float32_t const insideProbe = SDFLineSegment (
-        mad ( ray, mad ( pixelScale, beta.y, closest.y ), inputData._camera ),
+        mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), inputData._camera ),
         segmentA,
         segmentB,
         segmentRadius

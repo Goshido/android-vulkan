@@ -1,4 +1,4 @@
-// version 1.15
+// version 1.16
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -227,12 +227,13 @@
 {
     constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
 
+    // [2026/03/22] Math round works much closer to original color picker than simple floor.
     return
     {
-        static_cast<GXUByte> ( _data[ 0U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 1U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 2U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 3U ] * convertFactor )
+        static_cast<GXUByte> ( _data[ 0U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 1U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 2U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 3U ] * convertFactor + 0.5F )
     };
 }
 

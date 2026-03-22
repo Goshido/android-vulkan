@@ -1,4 +1,4 @@
-// version 1.16
+// version 1.17
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -301,7 +301,8 @@ namespace {
     constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
 
     float32_t tmp[ 4U ];
-    vst1q_f32 ( tmp, vmulq_n_f32 ( vld1q_f32 ( _data ), convertFactor ) );
+    // [2026/03/22] Math round works much closer to original color picker than simple floor.
+    vst1q_f32 ( tmp, vfmaq_n_f32 ( vdupq_n_f32 ( 0.5F ), vld1q_f32 ( _data ), convertFactor ) );
 
     return
     {

@@ -8,6 +8,9 @@
   - [_Efficient ray-marching threshold_](#threshold)
   - [_Final result_](#result)
 - [_Shell extend_](#shell-extend)
+- [_Memory layout_](#memory-layout)
+  - [_Samples_](#samples)
+  - [_Counters_](#counters)
 - [_SDF simplifications_](#simplification)
   - [_Line segment_](#line-segment)
 - [_Known limitations_](#limitations)
@@ -254,6 +257,38 @@ $$
 <img src="./images/shell-extend-result.svg">
 
 ⚠️ **Crucial Note**: Ensure that the _SDF_ shell inflation direction remains independent of any scaling transformations. The inflation must ignore the object's scale to work properly.
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="memory-layout">Memory layout</a>
+
+To optimize the cache hit rate, sample data is organized to maximize spatial locality.
+
+### <a id="samples">Samples</a>
+
+The image is partitioned into 8x8x8 tiles (8x8 pixels across 8 layers), which are processed and stored using the following hierarchy:
+
+**Memory Hierarchy & Layout**
+
+- Sample Cubes: The foundational unit is a 2x2x2 cube of samples.
+- Meta-Layers: Two layers are paired into a "meta-layer." Within these, samples are addressed using a Z-order pattern of sample cubes to maintain locality in 3D space.
+- Tile Storage: Each tile is written to memory meta-layer by meta-layer.
+
+**Image Layout**
+
+Tiles themselves are arranged in a linear, row-by-row (raster) order.
+
+**Example**
+
+For an image size of 20x14, the data will be padded to consume a grid of 3x2 tiles.
+
+<img src="./images/gizmo-sample-layout.svg">
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="counters">Counters</a>
+
+TODO
 
 [↬ table of content ⇧](#table-of-content)
 

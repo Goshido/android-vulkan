@@ -288,7 +288,7 @@ For an image size of 20x14, the data will be padded to consume a grid of 3x2 til
 
 ### <a id="counters">Counters</a>
 
-<img src="./images/gizmo-counter-layout.svg">
+<img src="./images/gizmo-counter-layout.svg" width="1200px">
 
 [↬ table of content ⇧](#table-of-content)
 

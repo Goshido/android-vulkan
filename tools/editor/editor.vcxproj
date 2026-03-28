@@ -1028,6 +1028,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\vulkan_utils.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\ideas\hlsl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\action.cpp" />
     <ClCompile Include="src\actor.cpp" />
     <ClCompile Include="src\append_ui_child_element_event.cpp" />
@@ -1167,6 +1177,16 @@
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\text_ui_element_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp" />
+    <ClInclude Include="..\ideas\hlsl.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="include\action.hpp" />
     <ClInclude Include="include\actor.hpp" />
     <ClInclude Include="include\append_ui_child_element_event.hpp" />

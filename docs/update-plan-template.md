@@ -107,6 +107,7 @@
 - ❌ Set starting project as PBR
 - ❌ Set VSYNC on
 - ❌ Remove old binaries
+- ❌ Exclude hlsl.cpp from compilation
 - ❌ Create archive tag with direct link to issue
 
 ## Commit messages

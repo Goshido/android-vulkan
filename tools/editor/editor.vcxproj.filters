@@ -70,6 +70,12 @@
     <Filter Include="Templates\pbr">
       <UniqueIdentifier>{e1adb553-27e9-4884-ae51-95a8b17459e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ideas">
+      <UniqueIdentifier>{49d2b772-f932-418d-ab27-589421cbf39e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ideas">
+      <UniqueIdentifier>{15e7a9fa-193a-484b-9554-e0106401b4ae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -356,6 +362,9 @@
     </ClCompile>
     <ClCompile Include="src\gizmo_node.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ideas\hlsl.cpp">
+      <Filter>Source Files\ideas</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -790,6 +799,9 @@
     </ClInclude>
     <ClInclude Include="include\gizmo_node.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ideas\hlsl.hpp">
+      <Filter>Header Files\ideas</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

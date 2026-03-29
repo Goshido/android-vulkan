@@ -4,60 +4,461 @@
 
 namespace hlsl {
 
-uint32_t2 &uint32_t2::operator += ( uint32_t2 const &v ) noexcept
+swizzle_uint32_t2::operator uint32_t2 () const noexcept
+{
+    return { *x, *y };
+}
+
+void swizzle_uint32_t2::operator += ( uint32_t2 const &v ) noexcept
+{
+    *x += v.x;
+    *y += v.y;
+}
+
+void swizzle_uint32_t2::operator -= ( uint32_t2 const &v ) noexcept
+{
+    *x -= v.x;
+    *y -= v.y;
+}
+
+void swizzle_uint32_t2::operator *= ( uint32_t2 const &v ) noexcept
+{
+    *x *= v.x;
+    *y *= v.y;
+}
+
+void swizzle_uint32_t2::operator /= ( uint32_t2 const &v ) noexcept
+{
+    *x /= v.x;
+    *y /= v.y;
+}
+
+void swizzle_uint32_t2::operator >>= ( uint32_t2 const &v ) noexcept
+{
+    *x >>= v.x;
+    *y >>= v.y;
+}
+
+void swizzle_uint32_t2::operator <<= ( uint32_t2 const &v ) noexcept
+{
+    *x <<= v.x;
+    *y <<= v.y;
+}
+
+void swizzle_uint32_t2::operator &= ( uint32_t2 const &v ) noexcept
+{
+    *x &= v.x;
+    *y &= v.y;
+}
+
+void swizzle_uint32_t2::operator |= ( uint32_t2 const &v ) noexcept
+{
+    *x |= v.x;
+    *y |= v.y;
+}
+
+void swizzle_uint32_t2::operator += ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x += *v.x;
+    *y += *v.y;
+}
+
+void swizzle_uint32_t2::operator -= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x -= *v.x;
+    *y -= *v.y;
+}
+
+void swizzle_uint32_t2::operator *= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x *= *v.x;
+    *y *= *v.y;
+}
+
+void swizzle_uint32_t2::operator /= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x /= *v.x;
+    *y /= *v.y;
+}
+
+void swizzle_uint32_t2::operator >>= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x >>= *v.x;
+    *y >>= *v.y;
+}
+
+void swizzle_uint32_t2::operator <<= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x <<= *v.x;
+    *y <<= *v.y;
+}
+
+void swizzle_uint32_t2::operator &= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x &= *v.x;
+    *y &= *v.y;
+}
+
+void swizzle_uint32_t2::operator |= ( swizzle_uint32_t2 const &v ) noexcept
+{
+    *x |= *v.x;
+    *y |= *v.y;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+swizzle_uint32_t3::operator uint32_t3 () const noexcept
+{
+    return { *x, *y, *z };
+}
+
+void swizzle_uint32_t3::operator += ( uint32_t3 const &v ) noexcept
+{
+    *x += v.x;
+    *y += v.y;
+    *z += v.z;
+}
+
+void swizzle_uint32_t3::operator -= ( uint32_t3 const &v ) noexcept
+{
+    *x -= v.x;
+    *y -= v.y;
+    *z -= v.z;
+}
+
+void swizzle_uint32_t3::operator *= ( uint32_t3 const &v ) noexcept
+{
+    *x *= v.x;
+    *y *= v.y;
+    *z *= v.z;
+}
+
+void swizzle_uint32_t3::operator /= ( uint32_t3 const &v ) noexcept
+{
+    *x /= v.x;
+    *y /= v.y;
+    *x /= v.x;
+}
+
+void swizzle_uint32_t3::operator >>= ( uint32_t3 const &v ) noexcept
+{
+    *x >>= v.x;
+    *y >>= v.y;
+    *z >>= v.z;
+}
+
+void swizzle_uint32_t3::operator <<= ( uint32_t3 const &v ) noexcept
+{
+    *x <<= v.x;
+    *y <<= v.y;
+    *z <<= v.z;
+}
+
+void swizzle_uint32_t3::operator &= ( uint32_t3 const &v ) noexcept
+{
+    *x &= v.x;
+    *y &= v.y;
+    *z &= v.z;
+}
+
+void swizzle_uint32_t3::operator |= ( uint32_t3 const &v ) noexcept
+{
+    *x |= v.x;
+    *y |= v.y;
+    *z |= v.z;
+}
+
+void swizzle_uint32_t3::operator += ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x += *v.x;
+    *y += *v.y;
+    *z += *v.z;
+}
+
+void swizzle_uint32_t3::operator -= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x -= *v.x;
+    *y -= *v.y;
+    *z -= *v.z;
+}
+
+void swizzle_uint32_t3::operator *= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x *= *v.x;
+    *y *= *v.y;
+    *z *= *v.z;
+}
+
+void swizzle_uint32_t3::operator /= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x /= *v.x;
+    *y /= *v.y;
+    *z /= *v.z;
+}
+
+void swizzle_uint32_t3::operator >>= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x >>= *v.x;
+    *y >>= *v.y;
+    *z >>= *v.z;
+}
+
+void swizzle_uint32_t3::operator <<= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x <<= *v.x;
+    *y <<= *v.y;
+    *z <<= *v.z;
+}
+
+void swizzle_uint32_t3::operator &= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x &= *v.x;
+    *y &= *v.y;
+    *z &= *v.z;
+}
+
+void swizzle_uint32_t3::operator |= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x |= *v.x;
+    *y |= *v.y;
+    *z |= *v.z;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+swizzle_uint32_t4::operator uint32_t4 () const noexcept
+{
+    return { *x, *y, *z, *w };
+}
+
+void swizzle_uint32_t4::operator += ( uint32_t4 const &v ) noexcept
+{
+    *x += v.x;
+    *y += v.y;
+    *z += v.z;
+    *w += v.w;
+}
+
+void swizzle_uint32_t4::operator -= ( uint32_t4 const &v ) noexcept
+{
+    *x -= v.x;
+    *y -= v.y;
+    *z -= v.z;
+    *w -= v.w;
+}
+
+void swizzle_uint32_t4::operator *= ( uint32_t4 const &v ) noexcept
+{
+    *x *= v.x;
+    *y *= v.y;
+    *z *= v.z;
+    *w *= v.w;
+}
+
+void swizzle_uint32_t4::operator /= ( uint32_t4 const &v ) noexcept
+{
+    *x /= v.x;
+    *y /= v.y;
+    *x /= v.x;
+    *w /= v.w;
+}
+
+void swizzle_uint32_t4::operator >>= ( uint32_t4 const &v ) noexcept
+{
+    *x >>= v.x;
+    *y >>= v.y;
+    *z >>= v.z;
+    *w >>= v.w;
+}
+
+void swizzle_uint32_t4::operator <<= ( uint32_t4 const &v ) noexcept
+{
+    *x <<= v.x;
+    *y <<= v.y;
+    *z <<= v.z;
+    *w <<= v.w;
+}
+
+void swizzle_uint32_t4::operator &= ( uint32_t4 const &v ) noexcept
+{
+    *x &= v.x;
+    *y &= v.y;
+    *z &= v.z;
+    *w &= v.w;
+}
+
+void swizzle_uint32_t4::operator |= ( uint32_t4 const &v ) noexcept
+{
+    *x |= v.x;
+    *y |= v.y;
+    *z |= v.z;
+    *w |= v.w;
+}
+
+void swizzle_uint32_t4::operator += ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x += *v.x;
+    *y += *v.y;
+    *z += *v.z;
+    *w += *v.w;
+}
+
+void swizzle_uint32_t4::operator -= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x -= *v.x;
+    *y -= *v.y;
+    *z -= *v.z;
+    *w -= *v.w;
+}
+
+void swizzle_uint32_t4::operator *= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x *= *v.x;
+    *y *= *v.y;
+    *z *= *v.z;
+    *w *= *v.w;
+}
+
+void swizzle_uint32_t4::operator /= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x /= *v.x;
+    *y /= *v.y;
+    *z /= *v.z;
+    *w /= *v.w;
+}
+
+void swizzle_uint32_t4::operator >>= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x >>= *v.x;
+    *y >>= *v.y;
+    *z >>= *v.z;
+    *w >>= *v.w;
+}
+
+void swizzle_uint32_t4::operator <<= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x <<= *v.x;
+    *y <<= *v.y;
+    *z <<= *v.z;
+    *w <<= *v.w;
+}
+
+void swizzle_uint32_t4::operator &= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x &= *v.x;
+    *y &= *v.y;
+    *z &= *v.z;
+    *w &= *v.w;
+}
+
+void swizzle_uint32_t4::operator |= ( swizzle_uint32_t4 const &v ) noexcept
+{
+    *x |= *v.x;
+    *y |= *v.y;
+    *z |= *v.z;
+    *w |= *v.w;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+uint32_t2::uint32_t2 () noexcept
+{
+    InitSwizzle ();
+}
+
+[[maybe_unused]] uint32_t2::uint32_t2 ( uint32_t2 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y )
+{
+    InitSwizzle ();
+}
+
+uint32_t2 &uint32_t2::operator = ( uint32_t2 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t2::uint32_t2 ( uint32_t2 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y )
+{
+    InitSwizzle ();
+}
+
+uint32_t2 &uint32_t2::operator = ( uint32_t2 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t2::uint32_t2 ( uint32_t v ) noexcept:
+    x ( v ),
+    y ( v )
+{
+    InitSwizzle ();
+}
+
+uint32_t2::uint32_t2 ( uint32_t xVal, uint32_t yVal ) noexcept:
+    x ( xVal ),
+    y ( yVal )
+{
+    InitSwizzle ();
+}
+
+void uint32_t2::operator += ( uint32_t2 const &v ) noexcept
 {
     x += v.x;
     y += v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator -= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator -= ( uint32_t2 const &v ) noexcept
 {
     x -= v.x;
     y -= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator *= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator *= ( uint32_t2 const &v ) noexcept
 {
     x *= v.x;
     y *= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator /= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator /= ( uint32_t2 const &v ) noexcept
 {
     x /= v.x;
     y /= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator >>= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator >>= ( uint32_t2 const &v ) noexcept
 {
     x >>= v.x;
     y >>= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator <<= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator <<= ( uint32_t2 const &v ) noexcept
 {
     x <<= v.x;
     y <<= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator &= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator &= ( uint32_t2 const &v ) noexcept
 {
     x &= v.x;
     y &= v.y;
-    return *this;
 }
 
-uint32_t2 &uint32_t2::operator |= ( uint32_t2 const &v ) noexcept
+void uint32_t2::operator |= ( uint32_t2 const &v ) noexcept
 {
     x |= v.x;
     y |= v.y;
-    return *this;
 }
 
 uint32_t2 operator + ( uint32_t2 const &a, uint32_t2 const &b ) noexcept
@@ -100,70 +501,147 @@ uint32_t2 operator | ( uint32_t2 const &a, uint32_t2 const &b ) noexcept
     return { a.x | b.x, a.y | b.y };
 }
 
+void uint32_t2::InitSwizzle () noexcept
+{
+    xx = swizzle_uint32_t2 ( &x, &x );
+    yx = swizzle_uint32_t2 ( &y, &x );
+    yy = swizzle_uint32_t2 ( &y, &y );
+    xxx = swizzle_uint32_t3 ( &x, &x, &x );
+    yyy = swizzle_uint32_t3 ( &y, &y, &y );
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t3 &uint32_t3::operator += ( uint32_t3 const &v ) noexcept
+uint32_t3::uint32_t3 () noexcept
+{
+    InitSwizzle ();
+}
+
+uint32_t3::uint32_t3 ( uint32_t3 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    InitSwizzle ();
+}
+
+uint32_t3 &uint32_t3::operator = ( uint32_t3 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t3::uint32_t3 ( uint32_t3 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    InitSwizzle ();
+}
+
+uint32_t3 &uint32_t3::operator = ( uint32_t3 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t3::uint32_t3 ( uint32_t v ) noexcept:
+    x ( v ),
+    y ( v ),
+    z ( v )
+{
+    InitSwizzle ();
+}
+
+uint32_t3::uint32_t3 ( uint32_t xVal, uint32_t yVal, uint32_t zVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
+    z ( zVal )
+{
+    InitSwizzle ();
+}
+
+uint32_t3::uint32_t3 ( uint32_t2 const &xy, uint32_t zVal ) noexcept:
+    x ( xy.x ),
+    y ( xy.y ),
+    z ( zVal )
+{
+    InitSwizzle ();
+}
+
+void uint32_t3::operator += ( uint32_t3 const &v ) noexcept
 {
     x += v.x;
     y += v.y;
     z += v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator -= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator -= ( uint32_t3 const &v ) noexcept
 {
     x -= v.x;
     y -= v.y;
     z -= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator *= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator *= ( uint32_t3 const &v ) noexcept
 {
     x *= v.x;
     y *= v.y;
     z *= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator /= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator /= ( uint32_t3 const &v ) noexcept
 {
     x /= v.x;
     y /= v.y;
     z /= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator >>= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator >>= ( uint32_t3 const &v ) noexcept
 {
     x >>= v.x;
     y >>= v.y;
     z >>= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator <<= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator <<= ( uint32_t3 const &v ) noexcept
 {
     x <<= v.x;
     y <<= v.y;
     z <<= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator &= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator &= ( uint32_t3 const &v ) noexcept
 {
     x &= v.x;
     y &= v.y;
     z &= v.z;
-    return *this;
 }
 
-uint32_t3 &uint32_t3::operator |= ( uint32_t3 const &v ) noexcept
+void uint32_t3::operator |= ( uint32_t3 const &v ) noexcept
 {
     x |= v.x;
     y |= v.y;
     z |= v.z;
-    return *this;
+}
+
+void uint32_t3::InitSwizzle () noexcept
+{
+    xy = swizzle_uint32_t2 ( &x, &y );
+    yz = swizzle_uint32_t2 ( &y, &z );
+
+    xxx = swizzle_uint32_t3 ( &x, &x, &x );
+    yyy = swizzle_uint32_t3 ( &y, &y, &y );
+    zzz = swizzle_uint32_t3 ( &z, &z, &z );
 }
 
 uint32_t3 operator + ( uint32_t3 const &a, uint32_t3 const &b ) noexcept
@@ -208,76 +686,167 @@ uint32_t3 operator | ( uint32_t3 const &a, uint32_t3 const &b ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t4 &uint32_t4::operator += ( uint32_t4 const &v ) noexcept
+uint32_t4::uint32_t4 () noexcept
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t4 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z ),
+    w ( other.w )
+{
+    InitSwizzle ();
+}
+
+uint32_t4 &uint32_t4::operator = ( uint32_t4 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    w = other.w;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t4::uint32_t4 ( uint32_t4 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z ),
+    w ( other.w )
+{
+    InitSwizzle ();
+}
+
+uint32_t4 &uint32_t4::operator = ( uint32_t4 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    w = other.w;
+    InitSwizzle ();
+    return *this;
+}
+
+uint32_t4::uint32_t4 ( uint32_t v ) noexcept:
+    x ( v ),
+    y ( v ),
+    z ( v ),
+    w ( v )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t xVal, uint32_t yVal, uint32_t zVal, uint32_t wVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
+    z ( zVal ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t2 const &xy, uint32_t zVal, uint32_t wVal ) noexcept:
+    x ( xy.x ),
+    y ( xy.y ),
+    z ( zVal ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t2 const &xy, uint32_t2 const &zwVal ) noexcept:
+    x ( xy.x ),
+    y ( xy.y ),
+    z ( zwVal.x ),
+    w ( zwVal.y )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t3 const &xyz, uint32_t wVal ) noexcept:
+    x ( xyz.x ),
+    y ( xyz.y ),
+    z ( xyz.z ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+
+void uint32_t4::operator += ( uint32_t4 const &v ) noexcept
 {
     x += v.x;
     y += v.y;
     z += v.z;
     w += v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator -= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator -= ( uint32_t4 const &v ) noexcept
 {
     x -= v.x;
     y -= v.y;
     z -= v.z;
     w -= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator *= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator *= ( uint32_t4 const &v ) noexcept
 {
     x *= v.x;
     y *= v.y;
     z *= v.z;
     w *= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator /= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator /= ( uint32_t4 const &v ) noexcept
 {
     x /= v.x;
     y /= v.y;
     z /= v.z;
     w /= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator >>= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator >>= ( uint32_t4 const &v ) noexcept
 {
     x >>= v.x;
     y >>= v.y;
     z >>= v.z;
     w >>= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator <<= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator <<= ( uint32_t4 const &v ) noexcept
 {
     x <<= v.x;
     y <<= v.y;
     z <<= v.z;
     w <<= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator &= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator &= ( uint32_t4 const &v ) noexcept
 {
     x &= v.x;
     y &= v.y;
     z &= v.z;
     w &= v.w;
-    return *this;
 }
 
-uint32_t4 &uint32_t4::operator |= ( uint32_t4 const &v ) noexcept
+void uint32_t4::operator |= ( uint32_t4 const &v ) noexcept
 {
     x |= v.x;
     y |= v.y;
     z |= v.z;
     w |= v.w;
-    return *this;
+}
+
+void uint32_t4::InitSwizzle () noexcept
+{
+    xxx = swizzle_uint32_t3 ( &x, &x, &x );
+    yyy = swizzle_uint32_t3 ( &y, &y, &y );
+    zzz = swizzle_uint32_t3 ( &z, &z, &z );
+    www = swizzle_uint32_t3 ( &w, &w, &w );
 }
 
 uint32_t4 operator + ( uint32_t4 const &a, uint32_t4 const &b ) noexcept

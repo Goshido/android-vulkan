@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include "hlsl.hpp"
+#include <tools/hlsl.hpp>
 
 
 namespace hlsl {
@@ -7,6 +7,12 @@ namespace hlsl {
 swizzle_uint32_t2::operator uint32_t2 () const noexcept
 {
     return { *x, *y };
+}
+
+void swizzle_uint32_t2::operator >>= ( uint32_t v ) noexcept
+{
+    *x += v;
+    *y += v;
 }
 
 void swizzle_uint32_t2::operator += ( uint32_t2 const &v ) noexcept
@@ -437,6 +443,12 @@ void uint32_t2::operator /= ( uint32_t2 const &v ) noexcept
     y /= v.y;
 }
 
+void uint32_t2::operator >>= ( uint32_t v ) noexcept
+{
+    x >>= v;
+    y >>= v;
+}
+
 void uint32_t2::operator >>= ( uint32_t2 const &v ) noexcept
 {
     x >>= v.x;
@@ -479,6 +491,11 @@ uint32_t2 operator * ( uint32_t2 const &a, uint32_t2 const &b ) noexcept
 uint32_t2 operator / ( uint32_t2 const &a, uint32_t2 const &b ) noexcept
 {
     return { a.x / b.x, a.y / b.y };
+}
+
+uint32_t2 operator >> ( uint32_t2 const& a, uint32_t b ) noexcept
+{
+    return { a.x >> b, a.y >> b };
 }
 
 uint32_t2 operator >> ( uint32_t2 const &a, uint32_t2 const &b ) noexcept
@@ -570,9 +587,17 @@ uint32_t3::uint32_t3 ( uint32_t xVal, uint32_t yVal, uint32_t zVal ) noexcept:
     InitSwizzle ();
 }
 
-uint32_t3::uint32_t3 ( uint32_t2 const &xy, uint32_t zVal ) noexcept:
-    x ( xy.x ),
-    y ( xy.y ),
+uint32_t3::uint32_t3 ( uint32_t xVal, uint32_t2 const &yzVal ) noexcept:
+    x ( xVal ),
+    y ( yzVal.x ),
+    z ( yzVal.y )
+{
+    InitSwizzle ();
+}
+
+uint32_t3::uint32_t3 ( uint32_t2 const &xyVal, uint32_t zVal ) noexcept:
+    x ( xyVal.x ),
+    y ( xyVal.y ),
     z ( zVal )
 {
     InitSwizzle ();
@@ -750,28 +775,37 @@ uint32_t4::uint32_t4 ( uint32_t xVal, uint32_t yVal, uint32_t zVal, uint32_t wVa
     InitSwizzle ();
 }
 
-uint32_t4::uint32_t4 ( uint32_t2 const &xy, uint32_t zVal, uint32_t wVal ) noexcept:
-    x ( xy.x ),
-    y ( xy.y ),
-    z ( zVal ),
-    w ( wVal )
-{
-    InitSwizzle ();
-}
-
-uint32_t4::uint32_t4 ( uint32_t2 const &xy, uint32_t2 const &zwVal ) noexcept:
-    x ( xy.x ),
-    y ( xy.y ),
+uint32_t4::uint32_t4 ( uint32_t xVal, uint32_t yVal, uint32_t2 const &zwVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
     z ( zwVal.x ),
     w ( zwVal.y )
 {
     InitSwizzle ();
 }
 
-uint32_t4::uint32_t4 ( uint32_t3 const &xyz, uint32_t wVal ) noexcept:
-    x ( xyz.x ),
-    y ( xyz.y ),
-    z ( xyz.z ),
+uint32_t4::uint32_t4 ( uint32_t2 const &xyVal, uint32_t zVal, uint32_t wVal ) noexcept:
+    x ( xyVal.x ),
+    y ( xyVal.y ),
+    z ( zVal ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t2 const &xyVal, uint32_t2 const &zwVal ) noexcept:
+    x ( xyVal.x ),
+    y ( xyVal.y ),
+    z ( zwVal.x ),
+    w ( zwVal.y )
+{
+    InitSwizzle ();
+}
+
+uint32_t4::uint32_t4 ( uint32_t3 const &xyzVal, uint32_t wVal ) noexcept:
+    x ( xyzVal.x ),
+    y ( xyzVal.y ),
+    z ( xyzVal.z ),
     w ( wVal )
 {
     InitSwizzle ();
@@ -843,6 +877,9 @@ void uint32_t4::operator |= ( uint32_t4 const &v ) noexcept
 
 void uint32_t4::InitSwizzle () noexcept
 {
+    xy = swizzle_uint32_t2 ( &x, &y );
+    xz = swizzle_uint32_t2 ( &x, &z );
+    zx = swizzle_uint32_t2 ( &z, &x );
     xxx = swizzle_uint32_t3 ( &x, &x, &x );
     yyy = swizzle_uint32_t3 ( &y, &y, &y );
     zzz = swizzle_uint32_t3 ( &z, &z, &z );

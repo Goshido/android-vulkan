@@ -2,22 +2,101 @@
 
 ## <a id="table-of-content">Table of content</a>
 
-- [_Formula_](#formula)
+- [_Solution_](#solution)
 - [_Step by step derivation_](#derivation)
+  - [_Ray definition_](#ray-definition)
+  - [_Intersection with cylinder side_](#side-intersection)
+  - [_Intersection with cylinder caps_](#cap-intersection)
 - [_Comparing result with original paper_](#comparison)
   - [_k term_](#comp-k)
   - [_a term_](#comp-a)
   - [_c term_](#comp-c)
 
-## <a id="formula">Formula</a>
+## <a id="solution">Solution</a>
 
-TODO
+<img src="./images/ray-vs-cylinder-solution.svg" width="400">
+
+- $\overrightarrow{O}$ ray origin (📨provided)
+- $\overrightarrow{D}$ ray unit vector direction (📨provided)
+- $\overrightarrow{C}$ is the start cap point of the cylinder (📨provided)
+- $\overrightarrow{V}$ is a unit vector that determines cylinder's axis (📨provided)
+- $r$ is the cylinder's radius (📨provided)
+- $u$ is the cylinder's length (📨provided)
+- $t$ is ray distance to closest hit (🧮will be computed)
+- $m$ is value to check if ray hits cylinder side (🧮will be computed)
+
+Compute
+
+$$
+    \begin{aligned}
+        \overrightarrow{X}=\overrightarrow{O}-\overrightarrow{C}\\
+        \alpha=\overrightarrow{D}\cdot\overrightarrow{V}\\
+        \beta=\overrightarrow{X}\cdot\overrightarrow{V}\\
+        \overrightarrow{I}=\overrightarrow{D}-\alpha\overrightarrow{V}\\
+        \overrightarrow{J}=\overrightarrow{X}-\beta\overrightarrow{V}\\
+        k=\overrightarrow{I}\cdot\overrightarrow{J}\\
+        a=\overrightarrow{I}\cdot\overrightarrow{I}\\
+        w=r^2\\
+        c=\overrightarrow{J}\cdot\overrightarrow{J}-w\\
+        D_1=k^2-ac\\
+    \end{aligned}
+$$
+
+If $D_1 \lt 0$ is true, the ray misses the cylinder side. Otherwise, check the intersection against the cylinder’s length $u$ by computing the two points along the surface.
+
+$$
+    t_{1,2}=\dfrac{-k\pm\sqrt{D_1}}{a}
+$$
+
+Compute $m$ for each $t$:
+
+$$
+    m=t\alpha+\beta
+$$
+
+$0\le{m}\le{u}$ indicates a direct hit on the cylinder's side; otherwise, the ray has missed the surface entirely.
+
+Next, determine the ray's intersection points with the cylinder caps.
+
+<img src="./images/ray-vs-cylinder-cap.svg" width="400">
+
+If $\alpha=0$ that ray is parallel to cap planes and nothing to check. Otherwise check first cap:
+
+$$
+    t=-\dfrac{\beta}{\alpha}
+$$
+
+Verify whether the intersection point falls within the boundaries of the first cap:
+
+$$
+    \begin{aligned}
+        \overrightarrow{F}=t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\\
+        \overrightarrow{F}\cdot\overrightarrow{F}\lt{w}
+    \end{aligned}
+$$
+
+Verify whether the intersection point falls within the boundaries of the second cap:
+
+$$
+    \begin{aligned}
+        \overrightarrow{C_{\Psi}}=\overrightarrow{C}+u\overrightarrow{V}\\
+        \overrightarrow{X_{\Psi}}=\overrightarrow{O}-\overrightarrow{C_{\Psi}}\\
+        {\beta}_{\Psi}=\overrightarrow{X_{\Psi}}\cdot\overrightarrow{V}\\
+        t=-\dfrac{{\beta}_{\Psi}}{\alpha}\\
+         \overrightarrow{F_{\Psi}}=t\overrightarrow{D}+\overrightarrow{X_{\Psi}}-\overrightarrow{C_{\Psi}}\\
+        \overrightarrow{F_{\Psi}}\cdot\overrightarrow{F_{\Psi}}\lt{w}
+    \end{aligned}
+$$
+
+To find the final ray distance, simply collect the values $t$ from the cylinder side and both end caps, then select the smallest one. This minimum value represents the point of first impact. That's it!
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="derivation">Step by step derivation</a>
 
 Idea is taken from [here](https://hugi.scene.org/online/hugi24/coding%20graphics%20chris%20dragan%20raytracing%20shapes.htm)
+
+### <a id="ray-definition">Ray definition</a>
 
 Ray $\overrightarrow{P}$ is defined:
 
@@ -42,6 +121,10 @@ Now the ray equation looks like this:
 $$
     \overrightarrow{P}-\overrightarrow{C}=t\overrightarrow{D}+\overrightarrow{X}
 $$
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="side-intersection">Intersection with cylinder side</a>
 
 Let's define cylinder
 
@@ -128,7 +211,7 @@ $$
     \end{aligned}
 $$
 
-Now trick is to treat $\left(\overrightarrow{D}\cdot\overrightarrow{V}\right)$ and $\left(\overrightarrow{X}\cdot\overrightarrow{V}\right)$ as scalars and rearrange equation using dot product [bilinear](https://en.wikipedia.org/wiki/Dot_product#Properties) property again.
+Now trick is to treat $\overrightarrow{D}\cdot\overrightarrow{V}$ and $\overrightarrow{X}\cdot\overrightarrow{V}$ as scalars and rearrange equation using dot product [bilinear](https://en.wikipedia.org/wiki/Dot_product#Properties) property again.
 
 $$
     \left\|
@@ -205,13 +288,13 @@ $$
         \\
         \left(\overrightarrow{a}+\overrightarrow{b}\right)\cdot\left(\overrightarrow{a}+\overrightarrow{b}\right)
         =
-        \left(\overrightarrow{a}\cdot\overrightarrow{a}\right)
+        \overrightarrow{a}\cdot\overrightarrow{a}
         +
-        \left(\overrightarrow{a}\cdot\overrightarrow{b}\right)
+        \overrightarrow{a}\cdot\overrightarrow{b}
         +
-        \left(\overrightarrow{b}\cdot\overrightarrow{a}\right)
+        \overrightarrow{b}\cdot\overrightarrow{a}
         +
-        \left(\overrightarrow{b}\cdot\overrightarrow{b}\right)
+        \overrightarrow{b}\cdot\overrightarrow{b}
     \end{aligned}
 $$
 
@@ -276,7 +359,7 @@ $$
         2\left(\overrightarrow{G}\cdot\overrightarrow{J}\right)
         =
         2t\left(\overrightarrow{I}\cdot\overrightarrow{J}\right)\\
-        \left\|\overrightarrow{J}\right\|^2-r^2=\left(\overrightarrow{J}\cdot\overrightarrow{J}\right)-r^2
+        \left\|\overrightarrow{J}\right\|^2-r^2=\overrightarrow{J}\cdot\overrightarrow{J}-r^2
     \end{aligned}
 $$
 
@@ -287,7 +370,7 @@ $$
     +
     2t\left(\overrightarrow{I}\cdot\overrightarrow{J}\right)
     +
-    \left(\overrightarrow{J}\cdot\overrightarrow{J}\right)-r^2
+    \overrightarrow{J}\cdot\overrightarrow{J}-r^2
     =
     0
 $$
@@ -342,6 +425,105 @@ $$
 - $\overrightarrow{C}$ is the start cap point of the cylinder
 - $\overrightarrow{V}$ is a unit vector that determines cylinder's axis
 - $r$ is the cylinder's radius
+
+And now it's time for $m$ reveal:
+
+$$
+    \begin{aligned}
+        m=t\left(\overrightarrow{D}\cdot\overrightarrow{V}\right)+\overrightarrow{X}\cdot\overrightarrow{V}
+    \end{aligned}
+$$
+
+$0\le{m}\le{u}$ means that ray hits cylinder side. Otherwise the ray missed cylinder side surface.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="cap-intersection">Intersection with cylinder caps</a>
+
+But there is a catch. Corner case when ray hits the cylinder cap:
+
+<img src="./images/ray-vs-cylinder-cap.svg" width="400">
+
+Ignoring the cap will work as the cylinder itself has two holes on it's surface. In extreme cases the ray could fly through holes and never hit cylinder side. Such case will report false positive miss. The solution is also check hits with $\Omega$ and $\Psi$ planes.
+
+Let's investigate intersection with $\Omega$ plane because it's easier. The $\overrightarrow{C}$ already lies in plane $\Omega$. To hit a plane we notice that:
+
+$$
+    \left(\overrightarrow{P}-\overrightarrow{C}\right)\cdot\overrightarrow{V}=0
+$$
+
+So the solution for ray vs plane hit will be
+
+$$
+    \left(t\overrightarrow{D}+\overrightarrow{X}\right)\cdot\overrightarrow{V}=0
+$$
+
+Let's refer to dot product [bilinear](https://en.wikipedia.org/wiki/Dot_product#Properties) property one more time:
+
+$$
+    \begin{aligned}
+        \left(\alpha\overrightarrow{a}+\beta\overrightarrow{b}\right)
+        \cdot
+        \left(\gamma\overrightarrow{c}+\delta\overrightarrow{d}\right)
+        =
+        \alpha\gamma\left(\overrightarrow{a}\cdot\overrightarrow{c}\right)
+        +
+        \alpha\delta\left(\overrightarrow{a}\cdot\overrightarrow{d}\right)
+        +
+        \beta\gamma\left(\overrightarrow{b}\cdot\overrightarrow{c}\right)
+        +
+        \beta\delta\left(\overrightarrow{b}\cdot\overrightarrow{d}\right)\\
+    \end{aligned}
+$$
+
+$$
+    \begin{aligned}
+        \begin{matrix}
+            \text{assuming:}&
+            \alpha=t&
+            \beta=1&
+            \gamma=1&
+            \delta=0&
+            \overrightarrow{a}=\overrightarrow{D}&
+            \overrightarrow{b}=\overrightarrow{X}&
+            \overrightarrow{c}=\overrightarrow{V}
+        \end{matrix}
+        \\
+        \left(t\overrightarrow{D}+\overrightarrow{X}\right)\cdot\overrightarrow{V}
+        =
+        t\left(\overrightarrow{D}\cdot\overrightarrow{V}\right)+\overrightarrow{X}\cdot\overrightarrow{V}
+    \end{aligned}
+$$
+
+Now we have:
+
+$$
+    \begin{aligned}
+        t\left(\overrightarrow{D}\cdot\overrightarrow{V}\right)+\overrightarrow{X}\cdot\overrightarrow{V}=0\\
+        t\left(\overrightarrow{D}\cdot\overrightarrow{V}\right)=-\overrightarrow{X}\cdot\overrightarrow{V}\\
+        t=-\dfrac{\overrightarrow{X}\cdot\overrightarrow{V}}{\overrightarrow{D}\cdot\overrightarrow{V}}
+    \end{aligned}
+$$
+
+In order to constraint plane intersection inside cap boundary it's needed to use cylinder radius $r$ and cap center point. It's also better to use radius square to avoid taking square root:
+
+$$
+    \begin{aligned}
+        \left(t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\right)
+        \cdot
+        \left(t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\right)
+        \lt
+        r^2
+    \end{aligned}
+$$
+
+For computation intersection point with plane $\Psi$ it's needed to adjust $\overrightarrow{X}$ and $\overrightarrow{C}$ points because second cap central point $\overrightarrow{C_{\Psi}}$ equals
+
+$$
+    \overrightarrow{C_{\Psi}}=\overrightarrow{C}+u\overrightarrow{V}
+$$
+
+At this point let's combine final [solution](#solution).
 
 [↬ table of content ⇧](#table-of-content)
 

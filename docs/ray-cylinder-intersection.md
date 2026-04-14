@@ -33,10 +33,19 @@ $$
         \alpha=\overrightarrow{D}\cdot\overrightarrow{V}\\
         \beta=\overrightarrow{X}\cdot\overrightarrow{V}\\
         \overrightarrow{I}=\overrightarrow{D}-\alpha\overrightarrow{V}\\
-        \overrightarrow{J}=\overrightarrow{X}-\beta\overrightarrow{V}\\
-        k=\overrightarrow{I}\cdot\overrightarrow{J}\\
         a=\overrightarrow{I}\cdot\overrightarrow{I}\\
         w=r^2\\
+    \end{aligned}
+$$
+
+If $a = 0$, the ray is parallel to the cylinder's side and can be ignored; otherwise, continue calculating the intersection point with the cylinder side.
+
+Compute
+
+$$
+    \begin{aligned}
+        \overrightarrow{J}=\overrightarrow{X}-\beta\overrightarrow{V}\\
+        k=\overrightarrow{I}\cdot\overrightarrow{J}\\
         c=\overrightarrow{J}\cdot\overrightarrow{J}-w\\
         D_1=k^2-ac\\
     \end{aligned}
@@ -70,7 +79,7 @@ Verify whether the intersection point falls within the boundaries of the first c
 
 $$
     \begin{aligned}
-        \overrightarrow{F}=t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\\
+        \overrightarrow{F}=t\overrightarrow{D}+\overrightarrow{X}\\
         \overrightarrow{F}\cdot\overrightarrow{F}\lt{w}
     \end{aligned}
 $$
@@ -79,12 +88,12 @@ Verify whether the intersection point falls within the boundaries of the second 
 
 $$
     \begin{aligned}
-        \overrightarrow{C_{\Psi}}=\overrightarrow{C}+u\overrightarrow{V}\\
-        \overrightarrow{X_{\Psi}}=\overrightarrow{O}-\overrightarrow{C_{\Psi}}\\
-        {\beta}_{\Psi}=\overrightarrow{X_{\Psi}}\cdot\overrightarrow{V}\\
-        t=-\dfrac{{\beta}_{\Psi}}{\alpha}\\
-         \overrightarrow{F_{\Psi}}=t\overrightarrow{D}+\overrightarrow{X_{\Psi}}-\overrightarrow{C_{\Psi}}\\
-        \overrightarrow{F_{\Psi}}\cdot\overrightarrow{F_{\Psi}}\lt{w}
+        \overrightarrow{C}=\overrightarrow{C}+u\overrightarrow{V}\\
+        \overrightarrow{X}=\overrightarrow{O}-\overrightarrow{C}\\
+        \beta=\overrightarrow{X}\cdot\overrightarrow{V}\\
+        t=-\dfrac{\beta}{\alpha}\\
+         \overrightarrow{F}=t\overrightarrow{D}+\overrightarrow{X}\\
+        \overrightarrow{F}\cdot\overrightarrow{F}\lt{w}
     \end{aligned}
 $$
 
@@ -509,9 +518,9 @@ In order to constraint plane intersection inside cap boundary it's needed to use
 
 $$
     \begin{aligned}
-        \left(t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\right)
+        \left(t\overrightarrow{D}+\overrightarrow{X}\right)
         \cdot
-        \left(t\overrightarrow{D}+\overrightarrow{X}-\overrightarrow{C}\right)
+        \left(t\overrightarrow{D}+\overrightarrow{X}\right)
         \lt
         r^2
     \end{aligned}

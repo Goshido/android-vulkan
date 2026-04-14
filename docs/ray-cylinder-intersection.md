@@ -30,9 +30,9 @@ Compute
 $$
     \begin{aligned}
         \overrightarrow{X}=\overrightarrow{O}-\overrightarrow{C}\\
-        \alpha=\overrightarrow{D}\cdot\overrightarrow{V}\\
+        \delta=\overrightarrow{D}\cdot\overrightarrow{V}\\
         \beta=\overrightarrow{X}\cdot\overrightarrow{V}\\
-        \overrightarrow{I}=\overrightarrow{D}-\alpha\overrightarrow{V}\\
+        \overrightarrow{I}=\overrightarrow{D}-\delta\overrightarrow{V}\\
         a=\overrightarrow{I}\cdot\overrightarrow{I}\\
         w=r^2\\
     \end{aligned}
@@ -60,7 +60,7 @@ $$
 Compute $m$ for each $t$:
 
 $$
-    m=t\alpha+\beta
+    m=t\delta+\beta
 $$
 
 $0\le{m}\le{u}$ indicates a direct hit on the cylinder's side; otherwise, the ray has missed the surface entirely.
@@ -69,10 +69,10 @@ Next, determine the ray's intersection points with the cylinder caps.
 
 <img src="./images/ray-vs-cylinder-cap.svg" width="400">
 
-If $\alpha=0$ that ray is parallel to cap planes and nothing to check. Otherwise check first cap:
+If $\delta=0$ that ray is parallel to cap planes and nothing to check. Otherwise check first cap:
 
 $$
-    t=-\dfrac{\beta}{\alpha}
+    t=-\dfrac{\beta}{\delta}
 $$
 
 Verify whether the intersection point falls within the boundaries of the first cap:
@@ -91,7 +91,7 @@ $$
         \overrightarrow{C}=\overrightarrow{C}+u\overrightarrow{V}\\
         \overrightarrow{X}=\overrightarrow{O}-\overrightarrow{C}\\
         \beta=\overrightarrow{X}\cdot\overrightarrow{V}\\
-        t=-\dfrac{\beta}{\alpha}\\
+        t=-\dfrac{\beta}{\delta}\\
          \overrightarrow{F}=t\overrightarrow{D}+\overrightarrow{X}\\
         \overrightarrow{F}\cdot\overrightarrow{F}\lt{w}
     \end{aligned}

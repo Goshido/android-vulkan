@@ -373,21 +373,25 @@ where:
 - $f$ is the scalar distance along the active axis, measured from the gizmo origin to the current 3D point of mouse interaction (🧮will be computed)
 - $\lambda$ is the common perpendicular axis between the two skew lines, to solve for the distance $f$ (🧮will be computed)
 
+---
+
 To compute the movement of the gizmo, we follow a two-stage process based on the geometry of skew lines:
 
-**1. Initialization (First Click)**
+**1. Initialization (first click)**
 
 The first step is to establish the starting point. We calculate the initial distance $s$ along the axis and store the original gizmo position $O$.
 
-**2. Update (Mouse Movement)**
+**2. Update (mouse movement)**
 
 On every frame the mouse moves, we compute the current distance $f$. The relationship between these values determines the transformation:
 
-- displacement $d$: The scalar change is found by the difference between the current and initial distances: $d=f-s$
-- direction: Since $d$ is a scalar, we apply it to the unit vector $\overrightarrow{A}$ to determine the 3D displacement.
-- final Position: The new gizmo position is calculated as $P=O+d\overrightarrow{A}$
+- displacement $d$: the scalar change is found by the difference between the current and initial distances: $d=f-s$
+- direction: since $d$ is a scalar, we apply it to the unit vector $\overrightarrow{A}$ to determine the 3D displacement
+- final position: the new gizmo position is calculated as $P=O+d\overrightarrow{A}$
 
-**Deriving the Formula**
+---
+
+**Deriving the formula**
 
 We will now derive the formula to compute the scalar distance along the active axis by finding the shortest distance between the mouse ray and the gizmo axis.
 

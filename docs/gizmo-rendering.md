@@ -13,6 +13,8 @@
   - [_Counters_](#counters)
 - [_SDF simplifications_](#simplification)
   - [_Line segment_](#line-segment)
+- [_Interaction with mouse_](#interaction)
+  - [_Axis_](#inter-axis)
 - [_Known limitations_](#limitations)
 
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
@@ -346,6 +348,50 @@ $$
     &SDF=\lambda+\left|\left(p_x+mad\left(h,\gamma,e\right),p_y,p_z\right)\right|                                     \\
 \end{aligned}
 $$
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="interaction">Interaction with mouse</a>
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-axis">Axis</a>
+
+The core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. This relationship is visualized in the illustration below:
+
+<img src="./images/move-gizmo-axis-math.svg">
+
+where:
+
+- $O$ is gizmo location (📨provided)
+- $\overrightarrow{A}$ is unit vector of the axis currently being manipulated by the mouse (📨provided)
+- $V$ is camera location (📨provided)
+- $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $s$ is the scalar distance along the active axis, measured from the gizmo origin to the initial 3D point of mouse interaction (🧮will be computed)
+- $\mu$ is the common perpendicular axis between the two skew lines, to solve for the distance $s$ (🧮will be computed)
+- $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $f$ is the scalar distance along the active axis, measured from the gizmo origin to the current 3D point of mouse interaction (🧮will be computed)
+- $\lambda$ is the common perpendicular axis between the two skew lines, to solve for the distance $f$ (🧮will be computed)
+
+To compute the movement of the gizmo, we follow a two-stage process based on the geometry of skew lines:
+
+**1. Initialization (First Click)**
+
+The first step is to establish the starting point. We calculate the initial distance $s$ along the axis and store the original gizmo position $O$.
+
+**2. Update (Mouse Movement)**
+
+On every frame the mouse moves, we compute the current distance $f$. The relationship between these values determines the transformation:
+
+- displacement $d$: The scalar change is found by the difference between the current and initial distances: $d=f-s$
+- direction: Since $d$ is a scalar, we apply it to the unit vector $\overrightarrow{A}$ to determine the 3D displacement.
+- final Position: The new gizmo position is calculated as $P=O+d\overrightarrow{A}$
+
+**Deriving the Formula**
+
+We will now derive the formula to compute the scalar distance along the active axis by finding the shortest distance between the mouse ray and the gizmo axis.
+
+TODO
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -368,10 +368,10 @@ where:
 - $V$ is camera location (📨provided)
 - $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
 - $s$ is the scalar distance along the active axis, measured from the gizmo origin to the initial 3D point of mouse interaction (🧮will be computed)
-- $\mu$ is the common perpendicular axis between the two skew lines, to solve for the distance $s$ (🧮will be computed)
+- $\overrightarrow{\mu}$ is the common perpendicular axis between the two skew lines, to solve for the distance $s$ (🧮will be computed)
 - $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
 - $f$ is the scalar distance along the active axis, measured from the gizmo origin to the current 3D point of mouse interaction (🧮will be computed)
-- $\lambda$ is the common perpendicular axis between the two skew lines, to solve for the distance $f$ (🧮will be computed)
+- $\overrightarrow{\lambda}$ is the common perpendicular axis between the two skew lines, to solve for the distance $f$ (🧮will be computed)
 
 ---
 
@@ -395,7 +395,41 @@ On every frame the mouse moves, we compute the current distance $f$. The relatio
 
 We will now derive the formula to compute the scalar distance along the active axis by finding the shortest distance between the mouse ray and the gizmo axis.
 
-TODO
+<img src="./images/skew-lines-common-perpendicular.svg">
+
+The idea is taken from [_nearest points paper_](https://en.wikipedia.org/wiki/Skew_lines#Nearest_points). The first key observation is that the direction of the common perpendicular $\overrightarrow{\lambda}$ is defined by the cross product of the two skew line directions:
+
+$$
+    \overrightarrow{\lambda}=\overrightarrow{A}\times{\overrightarrow{F}}
+$$
+
+**⚠️ATTENTION:** The mathematical model fails if vectors $\overrightarrow{A}$ and $\overrightarrow{F}$ are collinear. This occurs during the "edge case" where the manipulation axis aligns perfectly with the view direction. Intuitively, attempting to move an object along an axis pointing directly at the camera would result in the object "teleporting" to infinity, as the system cannot resolve depth changes from that perspective. To prevent this instability, we must implement a dot product test to detect it:
+
+$$
+    \left|\overrightarrow{A}\cdot{\overrightarrow{F}}\right| \lt 1
+$$
+
+Assuming the manipulation axis is not collinear with the view direction, we can proceed. Our next step is to precompute the vector $\overrightarrow{\omega}$:
+
+$$
+    \overrightarrow{\omega}=\overrightarrow{F}\times{\overrightarrow{\lambda}}
+$$
+
+Now the scalar distance $f$ equals:
+
+$$
+    f
+    =
+    \dfrac
+    {
+        \left(V-O\right)\cdot{\overrightarrow{\omega}}
+    }
+    {
+        \overrightarrow{A}\cdot{\overrightarrow{\omega}}
+    }
+$$
+
+And that's it!
 
 [↬ table of content ⇧](#table-of-content)
 

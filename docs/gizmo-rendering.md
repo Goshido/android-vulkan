@@ -15,6 +15,7 @@
   - [_Line segment_](#line-segment)
 - [_Interaction with mouse_](#interaction)
   - [_Axis_](#inter-axis)
+  - [_Plane_](#inter-plane)
 - [_Known limitations_](#limitations)
 
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
@@ -400,19 +401,19 @@ We will now derive the formula to compute the scalar distance along the active a
 The idea is taken from [_nearest points paper_](https://en.wikipedia.org/wiki/Skew_lines#Nearest_points). The first key observation is that the direction of the common perpendicular $\overrightarrow{\lambda}$ is defined by the cross product of the two skew line directions:
 
 $$
-    \overrightarrow{\lambda}=\overrightarrow{A}\times{\overrightarrow{F}}
+    \overrightarrow{\lambda}=\overrightarrow{A}\times\overrightarrow{F}
 $$
 
 **⚠️ATTENTION:** The mathematical model fails if vectors $\overrightarrow{A}$ and $\overrightarrow{F}$ are collinear. This occurs during the "edge case" where the manipulation axis aligns perfectly with the view direction. Intuitively, attempting to move an object along an axis pointing directly at the camera would result in the object "teleporting" to infinity, as the system cannot resolve depth changes from that perspective. To prevent this instability, we must implement a dot product test to detect it:
 
 $$
-    \left|\overrightarrow{A}\cdot{\overrightarrow{F}}\right| \lt 1
+    \left|\overrightarrow{A}\cdot\overrightarrow{F}\right| \lt 1
 $$
 
 Assuming the manipulation axis is not collinear with the view direction, we can proceed. Our next step is to precompute the vector $\overrightarrow{\omega}$:
 
 $$
-    \overrightarrow{\omega}=\overrightarrow{F}\times{\overrightarrow{\lambda}}
+    \overrightarrow{\omega}=\overrightarrow{F}\times\overrightarrow{\lambda}
 $$
 
 Now the scalar distance $f$ equals:
@@ -425,8 +426,71 @@ $$
         \left(V-O\right)\cdot{\overrightarrow{\omega}}
     }
     {
-        \overrightarrow{A}\cdot{\overrightarrow{\omega}}
+        \overrightarrow{A}\cdot\overrightarrow{\omega}
     }
+$$
+
+And that's it!
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-plane">Plane</a>
+
+The core concept relies on calculating the intersection of the mouse ray with the gizmo plane. This plane is defined as passing through the gizmo’s origin, with its orientation determined by one of the gizmo's primary axes acting as the plane normal.
+This spatial relationship is visualized in the illustration below:
+
+<img src="./images/move-gizmo-plane-math.svg">
+
+where:
+
+- $O$ is gizmo location (📨provided)
+- $\overrightarrow{A}$ is gizmo plane normal (📨provided)
+- $V$ is camera location (📨provided)
+- $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $s$ is intersection point of initial ray cast from the mouse's screen position into gizmo plane (🧮will be computed)
+- $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $f$ is intersection point of current ray cast from the mouse's screen position into gizmo plane (🧮will be computed)
+- $\overrightarrow{D}$ is final displacement (🧮will be computed)
+
+---
+
+To compute the movement of the gizmo, we follow a two-stage process based:
+
+**1. Initialization (first click)**
+
+The first step is to establish the starting point. We calculate the initial intersection point $s$ along and store the original gizmo position $O$.
+
+**2. Update (mouse movement)**
+
+On every frame the mouse moves, we compute the current intersection point $f$. The relationship between these values determines the transformation:
+
+- displacement $\overrightarrow{D}$: the change is found by the difference between the current and initial intersection points: $\overrightarrow{D}=f-s$
+- final position: the new gizmo position is calculated as $P=O+\overrightarrow{D}$
+
+---
+
+**Deriving the formula**
+
+To find intersection point of ray vs plane we gonna use the idea from the [_line–plane intersection paper_](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form).
+
+<img src="./images/ray-vs-plane.svg">
+
+First step is to check if gizmo plane is parallel to view direction. This occurs during the "edge case" where the manipulation plane aligns perfectly with the view direction. Intuitively, attempting to move an object along an plane pointing directly at the camera would result in the object "teleporting" to infinity, as the system cannot resolve depth changes from that perspective. To prevent this instability, we must implement a dot product test to detect it:
+
+$$
+    \left|\overrightarrow{A}\cdot\overrightarrow{F}\right| \lt 1
+$$
+
+Assuming the manipulation plane is not parallel with the view direction, we can proceed. Our next step is to compute scalar distance $i$ of intersection point:
+
+$$
+    i=\dfrac{\left(O-V\right)\cdot\overrightarrow{A}}{\overrightarrow{A}\cdot\overrightarrow{F}}
+$$
+
+Now the point $f$ equals:
+
+$$
+    f=V+i\overrightarrow{F}
 $$
 
 And that's it!

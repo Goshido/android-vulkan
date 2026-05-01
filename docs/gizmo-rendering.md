@@ -518,7 +518,7 @@ where:
 - $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
 - $f$ is the scalar distance along tangent line, measured from the tangent line touch point to the current 3D point of mouse interaction (🧮will be computed)
 
-The first step of to find intersection point of mouse initial ray $G$ with ring plane. We gonna use the idea from the [_line–plane intersection paper_](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form).
+The first step is to find intersection point $G$ of mouse initial ray with ring plane. We gonna use the idea from the [_line–plane intersection paper_](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form).
 
 $$
     G=V+\dfrac{\left(O-V\right)\cdot\overrightarrow{A}}{\overrightarrow{A}\cdot\overrightarrow{S}}\overrightarrow{S}
@@ -619,6 +619,8 @@ $$
         \overrightarrow{D}\cdot\overrightarrow{\eta}
     }
 $$
+
+**⚠️ ATTENTION:** Since all calculations occur in 3D space, the scalar distances $s$ and $f$ are measured in scene units. This creates a "dynamic sensitivity" effect: the further the gizmo is from the camera, the faster it will rotate, leading to a frustrating and inconsistent user experience. To ensure a smooth, constant feel, you must normalize the final distance $d$ using the [_pixel size_](#pixel-coverage) value, calculated specifically at the gizmo’s origin $O$.
 
 And that's it!
 

@@ -16,6 +16,7 @@
 - [_Interaction with mouse_](#interaction)
   - [_Axis_](#inter-axis)
   - [_Plane_](#inter-plane)
+  - [_Ring_](#inter-ring)
 - [_Known limitations_](#limitations)
 
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
@@ -364,9 +365,9 @@ The core idea relies on the unique geometric properties of [_skew lines_](https:
 
 where:
 
-- $O$ is gizmo location (📨provided)
+- $O$ is gizmo position (📨provided)
 - $\overrightarrow{A}$ is unit vector of the axis currently being manipulated by the mouse (📨provided)
-- $V$ is camera location (📨provided)
+- $V$ is camera position (📨provided)
 - $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
 - $s$ is the scalar distance along the active axis, measured from the gizmo origin to the initial 3D point of mouse interaction (🧮will be computed)
 - $\overrightarrow{\mu}$ is the common perpendicular axis between the two skew lines, to solve for the distance $s$ (🧮will be computed)
@@ -443,9 +444,9 @@ This spatial relationship is visualized in the illustration below:
 
 where:
 
-- $O$ is gizmo location (📨provided)
+- $O$ is gizmo position (📨provided)
 - $\overrightarrow{A}$ is gizmo plane normal (📨provided)
-- $V$ is camera location (📨provided)
+- $V$ is camera position (📨provided)
 - $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
 - $s$ is intersection point of initial ray cast from the mouse's screen position into gizmo plane (🧮will be computed)
 - $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
@@ -491,6 +492,132 @@ Now the point $f$ equals:
 
 $$
     f=V+i\overrightarrow{F}
+$$
+
+And that's it!
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-ring">Ring</a>
+
+The core idea is to find tangent line to the ring. This line will control rotation angle around ring normal. This relationship is visualized in the illustration below:
+
+<img src="./images/rotate-gizmo-ring-math.svg">
+
+where:
+
+- $O$ is gizmo position (📨provided)
+- $\overrightarrow{A}$ is ring normal currently being manipulated by the mouse (📨provided)
+- $r$ is ring radius (📨provided)
+- $\overrightarrow{D}$ is tangent line direction (🧮will be computed)
+- $G$ is the ring plane intersection point with the initial ray cast from the mouse's screen position into the 3D scene (🧮will be computed)
+- $R$ is any fixed point on the tangent line (🧮will be computed)
+- $V$ is camera position (📨provided)
+- $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $s$ is the scalar distance along tangent line, measured from the tangent line touch point to the initial 3D point of mouse interaction (🧮will be computed)
+- $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
+- $f$ is the scalar distance along tangent line, measured from the tangent line touch point to the current 3D point of mouse interaction (🧮will be computed)
+
+The first step of to find intersection point of mouse initial ray $G$ with ring plane. We gonna use the idea from the [_line–plane intersection paper_](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form).
+
+$$
+    G=V+\dfrac{\left(O-V\right)\cdot\overrightarrow{A}}{\overrightarrow{A}\cdot\overrightarrow{S}}\overrightarrow{S}
+$$
+
+The unit direction $\overrightarrow{\lambda}$ from gizmo origin to point $G$:
+
+$$
+    \overrightarrow{\lambda}=\dfrac{G-O}{\left|G-O\right|}
+$$
+
+Now it's possible to find tangent line direction $\overrightarrow{D}$:
+
+$$
+    \overrightarrow{D}=\overrightarrow{A}\times\overrightarrow{\lambda}
+$$
+
+And the point $R$ where the tangent line touches the ring:
+
+$$
+    R=O+r\overrightarrow{\lambda}
+$$
+
+**⚠️ATTENTION:** The mathematical model fails if vectors $\overrightarrow{A}$ and $\overrightarrow{S}$ are orthogonal. This occurs during the "edge case" where the manipulation ring is parallel the view direction. To test this case we should perform:
+
+$$
+    \overrightarrow{A}\cdot\overrightarrow{S} \ne 0
+$$
+
+If we are unlucky it's needed to use another approach to find direction $\overrightarrow{D}$ and point $R$. The direction $\overrightarrow{D}$ is simple. It is third axis of ring normal and camera view basis:
+
+$$
+    \overrightarrow{D}=\overrightarrow{A}\times\overrightarrow{S}
+$$
+
+Let's find $R$. We already know the tangent line direction $\overrightarrow{D}$. We gonna use the fact what gizmo control is the ring and we know it's radius $r$. We also know the direction where to move: gizmo origin $O$ and camera position $V$:
+
+$$
+    R=O+r{\dfrac{V-O}{\left|V-O\right|}}
+$$
+
+At this stage we have full information about tangent line! 🥳
+
+Next core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. So our primary goal is to compute $s$ and $f$ scalar distances.
+
+In the end of the day to compute the rotation of the gizmo, we follow a two-stage process:
+
+**1. Initialization (first click)**
+
+The first step is to establish the starting point $s$. We calculate the initial intersection point $s$ along and store the original gizmo orientation $\theta$ as [_quaternion_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations).
+
+**2. Update (mouse movement)**
+
+On every frame the mouse moves, we compute the current intersection point $f$. The relationship between these values determines the transformation.
+
+The change $d$ is found by the difference between the current and initial intersection points:
+
+$$
+    d=f-s
+$$
+
+We need to construct orientation change $\omega$ quaternion using [_axis-angle formula_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations). The axis is $\overrightarrow{A}$. The angle is $d$.
+
+So the final orientation $\chi$ is:
+
+$$
+    \chi=\theta \omega
+$$
+
+Last question to answer is the formula to compute the the shortest distance between the mouse ray and the tangent line.
+
+<img src="./images/rotate-gizmo-skew-lines.svg">
+
+The idea is taken from [_nearest points paper_](https://en.wikipedia.org/wiki/Skew_lines#Nearest_points). The first key observation is that the direction of the common perpendicular $\overrightarrow{\mu}$ is defined by the cross product of the two skew line directions:
+
+$$
+    \overrightarrow{\mu}=\overrightarrow{D}\times\overrightarrow{F}
+$$
+
+**🥳NOTE:** The mathematical model never fails because vectors $\overrightarrow{D}$ and $\overrightarrow{F}$ are never collinear. Why? Because we handled this case previously by computing $\overrightarrow{D}$ and $R$ two ways.
+
+Our next step is to precompute the vector $\overrightarrow{\eta}$:
+
+$$
+    \overrightarrow{\eta}=\overrightarrow{F}\times\overrightarrow{\mu}
+$$
+
+Now the scalar distance $f$ equals:
+
+$$
+    f
+    =
+    \dfrac
+    {
+        \left(V-R\right)\cdot{\overrightarrow{\eta}}
+    }
+    {
+        \overrightarrow{D}\cdot\overrightarrow{\eta}
+    }
 $$
 
 And that's it!

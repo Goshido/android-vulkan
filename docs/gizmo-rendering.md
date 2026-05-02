@@ -554,10 +554,10 @@ $$
     \overrightarrow{D}=\overrightarrow{A}\times\overrightarrow{S}
 $$
 
-Let's find $R$. We already know the tangent line direction $\overrightarrow{D}$. We gonna use the fact what gizmo control is the ring and we know it's radius $r$. We also know the direction where to move: gizmo origin $O$ and camera position $V$:
+Let's calculate $R$. Since the gizmo control is a ring with a known radius $r$, its origin $O$, and the camera's view direction $\overrightarrow{K}$, we can find $R$. To do this, we move from the origin $O$ in the negative view direction $\overrightarrow{K}$ by a distance equal to the ring's radius $r$:
 
 $$
-    R=O+r{\dfrac{V-O}{\left|V-O\right|}}
+    R=O-r\overrightarrow{K}
 $$
 
 At this stage we have full information about tangent line! 🥳

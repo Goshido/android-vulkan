@@ -17,6 +17,7 @@
   - [_Axis_](#inter-axis)
   - [_Plane_](#inter-plane)
   - [_Ring_](#inter-ring)
+  - [_Ball_](#inter-ball)
 - [_Known limitations_](#limitations)
 
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
@@ -585,7 +586,7 @@ We need to construct orientation change $\omega$ quaternion using [_axis-angle f
 So the final orientation $\chi$ is:
 
 $$
-    \chi=\theta \omega
+    \chi=\omega \theta
 $$
 
 Last question to answer is the formula to compute the the shortest distance between the mouse ray and the tangent line.
@@ -623,6 +624,29 @@ $$
 **⚠️ ATTENTION:** Since all calculations occur in 3D space, the scalar distances $s$ and $f$ are measured in scene units. This creates a "dynamic sensitivity" effect: the further the gizmo is from the camera, the faster it will rotate, leading to a frustrating and inconsistent user experience. To ensure a smooth, constant feel, you must normalize the final distance $d$ using the [_pixel size_](#pixel-coverage) value, calculated specifically at the gizmo’s origin $O$.
 
 And that's it!
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-ball">Ball</a>
+
+Ball rotation appears complex but is actually the most trivial to implement. The core concept is to compute the change in the 2D mouse pixel position each frame and directly map that delta to [_yaw and pitch_](https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll) angles. You can then apply these rotations using [_quaternions_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation). To ensure the rotation aligns with the user's perspective, use the camera's local up $\overrightarrow{\omega}$ and right $\overrightarrow{\delta}$ vectors as the rotation axes.
+
+**Orientation change** | **Mouse delta** | **Camera axis**
+--- | --- | ---
+pitch $q_0$ | vertical $a$ | right $\overrightarrow{\delta}$
+yaw $q_1$ | horizontal $b$ | up $\overrightarrow{\omega}$
+
+Let's consider pixel coordinates origin at the top-left, increasing from left to right and top to bottom. The final orientation $R$ will be:
+
+$$
+\begin{aligned}
+    q_0=FromAxisAngle\left(\overrightarrow{\delta}, a\right)                                                          \\
+    q_1=FromAxisAngle\left(\overrightarrow{\omega}, -b\right)                                                         \\
+    R=q_0 q_1 R
+\end{aligned}
+$$
+
+**⚠️ ATTENTION:** You must scale the mouse delta by the screen [_DPI_](https://en.wikipedia.org/wiki/Dots_per_inch) value. This prevents physical sensitivity issues caused by different screen sizes and resolution settings.
 
 [↬ table of content ⇧](#table-of-content)
 

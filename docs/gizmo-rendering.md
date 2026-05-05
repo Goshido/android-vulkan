@@ -14,10 +14,13 @@
 - [_SDF simplifications_](#simplification)
   - [_Line segment_](#line-segment)
 - [_Interaction with mouse_](#interaction)
-  - [_Axis_](#inter-axis)
-  - [_Plane_](#inter-plane)
+  - [_Move axis_](#inter-move-axis)
+  - [_Move plane_](#inter-move-plane)
   - [_Ring_](#inter-ring)
-  - [_Ball_](#inter-ball)
+  - [_Trackball_](#inter-trackball)
+  - [_Scale axis_](#inter-scale-axis)
+  - [_Scale plane_](#inter-scale-plane)
+  - [_Uniform scale_](#inter-uniform-scale)
 - [_Known limitations_](#limitations)
 
 ## <a id="aaa">Analytical Anti-Aliasing for _SDF_</a>
@@ -358,7 +361,7 @@ $$
 
 [↬ table of content ⇧](#table-of-content)
 
-### <a id="inter-axis">Axis</a>
+### <a id="inter-move-axis">Move axis</a>
 
 The core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. This relationship is visualized in the illustration below:
 
@@ -436,7 +439,7 @@ And that's it!
 
 [↬ table of content ⇧](#table-of-content)
 
-### <a id="inter-plane">Plane</a>
+### <a id="inter-move-plane">Move plane</a>
 
 The core concept relies on calculating the intersection of the mouse ray with the gizmo plane. This plane is defined as passing through the gizmo’s origin, with its orientation determined by one of the gizmo's primary axes acting as the plane normal.
 This spatial relationship is visualized in the illustration below:
@@ -627,9 +630,9 @@ And that's it!
 
 [↬ table of content ⇧](#table-of-content)
 
-### <a id="inter-ball">Ball</a>
+### <a id="inter-trackball">Trackball</a>
 
-Ball rotation appears complex but is actually the most trivial to implement. The core concept is to compute the change in the 2D mouse pixel position each frame and directly map that delta to [_yaw and pitch_](https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll) angles. You can then apply these rotations using [_quaternions_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation). To ensure the rotation aligns with the user's perspective, use the camera's local up $\overrightarrow{\omega}$ and right $\overrightarrow{\delta}$ vectors as the rotation axes.
+Trackball rotation appears complex but is actually the most trivial to implement. The core concept is to compute the change in the 2D mouse pixel position each frame and directly map that delta to [_yaw and pitch_](https://simple.wikipedia.org/wiki/Pitch,_yaw,_and_roll) angles. You can then apply these rotations using [_quaternions_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation). To ensure the rotation aligns with the user's perspective, use the camera's local up $\overrightarrow{\omega}$ and right $\overrightarrow{\delta}$ vectors as the rotation axes.
 
 **Orientation change** | **Mouse delta** | **Camera axis**
 --- | --- | ---
@@ -647,6 +650,44 @@ $$
 $$
 
 **⚠️ ATTENTION:** You must scale the mouse delta by the screen [_DPI_](https://en.wikipedia.org/wiki/Dots_per_inch) value. This prevents physical sensitivity issues caused by different screen sizes and resolution settings.
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-scale-axis">Scale axis</a>
+
+TODO
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-scale-plane">Scale plane</a>
+
+TODO
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="inter-uniform-scale">Uniform scale</a>
+
+The core concept is to map vertical mouse movement to an exponential scale change. To prevent the scale from reaching zero or turning negative, we use the natural exponential function $e^x$
+
+With the pixel coordinate origin at the top-left (increasing downward), the algorithm to determine the final scale $S_n$ is:
+
+1. Define the scale sensitivity constant $\omega$
+1. Acquire viewport [_DPI_](https://en.wikipedia.org/wiki/Dots_per_inch) value $\lambda$
+1. Calculate the normalized scale speed factor $m$:
+
+$$
+    m=\dfrac{\omega}{\lambda}
+$$
+
+4. Capture the initial mouse vertical position $s$ and the object's initial 3D scale vector $S_0$
+4. On every frame acquire current mouse vertical position $f$
+4. Compute the final scale $S_n$ using the following exponential mapping:
+
+$$
+    S_n=S_0 e^{m\left(f-s\right)}
+$$
+
+7. That's it!
 
 [↬ table of content ⇧](#table-of-content)
 

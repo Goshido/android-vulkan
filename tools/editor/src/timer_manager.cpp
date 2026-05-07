@@ -99,7 +99,7 @@ void TimerManager::OnStartTimer ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start timer" )
     _messageQueue.DequeueEnd ();
-    _timers.insert ( static_cast<Timer::State*> ( message._params ) );
+    _timers.insert ( static_cast<Timer::State*> ( message._action () ) );
 }
 
 void TimerManager::OnStopTimer ( Message &&message ) noexcept
@@ -107,7 +107,7 @@ void TimerManager::OnStopTimer ( Message &&message ) noexcept
     AV_TRACE ( "Stop timer" )
     _messageQueue.DequeueEnd ();
 
-    auto* timer = static_cast<Timer::State*> ( message._params );
+    auto* timer = static_cast<Timer::State*> ( message._action () );
     _timers.erase ( timer );
     delete timer;
 }
@@ -120,7 +120,7 @@ void TimerManager::OnShutdown ( Message &&refund ) noexcept
     _messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

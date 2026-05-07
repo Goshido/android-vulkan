@@ -61,15 +61,17 @@ bool Editor::InitModules () noexcept
         {
             AV_THREAD_NAME ( "Init Vulkan" )
 
+            auto* value = reinterpret_cast<void*> (
+                static_cast<uintptr_t> ( _renderer.OnCreateDevice ( config._gpu ) )
+            );
+
             _messageQueue.EnqueueBack (
                 {
                     ._type = eMessageType::VulkanInitReport,
 
-                    ._params = reinterpret_cast<void*> (
-                        static_cast<uintptr_t> (
-                            _renderer.OnCreateDevice ( config._gpu )
-                        )
-                    ),
+                    ._action = [ value ] () noexcept {
+                        return value;
+                    },
 
                     ._serialNumber = 0U
                 }
@@ -93,13 +95,13 @@ bool Editor::InitModules () noexcept
         {
             case eMessageType::VulkanInitReport:
                 _messageQueue.DequeueEnd ();
-                result &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._params ) );
+                result &= static_cast<bool> ( reinterpret_cast<uintptr_t> ( message._action () ) );
                 waiting = false;
             break;
 
             case eMessageType::WindowVisibilityChanged:
                 _messageQueue.DequeueEnd ();
-                _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) );
+                _stopRendering = static_cast<bool> ( std::bit_cast<uintptr_t> ( message._action () ) );
             break;
 
             default:
@@ -300,14 +302,14 @@ void Editor::OnChangeCursor ( Message &&message ) noexcept
 {
     AV_TRACE ( "Change cursor" )
     _messageQueue.DequeueEnd ();
-    _mainWindow.ChangeCursor ( std::bit_cast<eCursor> ( message._params ) );
+    _mainWindow.ChangeCursor ( std::bit_cast<eCursor> ( message._action () ) );
 }
 
 void Editor::OnDPIChanged ( Message &&message ) noexcept
 {
     AV_TRACE ( "DPI changed" )
     _messageQueue.DequeueEnd ();
-    _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._params ) ) );
+    _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._action () ) ) );
     // FUCK
 }
 
@@ -359,7 +361,7 @@ void Editor::OnRecreateSwapchain () noexcept
             _messageQueue.EnqueueBack (
                 {
                     ._type = eMessageType::SwapchainCreated,
-                    ._params = nullptr,
+                    ._action = nullptr,
                     ._serialNumber = 0U
                 }
             );
@@ -385,7 +387,7 @@ void Editor::OnRunEvent () noexcept
         _messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::RenderFrame,
-                ._params = nullptr,
+                ._action = nullptr,
                 ._serialNumber = 0U
             }
         );
@@ -404,7 +406,7 @@ void Editor::OnShutdown () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::Shutdown,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -452,7 +454,7 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
     _messageQueue.DequeueEnd ();
 
     bool const old = std::exchange ( _stopRendering,
-        static_cast<bool> ( std::bit_cast<uintptr_t> ( message._params ) )
+        static_cast<bool> ( std::bit_cast<uintptr_t> ( message._action () ) )
     );
 
     if ( ( ( old == _stopRendering ) | _stopRendering ) || _renderer.GetSwapchain () != VK_NULL_HANDLE )
@@ -473,7 +475,7 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::SwapchainCreated,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -483,10 +485,7 @@ void Editor::OnWriteClipboard ( Message &&message ) noexcept
 {
     AV_TRACE ( "Write clipboard" )
     _messageQueue.DequeueEnd ();
-
-    auto const* string = static_cast<std::u32string const*> ( message._params );
-    _mainWindow.WriteClipboard ( *string );
-    delete string;
+    _mainWindow.WriteClipboard ( *static_cast<std::u32string const*> ( message._action () ) );
 }
 
 void Editor::ScheduleEventLoop () noexcept
@@ -494,7 +493,7 @@ void Editor::ScheduleEventLoop () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::RunEventLoop,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

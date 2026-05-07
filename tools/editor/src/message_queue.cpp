@@ -38,7 +38,7 @@ void MessageQueue::EnqueueBack ( Message &&message ) noexcept
         Message
         {
             ._type = eMessageType::RunEventLoop,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = serialNumber
         }
     );

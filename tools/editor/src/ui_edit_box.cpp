@@ -2,7 +2,6 @@
 #include <cursor.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
-#include <set_text_event.hpp>
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
@@ -466,15 +465,19 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
     {
         Commit ();
 
+        MouseMoveEvent moveEvent
+        {
+            ._x = event._x,
+            ._y = event._y,
+            ._eventID = _eventID - 1U
+        };
+
         _messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::MouseMoved,
 
-                ._params = new MouseMoveEvent
-                {
-                    ._x = event._x,
-                    ._y = event._y,
-                    ._eventID = _eventID - 1U
+                ._action = [ moveEvent = std::move ( moveEvent ) ] () mutable noexcept {
+                    return &moveEvent;
                 },
 
                 ._serialNumber = 0U
@@ -484,7 +487,11 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
         _messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::MouseButtonDown,
-                ._params = new MouseButtonEvent ( event ),
+
+                ._action = [ buttonEvent = std::move ( MouseButtonEvent ( event ) ) ] () mutable noexcept {
+                    return &buttonEvent;
+                },
+
                 ._serialNumber = 0U
             }
         );
@@ -635,11 +642,16 @@ void UIEditBox::Copy () noexcept
     auto const [from, to] = GetSelection ();
     auto const begin = _content.cbegin ();
     using Offset = decltype ( begin )::difference_type;
+    std::u32string value ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) );
 
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::WriteClipboard,
-            ._params = new std::u32string ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) ),
+
+            ._action = [ value = std::move ( value ) ] () mutable noexcept {
+                return &value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -694,7 +706,7 @@ void UIEditBox::Paste () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReadClipboardRequest,
-            ._params = this,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

@@ -691,7 +691,11 @@ void UIComboBox::SwitchToNormalState () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIRemoveWidget,
-            ._params = std::exchange ( _popup, nullptr ),
+
+            ._action = [ popup = std::exchange ( _popup, nullptr ) ] () noexcept {
+                return popup;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -722,7 +726,11 @@ void UIComboBox::SwitchToMenuState () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIAddWidget,
-            ._params = _popup,
+            
+            ._action = [ popup = _popup ] () noexcept {
+                return popup;
+            },
+
             ._serialNumber = 0U
         }
     );

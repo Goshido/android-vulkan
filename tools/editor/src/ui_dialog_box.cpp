@@ -34,7 +34,11 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEven
     messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
-            ._params = std::bit_cast<void*> ( _cursor ),
+
+            ._action = [ cursor = std::bit_cast<void*> ( _cursor ) ] () noexcept {
+                return cursor;
+            },
+
             ._serialNumber = 0U
         }
     );

@@ -10,7 +10,7 @@ UIElement::UIElement ( MessageQueue &messageQueue ) noexcept:
     messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIElementCreated,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

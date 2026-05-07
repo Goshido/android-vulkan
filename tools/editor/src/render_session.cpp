@@ -1,11 +1,8 @@
 #include <precompiled_headers.hpp>
-#include <append_ui_child_element_event.hpp>
 #include <av_assert.hpp>
 #include <hello_triangle_vertex.hpp>
 #include <logger.hpp>
-#include <prepend_ui_child_element_event.hpp>
 #include <render_session.hpp>
-#include <set_text_event.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
 
@@ -68,7 +65,11 @@ HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
             messageQueue.EnqueueBack (
                 {
                     ._type = eMessageType::HelloTriangleReady,
-                    ._params = this,
+
+                    ._action = [ value = this ] () noexcept {
+                        return value;
+                    },
+
                     ._serialNumber = 0U
                 }
             );
@@ -507,7 +508,7 @@ void RenderSession::EventLoop () noexcept
         messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::CloseEditor,
-                ._params = nullptr,
+                ._action = nullptr,
                 ._serialNumber = 0U
             }
         );
@@ -525,7 +526,7 @@ void RenderSession::EventLoop () noexcept
         switch ( message._type )
         {
             case eMessageType::HelloTriangleReady:
-                OnHelloTriangleReady ( message._params );
+                OnHelloTriangleReady ( message._action () );
             break;
 
             case eMessageType::RenderFrame:
@@ -685,7 +686,7 @@ bool RenderSession::InitModules () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::FontStorageReady,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -929,7 +930,7 @@ void RenderSession::OnRenderFrame () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::FrameComplete,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -1026,10 +1027,9 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _resourceHeap.Destroy ( renderer );
 
     _messageQueue.EnqueueFront (
-        Message
         {
             ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -1087,19 +1087,14 @@ void RenderSession::OnUIAppendChildElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI append child element" )
     _messageQueue.DequeueEnd ();
-
-
-    auto* event = static_cast<AppendUIChildElementEvent*> ( message._params );
-    event->Action ();
-    delete event;
+    std::ignore = message._action ();
 }
 
 void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI delete element" )
     _messageQueue.DequeueEnd ();
-
-    delete static_cast<pbr::UIElement*> ( message._params );
+    std::ignore = message._action ();
     --_uiElements;
 }
 
@@ -1114,44 +1109,35 @@ void RenderSession::OnUIHideElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI hide element" )
     _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::UIElement*> ( message._params )->Hide ();
+    std::ignore = message._action ();
 }
 
 void RenderSession::OnUIShowElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
     _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::UIElement*> ( message._params )->Show ();
+    std::ignore = message._action ();
 }
 
 void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI prepend child element" )
     _messageQueue.DequeueEnd ();
-
-    auto* event = static_cast<PrependUIChildElementEvent*> ( message._params );
-    event->Action ();
-    delete event;
+    std::ignore = message._action ();
 }
 
 void RenderSession::OnUISetText ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI set text" )
     _messageQueue.DequeueEnd ();
-
-    auto &event = *static_cast<SetTextEvent*> ( message._params );
-    event.Execute ();
-    SetTextEvent::Destroy ( event );
+    std::ignore = message._action ();
 }
 
 void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
 {
     AV_TRACE ( "UI update element" )
     _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
+    std::ignore = message._action ();
 }
 
 void RenderSession::NotifyRecreateSwapchain () const noexcept
@@ -1159,7 +1145,7 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::RecreateSwapchain,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -1167,7 +1153,7 @@ void RenderSession::NotifyRecreateSwapchain () const noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::FrameComplete,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

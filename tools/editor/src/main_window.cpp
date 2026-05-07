@@ -348,14 +348,15 @@ void MainWindow::ReadClipboard () const noexcept
         return;
 
     HGLOBAL data = GetClipboardData ( CF_UNICODETEXT );
+    std::u32string value ( pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) ) );
 
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::ReadClipboardResponse,
 
-            ._params = new std::u32string (
-                pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) )
-            ),
+            ._action = [ value = std::move ( value ) ] () mutable noexcept {
+                return &value;
+            },
 
             ._serialNumber = 0U
         }
@@ -418,7 +419,11 @@ void MainWindow::OnChar ( WPARAM wParam ) noexcept
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::Typing,
-            ._params = std::bit_cast<void*> ( codepoint ),
+
+            ._action = [ value = std::bit_cast<void*> ( codepoint ) ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -431,7 +436,7 @@ void MainWindow::OnClose () noexcept
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::CloseEditor,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -458,16 +463,20 @@ void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: double click" )
 
+    MouseButtonEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._key = eKey::LeftMouseButton,
+        ._modifier = MakeKeyModifier ()
+    };
+
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::DoubleClick,
 
-            ._params = new MouseButtonEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton,
-                ._modifier = MakeKeyModifier ()
+            ._action = [ event = std::move ( event ) ] () mutable noexcept {
+                return &event;
             },
 
             ._serialNumber = 0U
@@ -478,11 +487,16 @@ void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
 void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: DPI changed" )
+    auto* value = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) );
 
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::DPIChanged,
-            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) ),
+
+            ._action = [ value ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -518,16 +532,20 @@ void MainWindow::OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageTy
 {
     AV_TRACE ( "Main window: mouse button" )
 
+    MouseButtonEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._key = key,
+        ._modifier = MakeKeyModifier ()
+    };
+
     _messageQueue->EnqueueBack (
         {
             ._type = messageType,
 
-            ._params = new MouseButtonEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = key,
-                ._modifier = MakeKeyModifier ()
+            ._action = [ event = std::move ( event ) ] () mutable noexcept {
+                return &event;
             },
 
             ._serialNumber = 0U
@@ -539,15 +557,19 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: mouse move" )
 
+    MouseMoveEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._eventID = ++_mouseMoveEventID
+    };
+
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::MouseMoved,
 
-            ._params = new MouseMoveEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._eventID = ++_mouseMoveEventID
+            ._action = [ event = std::move ( event) ] () mutable noexcept {
+                return &event;
             },
 
             ._serialNumber = 0U
@@ -558,11 +580,16 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 void MainWindow::OnSize ( WPARAM wParam ) noexcept
 {
     AV_TRACE ( "Main window: size" )
+    auto* value = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) );
 
     _messageQueue->EnqueueBack (
         {
             ._type = eMessageType::WindowVisibilityChanged,
-            ._params = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
+
+            ._action = [ value ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );

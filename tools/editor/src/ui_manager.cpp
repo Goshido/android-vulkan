@@ -191,24 +191,22 @@ void UIManager::OnDoubleClick ( Message &&message ) noexcept
     AV_TRACE ( "Double click" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnDoubleClick ( *event );
-        delete event;
+        _typingCapture->OnDoubleClick ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnDoubleClick ( *event );
-        delete event;
+        _mouseCapture->OnDoubleClick ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -217,13 +215,11 @@ void UIManager::OnDoubleClick ( Message &&message ) noexcept
         {
             if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
             {
-                w.OnDoubleClick ( *event );
+                w.OnDoubleClick ( event );
                 break;
             }
         }
     }
-
-    delete event;
 }
 
 void UIManager::OnFontStorageReady () noexcept
@@ -240,7 +236,11 @@ void UIManager::OnFontStorageReady () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIAddWidget,
-            ._params = dialogBox,
+
+            ._action = [ value = dialogBox ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -281,7 +281,7 @@ void UIManager::OnSetFocus ( Message &&message ) noexcept
 {
     AV_TRACE ( "Set focus" )
     _messageQueue.DequeueEnd ();
-    _typingCapture = static_cast<Widget*> ( message._params );
+    _typingCapture = static_cast<Widget*> ( message._action () );
 }
 
 void UIManager::OnMouseHover ( Message &&message ) noexcept
@@ -289,7 +289,7 @@ void UIManager::OnMouseHover ( Message &&message ) noexcept
     AV_TRACE ( "Mouse hover" )
     _messageQueue.DequeueEnd ();
 
-    auto* widget = static_cast<Widget*> ( message._params );
+    auto* widget = static_cast<Widget*> ( message._action () );
 
     if ( ( _hoverWidget != nullptr ) & ( _hoverWidget != widget ) ) [[likely]]
         _hoverWidget->OnMouseLeave ();
@@ -302,24 +302,22 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
     AV_TRACE ( "Mouse button down" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnMouseButtonDown ( *event );
-        delete event;
+        _typingCapture->OnMouseButtonDown ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonDown ( *event );
-        delete event;
+        _mouseCapture->OnMouseButtonDown ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -328,13 +326,11 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
         {
             if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseButtonDown ( *event );
+                w.OnMouseButtonDown ( event );
                 break;
             }
         }
     }
-
-    delete event;
 }
 
 void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
@@ -342,24 +338,22 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
     AV_TRACE ( "Mouse button up" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnMouseButtonUp ( *event );
-        delete event;
+        _typingCapture->OnMouseButtonUp ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonUp ( *event );
-        delete event;
+        _mouseCapture->OnMouseButtonUp ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -370,13 +364,11 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
 
             if ( w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseButtonUp ( *event );
+                w.OnMouseButtonUp ( event );
                 break;
             }
         }
     }
-
-    delete event;
 }
 
 void UIManager::OnMouseMoved ( Message &&message ) noexcept
@@ -384,17 +376,16 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     AV_TRACE ( "Mouse moved" )
     _messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseMoveEvent const*> ( message._action () );
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseMove ( *event );
-        delete event;
+        _mouseCapture->OnMouseMove ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -405,15 +396,13 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
             if ( w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseMove ( *event );
-                delete event;
+                w.OnMouseMove ( event );
                 return;
             }
         }
     }
 
-    size_t const eventID = event->_eventID;
-    delete event;
+    size_t const eventID = event._eventID;
 
     if ( eventID - std::exchange ( _eventID, eventID ) <= 1U ) [[likely]]
         return;
@@ -421,7 +410,11 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
-            ._params = std::bit_cast<void*> ( eCursor::Arrow ),
+
+            ._action = [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -431,12 +424,11 @@ void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
 {
     AV_TRACE ( "Read clipboard response" )
     _messageQueue.DequeueEnd ();
-    auto const* text = static_cast<std::u32string const*> ( message._params );
 
     if ( _typingCapture ) [[likely]]
-        _typingCapture->ApplyClipboard ( *text );
-
-    delete text;
+    {
+        _typingCapture->ApplyClipboard ( *static_cast<std::u32string const*> ( message._action () ) );
+    }
 }
 
 void UIManager::OnShutdown ( Message &&refund ) noexcept
@@ -452,7 +444,7 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
     _messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -462,7 +454,7 @@ void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start widget capture input" )
     _messageQueue.DequeueEnd ();
-    _mouseCapture = static_cast<Widget*> ( message._params );
+    _mouseCapture = static_cast<Widget*> ( message._action () );
 }
 
 void UIManager::OnStopWidgetCaptureMouse () noexcept
@@ -479,7 +471,7 @@ void UIManager::OnTyping ( Message &&message ) noexcept
 
     if ( _typingCapture ) [[likely]]
     {
-        _typingCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
+        _typingCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._action () ) ) );
     }
 }
 
@@ -489,14 +481,14 @@ void UIManager::OnUIAddWidget ( Message &&message ) noexcept
     _messageQueue.DequeueEnd ();
 
     std::lock_guard const lock ( _mutex );
-    _widgets.emplace_back ( static_cast<Widget*> ( message._params ) );
+    _widgets.emplace_back ( static_cast<Widget*> ( message._action () ) );
 }
 
 void UIManager::OnUIRemoveWidget ( Message &&message ) noexcept
 {
     AV_TRACE ( "Remove widget" )
     _messageQueue.DequeueEnd ();
-    auto const* widget = static_cast<Widget const*> ( message._params );
+    auto const* widget = static_cast<Widget const*> ( message._action () );
 
     std::lock_guard const lock ( _mutex );
     auto const end = _widgets.cend ();

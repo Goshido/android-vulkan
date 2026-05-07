@@ -7,6 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cstdint>
+#include <functional>
 
 GX_RESTORE_WARNING_STATE
 
@@ -66,9 +67,10 @@ enum class eMessageType : uint32_t
 struct Message final
 {
     using SerialNumber = uint32_t;
+    using Action = std::function<void* ()>;
 
     eMessageType    _type;
-    void*           _params;
+    Action          _action;
     SerialNumber    _serialNumber = 0U;
 };
 

@@ -43,7 +43,11 @@ Timer::Timer ( MessageQueue &messageQueue, eType type, Interval const &interval,
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StartTimer,
-            ._params = _state,
+
+            ._action = [ state = _state ] () noexcept {
+                return state;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -54,7 +58,11 @@ Timer::~Timer () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StopTimer,
-            ._params = _state,
+
+            ._action = [ state = _state ] () noexcept {
+                return state;
+            },
+
             ._serialNumber = 0U
         }
     );

@@ -47,7 +47,11 @@ void Widget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::MouseHover,
-            ._params = this,
+
+            ._action = [ value = this ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -96,7 +100,11 @@ void Widget::CaptureMouse () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StartWidgetCaptureMouse,
-            ._params = this,
+
+            ._action = [ value = this ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -104,7 +112,7 @@ void Widget::CaptureMouse () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::CaptureMouse,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -115,7 +123,7 @@ void Widget::ReleaseMouse () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StopWidgetCaptureMouse,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -123,7 +131,7 @@ void Widget::ReleaseMouse () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReleaseMouse,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -134,7 +142,11 @@ void Widget::ChangeCursor ( eCursor cursor ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
-            ._params = std::bit_cast<void*> ( cursor ),
+
+            ._action = [ value = std::bit_cast<void*> ( cursor ) ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -145,7 +157,7 @@ void Widget::KillFocus () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::KillFocus,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -153,7 +165,7 @@ void Widget::KillFocus () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReleaseKeyboard,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );
@@ -164,7 +176,11 @@ void Widget::SetFocus () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::SetFocus,
-            ._params = this,
+
+            ._action = [ value = this ] () noexcept {
+                return value;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -172,7 +188,7 @@ void Widget::SetFocus () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::CaptureKeyboard,
-            ._params = nullptr,
+            ._action = nullptr,
             ._serialNumber = 0U
         }
     );

@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <set_text_event.hpp>
 #include <text_ui_element.hpp>
 
 
@@ -21,7 +20,12 @@ TextUIElement::~TextUIElement () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIDeleteElement,
-            ._params = std::exchange ( _text, nullptr ),
+
+            ._action = [ text = std::exchange ( _text, nullptr ) ] () noexcept {
+                delete text;
+                return nullptr;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -42,7 +46,12 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UISetText,
-            ._params = SetTextEvent::Create ( *_text, text ),
+
+            ._action = [ &element = *_text, t = std::move ( std::string ( text ) ) ] () noexcept {
+                element.SetText ( std::string_view ( t ) );
+                return nullptr;
+            },
+
             ._serialNumber = 0U
         }
     );
@@ -53,7 +62,12 @@ void TextUIElement::SetText ( std::u32string_view text ) noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UISetText,
-            ._params = SetTextEvent::Create ( *_text, text ),
+
+            ._action = [ &element = *_text, t = std::move ( std::u32string ( text ) ) ] () noexcept {
+                element.SetText ( std::u32string_view ( t ) );
+                return nullptr;
+            },
+
             ._serialNumber = 0U
         }
     );

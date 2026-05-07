@@ -231,21 +231,21 @@ void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
     delete &n;
 }
 
-void Workspace::DrawOpaque ( VkCommandBuffer commandBuffer )
+void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer )
 {
     AV_TRACE ( "Opaque" )
     AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
     // FUCK
 }
 
-void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer )
+void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer )
 {
     AV_TRACE ( "Gizmo" )
     AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
     // FUCK
 }
 
-void Workspace::DrawUI ( VkCommandBuffer commandBuffer )
+void Workspace::DrawUI ( [[maybe_unused]] VkCommandBuffer commandBuffer )
 {
     AV_TRACE ( "UI" )
     AV_VULKAN_GROUP ( commandBuffer, "UI" )

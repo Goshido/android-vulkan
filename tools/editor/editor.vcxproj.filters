@@ -785,6 +785,9 @@
     <ClInclude Include="include\tools\hlsl.hpp">
       <Filter>Header Files\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\scope_quard.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">

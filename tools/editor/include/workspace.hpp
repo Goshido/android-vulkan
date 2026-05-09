@@ -2,8 +2,6 @@
 #define EDITOR_WORKSPACE_HPP
 
 
-#include <deque>
-#include <GXCommon/GXMath.hpp>
 #include "gizmo_node.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
@@ -13,8 +11,14 @@
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
+#include <deque>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
@@ -93,14 +97,14 @@ class Workspace final
         void DrawUI ( VkCommandBuffer commandBuffer );
 
         // FUCK move to ipp
-        [[nodiscard]] MeshNode Register ( MeshGeometryRef &mesh,
+        [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,
             MeshQueue &meshQueue,
             MeshMap &meshMap,
-            MeshInfo &node
+            MeshInfo &nodeMeshInfo
         ) noexcept;
 
         // FUCK move to ipp
-        void Unregister ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &node ) noexcept;
+        void UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &nodeMeshInfo ) noexcept;
 };
 
 } // namespace editor

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <scope_quard.hpp>
 #include <trace.hpp>
 #include <workspace.hpp>
 
@@ -78,18 +79,22 @@ MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
 {
     AV_TRACE ( "Workspace register opaque mesh" )
 
-    auto* m = new MeshInfo;
-    m->_material._isStipple = false;
-    return Register ( mesh, _opaqueQueue, _opaqueMap, *m );
+    // This will also act as search key for unregister operation.
+    auto* nodeMeshInfo = new MeshInfo;
+
+    nodeMeshInfo->_material._isStipple = false;
+    return RegisterMesh ( mesh, _opaqueQueue, _opaqueMap, *nodeMeshInfo );
 }
 
 MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
 {
     AV_TRACE ( "Workspace register stipple mesh" )
 
+    // This will also act as search key for unregister operation.
     auto &m = *new MeshInfo;
+
     m._material._isStipple = true;
-    return Register ( mesh, _stippleQueue, _stippleMap, m );
+    return RegisterMesh ( mesh, _stippleQueue, _stippleMap, m );
 }
 
 GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
@@ -155,12 +160,12 @@ ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
 void Workspace::Unregister ( MeshNode const &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
-    MeshInfo const &n = node.GetInternalInfo ();
+    MeshInfo const &n = node.GetMeshInfo ();
 
     if ( n._material._isStipple )
-        Unregister ( _stippleQueue, _stippleMap, n );
+        UnregisterMesh ( _stippleQueue, _stippleMap, n );
     else
-        Unregister ( _opaqueQueue, _opaqueMap, n );
+        UnregisterMesh ( _opaqueQueue, _opaqueMap, n );
 
     delete &n;
 }
@@ -252,7 +257,7 @@ void Workspace::DrawUI ( [[maybe_unused]] VkCommandBuffer commandBuffer )
     // FUCK
 }
 
-MeshNode Workspace::Register ( MeshGeometryRef &mesh,
+MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
     MeshQueue &meshQueue,
     MeshMap &meshMap,
     MeshInfo &node
@@ -269,27 +274,34 @@ MeshNode Workspace::Register ( MeshGeometryRef &mesh,
     return MeshNode ( *this, node );
 }
 
-void Workspace::Unregister ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &node ) noexcept
+void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &nodeMeshInfo ) noexcept
 {
     std::lock_guard const lock ( _mutex );
-    auto const findResult = _opaqueQueue.find ( meshMap.extract ( &node ).mapped ().lock () );
+    auto const findResult = _opaqueQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
     Meshes &meshes = findResult->second;
+
+    android_vulkan::ScopeGuard const freeMeshInfo (
+        [ &nodeMeshInfo ] () noexcept {
+            // It was allocated in RegisterOpaqueMesh|RegisterStippleMesh.
+            delete &nodeMeshInfo;
+        }
+    );
 
     if ( meshes.size () == 1U )
     {
-        AV_ASSERT ( meshes.front () == &node )
+        AV_ASSERT ( meshes.front () == &nodeMeshInfo )
         meshQueue.erase ( findResult );
         return;
     }
 
     for ( auto &mesh : meshes )
     {
-        if ( mesh != &node )
+        if ( mesh != &nodeMeshInfo )
             continue;
 
         mesh = meshes.back ();
         meshes.pop_back ();
-        break;
+        return;
     }
 }
 

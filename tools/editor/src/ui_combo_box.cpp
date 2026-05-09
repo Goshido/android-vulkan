@@ -726,7 +726,7 @@ void UIComboBox::SwitchToMenuState () noexcept
     _messageQueue.EnqueueBack (
         {
             ._type = eMessageType::UIAddWidget,
-            
+
             ._action = [ popup = _popup ] () noexcept {
                 return popup;
             },

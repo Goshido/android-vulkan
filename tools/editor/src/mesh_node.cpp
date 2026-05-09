@@ -12,8 +12,8 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
 
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::move ( other._hasChanges );
-    _internal = std::exchange ( other._internal, nullptr );
-    _info = std::move ( other._info );
+    _meshInfo = std::exchange ( other._meshInfo, nullptr );
+    _renderInfo = std::move ( other._renderInfo );
 
     other.Unlock ();
 }
@@ -25,45 +25,72 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
 
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::move ( other._hasChanges );
-    _internal = std::exchange ( other._internal, nullptr );
-    _info = std::move ( other._info );
+    _meshInfo = std::exchange ( other._meshInfo, nullptr );
+    _renderInfo = std::move ( other._renderInfo );
 
     other.Unlock ();
     return *this;
 }
 
-MeshNode::MeshNode ( Workspace &workspace, MeshInfo &internal ) noexcept:
+MeshNode::MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept:
     WorkspaceNode ( workspace ),
-    _internal ( &internal )
+    _meshInfo ( &meshInfo )
 {
     // NOTHING
 }
 
 MeshNode::~MeshNode () noexcept
 {
+    if ( !_workspace ) [[unlikely]]
+        return;
+
     if ( !TryLock () ) [[unlikely]]
         return;
 
     _workspace->Unregister ( *this );
     _workspace = nullptr;
+
     Unlock ();
 }
 
 void MeshNode::Commit () noexcept
 {
+    MeshInfo const &meshInfo = *_meshInfo;
+
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
 
-    *_internal = _info;
+    GXMat4 local {};
+    local.FromFast ( meshInfo._rotation, meshInfo._location );
+    auto &x = *reinterpret_cast<GXVec3*> ( local._data );
+    GXVec3 const &s = meshInfo._scale;
+
+    auto &y = *reinterpret_cast<GXVec3*> ( local._data + 4U );
+    x.Multiply ( x, s._data[ 0U ] );
+
+    auto &z = *reinterpret_cast<GXVec3*> ( local._data + 8U );
+    y.Multiply ( y, s._data[ 1U ] );
+    z.Multiply ( z, s._data[ 2U ] );
+
+    _renderInfo._material = meshInfo._material;
+    _renderInfo._local = local;
+    meshInfo._boundLocal.Transform ( _renderInfo._boundWorld, local );
+    _renderInfo._color = meshInfo._color;
+
     _hasChanges = false;
 
     Unlock ();
 }
 
-MeshInfo const &MeshNode::GetInternalInfo () const noexcept
+MeshInfo const &MeshNode::GetMeshInfo () const noexcept
 {
-    AV_ASSERT ( _internal )
-    return *_internal;
+    AV_ASSERT ( _meshInfo )
+    return *_meshInfo;
+}
+
+MeshNode::RenderInfo const &MeshNode::GetRenderInfo () const noexcept
+{
+    return _renderInfo;
 }
 
 void MeshNode::SetColor ( GXColorUNORM color0,
@@ -76,20 +103,86 @@ void MeshNode::SetColor ( GXColorUNORM color0,
     // Emission intensity should take range from 0 to 6000. Emission intensity is packed as 24bit fixed point value.
     constexpr double maxIntensity = 6.0e+3;
     constexpr double convertFactor = static_cast<double> ( 0x00FFFFFFU ) / maxIntensity;
-    double const beta = convertFactor * std::clamp ( static_cast<double> ( emissionIntensity ), 0.0, maxIntensity );
+    constexpr uint32_t rgbMask = 0xFFFF'FF00U;
 
     ColorData const c
     {
-        ._emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) | ( std::bit_cast<uint32_t> ( color0 ) << 8U ),
-        ._emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) | ( std::bit_cast<uint32_t> ( color1 ) << 8U ),
-        ._emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) | ( std::bit_cast<uint32_t> ( color2 ) << 8U ),
-        ._col0aEmiIntens = static_cast<uint32_t> ( color0._data[ 3U ] ) | ( static_cast<uint32_t> ( beta ) << 8U )
+        ._emiR = emission._data[ 0U ],
+        ._0rgb = std::bit_cast<uint32_t> ( color0 ) & rgbMask,
+        ._emiB = static_cast<uint32_t> ( emission._data[ 1U ] ),
+        ._1rgb = std::bit_cast<uint32_t> ( color1 ) & rgbMask,
+        ._emiG = static_cast<uint32_t> ( emission._data[ 2U ] ),
+        ._2rgb = std::bit_cast<uint32_t> ( color2 ) & rgbMask,
+        ._0A = static_cast<uint32_t> ( color0._data[ 3U ] ),
+
+        ._emiIntensity = static_cast<uint32_t> (
+            convertFactor * std::clamp ( static_cast<double> ( emissionIntensity ), 0.0, maxIntensity )
+        )
     };
 
     if ( !TryLock () ) [[unlikely]]
         return;
 
-   _info._color = c;
+    _meshInfo->_color = c;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetRotation ( GXQuat const &rotation ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_rotation = rotation;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetRotation ( GXMat3 const &rotation ) noexcept
+{
+    GXQuat const r ( rotation );
+
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_rotation = r;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetRotation ( GXMat4 const &rotation ) noexcept
+{
+    GXQuat const r ( rotation );
+
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_rotation = r;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetLocation ( GXVec3 const &location ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_location = location;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetScale ( GXVec3 const &scale ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_scale = scale;
     _hasChanges = true;
 
     Unlock ();
@@ -97,10 +190,42 @@ void MeshNode::SetColor ( GXColorUNORM color0,
 
 void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
 {
+    GXQuat const r ( local );
+
+    GXVec3 s {};
+    local.ClearScale ( s );
+
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _info._local = local;
+    _meshInfo->_rotation = r;
+    _meshInfo->_location = *reinterpret_cast<GXVec3 const*> ( local._data + 12U );
+    _meshInfo->_scale = s;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_rotation = rotation;
+    _meshInfo->_location = location;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _meshInfo->_rotation = rotation;
+    _meshInfo->_location = location;
+    _meshInfo->_scale = scale;
     _hasChanges = true;
 
     Unlock ();
@@ -108,13 +233,8 @@ void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
 
 void MeshNode::SetBounds ( GXAABB const &boundLocal ) noexcept
 {
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _info._boundLocal = boundLocal;
+    _meshInfo->_boundLocal = boundLocal;
     _hasChanges = true;
-
-    Unlock ();
 }
 
 void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
@@ -122,7 +242,7 @@ void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _info._material = material;
+    _meshInfo->_material = material;
     _hasChanges = true;
 
     Unlock ();

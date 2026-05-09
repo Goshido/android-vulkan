@@ -52,7 +52,7 @@ char32_t UTF16Parser::ToChar32 ( char16_t highSurrogate, char16_t lowSurrogate )
 
     return static_cast<char32_t> (
         SURROGATE_RANGE_FROM +
-        ( 
+        (
             ( static_cast<uint32_t> ( lowSurrogate ) & EXTRACT_CODE_POINT_MASK ) |
             ( ( highSurrogate & EXTRACT_CODE_POINT_MASK ) << 10U )
         )
@@ -82,11 +82,11 @@ std::u16string UTF16Parser::ToU16String ( std::u32string_view string ) noexcept
 
         char16_t const cases[ 2U ][ 2U ] =
         {
-            { 
+            {
                 static_cast<char16_t> ( c ),
                 0
             },
-            { 
+            {
                 static_cast<char16_t> ( HI_SURROGATE_MASK | ( ( u - SURROGATE_RANGE_FROM ) >> 10U ) ),
                 static_cast<char16_t> ( LOW_SURROGATE_MASK | ( u & EXTRACT_CODE_POINT_MASK ) )
             }

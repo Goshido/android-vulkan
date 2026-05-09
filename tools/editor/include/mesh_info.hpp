@@ -11,9 +11,10 @@ namespace editor {
 struct MeshInfo final
 {
     PBRMaterial     _material {};
-    GXMat4          _local {};
     GXAABB          _boundLocal {};
-    GXAABB          _boundWorld {};
+    GXQuat          _rotation {};
+    GXVec3          _scale {};
+    GXVec3          _location {};
     ColorData       _color {};
 };
 

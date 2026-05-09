@@ -1,4 +1,4 @@
-// version 1.95
+// version 1.96
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -575,6 +575,20 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     result._data[ 2U ] = b[ static_cast<size_t> ( c[ 2U ] > cutoff ) ];
 
     return result;
+}
+
+[[maybe_unused]] GXColorRGB GXColorRGB::ToSRGB () const noexcept
+{
+    // See <repo>/docs/srgb.md#linear-to-srgb
+    constexpr auto conv = []( float l ) noexcept -> float
+    {
+        if ( l < 3.1308e-3F )
+            return 12.92F * l;
+
+        return 1.055F * std::pow ( l, 4.1667e-1F ) - 5.5e-2F;
+    };
+
+    return { conv ( _data[ 0U ] ), conv ( _data[ 1U ] ), conv ( _data[ 2U ] ), _data[ 3U ] };
 }
 
 [[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red,

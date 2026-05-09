@@ -1165,6 +1165,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_vertex_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\scope_quard.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture_cube.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp" />

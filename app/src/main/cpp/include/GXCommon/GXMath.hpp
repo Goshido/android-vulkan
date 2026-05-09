@@ -1,4 +1,4 @@
-// version 1.95
+// version 1.96
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -424,6 +424,9 @@ struct [[maybe_unused]] GXColorRGB final
 
     // It is assumed that current color space is sRGB.
     [[maybe_unused, nodiscard]] GXColorRGB ToLinearSpace () const noexcept;
+
+    // It is assumed that current color space is linear space.
+    [[maybe_unused, nodiscard]] GXColorRGB ToSRGB () const noexcept;
 
     [[maybe_unused, nodiscard]] GXColorUNORM ToColorUNORM () const noexcept;
 

@@ -11,10 +11,17 @@ AV_DX_ALIGNMENT_BEGIN
 
 struct ColorData final
 {
-    uint32_t    _emiRcol0rgb = 0U;
-    uint32_t    _emiGcol1rgb = 0U;
-    uint32_t    _emiBcol2rgb = 0U;
-    uint32_t    _col0aEmiIntens = 0U;
+    uint32_t    _emiR : 8;
+    uint32_t    _0rgb : 24;
+
+    uint32_t    _emiB : 8;
+    uint32_t    _1rgb : 24;
+
+    uint32_t    _emiG : 8;
+    uint32_t    _2rgb : 24;
+
+    uint32_t    _0A : 8;
+    uint32_t    _emiIntensity : 24;
 };
 
 AV_DX_ALIGNMENT_END

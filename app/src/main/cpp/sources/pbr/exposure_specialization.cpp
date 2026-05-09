@@ -18,7 +18,7 @@ ExposureSpecialization::ExposureSpecialization ( VkExtent2D const &imageResoluti
         );
     };
 
-    _mip0Resolution = 
+    _mip0Resolution =
     {
         .width = adjustMip0 ( imageResolution.width ),
         .height = adjustMip0 ( imageResolution.height )

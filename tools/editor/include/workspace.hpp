@@ -2,11 +2,13 @@
 #define EDITOR_WORKSPACE_HPP
 
 
+#include "actor.hpp"
 #include "gizmo_node.hpp"
+#include "history.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
-#include "message_queue.hpp"
 #include "mesh_node.hpp"
+#include "message_queue.hpp"
 #include "point_light_node.hpp"
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
@@ -41,22 +43,25 @@ class Workspace final
         using ReflectionProbeGlobalQueue = std::unordered_set<ReflectionProbeGlobalInfo*>;
 
     private:
-        MessageQueue                    &_messageQueue;
+        MessageQueue                                    &_messageQueue;
 
-        MeshQueue                       _opaqueQueue {};
-        MeshMap                         _opaqueMap {};
+        History                                         _history {};
+        std::unordered_map<Actor const*, ActorRef>      _actors {};
 
-        MeshQueue                       _stippleQueue {};
-        MeshMap                         _stippleMap {};
+        MeshQueue                                       _opaqueQueue {};
+        MeshMap                                         _opaqueMap {};
 
-        GizmoQueue                      _gizmoQueue {};
-        GizmoMap                        _gizmoMap {};
+        MeshQueue                                       _stippleQueue {};
+        MeshMap                                         _stippleMap {};
 
-        PointLightQueue                 _pointLightQueue {};
-        ReflectionProbeLocalQueue       _reflectionProbeLocalQueue {};
-        ReflectionProbeGlobalQueue      _reflectionProbeGlobalQueue {};
+        GizmoQueue                                      _gizmoQueue {};
+        GizmoMap                                        _gizmoMap {};
 
-        std::mutex                      _mutex {};
+        PointLightQueue                                 _pointLightQueue {};
+        ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
+        ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
+
+        std::mutex                                      _mutex {};
 
     public:
         Workspace () = delete;
@@ -74,7 +79,12 @@ class Workspace final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        void Draw ( VkCommandBuffer commandBuffer ) noexcept;
+        void Load ( std::string_view scene ) noexcept;
+        void Close () noexcept;
+
+        void DrawOpaque ( VkCommandBuffer commandBuffer ) noexcept;
+        void DrawGizmo ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
         void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
 
@@ -92,9 +102,7 @@ class Workspace final
         void Unregister ( ReflectionProbeGlobalNode &node ) noexcept;
 
     private:
-        void DrawOpaque ( VkCommandBuffer commandBuffer );
-        void DrawGizmo ( VkCommandBuffer commandBuffer );
-        void DrawUI ( VkCommandBuffer commandBuffer );
+        void FUCK () noexcept;
 
         // FUCK move to ipp
         [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,

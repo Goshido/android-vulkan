@@ -1,4 +1,4 @@
-// version 1.96
+// version 1.97
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -127,6 +127,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+GXVec3 const GXVec3::ZERO ( 0.0F, 0.0F, 0.0F );
 
 [[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x ) noexcept
 {
@@ -788,6 +790,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
 
 // NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix ) noexcept

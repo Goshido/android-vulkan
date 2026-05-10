@@ -1,4 +1,4 @@
-// version 1.96
+// version 1.97
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -99,8 +99,10 @@ enum class eGXLineRelationship : GXUByte
 // By convention it is row-vector.
 struct [[maybe_unused]] GXVec3 final
 {
+    [[maybe_unused]] static GXVec3 const    ZERO;
+
     // Stores vector components in x, y, z order.
-    GXFloat     _data[ 3U ];
+    GXFloat                                 _data[ 3U ];
 
     [[maybe_unused]] GXVec3 () = default;
 
@@ -537,8 +539,10 @@ struct GXMat4;
 // By convention stores only orientation without any scale.
 struct [[maybe_unused]] GXQuat final
 {
+    [[maybe_unused]] static GXQuat const        IDENTITY;
+
     // Stores quaternion components in r, a, b, c order.
-    GXFloat     _data[ 4U ];
+    GXFloat                                     _data[ 4U ];
 
     [[maybe_unused]] GXQuat () = default;
 

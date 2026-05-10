@@ -79,8 +79,6 @@ bool Editor::InitModules () noexcept
         }
     ).detach ();
 
-    _workspace.Init ();
-
     bool result = _mainWindow.MakeWindow ( _messageQueue );
     std::optional<uint32_t> knownSerialNumber {};
 
@@ -135,6 +133,7 @@ bool Editor::InitModules () noexcept
     _timerManager.Init ();
     _renderSession.Init ();
     _runningModules = 3U;
+    _workspace.Init ();
 
     return true;
 }
@@ -142,6 +141,7 @@ bool Editor::InitModules () noexcept
 void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
+    _workspace.Destroy ();
     std::optional<uint32_t> knownSerialNumber {};
 
     while ( _runningModules )
@@ -181,7 +181,6 @@ void Editor::DestroyModules () noexcept
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
 
-    _workspace.Destroy ();
     _timerManager.Destroy ();
     _renderSession.Destroy ();
     _uiManager.Destroy ();

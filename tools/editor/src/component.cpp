@@ -62,7 +62,7 @@ void Component::InitSpawners () noexcept
     InitSpawner<TransformComponent> ();
 }
 
-std::optional<Component::Ref> Component::Spawn ( SaveState::Container const &info ) noexcept
+std::optional<ComponentRef> Component::Spawn ( SaveState::Container const &info ) noexcept
 {
     if ( auto const spawn = _spawners.find ( info.Read ( TYPE_KEY, std::string_view {} ) ); spawn != _spawners.cend () )
     {

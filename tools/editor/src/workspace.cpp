@@ -6,6 +6,54 @@
 
 namespace editor {
 
+namespace {
+
+class CreateActorAction final : public Action
+{
+    private:
+        std::unordered_map<Actor const*, ActorRef>      *_actors = nullptr;
+        ActorRef                                        _actor {};
+        Actor*                                          _key = _actor.get ();
+
+    public:
+        explicit CreateActorAction ( ActorRef &&actor, std::unordered_map<Actor const*, ActorRef> &actors ) noexcept;
+
+        CreateActorAction ( CreateActorAction const & ) = delete;
+        CreateActorAction &operator = ( CreateActorAction const & ) = delete;
+
+        CreateActorAction ( CreateActorAction && ) = default;
+        CreateActorAction &operator = ( CreateActorAction && ) = default;
+
+        ~CreateActorAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+CreateActorAction::CreateActorAction ( ActorRef &&actor, std::unordered_map<Actor const*, ActorRef> &actors ) noexcept:
+    _actors ( &actors ),
+    _actor ( std::move ( actor ) )
+{
+    // NOTHING
+}
+
+void CreateActorAction::Redo () noexcept
+{
+    _actors->insert ( std::pair ( _key, std::move ( _actor ) ) );
+}
+
+void CreateActorAction::Undo () noexcept
+{
+    auto findResult = _actors->find ( _key );
+    _actor = std::move ( findResult->second );
+    _actors->erase ( findResult );
+}
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 Workspace::Workspace ( MessageQueue& messageQueue ) noexcept:
     _messageQueue ( messageQueue )
 {
@@ -16,6 +64,7 @@ void Workspace::Init () noexcept
 {
     AV_TRACE ( "Workspace init" )
     // FUCK
+    FUCK ();
 }
 
 void Workspace::Destroy () noexcept
@@ -53,14 +102,30 @@ void Workspace::Destroy () noexcept
     clearBeta ( _reflectionProbeGlobalQueue );
 }
 
-void Workspace::Draw ( VkCommandBuffer commandBuffer ) noexcept
+void Workspace::Load ( std::string_view /*scene*/ ) noexcept
 {
-    AV_TRACE ( "Workspace draw" )
-    AV_VULKAN_GROUP ( commandBuffer, "Workspace draw" )
+    // FUCK
+}
 
-    DrawOpaque ( commandBuffer );
-    DrawGizmo ( commandBuffer );
-    DrawUI ( commandBuffer );
+void Workspace::Close () noexcept
+{
+    // FUCK
+}
+
+void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "Opaque" )
+    AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
+    // FUCK
+}
+
+void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer,
+    [[maybe_unused]] size_t commandBufferIndex
+) noexcept
+{
+    AV_TRACE ( "Gizmo" )
+    AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
+    // FUCK
 }
 
 void Workspace::Pick ( int32_t /*x*/, int32_t /*y*/, GXMat4 const &/*viewer*/, GXMat4 const &/*projection*/ ) noexcept
@@ -236,25 +301,15 @@ void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
     delete &n;
 }
 
-void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer )
+void Workspace::FUCK () noexcept
 {
-    AV_TRACE ( "Opaque" )
-    AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
     // FUCK
-}
+    ActorRef actor = std::make_unique<Actor> ();
+    actor->SetName ( "FUCK" );
 
-void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer )
-{
-    AV_TRACE ( "Gizmo" )
-    AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
-    // FUCK
-}
-
-void Workspace::DrawUI ( [[maybe_unused]] VkCommandBuffer commandBuffer )
-{
-    AV_TRACE ( "UI" )
-    AV_VULKAN_GROUP ( commandBuffer, "UI" )
-    // FUCK
+    _history.Begin ();
+    _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
+    _history.End ();
 }
 
 MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,

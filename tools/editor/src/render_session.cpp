@@ -806,7 +806,7 @@ void RenderSession::OnRenderFrame () noexcept
         _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     }
 
-    _workspace.Draw ( commandBuffer );
+    _workspace.DrawOpaque ( commandBuffer );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
@@ -877,6 +877,8 @@ void RenderSession::OnRenderFrame () noexcept
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
+        _workspace.DrawGizmo ( commandBuffer, commandBufferIndex );
+
         _presentRenderPass.Begin ( renderer, commandBuffer );
         _toneMapper.Execute ( commandBuffer, resourceHeap );
 

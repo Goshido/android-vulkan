@@ -15,16 +15,16 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
+class Component;
+using ComponentRef = std::unique_ptr<Component>;
+
 class Component
 {
-    public:
-        using Ref = std::unique_ptr<Component>;
-
     protected:
         constexpr static std::string_view TYPE_KEY = "type";
 
     private:
-        using Spawner = Ref ( * ) ( SaveState::Container const &info ) noexcept;
+        using Spawner = ComponentRef ( * ) ( SaveState::Container const &info ) noexcept;
         using Spawners = std::unordered_map<std::string_view, Spawner>;
 
     protected:
@@ -53,7 +53,7 @@ class Component
         virtual void Save ( SaveState::Container &root ) const noexcept;
 
         static void InitSpawners () noexcept;
-        [[nodiscard]] static std::optional<Ref> Spawn ( SaveState::Container const &info ) noexcept;
+        [[nodiscard]] static std::optional<ComponentRef> Spawn ( SaveState::Container const &info ) noexcept;
 
     private:
         template<typename T>
@@ -63,7 +63,7 @@ class Component
                 std::pair (
                     T::TYPE,
 
-                    [] ( SaveState::Container const &info ) noexcept -> Ref {
+                    [] ( SaveState::Container const &info ) noexcept -> ComponentRef {
                         return std::make_unique<T> ( info );
                     }
                 )

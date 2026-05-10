@@ -44,7 +44,7 @@ History::~History () noexcept
 void History::Begin () noexcept
 {
     AV_ASSERT ( !_active )
-    _active = std::optional<Transaction> {};
+    _active = std::optional<Transaction> { Transaction {} };
 }
 
 void History::Append ( std::unique_ptr<Action> &&action ) noexcept

@@ -113,6 +113,8 @@ class SaveState final
                 void Write ( std::string_view key, bool value ) noexcept;
                 void Write ( std::string_view key, std::string_view value ) noexcept;
                 void Write ( std::string_view key, GXMat4 const &value ) noexcept;
+                void Write ( std::string_view key, GXVec3 const &value ) noexcept;
+                void Write ( std::string_view key, GXQuat const &value ) noexcept;
 
                 [[nodiscard]] Container const &ReadArray ( std::string_view key ) const noexcept;
 
@@ -149,6 +151,8 @@ class SaveState final
                 ) const noexcept;
 
                 [[nodiscard]] GXMat4 Read ( std::string_view key, GXMat4 const &defaultValue ) const noexcept;
+                [[nodiscard]] GXVec3 Read ( std::string_view key, GXVec3 const &defaultValue ) const noexcept;
+                [[nodiscard]] GXQuat Read ( std::string_view key, GXQuat const &defaultValue ) const noexcept;
 
             private:
                 explicit Container ( eType type ) noexcept;

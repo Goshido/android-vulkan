@@ -10,7 +10,9 @@ constexpr std::string_view VERSION_KEY = "version";
 constexpr uint32_t VERSION = 1U;
 
 constexpr std::string_view NAME_KEY = "name";
-constexpr std::string_view LOCAL_KEY = "local";
+constexpr std::string_view ROTATION_KEY = "rotation";
+constexpr std::string_view SCALE_KEY = "scale";
+constexpr std::string_view LOCATION_KEY = "location";
 
 constexpr std::string_view COMPONENTS_KEY = "components";
 
@@ -21,7 +23,9 @@ constexpr std::string_view COMPONENTS_KEY = "components";
 Actor::Actor ( SaveState::Container const &info ) noexcept:
     _name ( info.Read ( NAME_KEY, DEFAULT_NAME ) )
 {
-    _local = info.Read ( LOCAL_KEY, GXMat4::IDENTITY );
+    _rotation = info.Read ( ROTATION_KEY, GXQuat::IDENTITY );
+    _scale = info.Read ( SCALE_KEY, GXVec3::ZERO );
+    _location = info.Read ( LOCATION_KEY, GXVec3::ZERO );
     SaveState::Container const &components = info.ReadArray ( COMPONENTS_KEY );
 
     for ( size_t i = 0U, count = components.GetArraySize (); i < count; ++i )
@@ -31,6 +35,11 @@ Actor::Actor ( SaveState::Container const &info ) noexcept:
             Append ( std::move ( *component ) );
         }
     }
+}
+
+void Actor::SetName ( std::string_view name ) noexcept
+{
+    _name = name;
 }
 
 void Actor::Append ( std::unique_ptr<Component> &&component ) noexcept
@@ -48,7 +57,9 @@ void Actor::Insert ( size_t before, std::unique_ptr<Component> &&component ) noe
 void Actor::Save ( SaveState::Container &root ) const noexcept
 {
     root.Write ( VERSION_KEY, VERSION );
-    root.Write ( LOCAL_KEY, _local );
+    root.Write ( ROTATION_KEY, _rotation );
+    root.Write ( SCALE_KEY, _scale );
+    root.Write ( LOCATION_KEY, _location );
 
     SaveState::Container &components = root.WriteArray ( COMPONENTS_KEY );
 

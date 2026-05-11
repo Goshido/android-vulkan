@@ -26,6 +26,16 @@ RigidBodyComponent::RigidBodyComponent ( SaveState::Container const &info ) noex
     // FUCK
 }
 
+void RigidBodyComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void RigidBodyComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void RigidBodyComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

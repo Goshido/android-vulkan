@@ -22,9 +22,9 @@ class Actor final
 
     private:
         Components                              _components {};
-        GXQuat                                  _rotation {};
-        GXVec3                                  _scale {};
-        GXVec3                                  _location {};
+        GXQuat                                  _rotation = GXQuat::IDENTITY;
+        GXVec3                                  _scale = GXVec3::ONE;
+        GXVec3                                  _location = GXVec3::ZERO;
         std::string                             _name = std::string ( DEFAULT_NAME );
 
     public:
@@ -38,12 +38,16 @@ class Actor final
 
         explicit Actor ( SaveState::Container const &info ) noexcept;
 
-        ~Actor () = default;
+        ~Actor () noexcept;
 
         void SetName ( std::string_view name ) noexcept;
 
-        void Append ( std::unique_ptr<Component> &&component ) noexcept;
-        void Insert ( size_t before, std::unique_ptr<Component> &&component ) noexcept;
+        void Append ( ComponentRef &&component ) noexcept;
+        void Insert ( size_t before, ComponentRef &&component ) noexcept;
+
+        // Method returns just removed component.
+        [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
+
         void Save ( SaveState::Container &root ) const noexcept;
 };
 

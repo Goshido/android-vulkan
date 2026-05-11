@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <actor.hpp>
+#include <av_assert.hpp>
 
 
 namespace editor {
@@ -37,21 +38,52 @@ Actor::Actor ( SaveState::Container const &info ) noexcept:
     }
 }
 
+Actor::~Actor () noexcept
+{
+    while ( !_components.empty () )
+    {
+        ComponentRef &ref = _components.back ();
+        ref->Unregister ();
+        _components.pop_back ();
+    }
+}
+
 void Actor::SetName ( std::string_view name ) noexcept
 {
     _name = name;
 }
 
-void Actor::Append ( std::unique_ptr<Component> &&component ) noexcept
+void Actor::Append ( ComponentRef &&component ) noexcept
 {
+    Component &c = *component;
     _components.push_back ( std::move ( component ) );
+    c.Register ();
 }
 
-void Actor::Insert ( size_t before, std::unique_ptr<Component> &&component ) noexcept
+void Actor::Insert ( size_t before, ComponentRef &&component ) noexcept
 {
     _components.insert ( _components.cbegin () + static_cast<Components::const_iterator::difference_type> ( before ),
         std::move ( component )
     );
+}
+
+ComponentRef Actor::Remove ( Component const &component ) noexcept
+{
+    auto end = _components.end ();
+
+    auto findResult = std::find_if ( _components.begin (),
+        _components.end (),
+
+        [ target = &component ] ( ComponentRef const &item ) noexcept -> bool {
+            return item.get () == target;
+        }
+    );
+
+    AV_ASSERT ( findResult != end )
+    ComponentRef result = std::move ( *findResult );
+    result->Unregister ();
+    _components.erase ( findResult );
+    return result;
 }
 
 void Actor::Save ( SaveState::Container &root ) const noexcept

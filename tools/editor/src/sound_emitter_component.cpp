@@ -26,6 +26,16 @@ SoundEmitterComponent::SoundEmitterComponent ( SaveState::Container const &info 
     // FUCK
 }
 
+void SoundEmitterComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void SoundEmitterComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void SoundEmitterComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

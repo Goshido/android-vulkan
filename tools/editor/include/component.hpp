@@ -2,13 +2,14 @@
 #define EDITOR_COMPONENT_HPP
 
 
-#include <GXCommon/GXMath.hpp>
 #include "save_state.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 
@@ -28,9 +29,11 @@ class Component
         using Spawners = std::unordered_map<std::string_view, Spawner>;
 
     protected:
+        GXQuat              _rotation = GXQuat::IDENTITY;
+        GXVec3              _scale = GXVec3::ONE;
+        GXVec3              _location = GXVec3::ZERO;
+
         uint32_t            _version;
-        GXMat4              _local = GXMat4::IDENTITY;
-        GXMat4              _parent = GXMat4::IDENTITY;
 
     private:
         std::string         _name {};
@@ -50,7 +53,12 @@ class Component
 
         virtual ~Component () = default;
 
+        virtual void Register () noexcept = 0;
+        virtual void Unregister () noexcept = 0;
+
         virtual void Save ( SaveState::Container &root ) const noexcept;
+
+        void SetName ( std::string_view name ) noexcept;
 
         static void InitSpawners () noexcept;
         [[nodiscard]] static std::optional<ComponentRef> Spawn ( SaveState::Container const &info ) noexcept;

@@ -26,6 +26,16 @@ StaticMeshComponent::StaticMeshComponent ( SaveState::Container const &info ) no
     // FUCK
 }
 
+void StaticMeshComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void StaticMeshComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

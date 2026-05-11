@@ -1,4 +1,4 @@
-// version 1.97
+// version 1.98
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -99,6 +99,10 @@ enum class eGXLineRelationship : GXUByte
 // By convention it is row-vector.
 struct [[maybe_unused]] GXVec3 final
 {
+    // [1.0F, 1.0F, 1.0F]
+    [[maybe_unused]] static GXVec3 const    ONE;
+
+    // [0.0F, 0.0F, 0.0F]
     [[maybe_unused]] static GXVec3 const    ZERO;
 
     // Stores vector components in x, y, z order.

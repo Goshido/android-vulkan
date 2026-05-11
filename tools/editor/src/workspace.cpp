@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <scope_quard.hpp>
+#include "static_mesh_component.hpp"
 #include <trace.hpp>
 #include <workspace.hpp>
 
@@ -48,6 +49,48 @@ void CreateActorAction::Undo () noexcept
     auto findResult = _actors->find ( _key );
     _actor = std::move ( findResult->second );
     _actors->erase ( findResult );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class AppendComponentAction final : public Action
+{
+    private:
+        Actor*          _actor = nullptr;
+        ComponentRef    _component {};
+        Component*      _key = _component.get ();
+
+    public:
+        explicit AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept;
+
+        AppendComponentAction ( AppendComponentAction const & ) = delete;
+        AppendComponentAction &operator = ( AppendComponentAction const & ) = delete;
+
+        AppendComponentAction ( AppendComponentAction && ) = default;
+        AppendComponentAction &operator = ( AppendComponentAction && ) = default;
+
+        ~AppendComponentAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+AppendComponentAction::AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept:
+    _actor ( &actor ),
+    _component ( std::move ( compoent ) )
+{
+    // NOTHING
+}
+
+void AppendComponentAction::Redo () noexcept
+{
+    _actor->Append ( std::move ( _component ) );
+}
+
+void AppendComponentAction::Undo () noexcept
+{
+    _component = _actor->Remove ( *_key );
 }
 
 } // end of anonymous namespace
@@ -306,9 +349,14 @@ void Workspace::FUCK () noexcept
     // FUCK
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "FUCK" );
+    Actor &a = *actor;
+
+    ComponentRef staticMesh = std::make_unique<StaticMeshComponent> ();
+    staticMesh->SetName ( "mesh" );
 
     _history.Begin ();
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( staticMesh ) ) );
     _history.End ();
 }
 

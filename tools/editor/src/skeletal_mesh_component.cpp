@@ -26,6 +26,16 @@ SkeletalMeshComponent::SkeletalMeshComponent ( SaveState::Container const &info 
     // FUCK
 }
 
+void SkeletalMeshComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void SkeletalMeshComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void SkeletalMeshComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

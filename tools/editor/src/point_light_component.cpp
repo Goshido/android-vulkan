@@ -26,6 +26,16 @@ PointLightComponent::PointLightComponent ( SaveState::Container const &info ) no
     // FUCK
 }
 
+void PointLightComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void PointLightComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void PointLightComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

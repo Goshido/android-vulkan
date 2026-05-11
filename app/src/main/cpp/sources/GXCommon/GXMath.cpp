@@ -1,4 +1,4 @@
-// version 1.97
+// version 1.98
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -128,6 +128,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+GXVec3 const GXVec3::ONE ( 1.0F, 1.0F, 1.0F );
 GXVec3 const GXVec3::ZERO ( 0.0F, 0.0F, 0.0F );
 
 [[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x ) noexcept

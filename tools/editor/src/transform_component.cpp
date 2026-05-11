@@ -26,6 +26,16 @@ TransformComponent::TransformComponent ( SaveState::Container const &info ) noex
     // FUCK
 }
 
+void TransformComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void TransformComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void TransformComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

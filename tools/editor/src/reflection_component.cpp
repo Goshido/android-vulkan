@@ -26,6 +26,16 @@ ReflectionComponent::ReflectionComponent ( SaveState::Container const &info ) no
     // FUCK
 }
 
+void ReflectionComponent::Register () noexcept
+{
+    // FUCK
+}
+
+void ReflectionComponent::Unregister () noexcept
+{
+    // FUCK
+}
+
 void ReflectionComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

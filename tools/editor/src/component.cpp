@@ -17,10 +17,11 @@ namespace {
 constexpr std::string_view VERSION_KEY = "version";
 constexpr uint32_t DEFAULT_VERSION = 0U;
 
-constexpr std::string_view NAME_KEY = "name";
 constexpr std::string_view DEFAULT_NAME = "component";
-
-constexpr std::string_view PARENT_KEY = "parent";
+constexpr std::string_view LOCATION_KEY = "location";
+constexpr std::string_view NAME_KEY = "name";
+constexpr std::string_view ROTATION_KEY = "rotation";
+constexpr std::string_view SCALE_KEY = "scale";
 
 } // end of anonymous namespace
 
@@ -39,14 +40,23 @@ Component::Component ( SaveState::Container const &info ) noexcept
 {
     _version = info.Read ( VERSION_KEY, DEFAULT_VERSION );
     _name = info.Read ( NAME_KEY, DEFAULT_NAME );
-    _parent = info.Read ( PARENT_KEY, GXMat4::IDENTITY );
+    _rotation = info.Read ( ROTATION_KEY, GXQuat::IDENTITY );
+    _scale = info.Read ( SCALE_KEY, GXVec3::ZERO );
+    _location = info.Read ( LOCATION_KEY, GXVec3::ZERO );
 }
 
 void Component::Save ( SaveState::Container &root ) const noexcept
 {
     root.Write ( VERSION_KEY, _version );
     root.Write ( NAME_KEY, _name );
-    root.Write ( PARENT_KEY, _parent );
+    root.Write ( ROTATION_KEY, _rotation );
+    root.Write ( SCALE_KEY, _scale );
+    root.Write ( LOCATION_KEY, _location );
+}
+
+void Component::SetName ( std::string_view name ) noexcept
+{
+    _name = name;
 }
 
 void Component::InitSpawners () noexcept

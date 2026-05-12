@@ -25,6 +25,7 @@ enum class eMessageType : uint32_t
     FontStorageReady,
     FrameComplete,
     HelloTriangleReady,
+    InvokeIO,
     KeyboardKeyDown,
     KeyboardKeyUp,
     KillFocus,

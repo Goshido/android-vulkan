@@ -129,10 +129,11 @@ bool Editor::InitModules () noexcept
     if ( status != android_vulkan::Renderer::eSwapchainResult::Success ) [[unlikely]]
         return false;
 
+    _io.Init ();
     _uiManager.Init ();
     _timerManager.Init ();
     _renderSession.Init ();
-    _runningModules = 3U;
+    _runningModules = 4U;
     _workspace.Init ();
 
     return true;
@@ -184,6 +185,7 @@ void Editor::DestroyModules () noexcept
     _timerManager.Destroy ();
     _renderSession.Destroy ();
     _uiManager.Destroy ();
+    _io.Destroy ();
     _renderer.OnDestroySwapchain ( false );
     _renderer.OnDestroyDevice ();
 }

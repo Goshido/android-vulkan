@@ -4,6 +4,7 @@
 
 #include "command_line.hpp"
 #include "history.hpp"
+#include "io.hpp"
 #include "main_window.hpp"
 #include <render_session.hpp>
 #include <renderer.hpp>
@@ -35,16 +36,13 @@ class Editor final
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};
+
         Workspace                               _workspace { _messageQueue };
         RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager, _workspace };
-
-        UIManager                               _uiManager
-        {
-            _messageQueue,
-            _renderSession.GetFontStorage ()
-        };
-
         TimerManager                            _timerManager { _messageQueue };
+        IO                                      _io { _messageQueue };
+        UIManager                               _uiManager { _messageQueue, _renderSession.GetFontStorage () };
+
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;
         float                                   _uiZoom = DEFAULT_UI_ZOOM;

@@ -1038,6 +1038,7 @@
     <ClCompile Include="src\gizmo_node.cpp" />
     <ClCompile Include="src\hello_triangle_program.cpp" />
     <ClCompile Include="src\history.cpp" />
+    <ClCompile Include="src\io.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />
     <ClCompile Include="src\keys.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -1191,6 +1192,7 @@
     <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
+    <ClInclude Include="include\io.hpp" />
     <ClInclude Include="include\keyboard_key_event.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />

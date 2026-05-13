@@ -13,7 +13,7 @@ class ReflectionComponent final : public Component
         constexpr static std::string_view       TYPE = "Reflection";
 
     public:
-        explicit ReflectionComponent () noexcept;
+        explicit ReflectionComponent ( MessageQueue &messageQueue ) noexcept;
 
         ReflectionComponent ( ReflectionComponent const & ) = delete;
         ReflectionComponent &operator = ( ReflectionComponent const & ) = delete;
@@ -21,7 +21,7 @@ class ReflectionComponent final : public Component
         ReflectionComponent ( ReflectionComponent && ) = delete;
         ReflectionComponent &operator = ( ReflectionComponent && ) = delete;
 
-        explicit ReflectionComponent ( SaveState::Container const &info ) noexcept;
+        explicit ReflectionComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
 
         ~ReflectionComponent () = default;
 

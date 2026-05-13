@@ -13,7 +13,7 @@ class RigidBodyComponent final : public Component
         constexpr static std::string_view       TYPE = "RigidBody";
 
     public:
-        explicit RigidBodyComponent () noexcept;
+        explicit RigidBodyComponent ( MessageQueue &messageQueue ) noexcept;
 
         RigidBodyComponent ( RigidBodyComponent const & ) = delete;
         RigidBodyComponent &operator = ( RigidBodyComponent const & ) = delete;
@@ -21,7 +21,7 @@ class RigidBodyComponent final : public Component
         RigidBodyComponent ( RigidBodyComponent && ) = delete;
         RigidBodyComponent &operator = ( RigidBodyComponent && ) = delete;
 
-        explicit RigidBodyComponent ( SaveState::Container const &info ) noexcept;
+        explicit RigidBodyComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
 
         ~RigidBodyComponent () = default;
 

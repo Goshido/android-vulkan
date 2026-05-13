@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-CameraComponent::CameraComponent () noexcept:
-    Component ( VERSION, "camera" )
+CameraComponent::CameraComponent ( MessageQueue &messageQueue ) noexcept:
+    Component ( messageQueue, VERSION, "camera" )
 {
     // NOTHING
 }
 
-CameraComponent::CameraComponent ( SaveState::Container const &info ) noexcept:
-    Component ( info )
+CameraComponent::CameraComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+    Component ( messageQueue, info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

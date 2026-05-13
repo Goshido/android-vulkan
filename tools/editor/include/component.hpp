@@ -2,6 +2,7 @@
 #define EDITOR_COMPONENT_HPP
 
 
+#include "message_queue.hpp"
 #include "save_state.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -25,10 +26,12 @@ class Component
         constexpr static std::string_view TYPE_KEY = "type";
 
     private:
-        using Spawner = ComponentRef ( * ) ( SaveState::Container const &info ) noexcept;
+        using Spawner = ComponentRef ( * ) ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
         using Spawners = std::unordered_map<std::string_view, Spawner>;
 
     protected:
+        MessageQueue        &_messageQueue;
+
         GXQuat              _rotation = GXQuat::IDENTITY;
         GXVec3              _scale = GXVec3::ONE;
         GXVec3              _location = GXVec3::ZERO;
@@ -48,8 +51,8 @@ class Component
         Component ( Component && ) = delete;
         Component &operator = ( Component && ) = delete;
 
-        explicit Component ( uint32_t version, std::string &&name ) noexcept;
-        explicit Component ( SaveState::Container const &info ) noexcept;
+        explicit Component ( MessageQueue &messageQueue, uint32_t version, std::string &&name ) noexcept;
+        explicit Component ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
 
         virtual ~Component () = default;
 
@@ -61,7 +64,10 @@ class Component
         void SetName ( std::string_view name ) noexcept;
 
         static void InitSpawners () noexcept;
-        [[nodiscard]] static std::optional<ComponentRef> Spawn ( SaveState::Container const &info ) noexcept;
+
+        [[nodiscard]] static std::optional<ComponentRef> Spawn ( MessageQueue &messageQueue,
+            SaveState::Container const &info
+        ) noexcept;
 
     private:
         template<typename T>
@@ -71,8 +77,8 @@ class Component
                 std::pair (
                     T::TYPE,
 
-                    [] ( SaveState::Container const &info ) noexcept -> ComponentRef {
-                        return std::make_unique<T> ( info );
+                    [] ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept -> ComponentRef {
+                        return std::make_unique<T> ( messageQueue, info );
                     }
                 )
             );

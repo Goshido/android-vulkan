@@ -351,12 +351,29 @@ void Workspace::FUCK () noexcept
     actor->SetName ( "FUCK" );
     Actor &a = *actor;
 
-    ComponentRef staticMesh = std::make_unique<StaticMeshComponent> ();
-    staticMesh->SetName ( "mesh" );
+    ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( _messageQueue,
+        "meshes/rotating_mesh/sonic-material-1.mesh2"
+    );
+
+    mesh1->SetName ( "mesh #1" );
+
+    ComponentRef mesh2 = std::make_unique<StaticMeshComponent> ( _messageQueue,
+        "meshes/rotating_mesh/sonic-material-2.mesh2"
+    );
+
+    mesh2->SetName ( "mesh #2" );
+
+    ComponentRef mesh3 = std::make_unique<StaticMeshComponent> ( _messageQueue,
+        "meshes/rotating_mesh/sonic-material-3.mesh2"
+    );
+
+    mesh3->SetName ( "mesh #3" );
 
     _history.Begin ();
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( staticMesh ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh1 ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh2 ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh3 ) ) );
     _history.End ();
 }
 

@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ReflectionComponent::ReflectionComponent () noexcept:
-    Component ( VERSION, "reflection" )
+ReflectionComponent::ReflectionComponent ( MessageQueue &messageQueue ) noexcept:
+    Component ( messageQueue, VERSION, "reflection" )
 {
     // NOTHING
 }
 
-ReflectionComponent::ReflectionComponent ( SaveState::Container const &info ) noexcept:
-    Component ( info )
+ReflectionComponent::ReflectionComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+    Component ( messageQueue, info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

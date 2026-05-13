@@ -36,7 +36,7 @@ class Actor final
         Actor ( Actor && ) = delete;
         Actor &operator = ( Actor && ) = delete;
 
-        explicit Actor ( SaveState::Container const &info ) noexcept;
+        explicit Actor ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
 
         ~Actor () noexcept;
 

@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-SkeletalMeshComponent::SkeletalMeshComponent () noexcept:
-    Component ( VERSION, "skeletal mesh" )
+SkeletalMeshComponent::SkeletalMeshComponent ( MessageQueue &messageQueue ) noexcept:
+    Component ( messageQueue, VERSION, "skeletal mesh" )
 {
     // NOTHING
 }
 
-SkeletalMeshComponent::SkeletalMeshComponent ( SaveState::Container const &info ) noexcept:
-    Component ( info )
+SkeletalMeshComponent::SkeletalMeshComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+    Component ( messageQueue, info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

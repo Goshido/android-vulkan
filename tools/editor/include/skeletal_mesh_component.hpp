@@ -13,7 +13,7 @@ class SkeletalMeshComponent final : public Component
         constexpr static std::string_view       TYPE = "SkeletalMesh";
 
     public:
-        explicit SkeletalMeshComponent () noexcept;
+        explicit SkeletalMeshComponent ( MessageQueue &messageQueue ) noexcept;
 
         SkeletalMeshComponent ( SkeletalMeshComponent const & ) = delete;
         SkeletalMeshComponent &operator = ( SkeletalMeshComponent const & ) = delete;
@@ -21,7 +21,7 @@ class SkeletalMeshComponent final : public Component
         SkeletalMeshComponent ( SkeletalMeshComponent && ) = delete;
         SkeletalMeshComponent &operator = ( SkeletalMeshComponent && ) = delete;
 
-        explicit SkeletalMeshComponent ( SaveState::Container const &info ) noexcept;
+        explicit SkeletalMeshComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
 
         ~SkeletalMeshComponent () = default;
 

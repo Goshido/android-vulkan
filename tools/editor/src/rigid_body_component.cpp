@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-RigidBodyComponent::RigidBodyComponent () noexcept:
-    Component ( VERSION, "rigid body" )
+RigidBodyComponent::RigidBodyComponent ( MessageQueue &messageQueue ) noexcept:
+    Component ( messageQueue, VERSION, "rigid body" )
 {
     // NOTHING
 }
 
-RigidBodyComponent::RigidBodyComponent ( SaveState::Container const &info ) noexcept:
-    Component ( info )
+RigidBodyComponent::RigidBodyComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+    Component ( messageQueue, info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

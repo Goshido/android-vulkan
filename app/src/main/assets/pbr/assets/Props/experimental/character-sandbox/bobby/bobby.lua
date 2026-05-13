@@ -146,7 +146,7 @@ local function UpdateVisual ( self, deltaTime )
     local f = self._moveAnimFactor
     f = f + deltaTime * MOVE_TRANSITION_FACTOR * ( self._isMoving and 1.0 or -1.0 )
 
-    if f > 1.0 then 
+    if f > 1.0 then
         f = 1.0
     end
 

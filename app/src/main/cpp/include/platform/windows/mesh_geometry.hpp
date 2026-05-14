@@ -10,11 +10,22 @@ namespace android_vulkan {
 
 class MeshGeometry final : public MeshGeometryBase
 {
-    private:
-        VkBuffer            _transferBuffer = VK_NULL_HANDLE;
-        Allocation          _transferAllocation {};
+    public:
+        struct Info final
+        {
+            VkIndexType                     _indexType = VK_INDEX_TYPE_UINT32;
+            StreamInfo                      _stream0 {};
+            std::optional<StreamInfo>       _stream1 = std::nullopt;
+            std::vector<UploadJob>          _jobs {};
+        };
 
-        MeshBufferInfo      _meshBufferInfo {};
+        using LoadResult = std::optional<Info>;
+
+    private:
+        VkBuffer                            _transferBuffer = VK_NULL_HANDLE;
+        Allocation                          _transferAllocation {};
+
+        MeshBufferInfo                      _meshBufferInfo {};
 
     public:
         explicit MeshGeometry () = default;
@@ -32,57 +43,43 @@ class MeshGeometry final : public MeshGeometryBase
 
         [[nodiscard]] MeshBufferInfo const &GetMeshBufferInfo () const noexcept;
 
-        [[nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
-            std::string &&fileName
-        ) noexcept;
+        [[nodiscard]] LoadResult LoadMesh ( Renderer &renderer, std::string &&fileName ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             AbstractData data,
             uint32_t vertexCount
         ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             Indices16 indices,
             Positions positions,
             GXAABB const &bounds
         ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             Indices32 indices,
             Positions positions,
             GXAABB const &bounds
         ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             Indices16 indices,
             Positions positions,
             Vertices vertices,
             GXAABB const &bounds
         ) noexcept;
 
-        [[maybe_unused, nodiscard]] bool LoadMesh ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             Indices32 indices,
             Positions positions,
             Vertices vertices,
             GXAABB const &bounds
+        ) noexcept;
+
+        [[nodiscard]] bool UploadToGPU ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            VkFence fence,
+            Info &&info
         ) noexcept;
 
     private:
@@ -101,17 +98,9 @@ class MeshGeometry final : public MeshGeometryBase
             UploadJobs jobs
         ) noexcept;
 
-        [[nodiscard]] bool LoadFromMesh2 ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
-            std::string &&fileName
-        ) noexcept;
+        [[nodiscard]] LoadResult LoadFromMesh2 ( Renderer &renderer, std::string &&fileName ) noexcept;
 
-        [[nodiscard]] bool Upload ( Renderer &renderer,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence,
+        [[nodiscard]] LoadResult Upload ( Renderer &renderer,
             AbstractData indices,
             VkIndexType indexType,
             AbstractData vertexStream0,

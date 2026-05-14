@@ -1,8 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <file.hpp>
+#include <mesh_storage.hpp>
 #include <static_mesh_component.hpp>
-#include <trace.hpp>
 
 
 namespace editor {
@@ -11,6 +10,7 @@ namespace {
 
 constexpr uint32_t VERSION = 1U;
 constexpr std::string_view DEFAULT_MESH = "pbr/system/unit-cube.mesh2";
+constexpr std::string_view DEFAULT_NAME = "static mesh";
 
 constexpr std::string_view MESH_KEY = "mesh";
 
@@ -18,21 +18,25 @@ constexpr std::string_view MESH_KEY = "mesh";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue ) noexcept:
-    Component ( messageQueue, VERSION, "static mesh" )
+StaticMeshComponent::StaticMeshComponent () noexcept:
+    Component ( MessageQueue::Instance (), VERSION, std::string ( DEFAULT_NAME ) )
 {
     LoadMesh ( DEFAULT_MESH );
 }
 
-StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue,
+    SaveState::Container const &info
+) noexcept:
     Component ( messageQueue, info )
 {
     AV_ASSERT ( _version == VERSION )
     LoadMesh ( info.Read ( MESH_KEY, DEFAULT_MESH ) );
 }
 
-StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue, std::string_view mesh ) noexcept:
-    Component ( messageQueue, VERSION, "static mesh" )
+StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue,
+    std::string_view mesh
+) noexcept:
+    Component ( messageQueue, VERSION, std::string ( DEFAULT_NAME ) )
 {
     LoadMesh ( mesh );
 }
@@ -56,24 +60,11 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::LoadMesh ( std::string_view mesh ) noexcept
 {
-    auto loadAsset = [ mesh = std::string ( mesh ) ] () noexcept -> void* {
-        AV_TRACE ( "Loading %s", mesh.c_str () )
-        android_vulkan::File file ( mesh );
-
-        if ( !file.LoadContent () ) [[unlikely]]
-            return nullptr;
-
-        // TODO
-        return nullptr;
+    auto result = [] ( std::optional<MeshGeometryRef> &&/*mesh*/ ) noexcept {
+        // FUCK
     };
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-            ._action = std::move ( loadAsset ),
-            ._serialNumber = 0U
-        }
-    );
+    MeshStorage::Instance ().Load ( mesh, std::move ( result ) );
 }
 
 } // namespace editor

@@ -1043,6 +1043,7 @@
     <ClCompile Include="src\keys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
+    <ClCompile Include="src\mesh_storage.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
     <ClCompile Include="src\mesh_node.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
@@ -1198,6 +1199,7 @@
     <ClInclude Include="include\main_window.hpp" />
     <ClInclude Include="include\mesh_geometry_ref.hpp" />
     <ClInclude Include="include\mesh_info.hpp" />
+    <ClInclude Include="include\mesh_storage.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\mouse_button_event.hpp" />

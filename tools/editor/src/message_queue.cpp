@@ -5,6 +5,13 @@
 
 namespace editor {
 
+MessageQueue* MessageQueue::_instance = nullptr;
+
+MessageQueue::MessageQueue () noexcept
+{
+    _instance = this;
+}
+
 void MessageQueue::EnqueueFront ( Message &&message ) noexcept
 {
     AV_TRACE ( "Enqueue message" )
@@ -88,6 +95,11 @@ void MessageQueue::DequeueEnd ( Message &&refund, eRefundLocation location ) noe
     }
 
     _mutex.unlock ();
+}
+
+MessageQueue &MessageQueue::Instance () noexcept
+{
+    return *_instance;
 }
 
 } // namespace editor

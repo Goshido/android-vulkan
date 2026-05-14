@@ -41,9 +41,9 @@ class MeshGeometryBase
 
         struct UploadJob final
         {
-            void const*     _data = nullptr;
-            VkDeviceSize    _dstOffset = 0U;
-            VkDeviceSize    _size = 0U;
+            void const*             _data = nullptr;
+            VkDeviceSize            _dstOffset = 0U;
+            VkDeviceSize            _size = 0U;
         };
 
         using UploadJobs = std::span<UploadJob const>;

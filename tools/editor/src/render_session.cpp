@@ -176,19 +176,23 @@ void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
 
         _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
 
-        result = _geometry->LoadMesh ( _renderer,
-            commandBuffer,
-            true,
-            VK_NULL_HANDLE,
+        android_vulkan::MeshGeometry::LoadResult loadResult = _geometry->LoadMesh ( _renderer,
             { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
             static_cast<uint32_t> ( std::size ( data ) )
         );
 
-        if ( !result ) [[unlikely]]
+        if ( !loadResult ) [[unlikely]]
         {
             _geometry->FreeResources ( _renderer );
             _geometry.reset ();
             return;
+        }
+
+        if ( !_geometry->UploadToGPU ( _renderer, commandBuffer, VK_NULL_HANDLE, std::move ( *loadResult ) ) )
+        {
+            [[unlikely]]
+            _geometry->FreeResources ( _renderer );
+            _geometry.reset ();
         }
     }
 

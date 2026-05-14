@@ -6,7 +6,8 @@
 #include "history.hpp"
 #include "io.hpp"
 #include "main_window.hpp"
-#include <render_session.hpp>
+#include "mesh_storage.hpp"
+#include "render_session.hpp"
 #include <renderer.hpp>
 #include "timer_manager.hpp"
 #include "ui_manager.hpp"
@@ -37,6 +38,7 @@ class Editor final
         MessageQueue                            _messageQueue {};
         android_vulkan::Renderer                _renderer {};
 
+        MeshStorage                             _meshStorage { _renderer };
         Workspace                               _workspace { _messageQueue };
         RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager, _workspace };
         TimerManager                            _timerManager { _messageQueue };

@@ -8,7 +8,6 @@
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
-#include "message_queue.hpp"
 #include "point_light_node.hpp"
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"

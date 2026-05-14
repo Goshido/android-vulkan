@@ -17,7 +17,7 @@ class StaticMeshComponent final : public Component
         constexpr static std::string_view       TYPE = "StaticMesh";
 
     public:
-        explicit StaticMeshComponent ( MessageQueue &messageQueue ) noexcept;
+        explicit StaticMeshComponent () noexcept;
 
         StaticMeshComponent ( StaticMeshComponent const & ) = delete;
         StaticMeshComponent &operator = ( StaticMeshComponent const & ) = delete;

@@ -50,17 +50,12 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     return _meshBufferInfo;
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
-    std::string &&fileName
-) noexcept
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer, std::string &&fileName ) noexcept
 {
     if ( fileName.empty () ) [[unlikely]]
     {
         LogError ( "MeshGeometry::LoadMesh - Can't upload data. Filename is empty." );
-        return false;
+        return std::nullopt;
     }
 
     static std::regex const isMesh2 ( R"__(^.+?\.mesh2$)__" );
@@ -69,16 +64,13 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     if ( !std::regex_match ( fileName, match, isMesh2 ) ) [[unlikely]]
     {
         LogError ( "MeshGeometry::LoadMesh - Mesh format is not supported: %s", fileName.c_str () );
-        return false;
+        return std::nullopt;
     }
 
-    return LoadFromMesh2 ( renderer, commandBuffer, externalCommandBuffer, fence, std::move ( fileName ) );
+    return LoadFromMesh2 ( renderer, std::move ( fileName ) );
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
     AbstractData data,
     uint32_t vertexCount
 ) noexcept
@@ -106,44 +98,37 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     );
 
     if ( !result ) [[unlikely]]
-        return false;
-
-    UploadJob const job
-    {
-        ._data = data.data (),
-        ._dstOffset = 0U,
-        ._size = _gpuAllocation._range
-    };
-
-    result = GPUTransfer ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
-        { &job, 1U }
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    CommitMeshInfo ( renderer.GetDevice (),
-        VK_INDEX_TYPE_NONE_KHR,
-        {
-            ._offset = 0U,
-            ._range = static_cast<size_t> ( _gpuAllocation._range )
-        },
-
-        std::nullopt
-    );
+        return std::nullopt;
 
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
-    return true;
+
+    return LoadResult
+    {
+        {
+            ._indexType = VK_INDEX_TYPE_NONE_KHR,
+
+            ._stream0
+            {
+                ._offset = 0U,
+                ._range = static_cast<size_t> ( _gpuAllocation._range )
+            },
+
+            ._stream1 = std::nullopt,
+
+            ._jobs
+            {
+                {
+                    ._data = data.data (),
+                    ._dstOffset = 0U,
+                    ._size = _gpuAllocation._range
+                }
+            }
+        }
+    };
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
     Indices16 indices,
     Positions positions,
     GXAABB const &bounds
@@ -154,30 +139,20 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     size_t const indexCount = indices.size ();
     size_t const positionCount = positions.size ();
 
-    bool const result = Upload ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
+    _vertexCount = static_cast<uint32_t> ( indexCount );
+    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
+    _bounds = bounds;
+
+    return Upload ( renderer,
         { reinterpret_cast<uint8_t const*> ( indices.data () ), indexCount * sizeof ( uint16_t ) },
         VK_INDEX_TYPE_UINT16,
         { reinterpret_cast<uint8_t const*> ( positions.data () ), positionCount * sizeof ( GXVec3 ) },
         {},
         static_cast<uint32_t> ( positionCount )
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _vertexCount = static_cast<uint32_t> ( indexCount );
-    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
-    _bounds = bounds;
-    return true;
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
     Indices32 indices,
     Positions positions,
     GXAABB const &bounds
@@ -188,30 +163,20 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     size_t const indexCount = indices.size ();
     size_t const positionCount = positions.size ();
 
-    bool const result = Upload ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
+    _vertexCount = static_cast<uint32_t> ( indexCount );
+    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
+    _bounds = bounds;
+
+    return Upload ( renderer,
         { reinterpret_cast<uint8_t const*> ( indices.data () ), indexCount * sizeof ( uint32_t ) },
         VK_INDEX_TYPE_UINT32,
         { reinterpret_cast<uint8_t const*> ( positions.data () ), positionCount * sizeof ( GXVec3 ) },
         {},
         static_cast<uint32_t> ( positionCount )
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _vertexCount = static_cast<uint32_t> ( indexCount );
-    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
-    _bounds = bounds;
-    return true;
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
     Indices16 indices,
     Positions positions,
     Vertices vertices,
@@ -226,30 +191,20 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 
     AV_ASSERT ( positionCount == vertexCount )
 
-    bool const result = Upload ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
+    _vertexCount = static_cast<uint32_t> ( indexCount );
+    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
+    _bounds = bounds;
+
+    return Upload ( renderer,
         { reinterpret_cast<uint8_t const*> ( indices.data () ), indexCount * sizeof ( uint16_t ) },
         VK_INDEX_TYPE_UINT16,
         { reinterpret_cast<uint8_t const*> ( positions.data () ), positionCount * sizeof ( GXVec3 ) },
         { vertices.data (), vertexCount },
         static_cast<uint32_t> ( positionCount )
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _vertexCount = static_cast<uint32_t> ( indexCount );
-    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
-    _bounds = bounds;
-    return true;
 }
 
-[[maybe_unused]] bool MeshGeometry::LoadMesh ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+[[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
     Indices32 indices,
     Positions positions,
     Vertices vertices,
@@ -264,23 +219,36 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 
     AV_ASSERT ( positionCount == vertexCount )
 
-    bool const result = Upload ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
+    _vertexCount = static_cast<uint32_t> ( indexCount );
+    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
+    _bounds = bounds;
+
+    return Upload ( renderer,
         { reinterpret_cast<uint8_t const*> ( indices.data () ), indexCount * sizeof ( uint32_t ) },
         VK_INDEX_TYPE_UINT32,
         { reinterpret_cast<uint8_t const*> ( positions.data () ), positionCount * sizeof ( GXVec3 ) },
         { vertices.data (), vertexCount },
         static_cast<uint32_t> ( positionCount )
     );
+}
+
+bool MeshGeometry::UploadToGPU ( Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    VkFence fence,
+    Info &&info
+) noexcept
+{
+    bool const result = GPUTransfer ( renderer,
+        commandBuffer,
+        true,
+        fence,
+        { info._jobs.data (), info._jobs.size () }
+    );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    _vertexCount = static_cast<uint32_t> ( indexCount );
-    _vertexBufferVertexCount = static_cast<uint32_t> ( positionCount );
-    _bounds = bounds;
+    CommitMeshInfo ( renderer.GetDevice (), info._indexType, std::move ( info._stream0 ), std::move ( info._stream1 ) );
     return true;
 }
 
@@ -529,18 +497,13 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     );
 }
 
-bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
-    std::string &&fileName
-) noexcept
+MeshGeometry::LoadResult MeshGeometry::LoadFromMesh2 ( Renderer &renderer, std::string &&fileName ) noexcept
 {
     FreeResourceInternal ( renderer );
     File file ( fileName );
 
     if ( !file.LoadContent () ) [[unlikely]]
-        return false;
+        return std::nullopt;
 
     std::vector<uint8_t> const &content = file.GetContent ();
     uint8_t const* rawData = content.data ();
@@ -549,11 +512,17 @@ bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
     auto const selector = static_cast<size_t> ( header._indexCount >= INDEX16_LIMIT );
     constexpr VkIndexType const cases[] = { VK_INDEX_TYPE_UINT16, VK_INDEX_TYPE_UINT32 };
 
-    bool const result = Upload ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
+    Vec3 const &mins = header._bounds._min;
+    Vec3 const &maxs = header._bounds._max;
+    _bounds.Empty ();
+    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
+    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
 
+    _vertexCount = static_cast<uint32_t> ( header._indexCount );
+    _vertexBufferVertexCount = header._vertexCount;
+    _fileName = std::move ( fileName );
+
+    return Upload ( renderer,
         {
             rawData + static_cast<size_t> ( header._indexDataOffset ),
             header._indexCount * INDEX_SIZES[ selector ]
@@ -573,26 +542,9 @@ bool MeshGeometry::LoadFromMesh2 ( Renderer &renderer,
 
         static_cast<uint32_t> ( header._vertexCount )
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    Vec3 const &mins = header._bounds._min;
-    Vec3 const &maxs = header._bounds._max;
-    _bounds.Empty ();
-    _bounds.AddVertex ( mins[ 0U ], mins[ 1U ], mins[ 2U ] );
-    _bounds.AddVertex ( maxs[ 0U ], maxs[ 1U ], maxs[ 2U ] );
-
-    _vertexCount = static_cast<uint32_t> ( header._indexCount );
-    _vertexBufferVertexCount = header._vertexCount;
-    _fileName = std::move ( fileName );
-    return true;
 }
 
-bool MeshGeometry::Upload ( Renderer &renderer,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence,
+MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
     AbstractData indices,
     VkIndexType indexType,
     AbstractData vertexStream0,
@@ -641,92 +593,78 @@ bool MeshGeometry::Upload ( Renderer &renderer,
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return std::nullopt;
 
     if ( vertexStream1.empty () )
     {
-        UploadJob const jobs[]
+        return LoadResult
         {
             {
-                ._data = indices.data (),
-                ._dstOffset = 0U,
-                ._size = static_cast<VkDeviceSize> ( indSize )
-            },
-            {
-                ._data = vertexStream0.data (),
-                ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
-                ._size = static_cast<VkDeviceSize> ( posSize )
+                ._indexType = indexType,
+
+                ._stream0
+                {
+                    ._offset = posOffset,
+                    ._range = posSize
+                },
+
+                ._stream1 = std::nullopt,
+
+                ._jobs
+                {
+                    {
+                        ._data = indices.data (),
+                        ._dstOffset = 0U,
+                        ._size = static_cast<VkDeviceSize> ( indSize )
+                    },
+                    {
+                        ._data = vertexStream0.data (),
+                        ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+                        ._size = static_cast<VkDeviceSize> ( posSize )
+                    }
+                }
             }
         };
+    }
 
-        result = GPUTransfer ( renderer,
-            commandBuffer,
-            externalCommandBuffer,
-            fence,
-            { jobs, std::size ( jobs ) }
-        );
+    return LoadResult
+    {
+        {
+            ._indexType = indexType,
 
-        if ( !result ) [[unlikely]]
-            return false;
-
-        CommitMeshInfo ( renderer.GetDevice (),
-            indexType,
+            ._stream0
             {
                 ._offset = posOffset,
                 ._range = posSize
             },
 
-            std::nullopt
-        );
+            ._stream1 = std::optional<StreamInfo> {
+                {
+                    ._offset = restOffset,
+                    ._range = restSize
+                }
+            },
 
-        return true;
-    }
-
-    UploadJob const jobs[]
-    {
-        {
-            ._data = indices.data (),
-            ._dstOffset = 0U,
-            ._size = static_cast<VkDeviceSize> ( indSize )
-        },
-        {
-            ._data = vertexStream0.data (),
-            ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
-            ._size = static_cast<VkDeviceSize> ( posSize )
-        },
-        {
-            ._data = vertexStream1.data (),
-            ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
-            ._size = static_cast<VkDeviceSize> ( restSize )
-        }
-    };
-
-    result = GPUTransfer ( renderer,
-        commandBuffer,
-        externalCommandBuffer,
-        fence,
-        { jobs, std::size ( jobs ) }
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    CommitMeshInfo ( renderer.GetDevice (),
-        indexType,
-        {
-            ._offset = posOffset,
-            ._range = posSize
-        },
-
-        std::optional<StreamInfo> {
+            ._jobs
             {
-                ._offset = restOffset,
-                ._range = restSize
+                {
+                    ._data = indices.data (),
+                    ._dstOffset = 0U,
+                    ._size = static_cast<VkDeviceSize> ( indSize )
+                },
+                {
+                    ._data = vertexStream0.data (),
+                    ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+                    ._size = static_cast<VkDeviceSize> ( posSize )
+                },
+                {
+                    ._data = vertexStream1.data (),
+                    ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
+                    ._size = static_cast<VkDeviceSize> ( restSize )
+                }
             }
         }
-    );
-
-    return true;
+    };
 }
 
 } // namespace android_vulkan

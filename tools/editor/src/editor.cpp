@@ -55,14 +55,15 @@ bool Editor::InitModules () noexcept
     AV_TRACE ( "Init modules" )
     Config const config = LoadConfig ();
     _uiZoom = config._uiZoom;
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
     std::thread (
-        [ this, &config ] () noexcept
+        [ this, &renderer, &config ] () noexcept
         {
             AV_THREAD_NAME ( "Init Vulkan" )
 
             auto* value = reinterpret_cast<void*> (
-                static_cast<uintptr_t> ( _renderer.OnCreateDevice ( config._gpu ) )
+                static_cast<uintptr_t> ( renderer.OnCreateDevice ( config._gpu ) )
             );
 
             _messageQueue.EnqueueBack (
@@ -118,10 +119,10 @@ bool Editor::InitModules () noexcept
     }
 
     float const dpi = _uiZoom * _mainWindow.GetDPI ();
-    _renderer.OnSetDPI ( dpi );
+    renderer.OnSetDPI ( dpi );
     pbr::CSSUnitToDevicePixel::Init ( dpi, COMFORTABLE_VIEW_DISTANCE_METERS );
 
-    android_vulkan::Renderer::eSwapchainResult const status = _renderer.OnCreateSwapchain ( false,
+    android_vulkan::Renderer::eSwapchainResult const status = renderer.OnCreateSwapchain ( false,
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
         config._vSync
     );
@@ -175,9 +176,10 @@ void Editor::DestroyModules () noexcept
 
     SaveState config {};
     SaveState::Container &root = config.GetContainer ();
-    root.Write ( CONFIG_KEY_GPU, _renderer.GetDeviceName () );
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    root.Write ( CONFIG_KEY_GPU, renderer.GetDeviceName () );
     root.Write ( CONFIG_KEY_UI_ZOOM, _uiZoom );
-    root.Write ( CONFIG_KEY_VSYNC, _renderer.GetVSync () );
+    root.Write ( CONFIG_KEY_VSYNC, renderer.GetVSync () );
 
     if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
@@ -186,8 +188,8 @@ void Editor::DestroyModules () noexcept
     _renderSession.Destroy ();
     _uiManager.Destroy ();
     _io.Destroy ();
-    _renderer.OnDestroySwapchain ( false );
-    _renderer.OnDestroyDevice ();
+    renderer.OnDestroySwapchain ( false );
+    renderer.OnDestroyDevice ();
 }
 
 void Editor::EventLoop () noexcept
@@ -310,7 +312,7 @@ void Editor::OnDPIChanged ( Message &&message ) noexcept
 {
     AV_TRACE ( "DPI changed" )
     _messageQueue.DequeueEnd ();
-    _renderer.OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._action () ) ) );
+    NativeRenderer::Instance ().OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._action () ) ) );
     // FUCK
 }
 
@@ -337,8 +339,9 @@ void Editor::OnRecreateSwapchain () noexcept
 {
     AV_TRACE ( "Recreate swapchain" )
     _messageQueue.DequeueEnd ();
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
-    bool const waitResult = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+    bool const waitResult = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "editor::Editor::OnRecreateSwapchain",
         "Can't wait queue idle"
     );
@@ -349,11 +352,11 @@ void Editor::OnRecreateSwapchain () noexcept
         return;
     }
 
-    _renderer.OnDestroySwapchain ( true );
+    renderer.OnDestroySwapchain ( true );
 
-    android_vulkan::Renderer::eSwapchainResult const swapchainResult = _renderer.OnCreateSwapchain ( true,
+    android_vulkan::Renderer::eSwapchainResult const swapchainResult = renderer.OnCreateSwapchain ( true,
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
-        _renderer.GetVSync ()
+        renderer.GetVSync ()
     );
 
     switch ( swapchainResult )
@@ -458,12 +461,14 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
         static_cast<bool> ( std::bit_cast<uintptr_t> ( message._action () ) )
     );
 
-    if ( ( ( old == _stopRendering ) | _stopRendering ) || _renderer.GetSwapchain () != VK_NULL_HANDLE )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    if ( ( ( old == _stopRendering ) | _stopRendering ) || renderer.GetSwapchain () != VK_NULL_HANDLE )
         return;
 
-    android_vulkan::Renderer::eSwapchainResult const result = _renderer.OnCreateSwapchain ( true,
+    android_vulkan::Renderer::eSwapchainResult const result = renderer.OnCreateSwapchain ( true,
         reinterpret_cast<android_vulkan::WindowHandle> ( _mainWindow.GetNativeWindow () ),
-        _renderer.GetVSync ()
+        renderer.GetVSync ()
     );
 
     if ( result != android_vulkan::Renderer::eSwapchainResult::Success ) [[unlikely]]

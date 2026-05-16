@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-PointLightComponent::PointLightComponent ( MessageQueue &messageQueue ) noexcept:
-    Component ( messageQueue, VERSION, "point light" )
+PointLightComponent::PointLightComponent () noexcept:
+    Component ( VERSION, "point light" )
 {
     // NOTHING
 }
 
-PointLightComponent::PointLightComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
-    Component ( messageQueue, info )
+PointLightComponent::PointLightComponent ( SaveState::Container const &info ) noexcept:
+    Component ( info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

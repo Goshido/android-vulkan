@@ -5,13 +5,8 @@
 
 namespace editor {
 
-UILabel::UILabel ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
-    std::string_view text,
-    std::string &&name
-) noexcept:
-    _div ( messageQueue,
-        parent,
+UILabel::UILabel ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept:
+    _div ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -43,8 +38,7 @@ UILabel::UILabel ( MessageQueue &messageQueue,
         name + " (DIV)"
     ),
 
-    _text ( messageQueue, _div, text, name + " (text)" ),
-    _messageQueue ( messageQueue )
+    _text ( _div, text, name + " (text)" )
 {
     _div.AppendChildElement ( _text );
     parent.AppendChildElement ( _div );

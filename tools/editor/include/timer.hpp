@@ -2,7 +2,7 @@
 #define EDITOR_TIMER_HPP
 
 
-#include "message_queue.hpp"
+#include <GXCommon/GXWarning.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -61,7 +61,6 @@ class Timer final
         };
 
     private:
-        MessageQueue                &_messageQueue;
         State*                      _state = nullptr;
 
     public:
@@ -73,11 +72,7 @@ class Timer final
         Timer ( Timer && ) = delete;
         Timer &operator = ( Timer && ) = delete;
 
-        explicit Timer ( MessageQueue &messageQueue,
-            eType type,
-            Interval const &interval,
-            Callback &&callback
-        ) noexcept;
+        explicit Timer ( eType type, Interval const &interval, Callback &&callback ) noexcept;
 
         ~Timer () noexcept;
 };

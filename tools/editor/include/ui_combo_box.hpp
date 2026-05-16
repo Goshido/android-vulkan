@@ -84,8 +84,7 @@ class UIComboBox final : public Widget
                 Popup ( Popup && ) = delete;
                 Popup &operator = ( Popup && ) = delete;
 
-                explicit Popup ( MessageQueue &messageQueue,
-                    DIVUIElement const &positionAnchor,
+                explicit Popup ( DIVUIElement const &positionAnchor,
                     DIVUIElement const &widthAnchor,
                     Items items,
                     size_t &selected,
@@ -158,8 +157,7 @@ class UIComboBox final : public Widget
         UIComboBox ( UIComboBox && ) = delete;
         UIComboBox &operator = ( UIComboBox && ) = delete;
 
-        explicit UIComboBox ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
+        explicit UIComboBox ( DIVUIElement &parent,
             std::string_view caption,
             Items items,
             uint32_t selected,

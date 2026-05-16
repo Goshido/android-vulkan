@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <timer.hpp>
 
 
@@ -36,11 +37,10 @@ bool Timer::State::Invoke ( Timestamp const &now ) noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Timer::Timer ( MessageQueue &messageQueue, eType type, Interval const &interval, Callback &&callback ) noexcept:
-    _messageQueue ( messageQueue ),
+Timer::Timer ( eType type, Interval const &interval, Callback &&callback ) noexcept:
     _state ( new State ( type, interval, std::move ( callback ) ) )
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::StartTimer,
 
@@ -55,7 +55,7 @@ Timer::Timer ( MessageQueue &messageQueue, eType type, Interval const &interval,
 
 Timer::~Timer () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::StopTimer,
 

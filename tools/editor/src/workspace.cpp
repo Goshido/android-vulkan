@@ -97,12 +97,6 @@ void AppendComponentAction::Undo () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Workspace::Workspace ( MessageQueue& messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
-
 void Workspace::Init () noexcept
 {
     AV_TRACE ( "Workspace init" )
@@ -351,22 +345,13 @@ void Workspace::FUCK () noexcept
     actor->SetName ( "FUCK" );
     Actor &a = *actor;
 
-    ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( _messageQueue,
-        "meshes/rotating_mesh/sonic-material-1.mesh2"
-    );
-
+    ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2" );
     mesh1->SetName ( "mesh #1" );
 
-    ComponentRef mesh2 = std::make_unique<StaticMeshComponent> ( _messageQueue,
-        "meshes/rotating_mesh/sonic-material-2.mesh2"
-    );
-
+    ComponentRef mesh2 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-2.mesh2" );
     mesh2->SetName ( "mesh #2" );
 
-    ComponentRef mesh3 = std::make_unique<StaticMeshComponent> ( _messageQueue,
-        "meshes/rotating_mesh/sonic-material-3.mesh2"
-    );
-
+    ComponentRef mesh3 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-3.mesh2" );
     mesh3->SetName ( "mesh #3" );
 
     _history.Begin ();

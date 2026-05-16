@@ -1,26 +1,18 @@
 #include <precompiled_headers.hpp>
 #include <div_ui_element.hpp>
+#include <message_queue.hpp>
 #include <text_ui_element.hpp>
 
 
 namespace editor {
 
-DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
-    pbr::CSSComputedValues &&css,
-    std::string &&name
-) noexcept:
-    UIElement ( messageQueue ),
+DIVUIElement::DIVUIElement ( pbr::CSSComputedValues &&css, std::string &&name ) noexcept:
     _div ( new pbr::DIVUIElement ( nullptr, std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
 }
 
-DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
-    pbr::CSSComputedValues &&css,
-    std::string &&name
-) noexcept:
-    UIElement ( messageQueue ),
+DIVUIElement::DIVUIElement ( DIVUIElement &parent, pbr::CSSComputedValues &&css, std::string &&name ) noexcept:
     _div ( new pbr::DIVUIElement ( &parent.GetNativeElement (), std::move ( css ), std::move ( name ) ) )
 {
     // NOTHING
@@ -28,7 +20,7 @@ DIVUIElement::DIVUIElement ( MessageQueue &messageQueue,
 
 DIVUIElement::~DIVUIElement () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIDeleteElement,
 
@@ -49,7 +41,7 @@ pbr::UIElement &DIVUIElement::GetNativeElement () noexcept
 
 void DIVUIElement::AppendChildElement ( DIVUIElement &element ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIAppendChildElement,
 
@@ -65,7 +57,7 @@ void DIVUIElement::AppendChildElement ( DIVUIElement &element ) noexcept
 
 void DIVUIElement::PrependChildElement ( DIVUIElement &element ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIPrependChildElement,
 
@@ -81,7 +73,7 @@ void DIVUIElement::PrependChildElement ( DIVUIElement &element ) noexcept
 
 void DIVUIElement::AppendChildElement ( TextUIElement &element ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIAppendChildElement,
 
@@ -97,7 +89,7 @@ void DIVUIElement::AppendChildElement ( TextUIElement &element ) noexcept
 
 void DIVUIElement::PrependChildElement ( TextUIElement &element ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIPrependChildElement,
 
@@ -113,7 +105,7 @@ void DIVUIElement::PrependChildElement ( TextUIElement &element ) noexcept
 
 void DIVUIElement::Hide () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIHideElement,
 
@@ -129,7 +121,7 @@ void DIVUIElement::Hide () noexcept
 
 void DIVUIElement::Show () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIShowElement,
 
@@ -150,7 +142,7 @@ bool DIVUIElement::IsVisible () const noexcept
 
 void DIVUIElement::Update () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIUpdateElement,
 

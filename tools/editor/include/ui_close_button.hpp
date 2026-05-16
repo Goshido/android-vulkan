@@ -43,7 +43,7 @@ class UICloseButton final : public Widget
         UICloseButton ( UICloseButton && ) = delete;
         UICloseButton &operator = ( UICloseButton && ) = delete;
 
-        explicit UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent, std::string &&name ) noexcept;
+        explicit UICloseButton ( DIVUIElement &parent, std::string &&name ) noexcept;
 
         ~UICloseButton () override = default;
 

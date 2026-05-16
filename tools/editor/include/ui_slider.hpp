@@ -58,8 +58,7 @@ class UISlider final : public Widget
         UISlider ( UISlider && ) = delete;
         UISlider &operator = ( UISlider && ) = delete;
 
-        explicit UISlider ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
+        explicit UISlider ( DIVUIElement &parent,
             std::string_view caption,
             double minValue,
             double maxValue,

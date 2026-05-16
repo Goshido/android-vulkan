@@ -1,15 +1,11 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <text_ui_element.hpp>
 
 
 namespace editor {
 
-TextUIElement::TextUIElement ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
-    std::string_view text,
-    std::string &&name
-) noexcept:
-    UIElement ( messageQueue ),
+TextUIElement::TextUIElement ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept:
     _text ( new pbr::TextUIElement ( true, &parent.GetNativeElement (), text, std::move ( name ) ) )
 {
     // NOTHING
@@ -17,7 +13,7 @@ TextUIElement::TextUIElement ( MessageQueue &messageQueue,
 
 TextUIElement::~TextUIElement () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIDeleteElement,
 
@@ -43,7 +39,7 @@ void TextUIElement::SetColor ( pbr::ColorValue const &color ) noexcept
 
 void TextUIElement::SetText ( std::string_view text ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UISetText,
 
@@ -59,7 +55,7 @@ void TextUIElement::SetText ( std::string_view text ) noexcept
 
 void TextUIElement::SetText ( std::u32string_view text ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UISetText,
 

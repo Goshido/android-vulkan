@@ -3,8 +3,6 @@
 
 
 #include "mesh_geometry_ref.hpp"
-#include "message_queue.hpp"
-#include <renderer.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -24,21 +22,18 @@ class MeshStorage final
         using LoadResult = std::function<void ( std::optional<MeshGeometryRef> && )>;
 
     private:
-        android_vulkan::Renderer                            &_renderer;
         std::unordered_map<std::string, MeshGeometryRef>    _storage {};
 
         static MeshStorage*                                 _instance;
 
     public:
-        MeshStorage () = delete;
+        explicit MeshStorage () = default;
 
         MeshStorage ( MeshStorage const & ) = delete;
         MeshStorage &operator = ( MeshStorage const & ) = delete;
 
         MeshStorage ( MeshStorage && ) = delete;
         MeshStorage &operator = ( MeshStorage && ) = delete;
-
-        explicit MeshStorage ( android_vulkan::Renderer &renderer ) noexcept;
 
         ~MeshStorage () = default;
 

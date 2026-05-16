@@ -13,7 +13,7 @@ class SoundEmitterComponent final : public Component
         constexpr static std::string_view       TYPE = "SoundEmitter";
 
     public:
-        explicit SoundEmitterComponent ( MessageQueue &messageQueue ) noexcept;
+        explicit SoundEmitterComponent () noexcept;
 
         SoundEmitterComponent ( SoundEmitterComponent const & ) = delete;
         SoundEmitterComponent &operator = ( SoundEmitterComponent const & ) = delete;
@@ -21,7 +21,7 @@ class SoundEmitterComponent final : public Component
         SoundEmitterComponent ( SoundEmitterComponent && ) = delete;
         SoundEmitterComponent &operator = ( SoundEmitterComponent && ) = delete;
 
-        explicit SoundEmitterComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
+        explicit SoundEmitterComponent ( SaveState::Container const &info ) noexcept;
 
         ~SoundEmitterComponent () = default;
 

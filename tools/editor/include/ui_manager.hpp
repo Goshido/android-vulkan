@@ -2,8 +2,8 @@
 #define EDITOR_UI_MANAGER_HPP
 
 
-#include "message_queue.hpp"
 #include <platform/windows/pbr/ui_pass.hpp>
+#include "message.hpp"
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -23,7 +23,6 @@ class UIManager final
         pbr::FontStorage                        &_fontStorage;
 
         Widget*                                 _hoverWidget = nullptr;
-        MessageQueue                            &_messageQueue;
         Widget*                                 _mouseCapture = nullptr;
         std::shared_mutex                       _mutex {};
         std::thread                             _thread {};
@@ -42,7 +41,7 @@ class UIManager final
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
 
-        explicit UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept;
+        explicit UIManager ( pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 

@@ -3,7 +3,6 @@
 
 
 #include "hello_triangle_program.hpp"
-#include "message_queue.hpp"
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
@@ -40,9 +39,6 @@ class RenderSession final
 
         std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
         std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
-
-        MessageQueue                                        &_messageQueue;
-        android_vulkan::Renderer                            &_renderer;
 
         pbr::PresentPass                                    _presentRenderPass {};
 
@@ -146,11 +142,7 @@ class RenderSession final
         RenderSession ( RenderSession && ) = delete;
         RenderSession &operator = ( RenderSession && ) = delete;
 
-        explicit RenderSession ( MessageQueue &messageQueue,
-            android_vulkan::Renderer &renderer,
-            UIManager &uiManager,
-            Workspace &workspace
-        ) noexcept;
+        explicit RenderSession ( UIManager &uiManager, Workspace &workspace ) noexcept;
 
         ~RenderSession () = default;
 

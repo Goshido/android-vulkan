@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
+#include <message_queue.hpp>
 #include <mesh_storage.hpp>
 #include <trace.hpp>
 
@@ -7,12 +8,6 @@
 namespace editor {
 
 MeshStorage* MeshStorage::_instance = nullptr;
-
-MeshStorage::MeshStorage ( android_vulkan::Renderer &renderer ) noexcept:
-    _renderer ( renderer )
-{
-    // NOTHING
-}
 
 void MeshStorage::Load ( std::string_view asset, LoadResult &&result ) noexcept
 {

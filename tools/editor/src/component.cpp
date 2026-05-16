@@ -29,16 +29,14 @@ constexpr std::string_view SCALE_KEY = "scale";
 
 Component::Spawners Component::_spawners {};
 
-Component::Component ( MessageQueue &messageQueue, uint32_t version, std::string &&name ) noexcept:
-    _messageQueue ( messageQueue ),
+Component::Component ( uint32_t version, std::string &&name ) noexcept:
     _version ( version ),
     _name ( std::move ( name ) )
 {
     // NOTHING
 }
 
-Component::Component ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
-    _messageQueue ( messageQueue )
+Component::Component ( SaveState::Container const &info ) noexcept
 {
     _version = info.Read ( VERSION_KEY, DEFAULT_VERSION );
     _name = info.Read ( NAME_KEY, DEFAULT_NAME );
@@ -74,12 +72,12 @@ void Component::InitSpawners () noexcept
     InitSpawner<TransformComponent> ();
 }
 
-std::optional<ComponentRef> Component::Spawn ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept
+std::optional<ComponentRef> Component::Spawn ( SaveState::Container const &info ) noexcept
 {
     if ( auto const spawn = _spawners.find ( info.Read ( TYPE_KEY, std::string_view {} ) ); spawn != _spawners.cend () )
     {
         [[likely]]
-        return spawn->second ( messageQueue, info );
+        return spawn->second ( info );
     }
 
     return std::nullopt;

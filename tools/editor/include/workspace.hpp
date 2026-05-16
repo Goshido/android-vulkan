@@ -42,8 +42,6 @@ class Workspace final
         using ReflectionProbeGlobalQueue = std::unordered_set<ReflectionProbeGlobalInfo*>;
 
     private:
-        MessageQueue                                    &_messageQueue;
-
         History                                         _history {};
         std::unordered_map<Actor const*, ActorRef>      _actors {};
 
@@ -63,15 +61,13 @@ class Workspace final
         std::mutex                                      _mutex {};
 
     public:
-        Workspace () = delete;
+        explicit Workspace () = default;
 
         Workspace ( Workspace const & ) = delete;
         Workspace &operator = ( Workspace const & ) = delete;
 
         Workspace ( Workspace && ) = delete;
         Workspace &operator = ( Workspace && ) = delete;
-
-        explicit Workspace ( MessageQueue &messageQueue ) noexcept;
 
         ~Workspace () = default;
 

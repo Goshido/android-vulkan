@@ -19,24 +19,20 @@ constexpr std::string_view MESH_KEY = "mesh";
 //----------------------------------------------------------------------------------------------------------------------
 
 StaticMeshComponent::StaticMeshComponent () noexcept:
-    Component ( MessageQueue::Instance (), VERSION, std::string ( DEFAULT_NAME ) )
+    Component ( VERSION, std::string ( DEFAULT_NAME ) )
 {
     LoadMesh ( DEFAULT_MESH );
 }
 
-StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue,
-    SaveState::Container const &info
-) noexcept:
-    Component ( messageQueue, info )
+StaticMeshComponent::StaticMeshComponent ( SaveState::Container const &info ) noexcept:
+    Component ( info )
 {
     AV_ASSERT ( _version == VERSION )
     LoadMesh ( info.Read ( MESH_KEY, DEFAULT_MESH ) );
 }
 
-StaticMeshComponent::StaticMeshComponent ( MessageQueue &messageQueue,
-    std::string_view mesh
-) noexcept:
-    Component ( messageQueue, VERSION, std::string ( DEFAULT_NAME ) )
+StaticMeshComponent::StaticMeshComponent ( std::string_view mesh ) noexcept:
+    Component ( VERSION, std::string ( DEFAULT_NAME ) )
 {
     LoadMesh ( mesh );
 }
@@ -60,8 +56,8 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::LoadMesh ( std::string_view mesh ) noexcept
 {
-    auto result = [] ( std::optional<MeshGeometryRef> &&/*mesh*/ ) noexcept {
-        // FUCK
+    auto result = [ this ] ( std::optional<MeshGeometryRef> &&mesh ) noexcept {
+        _mesh = *mesh;
     };
 
     MeshStorage::Instance ().Load ( mesh, std::move ( result ) );

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <timer_manager.hpp>
 #include <trace.hpp>
 
@@ -12,12 +13,6 @@ constexpr std::chrono::milliseconds IDLE ( 1U );
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
-
-TimerManager::TimerManager ( MessageQueue& messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
 
 void TimerManager::Init () noexcept
 {
@@ -47,11 +42,12 @@ void TimerManager::Destroy () noexcept
 void TimerManager::EventLoop () noexcept
 {
     std::optional<Message::SerialNumber> lastRefund {};
+    MessageQueue &messageQueue = MessageQueue::Instance ();
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = _messageQueue.DequeueBegin ( lastRefund );
+        Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
 
@@ -71,7 +67,7 @@ void TimerManager::EventLoop () noexcept
 
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -98,14 +94,14 @@ void TimerManager::EventLoop () noexcept
 void TimerManager::OnStartTimer ( Message &&message ) noexcept
 {
     AV_TRACE ( "Start timer" )
-    _messageQueue.DequeueEnd ();
+    MessageQueue::Instance ().DequeueEnd ();
     _timers.insert ( static_cast<Timer::State*> ( message._action () ) );
 }
 
 void TimerManager::OnStopTimer ( Message &&message ) noexcept
 {
     AV_TRACE ( "Stop timer" )
-    _messageQueue.DequeueEnd ();
+    MessageQueue::Instance ().DequeueEnd ();
 
     auto* timer = static_cast<Timer::State*> ( message._action () );
     _timers.erase ( timer );
@@ -115,9 +111,10 @@ void TimerManager::OnStopTimer ( Message &&message ) noexcept
 void TimerManager::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
-    _messageQueue.EnqueueFront (
+    messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
             ._action = nullptr,

@@ -21,7 +21,7 @@ constexpr std::string_view COMPONENTS_KEY = "components";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Actor::Actor ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
+Actor::Actor ( SaveState::Container const &info ) noexcept:
     _name ( info.Read ( NAME_KEY, DEFAULT_NAME ) )
 {
     _rotation = info.Read ( ROTATION_KEY, GXQuat::IDENTITY );
@@ -31,7 +31,7 @@ Actor::Actor ( MessageQueue &messageQueue, SaveState::Container const &info ) no
 
     for ( size_t i = 0U, count = components.GetArraySize (); i < count; ++i )
     {
-        if ( auto component = Component::Spawn ( messageQueue, components.ReadContainer () ); component ) [[likely]]
+        if ( auto component = Component::Spawn ( components.ReadContainer () ); component ) [[likely]]
         {
             Append ( std::move ( *component ) );
         }

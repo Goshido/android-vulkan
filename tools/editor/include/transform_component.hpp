@@ -13,7 +13,7 @@ class TransformComponent final : public Component
         constexpr static std::string_view       TYPE = "Transform";
 
     public:
-        explicit TransformComponent ( MessageQueue &messageQueue ) noexcept;
+        explicit TransformComponent () noexcept;
 
         TransformComponent ( TransformComponent const & ) = delete;
         TransformComponent &operator = ( TransformComponent const & ) = delete;
@@ -21,7 +21,7 @@ class TransformComponent final : public Component
         TransformComponent ( TransformComponent && ) = delete;
         TransformComponent &operator = ( TransformComponent && ) = delete;
 
-        explicit TransformComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
+        explicit TransformComponent ( SaveState::Container const &info ) noexcept;
 
         ~TransformComponent () = default;
 

@@ -2,6 +2,7 @@
 #include <av_assert.hpp>
 #include <cursor.hpp>
 #include <glyphs.hpp>
+#include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <theme.hpp>
 #include <ui_combo_box.hpp>
@@ -28,8 +29,7 @@ UIComboBox::MenuItem::MenuItem ( std::unique_ptr<DIVUIElement> &&div,
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
-    DIVUIElement const &positionAnchor,
+UIComboBox::Popup::Popup ( DIVUIElement const &positionAnchor,
     DIVUIElement const &widthAnchor,
     Items items,
     size_t &selected,
@@ -37,9 +37,7 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
     Callback &callback,
     std::string const &name
 ) noexcept:
-    Widget ( messageQueue ),
-
-    _div ( messageQueue,
+    _div (
         {
             ._backgroundColor = POPUP_BACKGROUND,
             ._backgroundSize = theme::ZERO_LENGTH,
@@ -99,8 +97,7 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
         size_t const cases[] = { _selected, i };
         _selected = cases[ static_cast<size_t> ( item._id == selected ) ];
 
-        std::unique_ptr<DIVUIElement> div = std::make_unique<DIVUIElement> ( messageQueue,
-            _div,
+        std::unique_ptr<DIVUIElement> div = std::make_unique<DIVUIElement> ( _div,
 
             pbr::CSSComputedValues
             {
@@ -133,8 +130,7 @@ UIComboBox::Popup::Popup ( MessageQueue &messageQueue,
             name + " (item: " + item._caption.data () + ")"
         );
 
-        std::unique_ptr<TextUIElement> t = std::make_unique<TextUIElement> ( messageQueue,
-            *div,
+        std::unique_ptr<TextUIElement> t = std::make_unique<TextUIElement> ( *div,
             item._caption,
             name + " (item: " + item._caption.data () + ")"
         );
@@ -279,17 +275,13 @@ Rect const &UIComboBox::Popup::HandleUpdatedRect () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIComboBox::UIComboBox ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
+UIComboBox::UIComboBox ( DIVUIElement &parent,
     std::string_view caption,
     Items items,
     uint32_t selected,
     std::string &&name
 ) noexcept:
-    Widget ( messageQueue ),
-
-    _lineDIV ( messageQueue,
-        parent,
+    _lineDIV ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -321,8 +313,7 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( messageQueue,
-        _lineDIV,
+    _columnDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -354,8 +345,7 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( messageQueue,
-        _columnDIV,
+    _captionDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -387,10 +377,9 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
+    _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( messageQueue,
-        _columnDIV,
+    _valueDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -422,8 +411,7 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _textDIV ( messageQueue,
-        _valueDIV,
+    _textDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -455,10 +443,9 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (text)"
     ),
 
-    _text ( messageQueue, _textDIV, "", name + " (text)" ),
+    _text ( _textDIV, "", name + " (text)" ),
 
-    _iconDIV ( messageQueue,
-        _valueDIV,
+    _iconDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -490,10 +477,9 @@ UIComboBox::UIComboBox ( MessageQueue &messageQueue,
         name + " (icon)"
     ),
 
-    _icon ( messageQueue, _iconDIV, glyph::COMBOBOX_DOWN, name + " (icon)" ),
+    _icon ( _iconDIV, glyph::COMBOBOX_DOWN, name + " (icon)" ),
 
-    _menuAnchorDIV ( messageQueue,
-        _valueDIV,
+    _menuAnchorDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -688,7 +674,7 @@ void UIComboBox::SwitchToNormalState () noexcept
 
     ReleaseMouse ();
 
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIRemoveWidget,
 
@@ -708,8 +694,7 @@ void UIComboBox::SwitchToMenuState () noexcept
     _icon.SetColor ( theme::MAIN_COLOR );
     _valueDIV.GetCSS ()._backgroundColor = POPUP_BACKGROUND;
 
-    _popup = new Popup ( _messageQueue,
-        _menuAnchorDIV,
+    _popup = new Popup ( _menuAnchorDIV,
         _valueDIV,
         _items,
         _selected,
@@ -723,7 +708,7 @@ void UIComboBox::SwitchToMenuState () noexcept
     _onMouseMove = &UIComboBox::OnMouseMoveMenu;
     _updateRect = &UIComboBox::UpdatedRectMenu;
 
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::UIAddWidget,
 

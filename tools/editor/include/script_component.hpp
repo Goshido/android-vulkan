@@ -13,7 +13,7 @@ class ScriptComponent final : public Component
         constexpr static std::string_view       TYPE = "Script";
 
     public:
-        explicit ScriptComponent ( MessageQueue &messageQueue ) noexcept;
+        explicit ScriptComponent () noexcept;
 
         ScriptComponent ( ScriptComponent const & ) = delete;
         ScriptComponent &operator = ( ScriptComponent const & ) = delete;
@@ -21,7 +21,7 @@ class ScriptComponent final : public Component
         ScriptComponent ( ScriptComponent && ) = delete;
         ScriptComponent &operator = ( ScriptComponent && ) = delete;
 
-        explicit ScriptComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
+        explicit ScriptComponent ( SaveState::Container const &info ) noexcept;
 
         ~ScriptComponent () = default;
 

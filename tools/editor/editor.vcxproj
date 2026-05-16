@@ -1053,6 +1053,7 @@
     <ClCompile Include="src\reflection_component.cpp" />
     <ClCompile Include="src\reflection_probe_global_node.cpp" />
     <ClCompile Include="src\reflection_probe_local_node.cpp" />
+    <ClCompile Include="src\native_renderer.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\rigid_body_component.cpp" />
     <ClCompile Include="src\save_state.cpp" />
@@ -1216,6 +1217,7 @@
     <ClInclude Include="include\reflection_probe_global_node.hpp" />
     <ClInclude Include="include\reflection_probe_local_info.hpp" />
     <ClInclude Include="include\reflection_probe_local_node.hpp" />
+    <ClInclude Include="include\native_renderer.hpp" />
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\rigid_body_component.hpp" />
     <ClInclude Include="include\save_state.hpp" />

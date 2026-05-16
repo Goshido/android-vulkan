@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <widget.hpp>
 
 
@@ -44,7 +45,7 @@ void Widget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     if ( event._eventID - std::exchange ( _hoverEventID, event._eventID ) < 2U ) [[likely]]
         return;
 
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::MouseHover,
 
@@ -89,15 +90,11 @@ bool Widget::IsOverlapped ( int32_t x, int32_t y ) const noexcept
     return _rect.IsOverlapped ( x, y );
 }
 
-Widget::Widget ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
-
 void Widget::CaptureMouse () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StartWidgetCaptureMouse,
 
@@ -109,7 +106,7 @@ void Widget::CaptureMouse () noexcept
         }
     );
 
-    _messageQueue.EnqueueBack (
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::CaptureMouse,
             ._action = nullptr,
@@ -120,7 +117,9 @@ void Widget::CaptureMouse () noexcept
 
 void Widget::ReleaseMouse () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::StopWidgetCaptureMouse,
             ._action = nullptr,
@@ -128,7 +127,7 @@ void Widget::ReleaseMouse () noexcept
         }
     );
 
-    _messageQueue.EnqueueBack (
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReleaseMouse,
             ._action = nullptr,
@@ -139,7 +138,7 @@ void Widget::ReleaseMouse () noexcept
 
 void Widget::ChangeCursor ( eCursor cursor ) noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
 
@@ -154,7 +153,9 @@ void Widget::ChangeCursor ( eCursor cursor ) noexcept
 
 void Widget::KillFocus () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::KillFocus,
             ._action = nullptr,
@@ -162,7 +163,7 @@ void Widget::KillFocus () noexcept
         }
     );
 
-    _messageQueue.EnqueueBack (
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::ReleaseKeyboard,
             ._action = nullptr,
@@ -173,7 +174,9 @@ void Widget::KillFocus () noexcept
 
 void Widget::SetFocus () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::SetFocus,
 
@@ -185,7 +188,7 @@ void Widget::SetFocus () noexcept
         }
     );
 
-    _messageQueue.EnqueueBack (
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::CaptureKeyboard,
             ._action = nullptr,

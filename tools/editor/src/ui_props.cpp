@@ -37,11 +37,10 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
-    UIDialogBox ( messageQueue, "Properties" ),
+UIProps::UIProps ( pbr::FontStorage &fontStorage ) noexcept:
+    UIDialogBox ( "Properties" ),
 
-    _headerLine ( messageQueue,
-        _div,
+    _headerLine ( _div,
 
         {
             ._backgroundColor = theme::HEADER_COLOR,
@@ -73,12 +72,12 @@ UIProps::UIProps ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) n
         "Header line"
     ),
 
-    _headerText ( messageQueue, _headerLine, "Properties", "Header"),
-    _closeButton ( messageQueue, _headerLine, "Close button" ),
-    _checkBox ( messageQueue, _div, "Shadows", "CheckBox" ),
-    _comboBox ( messageQueue, _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
-    _slider ( messageQueue, _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
-    _editBox ( messageQueue, _div, fontStorage, "Name", "The quick brown fox jumps", "EditBox" )
+    _headerText ( _headerLine, "Properties", "Header"),
+    _closeButton ( _headerLine, "Close button" ),
+    _checkBox ( _div, "Shadows", "CheckBox" ),
+    _comboBox ( _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
+    _slider ( _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
+    _editBox ( _div, fontStorage, "Name", "The quick brown fox jumps", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;

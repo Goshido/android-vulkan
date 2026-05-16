@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-TransformComponent::TransformComponent ( MessageQueue &messageQueue ) noexcept:
-    Component ( messageQueue, VERSION, "transform" )
+TransformComponent::TransformComponent () noexcept:
+    Component ( VERSION, "transform" )
 {
     // NOTHING
 }
 
-TransformComponent::TransformComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
-    Component ( messageQueue, info )
+TransformComponent::TransformComponent ( SaveState::Container const &info ) noexcept:
+    Component ( info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

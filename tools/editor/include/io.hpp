@@ -2,11 +2,11 @@
 #define EDITOR_IO_HPP
 
 
-#include "message_queue.hpp"
+#include "message.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <mutex>
+#include <thread>
 
 GX_RESTORE_WARNING_STATE
 
@@ -16,19 +16,16 @@ namespace editor {
 class IO final
 {
     private:
-        MessageQueue    &_messageQueue;
         std::thread     _thread {};
 
     public:
-        IO () = delete;
+        explicit IO () = default;
 
         IO ( IO const & ) = delete;
         IO &operator = ( IO const & ) = delete;
 
         IO ( IO && ) = delete;
         IO &operator = ( IO && ) = delete;
-
-        explicit IO ( MessageQueue &messageQueue ) noexcept;
 
         ~IO () = default;
 

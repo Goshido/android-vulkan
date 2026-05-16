@@ -7,11 +7,8 @@
 
 namespace editor {
 
-UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent, std::string &&name ) noexcept:
-    Widget ( messageQueue ),
-
-    _base ( messageQueue,
-        parent,
+UICloseButton::UICloseButton ( DIVUIElement &parent, std::string &&name ) noexcept:
+    _base ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -43,8 +40,7 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent,
         name + " (base)"
     ),
 
-    _backgroundDIV ( messageQueue,
-        _base,
+    _backgroundDIV ( _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -76,10 +72,9 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent,
         name + " (background DIV)"
     ),
 
-    _backgroundText ( messageQueue, _backgroundDIV, glyph::CLOSE_BUTTON_BACKGROUND, name + " (background text)" ),
+    _backgroundText ( _backgroundDIV, glyph::CLOSE_BUTTON_BACKGROUND, name + " (background text)" ),
 
-    _borderDIV ( messageQueue,
-        _base,
+    _borderDIV ( _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -111,10 +106,9 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent,
         name + " (border DIV)"
     ),
 
-    _borderText ( messageQueue, _borderDIV, glyph::CLOSE_BUTTON_BORDER, name + " (border text)" ),
+    _borderText ( _borderDIV, glyph::CLOSE_BUTTON_BORDER, name + " (border text)" ),
 
-    _crossDIV ( messageQueue,
-        _base,
+    _crossDIV ( _base,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -146,7 +140,7 @@ UICloseButton::UICloseButton ( MessageQueue &messageQueue, DIVUIElement &parent,
         name + " (cross DIV)"
     ),
 
-    _crossText ( messageQueue, _crossDIV, glyph::CLOSE_BUTTON_CROSS, name + " (cross text)" )
+    _crossText ( _crossDIV, glyph::CLOSE_BUTTON_CROSS, name + " (cross text)" )
 {
     _backgroundDIV.AppendChildElement ( _backgroundText );
 

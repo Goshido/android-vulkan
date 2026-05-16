@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
 #include <logger.hpp>
+#include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <theme.hpp>
 #include <ui_dialog_box.hpp>
@@ -23,7 +24,7 @@ UIDialogBox::Gizmo::Gizmo ( eCursor cursor ) noexcept:
     // NOTHING
 }
 
-bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept
+bool UIDialogBox::Gizmo::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     if ( !_rect.IsOverlapped ( event._x, event._y ) )
         return false;
@@ -31,7 +32,7 @@ bool UIDialogBox::Gizmo::OnMouseMove ( MessageQueue &messageQueue, MouseMoveEven
     if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
         return true;
 
-    messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::ChangeCursor,
 
@@ -62,10 +63,8 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
     UpdateMinSize ();
 }
 
-UIDialogBox::UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept:
-    Widget ( messageQueue ),
-    _div ( messageQueue,
-
+UIDialogBox::UIDialogBox ( std::string &&name ) noexcept:
+    _div (
         {
             ._backgroundColor = theme::BACKGROUND_COLOR,
             ._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
@@ -296,17 +295,15 @@ void UIDialogBox::DoDrag ( MouseMoveEvent const &event ) noexcept
 
 void UIDialogBox::DoHover ( MouseMoveEvent const &event ) noexcept
 {
-    MessageQueue &queue = _messageQueue;
-
-    bool const handled = _dragArea.OnMouseMove ( queue, event ) ||
-        _resizeUp.OnMouseMove ( queue, event ) ||
-        _resizeDown.OnMouseMove ( queue, event ) ||
-        _resizeLeft.OnMouseMove ( queue, event ) ||
-        _resizeRight.OnMouseMove ( queue, event ) ||
-        _resizeTopLeft.OnMouseMove ( queue, event ) ||
-        _resizeTopRight.OnMouseMove ( queue, event ) ||
-        _resizeBottomLeft.OnMouseMove ( queue, event ) ||
-        _resizeBottomRight.OnMouseMove ( queue, event );
+    bool const handled = _dragArea.OnMouseMove ( event ) ||
+        _resizeUp.OnMouseMove ( event ) ||
+        _resizeDown.OnMouseMove ( event ) ||
+        _resizeLeft.OnMouseMove ( event ) ||
+        _resizeRight.OnMouseMove ( event ) ||
+        _resizeTopLeft.OnMouseMove ( event ) ||
+        _resizeTopRight.OnMouseMove ( event ) ||
+        _resizeBottomLeft.OnMouseMove ( event ) ||
+        _resizeBottomRight.OnMouseMove ( event );
 
     if ( handled )
         return;

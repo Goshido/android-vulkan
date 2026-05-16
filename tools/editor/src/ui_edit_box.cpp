@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
+#include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
 #include <theme.hpp>
@@ -21,19 +22,16 @@ constexpr char32_t CTRL_X = 0x18;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIEditBox::UIEditBox ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
+UIEditBox::UIEditBox ( DIVUIElement &parent,
     pbr::FontStorage &fontStorage,
     std::string_view caption,
     std::string_view value,
     std::string &&name
 ) noexcept:
-    Widget ( messageQueue ),
     _committed ( value ),
     _fontStorage ( fontStorage ),
 
-    _lineDIV ( messageQueue,
-        parent,
+    _lineDIV ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -65,8 +63,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( messageQueue,
-        _lineDIV,
+    _columnDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -98,8 +95,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( messageQueue,
-        _columnDIV,
+    _captionDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -131,10 +127,9 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
+    _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( messageQueue,
-        _columnDIV,
+    _valueDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -166,8 +161,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _cursorDIV ( messageQueue,
-        _valueDIV,
+    _cursorDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::MAIN_COLOR,
@@ -199,8 +193,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (cursor)"
     ),
 
-    _selectionDIV ( messageQueue,
-        _valueDIV,
+    _selectionDIV ( _valueDIV,
 
         {
             ._backgroundColor = pbr::ColorValue ( 255U, 255U, 255U, 26U ),
@@ -232,8 +225,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (selection)"
     ),
 
-    _textDIV ( messageQueue,
-        _valueDIV,
+    _textDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -265,7 +257,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (text)"
     ),
 
-    _text ( messageQueue, _textDIV, value, name + " (text)" )
+    _text ( _textDIV, value, name + " (text)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );
@@ -472,7 +464,9 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
             ._eventID = _eventID - 1U
         };
 
-        _messageQueue.EnqueueBack (
+        MessageQueue &messageQueue = MessageQueue::Instance ();
+
+        messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::MouseMoved,
 
@@ -484,7 +478,7 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
             }
         );
 
-        _messageQueue.EnqueueBack (
+        messageQueue.EnqueueBack (
             {
                 ._type = eMessageType::MouseButtonDown,
 
@@ -644,7 +638,7 @@ void UIEditBox::Copy () noexcept
     using Offset = decltype ( begin )::difference_type;
     std::u32string value ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) );
 
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::WriteClipboard,
 
@@ -703,7 +697,7 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
 
 void UIEditBox::Paste () noexcept
 {
-    _messageQueue.EnqueueBack (
+    MessageQueue::Instance ().EnqueueBack (
         {
             ._type = eMessageType::ReadClipboardRequest,
             ._action = nullptr,
@@ -901,8 +895,7 @@ bool UIEditBox::RemoveSelectedContent () noexcept
 
 void UIEditBox::ResetBlinkTimer () noexcept
 {
-    _blink = std::make_unique<Timer> ( _messageQueue,
-        Timer::eType::Repeat,
+    _blink = std::make_unique<Timer> ( Timer::eType::Repeat,
         BLINK_PERIOD,
 
         [ this ] ( Timer::ElapsedTime &&/*elapsedTime*/ ) noexcept {

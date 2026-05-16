@@ -13,14 +13,14 @@ constexpr uint32_t VERSION = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-ScriptComponent::ScriptComponent ( MessageQueue &messageQueue ) noexcept:
-    Component ( messageQueue, VERSION, "script" )
+ScriptComponent::ScriptComponent () noexcept:
+    Component ( VERSION, "script" )
 {
     // NOTHING
 }
 
-ScriptComponent::ScriptComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept:
-    Component ( messageQueue, info )
+ScriptComponent::ScriptComponent ( SaveState::Container const &info ) noexcept:
+    Component ( info )
 {
     AV_ASSERT ( _version == VERSION )
     // FUCK

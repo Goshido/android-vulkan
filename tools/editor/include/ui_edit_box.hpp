@@ -79,8 +79,7 @@ class UIEditBox final : public Widget
         UIEditBox ( UIEditBox && ) = delete;
         UIEditBox &operator = ( UIEditBox && ) = delete;
 
-        explicit UIEditBox ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
+        explicit UIEditBox ( DIVUIElement &parent,
             pbr::FontStorage &fontStorage,
             std::string_view caption,
             std::string_view value,

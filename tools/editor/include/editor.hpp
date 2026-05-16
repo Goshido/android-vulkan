@@ -7,8 +7,8 @@
 #include "io.hpp"
 #include "main_window.hpp"
 #include "mesh_storage.hpp"
+#include "native_renderer.hpp"
 #include "render_session.hpp"
-#include <renderer.hpp>
 #include "timer_manager.hpp"
 #include "ui_manager.hpp"
 #include "workspace.hpp"
@@ -36,14 +36,14 @@ class Editor final
         History                                 _history {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
-        android_vulkan::Renderer                _renderer {};
+        NativeRenderer                          _renderer {};
 
-        MeshStorage                             _meshStorage { _renderer };
-        Workspace                               _workspace { _messageQueue };
-        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager, _workspace };
-        TimerManager                            _timerManager { _messageQueue };
-        IO                                      _io { _messageQueue };
-        UIManager                               _uiManager { _messageQueue, _renderSession.GetFontStorage () };
+        MeshStorage                             _meshStorage {};
+        Workspace                               _workspace {};
+        RenderSession                           _renderSession { _uiManager, _workspace };
+        TimerManager                            _timerManager {};
+        IO                                      _io {};
+        UIManager                               _uiManager { _renderSession.GetFontStorage () };
 
         bool                                    _stopRendering = false;
         uint16_t                                _runningModules = 0U;

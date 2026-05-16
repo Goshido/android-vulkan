@@ -1,15 +1,10 @@
 #include <precompiled_headers.hpp>
-#include "io.hpp"
+#include <io.hpp>
+#include <message_queue.hpp>
 #include <trace.hpp>
 
 
 namespace editor {
-
-IO::IO ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
 
 void IO::Init () noexcept
 {
@@ -36,8 +31,7 @@ void IO::Destroy () noexcept
 
 void IO::EventLoop () noexcept
 {
-    MessageQueue &messageQueue = _messageQueue;
-
+    MessageQueue &messageQueue = MessageQueue::Instance ();
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -70,16 +64,17 @@ void IO::EventLoop () noexcept
 void IO::OnInvokeIO ( Message &&message ) noexcept
 {
     AV_TRACE ( "Invoke" )
-    _messageQueue.DequeueEnd ();
+    MessageQueue::Instance ().DequeueEnd ();
     std::ignore = message._action ();
 }
 
 void IO::OnShutdown ( Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
-    _messageQueue.EnqueueFront (
+    messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
             ._action = nullptr,

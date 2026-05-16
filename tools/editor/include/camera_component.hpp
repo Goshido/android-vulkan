@@ -13,7 +13,7 @@ class CameraComponent final : public Component
         constexpr static std::string_view       TYPE = "Camera";
 
     public:
-        explicit CameraComponent ( MessageQueue &messageQueue ) noexcept;
+        explicit CameraComponent () noexcept;
 
         CameraComponent ( CameraComponent const & ) = delete;
         CameraComponent &operator = ( CameraComponent const & ) = delete;
@@ -21,7 +21,7 @@ class CameraComponent final : public Component
         CameraComponent ( CameraComponent && ) = delete;
         CameraComponent &operator = ( CameraComponent && ) = delete;
 
-        explicit CameraComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
+        explicit CameraComponent ( SaveState::Container const &info ) noexcept;
 
         ~CameraComponent () = default;
 

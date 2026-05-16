@@ -25,8 +25,8 @@ class StaticMeshComponent final : public Component
         StaticMeshComponent ( StaticMeshComponent && ) = delete;
         StaticMeshComponent &operator = ( StaticMeshComponent && ) = delete;
 
-        explicit StaticMeshComponent ( MessageQueue &messageQueue, SaveState::Container const &info ) noexcept;
-        explicit StaticMeshComponent ( MessageQueue &messageQueue, std::string_view mesh ) noexcept;
+        explicit StaticMeshComponent ( SaveState::Container const &info ) noexcept;
+        explicit StaticMeshComponent ( std::string_view mesh ) noexcept;
 
         ~StaticMeshComponent () = default;
 

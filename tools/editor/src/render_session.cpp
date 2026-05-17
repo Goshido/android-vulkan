@@ -521,52 +521,60 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::DestroyMesh:
+                OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::HelloTriangleReady:
                 OnHelloTriangleReady ( message._action () );
             break;
 
             case eMessageType::RenderFrame:
-                OnRenderFrame ();
+                OnRenderFrame ( messageQueue );
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::SwapchainCreated:
-                OnSwapchainCreated ();
+                OnSwapchainCreated ( messageQueue );
             break;
 
             case eMessageType::UIAppendChildElement:
-                OnUIAppendChildElement ( std::move ( message ) );
+                OnUIAppendChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIDeleteElement:
-                OnUIDeleteElement ( std::move ( message ) );
+                OnUIDeleteElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIElementCreated:
-                OnUIElementCreated ();
+                OnUIElementCreated ( messageQueue );
             break;
 
             case eMessageType::UIShowElement:
-                OnUIShowElement ( std::move ( message ) );
+                OnUIShowElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIPrependChildElement:
-                OnUIPrependChildElement ( std::move ( message ) );
+                OnUIPrependChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIHideElement:
-                OnUIHideElement ( std::move ( message ) );
+                OnUIHideElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UISetText:
-                OnUISetText ( std::move ( message ) );
+                OnUISetText ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIUpdateElement:
-                OnUIUpdateElement ( std::move ( message ) );
+                OnUIUpdateElement ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UploadMesh:
+                OnUploadMesh ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -708,6 +716,73 @@ bool RenderSession::InitModules () noexcept
     return true;
 }
 
+void RenderSession::FreeTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+{
+    auto &queue = _meshStorage._freeTransferQueue[ commandBufferIndex ];
+
+    if ( queue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Free transfer resources" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &mesh : queue )
+    {
+        messageQueue.EnqueueBack (
+            {
+                ._type = eMessageType::InvokeIO,
+
+                ._action = [ &renderer, mesh = mesh ] () noexcept -> void* {
+                    android_vulkan::MeshGeometry &m = *mesh;
+                    AV_TRACE ( "Free transfer resource (%s)", m.GetName ().c_str () );
+                    m.FreeTransferResources ( renderer );
+                    return nullptr;
+                },
+
+                ._serialNumber = 0U
+            }
+        );
+    }
+
+    queue.clear ();
+}
+
+void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+{
+    auto &uploadQueue = _meshStorage._uploadQueue;
+
+    if ( uploadQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Upload meshes" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload meshes" )
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    auto &transferQueue = _meshStorage._freeTransferQueue[ commandBufferIndex ];
+
+    for ( auto &info : uploadQueue )
+    {
+        MeshGeometryRef &mRef = info._mesh;
+        android_vulkan::MeshGeometry &m = *mRef;
+
+        AV_TRACE ( "Upload '%s'", m.GetName ().c_str () );
+        AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", m.GetName ().c_str () );
+
+        if ( !m.UploadToGPU ( renderer, commandBuffer, VK_NULL_HANDLE, std::move ( info._info ) ) )
+        {
+            [[unlikely]]
+            info._result ( std::nullopt );
+            continue;
+        }
+
+        transferQueue.push_back ( mRef );
+        ++_meshStorage._count;
+        info._result ( std::optional<MeshGeometryRef> { std::move ( mRef ) } );
+    }
+
+    uploadQueue.clear ();
+}
+
 void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
 {
     MessageQueue::Instance ().DequeueEnd ();
@@ -717,10 +792,18 @@ void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
     delete job;
 }
 
-void RenderSession::OnRenderFrame () noexcept
+void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy mesh" )
+    messageQueue.DequeueEnd ();
+    _meshStorage._destroyQueue.push_back ( std::move ( *static_cast<MeshGeometryRef*> ( message._action () ) ) );
+    --_meshStorage._count;
+}
+
+void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Render frame" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( _broken ) [[unlikely]]
         return;
@@ -750,9 +833,11 @@ void RenderSession::OnRenderFrame () noexcept
 
     if ( vulkanResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
     {
-        NotifyRecreateSwapchain ();
+        NotifyRecreateSwapchain ( messageQueue );
         return;
     }
+
+    FreeTransferQueue ( messageQueue, commandBufferIndex );
 
     if ( ( vulkanResult != VK_SUCCESS ) & ( vulkanResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
     {
@@ -787,6 +872,7 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
+    UploadMeshes ( commandBuffer, commandBufferIndex );
     resourceHeap.UploadGPUData ( commandBuffer );
 
     {
@@ -910,7 +996,7 @@ void RenderSession::OnRenderFrame () noexcept
             [[fallthrough]];
 
         case VK_ERROR_OUT_OF_DATE_KHR:
-            NotifyRecreateSwapchain ();
+            NotifyRecreateSwapchain ( messageQueue );
         return;
 
         default:
@@ -925,7 +1011,7 @@ void RenderSession::OnRenderFrame () noexcept
 
     GX_ENABLE_WARNING ( 4061 )
 
-    MessageQueue::Instance ().EnqueueBack (
+    messageQueue.EnqueueBack (
         {
             ._type = eMessageType::FrameComplete,
             ._action = nullptr,
@@ -934,17 +1020,16 @@ void RenderSession::OnRenderFrame () noexcept
     );
 }
 
-void RenderSession::OnShutdown ( Message &&refund ) noexcept
+void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
 
     // All existing events should be processed first.
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
     std::optional<Message::SerialNumber> lastRefund {};
 
-    while ( _uiElements )
+    while ( _uiElements | _meshStorage._count )
     {
         AV_TRACE ( "Event loop" )
         Message message = messageQueue.DequeueBegin ( lastRefund );
@@ -959,24 +1044,28 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
                 messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
             break;
 
+            case eMessageType::DestroyMesh:
+                OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::UIAppendChildElement:
-                OnUIAppendChildElement ( std::move ( message ) );
+                OnUIAppendChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIDeleteElement:
-                OnUIDeleteElement ( std::move ( message ) );
+                OnUIDeleteElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIElementCreated:
-                OnUIElementCreated ();
+                OnUIElementCreated ( messageQueue );
             break;
 
             case eMessageType::UIPrependChildElement:
-                OnUIPrependChildElement ( std::move ( message ) );
+                OnUIPrependChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UISetText:
-                OnUISetText ( std::move ( message ) );
+                OnUISetText ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -1026,6 +1115,11 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     _toneMapper.Destroy ( device );
     _resourceHeap.Destroy ( renderer );
 
+    for ( auto &mesh : _meshStorage._destroyQueue )
+        mesh->FreeResources ( renderer );
+
+    _meshStorage = {};
+
     messageQueue.EnqueueFront (
         {
             ._type = eMessageType::ModuleStopped,
@@ -1035,9 +1129,10 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     );
 }
 
-void RenderSession::OnSwapchainCreated () noexcept
+void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
 {
-    MessageQueue::Instance ().DequeueEnd ();
+    AV_TRACE ( "Swapchain created" )
+    messageQueue.DequeueEnd ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
     if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
@@ -1083,67 +1178,72 @@ void RenderSession::OnSwapchainCreated () noexcept
     AV_ASSERT ( false )
 }
 
-void RenderSession::OnUIAppendChildElement ( Message &&message ) noexcept
+void RenderSession::OnUIAppendChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI append child element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
+void RenderSession::OnUIDeleteElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI delete element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
     --_uiElements;
 }
 
-void RenderSession::OnUIElementCreated () noexcept
+void RenderSession::OnUIElementCreated ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "UI element created" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     ++_uiElements;
 }
 
-void RenderSession::OnUIHideElement ( Message &&message ) noexcept
+void RenderSession::OnUIHideElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI hide element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::OnUIShowElement ( Message &&message ) noexcept
+void RenderSession::OnUIShowElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
+void RenderSession::OnUIPrependChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI prepend child element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::OnUISetText ( Message &&message ) noexcept
+void RenderSession::OnUISetText ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI set text" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
+void RenderSession::OnUIUpdateElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI update element" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void RenderSession::NotifyRecreateSwapchain () const noexcept
+void RenderSession::OnUploadMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    MessageQueue &messageQueue = MessageQueue::Instance ();
+    AV_TRACE ( "Upload mesh" )
+    messageQueue.DequeueEnd ();
+    _meshStorage._uploadQueue.push_back ( std::move ( *static_cast<MeshUploadInfo*> ( message._action () ) ) );
+}
 
+void RenderSession::NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept
+{
     messageQueue.EnqueueBack (
         {
             ._type = eMessageType::RecreateSwapchain,

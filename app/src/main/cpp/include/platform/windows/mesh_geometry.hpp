@@ -16,6 +16,8 @@ class MeshGeometry final : public MeshGeometryBase
             VkIndexType                     _indexType = VK_INDEX_TYPE_UINT32;
             StreamInfo                      _stream0 {};
             std::optional<StreamInfo>       _stream1 = std::nullopt;
+
+            // FUCK replace by array
             std::vector<UploadJob>          _jobs {};
         };
 
@@ -44,6 +46,7 @@ class MeshGeometry final : public MeshGeometryBase
         [[nodiscard]] MeshBufferInfo const &GetMeshBufferInfo () const noexcept;
 
         [[nodiscard]] LoadResult LoadMesh ( Renderer &renderer, std::string &&fileName ) noexcept;
+        [[nodiscard]] LoadResult LoadMesh ( Renderer &renderer, std::string_view fileName ) noexcept;
 
         [[maybe_unused, nodiscard]] LoadResult LoadMesh ( Renderer &renderer,
             AbstractData data,
@@ -107,6 +110,8 @@ class MeshGeometry final : public MeshGeometryBase
             Vertices vertexStream1,
             uint32_t vertexCount
         ) noexcept;
+
+        [[nodiscard]] bool CreateStagingBuffer ( Renderer &renderer, UploadJobs jobs ) noexcept;
 };
 
 } // namespace android_vulkan

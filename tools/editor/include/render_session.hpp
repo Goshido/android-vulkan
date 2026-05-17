@@ -3,6 +3,7 @@
 
 
 #include "hello_triangle_program.hpp"
+#include "mesh_upload_info.hpp"
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
@@ -27,11 +28,17 @@ class RenderSession final
             VkCommandPool                                   _pool = VK_NULL_HANDLE;
         };
 
+        struct MeshStorage final
+        {
+            std::deque<MeshUploadInfo>                      _uploadQueue {};
+            std::deque<MeshGeometryRef>                     _freeTransferQueue[ pbr::FIF_COUNT ] {};
+            std::deque<MeshGeometryRef>                     _destroyQueue {};
+            size_t                                          _count = 0U;
+        };
+
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
 
     private:
-        bool                                                _broken = false;
-
         CommandInfo                                         _commandInfo[ pbr::FIF_COUNT ];
         size_t                                              _writingCommandInfo = 0U;
 
@@ -46,6 +53,7 @@ class RenderSession final
         uint32_t                                            _renderTargetIdx = 0U;
 
         pbr::ResourceHeap                                   _resourceHeap {};
+        MeshStorage                                         _meshStorage {};
 
         std::mutex                                          _submitMutex {};
         std::thread                                         _thread {};
@@ -60,6 +68,8 @@ class RenderSession final
         UIManager                                           &_uiManager;
         VkViewport                                          _viewport {};
         Workspace                                           &_workspace;
+
+        bool                                                _broken = false;
 
         VkRenderingAttachmentInfo                           _colorAttachment
         {
@@ -159,21 +169,25 @@ class RenderSession final
         [[nodiscard]] bool CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept;
         void EventLoop () noexcept;
         [[nodiscard]] bool InitModules () noexcept;
+        void FreeTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
+        void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnHelloTriangleReady ( void* params ) noexcept;
-        void OnRenderFrame () noexcept;
-        void OnShutdown ( Message &&refund ) noexcept;
-        void OnSwapchainCreated () noexcept;
-        void OnUIAppendChildElement ( Message &&message ) noexcept;
-        void OnUIDeleteElement ( Message &&message ) noexcept;
-        void OnUIElementCreated () noexcept;
-        void OnUIHideElement ( Message &&message ) noexcept;
-        void OnUIShowElement ( Message &&message ) noexcept;
-        void OnUIPrependChildElement ( Message &&message ) noexcept;
-        void OnUISetText ( Message &&message ) noexcept;
-        void OnUIUpdateElement ( Message &&message ) noexcept;
+        void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
+        void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
+        void OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept;
+        void OnUIAppendChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIDeleteElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIElementCreated ( MessageQueue &messageQueue ) noexcept;
+        void OnUIHideElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIShowElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIPrependChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUISetText ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIUpdateElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUploadMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
 
-        void NotifyRecreateSwapchain () const noexcept;
+        void NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept;
 
         [[nodiscard]] static bool PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept;
 };

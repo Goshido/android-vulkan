@@ -107,6 +107,8 @@ void Workspace::Init () noexcept
 void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
+    _history.Clear ();
+    _actors.clear ();
 
     constexpr auto clearAlpha = [] ( auto &queue, auto &map ) noexcept {
         for ( auto const &item : queue )

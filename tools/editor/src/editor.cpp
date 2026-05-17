@@ -143,7 +143,6 @@ bool Editor::InitModules () noexcept
 void Editor::DestroyModules () noexcept
 {
     AV_TRACE ( "Destroying modules" )
-    _workspace.Destroy ();
     std::optional<uint32_t> knownSerialNumber {};
 
     while ( _runningModules )
@@ -204,7 +203,7 @@ void Editor::EventLoop () noexcept
         Message message = _messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-
+        // FUCK - message queue as parameter
         switch ( message._type )
         {
             case eMessageType::ChangeCursor:
@@ -406,6 +405,7 @@ void Editor::OnShutdown () noexcept
 {
     AV_TRACE ( "Shutdown" )
     _messageQueue.DequeueEnd ();
+    _workspace.Destroy ();
 
     _messageQueue.EnqueueBack (
         {

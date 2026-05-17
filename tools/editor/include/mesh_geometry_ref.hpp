@@ -4,6 +4,12 @@
 
 #include <platform/windows/mesh_geometry.hpp>
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <memory>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace editor {
 

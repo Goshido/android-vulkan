@@ -31,7 +31,7 @@ void SetThreadName ( char const* name ) noexcept;
 
 } // namespace android_vulkan
 
-#define AV_TRACE_GEN(x, y) x##y
+#define AV_TRACE_GEN(x, y) x##____##y
 #define AV_TRACE_GEN2(x, y) AV_TRACE_GEN ( x, y )
 
 #define AV_TRACE_IMPL(trace, buf, ...)                                                                                 \
@@ -42,9 +42,11 @@ void SetThreadName ( char const* name ) noexcept;
 #define AV_TRACE(...) AV_TRACE_IMPL ( AV_TRACE_GEN2 ( trace, __LINE__ ), AV_TRACE_GEN2 ( buf, __LINE__ ), __VA_ARGS__ )
 
 #define AV_THREAD_NAME_IMPL(buf, ...)                                                                                  \
+{                                                                                                                      \
     char buf[ 256U ];                                                                                                  \
     std::snprintf ( buf, std::size ( buf ), __VA_ARGS__ );                                                             \
-    android_vulkan::SetThreadName ( buf );
+    android_vulkan::SetThreadName ( buf );                                                                             \
+}
 
 #define AV_THREAD_NAME(...) AV_THREAD_NAME_IMPL ( AV_TRACE_GEN2 ( buf, __LINE__ ), __VA_ARGS__ )
 

@@ -50,7 +50,7 @@ void TimerManager::EventLoop () noexcept
         Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-
+        // FUCK - message queue as parameter
         switch ( message._type )
         {
             case eMessageType::Shutdown:

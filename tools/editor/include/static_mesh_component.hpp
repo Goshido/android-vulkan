@@ -28,7 +28,7 @@ class StaticMeshComponent final : public Component
         explicit StaticMeshComponent ( SaveState::Container const &info ) noexcept;
         explicit StaticMeshComponent ( std::string_view mesh ) noexcept;
 
-        ~StaticMeshComponent () = default;
+        ~StaticMeshComponent () noexcept override;
 
     private:
         void Register () noexcept override;

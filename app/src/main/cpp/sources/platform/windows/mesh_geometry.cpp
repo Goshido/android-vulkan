@@ -50,6 +50,11 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     return _meshBufferInfo;
 }
 
+MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer& renderer, std::string_view fileName ) noexcept
+{
+    return LoadMesh ( renderer, std::string ( fileName ) );
+}
+
 [[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer, std::string &&fileName ) noexcept
 {
     if ( fileName.empty () ) [[unlikely]]
@@ -100,6 +105,18 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
     if ( !result ) [[unlikely]]
         return std::nullopt;
 
+    std::vector<UploadJob> jobs =
+    {
+        {
+            ._data = data.data (),
+            ._dstOffset = 0U,
+            ._size = _gpuAllocation._range
+        }
+    };
+
+    if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+        return std::nullopt;
+
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
 
@@ -116,14 +133,7 @@ MeshBufferInfo const &MeshGeometry::GetMeshBufferInfo () const noexcept
 
             ._stream1 = std::nullopt,
 
-            ._jobs
-            {
-                {
-                    ._data = data.data (),
-                    ._dstOffset = 0U,
-                    ._size = _gpuAllocation._range
-                }
-            }
+            ._jobs = std::move ( jobs )
         }
     };
 }
@@ -336,63 +346,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     UploadJobs jobs
 ) noexcept
 {
-    size_t const dataSize = [ &jobs ] () -> size_t {
-        size_t size = 0U;
-
-        for ( UploadJob const &job : jobs )
-            size += job._size;
-
-        return size;
-    } ();
-
-    constexpr VkMemoryPropertyFlags flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
-        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
-
-    bool result = CreateBuffer ( renderer,
-        _transferBuffer,
-        _transferAllocation,
-
-        {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0U,
-            .size = static_cast<VkDeviceSize> ( dataSize ),
-            .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .queueFamilyIndexCount = 0U,
-            .pQueueFamilyIndices = nullptr
-        },
-
-        flags,
-        "Mesh staging buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    void* transferData = nullptr;
-
-    result = renderer.MapMemory ( transferData,
-        _transferAllocation._memory,
-        _transferAllocation._offset,
-        "MeshGeometry::GPUTransfer",
-        "Can't map data"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    auto* writePtr = static_cast<uint8_t*> ( transferData );
-
-    for ( UploadJob const &job : jobs )
-    {
-        std::memcpy ( writePtr, job._data , job._size );
-        writePtr += static_cast<size_t> ( job._size );
-    }
-
-    renderer.UnmapMemory ( _transferAllocation._memory );
-
-    if ( !externalCommandBuffer )
+    if ( !externalCommandBuffer ) [[unlikely]]
     {
         constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
         {
@@ -402,7 +356,7 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
             .pInheritanceInfo = nullptr
         };
 
-        result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+        bool const result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
             "MeshGeometry::GPUTransfer",
             "Can't begin command buffer"
         );
@@ -466,10 +420,10 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         nullptr
     );
 
-    if ( externalCommandBuffer )
+    if ( externalCommandBuffer ) [[likely]]
         return true;
 
-    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+    bool const result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "MeshGeometry::GPUTransfer",
         "Can't end command buffer"
     );
@@ -520,7 +474,7 @@ MeshGeometry::LoadResult MeshGeometry::LoadFromMesh2 ( Renderer &renderer, std::
 
     _vertexCount = static_cast<uint32_t> ( header._indexCount );
     _vertexBufferVertexCount = header._vertexCount;
-    _fileName = std::move ( fileName );
+    _fileName = std::move ( file.GetPath () );
 
     return Upload ( renderer,
         {
@@ -597,6 +551,25 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
 
     if ( vertexStream1.empty () )
     {
+        std::vector<UploadJob> jobs =
+        {
+            {
+                {
+                    ._data = indices.data (),
+                    ._dstOffset = 0U,
+                    ._size = static_cast<VkDeviceSize> ( indSize )
+                },
+                {
+                    ._data = vertexStream0.data (),
+                    ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+                    ._size = static_cast<VkDeviceSize> ( posSize )
+                }
+            }
+        };
+
+        if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+            return std::nullopt;
+
         return LoadResult
         {
             {
@@ -609,23 +582,32 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
                 },
 
                 ._stream1 = std::nullopt,
-
-                ._jobs
-                {
-                    {
-                        ._data = indices.data (),
-                        ._dstOffset = 0U,
-                        ._size = static_cast<VkDeviceSize> ( indSize )
-                    },
-                    {
-                        ._data = vertexStream0.data (),
-                        ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
-                        ._size = static_cast<VkDeviceSize> ( posSize )
-                    }
-                }
+                ._jobs = std::move ( jobs )
             }
         };
     }
+
+    std::vector<UploadJob> jobs =
+    {
+        {
+            ._data = indices.data (),
+            ._dstOffset = 0U,
+            ._size = static_cast<VkDeviceSize> ( indSize )
+        },
+        {
+            ._data = vertexStream0.data (),
+            ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+            ._size = static_cast<VkDeviceSize> ( posSize )
+        },
+        {
+            ._data = vertexStream1.data (),
+            ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
+            ._size = static_cast<VkDeviceSize> ( restSize )
+        }
+    };
+
+    if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+        return std::nullopt;
 
     return LoadResult
     {
@@ -645,26 +627,69 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
                 }
             },
 
-            ._jobs
-            {
-                {
-                    ._data = indices.data (),
-                    ._dstOffset = 0U,
-                    ._size = static_cast<VkDeviceSize> ( indSize )
-                },
-                {
-                    ._data = vertexStream0.data (),
-                    ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
-                    ._size = static_cast<VkDeviceSize> ( posSize )
-                },
-                {
-                    ._data = vertexStream1.data (),
-                    ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
-                    ._size = static_cast<VkDeviceSize> ( restSize )
-                }
-            }
+            ._jobs = std::move ( jobs )
         }
     };
+}
+
+bool MeshGeometry::CreateStagingBuffer ( Renderer &renderer, UploadJobs jobs ) noexcept
+{
+    size_t const dataSize = [ &jobs ] () -> size_t {
+        size_t size = 0U;
+
+        for ( UploadJob const &job : jobs )
+            size += job._size;
+
+        return size;
+    } ();
+
+    constexpr VkMemoryPropertyFlags flags = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
+
+    bool result = CreateBuffer ( renderer,
+        _transferBuffer,
+        _transferAllocation,
+
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+            .size = static_cast<VkDeviceSize> ( dataSize ),
+            .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 0U,
+            .pQueueFamilyIndices = nullptr
+        },
+
+        flags,
+        "Mesh staging buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    void* transferData = nullptr;
+
+    result = renderer.MapMemory ( transferData,
+        _transferAllocation._memory,
+        _transferAllocation._offset,
+        "MeshGeometry::CreateStagingBuffer",
+        "Can't map data"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    auto* writePtr = static_cast<uint8_t*> ( transferData );
+
+    for ( UploadJob const &job : jobs )
+    {
+        std::memcpy ( writePtr, job._data , job._size );
+        writePtr += static_cast<size_t> ( job._size );
+    }
+
+    renderer.UnmapMemory ( _transferAllocation._memory );
+    return true;
 }
 
 } // namespace android_vulkan

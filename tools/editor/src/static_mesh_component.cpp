@@ -37,6 +37,14 @@ StaticMeshComponent::StaticMeshComponent ( std::string_view mesh ) noexcept:
     LoadMesh ( mesh );
 }
 
+StaticMeshComponent::~StaticMeshComponent () noexcept
+{
+    if ( _mesh ) [[likely]]
+    {
+        MeshStorage::Instance ().Unload ( std::move ( _mesh ) );
+    }
+}
+
 void StaticMeshComponent::Register () noexcept
 {
     // FUCK
@@ -56,11 +64,11 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::LoadMesh ( std::string_view mesh ) noexcept
 {
-    auto result = [ this ] ( std::optional<MeshGeometryRef> &&mesh ) noexcept {
-        _mesh = *mesh;
-    };
-
-    MeshStorage::Instance ().Load ( mesh, std::move ( result ) );
+    MeshStorage::Instance ().Load ( mesh,
+        [ this ] ( std::optional<MeshGeometryRef> &&mesh ) noexcept {
+            _mesh = std::move ( *mesh );
+        }
+    );
 }
 
 } // namespace editor

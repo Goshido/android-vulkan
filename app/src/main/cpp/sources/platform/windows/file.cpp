@@ -11,7 +11,7 @@ File::File ( std::string &&filePath ) noexcept:
     // NOTHING
 }
 
-File::File ( std::string_view const &filePath ) noexcept:
+File::File ( std::string_view filePath ) noexcept:
     _filePath ( filePath )
 {
     // NOTHING
@@ -86,6 +86,22 @@ bool File::LoadContent () noexcept
 
     LogError ( "File::LoadContent - Can't load whole file content %s.", _filePath.c_str () );
     return false;
+}
+
+std::string File::ResolvePath ( std::string &&path ) noexcept
+{
+    if ( std::string p = std::filesystem::weakly_canonical ( std::filesystem::path ( path ) ).string (); !p.empty () )
+    {
+        [[likely]]
+        return p;
+    }
+
+    return path;
+}
+
+std::string File::ResolvePath ( std::string_view path ) noexcept
+{
+    return ResolvePath ( std::string ( path ) );
 }
 
 } // namespace android_vulkan

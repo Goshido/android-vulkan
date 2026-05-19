@@ -16,9 +16,17 @@ namespace editor {
 class MeshStorage final
 {
     private:
-        std::unordered_map<std::string, MeshGeometryRef>    _storage {};
+        struct Item final
+        {
+            MeshGeometryRef                                             _mesh {};
+            size_t                                                      _references = 0U;
+        };
 
-        static MeshStorage*                                 _instance;
+    private:
+        std::unordered_map<std::string, Item>                           _storage {};
+        std::unordered_map<std::string, std::deque<MeshLoadResult>>     _tasks {};
+
+        static MeshStorage*                                             _instance;
 
     public:
         explicit MeshStorage () noexcept;
@@ -31,7 +39,7 @@ class MeshStorage final
 
         ~MeshStorage () = default;
 
-        // Note LoadResult could be called from IO or RenderSession thread depending of success or fail.
+        // Note LoadResult will be called from IO thread.
         void Load ( std::string_view asset, MeshLoadResult &&result ) noexcept;
         void Unload ( MeshGeometryRef &&mesh ) noexcept;
 

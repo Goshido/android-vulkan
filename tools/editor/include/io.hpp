@@ -2,7 +2,7 @@
 #define EDITOR_IO_HPP
 
 
-#include "message.hpp"
+#include "message_queue.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -35,8 +35,8 @@ class IO final
     private:
         void EventLoop () noexcept;
 
-        void OnInvokeIO ( Message &&message ) noexcept;
-        void OnShutdown ( Message &&refund ) noexcept;
+        void OnInvokeIO ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
 };
 
 } // namespace editor

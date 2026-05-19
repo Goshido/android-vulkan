@@ -2,7 +2,6 @@
 #include <av_assert.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
-#include <message_queue.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
 #include <ui_props.hpp>
@@ -105,75 +104,75 @@ void UIManager::EventLoop () noexcept
         Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-        // FUCK - message queue as parameter
+
         switch ( message._type )
         {
             case eMessageType::DoubleClick:
-                OnDoubleClick ( std::move ( message ) );
+                OnDoubleClick ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::FontStorageReady:
-                OnFontStorageReady ();
+                OnFontStorageReady ( messageQueue );
             break;
 
             case eMessageType::KeyboardKeyDown:
-                OnKeyboardKeyDown ( std::move ( message ) );
+                OnKeyboardKeyDown ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::KeyboardKeyUp:
-                OnKeyboardKeyUp ( std::move ( message ) );
+                OnKeyboardKeyUp ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::KillFocus:
-                OnKillFocus ();
+                OnKillFocus ( messageQueue );
             break;
 
             case eMessageType::MouseHover:
-                OnMouseHover ( std::move ( message ) );
+                OnMouseHover ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseButtonDown:
-                OnMouseButtonDown ( std::move ( message ) );
+                OnMouseButtonDown ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseButtonUp:
-                OnMouseButtonUp ( std::move ( message ) );
+                OnMouseButtonUp ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseMoved:
-                OnMouseMoved ( std::move ( message ) );
+                OnMouseMoved ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::ReadClipboardResponse:
-                OnReadClipboardResponse ( std::move ( message ) );
+                OnReadClipboardResponse ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::SetFocus:
-                OnSetFocus ( std::move ( message ) );
+                OnSetFocus ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::StartWidgetCaptureMouse:
-                OnStartWidgetCaptureMouse ( std::move ( message ) );
+                OnStartWidgetCaptureMouse ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::StopWidgetCaptureMouse:
-                OnStopWidgetCaptureMouse ();
+                OnStopWidgetCaptureMouse ( messageQueue );
             break;
 
             case eMessageType::Typing:
-                OnTyping ( std::move ( message ) );
+                OnTyping ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIAddWidget:
-                OnUIAddWidget ( std::move ( message ) );
+                OnUIAddWidget ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIRemoveWidget:
-                OnUIRemoveWidget ( std::move ( message ) );
+                OnUIRemoveWidget ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -186,10 +185,10 @@ void UIManager::EventLoop () noexcept
     }
 }
 
-void UIManager::OnDoubleClick ( Message &&message ) noexcept
+void UIManager::OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Double click" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
@@ -222,10 +221,9 @@ void UIManager::OnDoubleClick ( Message &&message ) noexcept
     }
 }
 
-void UIManager::OnFontStorageReady () noexcept
+void UIManager::OnFontStorageReady ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "FontStorage ready" )
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ();
 
     auto* dialogBox = new UIProps ( _fontStorage );
@@ -247,10 +245,10 @@ void UIManager::OnFontStorageReady () noexcept
     );
 }
 
-void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept
+void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Keyboard key down" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( !_typingCapture ) [[unlikely]]
         return;
@@ -259,10 +257,10 @@ void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept
     _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
 }
 
-void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
+void UIManager::OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Keyboard key up" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( !_typingCapture ) [[unlikely]]
         return;
@@ -271,24 +269,24 @@ void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
     _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
 }
 
-void UIManager::OnKillFocus () noexcept
+void UIManager::OnKillFocus ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Kill focus" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _typingCapture = nullptr;
 }
 
-void UIManager::OnSetFocus ( Message &&message ) noexcept
+void UIManager::OnSetFocus ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Set focus" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _typingCapture = static_cast<Widget*> ( message._action () );
 }
 
-void UIManager::OnMouseHover ( Message &&message ) noexcept
+void UIManager::OnMouseHover ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse hover" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     auto* widget = static_cast<Widget*> ( message._action () );
 
@@ -298,10 +296,10 @@ void UIManager::OnMouseHover ( Message &&message ) noexcept
     _hoverWidget = widget;
 }
 
-void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
+void UIManager::OnMouseButtonDown ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse button down" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
@@ -334,10 +332,10 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
     }
 }
 
-void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
+void UIManager::OnMouseButtonUp ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse button up" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
@@ -372,10 +370,9 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
     }
 }
 
-void UIManager::OnMouseMoved ( Message &&message ) noexcept
+void UIManager::OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse moved" )
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ();
 
     auto const &event = *static_cast<MouseMoveEvent const*> ( message._action () );
@@ -422,10 +419,10 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
     );
 }
 
-void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
+void UIManager::OnReadClipboardResponse ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Read clipboard response" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( _typingCapture ) [[likely]]
     {
@@ -433,10 +430,9 @@ void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
     }
 }
 
-void UIManager::OnShutdown ( Message &&refund ) noexcept
+void UIManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
 
     {
@@ -453,24 +449,24 @@ void UIManager::OnShutdown ( Message &&refund ) noexcept
     );
 }
 
-void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
+void UIManager::OnStartWidgetCaptureMouse ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Start widget capture input" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _mouseCapture = static_cast<Widget*> ( message._action () );
 }
 
-void UIManager::OnStopWidgetCaptureMouse () noexcept
+void UIManager::OnStopWidgetCaptureMouse ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Stop widget capture input" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _mouseCapture = nullptr;
 }
 
-void UIManager::OnTyping ( Message &&message ) noexcept
+void UIManager::OnTyping ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Typing" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( _typingCapture ) [[likely]]
     {
@@ -478,19 +474,19 @@ void UIManager::OnTyping ( Message &&message ) noexcept
     }
 }
 
-void UIManager::OnUIAddWidget ( Message &&message ) noexcept
+void UIManager::OnUIAddWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Add widget" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     std::lock_guard const lock ( _mutex );
     _widgets.emplace_back ( static_cast<Widget*> ( message._action () ) );
 }
 
-void UIManager::OnUIRemoveWidget ( Message &&message ) noexcept
+void UIManager::OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Remove widget" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     auto const* widget = static_cast<Widget const*> ( message._action () );
 
     std::lock_guard const lock ( _mutex );

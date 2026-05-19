@@ -2,7 +2,7 @@
 #define EDITOR_TIMER_MANAGER_HPP
 
 
-#include "message.hpp"
+#include "message_queue.hpp"
 #include "timer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -37,9 +37,9 @@ class TimerManager final
     private:
         void EventLoop () noexcept;
 
-        void OnStartTimer ( Message &&message ) noexcept;
-        void OnStopTimer ( Message &&message ) noexcept;
-        void OnShutdown ( Message &&refund ) noexcept;
+        void OnStartTimer ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnStopTimer ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
 };
 
 } // namespace editor

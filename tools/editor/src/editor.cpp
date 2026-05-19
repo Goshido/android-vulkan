@@ -203,7 +203,7 @@ void Editor::EventLoop () noexcept
         Message message = _messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-        // FUCK - message queue as parameter
+
         switch ( message._type )
         {
             case eMessageType::ChangeCursor:

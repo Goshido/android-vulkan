@@ -1,6 +1,5 @@
 #include <precompiled_headers.hpp>
 #include <io.hpp>
-#include <message_queue.hpp>
 #include <trace.hpp>
 
 
@@ -40,15 +39,15 @@ void IO::EventLoop () noexcept
         Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-        // FUCK - message queue as parameter
+
         switch ( message._type )
         {
             case eMessageType::InvokeIO:
-                OnInvokeIO ( std::move ( message ) );
+                OnInvokeIO ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             default:
@@ -61,17 +60,16 @@ void IO::EventLoop () noexcept
     }
 }
 
-void IO::OnInvokeIO ( Message &&message ) noexcept
+void IO::OnInvokeIO ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Invoke" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     std::ignore = message._action ();
 }
 
-void IO::OnShutdown ( Message &&refund ) noexcept
+void IO::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
     messageQueue.EnqueueFront (

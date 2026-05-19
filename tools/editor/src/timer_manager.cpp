@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <message_queue.hpp>
 #include <timer_manager.hpp>
 #include <trace.hpp>
 
@@ -50,19 +49,19 @@ void TimerManager::EventLoop () noexcept
         Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
-        // FUCK - message queue as parameter
+
         switch ( message._type )
         {
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::StartTimer:
-                OnStartTimer ( std::move ( message ) );
+                OnStartTimer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::StopTimer:
-                OnStopTimer ( std::move ( message ) );
+                OnStopTimer ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -91,27 +90,26 @@ void TimerManager::EventLoop () noexcept
     }
 }
 
-void TimerManager::OnStartTimer ( Message &&message ) noexcept
+void TimerManager::OnStartTimer ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Start timer" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _timers.insert ( static_cast<Timer::State*> ( message._action () ) );
 }
 
-void TimerManager::OnStopTimer ( Message &&message ) noexcept
+void TimerManager::OnStopTimer ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Stop timer" )
-    MessageQueue::Instance ().DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     auto* timer = static_cast<Timer::State*> ( message._action () );
     _timers.erase ( timer );
     delete timer;
 }
 
-void TimerManager::OnShutdown ( Message &&refund ) noexcept
+void TimerManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    MessageQueue &messageQueue = MessageQueue::Instance ();
     messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
     messageQueue.EnqueueFront (

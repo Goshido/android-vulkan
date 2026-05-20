@@ -6,6 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <deque>
 #include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
@@ -39,7 +40,7 @@ class MeshStorage final
 
         ~MeshStorage () = default;
 
-        // Note LoadResult will be called from IO thread.
+        // Note load result will be called from IO thread.
         void Load ( std::string_view asset, MeshLoadResult &&result ) noexcept;
         void Unload ( MeshGeometryRef &&mesh ) noexcept;
 

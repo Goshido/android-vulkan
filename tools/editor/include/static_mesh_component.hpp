@@ -4,6 +4,7 @@
 
 #include "component.hpp"
 #include "mesh_geometry_ref.hpp"
+#include "texture2D_ref.hpp"
 
 
 namespace editor {
@@ -12,6 +13,9 @@ class StaticMeshComponent final : public Component
 {
     private:
         MeshGeometryRef                         _mesh {};
+
+        // FUCK - replace by material system
+        Texture2DRef                            _albedo {};
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";
@@ -26,7 +30,7 @@ class StaticMeshComponent final : public Component
         StaticMeshComponent &operator = ( StaticMeshComponent && ) = delete;
 
         explicit StaticMeshComponent ( SaveState::Container const &info ) noexcept;
-        explicit StaticMeshComponent ( std::string_view mesh ) noexcept;
+        explicit StaticMeshComponent ( std::string_view mesh, std::string_view albedo ) noexcept;
 
         ~StaticMeshComponent () noexcept override;
 
@@ -35,7 +39,7 @@ class StaticMeshComponent final : public Component
         void Unregister () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
 
-        void LoadMesh ( std::string_view mesh ) noexcept;
+        void LoadResources ( std::string_view mesh, std::string_view albedo ) noexcept;
 };
 
 } // namespace editor

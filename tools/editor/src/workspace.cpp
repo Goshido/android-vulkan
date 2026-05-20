@@ -347,13 +347,22 @@ void Workspace::FUCK () noexcept
     actor->SetName ( "FUCK" );
     Actor &a = *actor;
 
-    ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2" );
+    ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
+        "../editor-assets/textures/sonic-material-1-diffuse.png"
+    );
+
     mesh1->SetName ( "mesh #1" );
 
-    ComponentRef mesh2 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-2.mesh2" );
+    ComponentRef mesh2 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-2.mesh2",
+        "../editor-assets/textures/sonic-material-2-diffuse.png"
+    );
+
     mesh2->SetName ( "mesh #2" );
 
-    ComponentRef mesh3 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-3.mesh2" );
+    ComponentRef mesh3 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-3.mesh2",
+        "../editor-assets/textures/sonic-material-3-diffuse.png"
+    );
+
     mesh3->SetName ( "mesh #3" );
 
     _history.Begin ();

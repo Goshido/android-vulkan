@@ -2,6 +2,7 @@
 #include <av_assert.hpp>
 #include <mesh_storage.hpp>
 #include <static_mesh_component.hpp>
+#include <texture2D_storage.hpp>
 
 
 namespace editor {
@@ -10,6 +11,7 @@ namespace {
 
 constexpr uint32_t VERSION = 1U;
 constexpr std::string_view DEFAULT_MESH = "pbr/system/unit-cube.mesh2";
+constexpr std::string_view DEFAULT_ALBEDO = "pbr/system/white.tga";
 constexpr std::string_view DEFAULT_NAME = "static mesh";
 
 constexpr std::string_view MESH_KEY = "mesh";
@@ -21,27 +23,30 @@ constexpr std::string_view MESH_KEY = "mesh";
 StaticMeshComponent::StaticMeshComponent () noexcept:
     Component ( VERSION, std::string ( DEFAULT_NAME ) )
 {
-    LoadMesh ( DEFAULT_MESH );
+    LoadResources ( DEFAULT_MESH, DEFAULT_ALBEDO );
 }
 
 StaticMeshComponent::StaticMeshComponent ( SaveState::Container const &info ) noexcept:
     Component ( info )
 {
     AV_ASSERT ( _version == VERSION )
-    LoadMesh ( info.Read ( MESH_KEY, DEFAULT_MESH ) );
+    LoadResources ( info.Read ( MESH_KEY, DEFAULT_MESH ), DEFAULT_ALBEDO );
 }
 
-StaticMeshComponent::StaticMeshComponent ( std::string_view mesh ) noexcept:
+StaticMeshComponent::StaticMeshComponent ( std::string_view mesh, std::string_view albedo ) noexcept:
     Component ( VERSION, std::string ( DEFAULT_NAME ) )
 {
-    LoadMesh ( mesh );
+    LoadResources ( mesh, albedo );
 }
 
 StaticMeshComponent::~StaticMeshComponent () noexcept
 {
     if ( _mesh ) [[likely]]
-    {
         MeshStorage::Instance ().Unload ( std::move ( _mesh ) );
+
+    if ( _albedo ) [[likely]]
+    {
+        Texture2DStorage::Instance ().Unload ( std::move ( _albedo ) );
     }
 }
 
@@ -62,11 +67,17 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
     root.Write ( MESH_KEY, _mesh->GetName () );
 }
 
-void StaticMeshComponent::LoadMesh ( std::string_view mesh ) noexcept
+void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_view albedo ) noexcept
 {
     MeshStorage::Instance ().Load ( mesh,
         [ this ] ( std::optional<MeshGeometryRef> &&mesh ) noexcept {
             _mesh = std::move ( *mesh );
+        }
+    );
+
+    Texture2DStorage::Instance ().Load ( albedo,
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _albedo = std::move ( *texture );
         }
     );
 }

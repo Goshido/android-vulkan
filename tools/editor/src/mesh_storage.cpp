@@ -18,6 +18,10 @@ MeshStorage::MeshStorage () noexcept
 
 void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexcept
 {
+    // The main goal: minimize the amount of work in rendering thread as much as possible. To achieve that every IO
+    // task will be done in separate thread. Any Vulkan resource allocations will be done is separate thread.
+    // The rendering thread will only record transfer operations into command buffer.
+
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
     auto loadAsset = [ this,
@@ -52,10 +56,13 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
             return nullptr;
         }
 
-        auto uploadResult = [ this, &messageQueue, path ] ( std::optional<MeshGeometryRef> &&mesh ) noexcept {
+        auto uploadResult = [ this, &messageQueue, path ] ( std::optional<MeshGeometryRef> &&mesh ) mutable noexcept {
             AV_TRACE ( "Upload done %s", path.c_str () )
 
-            auto finishUpload = [ this, path = std::move ( path ), mesh = std::move ( mesh ) ] () noexcept -> void* {
+            auto finishUpload = [ this,
+                path = std::move ( path ),
+                mesh = std::move ( mesh )
+            ] () mutable noexcept -> void* {
                 AV_TRACE ( "Upload done %s", path.c_str () )
                 auto const findResult = _tasks.find ( path );
 
@@ -70,7 +77,7 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
                 for ( auto &result : results )
                     result ( std::optional<MeshGeometryRef> ( mesh ) );
 
-                if ( !mesh )
+                if ( !mesh ) [[unlikely]]
                     return nullptr;
 
                 _storage.insert (

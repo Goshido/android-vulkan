@@ -9,7 +9,7 @@ namespace pbr {
 
 namespace {
 
-constexpr char const BRDF_LUT[] = "pbr/system/brdf-lut.png";
+constexpr std::string_view BRDF_LUT = "pbr/system/brdf-lut.png";
 
 // 256 128 64 32 16 8 4 2 1
 // counting from 0.0F

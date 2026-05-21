@@ -102,19 +102,7 @@ class Texture2D final
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadData ( Renderer &renderer,
-            std::string_view const &fileName,
-            eColorSpace space,
-            bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
-        ) noexcept;
-
-        // Supported media containers:
-        // - PNG
-        // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( Renderer &renderer,
-            char const* fileName,
+            std::string_view fileName,
             eColorSpace space,
             bool isGenerateMipmaps,
             VkCommandBuffer commandBuffer,
@@ -133,6 +121,13 @@ class Texture2D final
             VkFence fence
         ) noexcept;
 
+        // The method invocation must be externally synchronized because it's could call vkQueueSubmit.
+        [[nodiscard]] bool UploadToGPU ( Renderer &renderer,
+            VkCommandBuffer commandBuffer,
+            bool externalCommandBuffer,
+            VkFence fence
+        ) noexcept;
+
         [[nodiscard]] static uint8_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
 
     private:
@@ -144,8 +139,6 @@ class Texture2D final
             Renderer &renderer
         ) noexcept;
 
-        // The method returns true if success. Otherwise the method returns false.
-        // Note the method maps "_transferDeviceMemory" to the "mappedBuffer". So user code MUST invoke vkUnmapMemory.
         [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer,
             VkDeviceSize size,
             Renderer &renderer
@@ -169,6 +162,9 @@ class Texture2D final
             bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
+
+        [[nodiscard]] bool UploadCompressedImageToGPU ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadUncompressedImageToGPU ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool IsCompressed ( std::string const &fileName ) noexcept;
 

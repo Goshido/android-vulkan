@@ -192,57 +192,14 @@ bool Texture2D::UploadData ( Renderer &renderer,
     VkFence fence
 ) noexcept
 {
-    if ( fileName.empty () ) [[unlikely]]
-    {
-        LogError ( "Texture2D::UploadData - Can't upload data. Filename is empty." );
-        return false;
-    }
-
-    FreeResourceInternal ( renderer );
-    std::vector<uint8_t> pixelData;
-
-    int width = 0;
-    int height = 0;
-    int channels = 0;
-
-    if ( !LoadImage ( pixelData, fileName, width, height, channels ) ) [[unlikely]]
-        return false;
-
-    const VkFormat actualFormat = PickupFormat ( channels );
-    VkImageCreateInfo imageInfo;
-
-    VkExtent2D const resolution
-    {
-        .width = static_cast<uint32_t> ( width ),
-        .height = static_cast<uint32_t> ( height )
-    };
-
-    bool result = CreateCommonResources ( imageInfo,
-        resolution,
-        ResolveFormat ( actualFormat, space ),
-        ResolveUsage ( isGenerateMipmaps ),
-        isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U ),
-        renderer
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    result = UploadDataInternal ( renderer,
-        pixelData.data (),
-        pixelData.size (),
+    return UploadData ( renderer,
+        std::string ( fileName ),
+        space,
         isGenerateMipmaps,
-        imageInfo,
         commandBuffer,
         externalCommandBuffer,
         fence
     );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    _fileName = fileName;
-    return true;
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
@@ -315,26 +272,7 @@ bool Texture2D::UploadData ( Renderer &renderer,
 }
 
 bool Texture2D::UploadData ( Renderer &renderer,
-    std::string_view const &fileName,
-    eColorSpace space,
-    bool isGenerateMipmaps,
-    VkCommandBuffer commandBuffer,
-    bool externalCommandBuffer,
-    VkFence fence
-) noexcept
-{
-    return UploadData ( renderer,
-        std::string ( fileName ),
-        space,
-        isGenerateMipmaps,
-        commandBuffer,
-        externalCommandBuffer,
-        fence
-    );
-}
-
-bool Texture2D::UploadData ( Renderer &renderer,
-    char const *fileName,
+    std::string_view fileName,
     eColorSpace space,
     bool isGenerateMipmaps,
     VkCommandBuffer commandBuffer,
@@ -386,6 +324,82 @@ bool Texture2D::UploadData ( Renderer &renderer,
         externalCommandBuffer,
         fence
     );
+}
+
+bool Texture2D::UploadToGPU ( Renderer &renderer,
+    VkCommandBuffer commandBuffer,
+    bool externalCommandBuffer,
+    VkFence fence
+) noexcept
+{
+    if ( !externalCommandBuffer )
+    {
+        constexpr VkCommandBufferBeginInfo commandBufferBeginInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr
+        };
+
+        bool const result = Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &commandBufferBeginInfo ),
+            "Texture2D::UploadToGPU",
+            "Can't begin command buffer"
+        );
+
+        if ( !result ) [[unlikely]]
+        {
+            FreeResources ( renderer );
+            return false;
+        }
+    }
+
+    bool const isUncompressed = ( _format == VK_FORMAT_R8_SRGB ) |
+        ( _format == VK_FORMAT_R8_SRGB ) |
+        ( _format == VK_FORMAT_R8G8B8A8_UNORM ) |
+        ( _format == VK_FORMAT_R8G8B8A8_SRGB );
+
+    bool result = isUncompressed ?
+        UploadUncompressedImageToGPU ( commandBuffer ) :
+        UploadCompressedImageToGPU ( commandBuffer );
+
+    if ( externalCommandBuffer | !result )
+        return result;
+
+    result = Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
+        "Texture2D::UploadToGPU",
+        "Can't end command buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+    {
+        FreeResources ( renderer );
+        return false;
+    }
+
+    VkSubmitInfo const submitInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .pNext = nullptr,
+        .waitSemaphoreCount = 0U,
+        .pWaitSemaphores = nullptr,
+        .pWaitDstStageMask = nullptr,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &commandBuffer,
+        .signalSemaphoreCount = 0U,
+        .pSignalSemaphores = nullptr
+    };
+
+    result = Renderer::CheckVkResult ( vkQueueSubmit ( renderer.GetQueue (), 1U, &submitInfo, fence ),
+        "Texture2D::UploadToGPU",
+        "Can't submit command"
+    );
+
+    if ( result ) [[likely]]
+        return true;
+
+    FreeResources ( renderer );
+    return false;
 }
 
 uint8_t Texture2D::CountMipLevels ( VkExtent2D const &resolution ) noexcept
@@ -627,7 +641,7 @@ bool Texture2D::UploadCompressed ( Renderer &renderer,
         return false;
 
     // Note color space is defined in ktx container itself and can be fully trusted.
-    VkImageCreateInfo imageInfo{};
+    VkImageCreateInfo imageInfo {};
 
     bool result = CreateCommonResources ( imageInfo,
         ktx.GetMip ( 0U )._resolution,
@@ -1146,6 +1160,125 @@ bool Texture2D::UploadDataInternal ( Renderer &renderer,
     return true;
 }
 
+bool Texture2D::UploadCompressedImageToGPU ( VkCommandBuffer commandBuffer ) noexcept
+{
+    VkImageMemoryBarrier barrierInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .pNext = nullptr,
+        .srcAccessMask = 0U,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = _image,
+
+        .subresourceRange
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0U,
+            .levelCount = static_cast<uint32_t> ( _mipLevels ),
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        }
+    };
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    VkBufferImageCopy copyRegion
+    {
+        .bufferOffset = 0U,
+        .bufferRowLength = 0U,
+        .bufferImageHeight = 0U,
+
+        .imageSubresource
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0U,
+            .baseArrayLayer = 0U,
+            .layerCount = 1U
+        },
+
+        .imageOffset
+        {
+            .x = 0,
+            .y = 0,
+            .z = 0
+        },
+
+        .imageExtent
+        {
+            .width = 0U,
+            .height = 0U,
+            .depth = 1U
+        }
+    };
+
+    VkExtent3D &ext = copyRegion.imageExtent;
+    uint32_t &targetMip = copyRegion.imageSubresource.mipLevel;
+
+    size_t offset = 0U;
+    // FUCK
+    KTXMediaContainer ktx {};
+
+    for ( uint8_t i = 0U; i < _mipLevels; ++i )
+    {
+        MipInfo const &mip = ktx.GetMip ( i );
+
+        targetMip = static_cast<uint32_t> ( i );
+        ext.width = mip._resolution.width;
+        ext.height = mip._resolution.height;
+        copyRegion.bufferOffset = static_cast<VkDeviceSize> ( offset );
+
+        vkCmdCopyBufferToImage ( commandBuffer,
+            _transfer,
+            _image,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            1U,
+            &copyRegion
+        );
+
+        offset += static_cast<size_t> ( mip._size );
+    }
+
+    barrierInfo.subresourceRange.levelCount = static_cast<uint32_t> ( _mipLevels );
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &barrierInfo
+    );
+
+    return true;
+}
+
+bool Texture2D::UploadUncompressedImageToGPU ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+{
+    // FUCK
+    return true;
+}
+
 bool Texture2D::IsCompressed ( std::string const &fileName ) noexcept
 {
     static std::regex const isKTX ( R"__(^.+\.(?:ktx|KTX)$)__" );
@@ -1160,7 +1293,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     int &channels
 ) noexcept
 {
-    File file ( const_cast<std::string &> ( fileName ) );
+    File file ( fileName );
 
     if ( !file.LoadContent () ) [[unlikely]]
         return false;
@@ -1226,7 +1359,7 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
     constexpr uint8_t const oneAlphaRaw[ RGBA_BYTES_PER_PIXEL ] = { 0x00U, 0x00U, 0x00U, 0xFFU };
     auto const oneAlphaMask = *reinterpret_cast<uint32_t const*> ( oneAlphaRaw );
 
-    std::array<std::thread, EXPANDER_THREADS> expanders;
+    std::thread expanders[ EXPANDER_THREADS ];
 
     for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
     {
@@ -1241,8 +1374,8 @@ bool Texture2D::LoadImage ( std::vector<uint8_t> &pixelData,
         );
     }
 
-    for ( size_t i = 0U; i < EXPANDER_THREADS; ++i )
-        expanders[ i ].join ();
+    for ( std::thread &exp : expanders )
+        exp.join ();
 
     STBI_FREE ( imagePixels );
     channels = static_cast<int> ( RGBA_BYTES_PER_PIXEL );
@@ -1265,11 +1398,11 @@ VkFormat Texture2D::PickupFormat ( int channels ) noexcept
         return VK_FORMAT_UNDEFINED;
 
         case 4:
-            return VK_FORMAT_R8G8B8A8_UNORM;
+        return VK_FORMAT_R8G8B8A8_UNORM;
 
         default:
-            LogError (
-                "Texture2D::PickupFormat - Unexpected channel count: %i! Supported channel count: 1, 2 or 4."
+            LogError ( "Texture2D::PickupFormat - Unexpected channel count: %i! Supported channel count: 1, 2 or 4.",
+                channels
             );
         return VK_FORMAT_UNDEFINED;
     }

@@ -157,14 +157,18 @@ std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset, bo
     Asset ast {};
 
     // Note UNORM is correct mode because of pixel shader, alpha blending and swapchain UNORM format.
-    bool const result = ast._texture.UploadData ( *_renderer,
-        asset,
-        android_vulkan::eColorSpace::Unorm,
-        useMips,
-        _commandBuffers[ _commandBufferIndex ],
-        false,
-        _fences[ _commandBufferIndex ]
-    );
+    bool const result =
+        ast._texture.UploadToStagingBuffer ( *_renderer,
+            asset,
+            android_vulkan::eColorSpace::Unorm,
+            useMips
+        ) &&
+
+        ast._texture.UploadToGPU ( *_renderer,
+            _commandBuffers[ _commandBufferIndex ],
+            false,
+            _fences[ _commandBufferIndex ]
+        );
 
     if ( !result ) [[unlikely]]
         return std::nullopt;

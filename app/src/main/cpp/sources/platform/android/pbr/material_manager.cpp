@@ -343,14 +343,9 @@ Texture2DRef MaterialManager::LoadTexture ( android_vulkan::Renderer &renderer,
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
     VkFence fence = fences ? fences[ commandBufferConsumed ] : VK_NULL_HANDLE;
 
-    bool const result = texture->UploadData ( renderer,
-        std::string ( name ),
-        space,
-        true,
-        commandBuffers[ commandBufferConsumed ],
-        false,
-        fence
-    );
+    bool const result =
+        texture->UploadToStagingBuffer ( renderer, std::string ( name ), space, true ) &&
+        texture->UploadToGPU ( renderer, commandBuffers[ commandBufferConsumed ], false, fence );
 
     if ( !result ) [[unlikely]]
     {

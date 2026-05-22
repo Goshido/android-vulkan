@@ -115,14 +115,14 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
     Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
 
     // Note UNORM is correct mode because of pixel shader, alpha blending and swapchain UNORM format.
-    bool const result = texture->UploadData ( *_renderer,
-        asset,
-        android_vulkan::eColorSpace::Unorm,
-        true,
-        _commandBuffers[ _commandBufferIndex ],
-        false,
-        _fences[ _commandBufferIndex ]
-    );
+    bool const result =
+        texture->UploadToStagingBuffer ( *_renderer, asset, android_vulkan::eColorSpace::Unorm, true ) &&
+
+        texture->UploadToGPU ( *_renderer,
+            _commandBuffers[ _commandBufferIndex ],
+            false,
+            _fences[ _commandBufferIndex ]
+        );
 
     if ( !result ) [[unlikely]]
         return std::nullopt;
@@ -377,14 +377,9 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
     AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET, "UI common" )
     AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Text LUT" )
 
-    result = _textLUT.UploadData ( renderer,
-        TEXT_LUT,
-        android_vulkan::eColorSpace::Unorm,
-        false,
-        commandBuffer,
-        false,
-        _fence
-    );
+    result =
+        _textLUT.UploadToStagingBuffer ( renderer, TEXT_LUT, android_vulkan::eColorSpace::Unorm, false ) &&
+        _textLUT.UploadToGPU ( renderer, commandBuffer, false, _fence );
 
     if ( !result ) [[unlikely]]
         return false;

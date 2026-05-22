@@ -108,14 +108,14 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     {
         auto &drawcall = _drawcalls[ i ];
 
-        bool const result = drawcall._diffuse.UploadData ( renderer,
-            textureFiles[ i ],
-            android_vulkan::eColorSpace::Unorm,
-            true,
-            commandBuffers[ i ],
-            false,
-            VK_NULL_HANDLE
-        );
+        bool const result =
+            drawcall._diffuse.UploadToStagingBuffer ( renderer,
+                textureFiles[ i ],
+                android_vulkan::eColorSpace::Unorm,
+                true
+            ) &&
+
+            drawcall._diffuse.UploadToGPU ( renderer, commandBuffers[ i ], false, VK_NULL_HANDLE );
 
         if ( !result ) [[unlikely]]
         {
@@ -125,28 +125,32 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     Drawcall &secondMaterial = _drawcalls[ 1U ];
 
-    bool result = secondMaterial._normal.UploadData ( renderer,
-        MATERIAL_2_NORMAL,
-        android_vulkan::eColorSpace::Unorm,
-        true,
-        commandBuffers[ 3U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    bool result =
+        secondMaterial._normal.UploadToStagingBuffer ( renderer,
+            MATERIAL_2_NORMAL,
+            android_vulkan::eColorSpace::Unorm,
+            true
+        ) &&
+
+        secondMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 3U ],
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;
 
     Drawcall &thirdMaterial = _drawcalls[ 2U ];
 
-    result = thirdMaterial._normal.UploadData ( renderer,
-        MATERIAL_3_NORMAL,
-        android_vulkan::eColorSpace::Unorm,
-        true,
-        commandBuffers[ 4U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    result =
+        thirdMaterial._normal.UploadToStagingBuffer ( renderer,
+            MATERIAL_3_NORMAL,
+            android_vulkan::eColorSpace::Unorm,
+            true
+        ) &&
+
+        thirdMaterial._normal.UploadToGPU ( renderer, commandBuffers[ 4U ], false, VK_NULL_HANDLE );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -154,16 +158,16 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     Drawcall &firstMaterial = _drawcalls[ 0U ];
     constexpr uint8_t const defaultNormal[] = { 128U, 128U, 255U, 128U };
 
-    return firstMaterial._normal.UploadData ( renderer,
-        defaultNormal,
-        std::size ( defaultNormal ),
-        VkExtent2D { .width = 1U, .height = 1U },
-        VK_FORMAT_R8G8B8A8_UNORM,
-        false,
-        commandBuffers[ 5U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    return
+        firstMaterial._normal.UploadToStagingBuffer ( renderer,
+            defaultNormal,
+            std::size ( defaultNormal ),
+            VkExtent2D { .width = 1U, .height = 1U },
+            VK_FORMAT_R8G8B8A8_UNORM,
+            false
+        ) &&
+
+        firstMaterial._normal.UploadToGPU ( renderer, commandBuffers[ 5U ], false, VK_NULL_HANDLE );
 }
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer ) noexcept

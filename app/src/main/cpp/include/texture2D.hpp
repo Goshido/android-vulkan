@@ -3,6 +3,7 @@
 
 
 #include "color_space.hpp"
+#include "ktx_media_container.hpp"
 #include "renderer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -17,26 +18,27 @@ namespace android_vulkan {
 class Texture2D final
 {
     private:
-        VkFormat            _format = VK_FORMAT_UNDEFINED;
+        VkFormat                                _format = VK_FORMAT_UNDEFINED;
 
-        VkImage             _image = VK_NULL_HANDLE;
-        VkDeviceMemory      _imageDeviceMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _imageMemoryOffset = 0U;
-        VkImageView         _imageView = VK_NULL_HANDLE;
+        VkImage                                 _image = VK_NULL_HANDLE;
+        VkDeviceMemory                          _imageDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceSize                            _imageMemoryOffset = 0U;
+        VkImageView                             _imageView = VK_NULL_HANDLE;
 
-        uint8_t             _mipLevels = 0U;
-
-        VkExtent2D          _resolution
+        VkExtent2D                              _resolution
         {
             .width = 0U,
             .height = 0U
         };
 
-        VkBuffer            _transfer = VK_NULL_HANDLE;
-        VkDeviceMemory      _transferDeviceMemory = VK_NULL_HANDLE;
-        VkDeviceSize        _transferMemoryOffset = 0U;
+        VkBuffer                                _transfer = VK_NULL_HANDLE;
+        VkDeviceMemory                          _transferDeviceMemory = VK_NULL_HANDLE;
+        VkDeviceSize                            _transferMemoryOffset = 0U;
 
-        std::string         _fileName {};
+        std::unique_ptr<KTXMediaContainer>      _ktx {};
+        std::string                             _fileName {};
+        uint8_t                                 _mipLevels = 0U;
+        bool                                    _isGenerateMipmaps = false;
 
     public:
         Texture2D () = default;
@@ -77,48 +79,36 @@ class Texture2D final
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( Renderer &renderer,
+        [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string const &fileName,
             eColorSpace space,
-            bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
+            bool isGenerateMipmaps
         ) noexcept;
 
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( Renderer &renderer,
+        [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string &&fileName,
             eColorSpace space,
-            bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
+            bool isGenerateMipmaps
         ) noexcept;
 
         // Supported media containers:
         // - PNG
         // - KTXv1 (ASTC with mipmaps)
-        [[nodiscard]] bool UploadData ( Renderer &renderer,
+        [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string_view fileName,
             eColorSpace space,
-            bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
+            bool isGenerateMipmaps
         ) noexcept;
 
-        [[nodiscard]] bool UploadData ( Renderer &renderer,
+        [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             uint8_t const* data,
             size_t size,
             VkExtent2D const &resolution,
             VkFormat format,
-            bool isGenerateMipmaps,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
+            bool isGenerateMipmaps
         ) noexcept;
 
         // The method invocation must be externally synchronized because it's could call vkQueueSubmit.
@@ -131,44 +121,36 @@ class Texture2D final
         [[nodiscard]] static uint8_t CountMipLevels ( VkExtent2D const &resolution ) noexcept;
 
     private:
-        [[nodiscard]] bool CreateCommonResources ( VkImageCreateInfo &imageInfo,
+        [[nodiscard]] bool CreateCommonResources ( Renderer &renderer,
+            VkImageCreateInfo &imageInfo,
             VkExtent2D const &resolution,
             VkFormat format,
             VkImageUsageFlags usage,
-            uint8_t mips,
-            Renderer &renderer
+            uint8_t mips
         ) noexcept;
 
-        [[nodiscard]] bool CreateTransferResources ( uint8_t* &mappedBuffer,
-            VkDeviceSize size,
-            Renderer &renderer
+        [[nodiscard]] bool CreateTransferResources ( Renderer &renderer,
+            uint8_t* &mappedBuffer,
+            VkDeviceSize size
         ) noexcept;
 
         void FreeResourceInternal ( Renderer &renderer ) noexcept;
 
-        [[nodiscard]] bool UploadCompressed ( Renderer &renderer,
-            std::string const &fileName,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
-        ) noexcept;
+        [[nodiscard]] bool UploadCompressedToStagingBuffer ( Renderer &renderer, std::string const &fileName ) noexcept;
 
-        [[nodiscard]] bool UploadDataInternal ( Renderer &renderer,
+        [[nodiscard]] bool UploadDataUncompressedToStagingBuffer ( Renderer &renderer,
             uint8_t const* data,
             size_t size,
             bool isGenerateMipmaps,
-            VkImageCreateInfo const &imageInfo,
-            VkCommandBuffer commandBuffer,
-            bool externalCommandBuffer,
-            VkFence fence
+            VkImageCreateInfo const &imageInfo
         ) noexcept;
 
-        [[nodiscard]] bool UploadCompressedImageToGPU ( VkCommandBuffer commandBuffer ) noexcept;
-        [[nodiscard]] bool UploadUncompressedImageToGPU ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadCompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] static bool IsCompressed ( std::string const &fileName ) noexcept;
 
-        [[nodiscard]] static bool LoadImage ( std::vector<uint8_t> &pixelData,
+        [[nodiscard]] static bool LoadImageUncompressed ( std::vector<uint8_t> &pixelData,
             std::string const &fileName,
             int &width,
             int &height,

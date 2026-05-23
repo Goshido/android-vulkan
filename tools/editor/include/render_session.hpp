@@ -10,6 +10,7 @@
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
+#include "texture2D_upload_info.hpp"
 #include "ui_manager.hpp"
 #include "workspace.hpp"
 
@@ -36,6 +37,14 @@ class RenderSession final
             size_t                                          _count = 0U;
         };
 
+        struct Texture2DStorage final
+        {
+            std::deque<Texture2DUploadInfo>                 _uploadQueue {};
+            std::deque<Texture2DRef>                        _freeTransferQueue[ pbr::FIF_COUNT ] {};
+            std::deque<Texture2DRef>                        _destroyQueue {};
+            size_t                                          _count = 0U;
+        };
+
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
 
     private:
@@ -54,6 +63,7 @@ class RenderSession final
 
         pbr::ResourceHeap                                   _resourceHeap {};
         MeshStorage                                         _meshStorage {};
+        Texture2DStorage                                    _texture2DStorage {};
 
         std::mutex                                          _submitMutex {};
         std::thread                                         _thread {};
@@ -171,8 +181,10 @@ class RenderSession final
         [[nodiscard]] bool InitModules () noexcept;
         void FreeTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+        void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnHelloTriangleReady ( void* params ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
@@ -186,6 +198,7 @@ class RenderSession final
         void OnUISetText ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnUIUpdateElement ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnUploadMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUploadTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
 
         void NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept;
 

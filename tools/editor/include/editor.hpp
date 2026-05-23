@@ -9,6 +9,7 @@
 #include "mesh_storage.hpp"
 #include "native_renderer.hpp"
 #include "render_session.hpp"
+#include "texture2D_storage.hpp"
 #include "timer_manager.hpp"
 #include "ui_manager.hpp"
 #include "workspace.hpp"
@@ -39,6 +40,7 @@ class Editor final
         NativeRenderer                          _renderer {};
 
         MeshStorage                             _meshStorage {};
+        Texture2DStorage                        _texture2DStorage {};
         Workspace                               _workspace {};
         RenderSession                           _renderSession { _uiManager, _workspace };
         TimerManager                            _timerManager {};

@@ -525,6 +525,10 @@ void RenderSession::EventLoop () noexcept
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
             break;
 
+            case eMessageType::DestroyTexture2D:
+                OnDestroyTexture2D ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::HelloTriangleReady:
                 OnHelloTriangleReady ( message._action () );
             break;
@@ -575,6 +579,10 @@ void RenderSession::EventLoop () noexcept
 
             case eMessageType::UploadMesh:
                 OnUploadMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UploadTexture2D:
+                OnUploadTexture2D ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -768,7 +776,7 @@ void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t command
         AV_TRACE ( "Upload '%s'", m.GetName ().c_str () );
         AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", m.GetName ().c_str () );
 
-        if ( !m.UploadToGPU ( renderer, commandBuffer, VK_NULL_HANDLE, std::move ( info._info ) ) )
+        if ( !m.UploadToGPU ( renderer, commandBuffer, VK_NULL_HANDLE, std::move ( info._info ) ) ) [[unlikely]]
         {
             [[unlikely]]
             info._result ( std::nullopt );
@@ -778,6 +786,42 @@ void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t command
         transferQueue.push_back ( mRef );
         ++_meshStorage._count;
         info._result ( std::optional<MeshGeometryRef> { std::move ( mRef ) } );
+    }
+
+    uploadQueue.clear ();
+}
+
+void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+{
+    auto &uploadQueue = _texture2DStorage._uploadQueue;
+
+    if ( uploadQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Upload texture 2D instances" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload texture 2D instances" )
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    auto &transferQueue = _texture2DStorage._freeTransferQueue[ commandBufferIndex ];
+
+    for ( auto &info : uploadQueue )
+    {
+        Texture2DRef &tRef = info._texture;
+        android_vulkan::Texture2D &t = *tRef;
+
+        AV_TRACE ( "Upload '%s'", t.GetName ().c_str () );
+        AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", t.GetName ().c_str () );
+
+        if ( !t.UploadToGPU ( renderer, commandBuffer, true, VK_NULL_HANDLE ) ) [[unlikely]]
+        {
+            [[unlikely]]
+            info._result ( std::nullopt );
+            continue;
+        }
+
+        transferQueue.push_back ( tRef );
+        ++_texture2DStorage._count;
+        info._result ( std::optional<Texture2DRef> { std::move ( tRef ) } );
     }
 
     uploadQueue.clear ();
@@ -798,6 +842,14 @@ void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&messag
     messageQueue.DequeueEnd ();
     _meshStorage._destroyQueue.push_back ( std::move ( *static_cast<MeshGeometryRef*> ( message._action () ) ) );
     --_meshStorage._count;
+}
+
+void RenderSession::OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy mesh" )
+    messageQueue.DequeueEnd ();
+    _texture2DStorage._destroyQueue.push_back ( std::move ( *static_cast<Texture2DRef*> ( message._action () ) ) );
+    --_texture2DStorage._count;
 }
 
 void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
@@ -873,6 +925,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     }
 
     UploadMeshes ( commandBuffer, commandBufferIndex );
+    UploadTexture2DInstances ( commandBuffer, commandBufferIndex );
     resourceHeap.UploadGPUData ( commandBuffer );
 
     {
@@ -1029,7 +1082,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
 
     std::optional<Message::SerialNumber> lastRefund {};
 
-    while ( _uiElements | _meshStorage._count )
+    while ( _uiElements | _meshStorage._count | _texture2DStorage._count )
     {
         AV_TRACE ( "Event loop" )
         Message message = messageQueue.DequeueBegin ( lastRefund );
@@ -1046,6 +1099,10 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
 
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyTexture2D:
+                OnDestroyTexture2D ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIAppendChildElement:
@@ -1115,10 +1172,15 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _toneMapper.Destroy ( device );
     _resourceHeap.Destroy ( renderer );
 
-    for ( auto &mesh : _meshStorage._destroyQueue )
-        mesh->FreeResources ( renderer );
+    auto const freeStorage = [ &renderer ] ( auto &storage ) noexcept {
+        for ( auto &item : storage._destroyQueue )
+            item->FreeResources ( renderer );
 
-    _meshStorage = {};
+        storage = {};
+    };
+
+    freeStorage ( _meshStorage );
+    freeStorage ( _texture2DStorage );
 
     messageQueue.EnqueueFront (
         {
@@ -1240,6 +1302,16 @@ void RenderSession::OnUploadMesh ( MessageQueue &messageQueue, Message &&message
     AV_TRACE ( "Upload mesh" )
     messageQueue.DequeueEnd ();
     _meshStorage._uploadQueue.push_back ( std::move ( *static_cast<MeshUploadInfo*> ( message._action () ) ) );
+}
+
+void RenderSession::OnUploadTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Upload texture 2D" )
+    messageQueue.DequeueEnd ();
+
+    _texture2DStorage._uploadQueue.push_back (
+        std::move ( *static_cast<Texture2DUploadInfo*> ( message._action () ) )
+    );
 }
 
 void RenderSession::NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept

@@ -543,7 +543,7 @@ void RenderSession::EventLoop () noexcept
                 OnHelloTriangleReady ( message._action () );
             break;
 
-            case eMessageType::InvokeIO:
+            case eMessageType::InvokeRenderSession:
                 OnInvokeRenderSession ( messageQueue, std::move ( message ) );
             break;
 

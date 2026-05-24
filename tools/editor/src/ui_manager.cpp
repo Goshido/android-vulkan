@@ -96,6 +96,15 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
 void UIManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ModuleStarted,
+            ._action = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )

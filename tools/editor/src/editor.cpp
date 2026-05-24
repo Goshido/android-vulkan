@@ -134,8 +134,6 @@ bool Editor::InitModules () noexcept
     _uiManager.Init ();
     _timerManager.Init ();
     _renderSession.Init ();
-    _runningModules = 4U;
-    _workspace.Init ();
 
     return true;
 }
@@ -230,6 +228,10 @@ void Editor::EventLoop () noexcept
                 OnFrameComplete ();
             break;
 
+            case eMessageType::ModuleStarted:
+                OnModuleStarted ();
+            break;
+
             case eMessageType::ModuleStopped:
                 OnModuleStopped ();
             break;
@@ -321,8 +323,21 @@ void Editor::OnFrameComplete () noexcept
     _frameComplete = true;
 }
 
+void Editor::OnModuleStarted () noexcept
+{
+    AV_TRACE ( "Module started" )
+    _messageQueue.DequeueEnd ();
+    ++_runningModules;
+
+    if ( _runningModules == 4U ) [[unlikely]]
+    {
+        _workspace.Init ();
+    }
+}
+
 void Editor::OnModuleStopped () noexcept
 {
+    AV_TRACE ( "Module stopped" )
     _messageQueue.DequeueEnd ();
     --_runningModules;
 }
@@ -417,7 +432,9 @@ void Editor::OnShutdown () noexcept
 
     std::optional<Message::SerialNumber> lastRefund {};
 
-    while ( _runningModules )
+    // Only IO module must be alive
+
+    while ( _runningModules > 1U )
     {
         std::this_thread::sleep_for ( IDLE );
         Message message = _messageQueue.DequeueBegin ( lastRefund );
@@ -426,6 +443,18 @@ void Editor::OnShutdown () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::Shutdown:
+                _messageQueue.DequeueEnd ();
+
+                _messageQueue.EnqueueBack (
+                    {
+                        ._type = eMessageType::Shutdown,
+                        ._action = nullptr,
+                        ._serialNumber = 0U
+                    }
+                );
+            break;
+
             case eMessageType::FrameComplete:
                 OnFrameComplete ();
             break;
@@ -440,6 +469,42 @@ void Editor::OnShutdown () noexcept
                 [[fallthrough]];
             case eMessageType::StopTimer:
                 _messageQueue.DequeueEnd ();
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+
+    _messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::StopIO,
+            ._action = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    while ( _runningModules > 0U )
+    {
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::Shutdown:
+                _messageQueue.DequeueEnd ();
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
             break;
 
             default:

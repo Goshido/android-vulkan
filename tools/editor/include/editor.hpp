@@ -79,6 +79,7 @@ class Editor final
         void OnChangeCursor ( Message &&message ) noexcept;
         void OnDPIChanged ( Message &&message ) noexcept;
         void OnFrameComplete () noexcept;
+        void OnModuleStarted () noexcept;
         void OnModuleStopped () noexcept;
         void OnReadClipboardRequest () noexcept;
         void OnRecreateSwapchain () noexcept;

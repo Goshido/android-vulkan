@@ -151,6 +151,7 @@ class ResourceHeap final
         size_t                                          _storageImageSize = 0U;
 
         Write                                           _write {};
+        std::mutex                                      _mutex {};
 
         VkDescriptorBufferBindingInfoEXT                _bindingInfo
         {

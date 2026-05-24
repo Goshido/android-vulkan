@@ -7,7 +7,25 @@
 
 namespace editor {
 
-using Texture2DRef = std::shared_ptr<android_vulkan::Texture2D>;
+class Texture2D final
+{
+    public:
+        android_vulkan::Texture2D       _resource {};
+        uint32_t                        _heapIndex = 0U;
+
+    public:
+        Texture2D () = default;
+
+        Texture2D ( Texture2D const & ) = delete;
+        Texture2D &operator = ( Texture2D const & ) = delete;
+
+        Texture2D ( Texture2D && ) = default;
+        Texture2D &operator = ( Texture2D && ) = default;
+
+        ~Texture2D () = default;
+};
+
+using Texture2DRef = std::shared_ptr<Texture2D>;
 
 } // namespace editor
 

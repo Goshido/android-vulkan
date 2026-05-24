@@ -31,6 +31,15 @@ void IO::Destroy () noexcept
 void IO::EventLoop () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ModuleStarted,
+            ._action = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -46,8 +55,8 @@ void IO::EventLoop () noexcept
                 OnInvokeIO ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::Shutdown:
-                OnShutdown ( messageQueue, std::move ( message ) );
+            case eMessageType::StopIO:
+                OnStopIO ( messageQueue );
             return;
 
             default:
@@ -67,10 +76,10 @@ void IO::OnInvokeIO ( MessageQueue &messageQueue, Message &&message ) noexcept
     std::ignore = message._action ();
 }
 
-void IO::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
+void IO::OnStopIO ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+    messageQueue.DequeueEnd ();
 
     messageQueue.EnqueueFront (
         {

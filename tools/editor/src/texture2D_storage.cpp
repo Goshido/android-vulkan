@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
+#include <resource_heap.hpp>
 #include <scope_quard.hpp>
 #include <texture2D_storage.hpp>
 #include <trace.hpp>
@@ -46,9 +47,11 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             return nullptr;
         }
 
-        Texture2DRef texture = std::make_shared<android_vulkan::Texture2D> ();
+        Texture2DRef texture = std::make_shared<Texture2D> ();
+        android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+        android_vulkan::Texture2D &resource = texture->_resource;
 
-        bool const status = texture->UploadToStagingBuffer ( NativeRenderer::Instance (),
+        bool const status = resource.UploadToStagingBuffer ( renderer,
             path,
             android_vulkan::eColorSpace::Unorm,
             true
@@ -59,6 +62,18 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             result ( std::nullopt );
             return nullptr;
         }
+
+        auto const idx = ResourceHeap::Instance ().RegisterNonUISampledImage ( renderer.GetDevice (),
+            resource.GetImageView ()
+        );
+
+        if ( !idx ) [[unlikely]]
+        {
+            result ( std::nullopt );
+            return nullptr;
+        }
+
+        texture->_heapIndex = *idx;
 
         auto uploadResult = [ this, &messageQueue, path ] ( std::optional<Texture2DRef> &&texture ) mutable noexcept {
             AV_TRACE ( "Upload done %s", path.c_str () )
@@ -143,11 +158,13 @@ void Texture2DStorage::Unload ( Texture2DRef &&texture ) noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
     auto unload = [ this, &messageQueue, texture = std::move ( texture ) ] noexcept -> void* {
-        AV_TRACE ( "Unload %s", texture->GetName ().c_str () )
-        auto findResult = _storage.find ( texture->GetName () );
+        AV_TRACE ( "Unload %s", texture->_resource.GetName ().c_str () )
+        auto findResult = _storage.find ( texture->_resource.GetName () );
 
         if ( --findResult->second._references > 0U )
             return nullptr;
+
+        ResourceHeap::Instance ().UnregisterResource ( texture->_heapIndex );
 
         messageQueue.EnqueueBack (
             {

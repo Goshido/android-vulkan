@@ -36,7 +36,7 @@ class IO final
         void EventLoop () noexcept;
 
         void OnInvokeIO ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
+        void OnStopIO ( MessageQueue &messageQueue ) noexcept;
 };
 
 } // namespace editor

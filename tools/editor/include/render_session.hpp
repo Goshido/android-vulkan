@@ -7,9 +7,9 @@
 #include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
-#include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
+#include "resource_heap.hpp"
 #include "texture2D_upload_info.hpp"
 #include "ui_manager.hpp"
 #include "workspace.hpp"
@@ -33,7 +33,8 @@ class RenderSession final
         {
             std::deque<MeshUploadInfo>                      _uploadQueue {};
             std::deque<MeshGeometryRef>                     _freeTransferQueue[ pbr::FIF_COUNT ] {};
-            std::deque<MeshGeometryRef>                     _destroyQueue {};
+            std::deque<MeshGeometryRef>                     _toDestroy {};
+            std::deque<MeshGeometryRef>                     _destroyQueue[ pbr::FIF_COUNT ] {};
             size_t                                          _count = 0U;
         };
 
@@ -41,11 +42,13 @@ class RenderSession final
         {
             std::deque<Texture2DUploadInfo>                 _uploadQueue {};
             std::deque<Texture2DRef>                        _freeTransferQueue[ pbr::FIF_COUNT ] {};
-            std::deque<Texture2DRef>                        _destroyQueue {};
+            std::deque<Texture2DRef>                        _toDestroy {};
+            std::deque<Texture2DRef>                        _destroyQueue[ pbr::FIF_COUNT ] {};
             size_t                                          _count = 0U;
         };
 
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
+        using EnqueueHandle = void ( MessageQueue::* ) ( Message &&message ) noexcept;
 
     private:
         CommandInfo                                         _commandInfo[ pbr::FIF_COUNT ];
@@ -61,9 +64,9 @@ class RenderSession final
         android_vulkan::Texture2D                           _renderTarget {};
         uint32_t                                            _renderTargetIdx = 0U;
 
-        pbr::ResourceHeap                                   _resourceHeap {};
         MeshStorage                                         _meshStorage {};
         Texture2DStorage                                    _texture2DStorage {};
+        ResourceHeap                                        _resourceHeap {};
 
         std::mutex                                          _submitMutex {};
         std::thread                                         _thread {};
@@ -73,13 +76,16 @@ class RenderSession final
 
         size_t                                              _uiElements = 0U;
 
-        pbr::UIPass                                         _uiPass { _resourceHeap };
+        pbr::UIPass                                         _uiPass { ResourceHeap::Instance () };
 
         UIManager                                           &_uiManager;
         VkViewport                                          _viewport {};
         Workspace                                           &_workspace;
 
         bool                                                _broken = false;
+
+        // When app is in shutdown state the enqueue back mush be switched to enqueue front to avoid deadlock.
+        EnqueueHandle                                       _enqueueHandle = &MessageQueue::EnqueueBack;
 
         VkRenderingAttachmentInfo                           _colorAttachment
         {
@@ -179,13 +185,20 @@ class RenderSession final
         [[nodiscard]] bool CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept;
         void EventLoop () noexcept;
         [[nodiscard]] bool InitModules () noexcept;
-        void FreeTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+
+        void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+
+        void DestroyMeshes (  MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+
         void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnHelloTriangleReady ( void* params ) noexcept;
+        void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
         void OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept;

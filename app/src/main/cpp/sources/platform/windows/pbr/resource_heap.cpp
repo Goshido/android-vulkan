@@ -363,6 +363,8 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
     VkDeviceSize range
 ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ResourceHeap::RegisterBuffer - Non UI heap is full." );
@@ -437,6 +439,8 @@ std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice device, Vk
 
 void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( index < UI_SLOTS )
     {
         _uiSlots.Free ( index );
@@ -686,6 +690,8 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
     VkImageLayout layout
 ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( slots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ResourceHeap::RegisterImage - %s is full.", heap );
@@ -728,7 +734,6 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
 
     size_t const cases[] = { _storageImageSize, _sampledImageSize };
     auto const selector = static_cast<size_t> ( type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE );
-
     vkGetDescriptorEXT ( device, getInfo + selector, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
     return std::optional<uint32_t> { index };
 }

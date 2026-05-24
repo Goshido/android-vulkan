@@ -40,8 +40,17 @@ void TimerManager::Destroy () noexcept
 
 void TimerManager::EventLoop () noexcept
 {
-    std::optional<Message::SerialNumber> lastRefund {};
     MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::ModuleStarted,
+            ._action = nullptr,
+            ._serialNumber = 0U
+        }
+    );
+
+    std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
     {

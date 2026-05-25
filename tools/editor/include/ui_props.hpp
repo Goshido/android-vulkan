@@ -25,15 +25,13 @@ class UIProps final : public UIDialogBox
         UIEditBox           _editBox;
 
     public:
-        UIProps () = delete;
+        explicit UIProps () noexcept;
 
         UIProps ( UIProps const & ) = delete;
         UIProps &operator = ( UIProps const & ) = delete;
 
         UIProps ( UIProps && ) = delete;
         UIProps &operator = ( UIProps && ) = delete;
-
-        explicit UIProps ( pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIProps () override = default;
 

@@ -1,7 +1,10 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <scope_quard.hpp>
-#include "static_mesh_component.hpp"
+#include <static_mesh_component.hpp>
 #include <trace.hpp>
+#include <ui_props.hpp>
+#include <viewport_widget.hpp>
 #include <workspace.hpp>
 
 
@@ -343,6 +346,37 @@ void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
 void Workspace::FUCK () noexcept
 {
     // FUCK
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+
+            ._action = [] () noexcept {
+                return new ViewportWidget ();
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+
+            ._action = [] () noexcept {
+                auto* dialogBox = new UIProps ();
+                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+
+                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
+                return dialogBox;
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "FUCK" );
     Actor &a = *actor;

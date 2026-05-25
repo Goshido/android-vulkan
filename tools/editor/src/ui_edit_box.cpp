@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
+#include <font_storage.hpp>
 #include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
@@ -23,13 +24,11 @@ constexpr char32_t CTRL_X = 0x18;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIEditBox::UIEditBox ( DIVUIElement &parent,
-    pbr::FontStorage &fontStorage,
     std::string_view caption,
     std::string_view value,
     std::string &&name
 ) noexcept:
     _committed ( value ),
-    _fontStorage ( fontStorage ),
 
     _lineDIV ( parent,
 
@@ -985,7 +984,7 @@ void UIEditBox::UpdateMetrics () noexcept
 {
     pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
 
-    _fontStorage.GetStringMetrics ( _metrics,
+    FontStorage::Instance ().GetStringMetrics (_metrics,
         css._fontFile,
         static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
         _content

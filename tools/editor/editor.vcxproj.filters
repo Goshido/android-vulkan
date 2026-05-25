@@ -378,6 +378,12 @@
     <ClCompile Include="src\resource_heap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\viewport_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\font_storage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -831,6 +837,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\resource_heap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\viewport_widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\font_storage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

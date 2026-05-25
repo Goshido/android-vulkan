@@ -24,7 +24,6 @@ enum class eMessageType : uint32_t
     DestroyTexture2D,
     DoubleClick,
     DPIChanged,
-    FontStorageReady,
     FrameComplete,
     HelloTriangleReady,
     InvokeIO,

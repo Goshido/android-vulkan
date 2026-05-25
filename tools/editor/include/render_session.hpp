@@ -2,6 +2,7 @@
 #define EDITOR_RENDER_SESSION_HPP
 
 
+#include "font_storage.hpp"
 #include "hello_triangle_program.hpp"
 #include "mesh_upload_info.hpp"
 #include <platform/windows/mesh_geometry.hpp>
@@ -77,10 +78,11 @@ class RenderSession final
         size_t                                              _uiElements = 0U;
 
         pbr::UIPass                                         _uiPass { ResourceHeap::Instance () };
+        FontStorage                                         _fontStorage { _uiPass.GetFontStorage () };
 
-        UIManager                                           &_uiManager;
         VkViewport                                          _viewport {};
         Workspace                                           &_workspace;
+        UIManager                                           &_uiManager;
 
         bool                                                _broken = false;
 
@@ -174,8 +176,6 @@ class RenderSession final
 
         void Init () noexcept;
         void Destroy () noexcept;
-
-        [[nodiscard]] pbr::FontStorage &GetFontStorage () noexcept;
 
     private:
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;

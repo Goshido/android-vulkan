@@ -7,6 +7,7 @@
 #include <render_session.hpp>
 #include <resource_heap.hpp>
 #include <trace.hpp>
+#include <ui_manager.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -23,7 +24,6 @@ class HelloTriangleJob final
 {
     public:
         std::unique_ptr<android_vulkan::MeshGeometry>       _geometry {};
-
         std::unique_ptr<HelloTriangleProgram>               _program {};
 
     private:
@@ -287,8 +287,8 @@ void HelloTriangleJob::CreateProgram () noexcept
 //----------------------------------------------------------------------------------------------------------------------
 
 RenderSession::RenderSession ( UIManager &uiManager, Workspace &workspace ) noexcept:
-    _uiManager ( uiManager ),
-    _workspace ( workspace )
+    _workspace ( workspace ),
+    _uiManager ( uiManager )
 {
    // NOTHING
 }
@@ -314,11 +314,6 @@ void RenderSession::Destroy () noexcept
     {
         _thread.join ();
     }
-}
-
-pbr::FontStorage& RenderSession::GetFontStorage () noexcept
-{
-    return _uiPass.GetFontStorage ();
 }
 
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
@@ -707,14 +702,6 @@ bool RenderSession::InitModules () noexcept
             return false;
         }
     }
-
-    MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::FontStorageReady,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
 
     result = CreateRenderTarget () &&
         _exposurePass.SetTarget ( renderer, resourceHeap, _renderTarget, _renderTargetIdx ) &&

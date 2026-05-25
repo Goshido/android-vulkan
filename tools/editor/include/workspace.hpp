@@ -99,14 +99,12 @@ class Workspace final
     private:
         void FUCK () noexcept;
 
-        // FUCK move to ipp
         [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,
             MeshQueue &meshQueue,
             MeshMap &meshMap,
             MeshInfo &nodeMeshInfo
         ) noexcept;
 
-        // FUCK move to ipp
         void UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &nodeMeshInfo ) noexcept;
 };
 

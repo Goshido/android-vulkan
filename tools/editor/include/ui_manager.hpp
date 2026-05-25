@@ -3,7 +3,6 @@
 
 
 #include "message_queue.hpp"
-#include <platform/windows/pbr/ui_pass.hpp>
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -20,7 +19,6 @@ class UIManager final
 {
     private:
         size_t                                  _eventID = 0U;
-        pbr::FontStorage                        &_fontStorage;
 
         Widget*                                 _hoverWidget = nullptr;
         Widget*                                 _mouseCapture = nullptr;
@@ -29,19 +27,17 @@ class UIManager final
         Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
-        bool                                    _needRefill = false;
         size_t                                  _neededUIVertices = 0U;
+        bool                                    _needRefill = false;
 
     public:
-        UIManager () = delete;
+        explicit UIManager () = default;
 
         UIManager ( UIManager const & ) = delete;
         UIManager &operator = ( UIManager const & ) = delete;
 
         UIManager ( UIManager && ) = delete;
         UIManager &operator = ( UIManager && ) = delete;
-
-        explicit UIManager ( pbr::FontStorage &fontStorage ) noexcept;
 
         ~UIManager () = default;
 
@@ -54,7 +50,6 @@ class UIManager final
     private:
         void EventLoop () noexcept;
         void OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnFontStorageReady ( MessageQueue &messageQueue ) noexcept;
         void OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnKillFocus ( MessageQueue &messageQueue ) noexcept;

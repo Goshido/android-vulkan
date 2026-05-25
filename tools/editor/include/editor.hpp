@@ -33,7 +33,6 @@ class Editor final
 
     private:
         CommandLine                             _commandLine {};
-        bool                                    _frameComplete = true;
         History                                 _history {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
@@ -42,14 +41,15 @@ class Editor final
         MeshStorage                             _meshStorage {};
         Texture2DStorage                        _texture2DStorage {};
         Workspace                               _workspace {};
+        UIManager                               _uiManager {};
         RenderSession                           _renderSession { _uiManager, _workspace };
         TimerManager                            _timerManager {};
         IO                                      _io {};
-        UIManager                               _uiManager { _renderSession.GetFontStorage () };
 
-        bool                                    _stopRendering = false;
-        uint16_t                                _runningModules = 0U;
         float                                   _uiZoom = DEFAULT_UI_ZOOM;
+        uint16_t                                _runningModules = 0U;
+        bool                                    _frameComplete = true;
+        bool                                    _stopRendering = false;
 
     public:
         Editor () = delete;

@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <font_storage.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
@@ -8,12 +9,6 @@
 
 
 namespace editor {
-
-UIManager::UIManager ( pbr::FontStorage &fontStorage ) noexcept:
-    _fontStorage ( fontStorage )
-{
-    // NOTHING
-}
 
 void UIManager::Init () noexcept
 {
@@ -43,11 +38,13 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 
     _needRefill = false;
     _neededUIVertices = 0U;
+    pbr::FontStorage &fontStorage = FontStorage::Instance ();
+
     std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )
     {
-        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage );
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, fontStorage );
         _needRefill |= status._hasChanges;
         _neededUIVertices += status._neededUIVertices;
     }
@@ -66,9 +63,10 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
     AV_TRACE ( "Submit UI" )
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
+    pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
     for ( auto &widget : _widgets )
-        _needRefill |= widget->UpdateCache ( _fontStorage, viewport );
+        _needRefill |= widget->UpdateCache ( fontStorage, viewport );
 
     if ( !_needRefill )
         return;
@@ -118,10 +116,6 @@ void UIManager::EventLoop () noexcept
         {
             case eMessageType::DoubleClick:
                 OnDoubleClick ( messageQueue, std::move ( message ) );
-            break;
-
-            case eMessageType::FontStorageReady:
-                OnFontStorageReady ( messageQueue );
             break;
 
             case eMessageType::KeyboardKeyDown:
@@ -228,30 +222,6 @@ void UIManager::OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) 
             }
         }
     }
-}
-
-void UIManager::OnFontStorageReady ( MessageQueue &messageQueue ) noexcept
-{
-    AV_TRACE ( "FontStorage ready" )
-    messageQueue.DequeueEnd ();
-
-    auto* dialogBox = new UIProps ( _fontStorage );
-    dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-    dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-        pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [ value = dialogBox ] () noexcept {
-                return value;
-            },
-
-            ._serialNumber = 0U
-        }
-    );
 }
 
 void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept

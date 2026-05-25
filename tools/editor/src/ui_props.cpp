@@ -37,7 +37,7 @@ constexpr UIComboBox::Item const RESOLUTIONS[] =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIProps::UIProps ( pbr::FontStorage &fontStorage ) noexcept:
+UIProps::UIProps () noexcept:
     UIDialogBox ( "Properties" ),
 
     _headerLine ( _div,
@@ -77,7 +77,7 @@ UIProps::UIProps ( pbr::FontStorage &fontStorage ) noexcept:
     _checkBox ( _div, "Shadows", "CheckBox" ),
     _comboBox ( _div, "Resolution", { RESOLUTIONS, std::size ( RESOLUTIONS ) }, R1600x1024, "ComboBox" ),
     _slider ( _div, "Blur", 0.0, 1.0, 0.1, 0.5, "Slider" ),
-    _editBox ( _div, fontStorage, "Name", "The quick brown fox jumps", "EditBox" )
+    _editBox ( _div, "Name", "The quick brown fox jumps", "EditBox" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;

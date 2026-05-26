@@ -27,6 +27,9 @@ class UIManager final
         Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
 
+        int32_t                                 _lastMouseX = std::numeric_limits<int32_t>::min ();
+        int32_t                                 _lastMouseY = std::numeric_limits<int32_t>::min ();
+
         size_t                                  _neededUIVertices = 0U;
         bool                                    _needRefill = false;
 

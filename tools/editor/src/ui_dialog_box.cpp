@@ -220,8 +220,8 @@ Widget::LayoutStatus UIDialogBox::ApplyLayout ( android_vulkan::Renderer &render
         ._fontStorage = &fontStorage,
         ._hasChanges = _isChanged,
         ._lineHeights = &_lineHeights,
-        ._parentPaddingExtent = GXVec2 ( 0.0F, 0.0F ),
-        ._pen = GXVec2 ( 0.0F, 0.0F ),
+        ._parentPaddingExtent = GXVec2::ZERO,
+        ._pen = GXVec2::ZERO,
         ._renderer = &renderer,
         ._vertices = 0U
     };
@@ -244,8 +244,8 @@ bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const 
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
         ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
-        ._parentTopLeft = GXVec2 ( 0.0F, 0.0F ),
-        ._pen = GXVec2 ( 0.0F, 0.0F )
+        ._parentTopLeft = GXVec2::ZERO,
+        ._pen = GXVec2::ZERO
     };
 
     return _div.UpdateCache ( info );

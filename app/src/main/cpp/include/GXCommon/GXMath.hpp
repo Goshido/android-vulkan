@@ -1,4 +1,4 @@
-// version 1.98
+// version 1.99
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -29,8 +29,11 @@ GX_RESTORE_WARNING_STATE
 // By convention it is row-vertex.
 struct [[maybe_unused]] GXVec2 final
 {
+    // [0.0F, 0.0F]
+    [[maybe_unused]] static GXVec2 const    ZERO;
+
     // Stores vector components in x, y order.
-    GXFloat     _data[ 2U ];
+    GXFloat                                 _data[ 2U ];
 
     [[maybe_unused]] GXVec2 () = default;
 

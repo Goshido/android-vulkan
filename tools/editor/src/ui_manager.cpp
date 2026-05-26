@@ -229,11 +229,24 @@ void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&messag
     AV_TRACE ( "Keyboard key down" )
     messageQueue.DequeueEnd ();
 
-    if ( !_typingCapture ) [[unlikely]]
-        return;
-
     KeyboardKeyEvent const event ( message );
-    _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
+
+    if ( _typingCapture )
+    {
+        _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
+        return;
+    }
+
+    std::shared_lock const lock ( _mutex );
+
+    for ( auto &widget : _widgets )
+    {
+        if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+        {
+            w.OnKeyboardKeyDown ( event._key, event._modifier );
+            break;
+        }
+    }
 }
 
 void UIManager::OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -241,11 +254,24 @@ void UIManager::OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message 
     AV_TRACE ( "Keyboard key up" )
     messageQueue.DequeueEnd ();
 
-    if ( !_typingCapture ) [[unlikely]]
-        return;
-
     KeyboardKeyEvent const event ( message );
-    _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+
+    if ( _typingCapture )
+    {
+        _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+        return;
+    }
+
+    std::shared_lock const lock ( _mutex );
+
+    for ( auto &widget : _widgets )
+    {
+        if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+        {
+            w.OnKeyboardKeyUp ( event._key, event._modifier );
+            break;
+        }
+    }
 }
 
 void UIManager::OnKillFocus ( MessageQueue &messageQueue ) noexcept
@@ -355,15 +381,16 @@ void UIManager::OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) n
     messageQueue.DequeueEnd ();
 
     auto const &event = *static_cast<MouseMoveEvent const*> ( message._action () );
+    int32_t const x = event._x;
+    int32_t const y = event._y;
+    _lastMouseX = x;
+    _lastMouseY = y;
 
     if ( _mouseCapture ) [[unlikely]]
     {
         _mouseCapture->OnMouseMove ( event );
         return;
     }
-
-    int32_t const x = event._x;
-    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );

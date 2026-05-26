@@ -12,6 +12,7 @@
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
+#include "viewport_widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -58,6 +59,8 @@ class Workspace final
         ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
         ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
 
+        ViewportWidget*                                 _viewport = nullptr;
+
         std::mutex                                      _mutex {};
 
     public:
@@ -77,8 +80,8 @@ class Workspace final
         void Load ( std::string_view scene ) noexcept;
         void Close () noexcept;
 
-        void DrawOpaque ( VkCommandBuffer commandBuffer ) noexcept;
-        void DrawGizmo ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+        void DrawOpaque ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
+        void DrawGizmo ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
 
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
         void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;

@@ -4,7 +4,6 @@
 #include <static_mesh_component.hpp>
 #include <trace.hpp>
 #include <ui_props.hpp>
-#include <viewport_widget.hpp>
 #include <workspace.hpp>
 
 
@@ -154,16 +153,18 @@ void Workspace::Close () noexcept
     // FUCK
 }
 
-void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
+void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
+    if ( !_viewport ) [[unlikely]]
+        return;
+
     AV_TRACE ( "Opaque" )
     AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
+    _viewport->Update ( deltaTime );
     // FUCK
 }
 
-void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer,
-    [[maybe_unused]] size_t commandBufferIndex
-) noexcept
+void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer, float /*deltaTime*/ ) noexcept
 {
     AV_TRACE ( "Gizmo" )
     AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
@@ -353,24 +354,26 @@ void Workspace::FUCK () noexcept
             ._type = eMessageType::UIAddWidget,
 
             ._action = [] () noexcept {
-                return new ViewportWidget ();
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [] () noexcept {
                 auto* dialogBox = new UIProps ();
                 dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
                 dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
                     pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
                 return dialogBox;
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
+    _viewport = new ViewportWidget ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+
+            ._action = [ viewport = _viewport ] () noexcept {
+                return viewport;
             },
 
             ._serialNumber = 0U

@@ -1,4 +1,4 @@
-// version 1.98
+// version 1.99
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -23,6 +23,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+GXVec2 const GXVec2::ZERO ( 0.0F, 0.0F );
 
 [[maybe_unused]] GXVoid GXVec2::SetX ( GXFloat x ) noexcept
 {

@@ -1,4 +1,4 @@
-// version 1.99
+// version 1.100
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -1189,6 +1189,71 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
         ( vData[ 0U ] * ( ac2 - rb2 ) + vData[ 1U ] * ( ra2 + bc2 ) + vData[ 2U ] * ( rr - aa - bb + cc ) );
 }
 
+[[maybe_unused]] GXVoid GXQuat::GetRight ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = rr + aa - bb - cc;
+    d[ 1U ] = rc2 + ab2;
+    d[ 2U ] = ac2 - rb2;
+}
+
+[[maybe_unused]] GXVoid GXQuat::GetUp ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = ab2 - rc2;
+    d[ 1U ] = rr - aa + bb - cc;
+    d[ 2U ] = ra2 + bc2;
+}
+
+[[maybe_unused]] GXVoid GXQuat::GetForward ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = rb2 + ac2;
+    d[ 1U ] = bc2 - ra2;
+    d[ 2U ] = rr - aa - bb + cc;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // NOLINTNEXTLINE
@@ -1277,16 +1342,16 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     GXFloat const rr = qData[ 0U ] * qData[ 0U ];
     GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
     GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
-    GXFloat const rc2 = qData[ 0U ] * qData[ 3u ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
 
     GXFloat const aa = qData[ 1U ] * qData[ 1U ];
     GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
-    GXFloat const ac2 = qData[ 1U ] * qData[ 3u ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
 
     GXFloat const bb = qData[ 2U ] * qData[ 2U ];
-    GXFloat const bc2 = qData[ 2U ] * qData[ 3u ] * 2.0F;
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const cc = qData[ 3u ] * qData[ 3u ];
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
 
     auto &d = _data;
 

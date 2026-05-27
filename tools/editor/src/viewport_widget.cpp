@@ -41,28 +41,23 @@ ViewportWidget::ViewportWidget () noexcept:
     // NOTHING
 }
 
-void ViewportWidget::Update ( float /*deltaTime*/ ) noexcept
+void ViewportWidget::Update ( float deltaTime ) noexcept
 {
-    eNavigationMode const old = _navigationMode;
     ResolveNavigationMode ();
-
-    if ( old == _navigationMode ) [[likely]]
-        return;
 
     switch ( _navigationMode )
     {
         case eNavigationMode::FreeFly:
-            android_vulkan::LogInfo ( ">>> Mode is FreeFly" );
+            DoFreeFly ( deltaTime );
         break;
 
         case eNavigationMode::Orbit:
-            android_vulkan::LogInfo ( ">>> Mode is Orbit" );
+            DoOrbit ();
         break;
 
         case eNavigationMode::None:
-            android_vulkan::LogInfo ( ">>> Mode is None" );
-        break;
-
+            // NOTHING
+            [[fallthrough]];
         default:
             // IMPOSSIBLE
         break;
@@ -79,11 +74,6 @@ void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
     UpdateKeyboardState ( key, modifier, 0U );
 }
 
-void ViewportWidget::OnMouseLeave () noexcept
-{
-    // FUCK
-}
-
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 1U );
@@ -97,7 +87,15 @@ void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
-    // FUCK
+
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) > 1U ) [[unlikely]]
+        ChangeCursor ( eCursor::Arrow );
+
+    _mouseNow =
+    {
+        ._x = event._x,
+        ._y = event._y
+    };
 }
 
 Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -222,6 +220,12 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
     KeyModifier const &modifier = event._modifier;
     _state._shift = static_cast<uint8_t> ( modifier.AnyShiftPressed () );
     _state._alt = static_cast<uint8_t> ( modifier.AnyAltPressed () );
+
+    _mouseNow =
+    {
+        ._x = event._x,
+        ._y = event._y
+    };
 }
 
 void ViewportWidget::ResolveNavigationMode () noexcept
@@ -241,9 +245,23 @@ void ViewportWidget::ResolveNavigationMode () noexcept
     eNavigationMode const current = cases[ selector ];
     eNavigationMode const resultCases[] = { _navigationMode, current };
 
-    _navigationMode = resultCases[
-        static_cast<size_t> ( ( _navigationMode == eNavigationMode::None ) | ( current == eNavigationMode::None ) )
-    ];
+    auto const resultSelector =
+        static_cast<size_t> ( ( _navigationMode == eNavigationMode::None ) | ( current == eNavigationMode::None ) );
+
+    eNavigationMode const old = std::exchange ( _navigationMode, resultCases[ resultSelector ] );
+
+    Mouse const mouseCases[] = { _mouseCommit, _mouseNow };
+    _mouseCommit = mouseCases[ static_cast<size_t> ( old != _navigationMode ) ];
+}
+
+void ViewportWidget::DoFreeFly ( float /*deltaTime*/ ) noexcept
+{
+    // FUCK
+}
+
+void ViewportWidget::DoOrbit () noexcept
+{
+    // FUCK
 }
 
 } // namespace editor

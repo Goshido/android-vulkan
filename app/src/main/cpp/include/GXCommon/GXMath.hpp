@@ -1,4 +1,4 @@
-// version 1.99
+// version 1.100
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -639,6 +639,18 @@ struct [[maybe_unused]] GXQuat final
 
     [[maybe_unused]] GXVoid GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept;
     [[maybe_unused]] GXVoid Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+
+    // X axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetRight ( GXVec3 &out ) const noexcept;
+
+    // Y axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetUp ( GXVec3 &out ) const noexcept;
+
+    // Z axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetForward ( GXVec3 &out ) const noexcept;
 
     // Result is valid if quaternion is normalized.
     [[maybe_unused]] GXVoid TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept;

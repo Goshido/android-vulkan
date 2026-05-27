@@ -20,23 +20,32 @@ class ViewportWidget final : public Widget
 
         struct State final
         {
-            uint8_t         _forward: 1U = 0U;
-            uint8_t         _backward: 1U = 0U;
-            uint8_t         _left: 1U = 0U;
-            uint8_t         _right: 1U = 0U;
-            uint8_t         _shift: 1U = 0U;
-            uint8_t         _alt: 1U = 0U;
-            uint8_t         _middleMouseButton: 1U = 0U;
-            uint8_t         _leftMouseButton: 1U = 0U;
+            uint8_t             _forward: 1U = 0U;
+            uint8_t             _backward: 1U = 0U;
+            uint8_t             _left: 1U = 0U;
+            uint8_t             _right: 1U = 0U;
+            uint8_t             _shift: 1U = 0U;
+            uint8_t             _alt: 1U = 0U;
+            uint8_t             _middleMouseButton: 1U = 0U;
+            uint8_t             _leftMouseButton: 1U = 0U;
+        };
+
+        struct Mouse final
+        {
+            int32_t             _x = 0;
+            int32_t             _y = 0;
         };
 
     private:
-        DIVUIElement        _div;
-        VkExtent2D          _resolution {};
-        std::vector<float>  _lineHeights = { 0.0F };
-        float               _aspectRatio = 1.667F;
-        eNavigationMode     _navigationMode = eNavigationMode::None;
-        State               _state {};
+        DIVUIElement            _div;
+        VkExtent2D              _resolution {};
+        std::vector<float>      _lineHeights = { 0.0F };
+        Mouse                   _mouseNow {};
+        Mouse                   _mouseCommit {};
+        size_t                  _eventID = 0U;
+        float                   _aspectRatio = 1.667F;
+        eNavigationMode         _navigationMode = eNavigationMode::None;
+        State                   _state {};
 
     public:
         explicit ViewportWidget () noexcept;
@@ -55,7 +64,6 @@ class ViewportWidget final : public Widget
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept override;
 
-        void OnMouseLeave () noexcept override;
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
@@ -68,6 +76,9 @@ class ViewportWidget final : public Widget
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void ResolveNavigationMode () noexcept;
+
+        void DoFreeFly ( float deltaTime ) noexcept;
+        void DoOrbit () noexcept;
 };
 
 } // namespace editor

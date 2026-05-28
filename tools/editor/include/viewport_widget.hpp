@@ -37,13 +37,16 @@ class ViewportWidget final : public Widget
         };
 
     private:
+        GXMat4                  _projection = GXMat4::IDENTITY;
         DIVUIElement            _div;
         VkExtent2D              _resolution {};
         std::vector<float>      _lineHeights = { 0.0F };
+        GXQuat                  _orientation = GXQuat::IDENTITY;
+        GXVec3                  _position = GXVec3::ZERO;
         Mouse                   _mouseNow {};
         Mouse                   _mouseCommit {};
         size_t                  _eventID = 0U;
-        float                   _aspectRatio = 1.667F;
+        GXVec2                  _eulerAngles { 0.0F, 0.0F };
         eNavigationMode         _navigationMode = eNavigationMode::None;
         State                   _state {};
 
@@ -58,7 +61,7 @@ class ViewportWidget final : public Widget
 
         ~ViewportWidget () = default;
 
-        void Update ( float deltaTime ) noexcept;
+        void Update ( float deltaTime, float dpi ) noexcept;
 
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
@@ -72,12 +75,11 @@ class ViewportWidget final : public Widget
             pbr::FontStorage &fontStorage
         ) noexcept override;
 
-        void UpdateCamera () noexcept;
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void ResolveNavigationMode () noexcept;
 
-        void DoFreeFly ( float deltaTime ) noexcept;
+        void DoFreeFly ( float deltaTime, float dpi ) noexcept;
         void DoOrbit () noexcept;
 };
 

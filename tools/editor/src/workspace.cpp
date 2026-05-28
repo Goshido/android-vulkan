@@ -160,8 +160,9 @@ void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer, flo
 
     AV_TRACE ( "Opaque" )
     AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
-    _viewport->Update ( deltaTime );
-    // FUCK
+
+    // FUCK - correct DPI
+    _viewport->Update ( deltaTime, 1.0F );
 }
 
 void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer, float /*deltaTime*/ ) noexcept

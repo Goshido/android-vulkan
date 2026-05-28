@@ -3,8 +3,22 @@
 #include <theme.hpp>
 #include <viewport_widget.hpp>
 
+// FUCK
+#include <scope_quard.hpp>
+
 
 namespace editor {
+
+namespace {
+
+constexpr float FREE_FLY_ORIENTATION_SPEED = 4.0e-2F;
+constexpr float FREE_FLY_MOVE_SPEED = 1.0F;
+constexpr float FREE_FLY_SPRINT_SPEED = 10.0F;
+constexpr float Z_NEAR = 0.1F;
+constexpr float Z_FAR = 1.0e+3F;
+constexpr float FOV_Y = GXDegToRad ( 70.0F );
+
+} // namespace
 
 ViewportWidget::ViewportWidget () noexcept:
     _div (
@@ -41,14 +55,14 @@ ViewportWidget::ViewportWidget () noexcept:
     // NOTHING
 }
 
-void ViewportWidget::Update ( float deltaTime ) noexcept
+void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
 {
     ResolveNavigationMode ();
 
     switch ( _navigationMode )
     {
         case eNavigationMode::FreeFly:
-            DoFreeFly ( deltaTime );
+            DoFreeFly ( deltaTime, dpi );
         break;
 
         case eNavigationMode::Orbit:
@@ -116,9 +130,7 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     _resolution = viewport;
 
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _aspectRatio = size._data[ 0U ] / size._data[ 1U ];
-
-    UpdateCamera ();
+    _projection.Perspective ( FOV_Y, size._data[ 0U ] / size._data[ 1U ], Z_NEAR, Z_FAR );
 
     // It's needed to update widget boundaries according to HTML+CSS settings.
     // The viewport widget itself does not have any child elements.
@@ -156,11 +168,6 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
         ._hasChanges = false,
         ._neededUIVertices = 0U
     };
-}
-
-void ViewportWidget::UpdateCamera () noexcept
-{
-    android_vulkan::LogInfo ( ">>> UpdateCamera" );
 }
 
 void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept
@@ -254,9 +261,64 @@ void ViewportWidget::ResolveNavigationMode () noexcept
     _mouseCommit = mouseCases[ static_cast<size_t> ( old != _navigationMode ) ];
 }
 
-void ViewportWidget::DoFreeFly ( float /*deltaTime*/ ) noexcept
+void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
 {
+    _eulerAngles.Sum ( _eulerAngles,
+        FREE_FLY_ORIENTATION_SPEED / dpi,
+
+        GXVec2 ( static_cast<float> ( _mouseNow._y - _mouseCommit._y ),
+            static_cast<float> ( _mouseNow._x - _mouseCommit._x )
+        )
+    );
+
+    _mouseCommit = _mouseNow;
+
+    _eulerAngles._data[ 0U ] = GXClampf ( _eulerAngles._data[ 0U ], -GX_MATH_HALF_PI, GX_MATH_HALF_PI );
+
+    float yaw = _eulerAngles._data[ 1U ];
+    constexpr float mirrorCases[] = { 1.0F, -1.0F };
+    float const mirroring = mirrorCases[ static_cast<size_t> ( yaw < 0.0F ) ];
+    yaw *= mirroring;
+
+    while ( yaw > GX_MATH_DOUBLE_PI )
+        yaw -= GX_MATH_DOUBLE_PI;
+
+    _eulerAngles._data[ 1U ] = yaw * mirroring;
+
+    GXQuat pitchFactor {};
+    pitchFactor.FromAxisAngle ( GXVec3::RIGHT, _eulerAngles._data[ 0U ] );
+
+    GXQuat yawFactor {};
+    yawFactor.FromAxisAngle ( GXVec3::UP, _eulerAngles._data[ 1U ] );
+
+    _orientation.Multiply ( yawFactor, pitchFactor );
+
     // FUCK
+    android_vulkan::ScopeGuard const fuck (
+        [ this ] () noexcept {
+            android_vulkan::LogInfo ( "%g %g %g", _position._data[ 0U ], _position._data[ 1U ], _position._data[ 2U ] );
+        }
+    );
+
+    if ( !( _state._right | _state._left | _state._forward | _state._backward ) )
+        return;
+
+    constexpr float directionCases[] = { 0.0F, 1.0F };
+    GXVec3 displacementLocal = GXVec3::ZERO;
+    displacementLocal._data[ 0U ] = directionCases[ static_cast<size_t> ( _state._right ) ];
+    displacementLocal._data[ 0U ] += -directionCases[ static_cast<size_t> ( _state._left ) ];
+    displacementLocal._data[ 2U ] = directionCases[ static_cast<size_t> ( _state._forward ) ];
+    displacementLocal._data[ 2U ] += -directionCases[ static_cast<size_t> ( _state._backward ) ];
+
+    constexpr float speedCases[] = { FREE_FLY_MOVE_SPEED, FREE_FLY_SPRINT_SPEED };
+
+    displacementLocal.Multiply ( displacementLocal,
+        deltaTime * speedCases[ static_cast<size_t> ( _state._shift ) ] / displacementLocal.Length ()
+    );
+
+    GXVec3 displacementWorld {};
+    _orientation.TransformFast ( displacementWorld, displacementLocal );
+    _position.Sum ( _position, displacementWorld );
 }
 
 void ViewportWidget::DoOrbit () noexcept

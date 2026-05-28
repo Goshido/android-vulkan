@@ -1,4 +1,4 @@
-// version 1.100
+// version 1.101
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -9,9 +9,6 @@ namespace {
 constexpr GXFloat HSVA_FACTOR = 0.016666F;
 constexpr GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
 constexpr GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
-
-constexpr GXFloat DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
-constexpr GXFloat RADIANS_TO_DEGREES_FACTOR = 57.295779F;
 
 constexpr GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
 
@@ -132,6 +129,9 @@ GXVec2 const GXVec2::ZERO ( 0.0F, 0.0F );
 
 GXVec3 const GXVec3::ONE ( 1.0F, 1.0F, 1.0F );
 GXVec3 const GXVec3::ZERO ( 0.0F, 0.0F, 0.0F );
+GXVec3 const GXVec3::RIGHT ( 1.0F, 0.0F, 0.0F );
+GXVec3 const GXVec3::UP ( 0.0F, 1.0F, 0.0F );
+GXVec3 const GXVec3::FORWARD ( 0.0F, 0.0F, 1.0F );
 
 [[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x ) noexcept
 {
@@ -213,24 +213,6 @@ GXVec3 const GXVec3::ZERO ( 0.0F, 0.0F, 0.0F );
     auto const &d = _data;
     auto const &otherData = other._data;
     return ( d[ 0U ] == otherData[ 0U ] ) & ( d[ 1U ] == otherData[ 1U ] ) & ( d[ 2U ] == otherData[ 2U ] );
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteX () noexcept
-{
-    constexpr static GXVec3 absoluteX ( 1.0F, 0.0F, 0.0F );
-    return absoluteX;
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteY () noexcept
-{
-    constexpr static GXVec3 absoluteY ( 0.0F, 1.0F, 0.0F );
-    return absoluteY;
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteZ () noexcept
-{
-    constexpr static GXVec3 absoluteZ ( 0.0F, 0.0F, 1.0F );
-    return absoluteZ;
 }
 
 [[maybe_unused]] GXVoid GXCALL GXVec3::MakeOrthonormalBasis ( GXVec3 &baseX,
@@ -1313,10 +1295,10 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::RIGHT ) ) < 0.5F )
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
+        tmp.CrossProduct ( zDirection, GXVec3::RIGHT );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
         yAxis.CrossProduct ( zDirection, xAxis );
@@ -1324,7 +1306,7 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     else
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
+        tmp.CrossProduct ( zDirection, GXVec3::UP );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
         xAxis.CrossProduct ( yAxis, zDirection );
@@ -1713,10 +1695,10 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::RIGHT ) ) < 0.5F )
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
+        tmp.CrossProduct ( zDirection, GXVec3::RIGHT );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
         yAxis.CrossProduct ( zDirection, xAxis );
@@ -1724,7 +1706,7 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
     else
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
+        tmp.CrossProduct ( zDirection, GXVec3::UP );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
         xAxis.CrossProduct ( yAxis, zDirection );
@@ -2418,16 +2400,6 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-[[maybe_unused]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
-{
-    return degrees * DEGREES_TO_RADIANS_FACTOR;
-}
-
-[[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
-{
-    return radians * RADIANS_TO_DEGREES_FACTOR;
-}
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {

@@ -1,4 +1,4 @@
-// version 1.100
+// version 1.101
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -108,6 +108,15 @@ struct [[maybe_unused]] GXVec3 final
     // [0.0F, 0.0F, 0.0F]
     [[maybe_unused]] static GXVec3 const    ZERO;
 
+    // [1.0F, 0.0F, 0.0F]
+    [[maybe_unused]] static GXVec3 const    RIGHT;
+
+    // [0.0F, 1.0F, 0.0F]
+    [[maybe_unused]] static GXVec3 const    UP;
+
+    // [0.0F, 0.0F, 1.0F]
+    [[maybe_unused]] static GXVec3 const    FORWARD;
+
     // Stores vector components in x, y, z order.
     GXFloat                                 _data[ 3U ];
 
@@ -165,10 +174,6 @@ struct [[maybe_unused]] GXVec3 final
     [[maybe_unused]] GXVoid Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept;
 
     [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other ) noexcept;
-
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteX () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteY () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteZ () noexcept;
 
     // baseX - correct direction, adjustedY - desirable, adjustedZ - calculated.
     [[maybe_unused]] static GXVoid GXCALL MakeOrthonormalBasis ( GXVec3 &baseX,
@@ -966,8 +971,17 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 //---------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept;
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept;
+[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
+{
+    constexpr GXFloat toRadians = 0.0174533F;
+    return degrees * toRadians;
+}
+
+[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
+{
+    constexpr GXFloat toDegrees = 57.295779F;
+    return radians * toDegrees;
+}
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept;
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomNormalize () noexcept;

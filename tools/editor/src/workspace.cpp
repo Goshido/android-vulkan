@@ -153,20 +153,42 @@ void Workspace::Close () noexcept
     // FUCK
 }
 
-void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer, float deltaTime ) noexcept
+void Workspace::ComputeTransform ( float deltaTime ) noexcept
+{
+    if ( !_viewport ) [[unlikely]]
+        return;
+
+    AV_TRACE ( "Compute transforms" )
+
+    // FUCK - correct DPI
+    _viewport->Update ( deltaTime, 1.0F );
+}
+
+void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
+{
+    if ( !_viewport ) [[unlikely]]
+        return;
+
+    AV_TRACE ( "Upload to GPU" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload to GPU" )
+    // FUCK
+}
+
+void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !_viewport ) [[unlikely]]
         return;
 
     AV_TRACE ( "Opaque" )
     AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
-
-    // FUCK - correct DPI
-    _viewport->Update ( deltaTime, 1.0F );
+    // FUCK
 }
 
-void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer, float /*deltaTime*/ ) noexcept
+void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
+    if ( !_viewport ) [[unlikely]]
+        return;
+
     AV_TRACE ( "Gizmo" )
     AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
     // FUCK

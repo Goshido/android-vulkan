@@ -1082,6 +1082,8 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         return;
     }
 
+    _workspace.ComputeTransform ( deltaTime );
+
     UploadMeshes ( commandBuffer, commandBufferIndex );
     UploadTexture2DInstances ( commandBuffer, commandBufferIndex );
 
@@ -1101,7 +1103,8 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     }
 
-    _workspace.DrawOpaque ( commandBuffer, deltaTime );
+    _workspace.UploadToGPU ( commandBuffer );
+    _workspace.DrawOpaque ( commandBuffer );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Scene" )
@@ -1172,7 +1175,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
-        _workspace.DrawGizmo ( commandBuffer, deltaTime );
+        _workspace.DrawGizmo ( commandBuffer );
 
         _presentRenderPass.Begin ( renderer, commandBuffer );
         _toneMapper.Execute ( commandBuffer, resourceHeap );

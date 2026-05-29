@@ -80,8 +80,11 @@ class Workspace final
         void Load ( std::string_view scene ) noexcept;
         void Close () noexcept;
 
-        void DrawOpaque ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
-        void DrawGizmo ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
+        void ComputeTransform ( float deltaTime ) noexcept;
+        void UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept;
+
+        void DrawOpaque ( VkCommandBuffer commandBuffer ) noexcept;
+        void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
 
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
         void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;

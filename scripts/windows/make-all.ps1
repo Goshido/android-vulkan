@@ -29,6 +29,10 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh.vs.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\light_volume.vs.hlsl"                                                                        `
     "$CORE_SHADER_DIRECTORY\light_volume.vs.spv"
 

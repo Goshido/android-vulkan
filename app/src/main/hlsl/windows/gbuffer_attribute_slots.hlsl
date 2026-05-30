@@ -1,0 +1,12 @@
+#ifndef GBUFFER_ATTRIBUTE_SLOTS_INC
+#define GBUFFER_ATTRIBUTE_SLOTS_INC
+
+
+#define ATT_SLOT_UV                 0
+#define ATT_SLOT_TANGENT_VIEW       1
+#define ATT_SLOT_BITANGENT_VIEW     2
+#define ATT_SLOT_NORMAL_VIEW        3
+#define ATT_SLOT_INSTANCE_ID        4
+
+
+#endif // GBUFFER_ATTRIBUTE_SLOTS_INC

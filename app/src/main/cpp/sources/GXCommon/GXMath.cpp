@@ -1,4 +1,4 @@
-// version 1.101
+// version 1.102
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -817,6 +817,34 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
 }
 
 [[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
+{
+    GXVec3 imaginaryABC = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
+
+    // Shader code expects only positive real value for reconstruction.
+    // Using quaternion duality property to satisfy that convention.
+    if ( _data[ 0U ] < 0.0F )
+        imaginaryABC.Reverse ();
+
+    constexpr auto conv = [] ( uint32_t bits ) consteval -> std::pair<float, GXVec2>
+    {
+        uint32_t const halfFixedPoint = 1U << ( bits - 1U );
+        auto const offset = static_cast<float> ( halfFixedPoint );
+        return std::make_pair ( static_cast<float> ( halfFixedPoint - 1U ), GXVec2 ( offset, offset ) );
+    };
+
+    auto const [scale21, offset21] = conv ( 21U );
+    auto const [scale22, offset22] = conv ( 22U );
+
+    auto &imaginaryAB = *reinterpret_cast<GXVec2*> ( imaginaryABC._data );
+    imaginaryAB.Sum ( offset21, scale21, imaginaryAB );
+
+    auto const aSnorm = static_cast<uint64_t> ( imaginaryAB._data[ 0U ] );
+    auto const bSnorm = static_cast<uint64_t> ( imaginaryAB._data[ 1U ] );
+    auto const cSnorm = static_cast<uint64_t> ( imaginaryABC._data[ 2U ] * scale22 + offset22._data[ 0U ] );
+    return ( cSnorm << 42U ) | ( bSnorm << 21U ) | aSnorm;
+}
+
+[[maybe_unused]] GXUBigInt GXQuat::ToQuat64 () const noexcept
 {
     GXVec4 q = *reinterpret_cast<GXVec4 const*> ( this );
 

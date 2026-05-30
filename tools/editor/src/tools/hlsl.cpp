@@ -926,4 +926,429 @@ uint32_t4 operator | ( uint32_t4 const &a, uint32_t4 const &b ) noexcept
     return { a.x | b.x, a.y | b.y, a.z | b.z, a.w | b.w };
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
+swizzle_float32_t3::operator float32_t3 () const noexcept
+{
+    return { *x, *y, *z };
+}
+
+void swizzle_float32_t3::operator += ( float32_t3 const &v ) noexcept
+{
+    *x += v.x;
+    *y += v.y;
+    *z += v.z;
+}
+
+void swizzle_float32_t3::operator -= ( float32_t3 const &v ) noexcept
+{
+    *x -= v.x;
+    *y -= v.y;
+    *z -= v.z;
+}
+
+void swizzle_float32_t3::operator *= ( float32_t3 const &v ) noexcept
+{
+    *x *= v.x;
+    *y *= v.y;
+    *z *= v.z;
+}
+
+void swizzle_float32_t3::operator /= ( float32_t3 const &v ) noexcept
+{
+    *x /= v.x;
+    *y /= v.y;
+    *x /= v.x;
+}
+
+void swizzle_float32_t3::operator += ( swizzle_float32_t3 const &v ) noexcept
+{
+    *x += *v.x;
+    *y += *v.y;
+    *z += *v.z;
+}
+
+void swizzle_float32_t3::operator -= ( swizzle_float32_t3 const &v ) noexcept
+{
+    *x -= *v.x;
+    *y -= *v.y;
+    *z -= *v.z;
+}
+
+void swizzle_float32_t3::operator *= ( swizzle_float32_t3 const &v ) noexcept
+{
+    *x *= *v.x;
+    *y *= *v.y;
+    *z *= *v.z;
+}
+
+void swizzle_float32_t3::operator /= ( swizzle_float32_t3 const &v ) noexcept
+{
+    *x /= *v.x;
+    *y /= *v.y;
+    *z /= *v.z;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+swizzle_float32_t4::operator float32_t4 () const noexcept
+{
+    return { *x, *y, *z, *w };
+}
+
+void swizzle_float32_t4::operator += ( float32_t4 const &v ) noexcept
+{
+    *x += v.x;
+    *y += v.y;
+    *z += v.z;
+    *w += v.w;
+}
+
+void swizzle_float32_t4::operator -= ( float32_t4 const &v ) noexcept
+{
+    *x -= v.x;
+    *y -= v.y;
+    *z -= v.z;
+    *w -= v.w;
+}
+
+void swizzle_float32_t4::operator *= ( float32_t4 const &v ) noexcept
+{
+    *x *= v.x;
+    *y *= v.y;
+    *z *= v.z;
+    *w *= v.w;
+}
+
+void swizzle_float32_t4::operator /= ( float32_t4 const &v ) noexcept
+{
+    *x /= v.x;
+    *y /= v.y;
+    *x /= v.x;
+    *w /= v.w;
+}
+
+void swizzle_float32_t4::operator += ( swizzle_float32_t4 const &v ) noexcept
+{
+    *x += *v.x;
+    *y += *v.y;
+    *z += *v.z;
+    *w += *v.w;
+}
+
+void swizzle_float32_t4::operator -= ( swizzle_float32_t4 const &v ) noexcept
+{
+    *x -= *v.x;
+    *y -= *v.y;
+    *z -= *v.z;
+    *w -= *v.w;
+}
+
+void swizzle_float32_t4::operator *= ( swizzle_float32_t4 const &v ) noexcept
+{
+    *x *= *v.x;
+    *y *= *v.y;
+    *z *= *v.z;
+    *w *= *v.w;
+}
+
+void swizzle_float32_t4::operator /= ( swizzle_float32_t4 const &v ) noexcept
+{
+    *x /= *v.x;
+    *y /= *v.y;
+    *z /= *v.z;
+    *w /= *v.w;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float32_t3::float32_t3 () noexcept
+{
+    InitSwizzle ();
+}
+
+float32_t3::float32_t3 ( float32_t3 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    InitSwizzle ();
+}
+
+float32_t3 &float32_t3::operator = ( float32_t3 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    InitSwizzle ();
+    return *this;
+}
+
+float32_t3::float32_t3 ( float32_t3 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    InitSwizzle ();
+}
+
+float32_t3 &float32_t3::operator = ( float32_t3 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    InitSwizzle ();
+    return *this;
+}
+
+float32_t3::float32_t3 ( float v ) noexcept:
+    x ( v ),
+    y ( v ),
+    z ( v )
+{
+    InitSwizzle ();
+}
+
+float32_t3::float32_t3 ( float32_t xVal, float32_t yVal, float32_t zVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
+    z ( zVal )
+{
+    InitSwizzle ();
+}
+
+float32_t3::float32_t3 ( uint32_t3 v ) noexcept:
+    x ( static_cast<float32_t> ( v.x ) ),
+    y ( static_cast<float32_t> ( v.y ) ),
+    z ( static_cast<float32_t> ( v.z ) )
+{
+    InitSwizzle ();
+}
+
+void float32_t3::operator += ( float32_t3 const &v ) noexcept
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+}
+
+void float32_t3::operator -= ( float32_t3 const &v ) noexcept
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+}
+
+void float32_t3::operator *= ( float32_t3 const &v ) noexcept
+{
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+}
+
+void float32_t3::operator /= ( float32_t3 const &v ) noexcept
+{
+    x /= v.x;
+    y /= v.y;
+    z /= v.z;
+}
+
+void float32_t3::InitSwizzle () noexcept
+{
+    xxx = swizzle_float32_t3 ( &x, &x, &x );
+    yyy = swizzle_float32_t3 ( &y, &y, &y );
+    zzz = swizzle_float32_t3 ( &z, &z, &z );
+}
+
+float32_t3 operator + ( float32_t3 const &a, float32_t3 const &b ) noexcept
+{
+    return { a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
+float32_t3 operator - ( float32_t3 const &a, float32_t3 const &b ) noexcept
+{
+    return { a.x - b.x, a.y - b.y, a.z - b.z };
+}
+
+float32_t3 operator * ( float32_t3 const &a, float32_t3 const &b ) noexcept
+{
+    return { a.x * b.x, a.y * b.y, a.z * b.z };
+}
+
+float32_t3 operator / ( float32_t3 const &a, float32_t3 const &b ) noexcept
+{
+    return { a.x / b.x, a.y / b.y, a.z / b.z };
+}
+
+float32_t dot ( float32_t3 const& a, float32_t3 const& b ) noexcept
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+float32_t3 mad ( float32_t3 const &a, float32_t3 const &b, float32_t c ) noexcept
+{
+    return
+    {
+        a.x * b.x + c,
+        a.y * b.y + c,
+        a.z * b.z + c
+    };
+}
+
+float32_t3 mad ( float32_t3 const &a, float32_t3 const &b, float32_t3 const &c ) noexcept
+{
+    return
+    {
+        a.x * b.x + c.x,
+        a.y * b.y + c.y,
+        a.z * b.z + c.z
+    };
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+float32_t4::float32_t4 () noexcept
+{
+    InitSwizzle ();
+}
+
+float32_t4::float32_t4 ( float32_t4 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z ),
+    w ( other.w )
+{
+    InitSwizzle ();
+}
+
+float32_t4 &float32_t4::operator = ( float32_t4 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    w = other.w;
+    InitSwizzle ();
+    return *this;
+}
+
+float32_t4::float32_t4 ( float32_t4 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z ),
+    w ( other.w )
+{
+    InitSwizzle ();
+}
+
+float32_t4 &float32_t4::operator = ( float32_t4 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    w = other.w;
+    InitSwizzle ();
+    return *this;
+}
+
+float32_t4::float32_t4 ( float32_t v ) noexcept:
+    x ( v ),
+    y ( v ),
+    z ( v ),
+    w ( v )
+{
+    InitSwizzle ();
+}
+
+float32_t4::float32_t4 ( float32_t xVal, float32_t yVal, float32_t zVal, float32_t wVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
+    z ( zVal ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+float32_t4::float32_t4 ( float32_t3 const &xyzVal, float32_t wVal ) noexcept:
+    x ( xyzVal.x ),
+    y ( xyzVal.y ),
+    z ( xyzVal.z ),
+    w ( wVal )
+{
+    InitSwizzle ();
+}
+
+float32_t4::float32_t4 ( float32_t x, float32_t3 const &yzwVal ) noexcept:
+    x ( x ),
+    y ( yzwVal.x ),
+    z ( yzwVal.y ),
+    w ( yzwVal.z )
+{
+    InitSwizzle ();
+}
+
+void float32_t4::operator += ( float32_t4 const &v ) noexcept
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+    w += v.w;
+}
+
+void float32_t4::operator -= ( float32_t4 const &v ) noexcept
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+    w -= v.w;
+}
+
+void float32_t4::operator *= ( float32_t4 const &v ) noexcept
+{
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+    w *= v.w;
+}
+
+void float32_t4::operator /= ( float32_t4 const &v ) noexcept
+{
+    x /= v.x;
+    y /= v.y;
+    z /= v.z;
+    w /= v.w;
+}
+
+void float32_t4::InitSwizzle () noexcept
+{
+    xxx = swizzle_float32_t3 ( &x, &x, &x );
+    yyy = swizzle_float32_t3 ( &y, &y, &y );
+    zzz = swizzle_float32_t3 ( &z, &z, &z );
+    www = swizzle_float32_t3 ( &w, &w, &w );
+}
+
+float32_t4 operator + ( float32_t4 const &a, float32_t4 const &b ) noexcept
+{
+    return { a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w };
+}
+
+float32_t4 operator - ( float32_t4 const &a, float32_t4 const &b ) noexcept
+{
+    return { a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w };
+}
+
+float32_t4 operator * ( float32_t4 const &a, float32_t4 const &b ) noexcept
+{
+    return { a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w };
+}
+
+float32_t4 operator / ( float32_t4 const &a, float32_t4 const &b ) noexcept
+{
+    return { a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w };
+}
+
 } // namespace hlsl

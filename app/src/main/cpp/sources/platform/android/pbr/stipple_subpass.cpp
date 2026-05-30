@@ -77,7 +77,7 @@ void StippleSubpass::UpdateGPUData ( GeometryPool &geometryPool,
 
             GXQuat q {};
             q.FromFast ( localView );
-            normalData._localView[ 0U ]._q0 = q.Compress64 ();
+            normalData._localView[ 0U ]._q0 = q.ToQuat64 ();
 
             colorData._colorData[ 0U ] = geometryData._colorData;
             geometryPool.Push ( positionData, normalData, colorData, 1U );
@@ -111,7 +111,7 @@ void StippleSubpass::UpdateGPUData ( GeometryPool &geometryPool,
 
                 GXQuat q {};
                 q.FromFast ( localView );
-                uint64_t const tbn64 = q.Compress64 ();
+                uint64_t const tbn64 = q.ToQuat64 ();
 
                 GeometryPassProgram::TBN64 &dst = normalData._localView[ instanceIndex >> 1U ];
                 size_t const ind = instanceIndex & normalIndexMask;

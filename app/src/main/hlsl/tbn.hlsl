@@ -4,6 +4,15 @@
 
 #include "tbn64.hlsl"
 
+// FUCK - bitfields
+// Layout for r + ai + bj + ck
+// a - 21 bits
+// b - 21 bits
+// c - 22 bits
+// 0baaaa'aaaa'aaaa'aaaa'aaaa'abbb'bbbb'bbbb'bbbb'bbbb'bbcc'cccc'cccc'cccc'cccc'cccc
+using Quat64 = uint64_t;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 void GetNormalAndTangent ( out float16_t3 normalView, out float16_t3 tangentView, in float16_t4 tbn )
 {
@@ -52,6 +61,12 @@ float16_t4 DecompressTBN64 ( in TBN64 tbn64, in uint32_t idx )
 
     // 2.0 / ( 2 ^ 16 - 1 ) = 3.0518043793392843518730449378195e-5
     return (float16_t4)mad ( (float32_t4)uint16_t4 ( shifted.x, masked.x, shifted.y, masked.y ), 3.0518e-5F, -1.0F );
+}
+
+float16_t4 DecompressQuat64 ( in Quat64 q )
+{
+    // FUCK
+    return float16_t4 ( 1.0H, 0.0H, 0.0H, 0.0H );
 }
 
 uint32_t CompressTBN32 ( in float16_t4 tbn, in uint32_t oldCompressedTBN )

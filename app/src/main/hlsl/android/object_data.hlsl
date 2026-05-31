@@ -2,9 +2,10 @@
 #define OBJECT_DATA_HLSL
 
 
+#include "color_packing.hlsl"
 #include "platform/android/pbr/geometry_pass_binds.inc"
 #include "platform/android/pbr/gpgpu_limits.inc"
-#include "tbn64.hlsl"
+#include "quat64.hlsl"
 
 
 // In summary data per instance = 88 bytes
@@ -21,32 +22,7 @@ cbuffer InstancePositionData:       register ( b0 )
 [[vk::binding ( BIND_INSTANCE_NORMAL_DATA, SET_INSTANCE_DATA )]]
 cbuffer InstanceNormalData:         register ( b1 )
 {
-    TBN64           g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
-};
-
-struct ColorData
-{
-    uint32_t        _emiR: 8;
-
-    uint32_t        _col0R: 8;
-    uint32_t        _col0G: 8;
-    uint32_t        _col0B: 8;
-
-    uint32_t        _emiG: 8;
-
-    uint32_t        _col1R: 8;
-    uint32_t        _col1G: 8;
-    uint32_t        _col1B: 8;
-
-    uint32_t        _emiB: 8;
-
-    uint32_t        _col2R: 8;
-    uint32_t        _col2G: 8;
-    uint32_t        _col2B: 8;
-
-    uint32_t        _col0A: 8;
-
-    uint32_t        _emiIntens: 24;
+    Quat64x2        g_localView[ PBR_OPAQUE_MAX_INSTANCE_COUNT / 2U ];
 };
 
 [[vk::binding ( BIND_INSTANCE_COLOR_DATA, SET_INSTANCE_DATA )]]

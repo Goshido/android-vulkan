@@ -1,5 +1,5 @@
 #include "platform/windows/pbr/index_stream.inc"
-#include "tbn.hlsl"
+#include "quat.hlsl"
 #include "windows/gbuffer_attribute_slots.hlsl"
 
 
@@ -124,7 +124,7 @@ OutputData VS ( in InputData inputData )
 
     GetNormalAndTangent ( normalView,
         tangentView,
-        RotateTBN ( RecoverTBN ( compressedTBN.xyz ), DecompressQuat64 ( transform._normal ) )
+        Rotate ( Recover ( compressedTBN.xyz ), Decompress ( transform._normal ) )
     );
 
     result._tangentView = (float32_t3)tangentView;

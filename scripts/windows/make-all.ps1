@@ -13,8 +13,8 @@ scripts\windows\make-spv.ps1                                                    
     "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                       `
-    "$CORE_SHADER_DIRECTORY\common_opaque.vs.spv"
+    "$ANDROID_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                    `
+    "$ANDROID_SHADER_DIRECTORY\common_opaque.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy.vs.hlsl"                                                                               `
@@ -28,9 +28,9 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_HLSL_DIRECTORY\full_screen_triangle.vs.hlsl"                                                             `
     "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
-scripts\windows\make-spv.ps1                                                                                           `
-    "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh.vs.hlsl"                                                                     `
-    "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh.vs.spv"
+# scripts\windows\make-spv.ps1                                                                                           `
+#     "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh.vs.hlsl"                                                                     `
+#     "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\light_volume.vs.hlsl"                                                                        `
@@ -74,8 +74,8 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\blinn_phong_lut.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\dummy_gbuffer.ps.hlsl"                                                                       `
-    "$CORE_SHADER_DIRECTORY\dummy_gbuffer.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\dummy_gbuffer.ps.hlsl"                                                                    `
+    "$ANDROID_SHADER_DIRECTORY\dummy_gbuffer.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy_light.ps.hlsl"                                                                         `
@@ -94,8 +94,8 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\null.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                              `
-    "$CORE_SHADER_DIRECTORY\opaque.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                           `
+    "$ANDROID_SHADER_DIRECTORY\opaque.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light.ps.hlsl"                                                                         `
@@ -110,8 +110,8 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\reflection_local.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\stipple.ps.hlsl"                                                                             `
-    "$CORE_SHADER_DIRECTORY\stipple.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\stipple.ps.hlsl"                                                                          `
+    "$ANDROID_SHADER_DIRECTORY\stipple.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$ANDROID_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps.hlsl"                                                    `

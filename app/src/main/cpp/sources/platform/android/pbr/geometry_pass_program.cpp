@@ -8,7 +8,7 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
+constexpr char const* VERTEX_SHADER = "shaders/android/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;

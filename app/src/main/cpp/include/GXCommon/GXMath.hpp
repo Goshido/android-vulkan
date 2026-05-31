@@ -1,4 +1,4 @@
-// version 1.102
+// version 1.103
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -587,14 +587,14 @@ struct [[maybe_unused]] GXQuat final
     // bits 10-19: b component
     // bits 20-29: c component
     // bits 30-31: bitangent reflection scalar
-    [[maybe_unused, nodiscard]] GXUInt Compress32 ( bool reflectBitangent ) const noexcept;
+    [[maybe_unused, nodiscard]] GXUInt ToTBN32 ( bool reflectBitangent ) const noexcept;
 
     // "Real" component could be restored using unit quaternion property. It's guarantee to be positive real component
     // eliminating quaternion duality flaw.
     // bits 0-20: a component
     // bits 21-41: b component
     // bits 42-63: c component
-    [[maybe_unused, nodiscard]] GXUBigInt Compress64 () const noexcept;
+    [[maybe_unused, nodiscard]] GXUBigInt ToTBN64 () const noexcept;
 
     // Packing TBN basis into R16G16B16A16_UNORM format.
     // bits 0-15: r component

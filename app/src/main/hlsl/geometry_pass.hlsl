@@ -3,8 +3,6 @@
 
 
 #include "color_packing.hlsl"
-#include "gbuffer_render_targets.hlsl"
-#include "object_data.hlsl"
 
 
 // Intensity should take range from 0 to 6000.0H
@@ -12,50 +10,26 @@
 // 6000.0F / (float32_t)( 0x00FFFFFFU )
 #define INTENSITY_FACTOR    3.57628e-4F
 
+//----------------------------------------------------------------------------------------------------------------------
 
-[[vk::binding ( BIND_SAMPLER, SET_SAMPLER )]]
-SamplerState                        g_sampler:              register ( s0 );
-
-[[vk::binding ( BIND_DIFFUSE_TEXTURE, SET_MATERIAL )]]
-Texture2D<float32_t4>               g_diffuseTexture:       register ( t0 );
-
-[[vk::binding ( BIND_EMISSION_TEXTURE, SET_MATERIAL )]]
-Texture2D<float32_t4>               g_emissionTexture:      register ( t1 );
-
-[[vk::binding ( BIND_MASK_TEXTURE, SET_MATERIAL )]]
-Texture2D<float32_t4>               g_maskTexture:          register ( t2 );
-
-[[vk::binding ( BIND_NORMAL_TEXTURE, SET_MATERIAL )]]
-Texture2D<float32_t4>               g_normalTexture:        register ( t3 );
-
-[[vk::binding ( BIND_PARAMS_TEXTURE, SET_MATERIAL )]]
-Texture2D<float32_t4>               g_paramTexture:         register ( t4 );
-
-struct InputData
+struct GBufferResult
 {
-    [[vk::location ( ATT_SLOT_UV )]]
-    linear float32_t2               _uv:                    UV;
-
-    [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
-    linear float32_t3               _tangentView:           TANGENT;
-
-    [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
-    linear float32_t3               _bitangentView:         BITANGENT;
-
-    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
-    linear float32_t3               _normalView:            NORMAL;
-
-    [[vk::location ( ATT_SLOT_INSTANCE_INDEX )]]
-    nointerpolation uint32_t        _instanceIndex:         INSTANCE_INDEX;
-
-    linear float4                   _vertexH:               SV_Position;
+    float32_t4      _albedo;
+    float32_t4      _emission;
+    float32_t4      _normal;
+    float32_t4      _param;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_t3 diffuseSample )
+float32_t4 ComputeAlbedo ( in Texture2D<float32_t4> maskTexture,
+    in SamplerState linearSampler,
+    in float32_t2 uv,
+    in ColorData colorData,
+    in float16_t3 diffuseSample
+)
 {
-    float16_t3 maskSample = (float16_t3)g_maskTexture.Sample ( g_sampler, uv ).xyz;
+    float16_t3 maskSample = (float16_t3)maskTexture.Sample ( linearSampler, uv ).xyz;
     float16_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
 
     if ( maskSum > 1.0H )
@@ -81,21 +55,27 @@ float32_t4 ComputeAlbedo ( in float32_t2 uv, in ColorData colorData, in float16_
     return float32_t4 ( (float32_t3)( albedoOverlay * diffuseSample ), 1.0F );
 }
 
-float32_t4 ComputeEmission ( in float32_t2 uv, in ColorData colorData )
+float32_t4 ComputeEmission ( in Texture2D<float32_t4> emissionTexture,
+    in SamplerState linearSampler,
+    in float32_t2 uv,
+    in ColorData colorData
+)
 {
-    float16_t3 const emissionSample = (float16_t3)g_emissionTexture.Sample ( g_sampler, uv ).xyz;
+    float16_t3 const emissionSample = (float16_t3)emissionTexture.Sample ( linearSampler, uv ).xyz;
     float16_t3 const alpha = UnpackColorF16x3 ( colorData._emiR, colorData._emiG, colorData._emiB );
     float32_t const intensity = INTENSITY_FACTOR * (float32_t)colorData._emiIntens;
     return float32_t4 ( (float32_t3)( emissionSample * alpha * (float16_t)intensity ), 1.0F );
 }
 
-float32_t4 ComputeNormalView ( in float32_t2 uv,
+float32_t4 ComputeNormalView ( in Texture2D<float32_t4> normalTexture,
+    in SamplerState linearSampler,
+    in float32_t2 uv,
     in float32_t3 tangentView,
     in float32_t3 bitangentView,
     in float32_t3 normalView
 )
 {
-    float16_t2 const normalData = mad ( (float16_t2)g_normalTexture.Sample ( g_sampler, uv ).xw, 2.0H, -1.0H );
+    float16_t2 const normalData = mad ( (float16_t2)normalTexture.Sample ( linearSampler, uv ).xw, 2.0H, -1.0H );
 
     float16_t3x3 const tbnView = float16_t3x3 (
         (float16_t3)tangentView,
@@ -110,18 +90,31 @@ float32_t4 ComputeNormalView ( in float32_t2 uv,
     return float32_t4 ( mad ( normalize ( mul ( float16_t3 ( normalData.xy, 1.0H ), tbnView ) ), 0.5H, 0.5H ), 0.5F );
 }
 
-OutputData FillGBuffer ( in InputData inputData, in ColorData colorData, in float16_t3 diffuseSample )
+GBufferResult FillGBuffer ( in float32_t2 uv,
+    in float32_t3 tangentView,
+    in float32_t3 bitangentView,
+    in float32_t3 normalView,
+    in SamplerState linearSampler,
+    in Texture2D<float32_t4> emissionTexture,
+    in Texture2D<float32_t4> maskTexture,
+    in Texture2D<float32_t4> normalTexture,
+    in Texture2D<float32_t4> paramTexture,
+    in ColorData colorData,
+    in float16_t3 diffuseSample
+)
 {
-    OutputData result;
+    GBufferResult result;
 
-    result._albedo = ComputeAlbedo ( inputData._uv, colorData, diffuseSample );
-    result._emission = ComputeEmission ( inputData._uv, colorData );
-    result._param = g_paramTexture.Sample ( g_sampler, inputData._uv );
+    result._albedo = ComputeAlbedo ( maskTexture, linearSampler, uv, colorData, diffuseSample );
+    result._emission = ComputeEmission ( emissionTexture, linearSampler, uv, colorData );
+    result._param = paramTexture.Sample ( linearSampler, uv );
 
-    result._normal = ComputeNormalView ( inputData._uv,
-        inputData._tangentView,
-        inputData._bitangentView,
-        inputData._normalView
+    result._normal = ComputeNormalView ( normalTexture,
+        linearSampler,
+        uv,
+        tangentView,
+        bitangentView,
+        normalView
     );
 
     return result;

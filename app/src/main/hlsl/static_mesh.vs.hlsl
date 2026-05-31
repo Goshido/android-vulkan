@@ -1,5 +1,6 @@
 #include "platform/android/rotating_mesh/bindings.inc"
 #include "tbn.hlsl"
+#include "tbn32.hlsl"
 
 
 [[vk::binding ( BIND_TRANSFORM, SET_ONCE )]]
@@ -7,7 +8,7 @@ cbuffer Transform:                              register ( b0 )
 {
     float32_t4x4            _transform;
     float32_t4x4            _normalTransform;
-    float32_t4              _localView;
+    QuatF                   _localView;
 };
 
 struct InputData
@@ -19,7 +20,7 @@ struct InputData
     float32_t2              _uv:                UV;
 
     [[vk::location ( IN_SLOT_TBN )]]
-    float32_t4              _tbn:               TBN;
+    TBN32F                  _tbn:               TBN;
 };
 
 struct OutputData
@@ -54,17 +55,17 @@ OutputData VS ( in InputData inputData )
     result._fragmentView = ( mul ( _normalTransform, vertex ) ).xyz;
     result._uv = inputData._uv;
 
-    float16_t4 const compressedTBN = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
+    float16_t4 const tbn = mad ( (float16_t4)inputData._tbn, 2.0H, -1.0H );
     float16_t3 normalView;
     float16_t3 tangentView;
 
     GetNormalAndTangent ( normalView,
         tangentView,
-        RotateTBN ( RecoverTBN ( compressedTBN.xyz ), (float16_t4)_localView )
+        Rotate ( Recover ( tbn.xyz ), (QuatH)_localView )
     );
 
     result._tangentView = (float32_t3)tangentView;
-    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );
+    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * tbn.w );
     result._normalView = (float32_t3)normalView;
 
     return result;

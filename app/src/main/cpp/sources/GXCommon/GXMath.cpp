@@ -1,4 +1,4 @@
-// version 1.102
+// version 1.103
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -790,7 +790,7 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXUInt GXQuat::Compress32 ( bool reflectBitangent ) const noexcept
+[[maybe_unused]] GXUInt GXQuat::ToTBN32 ( bool reflectBitangent ) const noexcept
 {
     GXVec3 imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 
@@ -816,7 +816,7 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     return mirror | ( aSnorm << 20U ) | ( bSnorm << 10U ) | cSnorm;
 }
 
-[[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
+[[maybe_unused]] GXUBigInt GXQuat::ToTBN64 () const noexcept
 {
     GXVec3 imaginaryABC = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 

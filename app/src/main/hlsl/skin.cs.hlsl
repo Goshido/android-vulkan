@@ -1,5 +1,5 @@
 #include "platform/android/pbr/skin.inc"
-#include "tbn.hlsl"
+#include "tbn32.hlsl"
 
 
 #define BONES_PER_VERTEX    4U
@@ -9,7 +9,7 @@ struct Mesh2Vertex
     // Compressed form of float16_t2
     uint32_t                        _uv;
 
-    uint32_t                        _tbn;
+    TBN32                           _tbn;
 };
 
 struct SkinInfluence
@@ -26,7 +26,7 @@ struct SkinVertex
 struct Pose
 {
     float32_t3                      _location;
-    float32_t4                      _orientation;
+    QuatF                           _orientation;
 };
 
 struct PushConstants
@@ -142,14 +142,14 @@ void CS ( in uint32_t localThreadIndex: SV_GroupIndex, in uint32_t3 dispatch: SV
         return;
 
     Mesh2Vertex const referenceRest = g_referenceRest[ idx ];
-    uint32_t const tbn = referenceRest._tbn;
+    TBN32 const tbn = referenceRest._tbn;
 
     float32_t4x3 const skinTransform = ComputeSkinTransform ( idx );
     g_skinPositions[ idx ] = mul ( float32_t4 ( g_referencePositons[ idx ], 1.0F ), skinTransform );
 
     Mesh2Vertex skinRest;
     skinRest._uv = referenceRest._uv;
-    skinRest._tbn = CompressTBN32 ( RotateTBN ( DecompressTBN32 ( tbn ), ToTBN ( (float16_t3x3)skinTransform ) ), tbn );
+    skinRest._tbn = Compress ( Rotate ( ToQuat ( tbn ), ToQuat ( (float16_t3x3)skinTransform ) ), tbn );
 
     g_skinRest[ idx ] = skinRest;
 }

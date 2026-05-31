@@ -5,7 +5,7 @@
 namespace pbr {
 
 StippleProgram::StippleProgram () noexcept:
-    GeometryPassProgram ( "Stipple", "shaders/stipple.ps.spv" )
+    GeometryPassProgram ( "Stipple", "shaders/android/stipple.ps.spv" )
 {
     // NOTHING
 }

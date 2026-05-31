@@ -150,7 +150,7 @@ void MikktSetTSpaceBasic ( SMikkTSpaceContext const* pContext,
 
     GXQuat tbn {};
     tbn.FromFast ( m );
-    rawData._vertices[ index ]._tbn = tbn.Compress32 ( fSign < 0.0F );
+    rawData._vertices[ index ]._tbn = tbn.ToTBN32 ( fSign < 0.0F );
 }
 
 } // end of anonymous namespace

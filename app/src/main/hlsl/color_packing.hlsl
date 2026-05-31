@@ -6,6 +6,32 @@
 #define UNORM_FACTOR_F16    3.9216e-3H
 #define UNORM_FACTOR_F32    3.921569e-3F
 
+struct ColorData
+{
+    uint32_t        _emiR: 8;
+
+    uint32_t        _col0R: 8;
+    uint32_t        _col0G: 8;
+    uint32_t        _col0B: 8;
+
+    uint32_t        _emiG: 8;
+
+    uint32_t        _col1R: 8;
+    uint32_t        _col1G: 8;
+    uint32_t        _col1B: 8;
+
+    uint32_t        _emiB: 8;
+
+    uint32_t        _col2R: 8;
+    uint32_t        _col2G: 8;
+    uint32_t        _col2B: 8;
+
+    uint32_t        _col0A: 8;
+
+    uint32_t        _emiIntens: 24;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
 
 float16_t3 UnpackColorF16x3 ( in uint32_t r, in uint32_t g, in uint32_t b )
 {

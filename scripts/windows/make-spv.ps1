@@ -1,14 +1,15 @@
 [string] $src = $args[ 0 ]
 [string] $dst = $args[ 1 ]
 
-[PSCustomObject] $type = Resolve-Type-HLSL      `
+[PSCustomObject] $type = Resolve-Type-HLSL                                                                             `
     -Src $src
 
-$params =
+$params = @(
     "-E", $type._entryPoint,
     "-T", $type._profile,
     "-Fo", $dst,
     $src
+)
 
 Write-Host "Compiling:" $DXC $FLAGS $params
 

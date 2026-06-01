@@ -16,7 +16,7 @@ $embedSources = $args[ 0 ]
 [string] $DXC = "$Env:ANDROID_VULKAN_DXC_ROOT\dxc.exe"
 [string] $HLSL_PROFILE = "6_10"
 
-$global:FLAGS =
+$global:FLAGS = @(
     "-HV", "2021",
     "-spirv",
     "-fvk-use-dx-layout",
@@ -28,6 +28,7 @@ $global:FLAGS =
     "-I", "$CORE_HLSL_DIRECTORY",
     "-I", "$editorDirectory\include",
     "-I", "$coreDirectory\cpp\include"
+)
 
 function Resolve-Type-HLSL
 {
@@ -61,10 +62,11 @@ function Resolve-Type-HLSL
 
 if ( $embedSources )
 {
-    $FLAGS +=
+    $FLAGS += @(
         "-Od",
         "-Zi",
         "-fspv-debug=vulkan-with-source"
+    )
 
     return
 }

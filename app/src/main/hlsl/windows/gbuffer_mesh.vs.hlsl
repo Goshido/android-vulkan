@@ -1,5 +1,7 @@
 #include "platform/windows/pbr/index_stream.inc"
-#include "quat.hlsl"
+#include "tbn.hlsl"
+#include "tbn32.hlsl"
+#include "tbn64.hlsl"
 #include "windows/gbuffer_attribute_slots.hlsl"
 
 
@@ -28,7 +30,7 @@ using Position = float32_t3;
 struct Rest
 {
     float16_t2                      _uv;
-    uint32_t                        _tbn;
+    TBN32                           _tbn;
 };
 
 using IndexType = uint16_t;
@@ -43,7 +45,7 @@ struct Frame
 struct Transform
 {
     float32_t3x4                    _model;
-    Quat64                          _normal;
+    TBN64                           _normal;
 };
 
 struct OutputData
@@ -116,20 +118,15 @@ OutputData VS ( in InputData inputData )
     );
 
     result._uv = (float32_t2)rest._uv;
-    result._tangentView = (float32_t3)0.0F;
 
-    float16_t4 const compressedTBN = mad ( (float16_t4)rest._tbn, 2.0H, -1.0H );
     float16_t3 normalView;
     float16_t3 tangentView;
-
-    GetNormalAndTangent ( normalView,
-        tangentView,
-        Rotate ( Recover ( compressedTBN.xyz ), Decompress ( transform._normal ) )
-    );
+    GetNormalAndTangent ( normalView, tangentView, Rotate ( ToQuat ( rest._tbn ), ToQuat ( transform._normal ) ) );
 
     result._tangentView = (float32_t3)tangentView;
-    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * compressedTBN.w );
+    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * GetBitangentMirroring ( rest._tbn ) );
     result._normalView = (float32_t3)normalView;
 
+    result._instanceID = inputData._instanceID;
     return result;
 }

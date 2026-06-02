@@ -23,13 +23,13 @@ struct GBufferResult
 //----------------------------------------------------------------------------------------------------------------------
 
 float32_t4 ComputeAlbedo ( in Texture2D<float32_t4> maskTexture,
-    in SamplerState linearSampler,
+    in SamplerState materialSampler,
     in float32_t2 uv,
     in ColorData colorData,
     in float16_t3 diffuseSample
 )
 {
-    float16_t3 maskSample = (float16_t3)maskTexture.Sample ( linearSampler, uv ).xyz;
+    float16_t3 maskSample = (float16_t3)maskTexture.Sample ( materialSampler, uv ).xyz;
     float16_t const maskSum = maskSample.x + maskSample.y + maskSample.z;
 
     if ( maskSum > 1.0H )
@@ -56,26 +56,26 @@ float32_t4 ComputeAlbedo ( in Texture2D<float32_t4> maskTexture,
 }
 
 float32_t4 ComputeEmission ( in Texture2D<float32_t4> emissionTexture,
-    in SamplerState linearSampler,
+    in SamplerState materialSampler,
     in float32_t2 uv,
     in ColorData colorData
 )
 {
-    float16_t3 const emissionSample = (float16_t3)emissionTexture.Sample ( linearSampler, uv ).xyz;
+    float16_t3 const emissionSample = (float16_t3)emissionTexture.Sample ( materialSampler, uv ).xyz;
     float16_t3 const alpha = UnpackColorF16x3 ( colorData._emiR, colorData._emiG, colorData._emiB );
     float32_t const intensity = INTENSITY_FACTOR * (float32_t)colorData._emiIntens;
     return float32_t4 ( (float32_t3)( emissionSample * alpha * (float16_t)intensity ), 1.0F );
 }
 
 float32_t4 ComputeNormalView ( in Texture2D<float32_t4> normalTexture,
-    in SamplerState linearSampler,
+    in SamplerState materialSampler,
     in float32_t2 uv,
     in float32_t3 tangentView,
     in float32_t3 bitangentView,
     in float32_t3 normalView
 )
 {
-    float16_t2 const normalData = mad ( (float16_t2)normalTexture.Sample ( linearSampler, uv ).xw, 2.0H, -1.0H );
+    float16_t2 const normalData = mad ( (float16_t2)normalTexture.Sample ( materialSampler, uv ).xw, 2.0H, -1.0H );
 
     float16_t3x3 const tbnView = float16_t3x3 (
         (float16_t3)tangentView,
@@ -94,7 +94,7 @@ GBufferResult FillGBuffer ( in float32_t2 uv,
     in float32_t3 tangentView,
     in float32_t3 bitangentView,
     in float32_t3 normalView,
-    in SamplerState linearSampler,
+    in SamplerState materialSampler,
     in Texture2D<float32_t4> emissionTexture,
     in Texture2D<float32_t4> maskTexture,
     in Texture2D<float32_t4> normalTexture,
@@ -105,12 +105,12 @@ GBufferResult FillGBuffer ( in float32_t2 uv,
 {
     GBufferResult result;
 
-    result._albedo = ComputeAlbedo ( maskTexture, linearSampler, uv, colorData, diffuseSample );
-    result._emission = ComputeEmission ( emissionTexture, linearSampler, uv, colorData );
-    result._param = paramTexture.Sample ( linearSampler, uv );
+    result._albedo = ComputeAlbedo ( maskTexture, materialSampler, uv, colorData, diffuseSample );
+    result._emission = ComputeEmission ( emissionTexture, materialSampler, uv, colorData );
+    result._param = paramTexture.Sample ( materialSampler, uv );
 
     result._normal = ComputeNormalView ( normalTexture,
-        linearSampler,
+        materialSampler,
         uv,
         tangentView,
         bitangentView,

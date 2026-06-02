@@ -1,46 +1,52 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
-#include <pbr/brightness_factor.inc>
-#include <platform/windows/pbr/ui_program.hpp>
+#include <platform/windows/pbr/opaque_program.hpp>
+#include <platform/windows/pbr/gbuffer_pass_binds.inc>
 
 
 namespace pbr {
 
 namespace {
 
-constexpr char const VERTEX_SHADER[] = "shaders/windows/ui.vs.spv";
-constexpr char const CUSTOM_BRIGHTNESS_FRAGMENT_SHADER[] = "shaders/windows/ui_custom_brightness.ps.spv";
-constexpr char const DEFAULT_BRIGHTNESS_FRAGMENT_SHADER[] = "shaders/windows/ui_default_brightness.ps.spv";
+constexpr char const VERTEX_SHADER[] = "shaders/windows/gbuffer_mesh.vs.spv";
+constexpr char const FRAGMENT_SHADER[] = "shaders/windows/opaque.ps.spv";
 
-constexpr uint32_t COLOR_RENDER_TARGET_COUNT = 1U;
+constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIProgram::UIProgram () noexcept:
-    GraphicsProgram ( "UI", sizeof ( PushConstants ) )
+OpaqueProgram::OpaqueProgram () noexcept:
+    GraphicsProgram ( "Opaque", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
 
-void UIProgram::Destroy ( VkDevice device ) noexcept
+void OpaqueProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );
     _layout.Destroy ( device );
 }
 
-bool UIProgram::Init ( VkDevice device,
-    VkFormat swapchainFormat,
-    BrightnessInfo const &brightnessInfo,
-    VkExtent2D const &viewport
-) noexcept
+bool OpaqueProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexcept
 {
+    VkFormat colorFormats[] =
+    {
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_FORMAT_A2R10G10B10_UNORM_PACK32,
+        VK_FORMAT_R8G8B8A8_UNORM
+    };
+
+    static_assert ( std::size ( colorFormats ) == COLOR_RENDER_TARGET_COUNT );
+
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
-    VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
+    VkPipelineColorBlendAttachmentState attachmentInfo[ std::size ( colorFormats ) ];
     VkPipelineColorBlendStateCreateInfo blendInfo {};
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo {};
+    VkPipelineDynamicStateCreateInfo dynamicStateInfo {};
     VkShaderModuleCreateInfo moduleInfo[ STAGE_COUNT ];
     VkPipelineMultisampleStateCreateInfo multisampleInfo {};
     VkPipelineRasterizationStateCreateInfo rasterizationInfo {};
@@ -60,8 +66,8 @@ bool UIProgram::Init ( VkDevice device,
         .pNext = InitRenderingInfo ( VK_FORMAT_UNDEFINED,
             VK_FORMAT_UNDEFINED,
             VK_FORMAT_UNDEFINED,
-            VK_FORMAT_UNDEFINED,
-            &swapchainFormat,
+            depthStencilFormat,
+            colorFormats,
             renderingInfo
         ),
 
@@ -72,8 +78,8 @@ bool UIProgram::Init ( VkDevice device,
     bool result = InitShaderInfo ( pipelineInfo.pStages,
         vs,
         fs,
-        &brightnessInfo,
-        &specInfo,
+        nullptr,
+        nullptr,
         moduleInfo,
         stageInfo
     );
@@ -84,18 +90,12 @@ bool UIProgram::Init ( VkDevice device,
     pipelineInfo.pVertexInputState = InitVertexInputInfo ();
     pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
     pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
+    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo, nullptr, nullptr, nullptr );
     pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
     pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
     pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
     pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
+    pipelineInfo.pDynamicState = InitDynamicStateInfo ( &dynamicStateInfo );
 
     if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
         return false;
@@ -107,30 +107,30 @@ bool UIProgram::Init ( VkDevice device,
 
     result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::UIProgram::Init",
+        "pbr::OpaqueProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "UI" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Opaque" )
     return true;
 }
 
-VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
+VkPipelineColorBlendStateCreateInfo const* OpaqueProgram::InitColorBlendInfo (
     VkPipelineColorBlendStateCreateInfo &info,
     VkPipelineColorBlendAttachmentState* attachments
 ) const noexcept
 {
-    *attachments =
+    constexpr VkPipelineColorBlendAttachmentState state
     {
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
         .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
         .alphaBlendOp = VK_BLEND_OP_ADD,
 
         .colorWriteMask =
@@ -139,6 +139,11 @@ VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
             AV_VK_FLAG ( VK_COLOR_COMPONENT_B_BIT ) |
             AV_VK_FLAG ( VK_COLOR_COMPONENT_A_BIT )
     };
+
+    attachments[ OUT_ALBEDO ] = state;
+    attachments[ OUT_EMISSION ] = state;
+    attachments[ OUT_NORMAL ] = state;
+    attachments[ OUT_PARAM ] = state;
 
     info =
     {
@@ -155,7 +160,7 @@ VkPipelineColorBlendStateCreateInfo const* UIProgram::InitColorBlendInfo (
     return &info;
 }
 
-VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
+VkPipelineDepthStencilStateCreateInfo const* OpaqueProgram::InitDepthStencilInfo (
     VkPipelineDepthStencilStateCreateInfo &info
 ) const noexcept
 {
@@ -164,13 +169,13 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
         .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .depthTestEnable = VK_FALSE,
-        .depthWriteEnable = VK_FALSE,
-        .depthCompareOp = VK_COMPARE_OP_ALWAYS,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_GREATER,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
 
-        .front =
+        .front
         {
             .failOp = VK_STENCIL_OP_KEEP,
             .passOp = VK_STENCIL_OP_KEEP,
@@ -181,7 +186,7 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
             .reference = std::numeric_limits<uint32_t>::max ()
         },
 
-        .back =
+        .back
         {
             .failOp = VK_STENCIL_OP_KEEP,
             .passOp = VK_STENCIL_OP_KEEP,
@@ -199,14 +204,25 @@ VkPipelineDepthStencilStateCreateInfo const* UIProgram::InitDepthStencilInfo (
     return &info;
 }
 
-VkPipelineDynamicStateCreateInfo const* UIProgram::InitDynamicStateInfo (
-    VkPipelineDynamicStateCreateInfo* /*info*/
+VkPipelineDynamicStateCreateInfo const* OpaqueProgram::InitDynamicStateInfo (
+    VkPipelineDynamicStateCreateInfo* info
 ) const noexcept
 {
-    return nullptr;
+    constexpr static VkDynamicState const states[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+    *info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .dynamicStateCount = static_cast<uint32_t> ( std::size ( states ) ),
+        .pDynamicStates = states
+    };
+
+    return info;
 }
 
-VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
+VkPipelineInputAssemblyStateCreateInfo const* OpaqueProgram::InitInputAssemblyInfo (
     VkPipelineInputAssemblyStateCreateInfo &info
 ) const noexcept
 {
@@ -222,7 +238,7 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     return &info;
 }
 
-bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+bool OpaqueProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
         return false;
@@ -247,19 +263,19 @@ bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcep
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::UIProgram::InitLayout",
+        "pbr::OpaqueProgram::InitLayout",
         "Can't create pipeline layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Opaque" )
     layout = _pipelineLayout;
     return true;
 }
 
-VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
+VkPipelineMultisampleStateCreateInfo const* OpaqueProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
 {
@@ -279,7 +295,7 @@ VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
     return &info;
 }
 
-VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
+VkPipelineRasterizationStateCreateInfo const* OpaqueProgram::InitRasterizationInfo (
     VkPipelineRasterizationStateCreateInfo &info
 ) const noexcept
 {
@@ -291,7 +307,7 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
         .depthClampEnable = VK_FALSE,
         .rasterizerDiscardEnable = VK_FALSE,
         .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_NONE,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
         .frontFace = VK_FRONT_FACE_CLOCKWISE,
         .depthBiasEnable = VK_FALSE,
         .depthBiasConstantFactor = 0.0F,
@@ -303,51 +319,30 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
     return &info;
 }
 
-VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
+VkPipelineViewportStateCreateInfo const* OpaqueProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* /*scissorInfo*/,
+    VkViewport* /*viewportInfo*/,
+    VkExtent2D const* /*viewport*/
 ) const noexcept
 {
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
     info =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
         .viewportCount = 1U,
-        .pViewports = viewportInfo,
+        .pViewports = nullptr,
         .scissorCount = 1U,
-        .pScissors = scissorInfo
+        .pScissors = nullptr
     };
 
     return &info;
 }
 
-VkPipelineRenderingCreateInfo const* UIProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
+VkPipelineRenderingCreateInfo const* OpaqueProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
     VkFormat /*nativeDepth*/,
     VkFormat /*nativeStencil*/,
-    VkFormat /*nativeDepthStencil*/,
+    VkFormat nativeDepthStencil,
     VkFormat* colorAttachments,
     VkPipelineRenderingCreateInfo &info
 ) const noexcept
@@ -359,26 +354,24 @@ VkPipelineRenderingCreateInfo const* UIProgram::InitRenderingInfo ( VkFormat /*n
         .viewMask = 0U,
         .colorAttachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
         .pColorAttachmentFormats = colorAttachments,
-        .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
-        .stencilAttachmentFormat = VK_FORMAT_UNDEFINED
+        .depthAttachmentFormat = nativeDepthStencil,
+        .stencilAttachmentFormat = nativeDepthStencil
     };
 
     return &info;
 }
 
-bool UIProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
+bool OpaqueProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
     std::vector<uint8_t> &vs,
     std::vector<uint8_t> &fs,
-    SpecializationData specializationData,
-    VkSpecializationInfo* specializationInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/,
     VkShaderModuleCreateInfo* moduleInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
 ) const noexcept
 {
-    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
-    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
     android_vulkan::File vsFile ( VERTEX_SHADER );
-    android_vulkan::File fsFile ( cases[ static_cast<size_t> ( info._isDefaultBrightness ) ] );
+    android_vulkan::File fsFile ( FRAGMENT_SHADER );
 
     if ( !vsFile.LoadContent () || !fsFile.LoadContent () ) [[unlikely]]
         return false;
@@ -415,21 +408,6 @@ bool UIProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetI
         .pCode = reinterpret_cast<uint32_t const*> ( fs.data () )
     };
 
-    constexpr static VkSpecializationMapEntry entry
-    {
-        .constantID = CONST_BRIGHTNESS_FACTOR,
-        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
-        .size = sizeof ( BrightnessInfo::_brightnessFactor )
-    };
-
-    *specializationInfo =
-    {
-        .mapEntryCount = 1U,
-        .pMapEntries = &entry,
-        .dataSize = sizeof ( BrightnessInfo ),
-        .pData = specializationData
-    };
-
     sourceInfo[ 1U ] =
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -438,7 +416,7 @@ bool UIProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetI
         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
         .module = VK_NULL_HANDLE,
         .pName = FRAGMENT_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = specializationInfo
+        .pSpecializationInfo = nullptr
     };
 
     targetInfo = sourceInfo;

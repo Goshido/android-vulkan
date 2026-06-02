@@ -98,6 +98,10 @@ scripts\windows\make-spv.ps1                                                    
     "$ANDROID_SHADER_DIRECTORY\opaque.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                           `
+    "$WINDOWS_SHADER_DIRECTORY\opaque.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light.ps.hlsl"                                                                         `
     "$CORE_SHADER_DIRECTORY\point_light.ps.spv"
 

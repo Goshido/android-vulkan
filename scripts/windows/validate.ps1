@@ -1,5 +1,6 @@
 [string[]] $SPIRV_VAL_FLAGS = @(
-    "--scalar-block-layout"
+    "--scalar-block-layout",
+    "--target-env", "vulkan1.1spv1.4"
 )
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -22,10 +23,13 @@ $params =
     "-Fo", $targetBlob,
     $src
 
-Write-Host "Validating:" $DXC $FLAGS $params
+Write-Host "Compiling:" $DXC $FLAGS $params
 
 & $DXC $FLAGS $params
 
+Write-Host "Done"
+
+Write-Host ""
 Write-Host "Validating: spirv-val" $SPIRV_VAL_FLAGS $targetBlob
 
 spirv-val $SPIRV_VAL_FLAGS $targetBlob

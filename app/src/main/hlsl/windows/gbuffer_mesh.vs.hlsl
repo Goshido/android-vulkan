@@ -2,75 +2,36 @@
 #include "tbn.hlsl"
 #include "tbn32.hlsl"
 #include "tbn64.hlsl"
-#include "windows/gbuffer_attribute_slots.hlsl"
+#include "windows/gbuffer_attributes.hlsl"
+#include "windows/gbuffer_push_constants.hlsl"
 
 
 struct InputData
 {
-    uint32_t                        _vertexID:          SV_VertexID;
-    uint32_t                        _instanceID:        SV_InstanceID;
+    uint32_t        _vertexID:      SV_VertexID;
+    uint32_t        _instanceID:    SV_InstanceID;
 };
-
-struct PushConstants
-{
-    uint64_t                        _transformStream;
-    uint64_t                        _shadingStream;
-    uint64_t                        _frameStream;
-    uint64_t                        _positionStream;
-    uint64_t                        _restStream;
-    uint64_t                        _indexStream;
-    uint16_t                        _indexType;
-};
-
-[[vk::push_constant]]
-PushConstants                       g_pushConstants;
-
-using Position = float32_t3;
 
 struct Rest
 {
-    float16_t2                      _uv;
-    TBN32                           _tbn;
+    float16_t2      _uv;
+    TBN32           _tbn;
 };
-
-using IndexType = uint16_t;
-using Index16 = uint16_t;
-using Index32 = uint32_t;
 
 struct Frame
 {
-    float32_t4x4                    _viewProj;
+    float32_t4x4    _viewProj;
 };
 
 struct Transform
 {
-    float32_t3x4                    _model;
-    TBN64                           _normal;
-};
-
-struct OutputData
-{
-    linear float32_t4               _vertexH:           SV_Position;
-
-    [[vk::location ( ATT_SLOT_UV )]]
-    linear float32_t2               _uv:                UV;
-
-    [[vk::location ( ATT_SLOT_TANGENT_VIEW )]]
-    linear float32_t3               _tangentView:       TANGENT;
-
-    [[vk::location ( ATT_SLOT_BITANGENT_VIEW )]]
-    linear float32_t3               _bitangentView:     BITANGENT;
-
-    [[vk::location ( ATT_SLOT_NORMAL_VIEW )]]
-    linear float32_t3               _normalView:        NORMAL;
-
-    [[vk::location ( ATT_SLOT_INSTANCE_ID )]]
-    nointerpolation uint32_t        _instanceID:        INSTANCE_ID;
+    float32_t3x4    _model;
+    TBN64           _normal;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputData VS ( in InputData inputData )
+Attributes VS ( in InputData inputData )
 {
     Frame const frame = vk::RawBufferLoad<Frame> ( g_pushConstants._frameStream, 4U );
 
@@ -79,25 +40,31 @@ OutputData VS ( in InputData inputData )
         8U
     );
 
+    Rest const rest = vk::RawBufferLoad<Rest> (
+        g_pushConstants._restStream + inputData._instanceID * sizeof ( Rest ),
+        4U
+    );
+
     uint32_t idx;
 
     switch ( g_pushConstants._indexType )
     {
+        case INDEX_TYPE_NONE:
+            idx = inputData._vertexID;
+        break;
+
         case INDEX_TYPE_16:
-            idx = (uint32_t)vk::RawBufferLoad<Index16> (
-                g_pushConstants._indexStream + inputData._vertexID * sizeof ( Index16 ),
+            idx = (uint32_t)vk::RawBufferLoad<uint16_t> (
+                g_pushConstants._indexStream + inputData._vertexID * sizeof ( uint16_t ),
                 2U
             );
         break;
 
         case INDEX_TYPE_32:
-            idx = vk::RawBufferLoad<Index32> ( g_pushConstants._indexStream + inputData._vertexID * sizeof ( Index32 ),
+            idx = vk::RawBufferLoad<uint32_t> (
+                g_pushConstants._indexStream + inputData._vertexID * sizeof ( uint32_t ),
                 4U
             );
-        break;
-
-        case INDEX_TYPE_NONE:
-            idx = inputData._vertexID;
         break;
 
         default:
@@ -105,13 +72,12 @@ OutputData VS ( in InputData inputData )
         break;
     }
 
-    Position const position = vk::RawBufferLoad<Position> ( g_pushConstants._positionStream + idx * sizeof ( Position ),
+    float32_t3 const position = vk::RawBufferLoad<float32_t3> (
+        g_pushConstants._positionStream + idx * sizeof ( float32_t3 ),
         4U
     );
 
-    Rest const rest = vk::RawBufferLoad<Rest> ( g_pushConstants._restStream + idx * sizeof ( Rest ), 4U );
-
-    OutputData result;
+    Attributes result;
 
     result._vertexH = mul ( frame._viewProj,
         float32_t4 ( mul ( transform._model, float32_t4 ( position, 1.0F ) ), 1.0F )

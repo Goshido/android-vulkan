@@ -384,6 +384,9 @@
     <ClCompile Include="src\font_storage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -845,6 +848,9 @@
     <ClInclude Include="include\font_storage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -898,6 +904,9 @@
     </None>
     <None Include="include\hello_triangle_program.inc">
       <Filter>Header Files</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

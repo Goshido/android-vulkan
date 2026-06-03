@@ -9,6 +9,8 @@
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
 #include "point_light_node.hpp"
+#include <platform/windows/pbr/opaque_program.hpp>
+#include <platform/windows/pbr/stream_buffer.hpp>
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
@@ -16,9 +18,10 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <deque>
+#include <memory>
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
-#include <deque>
 
 GX_RESTORE_WARNING_STATE
 
@@ -58,6 +61,11 @@ class Workspace final
         PointLightQueue                                 _pointLightQueue {};
         ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
         ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
+
+        std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
+        std::unique_ptr<pbr::StreamBuffer>              _frameStream {};
+        std::unique_ptr<pbr::StreamBuffer>              _transformStream {};
+        std::unique_ptr<pbr::StreamBuffer>              _shadingStream {};
 
         ViewportWidget*                                 _viewport = nullptr;
 

@@ -22,7 +22,7 @@ class OpaqueProgram final : public GraphicsProgram
             VkDeviceAddress                 _positionStream;
             VkDeviceAddress                 _restStream;
             VkDeviceAddress                 _indexStream;
-            uint16_t                        _indexType;
+            uint32_t                        _indexType;
         };
 
         AV_DX_ALIGNMENT_END

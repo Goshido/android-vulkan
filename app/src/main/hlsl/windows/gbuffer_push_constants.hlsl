@@ -10,7 +10,7 @@ struct PushConstants
     uint64_t        _positionStream;
     uint64_t        _restStream;
     uint64_t        _indexStream;
-    uint16_t        _indexType;
+    uint32_t        _indexType;
 };
 
 [[vk::push_constant]]

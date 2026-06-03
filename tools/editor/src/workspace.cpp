@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <message_queue.hpp>
+#include <native_renderer.hpp>
 #include <scope_quard.hpp>
 #include <static_mesh_component.hpp>
 #include <trace.hpp>
@@ -10,6 +11,8 @@
 namespace editor {
 
 namespace {
+
+constexpr size_t STREAM_BUFFER_ELEMENTS = 1'000'000U;
 
 class CreateActorAction final : public Action
 {
@@ -52,6 +55,33 @@ void CreateActorAction::Undo () noexcept
     _actor = std::move ( findResult->second );
     _actors->erase ( findResult );
 }
+
+AV_DX_ALIGNMENT_BEGIN
+
+struct Frame final
+{
+    GXMat4      _viewProj;
+};
+
+struct Transform final
+{
+    GXVec4      _modelColumn0;
+    GXVec4      _modelColumn1;
+    GXVec4      _modelColumn2;
+    uint64_t    _normal;
+};
+
+struct Shading final
+{
+    uint32_t        _albedo;
+    uint32_t        _emission;
+    uint32_t        _mask;
+    uint32_t        _param;
+    uint32_t        _normal;
+    ColorData       _colors;
+};
+
+AV_DX_ALIGNMENT_END
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -102,6 +132,88 @@ void AppendComponentAction::Undo () noexcept
 void Workspace::Init () noexcept
 {
     AV_TRACE ( "Workspace init" )
+
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+
+            ._action = [] () noexcept {
+                auto* dialogBox = new UIProps ();
+                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+
+                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
+                return dialogBox;
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
+    _viewport = new ViewportWidget ();
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::UIAddWidget,
+
+            ._action = [ viewport = _viewport ] () noexcept {
+                return viewport;
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
+    messageQueue.EnqueueBack (
+        {
+            ._type = eMessageType::InvokeIO,
+
+            ._action = [ this ] () noexcept -> void* {
+                AV_TRACE ( "Making Vulkan resources" )
+
+                std::unique_ptr<pbr::OpaqueProgram> p = std::make_unique<pbr::OpaqueProgram> ();
+                android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+                if ( !p->Init ( renderer.GetDevice (), renderer.GetDefaultDepthStencilFormat () ) ) [[unlikely]]
+                    return nullptr;
+
+                _opaqueProgram = std::move ( p );
+
+                std::unique_ptr<pbr::StreamBuffer> frame = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !frame->Init ( renderer, sizeof ( Frame ), STREAM_BUFFER_ELEMENTS, "Frame stream" ) ) [[unlikely]]
+                    return nullptr;
+
+                _frameStream = std::move ( frame );
+
+                std::unique_ptr<pbr::StreamBuffer> transform = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !transform->Init ( renderer, sizeof ( Transform ), STREAM_BUFFER_ELEMENTS, "Transform stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                _transformStream = std::move ( transform );
+
+                std::unique_ptr<pbr::StreamBuffer> shading = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !shading->Init ( renderer, sizeof ( Shading ), STREAM_BUFFER_ELEMENTS, "Shading stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                _shadingStream = std::move ( shading );
+                return nullptr;
+            },
+
+            ._serialNumber = 0U
+        }
+    );
+
     // FUCK
     FUCK ();
 }
@@ -111,6 +223,26 @@ void Workspace::Destroy () noexcept
     AV_TRACE ( "Workspace destroy" )
     _history.Clear ();
     _actors.clear ();
+
+    if ( _opaqueProgram ) [[likely]]
+    {
+        _opaqueProgram->Destroy ( NativeRenderer::Instance ().GetDevice () );
+        _opaqueProgram.reset ();
+    }
+
+    auto const freeStream = [ &renderer = NativeRenderer::Instance () ] (
+        std::unique_ptr<pbr::StreamBuffer> &stream
+    ) noexcept {
+        if ( !stream ) [[unlikely]]
+            return;
+
+        stream->Destroy ( renderer );
+        stream.reset ();
+    };
+
+    freeStream ( _frameStream );
+    freeStream ( _transformStream );
+    freeStream ( _shadingStream );
 
     constexpr auto clearAlpha = [] ( auto &queue, auto &map ) noexcept {
         for ( auto const &item : queue )
@@ -164,7 +296,7 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
     _viewport->Update ( deltaTime, 1.0F );
 }
 
-void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
+void Workspace::UploadToGPU ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !_viewport ) [[unlikely]]
         return;
@@ -369,40 +501,6 @@ void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
 
 void Workspace::FUCK () noexcept
 {
-    // FUCK
-    MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [] () noexcept {
-                auto* dialogBox = new UIProps ();
-                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-                return dialogBox;
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-
-    _viewport = new ViewportWidget ();
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [ viewport = _viewport ] () noexcept {
-                return viewport;
-            },
-
-            ._serialNumber = 0U
-        }
-    );
-
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "FUCK" );
     Actor &a = *actor;

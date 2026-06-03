@@ -51,10 +51,8 @@ bool OpaqueProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexce
     VkPipelineMultisampleStateCreateInfo multisampleInfo {};
     VkPipelineRasterizationStateCreateInfo rasterizationInfo {};
     VkPipelineRenderingCreateInfo renderingInfo {};
-    VkRect2D scissorDescription {};
     VkPipelineShaderStageCreateInfo stageInfo[ STAGE_COUNT ];
     VkSpecializationInfo specInfo {};
-    VkViewport viewportDescription {};
     VkPipelineViewportStateCreateInfo viewportInfo {};
     std::vector<uint8_t> vs {};
     std::vector<uint8_t> fs {};

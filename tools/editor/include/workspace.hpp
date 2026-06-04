@@ -51,9 +51,11 @@ class Workspace final
 
         MeshQueue                                       _opaqueQueue {};
         MeshMap                                         _opaqueMap {};
+        std::vector<size_t>                             _opaqueVisible {};
 
         MeshQueue                                       _stippleQueue {};
         MeshMap                                         _stippleMap {};
+        std::vector<size_t>                             _stippleVisible {};
 
         GizmoQueue                                      _gizmoQueue {};
         GizmoMap                                        _gizmoMap {};
@@ -70,6 +72,7 @@ class Workspace final
         ViewportWidget*                                 _viewport = nullptr;
 
         std::mutex                                      _mutex {};
+        bool                                            _ready = false;
 
     public:
         explicit Workspace () = default;

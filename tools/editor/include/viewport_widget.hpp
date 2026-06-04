@@ -63,6 +63,10 @@ class ViewportWidget final : public Widget
 
         void Update ( float deltaTime, float dpi ) noexcept;
 
+        [[nodiscard]] GXMat4 const &GetProjection () const noexcept;
+        [[nodiscard]] GXQuat const &GetOrientation () const noexcept;
+        [[nodiscard]] GXVec3 const &GetPosition () const noexcept;
+
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept override;

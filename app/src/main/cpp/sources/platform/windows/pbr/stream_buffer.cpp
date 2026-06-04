@@ -6,11 +6,14 @@
 namespace pbr {
 
 bool StreamBuffer::Init ( android_vulkan::Renderer &renderer,
-    size_t elementSize,
-    size_t elements,
+    size_t count,
+    size_t itemSize,
     char const* name
 ) noexcept
 {
+    _count = count;
+    _itemSize = itemSize;
+
     constexpr VkBufferUsageFlags gpuUsage = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
         AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
@@ -20,7 +23,7 @@ bool StreamBuffer::Init ( android_vulkan::Renderer &renderer,
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( elementSize * elements ),
+        .size = static_cast<VkDeviceSize> ( count * itemSize ),
         .usage = gpuUsage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
@@ -30,12 +33,21 @@ bool StreamBuffer::Init ( android_vulkan::Renderer &renderer,
     if ( !CreateBuffer ( _gpu, renderer, bufferInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, name ) ) [[unlikely]]
         return false;
 
+    _barrier.buffer = _gpu._buffer;
     bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
     constexpr VkMemoryPropertyFlags cpuProperties = AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) |
         AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
 
-    if ( !CreateBuffer ( _staging, renderer, bufferInfo, cpuProperties, name ) ) [[unlikely]]
+    bool const result = CreateBuffer ( _staging, renderer, bufferInfo, cpuProperties, name ) &&
+        renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
+            _staging._memory,
+            _staging._offset,
+            "pbr::StreamBuffer::Init",
+            "Can't map memory"
+        );
+
+    if ( !result ) [[unlikely]]
         return false;
 
     VkBufferDeviceAddressInfo const bdaInfo
@@ -51,6 +63,9 @@ bool StreamBuffer::Init ( android_vulkan::Renderer &renderer,
 
 void StreamBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
+    if ( std::exchange ( _data, nullptr ) ) [[likely]]
+        renderer.UnmapMemory ( _staging._memory );
+
     auto const freeBuffer = [ &renderer, device = renderer.GetDevice () ] ( Buffer &buffer ) noexcept {
         if ( VkBuffer b = std::exchange ( buffer._buffer, VK_NULL_HANDLE ); b != VK_NULL_HANDLE ) [[likely]]
             vkDestroyBuffer ( device, b, nullptr );
@@ -66,25 +81,63 @@ void StreamBuffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _bda = 0U;
 }
 
-VkDeviceAddress StreamBuffer::AcquireAndConsume ( size_t /*elements*/ ) noexcept
+VkDeviceAddress StreamBuffer::AcquireAndConsume ( size_t count ) noexcept
 {
-    // FUCK
-    return _bda;
+    return _bda + static_cast<VkDeviceAddress> ( _itemSize * std::exchange ( _readIndex, _readIndex + count ) );
 }
 
 void StreamBuffer::Commit () noexcept
 {
-    // FUCK
+    _baseIndex = _writeIndex;
+    _written = 0U;
 }
 
-void StreamBuffer::IssueSync ( VkDevice /*device*/, VkCommandBuffer /*commandBuffer*/ ) const noexcept
+void StreamBuffer::IssueSync ( VkCommandBuffer commandBuffer ) noexcept
 {
-    // FUCK
+    auto const from = static_cast<VkDeviceSize> ( _baseIndex * _itemSize );
+
+    VkBufferCopy const copy
+    {
+        .srcOffset = from,
+        .dstOffset = from,
+        .size = static_cast<VkDeviceSize> ( _written * _itemSize )
+    };
+
+    vkCmdCopyBuffer ( commandBuffer, _staging._buffer, _gpu._buffer, 1U, &copy );
+
+    _barrier.size = copy.size;
+    _barrier.offset = copy.srcOffset;
+
+    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        dstStage,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &_barrier,
+        0U,
+        nullptr
+    );
 }
 
-void StreamBuffer::Push ( void const* /*item*/ ) noexcept
+void StreamBuffer::Push ( void const* item ) noexcept
 {
-    // FUCK
+    if ( _writeIndex >= _count ) [[unlikely]]
+    {
+        if ( _written > 0U ) [[likely]]
+            std::memcpy ( _data, _data + _itemSize * _baseIndex, _itemSize * _written );
+
+        _baseIndex = 0U;
+        _readIndex = 0U;
+        _writeIndex = _written;
+    }
+
+    std::memcpy ( _data + _itemSize * _writeIndex++, item, _itemSize );
+    ++_written;
 }
 
 bool StreamBuffer::CreateBuffer ( Buffer &buffer,

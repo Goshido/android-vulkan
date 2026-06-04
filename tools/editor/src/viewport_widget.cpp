@@ -78,6 +78,21 @@ void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
     }
 }
 
+GXMat4 const &ViewportWidget::GetProjection () const noexcept
+{
+    return _projection;
+}
+
+GXQuat const &ViewportWidget::GetOrientation () const noexcept
+{
+    return _orientation;
+}
+
+GXVec3 const &ViewportWidget::GetPosition () const noexcept
+{
+    return _position;
+}
+
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 1U );

@@ -12,7 +12,8 @@ namespace editor {
 
 namespace {
 
-constexpr size_t STREAM_BUFFER_ELEMENTS = 1'000'000U;
+constexpr size_t PER_MESH_ELEMENTS = 1'000'000U;
+constexpr size_t VISIBLE_INITIAL_SIZE = 1'000U;
 
 class CreateActorAction final : public Action
 {
@@ -173,6 +174,9 @@ void Workspace::Init () noexcept
             ._action = [ this ] () noexcept -> void* {
                 AV_TRACE ( "Making Vulkan resources" )
 
+                _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
+                _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
+
                 std::unique_ptr<pbr::OpaqueProgram> p = std::make_unique<pbr::OpaqueProgram> ();
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
@@ -183,14 +187,14 @@ void Workspace::Init () noexcept
 
                 std::unique_ptr<pbr::StreamBuffer> frame = std::make_unique<pbr::StreamBuffer> ();
 
-                if ( !frame->Init ( renderer, sizeof ( Frame ), STREAM_BUFFER_ELEMENTS, "Frame stream" ) ) [[unlikely]]
+                if ( !frame->Init ( renderer, pbr::FIF_COUNT, sizeof ( Frame ), "Frame stream" ) ) [[unlikely]]
                     return nullptr;
 
                 _frameStream = std::move ( frame );
 
                 std::unique_ptr<pbr::StreamBuffer> transform = std::make_unique<pbr::StreamBuffer> ();
 
-                if ( !transform->Init ( renderer, sizeof ( Transform ), STREAM_BUFFER_ELEMENTS, "Transform stream" ) )
+                if ( !transform->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Transform ), "Transform stream" ) )
                 {
                     [[unlikely]]
                     return nullptr;
@@ -200,7 +204,7 @@ void Workspace::Init () noexcept
 
                 std::unique_ptr<pbr::StreamBuffer> shading = std::make_unique<pbr::StreamBuffer> ();
 
-                if ( !shading->Init ( renderer, sizeof ( Shading ), STREAM_BUFFER_ELEMENTS, "Shading stream" ) )
+                if ( !shading->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Shading ), "Shading stream" ) )
                 {
                     [[unlikely]]
                     return nullptr;
@@ -287,13 +291,53 @@ void Workspace::Close () noexcept
 
 void Workspace::ComputeTransform ( float deltaTime ) noexcept
 {
-    if ( !_viewport ) [[unlikely]]
-        return;
+    if ( !_ready ) [[unlikely]]
+    {
+        _ready = ( static_cast<bool> ( _viewport ) ) &
+            ( static_cast<bool> ( _opaqueProgram ) ) &
+            ( static_cast<bool> ( _frameStream ) ) &
+            ( static_cast<bool> ( _transformStream ) ) &
+            ( static_cast<bool> ( _shadingStream ) ) &
+            ( _opaqueVisible.capacity () > 0U ) &
+            ( _stippleVisible.capacity () > 0U );
+
+        if ( !_ready )
+        {
+            return;
+        }
+    }
 
     AV_TRACE ( "Compute transforms" )
 
+    _frameStream->Commit ();
+    _transformStream->Commit ();
+    _shadingStream->Commit ();
+
     // FUCK - correct DPI
     _viewport->Update ( deltaTime, 1.0F );
+
+    [[maybe_unused]] GXMat4 const &proj = _viewport->GetProjection ();
+    [[maybe_unused]] GXQuat const &orientation = _viewport->GetOrientation ();
+    [[maybe_unused]] GXVec3 const &position = _viewport->GetPosition ();
+    _opaqueVisible.clear ();
+
+    for ( auto const &instances : _opaqueQueue )
+    {
+        for ( [[maybe_unused]] auto const &meshes : instances.second )
+        {
+            // FUCK
+        }
+    }
+
+    _stippleVisible.clear ();
+
+    for ( auto const &instances : _stippleQueue )
+    {
+        for ( [[maybe_unused]] auto const &meshes : instances.second )
+        {
+            // FUCK
+        }
+    }
 }
 
 void Workspace::UploadToGPU ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept

@@ -291,21 +291,8 @@ void Workspace::Close () noexcept
 
 void Workspace::ComputeTransform ( float deltaTime ) noexcept
 {
-    if ( !_ready ) [[unlikely]]
-    {
-        _ready = ( static_cast<bool> ( _viewport ) ) &
-            ( static_cast<bool> ( _opaqueProgram ) ) &
-            ( static_cast<bool> ( _frameStream ) ) &
-            ( static_cast<bool> ( _transformStream ) ) &
-            ( static_cast<bool> ( _shadingStream ) ) &
-            ( _opaqueVisible.capacity () > 0U ) &
-            ( _stippleVisible.capacity () > 0U );
-
-        if ( !_ready )
-        {
-            return;
-        }
-    }
+    if ( !IsReady () ) [[unlikely]]
+        return;
 
     AV_TRACE ( "Compute transforms" )
 
@@ -316,53 +303,149 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
     // FUCK - correct DPI
     _viewport->Update ( deltaTime, 1.0F );
 
-    [[maybe_unused]] GXMat4 const &proj = _viewport->GetProjection ();
-    [[maybe_unused]] GXQuat const &orientation = _viewport->GetOrientation ();
-    [[maybe_unused]] GXVec3 const &position = _viewport->GetPosition ();
-    _opaqueVisible.clear ();
+    GXQuat const &orientation = _viewport->GetOrientation ();
 
-    for ( auto const &instances : _opaqueQueue )
-    {
-        for ( [[maybe_unused]] auto const &meshes : instances.second )
+    GXMat4 alpha {};
+    alpha.FromFast ( orientation, _viewport->GetPosition () );
+
+    GXMat4 beta {};
+    beta.Inverse ( alpha );
+
+    Frame frame {};
+    frame._viewProj.Multiply ( beta, _viewport->GetProjection () );
+
+    GXProjectionClipPlanes frustum {};
+    frustum.From ( frame._viewProj );
+
+    auto const traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        &frustum
+    ] ( MeshQueue &queue, std::vector<size_t> &queueVisible ) noexcept {
+        GXMat4 local;
+        GXAABB bounds;
+        queueVisible.clear ();
+
+        for ( auto const &instances : queue )
         {
-            // FUCK
+            size_t count = 0U;
+
+            for ( auto const &mesh : instances.second )
+            {
+                GXVec3 const &scale = mesh->_scale;
+                GXQuat const &rotation = mesh->_rotation;
+
+                local.From ( rotation, mesh->_location );
+                auto &xRow = *reinterpret_cast<GXVec3*> ( local._data );
+                auto &yRow = *reinterpret_cast<GXVec3*> ( local._data + 4U );
+                xRow.Multiply ( xRow, scale._data[ 0U ] );
+
+                auto &zRow = *reinterpret_cast<GXVec3*> ( local._data + 8U );
+                yRow.Multiply ( yRow, scale._data[ 1U ] );
+                zRow.Multiply ( zRow, scale._data[ 2U ] );
+
+                mesh->_boundLocal.Transform ( bounds, local );
+
+                if ( !frustum.IsVisible ( bounds ) )
+                    continue;
+
+                ++count;
+                PBRMaterial const &material = mesh->_material;
+
+                Shading const shading
+                {
+                    // FUCK - default images in case of missing material image
+                    ._albedo = material._albedo->_heapIndex,
+                    ._emission = material._emission->_heapIndex,
+                    ._mask = material._mask->_heapIndex,
+                    ._param = material._param->_heapIndex,
+                    ._normal = material._normal->_heapIndex,
+                    ._colors = mesh->_color
+                };
+
+                shadingStream.Push ( &shading );
+
+                float const* x = local._data[ 0U ];
+                float const* y = local._data[ 1U ];
+                float const* z = local._data[ 2U ];
+                float const* w = local._data[ 3U ];
+
+                Transform const transform
+                {
+                    ._modelColumn0 { x[ 0U ], y[ 0U ], z[ 0U ], w[ 0U ] },
+                    ._modelColumn1 { x[ 1U ], y[ 1U ], z[ 1U ], w[ 1U ] },
+                    ._modelColumn2 { x[ 2U ], y[ 2U ], z[ 2U ], w[ 2U ] },
+                    ._normal = rotation.ToTBN64 ()
+                };
+
+                transformStream.Push ( &transform );
+            }
+
+            if ( !count ) [[unlikely]]
+                continue;
+
+            queueVisible.push_back ( count );
         }
-    }
+    };
 
-    _stippleVisible.clear ();
+    traverse ( _opaqueQueue, _opaqueVisible );
+    traverse ( _stippleQueue, _stippleVisible );
 
-    for ( auto const &instances : _stippleQueue )
+    if ( !_opaqueVisible.empty () | !_stippleVisible.empty () ) [[likely]]
     {
-        for ( [[maybe_unused]] auto const &meshes : instances.second )
-        {
-            // FUCK
-        }
+        _frameStream->Push ( &frame );
     }
 }
 
-void Workspace::UploadToGPU ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
+void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !_viewport ) [[unlikely]]
+    if ( !IsReady () ) [[unlikely]]
+        return;
+
+    if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
     AV_TRACE ( "Upload to GPU" )
     AV_VULKAN_GROUP ( commandBuffer, "Upload to GPU" )
-    // FUCK
+    _transformStream->IssueSync ( commandBuffer );
+    _shadingStream->IssueSync ( commandBuffer );
 }
 
 void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !_viewport ) [[unlikely]]
+    if ( !IsReady () ) [[unlikely]]
+        return;
+
+    if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
     AV_TRACE ( "Opaque" )
     AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
-    // FUCK
+
+    // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
+
+    auto const traverse = [
+        //& shadingStream = *_shadingStream,
+        //&transformStream = *_transformStream,
+
+        //pushConstants = pbr::OpaqueProgram::PushConstants
+        //{
+        //    ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+        //}
+    ] ( std::vector<size_t> &queueVisible ) noexcept {
+        for ( [[maybe_unused]] size_t const instances : queueVisible )
+        {
+            // FUCK
+        }
+    };
+
+    traverse ( _opaqueVisible );
+    traverse ( _stippleVisible );
 }
 
 void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !_viewport ) [[unlikely]]
+    if ( !IsReady () ) [[unlikely]]
         return;
 
     AV_TRACE ( "Gizmo" )
@@ -477,7 +560,6 @@ void Workspace::Unregister ( MeshNode const &node ) noexcept
     delete &n;
 }
 
-// FUCK move to ipp
 void Workspace::Unregister ( GizmoNode const &node ) noexcept
 {
     GizmoInfo const &g = node.GetInternalInfo ();
@@ -573,6 +655,22 @@ void Workspace::FUCK () noexcept
     _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh2 ) ) );
     _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh3 ) ) );
     _history.End ();
+}
+
+bool Workspace::IsReady () noexcept
+{
+    if ( _ready ) [[likely]]
+        return true;
+
+    _ready = ( static_cast<bool> ( _viewport ) ) &
+        ( static_cast<bool> ( _opaqueProgram ) ) &
+        ( static_cast<bool> ( _frameStream ) ) &
+        ( static_cast<bool> ( _transformStream ) ) &
+        ( static_cast<bool> ( _shadingStream ) ) &
+        ( _opaqueVisible.capacity () > 0U ) &
+        ( _stippleVisible.capacity () > 0U );
+
+    return _ready;
 }
 
 MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,

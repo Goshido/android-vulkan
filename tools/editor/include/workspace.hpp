@@ -115,6 +115,7 @@ class Workspace final
 
     private:
         void FUCK () noexcept;
+        [[nodiscard]] bool IsReady () noexcept;
 
         [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,
             MeshQueue &meshQueue,

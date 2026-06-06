@@ -3,9 +3,7 @@
 
 
 #include "font_storage.hpp"
-#include "hello_triangle_program.hpp"
 #include "mesh_upload_info.hpp"
-#include <platform/windows/mesh_geometry.hpp>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
@@ -56,14 +54,22 @@ class RenderSession final
         size_t                                              _writingCommandInfo = 0U;
 
         pbr::ExposurePass                                   _exposurePass {};
-
-        std::unique_ptr<HelloTriangleProgram>               _helloTriangleProgram {};
-        std::unique_ptr<android_vulkan::MeshGeometry>       _helloTriangleGeometry {};
-
         pbr::PresentPass                                    _presentRenderPass {};
 
-        android_vulkan::Texture2D                           _renderTarget {};
-        uint32_t                                            _renderTargetIdx = 0U;
+        android_vulkan::Texture2D                           _albedoRenderTarget {};
+        uint32_t                                            _albedoRenderTargetIdx = 0U;
+
+        android_vulkan::Texture2D                           _hdrRenderTarget {};
+        uint32_t                                            _hdrRenderTargetIdx = 0U;
+
+        android_vulkan::Texture2D                           _normalRenderTarget {};
+        uint32_t                                            _normalRenderTargetIdx = 0U;
+
+        android_vulkan::Texture2D                           _paramRenderTarget {};
+        uint32_t                                            _paramRenderTargetIdx = 0U;
+
+        android_vulkan::Texture2D                           _depthRenderTarget {};
+        uint32_t                                            _depthRenderTargetIdx = 0U;
 
         MeshStorage                                         _meshStorage {};
         Texture2DStorage                                    _texture2DStorage {};
@@ -86,15 +92,99 @@ class RenderSession final
 
         bool                                                _broken = false;
 
-        // When app is in shutdown state the enqueue back mush be switched to enqueue front to avoid deadlock.
+        // When app is in shutdown state the enqueue back must be switched to enqueue front to avoid deadlock.
         EnqueueHandle                                       _enqueueHandle = &MessageQueue::EnqueueBack;
 
-        VkRenderingAttachmentInfo                           _colorAttachment
+        VkRenderingAttachmentInfo                           _colorAttachments[ 4U ] =
+        {
+            // Albedo
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = VK_NULL_HANDLE,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+                .clearValue
+                {
+                    .color
+                    {
+                        .float32 { 0.0F, 0.0F, 0.0F, 0.0F }
+                    }
+                }
+            },
+            // HDR
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = VK_NULL_HANDLE,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+                .clearValue
+                {
+                    .color
+                    {
+                        .float32 { 0.0F, 0.0F, 0.0F, 1.0F }
+                    }
+                }
+            },
+            // Normal
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = VK_NULL_HANDLE,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+                .clearValue
+                {
+                    .color
+                    {
+                        .float32 { 0.5F, 0.5F, 0.5F, 0.0F }
+                    }
+                }
+            },
+            // Param
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = VK_NULL_HANDLE,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+                .clearValue
+                {
+                    .color
+                    {
+                        .float32 { 0.5F, 0.5F, 0.5F, 0.0F }
+                    }
+                }
+            }
+        };
+
+        VkRenderingAttachmentInfo                           _depthAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
             .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
             .resolveMode = VK_RESOLVE_MODE_NONE,
             .resolveImageView = VK_NULL_HANDLE,
             .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -103,9 +193,10 @@ class RenderSession final
 
             .clearValue
             {
-                .color
+                .depthStencil
                 {
-                    .float32 { 0.5F, 0.5F, 0.5F, 1.0F }
+                    .depth = 0.0F,
+                    .stencil = 0U
                 }
             }
         };
@@ -133,31 +224,118 @@ class RenderSession final
 
             .layerCount = 1U,
             .viewMask = 0U,
-            .colorAttachmentCount = 1U,
-            .pColorAttachments = &_colorAttachment,
-            .pDepthAttachment = nullptr,
+            .colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) ),
+            .pColorAttachments = _colorAttachments,
+            .pDepthAttachment = &_depthAttachment,
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier                                _barrier
+        VkImageMemoryBarrier                                _barriers[ 5U ] =
         {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_NONE,
-            .dstAccessMask = VK_ACCESS_NONE,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-            .image = VK_NULL_HANDLE,
-
-            .subresourceRange
+            // Albedo
             {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .baseMipLevel = 0U,
-                .levelCount = 1U,
-                .baseArrayLayer = 0U,
-                .layerCount = 1U
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // HDR
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // Normal
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // Param
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // Depth
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
             }
         };
 
@@ -181,8 +359,8 @@ class RenderSession final
         [[nodiscard]] bool AllocateCommandBuffers ( VkDevice device ) noexcept;
         void FreeCommandBuffers ( VkDevice device ) noexcept;
 
-        [[nodiscard]] bool CreateRenderTarget () noexcept;
-        [[nodiscard]] bool CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept;
+        [[nodiscard]] bool CreateRenderTargets () noexcept;
+        [[nodiscard]] bool CreateRenderTargetImages ( VkExtent2D const &resolution ) noexcept;
         void EventLoop () noexcept;
         [[nodiscard]] bool InitModules () noexcept;
 
@@ -197,7 +375,6 @@ class RenderSession final
 
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnHelloTriangleReady ( void* params ) noexcept;
         void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;

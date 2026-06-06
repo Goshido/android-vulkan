@@ -1,9 +1,9 @@
-#include "platform/windows/pbr/index_stream.inc"
 #include "tbn.hlsl"
 #include "tbn32.hlsl"
 #include "tbn64.hlsl"
 #include "windows/gbuffer_attributes.hlsl"
 #include "windows/gbuffer_push_constants.hlsl"
+#include "windows/index_stream.hlsl"
 
 
 struct InputData
@@ -49,18 +49,18 @@ Attributes VS ( in InputData inputData )
 
     switch ( g_pushConstants._indexType )
     {
-        case INDEX_TYPE_NONE:
+        case VK_INDEX_TYPE_NONE_KHR:
             idx = inputData._vertexID;
         break;
 
-        case INDEX_TYPE_16:
+        case VK_INDEX_TYPE_UINT16:
             idx = (uint32_t)vk::RawBufferLoad<uint16_t> (
                 g_pushConstants._indexStream + inputData._vertexID * sizeof ( uint16_t ),
                 2U
             );
         break;
 
-        case INDEX_TYPE_32:
+        case VK_INDEX_TYPE_UINT32:
             idx = vk::RawBufferLoad<uint32_t> (
                 g_pushConstants._indexStream + inputData._vertexID * sizeof ( uint32_t ),
                 4U

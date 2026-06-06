@@ -1,8 +1,10 @@
 #include <precompiled_headers.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
+#include <resource_heap.hpp>
 #include <scope_quard.hpp>
 #include <static_mesh_component.hpp>
+#include <texture2D_storage.hpp>
 #include <trace.hpp>
 #include <ui_props.hpp>
 #include <workspace.hpp>
@@ -130,6 +132,13 @@ void AppendComponentAction::Undo () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+Workspace* Workspace::_instance = nullptr;
+
+Workspace::Workspace () noexcept
+{
+    _instance = this;
+}
+
 void Workspace::Init () noexcept
 {
     AV_TRACE ( "Workspace init" )
@@ -180,7 +189,7 @@ void Workspace::Init () noexcept
                 std::unique_ptr<pbr::OpaqueProgram> p = std::make_unique<pbr::OpaqueProgram> ();
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
-                if ( !p->Init ( renderer.GetDevice (), renderer.GetDefaultDepthStencilFormat () ) ) [[unlikely]]
+                if ( !p->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
                     return nullptr;
 
                 _opaqueProgram = std::move ( p );
@@ -218,7 +227,38 @@ void Workspace::Init () noexcept
         }
     );
 
-    // FUCK
+    Texture2DStorage &storage = Texture2DStorage::Instance ();
+
+    storage.Load ( "pbr/system/white.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultAlbedo = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/black-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultEmission = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/red-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultMask = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/red-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultParam = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/normal.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultNormal = std::move ( *texture );
+        }
+    );
+
     FUCK ();
 }
 
@@ -233,6 +273,13 @@ void Workspace::Destroy () noexcept
         _opaqueProgram->Destroy ( NativeRenderer::Instance ().GetDevice () );
         _opaqueProgram.reset ();
     }
+
+    Texture2DStorage &storage = Texture2DStorage::Instance ();
+    storage.Unload ( std::move ( _defaultAlbedo ) );
+    storage.Unload ( std::move ( _defaultEmission ) );
+    storage.Unload ( std::move ( _defaultMask ) );
+    storage.Unload ( std::move ( _defaultParam ) );
+    storage.Unload ( std::move ( _defaultNormal ) );
 
     auto const freeStream = [ &renderer = NativeRenderer::Instance () ] (
         std::unique_ptr<pbr::StreamBuffer> &stream
@@ -320,15 +367,20 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
     auto const traverse = [
         &shadingStream = *_shadingStream,
         &transformStream = *_transformStream,
-        &frustum
-    ] ( MeshQueue &queue, std::vector<size_t> &queueVisible ) noexcept {
+        &frustum,
+        defaultAlbedo = _defaultAlbedo->_heapIndex,
+        defaultEmission = _defaultEmission->_heapIndex,
+        defaultMask = _defaultMask->_heapIndex,
+        defaultParam = _defaultParam->_heapIndex,
+        defaultNormal = _defaultNormal->_heapIndex
+    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
         GXMat4 local;
         GXAABB bounds;
         queueVisible.clear ();
 
         for ( auto const &instances : queue )
         {
-            size_t count = 0U;
+            uint32_t count = 0U;
 
             for ( auto const &mesh : instances.second )
             {
@@ -354,12 +406,11 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
 
                 Shading const shading
                 {
-                    // FUCK - default images in case of missing material image
-                    ._albedo = material._albedo->_heapIndex,
-                    ._emission = material._emission->_heapIndex,
-                    ._mask = material._mask->_heapIndex,
-                    ._param = material._param->_heapIndex,
-                    ._normal = material._normal->_heapIndex,
+                    ._albedo = !material._albedo ? defaultAlbedo : material._albedo->_heapIndex,
+                    ._emission = !material._emission ? defaultEmission : material._emission->_heapIndex,
+                    ._mask = !material._mask ? defaultMask : material._mask->_heapIndex,
+                    ._param = !material._param ? defaultParam : material._param->_heapIndex,
+                    ._normal = !material._normal ? defaultNormal : material._normal->_heapIndex,
                     ._colors = mesh->_color
                 };
 
@@ -384,7 +435,12 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
             if ( !count ) [[unlikely]]
                 continue;
 
-            queueVisible.push_back ( count );
+            queueVisible.push_back ( 
+                {
+                    ._mesh = instances.first.get (),
+                    ._count = count
+                }
+            );
         }
     };
 
@@ -411,7 +467,7 @@ void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
     _shadingStream->IssueSync ( commandBuffer );
 }
 
-void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
+void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !IsReady () ) [[unlikely]]
         return;
@@ -419,23 +475,46 @@ void Workspace::DrawOpaque ( [[maybe_unused]] VkCommandBuffer commandBuffer ) no
     if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
-    AV_TRACE ( "Opaque" )
-    AV_VULKAN_GROUP ( commandBuffer, "Opaque" )
+    AV_TRACE ( "GBuffer" )
+    AV_VULKAN_GROUP ( commandBuffer, "GBuffer" )
+
+    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
+    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
+    _opaqueProgram->Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
 
-    auto const traverse = [
-        //& shadingStream = *_shadingStream,
-        //&transformStream = *_transformStream,
+    auto traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        commandBuffer = commandBuffer,
+        layout = layout,
 
-        //pushConstants = pbr::OpaqueProgram::PushConstants
-        //{
-        //    ._frameStream = _frameStream->AcquireAndConsume ( 1U )
-        //}
-    ] ( std::vector<size_t> &queueVisible ) noexcept {
-        for ( [[maybe_unused]] size_t const instances : queueVisible )
+        pushConstants = pbr::OpaqueProgram::PushConstants
         {
-            // FUCK
+            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+        }
+    ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
+        for ( auto const &[ mesh, count ] : queueVisible )
+        {
+            pushConstants._transformStream = transformStream.AcquireAndConsume ( count );
+            pushConstants._shadingStream = shadingStream.AcquireAndConsume ( count );
+
+            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+            pushConstants._positionStream = info._bdaStream0;
+            pushConstants._restStream = info._bdaStream1;
+            pushConstants._indexStream = info._bdaIndex;
+            pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
+
+            vkCmdPushConstants ( commandBuffer,
+                layout,
+                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+                0U,
+                sizeof ( pushConstants ),
+                &pushConstants
+            );
+
+            vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
         }
     };
 
@@ -492,8 +571,6 @@ GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
     AV_TRACE ( "Workspace register gizmo" )
 
     auto &g = *new GizmoInfo;
-
-    // FUCK move to ipp
     auto w = MeshGeometryRef::weak_type ( mesh );
 
     {
@@ -625,6 +702,11 @@ void Workspace::Unregister ( ReflectionProbeGlobalNode &node ) noexcept
     delete &n;
 }
 
+Workspace &Workspace::Instance () noexcept
+{
+    return *_instance;
+}
+
 void Workspace::FUCK () noexcept
 {
     ActorRef actor = std::make_unique<Actor> ();
@@ -667,6 +749,11 @@ bool Workspace::IsReady () noexcept
         ( static_cast<bool> ( _frameStream ) ) &
         ( static_cast<bool> ( _transformStream ) ) &
         ( static_cast<bool> ( _shadingStream ) ) &
+        ( static_cast<bool> ( _defaultAlbedo ) ) &
+        ( static_cast<bool> ( _defaultEmission ) ) &
+        ( static_cast<bool> ( _defaultMask ) ) &
+        ( static_cast<bool> ( _defaultParam ) ) &
+        ( static_cast<bool> ( _defaultNormal ) ) &
         ( _opaqueVisible.capacity () > 0U ) &
         ( _stippleVisible.capacity () > 0U );
 

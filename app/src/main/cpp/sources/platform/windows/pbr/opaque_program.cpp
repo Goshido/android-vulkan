@@ -353,7 +353,7 @@ VkPipelineRenderingCreateInfo const* OpaqueProgram::InitRenderingInfo ( VkFormat
         .colorAttachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
         .pColorAttachmentFormats = colorAttachments,
         .depthAttachmentFormat = nativeDepthStencil,
-        .stencilAttachmentFormat = nativeDepthStencil
+        .stencilAttachmentFormat = VK_FORMAT_UNDEFINED
     };
 
     return &info;

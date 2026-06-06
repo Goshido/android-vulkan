@@ -45,17 +45,23 @@ class Workspace final
         using ReflectionProbeLocalQueue = std::unordered_set<ReflectionProbeLocalInfo*>;
         using ReflectionProbeGlobalQueue = std::unordered_set<ReflectionProbeGlobalInfo*>;
 
+        struct MeshInstance final
+        {
+            android_vulkan::MeshGeometry*               _mesh = nullptr;
+            uint32_t                                    _count = 0U;
+        };
+
     private:
         History                                         _history {};
         std::unordered_map<Actor const*, ActorRef>      _actors {};
 
         MeshQueue                                       _opaqueQueue {};
         MeshMap                                         _opaqueMap {};
-        std::vector<size_t>                             _opaqueVisible {};
+        std::vector<MeshInstance>                       _opaqueVisible {};
 
         MeshQueue                                       _stippleQueue {};
         MeshMap                                         _stippleMap {};
-        std::vector<size_t>                             _stippleVisible {};
+        std::vector<MeshInstance>                       _stippleVisible {};
 
         GizmoQueue                                      _gizmoQueue {};
         GizmoMap                                        _gizmoMap {};
@@ -69,13 +75,21 @@ class Workspace final
         std::unique_ptr<pbr::StreamBuffer>              _transformStream {};
         std::unique_ptr<pbr::StreamBuffer>              _shadingStream {};
 
+        Texture2DRef                                    _defaultAlbedo {};
+        Texture2DRef                                    _defaultEmission {};
+        Texture2DRef                                    _defaultMask {};
+        Texture2DRef                                    _defaultParam {};
+        Texture2DRef                                    _defaultNormal {};
+
         ViewportWidget*                                 _viewport = nullptr;
 
         std::mutex                                      _mutex {};
         bool                                            _ready = false;
 
+        static Workspace*                               _instance;
+
     public:
-        explicit Workspace () = default;
+        explicit Workspace () noexcept;
 
         Workspace ( Workspace const & ) = delete;
         Workspace &operator = ( Workspace const & ) = delete;
@@ -94,7 +108,7 @@ class Workspace final
         void ComputeTransform ( float deltaTime ) noexcept;
         void UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept;
 
-        void DrawOpaque ( VkCommandBuffer commandBuffer ) noexcept;
+        void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
 
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
@@ -112,6 +126,8 @@ class Workspace final
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
         void Unregister ( ReflectionProbeGlobalNode &node ) noexcept;
+
+        [[nodiscard]] static Workspace &Instance () noexcept;
 
     private:
         void FUCK () noexcept;

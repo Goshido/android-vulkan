@@ -25,7 +25,6 @@ enum class eMessageType : uint32_t
     DoubleClick,
     DPIChanged,
     FrameComplete,
-    HelloTriangleReady,
     InvokeIO,
     InvokeRenderSession,
     KeyboardKeyDown,

@@ -312,9 +312,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\tone_mapper_pass.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="src\hello_triangle_program.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry_base.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -734,12 +731,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="include\hello_triangle_vertex.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hello_triangle_program.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry_base.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
@@ -907,9 +898,6 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
-    </None>
-    <None Include="include\hello_triangle_program.inc">
-      <Filter>Header Files</Filter>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
       <Filter>Source Files\core\platform\windows\pbr</Filter>

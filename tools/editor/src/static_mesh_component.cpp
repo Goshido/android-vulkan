@@ -3,6 +3,7 @@
 #include <mesh_storage.hpp>
 #include <static_mesh_component.hpp>
 #include <texture2D_storage.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
@@ -44,9 +45,21 @@ StaticMeshComponent::~StaticMeshComponent () noexcept
     if ( _mesh ) [[likely]]
         MeshStorage::Instance ().Unload ( std::move ( _mesh ) );
 
-    if ( _albedo ) [[likely]]
+    if ( _material._albedo )
+        Texture2DStorage::Instance ().Unload ( std::move ( _material._albedo ) );
+
+    if ( _material._emission )
+        Texture2DStorage::Instance ().Unload ( std::move ( _material._emission ) );
+
+    if ( _material._mask )
+        Texture2DStorage::Instance ().Unload ( std::move ( _material._mask ) );
+
+    if ( _material._normal )
+        Texture2DStorage::Instance ().Unload ( std::move ( _material._normal ) );
+
+    if ( _material._param )
     {
-        Texture2DStorage::Instance ().Unload ( std::move ( _albedo ) );
+        Texture2DStorage::Instance ().Unload ( std::move ( _material._param ) );
     }
 }
 
@@ -77,7 +90,16 @@ void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_vie
 
     Texture2DStorage::Instance ().Load ( albedo,
         [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _albedo = std::move ( *texture );
+            _material._emission = std::move ( *texture );
+
+            // FUCK - make it right
+            _node = Workspace::Instance ().RegisterOpaqueMesh ( _mesh );
+            _node.SetLocal ( GXQuat::IDENTITY, GXVec3 ( 0.0F, 0.0F, 10.0F ), GXVec3::ONE );
+            _node.SetBounds ( _mesh->GetBounds () );
+
+            GXColorUNORM const c ( 255U, 255U, 255U, 255 );
+            _node.SetColor ( c, c, c, c, 1.0F );
+            _node.SetMaterial ( _material );
         }
     );
 }

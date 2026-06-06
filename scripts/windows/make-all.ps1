@@ -9,10 +9,6 @@ Clear-Host
 
 # vertex shaders
 scripts\windows\make-spv.ps1                                                                                           `
-    "$EDITOR_HLSL_DIRECTORY\hello_triangle.vs.hlsl"                                                                    `
-    "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
-
-scripts\windows\make-spv.ps1                                                                                           `
     "$ANDROID_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                    `
     "$ANDROID_SHADER_DIRECTORY\common_opaque.vs.spv"
 
@@ -61,10 +57,6 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\ui.vs.spv"
 
 # pixel shaders
-scripts\windows\make-spv.ps1                                                                                           `
-    "$EDITOR_HLSL_DIRECTORY\hello_triangle.ps.hlsl"                                                                    `
-    "$EDITOR_SHADER_DIRECTORY\hello_triangle.ps.spv"
-
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\blinn_phong_analytic.ps.hlsl"                                                                `
     "$CORE_SHADER_DIRECTORY\blinn_phong_analytic.ps.spv"

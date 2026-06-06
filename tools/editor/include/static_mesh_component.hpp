@@ -4,7 +4,7 @@
 
 #include "component.hpp"
 #include "mesh_geometry_ref.hpp"
-#include "texture2D_ref.hpp"
+#include "mesh_node.hpp"
 
 
 namespace editor {
@@ -13,9 +13,8 @@ class StaticMeshComponent final : public Component
 {
     private:
         MeshGeometryRef                         _mesh {};
-
-        // FUCK - replace by material system
-        Texture2DRef                            _albedo {};
+        MeshNode                                _node {};
+        PBRMaterial                             _material {};
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";

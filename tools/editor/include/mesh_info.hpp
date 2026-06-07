@@ -15,7 +15,7 @@ struct MeshInfo final
     GXQuat          _rotation {};
     GXVec3          _scale {};
     GXVec3          _location {};
-    ColorData       _color {};
+    ColorData       _colors {};
 };
 
 } // namespace editor

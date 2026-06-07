@@ -68,9 +68,10 @@ struct Frame final
 
 struct Transform final
 {
-    GXVec4      _modelColumn0;
-    GXVec4      _modelColumn1;
-    GXVec4      _modelColumn2;
+    GXVec3      _x;
+    GXVec3      _y;
+    GXVec3      _z;
+    GXVec3      _w;
     uint64_t    _normal;
 };
 
@@ -388,13 +389,13 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
                 GXQuat const &rotation = mesh->_rotation;
 
                 local.From ( rotation, mesh->_location );
-                auto &xRow = *reinterpret_cast<GXVec3*> ( local._data );
-                auto &yRow = *reinterpret_cast<GXVec3*> ( local._data + 4U );
-                xRow.Multiply ( xRow, scale._data[ 0U ] );
+                auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
+                auto &y = *reinterpret_cast<GXVec3*> ( local._data[ 1U ] );
+                x.Multiply ( x, scale._data[ 0U ] );
 
-                auto &zRow = *reinterpret_cast<GXVec3*> ( local._data + 8U );
-                yRow.Multiply ( yRow, scale._data[ 1U ] );
-                zRow.Multiply ( zRow, scale._data[ 2U ] );
+                auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
+                y.Multiply ( y, scale._data[ 1U ] );
+                z.Multiply ( z, scale._data[ 2U ] );
 
                 mesh->_boundLocal.Transform ( bounds, local );
 
@@ -411,21 +412,17 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
                     ._mask = !material._mask ? defaultMask : material._mask->_heapIndex,
                     ._param = !material._param ? defaultParam : material._param->_heapIndex,
                     ._normal = !material._normal ? defaultNormal : material._normal->_heapIndex,
-                    ._colors = mesh->_color
+                    ._colors = mesh->_colors
                 };
 
                 shadingStream.Push ( &shading );
 
-                float const* x = local._data[ 0U ];
-                float const* y = local._data[ 1U ];
-                float const* z = local._data[ 2U ];
-                float const* w = local._data[ 3U ];
-
                 Transform const transform
                 {
-                    ._modelColumn0 { x[ 0U ], y[ 0U ], z[ 0U ], w[ 0U ] },
-                    ._modelColumn1 { x[ 1U ], y[ 1U ], z[ 1U ], w[ 1U ] },
-                    ._modelColumn2 { x[ 2U ], y[ 2U ], z[ 2U ], w[ 2U ] },
+                    ._x = x,
+                    ._y = y,
+                    ._z = z,
+                    ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
                     ._normal = rotation.ToTBN64 ()
                 };
 
@@ -461,8 +458,9 @@ void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
     if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
-    AV_TRACE ( "Upload to GPU" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload to GPU" )
+    AV_TRACE ( "Upload workspace data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload workspace data" )
+    _frameStream->IssueSync ( commandBuffer );
     _transformStream->IssueSync ( commandBuffer );
     _shadingStream->IssueSync ( commandBuffer );
 }

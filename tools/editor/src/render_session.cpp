@@ -899,7 +899,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     resourceHeap.UploadGPUData ( commandBuffer );
 
     {
-        AV_VULKAN_GROUP ( commandBuffer, "Upload" )
+        AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
 
         if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
         {

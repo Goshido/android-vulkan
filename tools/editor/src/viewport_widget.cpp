@@ -1,18 +1,14 @@
 #include <precompiled_headers.hpp>
-#include <logger.hpp>
 #include <theme.hpp>
 #include <viewport_widget.hpp>
-
-// FUCK
-#include <scope_quard.hpp>
 
 
 namespace editor {
 
 namespace {
 
-constexpr float FREE_FLY_ORIENTATION_SPEED = 4.0e-2F;
-constexpr float FREE_FLY_MOVE_SPEED = 1.0F;
+constexpr float FREE_FLY_ORIENTATION_SPEED = 4.0e-3F;
+constexpr float FREE_FLY_MOVE_SPEED = 4.0F;
 constexpr float FREE_FLY_SPRINT_SPEED = 10.0F;
 constexpr float Z_NEAR = 0.1F;
 constexpr float Z_FAR = 1.0e+3F;
@@ -307,13 +303,6 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     yawFactor.FromAxisAngle ( GXVec3::UP, _eulerAngles._data[ 1U ] );
 
     _orientation.Multiply ( yawFactor, pitchFactor );
-
-    // FUCK
-    android_vulkan::ScopeGuard const fuck (
-        [ this ] () noexcept {
-            android_vulkan::LogInfo ( "%g %g %g", _position._data[ 0U ], _position._data[ 1U ], _position._data[ 2U ] );
-        }
-    );
 
     if ( !( _state._right | _state._left | _state._forward | _state._backward ) )
         return;

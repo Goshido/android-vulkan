@@ -40,11 +40,6 @@ Attributes VS ( in InputData inputData )
         8U
     );
 
-    Rest const rest = vk::RawBufferLoad<Rest> (
-        g_pushConstants._restStream + inputData._instanceID * sizeof ( Rest ),
-        4U
-    );
-
     uint32_t idx;
 
     switch ( g_pushConstants._indexType )
@@ -74,6 +69,11 @@ Attributes VS ( in InputData inputData )
 
     float32_t3 const position = vk::RawBufferLoad<float32_t3> (
         g_pushConstants._positionStream + idx * sizeof ( float32_t3 ),
+        4U
+    );
+
+    Rest const rest = vk::RawBufferLoad<Rest> (
+        g_pushConstants._restStream + idx * sizeof ( Rest ),
         4U
     );
 

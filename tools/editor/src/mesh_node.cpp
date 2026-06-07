@@ -75,7 +75,7 @@ void MeshNode::Commit () noexcept
     _renderInfo._material = meshInfo._material;
     _renderInfo._local = local;
     meshInfo._boundLocal.Transform ( _renderInfo._boundWorld, local );
-    _renderInfo._color = meshInfo._color;
+    _renderInfo._color = meshInfo._colors;
 
     _hasChanges = false;
 
@@ -123,7 +123,7 @@ void MeshNode::SetColor ( GXColorUNORM color0,
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_color = c;
+    _meshInfo->_colors = c;
     _hasChanges = true;
 
     Unlock ();

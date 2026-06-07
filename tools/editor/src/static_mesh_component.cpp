@@ -94,7 +94,7 @@ void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_vie
 
             // FUCK - make it right
             _node = Workspace::Instance ().RegisterOpaqueMesh ( _mesh );
-            _node.SetLocal ( GXQuat::IDENTITY, GXVec3 ( 0.0F, 0.0F, 10.0F ), GXVec3::ONE );
+            _node.SetLocal ( GXQuat::IDENTITY, GXVec3 ( 0.0F, -1.0F, 3.0F ), GXVec3::ONE );
             _node.SetBounds ( _mesh->GetBounds () );
 
             GXColorUNORM const c ( 255U, 255U, 255U, 255 );

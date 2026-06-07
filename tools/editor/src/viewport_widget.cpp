@@ -53,25 +53,43 @@ ViewportWidget::ViewportWidget () noexcept:
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
 {
+    eNavigationMode const old = _navigationMode;
+
+    auto const captureInput = [ this, old ] () noexcept {
+        if ( old == eNavigationMode::None ) [[unlikely]]
+        {
+            CaptureMouse ();
+            SetFocus ();
+        }
+    };
+
     ResolveNavigationMode ();
 
     switch ( _navigationMode )
     {
         case eNavigationMode::FreeFly:
+            captureInput ();
             DoFreeFly ( deltaTime, dpi );
-        break;
+        return;
 
         case eNavigationMode::Orbit:
+            captureInput ();
             DoOrbit ();
-        break;
+        return;
 
         case eNavigationMode::None:
-            // NOTHING
             [[fallthrough]];
         default:
             // IMPOSSIBLE
         break;
     }
+
+    if ( old == eNavigationMode::None ) [[likely]]
+        return;
+
+    ReleaseMouse ();
+    KillFocus ();
+    _state = {};
 }
 
 GXMat4 const &ViewportWidget::GetProjection () const noexcept
@@ -146,6 +164,7 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     // It's needed to update widget boundaries according to HTML+CSS settings.
     // The viewport widget itself does not have any child elements.
     // Note that bounds are updated in DIVUIElement::UpdateCache method.
+    _lineHeights.resize ( 1U );
 
     pbr::UIElement::ApplyInfo applyInfo
     {

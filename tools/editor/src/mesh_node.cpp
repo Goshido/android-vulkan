@@ -119,16 +119,15 @@ void MeshNode::SetColor ( GXColorUNORM color0,
     // Emission intensity should take range from 0 to 6000. Emission intensity is packed as 24bit fixed point value.
     constexpr double maxIntensity = 6.0e+3;
     constexpr double convertFactor = static_cast<double> ( 0x00FFFFFFU ) / maxIntensity;
-    constexpr uint32_t rgbMask = 0xFFFF'FF00U;
 
     ColorData const c
     {
         ._emiR = emission._data[ 0U ],
-        ._0rgb = std::bit_cast<uint32_t> ( color0 ) & rgbMask,
+        ._0rgb = std::bit_cast<uint32_t> ( color0._data ) >> 8U,
         ._emiB = static_cast<uint32_t> ( emission._data[ 1U ] ),
-        ._1rgb = std::bit_cast<uint32_t> ( color1 ) & rgbMask,
+        ._1rgb = std::bit_cast<uint32_t> ( color1 ) >> 8U,
         ._emiG = static_cast<uint32_t> ( emission._data[ 2U ] ),
-        ._2rgb = std::bit_cast<uint32_t> ( color2 ) & rgbMask,
+        ._2rgb = std::bit_cast<uint32_t> ( color2 ) >> 8U,
         ._0A = static_cast<uint32_t> ( color0._data[ 3U ] ),
 
         ._emiIntensity = static_cast<uint32_t> (

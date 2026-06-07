@@ -21,16 +21,12 @@ DIVUIElement::DIVUIElement ( DIVUIElement &parent, pbr::CSSComputedValues &&css,
 DIVUIElement::~DIVUIElement () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIDeleteElement,
-
-            ._action = [ div = std::exchange ( _div, nullptr ) ] () noexcept {
+        Message ( eMessageType::UIDeleteElement,
+            [ div = std::exchange ( _div, nullptr ) ] () noexcept {
                 delete div;
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -42,96 +38,72 @@ pbr::UIElement &DIVUIElement::GetNativeElement () noexcept
 void DIVUIElement::AppendChildElement ( DIVUIElement &element ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIAppendChildElement,
-
-            ._action = [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
+        Message ( eMessageType::UIAppendChildElement,
+            [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
                 parent.AppendChildElement ( element );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void DIVUIElement::PrependChildElement ( DIVUIElement &element ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIPrependChildElement,
-
-            ._action = [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
+        Message ( eMessageType::UIPrependChildElement,
+            [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
                 parent.PrependChildElement ( element );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void DIVUIElement::AppendChildElement ( TextUIElement &element ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIAppendChildElement,
-
-            ._action = [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
+        Message ( eMessageType::UIAppendChildElement,
+            [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
                 parent.AppendChildElement ( element );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void DIVUIElement::PrependChildElement ( TextUIElement &element ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIPrependChildElement,
-
-            ._action = [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
+        Message ( eMessageType::UIPrependChildElement,
+            [ &parent = *_div, &element = element.GetNativeElement () ] () noexcept {
                 parent.PrependChildElement ( element );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void DIVUIElement::Hide () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIHideElement,
-
-            ._action = [ &div = *_div ] () noexcept {
+        Message ( eMessageType::UIHideElement,
+            [ &div = *_div ] () noexcept {
                 div.Hide ();
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void DIVUIElement::Show () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIShowElement,
-
-            ._action = [ &div = *_div ] () noexcept {
+        Message ( eMessageType::UIShowElement,
+            [ &div = *_div ] () noexcept {
                 div.Show ();
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -143,16 +115,12 @@ bool DIVUIElement::IsVisible () const noexcept
 void DIVUIElement::Update () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIUpdateElement,
-
-            ._action = [ &div = *_div ] () noexcept {
+        Message ( eMessageType::UIUpdateElement,
+            [ &div = *_div ] () noexcept {
                 div.Update ();
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 

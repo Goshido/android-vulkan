@@ -41,15 +41,7 @@ void TimerManager::Destroy () noexcept
 void TimerManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ModuleStarted,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
+    messageQueue.EnqueueBack ( Message ( eMessageType::ModuleStarted ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -120,14 +112,7 @@ void TimerManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) n
 {
     AV_TRACE ( "Shutdown" )
     messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
-
-    messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
 } // namespace editor

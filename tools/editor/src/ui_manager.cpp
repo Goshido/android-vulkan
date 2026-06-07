@@ -94,15 +94,7 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
 void UIManager::EventLoop () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ModuleStarted,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
+    messageQueue.EnqueueBack ( Message ( eMessageType::ModuleStarted ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -413,15 +405,11 @@ void UIManager::OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) n
         return;
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-
-            ._action = [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
+        Message ( eMessageType::ChangeCursor,
+            [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
                 return value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -446,13 +434,7 @@ void UIManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noex
         _widgets.clear ();
     }
 
-    messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
 void UIManager::OnStartWidgetCaptureMouse ( MessageQueue &messageQueue, Message &&message ) noexcept

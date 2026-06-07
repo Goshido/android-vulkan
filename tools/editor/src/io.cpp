@@ -31,15 +31,7 @@ void IO::Destroy () noexcept
 void IO::EventLoop () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ModuleStarted,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
+    messageQueue.EnqueueBack ( Message ( eMessageType::ModuleStarted ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -80,14 +72,7 @@ void IO::OnStopIO ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Shutdown" )
     messageQueue.DequeueEnd ();
-
-    messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
 } // namespace editor

@@ -1057,8 +1057,11 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\font_storage.cpp" />
     <ClCompile Include="src\gizmo_node.cpp" />
+    <ClCompile Include="src\graphics_program_info.cpp" />
     <ClCompile Include="src\history.cpp" />
+    <ClCompile Include="src\message.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
+    <ClCompile Include="src\stream_buffer_info.cpp" />
     <ClCompile Include="src\texture2D_storage.cpp" />
     <ClCompile Include="src\io.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />

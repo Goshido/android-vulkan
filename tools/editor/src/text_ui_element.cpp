@@ -14,16 +14,12 @@ TextUIElement::TextUIElement ( DIVUIElement &parent, std::string_view text, std:
 TextUIElement::~TextUIElement () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIDeleteElement,
-
-            ._action = [ text = std::exchange ( _text, nullptr ) ] () noexcept {
+        Message ( eMessageType::UIDeleteElement,
+            [ text = std::exchange ( _text, nullptr ) ] () noexcept {
                 delete text;
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -40,32 +36,24 @@ void TextUIElement::SetColor ( pbr::ColorValue const &color ) noexcept
 void TextUIElement::SetText ( std::string_view text ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UISetText,
-
-            ._action = [ &element = *_text, t = std::move ( std::string ( text ) ) ] () noexcept {
+        Message ( eMessageType::UISetText,
+            [ &element = *_text, t = std::move ( std::string ( text ) ) ] () noexcept {
                 element.SetText ( std::string_view ( t ) );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void TextUIElement::SetText ( std::u32string_view text ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UISetText,
-
-            ._action = [ &element = *_text, t = std::move ( std::u32string ( text ) ) ] () noexcept {
+        Message ( eMessageType::UISetText,
+            [ &element = *_text, t = std::move ( std::u32string ( text ) ) ] () noexcept {
                 element.SetText ( std::u32string_view ( t ) );
                 return nullptr;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 

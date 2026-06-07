@@ -7,13 +7,7 @@ namespace editor {
 
 UIElement::UIElement () noexcept
 {
-    MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIElementCreated,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::UIElementCreated ) );
 }
 
 } // namespace editor

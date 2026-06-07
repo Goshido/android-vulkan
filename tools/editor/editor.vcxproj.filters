@@ -387,6 +387,15 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\stream_buffer.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics_program_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_buffer_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\message.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">

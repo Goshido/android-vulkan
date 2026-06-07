@@ -41,30 +41,22 @@ Timer::Timer ( eType type, Interval const &interval, Callback &&callback ) noexc
     _state ( new State ( type, interval, std::move ( callback ) ) )
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::StartTimer,
-
-            ._action = [ state = _state ] () noexcept {
+        Message ( eMessageType::StartTimer,
+            [ state = _state ] () noexcept {
                 return state;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 Timer::~Timer () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::StopTimer,
-
-            ._action = [ state = _state ] () noexcept {
+        Message ( eMessageType::StopTimer,
+            [ state = _state ] () noexcept {
                 return state;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 

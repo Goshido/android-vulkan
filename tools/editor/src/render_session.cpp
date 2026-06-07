@@ -1,10 +1,12 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <graphics_program_info.hpp>
 #include <logger.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
 #include <render_session.hpp>
 #include <resource_heap.hpp>
+#include <stream_buffer_info.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
 #include <vulkan_utils.hpp>
@@ -316,27 +318,8 @@ void RenderSession::EventLoop () noexcept
         _broken = true;
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    if ( _broken )
-    {
-        messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::CloseEditor,
-                ._action = nullptr,
-                ._serialNumber = 0U
-            }
-        );
-    }
-    else
-    {
-      messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::ModuleStarted,
-                ._action = nullptr,
-                ._serialNumber = 0U
-            }
-        );
-    }
+    constexpr eMessageType const cases[] = { eMessageType::ModuleStarted, eMessageType::CloseEditor };
+    messageQueue.EnqueueBack ( Message ( cases[ static_cast<size_t> ( _broken ) ] ) );
 
     std::optional<Message::SerialNumber> lastRefund {};
 
@@ -349,8 +332,16 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::DestroyGraphicsProgram:
+                OnDestroyGraphicsProgram ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyStreamBuffer:
+                OnDestroyStreamBuffer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::DestroyTexture2D:
@@ -359,6 +350,14 @@ void RenderSession::EventLoop () noexcept
 
             case eMessageType::InvokeRenderSession:
                 OnInvokeRenderSession ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewGraphicsProgram:
+                OnNewGraphicsProgram ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewStreamBuffer:
+                OnNewStreamBuffer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::RenderFrame:
@@ -554,18 +553,14 @@ void RenderSession::FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t c
     for ( auto &mesh : queue )
     {
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::InvokeIO,
-
-                ._action = [ &renderer, mesh = mesh ] () noexcept -> void* {
+            Message ( eMessageType::InvokeIO,
+                [ &renderer, mesh = mesh ] () noexcept -> void* {
                     android_vulkan::MeshGeometry &m = *mesh;
                     AV_TRACE ( "Free transfer resource (%s)", m.GetName ().c_str () );
                     m.FreeTransferResources ( renderer );
                     return nullptr;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
     }
 
@@ -585,25 +580,72 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
     for ( auto &texture2D : queue )
     {
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::InvokeIO,
-
-                ._action = [ &renderer, texture2D = texture2D ] () noexcept -> void* {
+            Message ( eMessageType::InvokeIO,
+                [ &renderer, texture2D = texture2D ] () noexcept -> void* {
                     android_vulkan::Texture2D &t = texture2D->_resource;
                     AV_TRACE ( "Free texture 2D resource (%s)", t.GetName ().c_str () );
                     t.FreeTransferResources ( renderer );
                     return nullptr;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
     }
 
     queue.clear ();
 }
 
-void RenderSession::DestroyMeshes (  MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyGraphicsPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+{
+    auto &toDestroy = _graphicsProgramStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _graphicsProgramStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _graphicsProgramStorage._destroyQueue[ commandBufferIndex ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy graphics programs" )
+    VkDevice device = NativeRenderer::Instance ().GetDevice ();
+
+    for ( auto &program : destroyQueue )
+    {
+        AV_TRACE ( "Destroy graphics program (%s)", program->GetName ().c_str () );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, device, program = std::move ( program ) ] () noexcept -> void* {
+                    pbr::GraphicsProgram &p = *program;
+                    AV_TRACE ( "Destroy graphics program (%s)", p.GetName ().c_str () );
+                    p.Destroy ( device );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Graphics program destroy complete" );
+                                --_graphicsProgramStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyMeshes ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
 {
     auto &toDestroy = _meshStorage._toDestroy;
 
@@ -628,34 +670,77 @@ void RenderSession::DestroyMeshes (  MessageQueue &messageQueue, size_t commandB
 
         // Calling method by pointer C++ syntax
         ( messageQueue.*_enqueueHandle ) (
-            {
-                ._type = eMessageType::InvokeIO,
-
-                ._action = [ this, &messageQueue, &renderer, mesh = std::move ( mesh ) ] () noexcept -> void* {
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, mesh = std::move ( mesh ) ] () noexcept -> void* {
                     android_vulkan::MeshGeometry &m = *mesh;
                     AV_TRACE ( "Destroy mesh (%s)", m.GetName ().c_str () );
                     m.FreeResources ( renderer );
 
                     // Calling method by pointer C++ syntax
                     ( messageQueue.*_enqueueHandle ) (
-                        {
-                            ._type = eMessageType::InvokeRenderSession,
-
-                            ._action = [ this ] () noexcept -> void* {
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
                                 AV_TRACE ( "Mesh destroy complete" );
                                 --_meshStorage._count;
                                 return nullptr;
-                            },
-
-                            ._serialNumber = 0U
-                        }
+                            }
+                        )
                     );
 
                     return nullptr;
-                },
+                }
+            )
+        );
+    }
 
-                ._serialNumber = 0U
-            }
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyStreamBuffers ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+{
+    auto &toDestroy = _streamBufferStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _streamBufferStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _streamBufferStorage._destroyQueue[ commandBufferIndex ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy stream buffers" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &buffer : destroyQueue )
+    {
+        AV_TRACE ( "Destroy stream buffer" );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, buffer = std::move ( buffer ) ] () noexcept -> void* {
+                    pbr::StreamBuffer &b = *buffer;
+                    AV_TRACE ( "Destroy stream buffer" );
+                    b.Destroy ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Stream buffer destroy complete" );
+                                --_streamBufferStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
         );
     }
 
@@ -687,10 +772,9 @@ void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size
 
         // Calling method by pointer C++ syntax
         ( messageQueue.*_enqueueHandle ) (
-            {
-                ._type = eMessageType::InvokeIO,
-
-                ._action = [ this,
+            Message ( eMessageType::InvokeIO,
+                [
+                    this,
                     &messageQueue,
                     &renderer,
                     texture2D = std::move ( texture2D )
@@ -701,24 +785,18 @@ void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size
 
                     // Calling method by pointer C++ syntax
                     ( messageQueue.*_enqueueHandle ) (
-                        {
-                            ._type = eMessageType::InvokeRenderSession,
-
-                            ._action = [ this ] () noexcept -> void* {
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
                                 AV_TRACE ( "Mesh destroy complete" );
                                 --_texture2DStorage._count;
                                 return nullptr;
-                            },
-
-                            ._serialNumber = 0U
-                        }
+                            }
+                        )
                     );
 
                     return nullptr;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
     }
 
@@ -795,11 +873,28 @@ void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, si
     uploadQueue.clear ();
 }
 
+void RenderSession::OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy graphics program" )
+    messageQueue.DequeueEnd ();
+
+    _graphicsProgramStorage._toDestroy.push_back (
+        std::move ( *static_cast<GraphicsProgramRef*> ( message._action () ) )
+    );
+}
+
 void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Destroy mesh" )
     messageQueue.DequeueEnd ();
     _meshStorage._toDestroy.push_back ( std::move ( *static_cast<MeshGeometryRef*> ( message._action () ) ) );
+}
+
+void RenderSession::OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy stream buffer" )
+    messageQueue.DequeueEnd ();
+    _streamBufferStorage._toDestroy.push_back ( std::move ( *static_cast<StreamBufferRef*> ( message._action () ) ) );
 }
 
 void RenderSession::OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -814,6 +909,24 @@ void RenderSession::OnInvokeRenderSession ( MessageQueue &messageQueue, Message 
     AV_TRACE ( "Invoke" )
     messageQueue.DequeueEnd ();
     std::ignore = message._action ();
+}
+
+void RenderSession::OnNewGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New graphics program" )
+    messageQueue.DequeueEnd ();
+    ++_graphicsProgramStorage._count;
+    auto &info = *static_cast<GraphicsProgramInfo*> ( message._action () );
+    info._notify ( std::move ( info._program ) );
+}
+
+void RenderSession::OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New stream buffer" )
+    messageQueue.DequeueEnd ();
+    ++_streamBufferStorage._count;
+    auto &info = *static_cast<StreamBufferInfo*> ( message._action () );
+    info._notify ( std::move ( info._buffer ) );
 }
 
 void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
@@ -854,7 +967,9 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     FreeMeshTransferQueue ( messageQueue, commandBufferIndex );
     FreeTexture2DTransferQueue ( messageQueue, commandBufferIndex );
 
+    DestroyGraphicsPrograms ( messageQueue, commandBufferIndex );
     DestroyMeshes ( messageQueue, commandBufferIndex );
+    DestroyStreamBuffers ( messageQueue, commandBufferIndex );
     DestroyTexture2DInstances ( messageQueue, commandBufferIndex );
 
     if ( ( vulkanResult != VK_SUCCESS ) & ( vulkanResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
@@ -1044,13 +1159,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     GX_ENABLE_WARNING ( 4061 )
 
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::FrameComplete,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
 }
 
 void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
@@ -1073,8 +1182,17 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
 
     std::optional<Message::SerialNumber> lastRefund {};
 
-    while ( _uiElements | _meshStorage._count | _texture2DStorage._count )
+    for ( ; ; )
     {
+        bool const exit = _uiElements |
+            _graphicsProgramStorage._count |
+            _meshStorage._count |
+            _streamBufferStorage._count |
+            _texture2DStorage._count;
+
+        if ( !exit ) [[unlikely]]
+            break;
+
         AV_TRACE ( "Event loop" )
         Message message = messageQueue.DequeueBegin ( lastRefund );
 
@@ -1087,15 +1205,25 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
             case eMessageType::Shutdown:
                 // All existing events should be processed first.
                 messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
+                DestroyGraphicsPrograms ( messageQueue, _writingCommandInfo );
                 DestroyMeshes ( messageQueue, _writingCommandInfo );
+                DestroyStreamBuffers ( messageQueue, _writingCommandInfo );
 
                 DestroyTexture2DInstances ( messageQueue,
                     std::exchange ( _writingCommandInfo, ( _writingCommandInfo + 1U ) % pbr::FIF_COUNT )
                 );
             break;
 
+            case eMessageType::DestroyGraphicsProgram:
+                OnDestroyGraphicsProgram ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyStreamBuffer:
+                OnDestroyStreamBuffer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::DestroyTexture2D:
@@ -1160,13 +1288,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _meshStorage = {};
     _texture2DStorage = {};
 
-    messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
 void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
@@ -1298,21 +1420,8 @@ void RenderSession::OnUploadTexture2D ( MessageQueue &messageQueue, Message &&me
 
 void RenderSession::NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept
 {
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::RecreateSwapchain,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::FrameComplete,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::RecreateSwapchain ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
 }
 
 bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept

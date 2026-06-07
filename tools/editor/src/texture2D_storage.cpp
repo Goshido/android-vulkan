@@ -113,26 +113,21 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             };
 
             messageQueue.EnqueueBack (
-                {
-                    ._type = eMessageType::InvokeIO,
-                    ._action = std::move ( finishUpload ),
-                    ._serialNumber = 0U
-                }
+                Message ( eMessageType::InvokeIO,
+                    std::move ( finishUpload )
+                )
             );
         };
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::UploadTexture2D,
+            Message ( eMessageType::UploadTexture2D,
 
-                ._action = [
+                [
                     info = Texture2DUploadInfo ( std::move ( texture ), std::move ( uploadResult ) )
                 ] () mutable noexcept -> void* {
                     return &info;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         _tasks.insert (
@@ -145,11 +140,9 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
     };
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-            ._action = std::move ( loadAsset ),
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::InvokeIO,
+            std::move ( loadAsset )
+        )
     );
 }
 
@@ -157,7 +150,7 @@ void Texture2DStorage::Unload ( Texture2DRef &&texture ) noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
-    auto unload = [ this, &messageQueue, texture = std::move ( texture ) ] noexcept -> void* {
+    auto unload = [ this, &messageQueue, texture = std::move ( texture ) ] mutable noexcept -> void* {
         AV_TRACE ( "Unload %s", texture->_resource.GetName ().c_str () )
         auto findResult = _storage.find ( texture->_resource.GetName () );
 
@@ -167,15 +160,12 @@ void Texture2DStorage::Unload ( Texture2DRef &&texture ) noexcept
         ResourceHeap::Instance ().UnregisterResource ( texture->_heapIndex );
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::DestroyTexture2D,
+            Message ( eMessageType::DestroyTexture2D,
 
-                ._action = [ texture = std::move ( texture ) ] () mutable noexcept -> void* {
+                [ texture = std::move ( texture ) ] () mutable noexcept -> void* {
                     return &texture;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         _storage.erase ( findResult );
@@ -183,11 +173,9 @@ void Texture2DStorage::Unload ( Texture2DRef &&texture ) noexcept
     };
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-            ._action = std::move ( unload ),
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::InvokeIO,
+            std::move ( unload )
+        )
     );
 }
 

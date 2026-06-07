@@ -40,16 +40,7 @@ void MessageQueue::EnqueueBack ( Message &&message ) noexcept
     Message &back = _queue.back ();
     Message::SerialNumber const serialNumber = back._serialNumber;
     back = std::move ( message );
-
-    _queue.push_back (
-        Message
-        {
-            ._type = eMessageType::RunEventLoop,
-            ._action = nullptr,
-            ._serialNumber = serialNumber
-        }
-    );
-
+    _queue.push_back ( Message ( eMessageType::RunEventLoop, nullptr, serialNumber ) );
     _isQueueChanged.notify_all ();
 }
 

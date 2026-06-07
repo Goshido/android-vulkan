@@ -14,7 +14,6 @@ class StaticMeshComponent final : public Component
     private:
         MeshGeometryRef                         _mesh {};
         MeshNode                                _node {};
-        PBRMaterial                             _material {};
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";

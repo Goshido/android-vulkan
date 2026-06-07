@@ -675,15 +675,11 @@ void UIComboBox::SwitchToNormalState () noexcept
     ReleaseMouse ();
 
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIRemoveWidget,
-
-            ._action = [ popup = std::exchange ( _popup, nullptr ) ] () noexcept {
+        Message ( eMessageType::UIRemoveWidget,
+            [ popup = std::exchange ( _popup, nullptr ) ] () noexcept {
                 return popup;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -709,15 +705,11 @@ void UIComboBox::SwitchToMenuState () noexcept
     _updateRect = &UIComboBox::UpdatedRectMenu;
 
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [ popup = _popup ] () noexcept {
+        Message ( eMessageType::UIAddWidget,
+            [ popup = _popup ] () noexcept {
                 return popup;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 
     CaptureMouse ();

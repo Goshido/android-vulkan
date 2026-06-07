@@ -67,15 +67,11 @@ bool Editor::InitModules () noexcept
             );
 
             _messageQueue.EnqueueBack (
-                {
-                    ._type = eMessageType::VulkanInitReport,
-
-                    ._action = [ value ] () noexcept {
+                Message ( eMessageType::VulkanInitReport,
+                    [ value ] () noexcept {
                         return value;
-                    },
-
-                    ._serialNumber = 0U
-                }
+                    }
+                )
             );
         }
     ).detach ();
@@ -376,13 +372,7 @@ void Editor::OnRecreateSwapchain () noexcept
     switch ( swapchainResult )
     {
         case android_vulkan::Renderer::eSwapchainResult::Success:
-            _messageQueue.EnqueueBack (
-                {
-                    ._type = eMessageType::SwapchainCreated,
-                    ._action = nullptr,
-                    ._serialNumber = 0U
-                }
-            );
+            _messageQueue.EnqueueBack ( Message ( eMessageType::SwapchainCreated ) );
         break;
 
         case android_vulkan::Renderer::eSwapchainResult::ZeroExtend:
@@ -402,14 +392,7 @@ void Editor::OnRunEvent () noexcept
 
     if ( !_stopRendering & _frameComplete ) [[likely]]
     {
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::RenderFrame,
-                ._action = nullptr,
-                ._serialNumber = 0U
-            }
-        );
-
+        _messageQueue.EnqueueBack ( Message ( eMessageType::RenderFrame ) );
         _frameComplete = false;
     }
 
@@ -422,14 +405,7 @@ void Editor::OnShutdown () noexcept
     _messageQueue.DequeueEnd ();
     _workspace.Destroy ();
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::Shutdown,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
+    _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     // Only IO module must be alive
@@ -445,14 +421,7 @@ void Editor::OnShutdown () noexcept
         {
             case eMessageType::Shutdown:
                 _messageQueue.DequeueEnd ();
-
-                _messageQueue.EnqueueBack (
-                    {
-                        ._type = eMessageType::Shutdown,
-                        ._action = nullptr,
-                        ._serialNumber = 0U
-                    }
-                );
+                _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
             break;
 
             case eMessageType::FrameComplete:
@@ -480,13 +449,7 @@ void Editor::OnShutdown () noexcept
         GX_ENABLE_WARNING ( 4061 )
     }
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopIO,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _messageQueue.EnqueueBack ( Message ( eMessageType::StopIO ) );
 
     while ( _runningModules > 0U )
     {
@@ -543,13 +506,7 @@ void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
         return;
     }
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::SwapchainCreated,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _messageQueue.EnqueueBack ( Message ( eMessageType::SwapchainCreated ) );
 }
 
 void Editor::OnWriteClipboard ( Message &&message ) noexcept
@@ -561,13 +518,7 @@ void Editor::OnWriteClipboard ( Message &&message ) noexcept
 
 void Editor::ScheduleEventLoop () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::RunEventLoop,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _messageQueue.EnqueueBack ( Message ( eMessageType::RunEventLoop ) );
 }
 
 std::string_view Editor::GetUserGPU () const noexcept

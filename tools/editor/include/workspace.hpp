@@ -10,10 +10,10 @@
 #include "mesh_node.hpp"
 #include "point_light_node.hpp"
 #include <platform/windows/pbr/opaque_program.hpp>
-#include <platform/windows/pbr/stream_buffer.hpp>
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
+#include "stream_buffer_ref.hpp"
 #include "viewport_widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -71,9 +71,9 @@ class Workspace final
         ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
 
         std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
-        std::unique_ptr<pbr::StreamBuffer>              _frameStream {};
-        std::unique_ptr<pbr::StreamBuffer>              _transformStream {};
-        std::unique_ptr<pbr::StreamBuffer>              _shadingStream {};
+        StreamBufferRef                                 _frameStream {};
+        StreamBufferRef                                 _transformStream {};
+        StreamBufferRef                                 _shadingStream {};
 
         Texture2DRef                                    _defaultAlbedo {};
         Texture2DRef                                    _defaultEmission {};
@@ -121,7 +121,7 @@ class Workspace final
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;
 
-        void Unregister ( MeshNode const &node ) noexcept;
+        void Unregister ( MeshNode &node ) noexcept;
         void Unregister ( GizmoNode const &node ) noexcept;
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
@@ -139,7 +139,7 @@ class Workspace final
             MeshInfo &nodeMeshInfo
         ) noexcept;
 
-        void UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &nodeMeshInfo ) noexcept;
+        void UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo &nodeMeshInfo ) noexcept;
 };
 
 } // namespace editor

@@ -1,9 +1,11 @@
 #include <precompiled_headers.hpp>
+#include <graphics_program_info.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
 #include <resource_heap.hpp>
 #include <scope_quard.hpp>
 #include <static_mesh_component.hpp>
+#include <stream_buffer_info.hpp>
 #include <texture2D_storage.hpp>
 #include <trace.hpp>
 #include <ui_props.hpp>
@@ -147,62 +149,82 @@ void Workspace::Init () noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [] () noexcept {
+        Message ( eMessageType::UIAddWidget,
+            [] () noexcept {
                 auto* dialogBox = new UIProps ();
                 dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
                 dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
                     pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
                 return dialogBox;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 
     _viewport = new ViewportWidget ();
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-
-            ._action = [ viewport = _viewport ] () noexcept {
+        Message ( eMessageType::UIAddWidget,
+            [ viewport = _viewport ] () noexcept {
                 return viewport;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 
     messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-
-            ._action = [ this ] () noexcept -> void* {
+        Message ( eMessageType::InvokeIO,
+            [ this, &messageQueue ] () noexcept -> void* {
                 AV_TRACE ( "Making Vulkan resources" )
 
                 _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
                 _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
 
-                std::unique_ptr<pbr::OpaqueProgram> p = std::make_unique<pbr::OpaqueProgram> ();
+                std::unique_ptr<pbr::OpaqueProgram> opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
-                if ( !p->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
+                if ( !opaqueProgram->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
                     return nullptr;
 
-                _opaqueProgram = std::move ( p );
+                auto programReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _opaqueProgram = std::unique_ptr<pbr::OpaqueProgram> (
+                        static_cast<pbr::OpaqueProgram*> ( program.release () )
+                    );
+                };
 
-                std::unique_ptr<pbr::StreamBuffer> frame = std::make_unique<pbr::StreamBuffer> ();
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewGraphicsProgram,
+                        [
+                            info = GraphicsProgramInfo (
+                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueProgram.release () ),
+                                std::move ( programReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef frame = std::make_unique<pbr::StreamBuffer> ();
 
                 if ( !frame->Init ( renderer, pbr::FIF_COUNT, sizeof ( Frame ), "Frame stream" ) ) [[unlikely]]
                     return nullptr;
 
-                _frameStream = std::move ( frame );
+                auto frameReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _frameStream = std::move ( buffer );
+                };
 
-                std::unique_ptr<pbr::StreamBuffer> transform = std::make_unique<pbr::StreamBuffer> ();
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( frame ), std::move ( frameReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef transform = std::make_unique<pbr::StreamBuffer> ();
 
                 if ( !transform->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Transform ), "Transform stream" ) )
                 {
@@ -210,9 +232,21 @@ void Workspace::Init () noexcept
                     return nullptr;
                 }
 
-                _transformStream = std::move ( transform );
+                auto transformReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _transformStream = std::move ( buffer );
+                };
 
-                std::unique_ptr<pbr::StreamBuffer> shading = std::make_unique<pbr::StreamBuffer> ();
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( transform ), std::move ( transformReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef shading = std::make_unique<pbr::StreamBuffer> ();
 
                 if ( !shading->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Shading ), "Shading stream" ) )
                 {
@@ -220,12 +254,23 @@ void Workspace::Init () noexcept
                     return nullptr;
                 }
 
-                _shadingStream = std::move ( shading );
-                return nullptr;
-            },
+                auto shadingReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _shadingStream = std::move ( buffer );
+                };
 
-            ._serialNumber = 0U
-        }
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( shading ), std::move ( shadingReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                return nullptr;
+            }
+        )
     );
 
     Texture2DStorage &storage = Texture2DStorage::Instance ();
@@ -271,8 +316,46 @@ void Workspace::Destroy () noexcept
 
     if ( _opaqueProgram ) [[likely]]
     {
-        _opaqueProgram->Destroy ( NativeRenderer::Instance ().GetDevice () );
-        _opaqueProgram.reset ();
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyGraphicsProgram,
+                [ opaqueProgram = GraphicsProgramRef ( _opaqueProgram.release () ) ] () mutable noexcept -> void* {
+                    return &opaqueProgram;
+                }
+            )
+        );
+    }
+
+    if ( _frameStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _frameStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
+    if ( _transformStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _transformStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
+    if ( _shadingStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _shadingStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
     }
 
     Texture2DStorage &storage = Texture2DStorage::Instance ();
@@ -281,20 +364,6 @@ void Workspace::Destroy () noexcept
     storage.Unload ( std::move ( _defaultMask ) );
     storage.Unload ( std::move ( _defaultParam ) );
     storage.Unload ( std::move ( _defaultNormal ) );
-
-    auto const freeStream = [ &renderer = NativeRenderer::Instance () ] (
-        std::unique_ptr<pbr::StreamBuffer> &stream
-    ) noexcept {
-        if ( !stream ) [[unlikely]]
-            return;
-
-        stream->Destroy ( renderer );
-        stream.reset ();
-    };
-
-    freeStream ( _frameStream );
-    freeStream ( _transformStream );
-    freeStream ( _shadingStream );
 
     constexpr auto clearAlpha = [] ( auto &queue, auto &map ) noexcept {
         for ( auto const &item : queue )
@@ -622,17 +691,19 @@ ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
     return ReflectionProbeGlobalNode ( *this, node );
 }
 
-void Workspace::Unregister ( MeshNode const &node ) noexcept
+void Workspace::Unregister ( MeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
-    MeshInfo const &n = node.GetMeshInfo ();
+    node._workspace = nullptr;
+    MeshInfo &n = node.GetMeshInfo ();
 
     if ( n._material._isStipple )
+    {
         UnregisterMesh ( _stippleQueue, _stippleMap, n );
-    else
-        UnregisterMesh ( _opaqueQueue, _opaqueMap, n );
+        return;
+    }
 
-    delete &n;
+    UnregisterMesh ( _opaqueQueue, _opaqueMap, n );
 }
 
 void Workspace::Unregister ( GizmoNode const &node ) noexcept
@@ -775,7 +846,7 @@ MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
     return MeshNode ( *this, node );
 }
 
-void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo const &nodeMeshInfo ) noexcept
+void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo &nodeMeshInfo ) noexcept
 {
     std::lock_guard const lock ( _mutex );
     auto const findResult = _opaqueQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
@@ -784,6 +855,24 @@ void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInf
     android_vulkan::ScopeGuard const freeMeshInfo (
         [ &nodeMeshInfo ] () noexcept {
             // It was allocated in RegisterOpaqueMesh|RegisterStippleMesh.
+            Texture2DStorage &storage = Texture2DStorage::Instance ();
+            PBRMaterial &material = nodeMeshInfo._material;
+
+            if ( material._albedo )
+                storage.Unload ( std::move ( material._albedo ) );
+
+            if ( material._emission )
+                storage.Unload ( std::move ( material._emission ) );
+
+            if ( material._mask )
+                storage.Unload ( std::move ( material._mask ) );
+
+            if ( material._normal )
+                storage.Unload ( std::move ( material._normal ) );
+
+            if ( material._param )
+                storage.Unload ( std::move ( material._param ) );
+
             delete &nodeMeshInfo;
         }
     );

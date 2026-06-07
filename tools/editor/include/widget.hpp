@@ -72,6 +72,7 @@ class Widget
 
         void ChangeCursor ( eCursor cursor ) noexcept;
 
+        // Keyboard capture
         void KillFocus () noexcept;
         void SetFocus () noexcept;
 };

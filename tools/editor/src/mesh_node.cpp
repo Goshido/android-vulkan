@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <mesh_node.hpp>
+#include <texture2D_storage.hpp>
 #include <workspace.hpp>
 
 
@@ -41,10 +42,25 @@ MeshNode::MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept:
 
 MeshNode::~MeshNode () noexcept
 {
-    if ( !_workspace ) [[unlikely]]
-        return;
+    PBRMaterial &material = _renderInfo._material;
+    Texture2DStorage &storage = Texture2DStorage::Instance ();
 
-    if ( !TryLock () ) [[unlikely]]
+    if ( material._albedo )
+        storage.Unload ( std::move ( material._albedo ) );
+
+    if ( material._emission )
+        storage.Unload ( std::move ( material._emission ) );
+
+    if ( material._mask )
+        storage.Unload ( std::move ( material._mask ) );
+
+    if ( material._normal )
+        storage.Unload ( std::move ( material._normal ) );
+
+    if ( material._param )
+        storage.Unload ( std::move ( material._param ) );
+
+    if ( !_workspace || !TryLock () ) [[unlikely]]
         return;
 
     _workspace->Unregister ( *this );
@@ -82,7 +98,7 @@ void MeshNode::Commit () noexcept
     Unlock ();
 }
 
-MeshInfo const &MeshNode::GetMeshInfo () const noexcept
+MeshInfo &MeshNode::GetMeshInfo () const noexcept
 {
     AV_ASSERT ( _meshInfo )
     return *_meshInfo;

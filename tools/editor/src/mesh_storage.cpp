@@ -93,40 +93,24 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
                 return nullptr;
             };
 
-            messageQueue.EnqueueBack (
-                {
-                    ._type = eMessageType::InvokeIO,
-                    ._action = std::move ( finishUpload ),
-                    ._serialNumber = 0U
-                }
-            );
+            messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( finishUpload ) ) );
         };
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::UploadMesh,
-
-                ._action = [
+            Message ( eMessageType::UploadMesh,
+                [
                     info = MeshUploadInfo ( std::move ( mesh ), std::move ( *loadResult ), std::move ( uploadResult ) )
                 ] () mutable noexcept -> void* {
                     return &info;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         _tasks.insert ( std::pair ( std::move ( path ), std::deque<MeshLoadResult> ( { std::move ( result ) } ) ) );
         return nullptr;
     };
 
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-            ._action = std::move ( loadAsset ),
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( loadAsset ) ) );
 }
 
 void MeshStorage::Unload ( MeshGeometryRef &&mesh ) noexcept
@@ -141,28 +125,18 @@ void MeshStorage::Unload ( MeshGeometryRef &&mesh ) noexcept
             return nullptr;
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::DestroyMesh,
-
-                ._action = [ mesh = std::move ( mesh ) ] () mutable noexcept -> void* {
+            Message ( eMessageType::DestroyMesh,
+                [ mesh = std::move ( mesh ) ] () mutable noexcept -> void* {
                     return &mesh;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         _storage.erase ( findResult );
         return nullptr;
     };
 
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::InvokeIO,
-            ._action = std::move ( unload ),
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( unload ) ) );
 }
 
 MeshStorage &MeshStorage::Instance () noexcept

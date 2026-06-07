@@ -11,6 +11,8 @@ class Workspace;
 
 class WorkspaceNode
 {
+    friend Workspace;
+
     protected:
         Workspace*          _workspace = nullptr;
         std::atomic_bool    _lock = false;

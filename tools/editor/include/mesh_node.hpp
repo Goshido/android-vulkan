@@ -13,6 +13,7 @@ class Workspace;
 class MeshNode final : public WorkspaceNode
 {
     public:
+        // FUCK - use this instead MeshInfo
         struct RenderInfo final
         {
             PBRMaterial     _material {};
@@ -39,7 +40,7 @@ class MeshNode final : public WorkspaceNode
         ~MeshNode () noexcept override;
 
         void Commit () noexcept;
-        [[nodiscard]] MeshInfo const &GetMeshInfo () const noexcept;
+        [[nodiscard]] MeshInfo &GetMeshInfo () const noexcept;
         [[nodiscard]] RenderInfo const &GetRenderInfo () const noexcept;
 
         void SetColor ( GXColorUNORM color0,

@@ -466,27 +466,19 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
         MessageQueue &messageQueue = MessageQueue::Instance ();
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::MouseMoved,
-
-                ._action = [ moveEvent = std::move ( moveEvent ) ] () mutable noexcept {
+            Message ( eMessageType::MouseMoved,
+                [ moveEvent = std::move ( moveEvent ) ] () mutable noexcept {
                     return &moveEvent;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::MouseButtonDown,
-
-                ._action = [ buttonEvent = std::move ( MouseButtonEvent ( event ) ) ] () mutable noexcept {
+            Message ( eMessageType::MouseButtonDown,
+                [ buttonEvent = std::move ( MouseButtonEvent ( event ) ) ] () mutable noexcept {
                     return &buttonEvent;
-                },
-
-                ._serialNumber = 0U
-            }
+                }
+            )
         );
 
         return;
@@ -638,15 +630,11 @@ void UIEditBox::Copy () noexcept
     std::u32string value ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) );
 
     MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::WriteClipboard,
-
-            ._action = [ value = std::move ( value ) ] () mutable noexcept {
+        Message ( eMessageType::WriteClipboard,
+            [ value = std::move ( value ) ] () mutable noexcept {
                 return &value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -696,13 +684,7 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
 
 void UIEditBox::Paste () noexcept
 {
-    MessageQueue::Instance ().EnqueueBack (
-        {
-            ._type = eMessageType::ReadClipboardRequest,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::ReadClipboardRequest ) );
 }
 
 int32_t UIEditBox::FindClosestSymbol ( int32_t x ) const noexcept

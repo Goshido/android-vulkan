@@ -351,15 +351,11 @@ void MainWindow::ReadClipboard () const noexcept
     std::u32string value ( pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::ReadClipboardResponse,
-
-            ._action = [ value = std::move ( value ) ] () mutable noexcept {
+        Message ( eMessageType::ReadClipboardResponse,
+            [ value = std::move ( value ) ] () mutable noexcept {
                 return &value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 
     GlobalUnlock ( data );
@@ -417,29 +413,18 @@ void MainWindow::OnChar ( WPARAM wParam ) noexcept
     _highSurrogate = std::nullopt;
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::Typing,
-
-            ._action = [ value = std::bit_cast<void*> ( codepoint ) ] () noexcept {
+        Message ( eMessageType::Typing,
+            [ value = std::bit_cast<void*> ( codepoint ) ] () noexcept {
                 return value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
 void MainWindow::OnClose () noexcept
 {
     AV_TRACE ( "Main window: close" )
-
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::CloseEditor,
-            ._action = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _messageQueue->EnqueueBack ( Message ( eMessageType::CloseEditor ) );
 }
 
 void MainWindow::OnCreate ( HWND hwnd ) noexcept
@@ -472,15 +457,11 @@ void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
     };
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::DoubleClick,
-
-            ._action = [ event = std::move ( event ) ] () mutable noexcept {
+        Message ( eMessageType::DoubleClick,
+            [ event = std::move ( event ) ] () mutable noexcept {
                 return &event;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -490,15 +471,11 @@ void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
     auto* value = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::DPIChanged,
-
-            ._action = [ value ] () noexcept {
+        Message ( eMessageType::DPIChanged,
+            [ value ] () noexcept {
                 return value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 
     RECT const &rect = *reinterpret_cast<RECT const*> ( lParam );
@@ -541,15 +518,11 @@ void MainWindow::OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageTy
     };
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = messageType,
-
-            ._action = [ event = std::move ( event ) ] () mutable noexcept {
+        Message ( messageType,
+            [ event = std::move ( event ) ] () mutable noexcept {
                 return &event;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -565,15 +538,11 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
     };
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseMoved,
-
-            ._action = [ event = std::move ( event) ] () mutable noexcept {
+        Message ( eMessageType::MouseMoved,
+            [ event = std::move ( event) ] () mutable noexcept {
                 return &event;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 
@@ -583,15 +552,11 @@ void MainWindow::OnSize ( WPARAM wParam ) noexcept
     auto* value = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::WindowVisibilityChanged,
-
-            ._action = [ value ] () noexcept {
+        Message ( eMessageType::WindowVisibilityChanged,
+            [ value ] () noexcept {
                 return value;
-            },
-
-            ._serialNumber = 0U
-        }
+            }
+        )
     );
 }
 

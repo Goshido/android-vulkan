@@ -30,9 +30,10 @@ class GraphicsProgram : public GraphicsProgramBase
         [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
         void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
+        ~GraphicsProgram () override = default;
+
     protected:
         explicit GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
-        ~GraphicsProgram () override = default;
 
         // 'nativeXXX' are needed when format is OS/platform specific and could be known in runtime only.
         // For example swapchain related pipelines or pipelines with depth/stencil features.

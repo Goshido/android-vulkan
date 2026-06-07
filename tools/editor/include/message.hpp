@@ -20,7 +20,9 @@ enum class eMessageType : uint32_t
     CaptureMouse,
     ChangeCursor,
     CloseEditor,
+    DestroyGraphicsProgram,
     DestroyMesh,
+    DestroyStreamBuffer,
     DestroyTexture2D,
     DoubleClick,
     DPIChanged,
@@ -36,6 +38,8 @@ enum class eMessageType : uint32_t
     MouseButtonUp,
     MouseHover,
     MouseMoved,
+    NewGraphicsProgram,
+    NewStreamBuffer,
     ReadClipboardRequest,
     ReadClipboardResponse,
     RecreateSwapchain,
@@ -72,12 +76,29 @@ enum class eMessageType : uint32_t
 
 struct Message final
 {
-    using SerialNumber = uint32_t;
-    using Action = std::function<void* ()>;
+    public:
+        using SerialNumber = uint32_t;
+        using Action = std::move_only_function<void* ()>;
 
-    eMessageType    _type;
-    Action          _action;
-    SerialNumber    _serialNumber = 0U;
+    public:
+        eMessageType    _type;
+        Action          _action;
+        SerialNumber    _serialNumber = 0U;
+
+    public:
+        Message () = default;
+
+        Message ( Message const & ) = delete;
+        Message &operator = ( Message const & ) = delete;
+
+        Message ( Message && ) = default;
+        Message &operator = ( Message && ) = default;
+
+        explicit Message ( eMessageType type ) noexcept;
+        explicit Message ( eMessageType type, Action&& action ) noexcept;
+        explicit Message ( eMessageType type, Action&& action, SerialNumber serialNumber ) noexcept;
+
+        ~Message () = default;
 };
 
 } // namespace editor

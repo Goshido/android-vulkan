@@ -3,12 +3,14 @@
 
 
 #include "font_storage.hpp"
+#include "graphics_program_ref.hpp"
 #include "mesh_upload_info.hpp"
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <platform/windows/pbr/ui_pass.hpp>
 #include "resource_heap.hpp"
+#include "stream_buffer_ref.hpp"
 #include "texture2D_upload_info.hpp"
 #include "ui_manager.hpp"
 #include "workspace.hpp"
@@ -21,81 +23,97 @@ class RenderSession final
     private:
         struct CommandInfo final
         {
-            VkSemaphore                                     _acquire = VK_NULL_HANDLE;
-            VkCommandBuffer                                 _buffer = VK_NULL_HANDLE;
-            VkFence                                         _fence = VK_NULL_HANDLE;
-            bool                                            _inUse = false;
-            VkCommandPool                                   _pool = VK_NULL_HANDLE;
+            VkSemaphore                         _acquire = VK_NULL_HANDLE;
+            VkCommandBuffer                     _buffer = VK_NULL_HANDLE;
+            VkFence                             _fence = VK_NULL_HANDLE;
+            bool                                _inUse = false;
+            VkCommandPool                       _pool = VK_NULL_HANDLE;
         };
 
         struct MeshStorage final
         {
-            std::deque<MeshUploadInfo>                      _uploadQueue {};
-            std::deque<MeshGeometryRef>                     _freeTransferQueue[ pbr::FIF_COUNT ] {};
-            std::deque<MeshGeometryRef>                     _toDestroy {};
-            std::deque<MeshGeometryRef>                     _destroyQueue[ pbr::FIF_COUNT ] {};
-            size_t                                          _count = 0U;
+            std::deque<MeshUploadInfo>          _uploadQueue {};
+            std::deque<MeshGeometryRef>         _freeTransferQueue[ pbr::FIF_COUNT ] {};
+            std::deque<MeshGeometryRef>         _toDestroy {};
+            std::deque<MeshGeometryRef>         _destroyQueue[ pbr::FIF_COUNT ] {};
+            size_t                              _count = 0U;
         };
 
         struct Texture2DStorage final
         {
-            std::deque<Texture2DUploadInfo>                 _uploadQueue {};
-            std::deque<Texture2DRef>                        _freeTransferQueue[ pbr::FIF_COUNT ] {};
-            std::deque<Texture2DRef>                        _toDestroy {};
-            std::deque<Texture2DRef>                        _destroyQueue[ pbr::FIF_COUNT ] {};
-            size_t                                          _count = 0U;
+            std::deque<Texture2DUploadInfo>     _uploadQueue {};
+            std::deque<Texture2DRef>            _freeTransferQueue[ pbr::FIF_COUNT ] {};
+            std::deque<Texture2DRef>            _toDestroy {};
+            std::deque<Texture2DRef>            _destroyQueue[ pbr::FIF_COUNT ] {};
+            size_t                              _count = 0U;
+        };
+
+        struct GraphicsProgramStorage final
+        {
+            std::deque<GraphicsProgramRef>      _toDestroy {};
+            std::deque<GraphicsProgramRef>      _destroyQueue[ pbr::FIF_COUNT ] {};
+            size_t                              _count = 0U;
+        };
+
+        struct StreamBufferStorage final
+        {
+            std::deque<StreamBufferRef>         _toDestroy {};
+            std::deque<StreamBufferRef>         _destroyQueue[ pbr::FIF_COUNT ] {};
+            size_t                              _count = 0U;
         };
 
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
         using EnqueueHandle = void ( MessageQueue::* ) ( Message &&message ) noexcept;
 
     private:
-        CommandInfo                                         _commandInfo[ pbr::FIF_COUNT ];
-        size_t                                              _writingCommandInfo = 0U;
+        CommandInfo                             _commandInfo[ pbr::FIF_COUNT ];
+        size_t                                  _writingCommandInfo = 0U;
 
-        pbr::ExposurePass                                   _exposurePass {};
-        pbr::PresentPass                                    _presentRenderPass {};
+        pbr::ExposurePass                       _exposurePass {};
+        pbr::PresentPass                        _presentRenderPass {};
 
-        android_vulkan::Texture2D                           _albedoRenderTarget {};
-        uint32_t                                            _albedoRenderTargetIdx = 0U;
+        android_vulkan::Texture2D               _albedoRenderTarget {};
+        uint32_t                                _albedoRenderTargetIdx = 0U;
 
-        android_vulkan::Texture2D                           _hdrRenderTarget {};
-        uint32_t                                            _hdrRenderTargetIdx = 0U;
+        android_vulkan::Texture2D               _hdrRenderTarget {};
+        uint32_t                                _hdrRenderTargetIdx = 0U;
 
-        android_vulkan::Texture2D                           _normalRenderTarget {};
-        uint32_t                                            _normalRenderTargetIdx = 0U;
+        android_vulkan::Texture2D               _normalRenderTarget {};
+        uint32_t                                _normalRenderTargetIdx = 0U;
 
-        android_vulkan::Texture2D                           _paramRenderTarget {};
-        uint32_t                                            _paramRenderTargetIdx = 0U;
+        android_vulkan::Texture2D               _paramRenderTarget {};
+        uint32_t                                _paramRenderTargetIdx = 0U;
 
-        android_vulkan::Texture2D                           _depthRenderTarget {};
-        uint32_t                                            _depthRenderTargetIdx = 0U;
+        android_vulkan::Texture2D               _depthRenderTarget {};
+        uint32_t                                _depthRenderTargetIdx = 0U;
 
-        MeshStorage                                         _meshStorage {};
-        Texture2DStorage                                    _texture2DStorage {};
-        ResourceHeap                                        _resourceHeap {};
+        GraphicsProgramStorage                  _graphicsProgramStorage {};
+        MeshStorage                             _meshStorage {};
+        StreamBufferStorage                     _streamBufferStorage {};
+        Texture2DStorage                        _texture2DStorage {};
+        ResourceHeap                            _resourceHeap {};
 
-        std::mutex                                          _submitMutex {};
-        std::thread                                         _thread {};
-        Timestamp                                           _timestamp {};
+        std::mutex                              _submitMutex {};
+        std::thread                             _thread {};
+        Timestamp                               _timestamp {};
 
-        pbr::ToneMapperPass                                 _toneMapper {};
+        pbr::ToneMapperPass                     _toneMapper {};
 
-        size_t                                              _uiElements = 0U;
+        size_t                                  _uiElements = 0U;
 
-        pbr::UIPass                                         _uiPass { ResourceHeap::Instance () };
-        FontStorage                                         _fontStorage { _uiPass.GetFontStorage () };
+        pbr::UIPass                             _uiPass { ResourceHeap::Instance () };
+        FontStorage                             _fontStorage { _uiPass.GetFontStorage () };
 
-        VkViewport                                          _viewport {};
-        Workspace                                           &_workspace;
-        UIManager                                           &_uiManager;
-
-        bool                                                _broken = false;
+        VkViewport                              _viewport {};
+        Workspace                               &_workspace;
+        UIManager                               &_uiManager;
 
         // When app is in shutdown state the enqueue back must be switched to enqueue front to avoid deadlock.
-        EnqueueHandle                                       _enqueueHandle = &MessageQueue::EnqueueBack;
+        EnqueueHandle                           _enqueueHandle = &MessageQueue::EnqueueBack;
 
-        VkRenderingAttachmentInfo                           _colorAttachments[ 4U ] =
+        bool                                    _broken = false;
+
+        VkRenderingAttachmentInfo               _colorAttachments[ 4U ] =
         {
             // Albedo
             {
@@ -179,7 +197,7 @@ class RenderSession final
             }
         };
 
-        VkRenderingAttachmentInfo                           _depthAttachment
+        VkRenderingAttachmentInfo               _depthAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -201,7 +219,7 @@ class RenderSession final
             }
         };
 
-        VkRenderingInfo                                     _renderingInfo
+        VkRenderingInfo                         _renderingInfo
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = nullptr,
@@ -230,7 +248,7 @@ class RenderSession final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier                                _barriers[ 5U ] =
+        VkImageMemoryBarrier                    _barriers[ 5U ] =
         {
             // Albedo
             {
@@ -367,15 +385,21 @@ class RenderSession final
         void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
 
-        void DestroyMeshes (  MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyGraphicsPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyMeshes ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyStreamBuffers ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
 
         void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
+        void OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnNewGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
         void OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept;

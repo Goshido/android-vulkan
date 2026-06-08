@@ -105,23 +105,25 @@ MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer& renderer, std::strin
     if ( !result ) [[unlikely]]
         return std::nullopt;
 
-    std::vector<UploadJob> jobs =
-    {
+    auto const jobs = std::to_array (
         {
-            ._data = data.data (),
-            ._dstOffset = 0U,
-            ._size = _gpuAllocation._range
+            UploadJob
+            {
+                ._data = data.data (),
+                ._dstOffset = 0U,
+                ._size = _gpuAllocation._range
+            }
         }
-    };
+    );
 
-    if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+    if ( !CreateStagingBuffer ( renderer, jobs ) ) [[unlikely]]
         return std::nullopt;
 
     _vertexCount = vertexCount;
     _vertexBufferVertexCount = vertexCount;
 
     return LoadResult
-    {
+    (
         {
             ._indexType = VK_INDEX_TYPE_NONE_KHR,
 
@@ -132,10 +134,10 @@ MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer& renderer, std::strin
             },
 
             ._stream1 = std::nullopt,
-
-            ._jobs = std::move ( jobs )
+            ._jobs { jobs[ 0U ] },
+            ._jobCount = static_cast<uint8_t> ( jobs.size () )
         }
-    };
+    );
 }
 
 [[maybe_unused]] MeshGeometry::LoadResult MeshGeometry::LoadMesh ( Renderer &renderer,
@@ -252,7 +254,7 @@ bool MeshGeometry::UploadToGPU ( Renderer &renderer,
         commandBuffer,
         true,
         fence,
-        { info._jobs.data (), info._jobs.size () }
+        { info._jobs.data (), static_cast<size_t> ( info._jobCount )}
     );
 
     if ( !result ) [[unlikely]]
@@ -551,26 +553,27 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
 
     if ( vertexStream1.empty () )
     {
-        std::vector<UploadJob> jobs =
-        {
+        auto const jobs = std::to_array(
             {
+                UploadJob
                 {
                     ._data = indices.data (),
                     ._dstOffset = 0U,
                     ._size = static_cast<VkDeviceSize> ( indSize )
                 },
+                UploadJob
                 {
                     ._data = vertexStream0.data (),
                     ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
                     ._size = static_cast<VkDeviceSize> ( posSize )
                 }
             }
-        };
+        );
 
-        if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+        if ( !CreateStagingBuffer ( renderer, jobs ) ) [[unlikely]]
             return std::nullopt;
 
-        return LoadResult
+        return
         {
             {
                 ._indexType = indexType,
@@ -582,34 +585,39 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
                 },
 
                 ._stream1 = std::nullopt,
-                ._jobs = std::move ( jobs )
+                ._jobs { jobs[ 0U ], jobs[ 1U ] },
+                ._jobCount = static_cast<uint8_t> ( jobs.size () )
             }
         };
     }
 
-    std::vector<UploadJob> jobs =
-    {
+    auto const jobs = std::to_array (
         {
-            ._data = indices.data (),
-            ._dstOffset = 0U,
-            ._size = static_cast<VkDeviceSize> ( indSize )
-        },
-        {
-            ._data = vertexStream0.data (),
-            ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
-            ._size = static_cast<VkDeviceSize> ( posSize )
-        },
-        {
-            ._data = vertexStream1.data (),
-            ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
-            ._size = static_cast<VkDeviceSize> ( restSize )
+            UploadJob
+            {
+                ._data = indices.data (),
+                ._dstOffset = 0U,
+                ._size = static_cast<VkDeviceSize> ( indSize )
+            },
+            UploadJob
+            {
+                ._data = vertexStream0.data (),
+                ._dstOffset = static_cast<VkDeviceSize> ( posOffset ),
+                ._size = static_cast<VkDeviceSize> ( posSize )
+            },
+            UploadJob
+            {
+                ._data = vertexStream1.data (),
+                ._dstOffset = static_cast<VkDeviceSize> ( restOffset ),
+                ._size = static_cast<VkDeviceSize> ( restSize )
+            }
         }
-    };
+    );
 
-    if ( !CreateStagingBuffer ( renderer, { jobs.data (), jobs.size () } ) ) [[unlikely]]
+    if ( !CreateStagingBuffer ( renderer, jobs ) ) [[unlikely]]
         return std::nullopt;
 
-    return LoadResult
+    return
     {
         {
             ._indexType = indexType,
@@ -627,7 +635,8 @@ MeshGeometry::LoadResult MeshGeometry::Upload ( Renderer &renderer,
                 }
             },
 
-            ._jobs = std::move ( jobs )
+            ._jobs = jobs,
+            ._jobCount = static_cast<uint8_t> ( jobs.size () )
         }
     };
 }

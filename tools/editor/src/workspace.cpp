@@ -3,11 +3,12 @@
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
 #include <resource_heap.hpp>
-#include <scope_quard.hpp>
+#include <shading.hpp>
 #include <static_mesh_component.hpp>
 #include <stream_buffer_info.hpp>
 #include <texture2D_storage.hpp>
 #include <trace.hpp>
+#include <transform.hpp>
 #include <ui_props.hpp>
 #include <workspace.hpp>
 
@@ -66,25 +67,6 @@ AV_DX_ALIGNMENT_BEGIN
 struct Frame final
 {
     GXMat4      _viewProj;
-};
-
-struct Transform final
-{
-    GXVec3      _x;
-    GXVec3      _y;
-    GXVec3      _z;
-    GXVec3      _w;
-    uint64_t    _normal;
-};
-
-struct Shading final
-{
-    uint32_t        _albedo;
-    uint32_t        _emission;
-    uint32_t        _mask;
-    uint32_t        _param;
-    uint32_t        _normal;
-    ColorData       _colors;
 };
 
 AV_DX_ALIGNMENT_END
@@ -444,58 +426,22 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
         defaultParam = _defaultParam->_heapIndex,
         defaultNormal = _defaultNormal->_heapIndex
     ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
-        GXMat4 local;
-        GXAABB bounds;
         queueVisible.clear ();
 
         for ( auto const &instances : queue )
         {
             uint32_t count = 0U;
 
-            for ( auto const &mesh : instances.second )
+            for ( auto &mesh : instances.second )
             {
-                GXVec3 const &scale = mesh->_scale;
-                GXQuat const &rotation = mesh->_rotation;
+                mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
 
-                local.From ( rotation, mesh->_location );
-                auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
-                auto &y = *reinterpret_cast<GXVec3*> ( local._data[ 1U ] );
-                x.Multiply ( x, scale._data[ 0U ] );
-
-                auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
-                y.Multiply ( y, scale._data[ 1U ] );
-                z.Multiply ( z, scale._data[ 2U ] );
-
-                mesh->_boundLocal.Transform ( bounds, local );
-
-                if ( !frustum.IsVisible ( bounds ) )
+                if ( !frustum.IsVisible ( mesh->_boundWorld ) )
                     continue;
 
                 ++count;
-                PBRMaterial const &material = mesh->_material;
-
-                Shading const shading
-                {
-                    ._albedo = !material._albedo ? defaultAlbedo : material._albedo->_heapIndex,
-                    ._emission = !material._emission ? defaultEmission : material._emission->_heapIndex,
-                    ._mask = !material._mask ? defaultMask : material._mask->_heapIndex,
-                    ._param = !material._param ? defaultParam : material._param->_heapIndex,
-                    ._normal = !material._normal ? defaultNormal : material._normal->_heapIndex,
-                    ._colors = mesh->_colors
-                };
-
-                shadingStream.Push ( &shading );
-
-                Transform const transform
-                {
-                    ._x = x,
-                    ._y = y,
-                    ._z = z,
-                    ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
-                    ._normal = rotation.ToTBN64 ()
-                };
-
-                transformStream.Push ( &transform );
+                transformStream.Push ( &mesh->_transform );
+                shadingStream.Push ( &mesh->_shading );
             }
 
             if ( !count ) [[unlikely]]
@@ -616,10 +562,10 @@ MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
     AV_TRACE ( "Workspace register opaque mesh" )
 
     // This will also act as search key for unregister operation.
-    auto* nodeMeshInfo = new MeshInfo;
+    auto &m = *new MeshInfo;
 
-    nodeMeshInfo->_material._isStipple = false;
-    return RegisterMesh ( mesh, _opaqueQueue, _opaqueMap, *nodeMeshInfo );
+    m._isStipple = false;
+    return RegisterMesh ( mesh, _opaqueQueue, _opaqueMap, m );
 }
 
 MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
@@ -629,7 +575,7 @@ MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
     // This will also act as search key for unregister operation.
     auto &m = *new MeshInfo;
 
-    m._material._isStipple = true;
+    m._isStipple = true;
     return RegisterMesh ( mesh, _stippleQueue, _stippleMap, m );
 }
 
@@ -695,9 +641,9 @@ void Workspace::Unregister ( MeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
     node._workspace = nullptr;
-    MeshInfo &n = node.GetMeshInfo ();
+    MeshInfo &n = *node._meshInfo;
 
-    if ( n._material._isStipple )
+    if ( n._isStipple )
     {
         UnregisterMesh ( _stippleQueue, _stippleMap, n );
         return;
@@ -851,31 +797,6 @@ void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInf
     std::lock_guard const lock ( _mutex );
     auto const findResult = _opaqueQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
     Meshes &meshes = findResult->second;
-
-    android_vulkan::ScopeGuard const freeMeshInfo (
-        [ &nodeMeshInfo ] () noexcept {
-            // It was allocated in RegisterOpaqueMesh|RegisterStippleMesh.
-            Texture2DStorage &storage = Texture2DStorage::Instance ();
-            PBRMaterial &material = nodeMeshInfo._material;
-
-            if ( material._albedo )
-                storage.Unload ( std::move ( material._albedo ) );
-
-            if ( material._emission )
-                storage.Unload ( std::move ( material._emission ) );
-
-            if ( material._mask )
-                storage.Unload ( std::move ( material._mask ) );
-
-            if ( material._normal )
-                storage.Unload ( std::move ( material._normal ) );
-
-            if ( material._param )
-                storage.Unload ( std::move ( material._param ) );
-
-            delete &nodeMeshInfo;
-        }
-    );
 
     if ( meshes.size () == 1U )
     {

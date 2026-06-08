@@ -76,27 +76,21 @@ class Texture2D final
         [[nodiscard]] VkExtent2D const &GetResolution () const noexcept;
         [[nodiscard]] bool IsInit () const noexcept;
 
-        // Supported media containers:
-        // - PNG
-        // - KTXv1 (ASTC with mipmaps)
+        // Supported media containers: PNG, TGA, KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string const &fileName,
             eColorSpace space,
             bool isGenerateMipmaps
         ) noexcept;
 
-        // Supported media containers:
-        // - PNG
-        // - KTXv1 (ASTC with mipmaps)
+        // Supported media containers: PNG, TGA, KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string &&fileName,
             eColorSpace space,
             bool isGenerateMipmaps
         ) noexcept;
 
-        // Supported media containers:
-        // - PNG
-        // - KTXv1 (ASTC with mipmaps)
+        // Supported media containers: PNG, TGA, KTXv1 (ASTC with mipmaps)
         [[nodiscard]] bool UploadToStagingBuffer ( Renderer &renderer,
             std::string_view fileName,
             eColorSpace space,

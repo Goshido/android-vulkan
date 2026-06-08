@@ -2,20 +2,21 @@
 #define EDITOR_MESH_INFO_HPP
 
 
-#include "color_data.hpp"
-#include "pbr_material.hpp"
+#include "shading.hpp"
+#include "transform.hpp"
 
 
 namespace editor {
 
+class MeshNode;
+
 struct MeshInfo final
 {
-    PBRMaterial     _material {};
-    GXAABB          _boundLocal {};
-    GXQuat          _rotation {};
-    GXVec3          _scale {};
-    GXVec3          _location {};
-    ColorData       _colors {};
+    MeshNode*       _node = nullptr;
+    Transform       _transform {};
+    GXAABB          _boundWorld {};
+    Shading         _shading {};
+    bool            _isStipple = false;
 };
 
 } // namespace editor

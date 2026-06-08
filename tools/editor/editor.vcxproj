@@ -1224,6 +1224,7 @@
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
+    <ClInclude Include="include\shading.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
     <ClInclude Include="include\io.hpp" />
@@ -1274,6 +1275,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="include\transform.hpp" />
     <ClInclude Include="include\transform_component.hpp" />
     <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />

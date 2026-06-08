@@ -3,6 +3,7 @@
 
 
 #include "mesh_info.hpp"
+#include "pbr_material.hpp"
 #include "workspace_node.hpp"
 
 
@@ -12,19 +13,16 @@ class Workspace;
 
 class MeshNode final : public WorkspaceNode
 {
-    public:
-        // FUCK - use this instead MeshInfo
-        struct RenderInfo final
-        {
-            PBRMaterial     _material {};
-            GXMat4          _local {};
-            GXAABB          _boundWorld {};
-            ColorData       _color {};
-        };
+    friend class Workspace;
 
     private:
-        MeshInfo*           _meshInfo = nullptr;
-        RenderInfo          _renderInfo {};
+        MeshInfo*       _meshInfo = nullptr;
+        PBRMaterial     _material {};
+        ColorData       _colors {};
+        GXQuat          _rotation {};
+        GXVec3          _location {};
+        GXVec3          _scale {};
+        GXAABB          _boundLocal {};
 
     public:
         MeshNode () = default;
@@ -39,9 +37,12 @@ class MeshNode final : public WorkspaceNode
 
         ~MeshNode () noexcept override;
 
-        void Commit () noexcept;
-        [[nodiscard]] MeshInfo &GetMeshInfo () const noexcept;
-        [[nodiscard]] RenderInfo const &GetRenderInfo () const noexcept;
+        void Commit ( uint32_t defaultAlbedo,
+            uint32_t defaultEmission,
+            uint32_t defaultMask,
+            uint32_t defaultParam,
+            uint32_t defaultNormal
+        ) noexcept;
 
         void SetColor ( GXColorUNORM color0,
             GXColorUNORM color1,

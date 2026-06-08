@@ -17,8 +17,9 @@ class MeshGeometry final : public MeshGeometryBase
             StreamInfo                      _stream0 {};
             std::optional<StreamInfo>       _stream1 = std::nullopt;
 
-            // FUCK replace by array
-            std::vector<UploadJob>          _jobs {};
+            // std::array is needed for deep copy
+            std::array<UploadJob, 3U>       _jobs {};
+            uint8_t                         _jobCount = 0U;
         };
 
         using LoadResult = std::optional<Info>;

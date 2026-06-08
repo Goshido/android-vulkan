@@ -1,7 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <av_assert.hpp>
 #include <mesh_node.hpp>
-#include <texture2D_storage.hpp>
 #include <workspace.hpp>
 
 
@@ -12,9 +10,16 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
     std::ignore = other.TryLock ();
 
     _workspace = std::exchange ( other._workspace, nullptr );
-    _hasChanges = std::move ( other._hasChanges );
+    _hasChanges = std::exchange ( other._hasChanges, false );
+
     _meshInfo = std::exchange ( other._meshInfo, nullptr );
-    _renderInfo = std::move ( other._renderInfo );
+    _meshInfo->_node = this;
+
+    _colors = std::exchange ( other._colors, {} );
+    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
+    _location = std::exchange ( other._location, GXVec3::ZERO );
+    _scale = std::exchange ( other._scale, GXVec3::ONE );
+    _boundLocal = std::exchange ( other._boundLocal, {} );
 
     other.Unlock ();
 }
@@ -25,9 +30,16 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
         return *this;
 
     _workspace = std::exchange ( other._workspace, nullptr );
-    _hasChanges = std::move ( other._hasChanges );
+    _hasChanges = std::exchange ( other._hasChanges, false );
+
     _meshInfo = std::exchange ( other._meshInfo, nullptr );
-    _renderInfo = std::move ( other._renderInfo );
+    _meshInfo->_node = this;
+
+    _colors = std::exchange ( other._colors, {} );
+    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
+    _location = std::exchange ( other._location, GXVec3::ZERO );
+    _scale = std::exchange ( other._scale, GXVec3::ONE );
+    _boundLocal = std::exchange ( other._boundLocal, {} );
 
     other.Unlock ();
     return *this;
@@ -37,29 +49,11 @@ MeshNode::MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept:
     WorkspaceNode ( workspace ),
     _meshInfo ( &meshInfo )
 {
-    // NOTHING
+    meshInfo._node = this;
 }
 
 MeshNode::~MeshNode () noexcept
 {
-    PBRMaterial &material = _renderInfo._material;
-    Texture2DStorage &storage = Texture2DStorage::Instance ();
-
-    if ( material._albedo )
-        storage.Unload ( std::move ( material._albedo ) );
-
-    if ( material._emission )
-        storage.Unload ( std::move ( material._emission ) );
-
-    if ( material._mask )
-        storage.Unload ( std::move ( material._mask ) );
-
-    if ( material._normal )
-        storage.Unload ( std::move ( material._normal ) );
-
-    if ( material._param )
-        storage.Unload ( std::move ( material._param ) );
-
     if ( !_workspace || !TryLock () ) [[unlikely]]
         return;
 
@@ -69,44 +63,53 @@ MeshNode::~MeshNode () noexcept
     Unlock ();
 }
 
-void MeshNode::Commit () noexcept
+void MeshNode::Commit ( uint32_t defaultAlbedo,
+    uint32_t defaultEmission,
+    uint32_t defaultMask,
+    uint32_t defaultParam,
+    uint32_t defaultNormal
+) noexcept
 {
-    MeshInfo const &meshInfo = *_meshInfo;
+    MeshInfo &meshInfo = *_meshInfo;
 
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
 
     GXMat4 local {};
-    local.FromFast ( meshInfo._rotation, meshInfo._location );
-    auto &x = *reinterpret_cast<GXVec3*> ( local._data );
-    GXVec3 const &s = meshInfo._scale;
+    local.FromFast ( _rotation, _location );
+    auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
+    GXVec3 const &s = _scale;
 
-    auto &y = *reinterpret_cast<GXVec3*> ( local._data + 4U );
+    auto &y = *reinterpret_cast<GXVec3*> ( local._data[ 1U ] );
     x.Multiply ( x, s._data[ 0U ] );
 
-    auto &z = *reinterpret_cast<GXVec3*> ( local._data + 8U );
+    auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
     y.Multiply ( y, s._data[ 1U ] );
     z.Multiply ( z, s._data[ 2U ] );
 
-    _renderInfo._material = meshInfo._material;
-    _renderInfo._local = local;
-    meshInfo._boundLocal.Transform ( _renderInfo._boundWorld, local );
-    _renderInfo._color = meshInfo._colors;
+    meshInfo._transform =
+    {
+        ._x = x,
+        ._y = y,
+        ._z = z,
+        ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
+        ._normal = _rotation.ToTBN64 ()
+    };
+
+    _boundLocal.Transform ( meshInfo._boundWorld, local );
+
+    meshInfo._shading =
+    {
+        ._albedo = !_material._albedo ? defaultAlbedo : _material._albedo->_heapIndex,
+        ._emission = !_material._emission ? defaultEmission : _material._emission->_heapIndex,
+        ._mask = !_material._mask ? defaultMask : _material._mask->_heapIndex,
+        ._param = !_material._param ? defaultParam : _material._param->_heapIndex,
+        ._normal = !_material._normal ? defaultNormal : _material._normal->_heapIndex,
+        ._colors = _colors
+    };
 
     _hasChanges = false;
-
     Unlock ();
-}
-
-MeshInfo &MeshNode::GetMeshInfo () const noexcept
-{
-    AV_ASSERT ( _meshInfo )
-    return *_meshInfo;
-}
-
-MeshNode::RenderInfo const &MeshNode::GetRenderInfo () const noexcept
-{
-    return _renderInfo;
 }
 
 void MeshNode::SetColor ( GXColorUNORM color0,
@@ -138,7 +141,7 @@ void MeshNode::SetColor ( GXColorUNORM color0,
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_colors = c;
+    _colors = c;
     _hasChanges = true;
 
     Unlock ();
@@ -149,7 +152,7 @@ void MeshNode::SetRotation ( GXQuat const &rotation ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = rotation;
+    _rotation = rotation;
     _hasChanges = true;
 
     Unlock ();
@@ -162,7 +165,7 @@ void MeshNode::SetRotation ( GXMat3 const &rotation ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = r;
+    _rotation = r;
     _hasChanges = true;
 
     Unlock ();
@@ -175,7 +178,7 @@ void MeshNode::SetRotation ( GXMat4 const &rotation ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = r;
+    _rotation = r;
     _hasChanges = true;
 
     Unlock ();
@@ -186,7 +189,7 @@ void MeshNode::SetLocation ( GXVec3 const &location ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_location = location;
+    _location = location;
     _hasChanges = true;
 
     Unlock ();
@@ -197,7 +200,7 @@ void MeshNode::SetScale ( GXVec3 const &scale ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_scale = scale;
+    _scale = scale;
     _hasChanges = true;
 
     Unlock ();
@@ -213,9 +216,9 @@ void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = r;
-    _meshInfo->_location = *reinterpret_cast<GXVec3 const*> ( local._data + 12U );
-    _meshInfo->_scale = s;
+    _rotation = r;
+    _location = *reinterpret_cast<GXVec3 const*> ( local._data + 12U );
+    _scale = s;
     _hasChanges = true;
 
     Unlock ();
@@ -226,8 +229,8 @@ void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexc
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = rotation;
-    _meshInfo->_location = location;
+    _rotation = rotation;
+    _location = location;
     _hasChanges = true;
 
     Unlock ();
@@ -238,9 +241,9 @@ void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_rotation = rotation;
-    _meshInfo->_location = location;
-    _meshInfo->_scale = scale;
+    _rotation = rotation;
+    _location = location;
+    _scale = scale;
     _hasChanges = true;
 
     Unlock ();
@@ -248,7 +251,7 @@ void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3
 
 void MeshNode::SetBounds ( GXAABB const &boundLocal ) noexcept
 {
-    _meshInfo->_boundLocal = boundLocal;
+    _boundLocal = boundLocal;
     _hasChanges = true;
 }
 
@@ -257,7 +260,7 @@ void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
     if ( !TryLock () ) [[unlikely]]
         return;
 
-    _meshInfo->_material = material;
+    _material = material;
     _hasChanges = true;
 
     Unlock ();

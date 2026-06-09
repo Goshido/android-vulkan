@@ -14,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
-using Texture2DLoadResult = std::function<void ( std::optional<Texture2DRef> && )>;
+using Texture2DLoadResult = std::move_only_function<void ( std::optional<Texture2DRef> && )>;
 
 class Texture2DUploadInfo final
 {
@@ -25,7 +25,7 @@ class Texture2DUploadInfo final
     public:
         Texture2DUploadInfo () = delete;
 
-        Texture2DUploadInfo ( Texture2DUploadInfo const & ) = default;
+        Texture2DUploadInfo ( Texture2DUploadInfo const & ) = delete;
         Texture2DUploadInfo &operator = ( Texture2DUploadInfo const & ) = delete;
 
         Texture2DUploadInfo ( Texture2DUploadInfo && ) = default;

@@ -1,4 +1,4 @@
-// version 1.103
+// version 1.104
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -869,7 +869,7 @@ struct [[maybe_unused]] GXAABB final
     GXVec3      _min;
     GXVec3      _max;
 
-    [[maybe_unused]] constexpr GXAABB ():
+    [[maybe_unused]] constexpr GXAABB () noexcept:
         _vertices ( 0U ),
         _min ( FLT_MAX, FLT_MAX, FLT_MAX ),
         _max ( -FLT_MAX, -FLT_MAX, -FLT_MAX )

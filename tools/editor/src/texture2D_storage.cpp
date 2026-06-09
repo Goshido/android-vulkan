@@ -41,7 +41,7 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             return nullptr;
         }
 
-        if ( auto findResult = _tasks.find ( path ); findResult != _tasks.cend () )
+        if ( auto findResult = _tasks.find ( path ); findResult != _tasks.end () )
         {
             findResult->second.push_back ( std::move ( result ) );
             return nullptr;
@@ -83,7 +83,7 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
                 texture = std::move ( texture )
             ] () mutable noexcept -> void* {
                 AV_TRACE ( "Upload done %s", path.c_str () )
-                auto const findResult = _tasks.find ( path );
+                auto findResult = _tasks.find ( path );
 
                 android_vulkan::ScopeGuard const freeTask (
                     [ this, findResult ] () noexcept {
@@ -91,7 +91,7 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
                     }
                 );
 
-                std::deque<Texture2DLoadResult> const &results = findResult->second;
+                std::deque<Texture2DLoadResult> &results = findResult->second;
 
                 for ( auto &result : results )
                     result ( std::optional<Texture2DRef> ( texture ) );
@@ -130,12 +130,10 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             )
         );
 
-        _tasks.insert (
-            std::pair ( std::move ( path ),
-                std::deque<Texture2DLoadResult> ( { std::move ( result ) } )
-            )
-        );
-
+        // Can't do std::unordered_map::insert and creation from std::initializer_list. List is holding const objects.
+        // So copy constructor will be involved. This will lead to massive compile error.
+        // Using two steps initialization.
+        _tasks[ std::move ( path ) ].push_back ( std::move ( result ) );
         return nullptr;
     };
 

@@ -24,7 +24,7 @@ class UICheckBox final : public Widget
             Multi
         };
 
-        using Callback = std::function<void ( eState state )>;
+        using Callback = std::move_only_function<void ( eState state )>;
 
     private:
         DIVUIElement        _lineDIV;

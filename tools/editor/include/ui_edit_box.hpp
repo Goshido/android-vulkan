@@ -12,7 +12,7 @@ namespace editor {
 class UIEditBox final : public Widget
 {
     public:
-        using Callback = std::function<void ( std::string const &value )>;
+        using Callback = std::move_only_function<void ( std::string const &value )>;
 
     private:
         using MouseButtonHandler = void ( UIEditBox::* ) ( MouseButtonEvent const &event ) noexcept;

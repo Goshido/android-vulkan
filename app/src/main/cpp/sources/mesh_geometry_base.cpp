@@ -5,6 +5,45 @@
 
 namespace android_vulkan {
 
+MeshGeometryBase::MeshGeometryBase ( MeshGeometryBase &&other ) noexcept:
+    _bounds ( std::exchange ( other._bounds, {} ) ),
+
+    _gpuAllocation (
+        {
+            ._memory = std::exchange ( other._gpuAllocation._memory, VK_NULL_HANDLE ),
+            ._offset = std::exchange ( other._gpuAllocation._offset, 0U ),
+            ._range = std::exchange ( other._gpuAllocation._range, 0U )
+        }
+    ),
+
+    _vertexCount ( std::exchange ( other._vertexCount, 0U ) ),
+    _vertexBufferVertexCount ( std::exchange ( other._vertexBufferVertexCount, 0U ) ),
+    _fileName ( std::move ( other._fileName ) )
+{
+    // NOTHING
+}
+
+MeshGeometryBase &MeshGeometryBase::operator = ( MeshGeometryBase &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _bounds = std::exchange ( other._bounds, {} );
+
+    _gpuAllocation =
+    {
+        ._memory = std::exchange ( other._gpuAllocation._memory, VK_NULL_HANDLE ),
+        ._offset = std::exchange ( other._gpuAllocation._offset, 0U ),
+        ._range = std::exchange ( other._gpuAllocation._range, 0U )
+    };
+
+    _vertexCount = std::exchange ( other._vertexCount, 0U );
+    _vertexBufferVertexCount = std::exchange ( other._vertexBufferVertexCount, 0U );
+    _fileName = std::move ( other._fileName );
+
+    return *this;
+}
+
 GXAABB const &MeshGeometryBase::GetBounds () const noexcept
 {
     return _bounds;

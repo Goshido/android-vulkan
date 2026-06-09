@@ -31,7 +31,7 @@ void PointLightPass::ExecuteLightupPhase ( VkCommandBuffer commandBuffer,
 
     android_vulkan::MeshBufferInfo const &bufferInfo = unitCube.GetMeshBufferInfo ();
     VkBuffer buffer = bufferInfo._buffer;
-    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &bufferInfo._buffer, bufferInfo._vertexDataOffsets );
+    vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &bufferInfo._buffer, bufferInfo._vertexDataOffsets.data () );
     vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
     uint32_t const volumeVertices = unitCube.GetVertexCount ();
@@ -298,7 +298,7 @@ bool PointLightPass::GenerateShadowmaps ( VkCommandBuffer commandBuffer) noexcep
         {
             android_vulkan::MeshBufferInfo const &bufferInfo = unique->GetMeshBufferInfo ();
             VkBuffer buffer = bufferInfo._buffer;
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets.data () );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
             _shadowmapProgram.SetDescriptorSet ( commandBuffer, _shadowmapPool.Acquire () );
@@ -310,7 +310,7 @@ bool PointLightPass::GenerateShadowmaps ( VkCommandBuffer commandBuffer) noexcep
             auto const &[mesh, transforms] = casterInfo.second;
             android_vulkan::MeshBufferInfo const &bufferInfo = mesh->GetMeshBufferInfo ();
             VkBuffer buffer = bufferInfo._buffer;
-            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets );
+            vkCmdBindVertexBuffers ( commandBuffer, 0U, 1U, &buffer, bufferInfo._vertexDataOffsets.data () );
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, bufferInfo._indexType );
 
             size_t remain = transforms.size ();

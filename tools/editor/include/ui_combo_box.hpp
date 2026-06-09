@@ -18,7 +18,7 @@ class UIComboBox final : public Widget
 {
     public:
         using ID = uint32_t;
-        using Callback = std::function<void ( ID )>;
+        using Callback = std::move_only_function<void ( ID )>;
 
         struct Item final
         {

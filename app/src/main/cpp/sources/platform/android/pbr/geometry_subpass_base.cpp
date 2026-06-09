@@ -78,7 +78,7 @@ void GeometrySubpassBase::AppendDrawcalls ( VkCommandBuffer commandBuffer,
                 0U,
                 static_cast<uint32_t> ( std::size ( vertexBuffers ) ),
                 vertexBuffers,
-                info._vertexDataOffsets
+                info._vertexDataOffsets.data ()
             );
 
             vkCmdBindIndexBuffer ( commandBuffer, buffer, 0U, info._indexType );

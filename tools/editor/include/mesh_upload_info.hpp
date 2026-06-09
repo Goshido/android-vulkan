@@ -14,7 +14,7 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
-using MeshLoadResult = std::function<void ( std::optional<MeshGeometryRef> && )>;
+using MeshLoadResult = std::move_only_function<void ( std::optional<MeshGeometryRef> && )>;
 
 class MeshUploadInfo final
 {
@@ -26,7 +26,7 @@ class MeshUploadInfo final
     public:
         MeshUploadInfo () = delete;
 
-        MeshUploadInfo ( MeshUploadInfo const & ) = default;
+        MeshUploadInfo ( MeshUploadInfo const & ) = delete;
         MeshUploadInfo &operator = ( MeshUploadInfo const & ) = delete;
 
         MeshUploadInfo ( MeshUploadInfo && ) = default;

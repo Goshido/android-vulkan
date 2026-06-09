@@ -17,7 +17,7 @@ namespace editor {
 class UISlider final : public Widget
 {
     public:
-        using Callback = std::function<void ( double )>;
+        using Callback = std::move_only_function<void ( double )>;
 
     private:
         using MouseButtonHandler = void ( UISlider::* ) ( MouseButtonEvent const &event ) noexcept;

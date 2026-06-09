@@ -24,7 +24,8 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
-    auto loadAsset = [ this,
+    auto loadAsset = [
+        this,
         &messageQueue,
         asset = std::string ( asset ),
         result = std::move ( result )
@@ -64,7 +65,7 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
                 mesh = std::move ( mesh )
             ] () mutable noexcept -> void* {
                 AV_TRACE ( "Upload done %s", path.c_str () )
-                auto const findResult = _tasks.find ( path );
+                auto findResult = _tasks.find ( path );
 
                 android_vulkan::ScopeGuard const freeTask (
                     [ this, findResult ] () noexcept {
@@ -72,7 +73,7 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
                     }
                 );
 
-                std::deque<MeshLoadResult> const &results = findResult->second;
+                std::deque<MeshLoadResult> &results = findResult->second;
 
                 for ( auto &result : results )
                     result ( std::optional<MeshGeometryRef> ( mesh ) );
@@ -106,7 +107,10 @@ void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexc
             )
         );
 
-        _tasks.insert ( std::pair ( std::move ( path ), std::deque<MeshLoadResult> ( { std::move ( result ) } ) ) );
+        // Can't do std::unordered_map::insert and creation from std::initializer_list. List is holding const objects.
+        // So copy constructor will be involved. This will lead to massive compile error.
+        // Using two steps initialization.
+        _tasks[ std::move ( path ) ].push_back ( std::move ( result ) );
         return nullptr;
     };
 

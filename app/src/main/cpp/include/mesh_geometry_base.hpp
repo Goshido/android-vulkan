@@ -64,8 +64,8 @@ class MeshGeometryBase
         MeshGeometryBase ( MeshGeometryBase const & ) = delete;
         MeshGeometryBase &operator = ( MeshGeometryBase const & ) = delete;
 
-        MeshGeometryBase ( MeshGeometryBase && ) = delete;
-        MeshGeometryBase &operator = ( MeshGeometryBase && ) = delete;
+        MeshGeometryBase ( MeshGeometryBase &&other ) noexcept;
+        MeshGeometryBase &operator = ( MeshGeometryBase &&other ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;

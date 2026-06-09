@@ -310,7 +310,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
             0U,
             2U,
             buffers,
-            bufferInfo._vertexDataOffsets
+            bufferInfo._vertexDataOffsets.data ()
         );
 
         vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );

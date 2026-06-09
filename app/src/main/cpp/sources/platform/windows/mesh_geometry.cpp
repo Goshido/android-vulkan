@@ -23,6 +23,62 @@ constexpr VkBufferUsageFlags USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_
 
 //----------------------------------------------------------------------------------------------------------------------
 
+MeshGeometry::MeshGeometry ( MeshGeometry &&other ) noexcept:
+    MeshGeometryBase ( std::move ( other ) ),
+    _transferBuffer ( std::exchange ( other._transferBuffer, VK_NULL_HANDLE ) ),
+
+    _transferAllocation (
+        {
+            ._memory = std::exchange ( other._transferAllocation._memory, VK_NULL_HANDLE ),
+            ._offset = std::exchange ( other._transferAllocation._offset, 0U ),
+            ._range = std::exchange ( other._transferAllocation._range, 0U )
+        }
+    ),
+
+    _meshBufferInfo (
+        {
+            ._buffer = std::exchange ( other._meshBufferInfo._buffer, VK_NULL_HANDLE ),
+            ._bdaIndex = std::exchange ( other._meshBufferInfo._bdaIndex, 0U ),
+            ._bdaStream0 = std::exchange ( other._meshBufferInfo._bdaStream0, 0U ),
+            ._bdaStream1 = std::exchange ( other._meshBufferInfo._bdaStream1, 0U ),
+            ._vertexDataOffsets = std::move ( other._meshBufferInfo._vertexDataOffsets ),
+            ._vertexDataRanges = std::move ( other._meshBufferInfo._vertexDataRanges ),
+            ._indexType = std::exchange ( other._meshBufferInfo._indexType, VK_INDEX_TYPE_NONE_KHR )
+        }
+    )
+{
+    // NOTHING
+}
+
+MeshGeometry &MeshGeometry::operator = ( MeshGeometry &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    MeshGeometryBase::operator = ( std::move ( other ) );
+    _transferBuffer = std::exchange ( other._transferBuffer, VK_NULL_HANDLE );
+
+    _transferAllocation =
+    {
+        ._memory = std::exchange ( other._transferAllocation._memory, VK_NULL_HANDLE ),
+        ._offset = std::exchange ( other._transferAllocation._offset, 0U ),
+        ._range = std::exchange ( other._transferAllocation._range, 0U )
+    };
+
+    _meshBufferInfo =
+    {
+        ._buffer = std::exchange ( other._meshBufferInfo._buffer, VK_NULL_HANDLE ),
+        ._bdaIndex = std::exchange ( other._meshBufferInfo._bdaIndex, 0U ),
+        ._bdaStream0 = std::exchange ( other._meshBufferInfo._bdaStream0, 0U ),
+        ._bdaStream1 = std::exchange ( other._meshBufferInfo._bdaStream1, 0U ),
+        ._vertexDataOffsets = std::move ( other._meshBufferInfo._vertexDataOffsets ),
+        ._vertexDataRanges = std::move ( other._meshBufferInfo._vertexDataRanges ),
+        ._indexType = std::exchange ( other._meshBufferInfo._indexType, VK_INDEX_TYPE_NONE_KHR )
+    };
+
+    return *this;
+}
+
 void MeshGeometry::FreeResources ( Renderer &renderer ) noexcept
 {
     FreeTransferResources ( renderer );

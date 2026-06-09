@@ -28,7 +28,7 @@ class Timer final
         };
 
         using ElapsedTime = std::chrono::duration<float>;
-        using Callback = std::function<void ( ElapsedTime &&elapsedTime )>;
+        using Callback = std::move_only_function<void ( ElapsedTime &&elapsedTime )>;
         using Interval = std::chrono::duration<std::chrono::steady_clock::rep, std::chrono::steady_clock::period>;
 
     private:
@@ -37,7 +37,7 @@ class Timer final
         class State final
         {
             public:
-                Callback const      _callback;
+                Callback            _callback;
                 Interval const      _interval {};
                 Timestamp           _schedule {};
                 eType const         _type = eType::SingleShot;

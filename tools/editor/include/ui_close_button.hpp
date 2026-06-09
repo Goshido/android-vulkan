@@ -17,7 +17,7 @@ namespace editor {
 class UICloseButton final : public Widget
 {
     public:
-        using Callback = std::function<void ()>;
+        using Callback = std::move_only_function<void ()>;
 
     private:
         DIVUIElement        _base;

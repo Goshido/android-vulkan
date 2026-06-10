@@ -20,14 +20,14 @@ class ViewportWidget final : public Widget
 
         struct State final
         {
-            uint8_t             _forward: 1U = 0U;
-            uint8_t             _backward: 1U = 0U;
-            uint8_t             _left: 1U = 0U;
-            uint8_t             _right: 1U = 0U;
-            uint8_t             _shift: 1U = 0U;
-            uint8_t             _alt: 1U = 0U;
-            uint8_t             _middleMouseButton: 1U = 0U;
-            uint8_t             _leftMouseButton: 1U = 0U;
+            uint8_t             _forward: 1 = 0U;
+            uint8_t             _backward: 1 = 0U;
+            uint8_t             _left: 1 = 0U;
+            uint8_t             _right: 1 = 0U;
+            uint8_t             _shift: 1 = 0U;
+            uint8_t             _alt: 1 = 0U;
+            uint8_t             _middleMouseButton: 1 = 0U;
+            uint8_t             _leftMouseButton: 1 = 0U;
         };
 
         struct Mouse final

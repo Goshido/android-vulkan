@@ -49,6 +49,9 @@ ViewportWidget::ViewportWidget () noexcept:
     )
 {
     // NOTHING
+
+    // FUCK
+    _position = GXVec3 ( 0.0F, 1.0F, -3.0F );
 }
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept

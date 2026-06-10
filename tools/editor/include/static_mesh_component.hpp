@@ -14,6 +14,7 @@ class StaticMeshComponent final : public Component
     private:
         MeshGeometryRef                         _mesh {};
         MeshNode                                _node {};
+        PBRMaterial                             _material {};
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";
@@ -28,16 +29,22 @@ class StaticMeshComponent final : public Component
         StaticMeshComponent &operator = ( StaticMeshComponent && ) = delete;
 
         explicit StaticMeshComponent ( SaveState::Container const &info ) noexcept;
-        explicit StaticMeshComponent ( std::string_view mesh, std::string_view albedo ) noexcept;
+        explicit StaticMeshComponent ( std::string_view mesh, std::string_view emission ) noexcept;
 
         ~StaticMeshComponent () noexcept override;
 
     private:
-        void Register () noexcept override;
+        void Register ( Actor &actor ) noexcept override;
         void Unregister () noexcept override;
+        void ActorTransformChanged () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
 
-        void LoadResources ( std::string_view mesh, std::string_view albedo ) noexcept;
+        void LoadResources ( std::string_view mesh, std::string_view emission ) noexcept;
+
+        void JoinRendering () noexcept;
+        void QuitRendering () noexcept;
+
+        void UpdateTransform () noexcept;
 };
 
 } // namespace editor

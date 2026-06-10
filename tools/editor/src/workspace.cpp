@@ -293,6 +293,9 @@ void Workspace::Init () noexcept
 void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
+
+    // FUCK - data race: stop participating in rendering in RenderSession thread.
+
     _history.Clear ();
     _actors.clear ();
 

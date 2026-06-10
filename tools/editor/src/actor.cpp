@@ -57,14 +57,20 @@ void Actor::Append ( ComponentRef &&component ) noexcept
 {
     Component &c = *component;
     _components.push_back ( std::move ( component ) );
-    c.Register ();
+    c.Register ( *this );
+    c.ActorTransformChanged ();
 }
 
 void Actor::Insert ( size_t before, ComponentRef &&component ) noexcept
 {
+    Component &c = *component;
+
     _components.insert ( _components.cbegin () + static_cast<Components::const_iterator::difference_type> ( before ),
         std::move ( component )
     );
+
+    c.Register ( *this );
+    c.ActorTransformChanged ();
 }
 
 ComponentRef Actor::Remove ( Component const &component ) noexcept
@@ -98,6 +104,81 @@ void Actor::Save ( SaveState::Container &root ) const noexcept
     for ( auto const &component : _components )
     {
         component->Save ( components.WriteContainer () );
+    }
+}
+
+void Actor::SetRotation ( GXQuat const &rotation ) noexcept
+{
+    _rotation = rotation;
+    NotifyTransformChanged ();
+}
+
+void Actor::SetRotation ( GXMat3 const &rotation ) noexcept
+{
+    _rotation = GXQuat ( rotation );
+    NotifyTransformChanged ();
+}
+
+void Actor::SetRotation ( GXMat4 const &rotation ) noexcept
+{
+    _rotation = GXQuat ( rotation );
+    NotifyTransformChanged ();
+}
+
+void Actor::SetLocation ( GXVec3 const &location ) noexcept
+{
+    _location = location;
+    NotifyTransformChanged ();
+}
+
+void Actor::SetScale ( GXVec3 const &scale ) noexcept
+{
+    _scale = scale;
+    NotifyTransformChanged ();
+}
+
+void Actor::SetLocal ( GXMat4 const &local ) noexcept
+{
+    _rotation =  GXQuat ( local );
+    _location = *reinterpret_cast<GXVec3 const*> ( local._data[ 3U ] );
+    local.ClearScale ( _scale );
+    NotifyTransformChanged ();
+}
+
+void Actor::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept
+{
+    _rotation = rotation;
+    _location = location;
+    NotifyTransformChanged ();
+}
+
+void Actor::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept
+{
+    _rotation = rotation;
+    _location = location;
+    _scale = scale;
+    NotifyTransformChanged ();
+}
+
+void Actor::GetTransform ( GXMat4 &dst ) noexcept
+{
+    dst.FromFast ( _rotation, _location );
+    auto &x = *reinterpret_cast<GXVec3*> ( dst._data[ 0U ] );
+    GXVec3 const &s = _scale;
+
+    auto &y = *reinterpret_cast<GXVec3*> ( dst._data[ 1U ] );
+    x.Multiply ( x, s._data[ 0U ] );
+
+    auto &z = *reinterpret_cast<GXVec3*> ( dst._data[ 2U ] );
+    y.Multiply ( y, s._data[ 1U ] );
+    z.Multiply ( z, s._data[ 2U ] );
+}
+
+void Actor::NotifyTransformChanged () noexcept
+{
+    for ( auto &component : _components )
+    {
+        component->ActorTransformChanged ();
     }
 }
 

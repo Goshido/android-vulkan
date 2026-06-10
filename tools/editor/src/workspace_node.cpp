@@ -11,6 +11,11 @@ WorkspaceNode::WorkspaceNode ( Workspace &workspace ) noexcept:
     // NOTHING
 }
 
+bool WorkspaceNode::IsConnected () const noexcept
+{
+    return _workspace != nullptr;
+}
+
 bool WorkspaceNode::TryLock () noexcept
 {
     bool expected = false;

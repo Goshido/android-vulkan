@@ -26,14 +26,16 @@ TransformComponent::TransformComponent ( SaveState::Container const &info ) noex
     // FUCK
 }
 
-void TransformComponent::Register () noexcept
+void TransformComponent::Register ( Actor &actor ) noexcept
 {
+    Component::Register ( actor );
     // FUCK
 }
 
 void TransformComponent::Unregister () noexcept
 {
     // FUCK
+    Component::Unregister ();
 }
 
 void TransformComponent::Save ( SaveState::Container &root ) const noexcept

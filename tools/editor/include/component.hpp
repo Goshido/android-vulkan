@@ -16,6 +16,8 @@ GX_RESTORE_WARNING_STATE
 
 namespace editor {
 
+class Actor;
+
 class Component;
 using ComponentRef = std::unique_ptr<Component>;
 
@@ -29,6 +31,8 @@ class Component
         using Spawners = std::unordered_map<std::string_view, Spawner>;
 
     protected:
+        Actor*              _actor = nullptr;
+
         GXQuat              _rotation = GXQuat::IDENTITY;
         GXVec3              _scale = GXVec3::ONE;
         GXVec3              _location = GXVec3::ZERO;
@@ -53,9 +57,13 @@ class Component
 
         virtual ~Component () = default;
 
-        virtual void Register () noexcept = 0;
-        virtual void Unregister () noexcept = 0;
+        // Method must be called in derived class
+        virtual void Register ( Actor &actor ) noexcept;
 
+        // Method must be called in derived class
+        virtual void Unregister () noexcept;
+
+        virtual void ActorTransformChanged () noexcept;
         virtual void Save ( SaveState::Container &root ) const noexcept;
 
         void SetName ( std::string_view name ) noexcept;

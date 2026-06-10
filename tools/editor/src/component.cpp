@@ -45,6 +45,21 @@ Component::Component ( SaveState::Container const &info ) noexcept
     _location = info.Read ( LOCATION_KEY, GXVec3::ZERO );
 }
 
+void Component::Register ( Actor &actor ) noexcept
+{
+    _actor = &actor;
+}
+
+void Component::Unregister () noexcept
+{
+    _actor = nullptr;
+}
+
+void Component::ActorTransformChanged () noexcept
+{
+    // NOTHING
+}
+
 void Component::Save ( SaveState::Container &root ) const noexcept
 {
     root.Write ( VERSION_KEY, _version );

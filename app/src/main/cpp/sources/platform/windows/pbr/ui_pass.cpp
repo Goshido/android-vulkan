@@ -801,20 +801,15 @@ void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
 
 bool UIPass::UploadGPUFontData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "Upload GPU font data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload GPU font data" )
     return _fontStorage.UploadGPUData ( renderer, commandBuffer );
 }
 
 void UIPass::UploadGPUGeometryData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "Upload UI geometry data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload UI geometry data" )
-
     if ( _isTransformChanged ) [[unlikely]]
         UpdateTransform ( renderer );
 
-    if ( _hasChanges )
+    if ( _hasChanges ) [[unlikely]]
     {
         UpdateGeometry ( commandBuffer );
     }
@@ -1047,12 +1042,15 @@ std::optional<UIPass::Image> UIPass::RequestImage ( std::string const &asset ) n
 
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_TRACE ( "Upload UI geometry data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload UI geometry data" )
     _uiVertices.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
     _hasChanges = false;
 }
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
 {
+    AV_TRACE ( "Upload UI transform" )
     float const scaleX = 2.0F / _bottomRight._data[ 0U ];
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();

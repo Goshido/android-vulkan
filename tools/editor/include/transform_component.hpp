@@ -26,7 +26,7 @@ class TransformComponent final : public Component
         ~TransformComponent () = default;
 
     private:
-        void Register () noexcept override;
+        void Register ( Actor &actor ) noexcept override;
         void Unregister () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
 };

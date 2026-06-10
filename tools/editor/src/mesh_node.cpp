@@ -217,7 +217,7 @@ void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
         return;
 
     _rotation = r;
-    _location = *reinterpret_cast<GXVec3 const*> ( local._data + 12U );
+    _location = *reinterpret_cast<GXVec3 const*> ( local._data[ 3U ] );
     _scale = s;
     _hasChanges = true;
 

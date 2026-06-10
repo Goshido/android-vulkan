@@ -49,6 +49,22 @@ class Actor final
         [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
 
         void Save ( SaveState::Container &root ) const noexcept;
+
+        void SetRotation ( GXQuat const &rotation ) noexcept;
+        void SetRotation ( GXMat3 const &rotation ) noexcept;
+        void SetRotation ( GXMat4 const &rotation ) noexcept;
+
+        void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetScale ( GXVec3 const &scale ) noexcept;
+
+        void SetLocal ( GXMat4 const &local ) noexcept;
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept;
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept;
+
+        void GetTransform ( GXMat4 &dst ) noexcept;
+
+    private:
+        void NotifyTransformChanged () noexcept;
 };
 
 using ActorRef = std::unique_ptr<Actor>;

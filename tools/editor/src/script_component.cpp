@@ -26,14 +26,16 @@ ScriptComponent::ScriptComponent ( SaveState::Container const &info ) noexcept:
     // FUCK
 }
 
-void ScriptComponent::Register () noexcept
+void ScriptComponent::Register ( Actor &actor ) noexcept
 {
+    Component::Register ( actor );
     // FUCK
 }
 
 void ScriptComponent::Unregister () noexcept
 {
     // FUCK
+    Component::Unregister ();
 }
 
 void ScriptComponent::Save ( SaveState::Container &root ) const noexcept

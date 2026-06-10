@@ -1013,18 +1013,14 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     resourceHeap.UploadGPUData ( commandBuffer );
 
+    if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
     {
-        AV_VULKAN_GROUP ( commandBuffer, "Upload UI data" )
-
-        if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
-        {
-            AV_ASSERT ( false )
-            return;
-        }
-
-        _uiManager.Submit ( renderer, _uiPass );
-        _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
+        AV_ASSERT ( false )
+        return;
     }
+
+    _uiManager.Submit ( renderer, _uiPass );
+    _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
 
     _workspace.UploadToGPU ( commandBuffer );
 

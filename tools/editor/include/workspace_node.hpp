@@ -27,6 +27,8 @@ class WorkspaceNode
         WorkspaceNode ( WorkspaceNode && ) = delete;
         WorkspaceNode &operator = ( WorkspaceNode && ) = delete;
 
+        [[nodiscard]] bool IsConnected () const noexcept;
+
     protected:
         explicit WorkspaceNode ( Workspace &workspace ) noexcept;
         virtual ~WorkspaceNode () = default;

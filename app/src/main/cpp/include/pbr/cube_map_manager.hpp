@@ -36,10 +36,10 @@ struct CubeMapID final
             Hasher () = default;
 
             Hasher ( Hasher const & ) = default;
-            Hasher &operator = ( Hasher const & ) = default;
+            Hasher &operator = ( Hasher const & ) = delete;
 
-            Hasher ( Hasher && ) = default;
-            Hasher &operator = ( Hasher && ) = default;
+            Hasher ( Hasher && ) = delete;
+            Hasher &operator = ( Hasher && ) = delete;
 
             ~Hasher () = default;
 

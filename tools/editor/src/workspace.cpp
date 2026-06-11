@@ -128,164 +128,9 @@ void Workspace::Init () noexcept
 {
     AV_TRACE ( "Workspace init" )
 
-    MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAddWidget,
-            [] () noexcept {
-                auto* dialogBox = new UIProps ();
-                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-                return dialogBox;
-            }
-        )
-    );
-
-    _viewport = new ViewportWidget ();
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAddWidget,
-            [ viewport = _viewport ] () noexcept {
-                return viewport;
-            }
-        )
-    );
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::InvokeIO,
-            [ this, &messageQueue ] () noexcept -> void* {
-                AV_TRACE ( "Making Vulkan resources" )
-
-                _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
-                _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
-
-                std::unique_ptr<pbr::OpaqueProgram> opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
-                android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-
-                if ( !opaqueProgram->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
-                    return nullptr;
-
-                auto programReady = [ this ] ( GraphicsProgramRef program ) noexcept {
-                    // NOLINTNEXTLINE - downcast
-                    _opaqueProgram = std::unique_ptr<pbr::OpaqueProgram> (
-                        static_cast<pbr::OpaqueProgram*> ( program.release () )
-                    );
-                };
-
-                messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewGraphicsProgram,
-                        [
-                            info = GraphicsProgramInfo (
-                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueProgram.release () ),
-                                std::move ( programReady )
-                            )
-                        ] () mutable noexcept -> void* {
-                            return &info;
-                        }
-                    )
-                );
-
-                StreamBufferRef frame = std::make_unique<pbr::StreamBuffer> ();
-
-                if ( !frame->Init ( renderer, pbr::FIF_COUNT, sizeof ( Frame ), "Frame stream" ) ) [[unlikely]]
-                    return nullptr;
-
-                auto frameReady = [ this ] ( StreamBufferRef buffer ) noexcept {
-                    _frameStream = std::move ( buffer );
-                };
-
-                messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewStreamBuffer,
-                        [
-                            info = StreamBufferInfo ( std::move ( frame ), std::move ( frameReady ) )
-                        ] () mutable noexcept -> void* {
-                            return &info;
-                        }
-                    )
-                );
-
-                StreamBufferRef transform = std::make_unique<pbr::StreamBuffer> ();
-
-                if ( !transform->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Transform ), "Transform stream" ) )
-                {
-                    [[unlikely]]
-                    return nullptr;
-                }
-
-                auto transformReady = [ this ] ( StreamBufferRef buffer ) noexcept {
-                    _transformStream = std::move ( buffer );
-                };
-
-                messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewStreamBuffer,
-                        [
-                            info = StreamBufferInfo ( std::move ( transform ), std::move ( transformReady ) )
-                        ] () mutable noexcept -> void* {
-                            return &info;
-                        }
-                    )
-                );
-
-                StreamBufferRef shading = std::make_unique<pbr::StreamBuffer> ();
-
-                if ( !shading->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Shading ), "Shading stream" ) )
-                {
-                    [[unlikely]]
-                    return nullptr;
-                }
-
-                auto shadingReady = [ this ] ( StreamBufferRef buffer ) noexcept {
-                    _shadingStream = std::move ( buffer );
-                };
-
-                messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewStreamBuffer,
-                        [
-                            info = StreamBufferInfo ( std::move ( shading ), std::move ( shadingReady ) )
-                        ] () mutable noexcept -> void* {
-                            return &info;
-                        }
-                    )
-                );
-
-                return nullptr;
-            }
-        )
-    );
-
-    Texture2DStorage &storage = Texture2DStorage::Instance ();
-
-    storage.Load ( "pbr/system/white.tga",
-        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _defaultAlbedo = std::move ( *texture );
-        }
-    );
-
-    storage.Load ( "pbr/system/black-transparent.tga",
-        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _defaultEmission = std::move ( *texture );
-        }
-    );
-
-    storage.Load ( "pbr/system/red-transparent.tga",
-        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _defaultMask = std::move ( *texture );
-        }
-    );
-
-    storage.Load ( "pbr/system/red-transparent.tga",
-        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _defaultParam = std::move ( *texture );
-        }
-    );
-
-    storage.Load ( "pbr/system/normal.tga",
-        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
-            _defaultNormal = std::move ( *texture );
-        }
-    );
+    InitWidgets ();
+    InitGraphicsResources ();
+    InitHotkeys ();
 
     FUCK ();
 }
@@ -295,6 +140,13 @@ void Workspace::Destroy () noexcept
     AV_TRACE ( "Workspace destroy" )
 
     // FUCK - data race: stop participating in rendering in RenderSession thread.
+
+    _useSelectTool = {};
+    _useMoveTool = {};
+    _useRotateTool = {};
+    _useScaleTool = {};
+    _saveWorkspace = {};
+    _saveAsWorkspace = {};
 
     _history.Clear ();
     _actors.clear ();
@@ -776,6 +628,236 @@ bool Workspace::IsReady () noexcept
         ( _stippleVisible.capacity () > 0U );
 
     return _ready;
+}
+
+void Workspace::InitGraphicsResources () noexcept
+{
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::InvokeIO,
+            [ this, &messageQueue ] () noexcept -> void* {
+                AV_TRACE ( "Making Vulkan resources" )
+
+                _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
+                _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
+
+                std::unique_ptr<pbr::OpaqueProgram> opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
+                android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+                if ( !opaqueProgram->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
+                    return nullptr;
+
+                auto programReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _opaqueProgram = std::unique_ptr<pbr::OpaqueProgram> (
+                        static_cast<pbr::OpaqueProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewGraphicsProgram,
+                        [
+                            info = GraphicsProgramInfo (
+                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueProgram.release () ),
+                                std::move ( programReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef frame = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !frame->Init ( renderer, pbr::FIF_COUNT, sizeof ( Frame ), "Frame stream" ) ) [[unlikely]]
+                    return nullptr;
+
+                auto frameReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _frameStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( frame ), std::move ( frameReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef transform = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !transform->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Transform ), "Transform stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto transformReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _transformStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( transform ), std::move ( transformReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef shading = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !shading->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Shading ), "Shading stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto shadingReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _shadingStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( shading ), std::move ( shadingReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                return nullptr;
+            }
+        )
+    );
+
+    Texture2DStorage &storage = Texture2DStorage::Instance ();
+
+    storage.Load ( "pbr/system/white.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultAlbedo = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/black-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultEmission = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/red-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultMask = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/red-transparent.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultParam = std::move ( *texture );
+        }
+    );
+
+    storage.Load ( "pbr/system/normal.tga",
+        [ this ] ( std::optional<Texture2DRef> &&texture ) noexcept {
+            _defaultNormal = std::move ( *texture );
+        }
+    );
+}
+
+void Workspace::InitHotkeys () noexcept
+{
+    _useSelectTool = Hotkey ( eKey::KeyQ,
+        false,
+        false,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Select tool" );
+        }
+    );
+
+    _useMoveTool = Hotkey ( eKey::KeyW,
+        false,
+        false,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Move tool" );
+        }
+    );
+
+    _useRotateTool = Hotkey ( eKey::KeyE,
+        false,
+        false,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Rotate tool" );
+        }
+    );
+
+    _useScaleTool = Hotkey ( eKey::KeyR,
+        false,
+        false,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Scale tool" );
+        }
+    );
+
+    _saveWorkspace = Hotkey ( eKey::KeyS,
+        false,
+        true,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Save" );
+        }
+    );
+
+    _saveAsWorkspace = Hotkey ( eKey::KeyS,
+        false,
+        true,
+        true,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Save as" );
+        }
+    );
+}
+
+void Workspace::InitWidgets () noexcept
+{
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::UIAddWidget,
+            [] () noexcept {
+                auto* dialogBox = new UIProps ();
+                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+
+                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
+                return dialogBox;
+            }
+        )
+    );
+
+    _viewport = new ViewportWidget ();
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::UIAddWidget,
+            [ viewport = _viewport ] () noexcept {
+                return viewport;
+            }
+        )
+    );
 }
 
 MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,

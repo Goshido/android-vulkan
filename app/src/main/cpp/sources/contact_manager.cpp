@@ -26,7 +26,7 @@ size_t ContactManager::Hasher::operator () ( Key const &me ) const noexcept
 
     size_t hash = 0U;
 
-    auto hashCombine = [ & ] ( RigidBody const* body ) noexcept
+    auto const hashCombine = [ this, &hash ] ( RigidBody const* body ) noexcept
     {
         constexpr size_t magic = 0x9E3779B9U;
         hash ^= _hashServer ( body ) + magic + ( hash << 6U ) + ( hash >> 2U );

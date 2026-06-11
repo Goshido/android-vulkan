@@ -12,7 +12,7 @@ size_t Exporter::Attributes::Hasher::operator () ( Attributes const &item ) cons
 
     size_t hash = 0U;
 
-    auto hashCombine = [ & ] ( uint64_t v ) noexcept
+    auto const hashCombine = [ this, &hash ] ( uint64_t v ) noexcept
     {
         constexpr size_t magic = 0x9E3779B9U;
         hash ^= _hashServer ( v ) + magic + ( hash << 6U ) + ( hash >> 2U );

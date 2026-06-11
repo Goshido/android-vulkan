@@ -1059,6 +1059,7 @@
     <ClCompile Include="src\gizmo_node.cpp" />
     <ClCompile Include="src\graphics_program_info.cpp" />
     <ClCompile Include="src\history.cpp" />
+    <ClCompile Include="src\hotkey.cpp" />
     <ClCompile Include="src\message.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
@@ -1223,6 +1224,7 @@
     <ClInclude Include="include\gizmo_node.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\history.hpp" />
+    <ClInclude Include="include\hotkey.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\shading.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />

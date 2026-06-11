@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <font_storage.hpp>
+#include <hotkey.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
@@ -223,22 +224,28 @@ void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&messag
 
     KeyboardKeyEvent const event ( message );
 
+    // FUCK - figure out how to process hotkeys
+
     if ( _typingCapture )
     {
         _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
         return;
     }
 
-    std::shared_lock const lock ( _mutex );
-
-    for ( auto &widget : _widgets )
     {
-        if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+        std::shared_lock const lock ( _mutex );
+
+        for ( auto &widget : _widgets )
         {
-            w.OnKeyboardKeyDown ( event._key, event._modifier );
-            break;
+            if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+            {
+                w.OnKeyboardKeyDown ( event._key, event._modifier );
+                break;
+            }
         }
     }
+
+    Hotkey::Process ( event._key, event._modifier );
 }
 
 void UIManager::OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept

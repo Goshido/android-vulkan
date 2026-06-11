@@ -11,7 +11,7 @@ size_t CubeMapID::Hasher::operator () ( CubeMapID const &me ) const noexcept
 
     size_t hash = 0U;
 
-    auto hashCombine = [ & ] ( std::string_view const &string )
+    auto const hashCombine = [ this, &hash ] ( std::string_view const &string ) noexcept
     {
         constexpr size_t const magic = 0x9e3779b9U;
         hash ^= _hashServer ( string ) + magic + ( hash << 6U ) + ( hash >> 2U );

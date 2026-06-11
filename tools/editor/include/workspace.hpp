@@ -5,6 +5,7 @@
 #include "actor.hpp"
 #include "gizmo_node.hpp"
 #include "history.hpp"
+#include "hotkey.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
@@ -82,8 +83,16 @@ class Workspace final
         Texture2DRef                                    _defaultNormal {};
 
         ViewportWidget*                                 _viewport = nullptr;
-
         std::mutex                                      _mutex {};
+
+        Hotkey                                          _useSelectTool {};
+        Hotkey                                          _useMoveTool {};
+        Hotkey                                          _useRotateTool {};
+        Hotkey                                          _useScaleTool {};
+
+        Hotkey                                          _saveWorkspace {};
+        Hotkey                                          _saveAsWorkspace {};
+
         bool                                            _ready = false;
 
         static Workspace*                               _instance;
@@ -132,6 +141,10 @@ class Workspace final
     private:
         void FUCK () noexcept;
         [[nodiscard]] bool IsReady () noexcept;
+
+        void InitGraphicsResources () noexcept;
+        void InitHotkeys () noexcept;
+        void InitWidgets () noexcept;
 
         [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,
             MeshQueue &meshQueue,

@@ -19,6 +19,7 @@ constexpr std::string_view CONFIG_KEY_UI_ZOOM = "UI zoom";
 constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
+constexpr std::string_view CLI_NO_VULKAN_INIT_LOGS = "--no-vulkan-init-logs";
 
 // It prevents busy loop.
 // [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
@@ -63,7 +64,7 @@ bool Editor::InitModules () noexcept
             AV_THREAD_NAME ( "Init Vulkan" )
 
             auto* value = reinterpret_cast<void*> (
-                static_cast<uintptr_t> ( renderer.OnCreateDevice ( config._gpu ) )
+                static_cast<uintptr_t> ( renderer.OnCreateDevice ( config._gpu, IsProvideVulkanInitLogs () ) )
             );
 
             _messageQueue.EnqueueBack (
@@ -183,6 +184,114 @@ void Editor::DestroyModules () noexcept
     _io.Destroy ();
     renderer.OnDestroySwapchain ( false );
     renderer.OnDestroyDevice ();
+}
+
+void Editor::ShutdownWorkspace ( std::optional<Message::SerialNumber> &lastRefund ) noexcept
+{
+    while ( !_frameComplete )
+    {
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::FrameComplete:
+                OnFrameComplete ();
+            break;
+
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::StartTimer:
+                [[fallthrough]];
+            case eMessageType::StopTimer:
+                _messageQueue.DequeueEnd ();
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+
+    _workspace.Destroy ();
+}
+
+void Editor::ShutdownAllExceptIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept
+{
+    _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
+
+    while ( _runningModules > 1U )
+    {
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::Shutdown:
+                _messageQueue.DequeueEnd ();
+                _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
+            break;
+
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::StartTimer:
+                [[fallthrough]];
+            case eMessageType::StopTimer:
+                _messageQueue.DequeueEnd ();
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+}
+
+void Editor::ShutdownIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept
+{
+    _messageQueue.EnqueueBack ( Message ( eMessageType::StopIO ) );
+
+    while ( _runningModules > 0U )
+    {
+        std::this_thread::sleep_for ( IDLE );
+        Message message = _messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::Shutdown:
+                _messageQueue.DequeueEnd ();
+            break;
+
+            case eMessageType::ModuleStopped:
+                OnModuleStopped ();
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
 }
 
 void Editor::EventLoop () noexcept
@@ -403,81 +512,11 @@ void Editor::OnShutdown () noexcept
 {
     AV_TRACE ( "Shutdown" )
     _messageQueue.DequeueEnd ();
-    _workspace.Destroy ();
 
-    _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
     std::optional<Message::SerialNumber> lastRefund {};
-
-    // Only IO module must be alive
-
-    while ( _runningModules > 1U )
-    {
-        std::this_thread::sleep_for ( IDLE );
-        Message message = _messageQueue.DequeueBegin ( lastRefund );
-
-        GX_DISABLE_WARNING ( 4061 )
-
-        switch ( message._type )
-        {
-            case eMessageType::Shutdown:
-                _messageQueue.DequeueEnd ();
-                _messageQueue.EnqueueBack ( Message ( eMessageType::Shutdown ) );
-            break;
-
-            case eMessageType::FrameComplete:
-                OnFrameComplete ();
-            break;
-
-            case eMessageType::ModuleStopped:
-                OnModuleStopped ();
-            break;
-
-            case eMessageType::RunEventLoop:
-                [[fallthrough]];
-            case eMessageType::StartTimer:
-                [[fallthrough]];
-            case eMessageType::StopTimer:
-                _messageQueue.DequeueEnd ();
-            break;
-
-            default:
-                lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
-            break;
-        }
-
-        GX_ENABLE_WARNING ( 4061 )
-    }
-
-    _messageQueue.EnqueueBack ( Message ( eMessageType::StopIO ) );
-
-    while ( _runningModules > 0U )
-    {
-        std::this_thread::sleep_for ( IDLE );
-        Message message = _messageQueue.DequeueBegin ( lastRefund );
-
-        GX_DISABLE_WARNING ( 4061 )
-
-        switch ( message._type )
-        {
-            case eMessageType::RunEventLoop:
-                [[fallthrough]];
-            case eMessageType::Shutdown:
-                _messageQueue.DequeueEnd ();
-            break;
-
-            case eMessageType::ModuleStopped:
-                OnModuleStopped ();
-            break;
-
-            default:
-                lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
-            break;
-        }
-
-        GX_ENABLE_WARNING ( 4061 )
-    }
+    ShutdownWorkspace ( lastRefund );
+    ShutdownAllExceptIO ( lastRefund );
+    ShutdownIO ( lastRefund );
 }
 
 void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept
@@ -534,6 +573,19 @@ std::string_view Editor::GetUserGPU () const noexcept
     }
 
     return {};
+}
+
+bool Editor::IsProvideVulkanInitLogs () const noexcept
+{
+    for ( char const *arg : _commandLine )
+    {
+        if ( arg == CLI_NO_VULKAN_INIT_LOGS ) [[unlikely]]
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 Editor::Config Editor::LoadConfig () noexcept

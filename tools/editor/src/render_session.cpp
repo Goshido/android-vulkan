@@ -615,14 +615,14 @@ void RenderSession::DestroyGraphicsPrograms ( MessageQueue &messageQueue, size_t
 
     for ( auto &program : destroyQueue )
     {
-        AV_TRACE ( "Destroy graphics program (%s)", program->GetName ().c_str () );
+        AV_TRACE ( "Destroy graphics program (%s)", program->GetName ().data () );
 
         // Calling method by pointer C++ syntax
         ( messageQueue.*_enqueueHandle ) (
             Message ( eMessageType::InvokeIO,
                 [ this, &messageQueue, device, program = std::move ( program ) ] () noexcept -> void* {
                     pbr::GraphicsProgram &p = *program;
-                    AV_TRACE ( "Destroy graphics program (%s)", p.GetName ().c_str () );
+                    AV_TRACE ( "Destroy graphics program (%s)", p.GetName ().data () );
                     p.Destroy ( device );
 
                     // Calling method by pointer C++ syntax
@@ -1281,7 +1281,9 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _toneMapper.Destroy ( device );
     resourceHeap.Destroy ( renderer );
 
+    _graphicsProgramStorage = {};
     _meshStorage = {};
+    _streamBufferStorage = {};
     _texture2DStorage = {};
 
     messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );

@@ -21,6 +21,11 @@ void GraphicsProgramBase::Bind ( VkCommandBuffer commandBuffer ) const noexcept
     vkCmdBindPipeline ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline );
 }
 
+[[maybe_unused]] std::string_view GraphicsProgramBase::GetName () const noexcept
+{
+    return _name;
+}
+
 GraphicsProgramBase::GraphicsProgramBase ( std::string_view name ) noexcept:
     _name ( name )
 {

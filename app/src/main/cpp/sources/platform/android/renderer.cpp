@@ -25,10 +25,13 @@ constexpr char const INDENT_2[] = "        ";
 //----------------------------------------------------------------------------------------------------------------------
 
 [[nodiscard]] bool CheckExtensionScalarBlockLayout ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME, initLogs );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
@@ -46,8 +49,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.scalarBlockLayout == VK_TRUE;
 
-    if ( hardwareSupport.scalarBlockLayout ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
         return true;
@@ -58,10 +65,13 @@ constexpr char const INDENT_2[] = "        ";
 }
 
 [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME, initLogs );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
@@ -80,8 +90,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.shaderFloat16 == VK_TRUE;
 
-    if ( hardwareSupport.shaderFloat16 ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
         return true;
@@ -214,8 +228,6 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 
 bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-    LogInfo ( ">>> Checking required device features..." );
-
     VkPhysicalDeviceVulkan11Features features11
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
@@ -247,19 +259,29 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
+    if ( _initLogs )
+        LogInfo ( ">>> Checking required device features..." );
+
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SPIRV_1_4_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32" ) );
-        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) );
-        AV_BITWISE ( CheckFeature ( features.textureCompressionASTC_LDR, "textureCompressionASTC_LDR" ) );
-        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) );
+    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, _initLogs ) ) &
+
+        AV_BITWISE (
+            CheckExtensionCommon ( allExtensions,
+                VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SPIRV_1_4_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features.textureCompressionASTC_LDR, "textureCompressionASTC_LDR", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview", _initLogs ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept

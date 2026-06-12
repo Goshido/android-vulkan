@@ -44,6 +44,8 @@ class GraphicsProgramBase
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
+        [[maybe_unused]] std::string_view GetName () const noexcept;
+
     protected:
         explicit GraphicsProgramBase ( std::string_view name ) noexcept;
         virtual ~GraphicsProgramBase () = default;

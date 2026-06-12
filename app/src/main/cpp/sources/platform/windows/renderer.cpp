@@ -26,10 +26,13 @@ constexpr char const INDENT_2[] = "        ";
 //----------------------------------------------------------------------------------------------------------------------
 
 [[nodiscard]] bool CheckExtensionDescriptorBuffer ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME, initLogs );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceDescriptorBufferFeaturesEXT hardwareSupport
@@ -50,8 +53,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.descriptorBuffer == VK_TRUE;
 
-    if ( hardwareSupport.descriptorBuffer ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: descriptorBuffer", INDENT_2 );
         return true;
@@ -62,10 +69,16 @@ constexpr char const INDENT_2[] = "        ";
 }
 
 [[nodiscard]] bool CheckExtensionMutableDescriptorType ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions,
+        VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
+        initLogs
+    );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT hardwareSupport
@@ -83,8 +96,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.mutableDescriptorType == VK_TRUE;
 
-    if ( hardwareSupport.mutableDescriptorType ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: mutableDescriptorType", INDENT_2 );
         return true;
@@ -286,8 +303,6 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 
 bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-    LogInfo ( ">>> Checking required device features..." );
-
     VkPhysicalDeviceVulkan11Features features11
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
@@ -420,56 +435,97 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
+    if ( _initLogs )
+        LogInfo ( ">>> Checking required device features..." );
+
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionDescriptorBuffer ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionMutableDescriptorType ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
+    return AV_BITWISE ( CheckExtensionDescriptorBuffer ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionMutableDescriptorType ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, _initLogs ) ) &
 
 #ifdef AV_ENABLE_NSIGHT
 
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME ) ) &
+        AV_BITWISE (
+            CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, _initLogs )
+        ) &
 
 #endif // AV_ENABLE_NSIGHT
 
-        AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy" ) ) &
-        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) ) &
-        AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64" ) ) &
+        AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
-            "shaderSampledImageArrayDynamicIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
+                "shaderSampledImageArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderStorageBufferArrayDynamicIndexing,
-            "shaderStorageBufferArrayDynamicIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderStorageBufferArrayDynamicIndexing,
+                "shaderStorageBufferArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderStorageImageArrayDynamicIndexing,
-            "shaderStorageImageArrayDynamicIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderStorageImageArrayDynamicIndexing,
+                "shaderStorageImageArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC" ) ) &
+        AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.descriptorBindingPartiallyBound,
+                "descriptorBindingPartiallyBound",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.descriptorBindingPartiallyBound, "descriptorBindingPartiallyBound" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.descriptorIndexing, "descriptorIndexing" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.runtimeDescriptorArray, "runtimeDescriptorArray" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.separateDepthStencilLayouts, "separateDepthStencilLayouts" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.descriptorIndexing, "descriptorIndexing", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.runtimeDescriptorArray, "runtimeDescriptorArray", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderSampledImageArrayNonUniformIndexing,
-            "shaderSampledImageArrayNonUniformIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.separateDepthStencilLayouts,
+                "separateDepthStencilLayouts",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderStorageBufferArrayNonUniformIndexing,
-            "shaderStorageBufferArrayNonUniformIndexing" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
-            "shaderStorageImageArrayNonUniformIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.shaderSampledImageArrayNonUniformIndexing,
+                "shaderSampledImageArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) ) &
-        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.shaderStorageBufferArrayNonUniformIndexing,
+                "shaderStorageBufferArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5" ) );
+        AV_BITWISE (
+            CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
+                "shaderStorageImageArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2", _initLogs ) ) &
+
+        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5", _initLogs ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept

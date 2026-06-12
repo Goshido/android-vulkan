@@ -12,8 +12,7 @@ $params = @(
 )
 
 Write-Host "Compiling:" $DXC $FLAGS $params
-
 & $DXC $FLAGS $params
-
 Write-Host "Done"
-Write-Host
+
+Write-Host ""

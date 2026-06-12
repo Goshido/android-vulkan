@@ -75,7 +75,7 @@ class ContactManager final
                 Hasher ( Hasher const & ) = default;
                 Hasher &operator = ( Hasher const & ) = delete;
 
-                Hasher ( Hasher && ) = delete;
+                Hasher ( Hasher && ) = default;
                 Hasher &operator = ( Hasher && ) = delete;
 
                 ~Hasher() = default;

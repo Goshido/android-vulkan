@@ -70,6 +70,10 @@ class Editor final
         [[nodiscard]] bool InitModules () noexcept;
         void DestroyModules () noexcept;
 
+        void ShutdownWorkspace ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+        void ShutdownAllExceptIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+        void ShutdownIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+
         void EventLoop () noexcept;
 
         void OnCaptureKeyboard () noexcept;
@@ -90,6 +94,7 @@ class Editor final
         void ScheduleEventLoop () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;
+        [[nodiscard]] bool IsProvideVulkanInitLogs () const noexcept;
         [[nodiscard]] Config LoadConfig () noexcept;
 };
 

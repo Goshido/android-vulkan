@@ -1,9 +1,7 @@
-[string] $src = $args[ 0 ]
-
-#-----------------------------------------------------------------------------------------------------------------------
-
 Clear-Host
 . scripts\windows\make-env.ps1 $false
+
+[string] $src = $args[ 0 ]
 
 [PSCustomObject] $type = Resolve-Type-HLSL                                                                             `
     -Src $src
@@ -16,8 +14,7 @@ $params = @(
 )
 
 Write-Host "SPIR-V Disassemble:" $DXC $FLAGS $params
-
 & $DXC $FLAGS $params
-
 Write-Host "Done"
-Write-Host
+
+Write-Host ""

@@ -10,7 +10,6 @@ tokei                                                                           
     "./tools/3ds-max-plugin/sources"                                                                                   `
     --exclude "tools/3ds-max-plugin/sources/mikkt/mikktspace.c"                                                        `
                                                                                                                        `
-    "./tools/editor/hlsl"                                                                                              `
     "./tools/editor/include"                                                                                           `
     --exclude "tools/editor/include/WinPixEventRuntime/*"                                                              `
     "./tools/editor/scripts"                                                                                           `

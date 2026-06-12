@@ -24,6 +24,7 @@ namespace {
 constexpr double FPS_PERIOD = 3.0;
 constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
 constexpr bool VSYNC = true;
+constexpr bool VULKAN_INIT_LOGS = true;
 
 enum class eGame : uint16_t
 {
@@ -100,7 +101,7 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
                 return;
             }
 
-            if ( !_renderer.OnCreateDevice ( {} ) ) [[unlikely]]
+            if ( !_renderer.OnCreateDevice ( {}, VULKAN_INIT_LOGS ) ) [[unlikely]]
             {
                 _renderer.OnDestroyDevice ();
                 _game->OnDestroySoundSystem ();

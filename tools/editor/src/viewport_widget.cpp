@@ -13,6 +13,7 @@ constexpr float FREE_FLY_SPRINT_SPEED = 10.0F;
 constexpr float Z_NEAR = 0.1F;
 constexpr float Z_FAR = 1.0e+3F;
 constexpr float FOV_Y = GXDegToRad ( 70.0F );
+constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
 } // namespace
 
@@ -336,10 +337,16 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     displacementLocal._data[ 2U ] = directionCases[ static_cast<size_t> ( _state._forward ) ];
     displacementLocal._data[ 2U ] += -directionCases[ static_cast<size_t> ( _state._backward ) ];
 
+    float const l = displacementLocal.SquaredLength ();
+
+    // For example the user is pressing A+D or W+S.
+    if ( l < MOVE_SPEED_THRESHOLD ) [[unlikely]]
+        return;
+
     constexpr float speedCases[] = { FREE_FLY_MOVE_SPEED, FREE_FLY_SPRINT_SPEED };
 
     displacementLocal.Multiply ( displacementLocal,
-        deltaTime * speedCases[ static_cast<size_t> ( _state._shift ) ] / displacementLocal.Length ()
+        deltaTime * speedCases[ static_cast<size_t> ( _state._shift ) ] / std::sqrt ( l )
     );
 
     GXVec3 displacementWorld {};

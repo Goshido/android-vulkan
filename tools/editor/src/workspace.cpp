@@ -139,8 +139,6 @@ void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
 
-    // FUCK - data race: stop participating in rendering in RenderSession thread.
-
     _useSelectTool = {};
     _useMoveTool = {};
     _useRotateTool = {};
@@ -302,7 +300,7 @@ void Workspace::ComputeTransform ( float deltaTime ) noexcept
             if ( !count ) [[unlikely]]
                 continue;
 
-            queueVisible.push_back ( 
+            queueVisible.push_back (
                 {
                     ._mesh = instances.first.get (),
                     ._count = count

@@ -137,8 +137,6 @@ class Renderer final
 
 #endif // AV_ENABLE_VVL
 
-        bool                                                _vSync = true;
-
         VkExtent2D                                          _viewportResolution
         {
             .width = 0U,
@@ -146,6 +144,8 @@ class Renderer final
         };
 
         VulkanLoader                                        _vulkanLoader {};
+        bool                                                _vSync = true;
+        bool                                                _initLogs = true;
 
     public:
         explicit Renderer () = default;
@@ -219,7 +219,7 @@ class Renderer final
 
         void OnDestroySwapchain ( bool preserveSurface ) noexcept;
 
-        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU ) noexcept;
+        [[nodiscard]] bool OnCreateDevice ( std::string_view const &userGPU, bool initLogs ) noexcept;
         void OnDestroyDevice () noexcept;
 
         void OnSetDPI ( float dpi ) noexcept;
@@ -246,7 +246,8 @@ class Renderer final
         [[maybe_unused]] void MakeVulkanMemorySnapshot () noexcept;
 
         [[nodiscard]] static bool CheckExtensionCommon ( std::set<std::string> const &allExtensions,
-            char const* extension
+            char const* extension,
+            bool initLogs
         ) noexcept;
 
         // Method returns true if "result" equals VK_SUCCESS. Otherwise method returns false.
@@ -290,9 +291,9 @@ class Renderer final
 
         void GetPlatformFeatureProperties () noexcept;
 
-        [[nodiscard]] bool PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
-        void PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
-        [[nodiscard]] bool PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept;
+        [[nodiscard]] bool CollectPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        void CollectPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept;
+        [[nodiscard]] bool CollectPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept;
 
         [[nodiscard]] bool SelectTargetCompositeAlpha (
             VkCompositeAlphaFlagBitsKHR &targetCompositeAlpha
@@ -302,7 +303,7 @@ class Renderer final
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept;
 
-        [[nodiscard]] static bool CheckFeature ( VkBool32 feature, char const* name ) noexcept;
+        [[nodiscard]] static bool CheckFeature ( VkBool32 feature, char const* name, bool initLogs ) noexcept;
         [[nodiscard]] static std::span<char const* const> GetDeviceExtensions () noexcept;
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
@@ -311,7 +312,7 @@ class Renderer final
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;
-        static void PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] ) noexcept;
+        static void PrintFloatVec2Prop ( char const* indent, char const* name, float const* value ) noexcept;
         static void PrintINT32Prop ( char const* indent, char const* name, int32_t value ) noexcept;
         [[nodiscard]] static bool PrintInstanceLayerInfo () noexcept;
         static void PrintPhysicalDeviceCommonProps ( VkPhysicalDeviceProperties const &props ) noexcept;
@@ -331,8 +332,8 @@ class Renderer final
         static void PrintPhysicalDeviceSparse ( VkPhysicalDeviceSparseProperties const &sparse ) noexcept;
         static void PrintSizeProp ( char const* indent, char const* name, size_t value ) noexcept;
         static void PrintUINT32Prop ( char const* indent, char const* name, uint32_t value ) noexcept;
-        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept;
-        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept;
+        static void PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const* value ) noexcept;
+        static void PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const* value ) noexcept;
         static void PrintUTF8Prop ( char const* indent, char const* name, char const* value ) noexcept;
         static void PrintVkBool32Prop ( char const* indent, char const* name, VkBool32 value ) noexcept;
         static void PrintVkExtent2DProp ( char const* indent, char const* name, VkExtent2D const &value ) noexcept;

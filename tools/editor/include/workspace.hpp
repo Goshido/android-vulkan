@@ -5,7 +5,6 @@
 #include "actor.hpp"
 #include "gizmo_node.hpp"
 #include "history.hpp"
-#include "hotkey.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
@@ -55,6 +54,7 @@ class Workspace final
     private:
         History                                         _history {};
         std::unordered_map<Actor const*, ActorRef>      _actors {};
+        std::deque<Actor const*>                        _selection {};
 
         MeshQueue                                       _opaqueQueue {};
         MeshMap                                         _opaqueMap {};
@@ -85,11 +85,8 @@ class Workspace final
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 
-        Hotkey                                          _useSelectTool {};
-        Hotkey                                          _useMoveTool {};
-        Hotkey                                          _useRotateTool {};
-        Hotkey                                          _useScaleTool {};
-
+        Hotkey                                          _delete {};
+        Hotkey                                          _openWorkspace {};
         Hotkey                                          _saveWorkspace {};
         Hotkey                                          _saveAsWorkspace {};
 
@@ -122,6 +119,9 @@ class Workspace final
 
         void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
         void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
+
+        [[nodiscard]] bool HasSelection () const noexcept;
+        void Select ( Rect const &rect, bool invert ) noexcept;
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;

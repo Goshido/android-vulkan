@@ -3,6 +3,11 @@
 
 
 #include "div_ui_element.hpp"
+#include "hotkey.hpp"
+#include "move_tool.hpp"
+#include "rotate_tool.hpp"
+#include "scale_tool.hpp"
+#include "select_tool.hpp"
 #include "widget.hpp"
 
 
@@ -37,12 +42,29 @@ class ViewportWidget final : public Widget
         };
 
     private:
+        MoveTool                _moveTool {};
+        Hotkey                  _useMoveTool {};
+
+        RotateTool              _rotateTool {};
+        Hotkey                  _useRotateTool {};
+
+        ScaleTool               _scaleTool {};
+        Hotkey                  _useScaleTool {};
+
+        SelectTool              _selectTool {};
+        Hotkey                  _useSelectTool {};
+
+        Tool*                   _activeTool = nullptr;
+
         GXMat4                  _projection = GXMat4::IDENTITY;
         DIVUIElement            _div;
         VkExtent2D              _resolution {};
         std::vector<float>      _lineHeights = { 0.0F };
         GXQuat                  _orientation = GXQuat::IDENTITY;
-        GXVec3                  _position = GXVec3::ZERO;
+
+        // FUCK - must be GXVec3::ZERO
+        GXVec3                  _position { 0.0F, 1.0F, -3.0F };
+
         Mouse                   _mouseNow {};
         Mouse                   _mouseCommit {};
         size_t                  _eventID = 0U;
@@ -60,6 +82,9 @@ class ViewportWidget final : public Widget
         ViewportWidget &operator = ( ViewportWidget && ) = delete;
 
         ~ViewportWidget () = default;
+
+        void Init () noexcept;
+        void Destroy () noexcept;
 
         void Update ( float deltaTime, float dpi ) noexcept;
 
@@ -85,6 +110,9 @@ class ViewportWidget final : public Widget
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;
         void DoOrbit () noexcept;
+
+        void HandleSelection ( MouseButtonEvent const &event ) noexcept;
+        void SwitchTool ( Tool &tool ) noexcept;
 };
 
 } // namespace editor

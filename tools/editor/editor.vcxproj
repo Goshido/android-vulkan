@@ -1061,7 +1061,11 @@
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\hotkey.cpp" />
     <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\move_tool.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
+    <ClCompile Include="src\rotate_tool.cpp" />
+    <ClCompile Include="src\scale_tool.cpp" />
+    <ClCompile Include="src\select_tool.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
     <ClCompile Include="src\texture2D_storage.cpp" />
     <ClCompile Include="src\io.cpp" />
@@ -1225,7 +1229,11 @@
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\hotkey.hpp" />
+    <ClInclude Include="include\move_tool.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
+    <ClInclude Include="include\rotate_tool.hpp" />
+    <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\select_tool.hpp" />
     <ClInclude Include="include\shading.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
@@ -1267,6 +1275,7 @@
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\timer.hpp" />
     <ClInclude Include="include\timer_manager.hpp" />
+    <ClInclude Include="include\tool.hpp" />
     <ClInclude Include="include\tools\hlsl.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>

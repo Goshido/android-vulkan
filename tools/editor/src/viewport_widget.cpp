@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <theme.hpp>
 #include <viewport_widget.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
@@ -50,9 +51,57 @@ ViewportWidget::ViewportWidget () noexcept:
     )
 {
     // NOTHING
+}
 
-    // FUCK
-    _position = GXVec3 ( 0.0F, 1.0F, -3.0F );
+void ViewportWidget::Init () noexcept
+{
+    _useMoveTool = Hotkey ( eKey::KeyW,
+        false,
+        false,
+        false,
+
+        [ this ] () noexcept {
+            SwitchTool ( _moveTool );
+        }
+    );
+
+    _useRotateTool = Hotkey ( eKey::KeyE,
+        false,
+        false,
+        false,
+
+        [ this ] () noexcept {
+            SwitchTool ( _rotateTool );
+        }
+    );
+
+    _useSelectTool = Hotkey ( eKey::KeyQ,
+        false,
+        false,
+        false,
+
+        [ this ] () noexcept {
+            SwitchTool ( _selectTool );
+        }
+    );
+
+    _useScaleTool = Hotkey ( eKey::KeyR,
+        false,
+        false,
+        false,
+
+        [ this ] () noexcept {
+            SwitchTool ( _scaleTool );
+        }
+    );
+}
+
+void ViewportWidget::Destroy () noexcept
+{
+    _useSelectTool = {};
+    _useMoveTool = {};
+    _useRotateTool = {};
+    _useScaleTool = {};
 }
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
@@ -124,6 +173,7 @@ void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 1U );
+    HandleSelection ( event );
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
@@ -357,6 +407,30 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
 void ViewportWidget::DoOrbit () noexcept
 {
     // FUCK
+}
+
+void ViewportWidget::HandleSelection ( MouseButtonEvent const &event ) noexcept
+{
+    if ( event._key != eKey::LeftMouseButton )
+        return;
+
+    // FUCK - rectangle select
+    Workspace::Instance ().Select ( Rect ( _mouseNow._x, _mouseNow._x, _mouseNow._y, _mouseNow._y ),
+        event._modifier.AnyShiftPressed ()
+    );
+}
+
+void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
+{
+    Tool* old = std::exchange ( _activeTool, &tool );
+
+    if ( old == &tool ) [[unlikely]]
+        return;
+
+    if ( old ) [[likely]]
+        old->Deactivate ();
+
+    tool.Activate ();
 }
 
 } // namespace editor

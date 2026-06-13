@@ -399,6 +399,18 @@
     <ClCompile Include="src\hotkey.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\move_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rotate_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scale_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\select_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -867,6 +879,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\hotkey.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\move_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rotate_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scale_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\select_tool.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

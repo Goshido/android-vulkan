@@ -139,10 +139,10 @@ void Workspace::Destroy () noexcept
 {
     AV_TRACE ( "Workspace destroy" )
 
-    _useSelectTool = {};
-    _useMoveTool = {};
-    _useRotateTool = {};
-    _useScaleTool = {};
+    _viewport->Destroy ();
+
+    _delete = {};
+    _openWorkspace = {};
     _saveWorkspace = {};
     _saveAsWorkspace = {};
 
@@ -408,6 +408,19 @@ void Workspace::Pick ( Rect const &/*rect*/, GXMat4 const &/*viewer*/, GXMat4 co
 {
     AV_TRACE ( "Workspace pick" )
     // FUCK
+}
+
+bool Workspace::HasSelection () const noexcept
+{
+    return !_selection.empty ();
+}
+
+void Workspace::Select ( Rect const &rect, bool invert ) noexcept
+{
+    // FUCK
+    android_vulkan::LogDebug ( "[%d %d][%d %d] %s", rect._left, rect._top, rect._right, rect._bottom,
+        invert ? "invert" : "single"
+    );
 }
 
 MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
@@ -769,43 +782,23 @@ void Workspace::InitGraphicsResources () noexcept
 
 void Workspace::InitHotkeys () noexcept
 {
-    _useSelectTool = Hotkey ( eKey::KeyQ,
+    _delete = Hotkey ( eKey::KeyDel,
         false,
         false,
         false,
 
         [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Select tool" );
+            android_vulkan::LogDebug ( ">>> Delete" );
         }
     );
 
-    _useMoveTool = Hotkey ( eKey::KeyW,
+    _openWorkspace = Hotkey ( eKey::KeyO,
         false,
-        false,
-        false,
-
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Move tool" );
-        }
-    );
-
-    _useRotateTool = Hotkey ( eKey::KeyE,
-        false,
-        false,
+        true,
         false,
 
         [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Rotate tool" );
-        }
-    );
-
-    _useScaleTool = Hotkey ( eKey::KeyR,
-        false,
-        false,
-        false,
-
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Scale tool" );
+            android_vulkan::LogDebug ( ">>> Open" );
         }
     );
 
@@ -852,6 +845,7 @@ void Workspace::InitWidgets () noexcept
     messageQueue.EnqueueBack (
         Message ( eMessageType::UIAddWidget,
             [ viewport = _viewport ] () noexcept {
+                viewport->Init ();
                 return viewport;
             }
         )

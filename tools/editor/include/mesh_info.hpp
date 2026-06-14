@@ -5,6 +5,12 @@
 #include "shading.hpp"
 #include "transform.hpp"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <bit>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace editor {
 
@@ -16,6 +22,7 @@ struct MeshInfo final
     Transform       _transform {};
     GXAABB          _boundWorld {};
     Shading         _shading {};
+    uint64_t        _id = std::bit_cast<uint64_t> ( nullptr );
     bool            _isStipple = false;
 };
 

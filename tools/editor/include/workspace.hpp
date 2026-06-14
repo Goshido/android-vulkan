@@ -75,6 +75,7 @@ class Workspace final
         StreamBufferRef                                 _frameStream {};
         StreamBufferRef                                 _transformStream {};
         StreamBufferRef                                 _shadingStream {};
+        StreamBufferRef                                 _idStream {};
 
         Texture2DRef                                    _defaultAlbedo {};
         Texture2DRef                                    _defaultEmission {};
@@ -91,6 +92,7 @@ class Workspace final
         Hotkey                                          _saveAsWorkspace {};
 
         bool                                            _ready = false;
+        bool                                            _pendingSelect = false;
 
         static Workspace*                               _instance;
 
@@ -111,17 +113,14 @@ class Workspace final
         void Load ( std::string_view scene ) noexcept;
         void Close () noexcept;
 
-        void ComputeTransform ( float deltaTime ) noexcept;
-        void UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept;
-
+        void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
 
-        void Pick ( int32_t x, int32_t y, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
-        void Pick ( Rect const &rect, GXMat4 const &viewer, GXMat4 const &projection ) noexcept;
-
+        [[nodiscard]] bool PendingSelect () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void Select ( Rect const &rect, bool invert ) noexcept;
+        void ComputeSelect ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
@@ -140,6 +139,13 @@ class Workspace final
 
     private:
         void FUCK () noexcept;
+
+        void ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept;
+        void ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept;
+
+        void FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept;
+        void FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept;
+
         [[nodiscard]] bool IsReady () noexcept;
 
         void InitGraphicsResources () noexcept;

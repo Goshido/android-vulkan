@@ -32,6 +32,9 @@ constexpr size_t PARAM_ATTACHMENT_INDEX = 3U;
 
 constexpr size_t DEPTH_BARRIER_INDEX = 4U;
 
+constexpr VkFormat ID_RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_UINT;
+constexpr size_t ID_BARRIER_INDEX = 5U;
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -244,6 +247,12 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
             renderer.GetDefaultDepthFormat (),
             AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
             renderer
+        ) &&
+
+        _idRenderTarget.CreateRenderTarget ( resolution,
+            ID_RENDER_TARGET_FORMAT,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+            renderer
         );
 
     if ( !result ) [[unlikely]]
@@ -309,6 +318,13 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
             _barriers[ DEPTH_BARRIER_INDEX ],
             _depthRenderTargetIdx,
             "Depth"
+        ) &&
+
+        setup ( _idRenderTarget,
+            _idAttachment,
+            _barriers[ ID_BARRIER_INDEX ],
+            _idRenderTargetIdx,
+            "ID"
         );
 }
 
@@ -873,6 +889,157 @@ void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, si
     uploadQueue.clear ();
 }
 
+void RenderSession::RenderSceneOnly ( VkCommandBuffer commandBuffer ) noexcept
+{
+    constexpr auto prepareColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    };
+
+    prepareColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+
+    VkImageMemoryBarrier &depth = _barriers[ DEPTH_BARRIER_INDEX ];
+    depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U ),
+        _barriers
+    );
+
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+
+    _workspace.FillGBuffer ( commandBuffer );
+
+    vkCmdEndRendering ( commandBuffer );
+
+    constexpr auto commitColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    };
+
+    commitColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX ),
+        _barriers
+    );
+}
+
+void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+{
+    // FUCK - add ID render target sync
+    constexpr auto prepareColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    };
+
+    prepareColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+
+    VkImageMemoryBarrier &depth = _barriers[ DEPTH_BARRIER_INDEX ];
+    depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U ),
+        _barriers
+    );
+
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+
+    _workspace.FillGBuffer ( commandBuffer );
+
+    vkCmdEndRendering ( commandBuffer );
+
+    constexpr auto commitColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    };
+
+    commitColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX ),
+        _barriers
+    );
+
+    _workspace.ComputeSelect ( commandBuffer, commandBufferIndex );
+}
+
 void RenderSession::OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Destroy graphics program" )
@@ -1005,8 +1172,6 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         return;
     }
 
-    _workspace.ComputeTransform ( deltaTime );
-
     UploadMeshes ( commandBuffer, commandBufferIndex );
     UploadTexture2DInstances ( commandBuffer, commandBufferIndex );
 
@@ -1021,83 +1186,12 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     _uiManager.Submit ( renderer, _uiPass );
     _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
+    _workspace.UploadGPUData ( commandBuffer, deltaTime );
 
-    _workspace.UploadToGPU ( commandBuffer );
-
-    {
-        AV_VULKAN_GROUP ( commandBuffer, "Scene" )
-
-        constexpr auto prepareColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
-            barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        };
-
-        prepareColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
-        prepareColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
-        prepareColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
-        prepareColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
-
-        VkImageMemoryBarrier &depth = _barriers[ DEPTH_BARRIER_INDEX ];
-        depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        depth.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        depth.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depth.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        vkCmdPipelineBarrier ( commandBuffer,
-
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
-                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
-
-            VK_DEPENDENCY_BY_REGION_BIT,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            static_cast<uint32_t> ( std::size ( _barriers ) ),
-            _barriers
-        );
-
-        vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
-        vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
-        vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
-
-        _workspace.FillGBuffer ( commandBuffer );
-
-        vkCmdEndRendering ( commandBuffer );
-
-        constexpr auto commitColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
-            barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        };
-
-        commitColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
-        commitColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
-        commitColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
-        commitColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
-
-        vkCmdPipelineBarrier ( commandBuffer,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-            VK_DEPENDENCY_BY_REGION_BIT,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            static_cast<uint32_t> ( std::size ( _barriers ) - 1U ),
-            _barriers
-        );
-    }
+    if ( _workspace.PendingSelect () ) [[unlikely]]
+        RenderSceneWithID ( commandBuffer, commandBufferIndex );
+    else
+        RenderSceneOnly ( commandBuffer );
 
     _exposurePass.Execute ( commandBuffer, deltaTime, resourceHeap );
 
@@ -1272,6 +1366,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _normalRenderTarget.FreeResources ( renderer );
     _paramRenderTarget.FreeResources ( renderer );
     _depthRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
 
     _uiPass.OnSwapchainDestroyed ();
     _uiPass.OnDestroyDevice ( renderer );
@@ -1323,6 +1418,7 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     _normalRenderTarget.FreeResources ( renderer );
     _paramRenderTarget.FreeResources ( renderer );
     _depthRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
 
     if ( !CreateRenderTargetImages ( resolution ) ) [[unlikely]]
     {

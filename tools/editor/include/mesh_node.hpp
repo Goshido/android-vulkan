@@ -23,6 +23,7 @@ class MeshNode final : public WorkspaceNode
         GXVec3          _location {};
         GXVec3          _scale {};
         GXAABB          _boundLocal {};
+        uint64_t        _id = std::bit_cast<uint64_t> ( nullptr );
 
     public:
         MeshNode () = default;
@@ -64,6 +65,8 @@ class MeshNode final : public WorkspaceNode
 
         void SetBounds ( GXAABB const &boundLocal ) noexcept;
         void SetMaterial ( PBRMaterial const &material ) noexcept;
+
+        void SetID ( void const* id ) noexcept;
 };
 
 } // namespace editor

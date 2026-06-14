@@ -193,6 +193,17 @@ void Workspace::Destroy () noexcept
         );
     }
 
+    if ( _idStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _idStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
     Texture2DStorage &storage = Texture2DStorage::Instance ();
     storage.Unload ( std::move ( _defaultAlbedo ) );
     storage.Unload ( std::move ( _defaultEmission ) );
@@ -241,96 +252,62 @@ void Workspace::Close () noexcept
     // FUCK
 }
 
-void Workspace::ComputeTransform ( float deltaTime ) noexcept
+void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
     if ( !IsReady () ) [[unlikely]]
         return;
 
-    AV_TRACE ( "Compute transforms" )
+    Frame frame{};
 
-    _frameStream->Commit ();
-    _transformStream->Commit ();
-    _shadingStream->Commit ();
-
-    // FUCK - correct DPI
-    _viewport->Update ( deltaTime, 1.0F );
-
-    GXQuat const &orientation = _viewport->GetOrientation ();
-
-    GXMat4 alpha {};
-    alpha.FromFast ( orientation, _viewport->GetPosition () );
-
-    GXMat4 beta {};
-    beta.Inverse ( alpha );
-
-    Frame frame {};
-    frame._viewProj.Multiply ( beta, _viewport->GetProjection () );
-
-    GXProjectionClipPlanes frustum {};
-    frustum.From ( frame._viewProj );
-
-    auto const traverse = [
-        &shadingStream = *_shadingStream,
-        &transformStream = *_transformStream,
-        &frustum,
-        defaultAlbedo = _defaultAlbedo->_heapIndex,
-        defaultEmission = _defaultEmission->_heapIndex,
-        defaultMask = _defaultMask->_heapIndex,
-        defaultParam = _defaultParam->_heapIndex,
-        defaultNormal = _defaultNormal->_heapIndex
-    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
-        queueVisible.clear ();
-
-        for ( auto const &instances : queue )
-        {
-            uint32_t count = 0U;
-
-            for ( auto &mesh : instances.second )
-            {
-                mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
-
-                if ( !frustum.IsVisible ( mesh->_boundWorld ) )
-                    continue;
-
-                ++count;
-                transformStream.Push ( &mesh->_transform );
-                shadingStream.Push ( &mesh->_shading );
-            }
-
-            if ( !count ) [[unlikely]]
-                continue;
-
-            queueVisible.push_back (
-                {
-                    ._mesh = instances.first.get (),
-                    ._count = count
-                }
-            );
-        }
-    };
-
-    traverse ( _opaqueQueue, _opaqueVisible );
-    traverse ( _stippleQueue, _stippleVisible );
-
-    if ( !_opaqueVisible.empty () | !_stippleVisible.empty () ) [[likely]]
     {
-        _frameStream->Push ( &frame );
-    }
-}
+        AV_TRACE ( "Compute transforms" )
 
-void Workspace::UploadToGPU ( VkCommandBuffer commandBuffer ) noexcept
-{
-    if ( !IsReady () ) [[unlikely]]
-        return;
+        _frameStream->Commit ();
+        _transformStream->Commit ();
+        _shadingStream->Commit ();
+
+        // FUCK - correct DPI
+        _viewport->Update ( deltaTime, 1.0F );
+
+        GXQuat const& orientation = _viewport->GetOrientation ();
+
+        GXMat4 alpha{};
+        alpha.FromFast ( orientation, _viewport->GetPosition () );
+
+        GXMat4 beta{};
+        beta.Inverse ( alpha );
+        frame._viewProj.Multiply ( beta, _viewport->GetProjection () );
+
+        GXProjectionClipPlanes frustum{};
+        frustum.From ( frame._viewProj );
+
+        if ( _pendingSelect ) [[unlikely]]
+        {
+            ComputeTransformGBufferWithID ( frustum );
+        }
+        else
+        {
+            ComputeTransformGBufferOnly ( frustum );
+        }
+    }
 
     if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
-    AV_TRACE ( "Upload workspace data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload workspace data" )
-    _frameStream->IssueSync ( commandBuffer );
-    _transformStream->IssueSync ( commandBuffer );
-    _shadingStream->IssueSync ( commandBuffer );
+    _frameStream->Push ( &frame );
+
+    {
+        AV_TRACE ( "Upload workspace data" )
+        AV_VULKAN_GROUP ( commandBuffer, "Upload workspace data" )
+        _frameStream->IssueSync ( commandBuffer );
+        _transformStream->IssueSync ( commandBuffer );
+        _shadingStream->IssueSync ( commandBuffer );
+
+        if ( _pendingSelect ) [[unlikely]]
+        {
+            _idStream->IssueSync ( commandBuffer );
+        }
+    }
 }
 
 void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
@@ -341,51 +318,13 @@ void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) n
     if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
-    AV_TRACE ( "GBuffer" )
-    AV_VULKAN_GROUP ( commandBuffer, "GBuffer" )
+    if ( _pendingSelect ) [[unlikely]]
+    {
+        FillGBufferWithID ( commandBuffer );
+        return;
+    }
 
-    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
-    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
-    _opaqueProgram->Bind ( commandBuffer );
-
-    // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
-
-    auto traverse = [
-        &shadingStream = *_shadingStream,
-        &transformStream = *_transformStream,
-        commandBuffer = commandBuffer,
-        layout = layout,
-
-        pushConstants = pbr::OpaqueProgram::PushConstants
-        {
-            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
-        }
-    ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
-        for ( auto const &[ mesh, count ] : queueVisible )
-        {
-            pushConstants._transformStream = transformStream.AcquireAndConsume ( count );
-            pushConstants._shadingStream = shadingStream.AcquireAndConsume ( count );
-
-            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
-            pushConstants._positionStream = info._bdaStream0;
-            pushConstants._restStream = info._bdaStream1;
-            pushConstants._indexStream = info._bdaIndex;
-            pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
-
-            vkCmdPushConstants ( commandBuffer,
-                layout,
-                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-                0U,
-                sizeof ( pushConstants ),
-                &pushConstants
-            );
-
-            vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
-        }
-    };
-
-    traverse ( _opaqueVisible );
-    traverse ( _stippleVisible );
+    FillGBufferOnly ( commandBuffer );
 }
 
 void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
@@ -398,16 +337,9 @@ void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noe
     // FUCK
 }
 
-void Workspace::Pick ( int32_t /*x*/, int32_t /*y*/, GXMat4 const &/*viewer*/, GXMat4 const &/*projection*/ ) noexcept
+bool Workspace::PendingSelect () const noexcept
 {
-    AV_TRACE ( "Workspace pick" )
-    // FUCK
-}
-
-void Workspace::Pick ( Rect const &/*rect*/, GXMat4 const &/*viewer*/, GXMat4 const &/*projection*/ ) noexcept
-{
-    AV_TRACE ( "Workspace pick" )
-    // FUCK
+    return _pendingSelect;
 }
 
 bool Workspace::HasSelection () const noexcept
@@ -417,10 +349,28 @@ bool Workspace::HasSelection () const noexcept
 
 void Workspace::Select ( Rect const &rect, bool invert ) noexcept
 {
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [ this ] () noexcept -> void* {
+                _pendingSelect = true;
+                return nullptr;
+            }
+        )
+    );
+
     // FUCK
     android_vulkan::LogDebug ( "[%d %d][%d %d] %s", rect._left, rect._top, rect._right, rect._bottom,
         invert ? "invert" : "single"
     );
+}
+
+void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer, size_t /*commandBufferIndex*/ ) noexcept
+{
+    AV_TRACE ( "Select" )
+    AV_VULKAN_GROUP ( commandBuffer, "Select" )
+
+    _pendingSelect = false;
+    // FUCK
 }
 
 MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
@@ -620,6 +570,207 @@ void Workspace::FUCK () noexcept
     _history.End ();
 }
 
+void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept
+{
+    auto const traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        &frustum,
+        defaultAlbedo = _defaultAlbedo->_heapIndex,
+        defaultEmission = _defaultEmission->_heapIndex,
+        defaultMask = _defaultMask->_heapIndex,
+        defaultParam = _defaultParam->_heapIndex,
+        defaultNormal = _defaultNormal->_heapIndex
+    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
+        queueVisible.clear ();
+
+        for ( auto const &instances : queue )
+        {
+            uint32_t count = 0U;
+
+            for ( auto &mesh : instances.second )
+            {
+                mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
+
+                if ( !frustum.IsVisible ( mesh->_boundWorld ) )
+                    continue;
+
+                ++count;
+                transformStream.Push ( &mesh->_transform );
+                shadingStream.Push ( &mesh->_shading );
+            }
+
+            if ( !count ) [[unlikely]]
+                continue;
+
+            queueVisible.push_back (
+                {
+                    ._mesh = instances.first.get (),
+                    ._count = count
+                }
+            );
+        }
+    };
+
+    traverse ( _opaqueQueue, _opaqueVisible );
+    traverse ( _stippleQueue, _stippleVisible );
+}
+
+void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept
+{
+    _idStream->Commit ();
+
+    auto const traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        &idStream = *_idStream,
+        &frustum,
+        defaultAlbedo = _defaultAlbedo->_heapIndex,
+        defaultEmission = _defaultEmission->_heapIndex,
+        defaultMask = _defaultMask->_heapIndex,
+        defaultParam = _defaultParam->_heapIndex,
+        defaultNormal = _defaultNormal->_heapIndex
+    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
+        queueVisible.clear ();
+
+        for ( auto const &instances : queue )
+        {
+            uint32_t count = 0U;
+
+            for ( auto &mesh : instances.second )
+            {
+                mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
+
+                if ( !frustum.IsVisible ( mesh->_boundWorld ) )
+                    continue;
+
+                ++count;
+                transformStream.Push ( &mesh->_transform );
+                shadingStream.Push ( &mesh->_shading );
+                idStream.Push ( &mesh->_id );
+            }
+
+            if ( !count ) [[unlikely]]
+                continue;
+
+            queueVisible.push_back (
+                {
+                    ._mesh = instances.first.get (),
+                    ._count = count
+                }
+            );
+        }
+    };
+
+    traverse ( _opaqueQueue, _opaqueVisible );
+    traverse ( _stippleQueue, _stippleVisible );
+}
+
+void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "GBuffer" )
+    AV_VULKAN_GROUP ( commandBuffer, "GBuffer" )
+
+    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
+    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
+    _opaqueProgram->Bind ( commandBuffer );
+
+    // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
+
+    auto traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        commandBuffer = commandBuffer,
+        layout = layout,
+
+        pushConstants = pbr::OpaqueProgram::PushConstants
+        {
+            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+        }
+    ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
+        for ( auto const &[ mesh, count ] : queueVisible )
+        {
+            pushConstants._transformStream = transformStream.AcquireAndConsume ( count );
+            pushConstants._shadingStream = shadingStream.AcquireAndConsume ( count );
+
+            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+            pushConstants._positionStream = info._bdaStream0;
+            pushConstants._restStream = info._bdaStream1;
+            pushConstants._indexStream = info._bdaIndex;
+            pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
+
+            vkCmdPushConstants ( commandBuffer,
+                layout,
+                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+                0U,
+                sizeof ( pushConstants ),
+                &pushConstants
+            );
+
+            vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
+        }
+    };
+
+    traverse ( _opaqueVisible );
+    traverse ( _stippleVisible );
+}
+
+void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
+{
+    AV_TRACE ( "GBuffer with ID" )
+    AV_VULKAN_GROUP ( commandBuffer, "GBuffer with ID" )
+
+    // FUCK - use other pipeleine
+    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
+    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
+    _opaqueProgram->Bind ( commandBuffer );
+
+    // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
+
+    auto traverse = [
+        &shadingStream = *_shadingStream,
+        &transformStream = *_transformStream,
+        &idStream = *_idStream,
+        commandBuffer = commandBuffer,
+        layout = layout,
+
+        pushConstants = pbr::OpaqueProgram::PushConstants
+        {
+            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+        }
+    ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
+        for ( auto const &[ mesh, count ] : queueVisible )
+        {
+            pushConstants._transformStream = transformStream.AcquireAndConsume ( count );
+            pushConstants._shadingStream = shadingStream.AcquireAndConsume ( count );
+
+            // FUCK - id stream
+            std::ignore = idStream.AcquireAndConsume ( count );
+
+            android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+            pushConstants._positionStream = info._bdaStream0;
+            pushConstants._restStream = info._bdaStream1;
+            pushConstants._indexStream = info._bdaIndex;
+            pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
+
+            // FUCK - write ID BDA into push constant
+
+            vkCmdPushConstants ( commandBuffer,
+                layout,
+                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+                0U,
+                sizeof ( pushConstants ),
+                &pushConstants
+            );
+
+            vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
+        }
+    };
+
+    traverse ( _opaqueVisible );
+    traverse ( _stippleVisible );
+}
+
 bool Workspace::IsReady () noexcept
 {
     if ( _ready ) [[likely]]
@@ -630,6 +781,7 @@ bool Workspace::IsReady () noexcept
         ( static_cast<bool> ( _frameStream ) ) &
         ( static_cast<bool> ( _transformStream ) ) &
         ( static_cast<bool> ( _shadingStream ) ) &
+        ( static_cast<bool> ( _idStream ) ) &
         ( static_cast<bool> ( _defaultAlbedo ) ) &
         ( static_cast<bool> ( _defaultEmission ) ) &
         ( static_cast<bool> ( _defaultMask ) ) &
@@ -736,6 +888,28 @@ void Workspace::InitGraphicsResources () noexcept
                     Message ( eMessageType::NewStreamBuffer,
                         [
                             info = StreamBufferInfo ( std::move ( shading ), std::move ( shadingReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef id = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !id->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( uint64_t ), "ID stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto idReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _idStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( id ), std::move ( idReady ) )
                         ] () mutable noexcept -> void* {
                             return &info;
                         }

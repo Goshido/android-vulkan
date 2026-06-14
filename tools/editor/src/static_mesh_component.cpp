@@ -117,6 +117,7 @@ void StaticMeshComponent::JoinRendering () noexcept
     GXColorUNORM const c ( 255U, 255U, 255U, 255 );
     _node.SetColor ( c, c, c, c, 1.0F );
     _node.SetMaterial ( _material );
+    _node.SetID ( _actor );
 
     UpdateTransform ();
 }

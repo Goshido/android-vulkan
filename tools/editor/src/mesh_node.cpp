@@ -20,6 +20,7 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
     _location = std::exchange ( other._location, GXVec3::ZERO );
     _scale = std::exchange ( other._scale, GXVec3::ONE );
     _boundLocal = std::exchange ( other._boundLocal, {} );
+    _id = std::exchange ( other._id, std::bit_cast<uint64_t> ( nullptr ) );
 
     other.Unlock ();
 }
@@ -40,6 +41,7 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
     _location = std::exchange ( other._location, GXVec3::ZERO );
     _scale = std::exchange ( other._scale, GXVec3::ONE );
     _boundLocal = std::exchange ( other._boundLocal, {} );
+    _id = std::exchange ( other._id, std::bit_cast<uint64_t> ( nullptr ) );
 
     other.Unlock ();
     return *this;
@@ -108,6 +110,7 @@ void MeshNode::Commit ( uint32_t defaultAlbedo,
         ._colors = _colors
     };
 
+    meshInfo._id = _id;
     _hasChanges = false;
     Unlock ();
 }
@@ -261,6 +264,17 @@ void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
         return;
 
     _material = material;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void MeshNode::SetID ( void const* id ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _id = std::bit_cast<uint64_t> ( id );
     _hasChanges = true;
 
     Unlock ();

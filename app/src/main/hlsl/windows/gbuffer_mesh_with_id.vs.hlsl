@@ -2,7 +2,7 @@
 
 
 [[vk::push_constant]]
-PushConstants       g_pushConstants;
+PushConstantsWithID     g_pushConstants;
 
 //----------------------------------------------------------------------------------------------------------------------
 

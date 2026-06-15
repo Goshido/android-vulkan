@@ -13,8 +13,18 @@ struct PushConstants
     uint32_t        _indexType;
 };
 
-[[vk::push_constant]]
-PushConstants       g_pushConstants;
+struct PushConstantsWithID
+{
+    uint64_t        _transformStream;
+    uint64_t        _shadingStream;
+    uint64_t        _frameStream;
+    uint64_t        _idStream;
+    uint64_t        _positionStream;
+    uint64_t        _restStream;
+    uint64_t        _indexStream;
+    uint32_t        _indexType;
+    uint32_t        _idImage;
+};
 
 
 #endif // GBUFFER_PUSH_CONSTANTS_HLSL

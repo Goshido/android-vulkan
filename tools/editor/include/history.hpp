@@ -3,7 +3,6 @@
 
 
 #include "action.hpp"
-#include <memory>
 
 
 namespace editor {

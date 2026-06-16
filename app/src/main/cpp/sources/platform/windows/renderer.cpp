@@ -452,6 +452,7 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
 #endif // AV_ENABLE_NSIGHT
 
+        AV_BITWISE ( CheckFeature ( features.fragmentStoresAndAtomics, "fragmentStoresAndAtomics", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64", _initLogs ) ) &
@@ -796,7 +797,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .occlusionQueryPrecise = VK_FALSE,
             .pipelineStatisticsQuery = VK_FALSE,
             .vertexPipelineStoresAndAtomics = VK_FALSE,
-            .fragmentStoresAndAtomics = VK_FALSE,
+            .fragmentStoresAndAtomics = VK_TRUE,
             .shaderTessellationAndGeometryPointSize = VK_FALSE,
             .shaderImageGatherExtended = VK_FALSE,
             .shaderStorageImageExtendedFormats = VK_FALSE,

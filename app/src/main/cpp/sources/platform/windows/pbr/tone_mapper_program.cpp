@@ -55,61 +55,57 @@ bool ToneMapperProgram::Init ( VkDevice device,
     std::vector<uint8_t> vs {};
     std::vector<uint8_t> fs {};
 
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    VkGraphicsPipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 
-    pipelineInfo.pNext = InitRenderingInfo ( swapchainFormat,
-        VK_FORMAT_UNDEFINED,
-        VK_FORMAT_UNDEFINED,
-        VK_FORMAT_UNDEFINED,
-        &swapchainFormat,
-        renderingInfo
-    );
+        .pNext = InitRenderingInfo ( swapchainFormat,
+            VK_FORMAT_UNDEFINED,
+            VK_FORMAT_UNDEFINED,
+            VK_FORMAT_UNDEFINED,
+            &swapchainFormat,
+            renderingInfo
+        ),
 
-    pipelineInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
+        .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pVertexInputState = InitVertexInputInfo (),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
 
-    bool result = InitShaderInfo ( pipelineInfo.pStages,
-        vs,
-        fs,
-        &brightnessInfo,
-        &specInfo,
-        moduleInfo,
-        stageInfo
-    );
+        .pViewportState = InitViewportInfo ( viewportInfo,
+            &scissorDescription,
+            &viewportDescription,
+            &viewport
+        ),
 
-    if ( !result ) [[unlikely]]
-        return false;
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .renderPass = VK_NULL_HANDLE,
+        .subpass = 0U,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ();
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
+    bool const result = InitShaderInfo ( pipelineInfo.pStages,
+            vs,
+            fs,
+            &brightnessInfo,
+            &specInfo,
+            moduleInfo,
+            stageInfo
+        ) &&
 
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
+        InitLayout ( device, pipelineInfo.layout ) &&
 
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = VK_NULL_HANDLE;
-    pipelineInfo.subpass = 0U;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::ToneMapperProgram::Init",
-        "Can't create pipeline"
-    );
+        android_vulkan::Renderer::CheckVkResult (
+            vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+            "pbr::ToneMapperProgram::Init",
+            "Can't create pipeline"
+        );
 
     if ( !result ) [[unlikely]]
         return false;

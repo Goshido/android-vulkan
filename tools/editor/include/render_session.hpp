@@ -87,9 +87,6 @@ class RenderSession final
         android_vulkan::Texture2D               _depthRenderTarget {};
         uint32_t                                _depthRenderTargetIdx = 0U;
 
-        android_vulkan::Texture2D               _idRenderTarget {};
-        uint32_t                                _idRenderTargetIdx = 0U;
-
         GraphicsProgramStorage                  _graphicsProgramStorage {};
         MeshStorage                             _meshStorage {};
         StreamBufferStorage                     _streamBufferStorage {};
@@ -272,7 +269,7 @@ class RenderSession final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier                    _barriers[ 6U ] =
+        VkImageMemoryBarrier                    _barriers[ 5U ] =
         {
             // Albedo
             {
@@ -378,27 +375,6 @@ class RenderSession final
                     .baseArrayLayer = 0U,
                     .layerCount = 1U
                 }
-            },
-            // ID
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .pNext = nullptr,
-                .srcAccessMask = VK_ACCESS_NONE,
-                .dstAccessMask = VK_ACCESS_NONE,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = VK_NULL_HANDLE,
-
-                .subresourceRange
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0U,
-                    .levelCount = 1U,
-                    .baseArrayLayer = 0U,
-                    .layerCount = 1U
-                }
             }
         };
 
@@ -438,8 +414,7 @@ class RenderSession final
         void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
         void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
 
-        void RenderSceneOnly ( VkCommandBuffer commandBuffer ) noexcept;
-        void RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+        void RenderScene ( VkCommandBuffer commandBuffer ) noexcept;
 
         void OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;

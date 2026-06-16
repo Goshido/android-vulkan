@@ -10,6 +10,7 @@
 #include <trace.hpp>
 #include <transform.hpp>
 #include <ui_props.hpp>
+#include <vulkan_utils.hpp>
 #include <workspace.hpp>
 
 
@@ -19,6 +20,7 @@ namespace {
 
 constexpr size_t PER_MESH_ELEMENTS = 1'000'000U;
 constexpr size_t VISIBLE_INITIAL_SIZE = 1'000U;
+constexpr VkFormat ID_RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_UINT;
 
 class CreateActorAction final : public Action
 {
@@ -141,6 +143,12 @@ void Workspace::Destroy () noexcept
 
     _viewport->Destroy ();
 
+    if ( _idImageIdx != 0U ) [[likely]]
+        ResourceHeap::Instance ().UnregisterResource ( std::exchange ( _idImageIdx, 0U ) );
+
+    if ( _idImage.IsInit () ) [[likely]]
+        _idImage.FreeResources ( NativeRenderer::Instance () );
+
     _delete = {};
     _openWorkspace = {};
     _saveWorkspace = {};
@@ -153,8 +161,19 @@ void Workspace::Destroy () noexcept
     {
         MessageQueue::Instance ().EnqueueBack (
             Message ( eMessageType::DestroyGraphicsProgram,
-                [ opaqueProgram = GraphicsProgramRef ( _opaqueProgram.release () ) ] () mutable noexcept -> void* {
-                    return &opaqueProgram;
+                [ program = GraphicsProgramRef ( _opaqueProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
+    if ( _opaqueWithIDProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyGraphicsProgram,
+                [ program = GraphicsProgramRef ( _opaqueWithIDProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
                 }
             )
         );
@@ -337,9 +356,39 @@ void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noe
     // FUCK
 }
 
-bool Workspace::PendingSelect () const noexcept
+void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noexcept
 {
-    return _pendingSelect;
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+
+    if ( _idImageIdx != 0U ) [[likely]]
+        resourceHeap.UnregisterResource ( std::exchange ( _idImageIdx, 0U ) );
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    if ( _idImage.IsInit () ) [[likely]]
+        _idImage.FreeResources ( renderer );
+
+    bool const result = _idImage.CreateRenderTarget ( resolution,
+        ID_RENDER_TARGET_FORMAT,
+        AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+        renderer
+    );
+
+    if ( !result ) [[unlikely]]
+        return;
+
+    VkDevice device = renderer.GetDevice ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _idImage.GetImage (), VK_OBJECT_TYPE_IMAGE, "ID" )
+
+    VkImageView view = _idImage.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "ID" )
+
+    auto const idx = resourceHeap.RegisterNonUISampledImage ( device, view );
+
+    if ( !idx ) [[unlikely]]
+        return;
+
+    _idImageIdx = *idx;
 }
 
 bool Workspace::HasSelection () const noexcept
@@ -364,8 +413,11 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
     );
 }
 
-void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer, size_t /*commandBufferIndex*/ ) noexcept
+void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t /*commandBufferIndex*/ ) noexcept
 {
+    if ( !_pendingSelect ) [[likely]]
+        return;
+
     AV_TRACE ( "Select" )
     AV_VULKAN_GROUP ( commandBuffer, "Select" )
 
@@ -778,6 +830,7 @@ bool Workspace::IsReady () noexcept
 
     _ready = ( static_cast<bool> ( _viewport ) ) &
         ( static_cast<bool> ( _opaqueProgram ) ) &
+        ( static_cast<bool> ( _opaqueWithIDProgram ) ) &
         ( static_cast<bool> ( _frameStream ) ) &
         ( static_cast<bool> ( _transformStream ) ) &
         ( static_cast<bool> ( _shadingStream ) ) &
@@ -805,13 +858,15 @@ void Workspace::InitGraphicsResources () noexcept
                 _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
                 _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
 
-                std::unique_ptr<pbr::OpaqueProgram> opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+                VkDevice device = renderer.GetDevice ();
+                VkFormat const depth = renderer.GetDefaultDepthFormat ();
+                auto opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
 
-                if ( !opaqueProgram->Init ( renderer.GetDevice (), renderer.GetDefaultDepthFormat () ) ) [[unlikely]]
+                if ( !opaqueProgram->Init ( device, depth ) ) [[unlikely]]
                     return nullptr;
 
-                auto programReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                auto opaqueProgramReady = [ this ] ( GraphicsProgramRef program ) noexcept {
                     // NOLINTNEXTLINE - downcast
                     _opaqueProgram = std::unique_ptr<pbr::OpaqueProgram> (
                         static_cast<pbr::OpaqueProgram*> ( program.release () )
@@ -823,7 +878,32 @@ void Workspace::InitGraphicsResources () noexcept
                         [
                             info = GraphicsProgramInfo (
                                 std::unique_ptr<pbr::GraphicsProgram> ( opaqueProgram.release () ),
-                                std::move ( programReady )
+                                std::move ( opaqueProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                auto opaqueWithIDProgram = std::make_unique<pbr::OpaqueWithIDProgram> ();
+
+                if ( !opaqueWithIDProgram->Init ( device, depth ) ) [[unlikely]]
+                    return nullptr;
+
+                auto opaqueWithIDProgramReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _opaqueWithIDProgram = std::unique_ptr<pbr::OpaqueWithIDProgram> (
+                        static_cast<pbr::OpaqueWithIDProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewGraphicsProgram,
+                        [
+                            info = GraphicsProgramInfo (
+                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueWithIDProgram.release () ),
+                                std::move ( opaqueWithIDProgramReady )
                             )
                         ] () mutable noexcept -> void* {
                             return &info;

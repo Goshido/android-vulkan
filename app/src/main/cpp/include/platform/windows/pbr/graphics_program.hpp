@@ -15,7 +15,7 @@ namespace pbr {
 
 class GraphicsProgram : public GraphicsProgramBase
 {
-    private:
+    protected:
         uint32_t    _pushConstantSize = 0U;
 
     public:

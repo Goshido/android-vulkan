@@ -2,7 +2,13 @@
 #define EDITOR_WORKSPACE_NODE_HPP
 
 
+#include <GXCommon/GXWarning.hpp>
+
+GX_DISABLE_COMMON_WARNINGS
+
 #include <atomic>
+
+GX_RESTORE_WARNING_STATE
 
 
 namespace editor {

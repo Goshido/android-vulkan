@@ -411,6 +411,12 @@
     <ClCompile Include="src\select_tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gbuffer_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_with_id_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -866,9 +872,6 @@
     <ClInclude Include="include\font_storage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp">
-      <Filter>Header Files\core\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\stream_buffer.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
@@ -895,6 +898,15 @@
     </ClInclude>
     <ClInclude Include="include\select_tool.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_with_id_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

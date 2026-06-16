@@ -8,22 +8,14 @@
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
-#include "point_light_node.hpp"
 #include <platform/windows/pbr/opaque_program.hpp>
+#include <platform/windows/pbr/opaque_with_id_program.hpp>
+#include "point_light_node.hpp"
 #include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
 #include "stream_buffer_ref.hpp"
 #include "viewport_widget.hpp"
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <deque>
-#include <memory>
-#include <unordered_map>
-#include <vulkan/vulkan_core.h>
-
-GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
@@ -72,6 +64,7 @@ class Workspace final
         ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
 
         std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
+        std::unique_ptr<pbr::OpaqueWithIDProgram>       _opaqueWithIDProgram {};
         StreamBufferRef                                 _frameStream {};
         StreamBufferRef                                 _transformStream {};
         StreamBufferRef                                 _shadingStream {};
@@ -82,6 +75,9 @@ class Workspace final
         Texture2DRef                                    _defaultMask {};
         Texture2DRef                                    _defaultParam {};
         Texture2DRef                                    _defaultNormal {};
+
+        android_vulkan::Texture2D                       _idImage {};
+        uint32_t                                        _idImageIdx = 0U;
 
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
@@ -116,8 +112,8 @@ class Workspace final
         void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
+        void OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noexcept;
 
-        [[nodiscard]] bool PendingSelect () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void Select ( Rect const &rect, bool invert ) noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;

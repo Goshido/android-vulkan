@@ -4,20 +4,20 @@
 
 struct PushConstants
 {
-    uint32_t        _hdrImage;
-    uint32_t        _syncMip5;
-    uint32_t        _exposure;
-    uint32_t        _globalAtomic;
-    uint32_t        _temporalLuma;
+    uint32_t                                        _hdrImage;
+    uint32_t                                        _syncMip5;
+    uint32_t                                        _exposure;
+    uint32_t                                        _globalAtomic;
+    uint32_t                                        _temporalLuma;
 
-    float32_t       _exposureCompensation;
-    float32_t       _eyeAdaptation;
-    float32_t       _maxLuma;
-    float32_t       _minLuma;
+    float32_t                                       _exposureCompensation;
+    float32_t                                       _eyeAdaptation;
+    float32_t                                       _maxLuma;
+    float32_t                                       _minLuma;
 };
 
 [[vk::push_constant]]
-PushConstants       g_exposureInfo;
+PushConstants                                       g_exposureInfo;
 
 // [2025/09/11] DXC has issue with 'globallycoherent' and 'ResourceDescriptorHeap'.
 // So the workaround is used.

@@ -329,6 +329,27 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
     }
 }
 
+void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
+{
+    if ( !IsReady () | !_pendingSelect ) [[likely]]
+        return;
+
+    AV_TRACE ( "ID buffer" )
+    AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        1U,
+        &_barrier
+    );
+}
+
 void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !IsReady () ) [[unlikely]]
@@ -378,7 +399,8 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
         return;
 
     VkDevice device = renderer.GetDevice ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, _idImage.GetImage (), VK_OBJECT_TYPE_IMAGE, "ID" )
+    _barrier.image = _idImage.GetImage ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.image, VK_OBJECT_TYPE_IMAGE, "ID" )
 
     VkImageView view = _idImage.GetImageView ();
     AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "ID" )
@@ -723,9 +745,10 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "GBuffer" )
     AV_VULKAN_GROUP ( commandBuffer, "GBuffer" )
 
-    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
+    pbr::OpaqueProgram &program = *_opaqueProgram;
+    VkPipelineLayout layout = program.GetPipelineLayout ();
     ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
-    _opaqueProgram->Bind ( commandBuffer );
+    program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
 
@@ -772,10 +795,10 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "GBuffer with ID" )
     AV_VULKAN_GROUP ( commandBuffer, "GBuffer with ID" )
 
-    // FUCK - use other pipeleine
-    VkPipelineLayout layout = _opaqueProgram->GetPipelineLayout ();
+    pbr::OpaqueWithIDProgram &program = *_opaqueWithIDProgram;
+    VkPipelineLayout layout = program.GetPipelineLayout ();
     ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
-    _opaqueProgram->Bind ( commandBuffer );
+    program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
 
@@ -786,26 +809,23 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
         commandBuffer = commandBuffer,
         layout = layout,
 
-        pushConstants = pbr::OpaqueProgram::PushConstants
+        pushConstants = pbr::OpaqueWithIDProgram::PushConstants
         {
-            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+            ._frameStream = _frameStream->AcquireAndConsume ( 1U ),
+            ._idImage = _idImageIdx
         }
     ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
         for ( auto const &[ mesh, count ] : queueVisible )
         {
             pushConstants._transformStream = transformStream.AcquireAndConsume ( count );
             pushConstants._shadingStream = shadingStream.AcquireAndConsume ( count );
-
-            // FUCK - id stream
-            std::ignore = idStream.AcquireAndConsume ( count );
+            pushConstants._idStream = idStream.AcquireAndConsume ( count );
 
             android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
             pushConstants._positionStream = info._bdaStream0;
             pushConstants._restStream = info._bdaStream1;
             pushConstants._indexStream = info._bdaIndex;
             pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
-
-            // FUCK - write ID BDA into push constant
 
             vkCmdPushConstants ( commandBuffer,
                 layout,

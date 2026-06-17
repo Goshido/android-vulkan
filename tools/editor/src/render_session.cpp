@@ -519,6 +519,8 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
+    _workspace.OnGBufferResolutionChanged ( renderer.GetSurfaceSize () );
+
     result = CreateRenderTargets () &&
         _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, _hdrRenderTargetIdx ) &&
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
@@ -913,6 +915,8 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
         static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U ),
         _barriers
     );
+
+    _workspace.PrepareIDBuffer ( commandBuffer );
 
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
     vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );

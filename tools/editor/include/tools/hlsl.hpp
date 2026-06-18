@@ -26,6 +26,13 @@ class uint64_t3;
 class uint64_t4;
 class float32_t3;
 class float32_t4;
+class swizzle_uint32_t2;
+class swizzle_uint32_t3;
+class swizzle_uint32_t4;
+class swizzle_uint64_t3;
+class swizzle_uint64_t4;
+class swizzle_float32_t3;
+class swizzle_float32_t4;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -88,6 +95,7 @@ class swizzle_uint32_t3 final
     friend class uint32_t2;
     friend class uint32_t3;
     friend class uint32_t4;
+    friend class swizzle_uint64_t3;
 
     private:
         uint32_t*       x = nullptr;
@@ -383,7 +391,9 @@ class swizzle_uint64_t3 final
         [[maybe_unused]] void operator *= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator /= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator >>= ( uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator >>= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator <<= ( uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator <<= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( uint64_t3 const &v ) noexcept;
 
@@ -392,7 +402,9 @@ class swizzle_uint64_t3 final
         [[maybe_unused]] void operator *= ( swizzle_uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator /= ( swizzle_uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator >>= ( swizzle_uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator >>= ( swizzle_uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator <<= ( swizzle_uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator <<= ( swizzle_uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( swizzle_uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( swizzle_uint64_t3 const &v ) noexcept;
 
@@ -442,7 +454,9 @@ class uint64_t3 final
         [[maybe_unused]] void operator *= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator /= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator >>= ( uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator >>= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator <<= ( uint64_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator <<= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( uint64_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( uint64_t3 const &v ) noexcept;
 };
@@ -452,7 +466,9 @@ class uint64_t3 final
 [[maybe_unused, nodiscard]] uint64_t3 operator * ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t3 operator / ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t3 operator >> ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] uint64_t3 operator >> ( uint64_t3 const &a, uint32_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t3 operator << ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] uint64_t3 operator << ( uint64_t3 const &a, uint32_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t3 operator & ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t3 operator | ( uint64_t3 const &a, uint64_t3 const &b ) noexcept;
 
@@ -466,6 +482,7 @@ class uint64_t4 final
         uint64_t                z;
         uint64_t                w;
 
+        swizzle_uint64_t3       xyz;
         swizzle_uint64_t3       yzw;
 
     public:
@@ -488,7 +505,9 @@ class uint64_t4 final
         [[maybe_unused]] void operator *= ( uint64_t4 const &v ) noexcept;
         [[maybe_unused]] void operator /= ( uint64_t4 const &v ) noexcept;
         [[maybe_unused]] void operator >>= ( uint64_t4 const &v ) noexcept;
+        [[maybe_unused]] void operator >>= ( uint32_t4 const &v ) noexcept;
         [[maybe_unused]] void operator <<= ( uint64_t4 const &v ) noexcept;
+        [[maybe_unused]] void operator <<= ( uint32_t4 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( uint64_t4 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( uint64_t4 const &v ) noexcept;
 
@@ -501,7 +520,9 @@ class uint64_t4 final
 [[maybe_unused, nodiscard]] uint64_t4 operator * ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t4 operator / ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t4 operator >> ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
+[[maybe_unused, nodiscard]] uint64_t4 operator >> ( uint64_t4 const &a, uint32_t4 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t4 operator << ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
+[[maybe_unused, nodiscard]] uint64_t4 operator << ( uint64_t4 const &a, uint32_t4 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t4 operator & ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint64_t4 operator | ( uint64_t4 const &a, uint64_t4 const &b ) noexcept;
 

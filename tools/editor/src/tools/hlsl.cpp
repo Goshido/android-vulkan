@@ -977,7 +977,21 @@ void swizzle_uint64_t3::operator >>= ( uint64_t3 const &v ) noexcept
     *z >>= v.z;
 }
 
+void swizzle_uint64_t3::operator >>= ( uint32_t3 const &v ) noexcept
+{
+    *x >>= v.x;
+    *y >>= v.y;
+    *z >>= v.z;
+}
+
 void swizzle_uint64_t3::operator <<= ( uint64_t3 const &v ) noexcept
+{
+    *x <<= v.x;
+    *y <<= v.y;
+    *z <<= v.z;
+}
+
+void swizzle_uint64_t3::operator <<= ( uint32_t3 const &v ) noexcept
 {
     *x <<= v.x;
     *y <<= v.y;
@@ -1033,7 +1047,21 @@ void swizzle_uint64_t3::operator >>= ( swizzle_uint64_t3 const &v ) noexcept
     *z >>= *v.z;
 }
 
+void swizzle_uint64_t3::operator >>= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x >>= *v.x;
+    *y >>= *v.y;
+    *z >>= *v.z;
+}
+
 void swizzle_uint64_t3::operator <<= ( swizzle_uint64_t3 const &v ) noexcept
+{
+    *x <<= *v.x;
+    *y <<= *v.y;
+    *z <<= *v.z;
+}
+
+void swizzle_uint64_t3::operator <<= ( swizzle_uint32_t3 const &v ) noexcept
 {
     *x <<= *v.x;
     *y <<= *v.y;
@@ -1142,7 +1170,21 @@ void uint64_t3::operator >>= ( uint64_t3 const &v ) noexcept
     z >>= v.z;
 }
 
+void uint64_t3::operator >>= ( uint32_t3 const &v ) noexcept
+{
+    x >>= v.x;
+    y >>= v.y;
+    z >>= v.z;
+}
+
 void uint64_t3::operator <<= ( uint64_t3 const &v ) noexcept
+{
+    x <<= v.x;
+    y <<= v.y;
+    z <<= v.z;
+}
+
+void uint64_t3::operator <<= ( uint32_t3 const &v ) noexcept
 {
     x <<= v.x;
     y <<= v.y;
@@ -1188,7 +1230,17 @@ uint64_t3 operator >> ( uint64_t3 const &a, uint64_t3 const &b ) noexcept
     return { a.x >> b.x, a.y >> b.y, a.z >> b.z };
 }
 
+uint64_t3 operator >> ( uint64_t3 const &a, uint32_t3 const &b ) noexcept
+{
+    return { a.x >> b.x, a.y >> b.y, a.z >> b.z };
+}
+
 uint64_t3 operator << ( uint64_t3 const &a, uint64_t3 const &b ) noexcept
+{
+    return { a.x << b.x, a.y << b.y, a.z << b.z };
+}
+
+uint64_t3 operator << ( uint64_t3 const &a, uint32_t3 const &b ) noexcept
 {
     return { a.x << b.x, a.y << b.y, a.z << b.z };
 }
@@ -1313,7 +1365,23 @@ void uint64_t4::operator >>= ( uint64_t4 const &v ) noexcept
     w >>= v.w;
 }
 
+void uint64_t4::operator >>= ( uint32_t4 const &v ) noexcept
+{
+    x >>= v.x;
+    y >>= v.y;
+    z >>= v.z;
+    w >>= v.w;
+}
+
 void uint64_t4::operator <<= ( uint64_t4 const &v ) noexcept
+{
+    x <<= v.x;
+    y <<= v.y;
+    z <<= v.z;
+    w <<= v.w;
+}
+
+void uint64_t4::operator <<= ( uint32_t4 const &v ) noexcept
 {
     x <<= v.x;
     y <<= v.y;
@@ -1339,6 +1407,7 @@ void uint64_t4::operator |= ( uint64_t4 const &v ) noexcept
 
 void uint64_t4::InitSwizzle () noexcept
 {
+    xyz = swizzle_uint64_t3 ( &x, &y, &z );
     yzw = swizzle_uint64_t3 ( &y, &z, &w );
 }
 
@@ -1367,7 +1436,17 @@ uint64_t4 operator >> ( uint64_t4 const &a, uint64_t4 const &b ) noexcept
     return { a.x >> b.x, a.y >> b.y, a.z >> b.z, a.w >> b.w };
 }
 
+uint64_t4 operator >> ( uint64_t4 const &a, uint32_t4 const &b ) noexcept
+{
+    return { a.x >> b.x, a.y >> b.y, a.z >> b.z, a.w >> b.w };
+}
+
 uint64_t4 operator << ( uint64_t4 const &a, uint64_t4 const &b ) noexcept
+{
+    return { a.x << b.x, a.y << b.y, a.z << b.z, a.w << b.w };
+}
+
+uint64_t4 operator << ( uint64_t4 const &a, uint32_t4 const &b ) noexcept
 {
     return { a.x << b.x, a.y << b.y, a.z << b.z, a.w << b.w };
 }

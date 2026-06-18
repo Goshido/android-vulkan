@@ -22,7 +22,7 @@ Texture2D<uint32_t4>        g_images[]:     register ( t0 );
 struct Pair
 {
     uint64_t                _key : 63;
-    uint64_t                _empty: 1;
+    uint64_t                _hasValue: 1;
     uint64_t                _id;
 };
 
@@ -38,12 +38,51 @@ uint64_t UnpackID ( in Texture2D<uint32_t4> ids, in uint32_t2 pix )
     return alpha.x | alpha.y | alpha.z | alpha.w;
 }
 
+uint64_t Hash ( in uint64_t id )
+{
+    // Taken from MSVC std::hash<void const*>.
+    uint64_t4 alpha = (uint64_t4)id;
+    uint64_t4 beta = (uint64_t4)id;
+
+    alpha.yzw &= uint64_t3 ( 0x00FF000000000000ULL, 0x0000FF0000000000ULL, 0x000000FF00000000ULL );
+    beta &= uint64_t4 ( 0x00000000FF000000ULL, 0x0000000000FF0000ULL, 0x000000000000FF00ULL, 0x00000000000000FFULL );
+
+    alpha >>= uint32_t4 ( 56U, 48U, 40U, 32U );
+    beta.xyz >>= uint32_t3 ( 24U, 16U, 8U );
+
+    uint64_t const fnvPrime = 1099511628211ULL;
+    uint64_t hash = 14695981039346656037ULL ^ beta.w;
+    hash *= fnvPrime;
+
+    hash ^= beta.z;
+    hash *= fnvPrime;
+
+    hash ^= beta.y;
+    hash *= fnvPrime;
+
+    hash ^= beta.x;
+    hash *= fnvPrime;
+
+    hash ^= alpha.w;
+    hash *= fnvPrime;
+
+    hash ^= alpha.z;
+    hash *= fnvPrime;
+
+    hash ^= alpha.y;
+    hash *= fnvPrime;
+
+    hash ^= alpha.x;
+    return hash * fnvPrime;
+}
+
 void InsertID ( uint64_t id )
 {
     if ( id == 0U )
         return;
 
     RWStructuredBuffer<Pair> idSet = ResourceDescriptorHeap[ g_pushConstants._idSet ];
+    uint64_t const hash = Hash ( id );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

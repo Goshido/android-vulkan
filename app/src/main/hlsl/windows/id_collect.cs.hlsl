@@ -1,33 +1,26 @@
-#include "platform/windows/pbr/id.inc"
+#include "platform/windows/pbr/id_collect.inc"
 #include "platform/windows/pbr/resource_heap.inc"
 
 
 struct PushConstants
 {
-    uint32_t                _idImage;
-    uint32_t                _idSet;
-    uint32_t                _capacity;
+    uint32_t                                        _idImage;
+    uint32_t                                        _idSet;
+    uint32_t                                        _capacity;
 };
 
 [[vk::push_constant]]
-PushConstants               g_pushConstants;
+PushConstants                                       g_pushConstants;
 
 // [2025/09/11] DXC has issue with 'globallycoherent' and 'ResourceDescriptorHeap'.
 // So the workaround is used.
 // See https://github.com/microsoft/DirectXShaderCompiler/issues/7740
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-Texture2D<uint32_t4>        g_images[]:     register ( t0 );
-
-struct Pair
-{
-    uint64_t                _key : 63;
-    uint64_t                _hasValue: 1;
-    uint64_t                _id;
-};
+Texture2D<uint32_t4>                                g_images[]:     register ( t0 );
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-RWStructuredBuffer<Pair>    g_buffers[]:    register ( u0 );
+globallycoherent RWStructuredBuffer<uint64_t>       g_buffers[]:    register ( u0 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -38,9 +31,9 @@ uint64_t UnpackID ( in Texture2D<uint32_t4> ids, in uint32_t2 pix )
     return alpha.x | alpha.y | alpha.z | alpha.w;
 }
 
-uint64_t Hash ( in uint64_t id )
+uint32_t BucketIndex ( in uint64_t id )
 {
-    // Taken from MSVC std::hash<void const*>.
+    // The implementation is based on ideas from from MSVC std::hash<void const*>.
     uint64_t4 alpha = (uint64_t4)id;
     uint64_t4 beta = (uint64_t4)id;
 
@@ -73,16 +66,36 @@ uint64_t Hash ( in uint64_t id )
     hash *= fnvPrime;
 
     hash ^= alpha.x;
-    return hash * fnvPrime;
+    return (uint32_t)( ( hash * fnvPrime ) % (uint64_t)g_pushConstants._capacity );
 }
 
-void InsertID ( uint64_t id )
+void InsertID ( in uint64_t id )
 {
     if ( id == 0U )
         return;
 
-    RWStructuredBuffer<Pair> idSet = ResourceDescriptorHeap[ g_pushConstants._idSet ];
-    uint64_t const hash = Hash ( id );
+    // The implementation is based on ideas from
+    // https://developer.nvidia.com/blog/maximizing-performance-with-massively-parallel-hash-maps-on-gpus/
+    globallycoherent RWStructuredBuffer<uint64_t> idSet = g_buffers[ g_pushConstants._idSet ];
+
+    for ( uint32_t i = BucketIndex ( id ); ; i = ++i % g_pushConstants._capacity )
+    {
+        uint64_t old;
+        InterlockedOr ( idSet[ i ], 0ULL, old );
+
+        if ( old == id )
+            return;
+
+        if ( old != 0ULL )
+            continue;
+
+        InterlockedCompareExchange ( idSet[ i ], 0ULL, id, old );
+
+        if ( old == 0ULL )
+        {
+            return;
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -90,7 +103,7 @@ void InsertID ( uint64_t id )
 [numthreads ( THREADS_X, THREADS_Y, 1U )]
 void CS ( in uint32_t3 pix : SV_DispatchThreadID )
 {
-    Texture2D<uint32_t4> ids = ResourceDescriptorHeap[ g_pushConstants._idImage ];
+    Texture2D<uint32_t4> ids = g_images[ g_pushConstants._idImage ];
     uint32_t2 resolution;
     ids.GetDimensions ( resolution.x, resolution.y );
 

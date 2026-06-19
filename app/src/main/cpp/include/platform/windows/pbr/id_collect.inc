@@ -1,5 +1,5 @@
-#ifndef ID_INC
-#define ID_INC
+#ifndef ID_COLLECT_INC
+#define ID_COLLECT_INC
 
 
 #define THREADS_X               8U
@@ -9,4 +9,4 @@
 #define THREADS_PER_GROUP       64U
 
 
-#endif // ID_INC
+#endif // ID_COLLECT_INC

@@ -500,6 +500,7 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
             )
         ) &
 
+        AV_BITWISE ( CheckFeature ( features12.shaderBufferInt64Atomics, "shaderBufferInt64Atomics", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16", _initLogs ) ) &
 
         AV_BITWISE (
@@ -669,7 +670,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .storageBuffer8BitAccess = VK_FALSE,
         .uniformAndStorageBuffer8BitAccess = VK_FALSE,
         .storagePushConstant8 = VK_FALSE,
-        .shaderBufferInt64Atomics = VK_FALSE,
+        .shaderBufferInt64Atomics = VK_TRUE,
         .shaderSharedInt64Atomics = VK_FALSE,
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE,

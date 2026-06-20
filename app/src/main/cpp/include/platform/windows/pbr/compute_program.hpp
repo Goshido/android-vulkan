@@ -3,7 +3,6 @@
 
 
 #include <pbr/compute_program_base.hpp>
-#include <renderer.hpp>
 
 
 namespace pbr {
@@ -22,16 +21,15 @@ class ComputeProgram : public ComputeProgramBase
         [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
 
     protected:
-        explicit ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
+        explicit ComputeProgram ( size_t pushConstantSize ) noexcept;
         ~ComputeProgram () override = default;
 
         [[nodiscard]] virtual bool Init ( VkDevice device, SpecializationData specializationData ) noexcept = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( std::vector<uint8_t> &cs,
+        [[nodiscard]] virtual VkPipelineShaderStageCreateInfo InitShaderInfo ( std::vector<uint8_t> &cs,
             VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo &targetInfo
+            VkSpecializationInfo* specializationInfo
         ) noexcept = 0;
 };
 

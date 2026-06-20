@@ -109,9 +109,12 @@ VkPipelineDepthStencilStateCreateInfo const* DummyLightProgram::InitDepthStencil
     return &info;
 }
 
-bool DummyLightProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout DummyLightProgram::InitLayout ( VkDevice device ) noexcept
 {
-    return _layout.Init ( device ) && InitLayoutInternal ( device, layout, _layout.GetLayout () );
+    if ( !_layout.Init ( device ) ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    return InitLayoutInternal ( device, _layout.GetLayout () );
 }
 
 VkPipelineRasterizationStateCreateInfo const* DummyLightProgram::InitRasterizationInfo (

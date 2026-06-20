@@ -24,8 +24,6 @@ class LightLightupBaseProgram : public GraphicsProgram
         AV_DX_ALIGNMENT_END
 
     public:
-        LightLightupBaseProgram () = delete;
-
         LightLightupBaseProgram ( LightLightupBaseProgram const & ) = delete;
         LightLightupBaseProgram &operator = ( LightLightupBaseProgram const & ) = delete;
 
@@ -33,7 +31,7 @@ class LightLightupBaseProgram : public GraphicsProgram
         LightLightupBaseProgram &operator = ( LightLightupBaseProgram && ) = delete;
 
     protected:
-        explicit LightLightupBaseProgram ( std::string &&name ) noexcept;
+        explicit LightLightupBaseProgram () noexcept;
         ~LightLightupBaseProgram () override = default;
 };
 

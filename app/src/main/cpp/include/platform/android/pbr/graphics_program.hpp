@@ -27,11 +27,11 @@ class GraphicsProgram : public GraphicsProgramBase
         void Destroy ( VkDevice device ) noexcept override;
 
     protected:
-        explicit GraphicsProgram ( std::string_view name ) noexcept;
+        explicit GraphicsProgram ( size_t pushConstantSize ) noexcept;
         ~GraphicsProgram () override = default;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
+        [[nodiscard]] virtual VkPipelineShaderStageCreateInfo const* InitShaderInfo (
+            android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo

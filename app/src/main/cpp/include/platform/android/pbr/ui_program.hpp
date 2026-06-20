@@ -76,7 +76,7 @@ class UIProgram final : public GraphicsProgram
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -86,8 +86,7 @@ class UIProgram final : public GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo

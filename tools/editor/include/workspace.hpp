@@ -8,6 +8,7 @@
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
+#include <platform/windows/pbr/id_collect_program.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include "point_light_node.hpp"
@@ -63,6 +64,7 @@ class Workspace final
         ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
         ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
 
+        std::unique_ptr<pbr::IDCollectProgram>          _idCollectProgram {};
         std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
         std::unique_ptr<pbr::OpaqueWithIDProgram>       _opaqueWithIDProgram {};
         StreamBufferRef                                 _frameStream {};

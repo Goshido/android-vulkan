@@ -6,9 +6,8 @@
 
 namespace pbr {
 
-GraphicsProgram::GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    GraphicsProgramBase ( name ),
-    _pushConstantSize ( static_cast<uint32_t> ( pushConstantSize ) )
+GraphicsProgram::GraphicsProgram ( size_t pushConstantSize ) noexcept:
+    GraphicsProgramBase ( pushConstantSize )
 {
     // NOTHING
 }

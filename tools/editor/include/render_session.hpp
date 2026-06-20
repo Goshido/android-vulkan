@@ -3,7 +3,7 @@
 
 
 #include "font_storage.hpp"
-#include "graphics_program_ref.hpp"
+#include "program_ref.hpp"
 #include "mesh_upload_info.hpp"
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
@@ -48,10 +48,10 @@ class RenderSession final
             size_t                              _count = 0U;
         };
 
-        struct GraphicsProgramStorage final
+        struct ProgramStorage final
         {
-            std::deque<GraphicsProgramRef>      _toDestroy {};
-            std::deque<GraphicsProgramRef>      _destroyQueue[ pbr::FIF_COUNT ] {};
+            std::deque<ProgramRef>              _toDestroy {};
+            std::deque<ProgramRef>              _destroyQueue[ pbr::FIF_COUNT ] {};
             size_t                              _count = 0U;
         };
 
@@ -87,7 +87,7 @@ class RenderSession final
         android_vulkan::Texture2D               _depthRenderTarget {};
         uint32_t                                _depthRenderTargetIdx = 0U;
 
-        GraphicsProgramStorage                  _graphicsProgramStorage {};
+        ProgramStorage                          _programStorage {};
         MeshStorage                             _meshStorage {};
         StreamBufferStorage                     _streamBufferStorage {};
         Texture2DStorage                        _texture2DStorage {};
@@ -406,7 +406,7 @@ class RenderSession final
         void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
 
-        void DestroyGraphicsPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void DestroyMeshes ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void DestroyStreamBuffers ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
         void DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
@@ -416,12 +416,12 @@ class RenderSession final
 
         void RenderScene ( VkCommandBuffer commandBuffer ) noexcept;
 
-        void OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnNewGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;

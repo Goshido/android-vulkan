@@ -20,7 +20,7 @@ constexpr size_t VERTEX_ATTRIBUTE_COUNT = 1U;
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightShadowmapGeneratorProgram::PointLightShadowmapGeneratorProgram () noexcept:
-    GraphicsProgram ( "pbr::PointLightShadowmapGeneratorProgram" )
+    GraphicsProgram ( 0U )
 {
     // NOTHING
 }
@@ -49,45 +49,30 @@ bool PointLightShadowmapGeneratorProgram::Init ( android_vulkan::Renderer const 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkViewport viewportDescription;
     VkPipelineViewportStateCreateInfo viewportInfo;
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        &attributeDescriptions,
-        &bindingDescription
-    );
-
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    VkGraphicsPipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( renderer, nullptr, nullptr, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, &attributeDescriptions, &bindingDescription ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, nullptr ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = subpass,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
@@ -205,10 +190,10 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_instanceLayout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     VkPipelineLayoutCreateInfo const layoutInfo
     {
@@ -228,7 +213,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device,
         _pipelineLayout,
@@ -236,8 +221,7 @@ bool PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device, VkPipeli
         "Point light shadowmap generator"
     )
 
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitMultisampleInfo (
@@ -284,8 +268,8 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
+VkPipelineShaderStageCreateInfo const* PointLightShadowmapGeneratorProgram::InitShaderInfo (
+    android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
@@ -297,7 +281,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
@@ -307,7 +291,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
@@ -333,8 +317,7 @@ bool PointLightShadowmapGeneratorProgram::InitShaderInfo ( android_vulkan::Rende
         .pSpecializationInfo = nullptr
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (

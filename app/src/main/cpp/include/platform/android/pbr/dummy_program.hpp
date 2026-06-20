@@ -12,6 +12,7 @@ class DummyProgram : public GraphicsProgram
     private:
         std::string_view const      _fragmentShaderSource;
         uint32_t const              _subpass = 0U;
+        std::string_view const      _name {};
 
     public:
         DummyProgram () = delete;
@@ -30,15 +31,9 @@ class DummyProgram : public GraphicsProgram
         ) noexcept;
 
     protected:
-        explicit DummyProgram ( std::string_view &&name,
-            std::string_view &&fragmentShader,
-            uint32_t subpass
-        ) noexcept;
+        explicit DummyProgram ( std::string_view name, std::string_view &&fragmentShader, uint32_t subpass ) noexcept;
 
-        [[nodiscard]] bool InitLayoutInternal ( VkDevice device,
-            VkPipelineLayout &layout,
-            VkDescriptorSetLayout descriptorSetLayout
-        ) noexcept;
+        [[nodiscard]] VkPipelineLayout InitLayoutInternal ( VkDevice device, VkDescriptorSetLayout descriptorSetLayout ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
@@ -53,8 +48,7 @@ class DummyProgram : public GraphicsProgram
             VkPipelineMultisampleStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo

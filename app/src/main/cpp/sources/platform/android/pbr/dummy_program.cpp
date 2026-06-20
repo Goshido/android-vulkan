@@ -33,41 +33,30 @@ bool DummyProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkViewport viewportDescription;
     VkPipelineViewportStateCreateInfo viewportInfo;
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = _subpass;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    VkGraphicsPipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) ),
+        .pStages = InitShaderInfo ( renderer, nullptr, nullptr, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = _subpass,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
     char where[ 512U ];
     std::snprintf ( where, std::size ( where ), "%s::Init", _name.data () );
@@ -87,21 +76,19 @@ bool DummyProgram::Init ( android_vulkan::Renderer const &renderer,
     return true;
 }
 
-DummyProgram::DummyProgram ( std::string_view &&name,
+DummyProgram::DummyProgram ( std::string_view name,
     std::string_view &&fragmentShader,
     uint32_t subpass
 ) noexcept:
-    GraphicsProgram ( std::forward<std::string_view> ( name ) ),
+    GraphicsProgram ( 0U ),
     _fragmentShaderSource ( fragmentShader ),
-    _subpass ( subpass )
+    _subpass ( subpass ),
+    _name ( name )
 {
     // NOTHING
 }
 
-bool DummyProgram::InitLayoutInternal ( VkDevice device,
-    VkPipelineLayout &layout,
-    VkDescriptorSetLayout descriptorSetLayout
-) noexcept
+VkPipelineLayout DummyProgram::InitLayoutInternal ( VkDevice device, VkDescriptorSetLayout descriptorSetLayout ) noexcept
 {
     VkPipelineLayoutCreateInfo const layoutInfo
     {
@@ -124,12 +111,10 @@ bool DummyProgram::InitLayoutInternal ( VkDevice device,
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
-
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
 VkPipelineDynamicStateCreateInfo const* DummyProgram::InitDynamicStateInfo (
@@ -175,8 +160,7 @@ VkPipelineMultisampleStateCreateInfo const* DummyProgram::InitMultisampleInfo (
     return &info;
 }
 
-bool DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
+VkPipelineShaderStageCreateInfo const* DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
@@ -186,14 +170,14 @@ bool DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     std::snprintf ( where, std::size ( where ), "Can't create vertex shader (pbr::%s)", _name.data () );
 
     if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, where ) ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     std::snprintf ( where, std::size ( where ), "Can't create fragment shader (pbr::%s)", _name.data () );
 
     if ( !renderer.CreateShader ( _fragmentShader, std::string ( _fragmentShaderSource ), where ) ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
         _fragmentShader,
@@ -224,8 +208,7 @@ bool DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
         .pSpecializationInfo = nullptr
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 VkPipelineViewportStateCreateInfo const* DummyProgram::InitViewportInfo (

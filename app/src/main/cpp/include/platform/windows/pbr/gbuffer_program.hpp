@@ -14,6 +14,7 @@ class GBufferProgram : public GraphicsProgram
         std::string_view                    _vsSource {};
         std::string_view                    _fsSource {};
         ResourceHeapDescriptorSetLayout     _layout {};
+        std::string_view                    _name {};
 
     public:
         GBufferProgram () = delete;
@@ -54,7 +55,7 @@ class GBufferProgram : public GraphicsProgram
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
@@ -79,8 +80,7 @@ class GBufferProgram : public GraphicsProgram
             VkPipelineRenderingCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            std::vector<uint8_t> &vs,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,
             std::vector<uint8_t> &fs,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

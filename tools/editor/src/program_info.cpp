@@ -1,11 +1,10 @@
 #include <precompiled_headers.hpp>
-#include <graphics_program_info.hpp>
+#include <program_info.hpp>
 
 
 namespace editor {
 
-GraphicsProgramInfo::GraphicsProgramInfo ( GraphicsProgramRef program,
-    GraphicsProgramAddedNotify &&addedNotify ) noexcept:
+ProgramInfo::ProgramInfo ( ProgramRef program, ProgramAddedNotify &&addedNotify ) noexcept:
     _program ( std::move ( program ) ),
     _notify ( std::move ( addedNotify ) )
 {

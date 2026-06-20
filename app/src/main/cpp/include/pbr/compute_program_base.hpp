@@ -2,14 +2,7 @@
 #define PBR_COMPUTE_PROGRAM_BASE_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string_view>
-#include <vulkan/vulkan_core.h>
-
-GX_RESTORE_WARNING_STATE
+#include "program.hpp"
 
 
 namespace pbr {
@@ -18,17 +11,8 @@ constexpr static char const* COMPUTE_SHADER_ENTRY_POINT = "CS";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class ComputeProgramBase
+class ComputeProgramBase : public Program
 {
-    public:
-        using SpecializationData = void const*;
-
-    protected:
-        [[maybe_unused]] std::string_view const     _name;
-        VkPipeline                                  _pipeline = VK_NULL_HANDLE;
-        VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
-        uint32_t                                    _pushConstantSize = 0U;
-
     public:
         ComputeProgramBase () = delete;
 
@@ -44,13 +28,10 @@ class ComputeProgramBase
         void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
     protected:
-        explicit ComputeProgramBase ( std::string_view name, size_t pushConstantSize ) noexcept;
+        explicit ComputeProgramBase ( size_t pushConstantSize ) noexcept;
         virtual ~ComputeProgramBase () = default;
 
-        // Successor classes MUST call this method.
-        virtual void Destroy ( VkDevice device ) noexcept;
-
-        [[nodiscard]] virtual bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept = 0;
+        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
 };
 
 } // namespace pbr

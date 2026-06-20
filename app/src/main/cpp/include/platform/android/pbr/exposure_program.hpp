@@ -47,12 +47,11 @@ class ExposureProgram final : public ComputeProgram
         void SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptorSet set ) const noexcept;
 
     private:
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo &targetInfo
+            VkSpecializationInfo* specializationInfo
         ) noexcept override;
 };
 

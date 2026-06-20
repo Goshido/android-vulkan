@@ -2,14 +2,7 @@
 #define PBR_GRAPHICS_PROGRAM_BASE_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <string_view>
-#include <vulkan/vulkan_core.h>
-
-GX_RESTORE_WARNING_STATE
+#include "program.hpp"
 
 
 namespace pbr {
@@ -19,16 +12,8 @@ constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-class GraphicsProgramBase
+class GraphicsProgramBase : public Program
 {
-    protected:
-        using SpecializationData = void const*;
-
-    protected:
-        [[maybe_unused]] std::string_view const     _name;
-        VkPipeline                                  _pipeline = VK_NULL_HANDLE;
-        VkPipelineLayout                            _pipelineLayout = VK_NULL_HANDLE;
-
     public:
         GraphicsProgramBase () = delete;
 
@@ -38,16 +23,11 @@ class GraphicsProgramBase
         GraphicsProgramBase ( GraphicsProgramBase && ) = delete;
         GraphicsProgramBase &operator = ( GraphicsProgramBase && ) = delete;
 
-        // Successor classes MUST call this method.
-        virtual void Destroy ( VkDevice device ) noexcept;
-
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
-        [[maybe_unused]] std::string_view GetName () const noexcept;
-
     protected:
-        explicit GraphicsProgramBase ( std::string_view name ) noexcept;
+        explicit GraphicsProgramBase ( size_t pushConstantSize ) noexcept;
         virtual ~GraphicsProgramBase () = default;
 
         [[nodiscard]] virtual VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -67,7 +47,7 @@ class GraphicsProgramBase
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept = 0;
 
-        [[nodiscard]] virtual bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept = 0;
+        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

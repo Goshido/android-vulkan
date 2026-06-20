@@ -63,6 +63,7 @@ bool GBufferProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexc
 
         .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
         .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( vs, fs, nullptr, nullptr, moduleInfo, stageInfo ),
         .pVertexInputState = InitVertexInputInfo (),
         .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
         .pTessellationState = nullptr,
@@ -72,28 +73,18 @@ bool GBufferProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexc
         .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
         .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
         .pDynamicState = InitDynamicStateInfo ( &dynamicStateInfo ),
+        .layout = InitLayout ( device ),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0U,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };
 
-    bool const result = InitShaderInfo ( pipelineInfo.pStages,
-            vs,
-            fs,
-            nullptr,
-            nullptr,
-            moduleInfo,
-            stageInfo
-        ) &&
-
-        InitLayout ( device, pipelineInfo.layout ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-            "pbr::GBufferProgram::Init",
-            "Can't create pipeline"
-        );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::GBufferProgram::Init",
+        "Can't create pipeline"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -107,9 +98,10 @@ GBufferProgram::GBufferProgram ( std::string_view vs,
     std::string_view name,
     size_t pushConstantSize
 ) noexcept:
-    GraphicsProgram ( name, pushConstantSize ),
+    GraphicsProgram ( pushConstantSize ),
     _vsSource ( vs ),
-    _fsSource ( fs )
+    _fsSource ( fs ),
+    _name ( name )
 {
     // NOTHING
 }
@@ -234,10 +226,10 @@ VkPipelineInputAssemblyStateCreateInfo const* GBufferProgram::InitInputAssemblyI
     return &info;
 }
 
-bool GBufferProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout GBufferProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     VkPushConstantRange const pushConstantRange
     {
@@ -264,11 +256,10 @@ bool GBufferProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) no
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* GBufferProgram::InitMultisampleInfo (
@@ -357,8 +348,7 @@ VkPipelineRenderingCreateInfo const* GBufferProgram::InitRenderingInfo ( VkForma
     return &info;
 }
 
-bool GBufferProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    std::vector<uint8_t> &vs,
+VkPipelineShaderStageCreateInfo const* GBufferProgram::InitShaderInfo ( std::vector<uint8_t> &vs,
     std::vector<uint8_t> &fs,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
@@ -370,7 +360,7 @@ bool GBufferProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &ta
     android_vulkan::File fsFile ( _fsSource );
 
     if ( !vsFile.LoadContent () || !fsFile.LoadContent () ) [[unlikely]]
-        return false;
+        return nullptr;
 
     vs = std::move ( vsFile.GetContent () );
     fs = std::move ( fsFile.GetContent () );
@@ -415,8 +405,7 @@ bool GBufferProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &ta
         .pSpecializationInfo = nullptr
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 } // namespace pbr

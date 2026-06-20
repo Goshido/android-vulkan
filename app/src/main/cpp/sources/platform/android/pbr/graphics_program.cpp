@@ -10,8 +10,8 @@ void GraphicsProgram::Destroy ( VkDevice device ) noexcept
     DestroyShaderModules ( device );
 }
 
-GraphicsProgram::GraphicsProgram ( std::string_view name ) noexcept:
-    GraphicsProgramBase ( name )
+GraphicsProgram::GraphicsProgram ( size_t pushConstantSize ) noexcept:
+    GraphicsProgramBase ( pushConstantSize )
 {
     // NOTHING
 }

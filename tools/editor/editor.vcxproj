@@ -721,6 +721,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
@@ -1087,11 +1097,11 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\font_storage.cpp" />
     <ClCompile Include="src\gizmo_node.cpp" />
-    <ClCompile Include="src\graphics_program_info.cpp" />
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\hotkey.cpp" />
     <ClCompile Include="src\message.cpp" />
     <ClCompile Include="src\move_tool.cpp" />
+    <ClCompile Include="src\program_info.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
@@ -1197,6 +1207,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp" />
@@ -1263,6 +1274,8 @@
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\hotkey.hpp" />
     <ClInclude Include="include\move_tool.hpp" />
+    <ClInclude Include="include\program_info.hpp" />
+    <ClInclude Include="include\program_ref.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />

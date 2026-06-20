@@ -21,7 +21,6 @@ constexpr char const* VERTEX_SHADER = "shaders/light_volume.vs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 PointLightLightupProgram::PointLightLightupProgram () noexcept:
-    LightLightupBaseProgram ( "pbr::PointLightLightupProgram" ),
     _commonLayout {},
     _lightVolumeLayout {},
     _pointLightLayout {}
@@ -56,45 +55,30 @@ bool PointLightLightupProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkViewport viewportDescription;
     VkPipelineViewportStateCreateInfo viewportInfo;
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = std::size ( stageInfo );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        &bindingDescription
-    );
-
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = SUBPASS;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    VkGraphicsPipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = std::size ( stageInfo ),
+        .pStages = InitShaderInfo ( renderer, nullptr, nullptr, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, attributeDescriptions, &bindingDescription ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = SUBPASS,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
@@ -230,12 +214,12 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightLightupProgram::InitInpu
     return &info;
 }
 
-bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout PointLightLightupProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_commonLayout.Init ( device ) || !_lightVolumeLayout.Init ( device ) || !_pointLightLayout.Init ( device ) )
     {
         [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
     }
 
     VkDescriptorSetLayout const layouts[] =
@@ -263,12 +247,10 @@ bool PointLightLightupProgram::InitLayout ( VkDevice device, VkPipelineLayout &l
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Point light lightup" )
-
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* PointLightLightupProgram::InitMultisampleInfo (
@@ -315,8 +297,8 @@ VkPipelineRasterizationStateCreateInfo const* PointLightLightupProgram::InitRast
     return &info;
 }
 
-bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
+VkPipelineShaderStageCreateInfo const* PointLightLightupProgram::InitShaderInfo (
+    android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
@@ -328,7 +310,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer const &
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
@@ -338,7 +320,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer const &
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, FRAGMENT_SHADER )
 
@@ -364,8 +346,7 @@ bool PointLightLightupProgram::InitShaderInfo ( android_vulkan::Renderer const &
         .pSpecializationInfo = nullptr
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 VkPipelineViewportStateCreateInfo const* PointLightLightupProgram::InitViewportInfo (

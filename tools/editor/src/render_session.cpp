@@ -1,6 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
-#include <graphics_program_info.hpp>
+#include <program_info.hpp>
 #include <logger.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
@@ -332,12 +332,12 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
-            case eMessageType::DestroyGraphicsProgram:
-                OnDestroyGraphicsProgram ( messageQueue, std::move ( message ) );
-            break;
-
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyProgram:
+                OnDestroyProgram ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::DestroyStreamBuffer:
@@ -352,8 +352,8 @@ void RenderSession::EventLoop () noexcept
                 OnInvokeRenderSession ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::NewGraphicsProgram:
-                OnNewGraphicsProgram ( messageQueue, std::move ( message ) );
+            case eMessageType::NewProgram:
+                OnNewProgram ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::NewStreamBuffer:
@@ -596,43 +596,42 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
     queue.clear ();
 }
 
-void RenderSession::DestroyGraphicsPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
 {
-    auto &toDestroy = _graphicsProgramStorage._toDestroy;
+    auto &toDestroy = _programStorage._toDestroy;
 
     // Destroy on next frame.
-    auto &scheduleToDestroy = _graphicsProgramStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+    auto &scheduleToDestroy = _programStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
 
     for ( auto &item : toDestroy )
         scheduleToDestroy.push_back ( std::move ( item ) );
 
     toDestroy.clear ();
-    auto &destroyQueue = _graphicsProgramStorage._destroyQueue[ commandBufferIndex ];
+    auto &destroyQueue = _programStorage._destroyQueue[ commandBufferIndex ];
 
     if ( destroyQueue.empty () ) [[likely]]
         return;
 
-    AV_TRACE ( "Destroy graphics programs" )
+    AV_TRACE ( "Destroy programs" )
     VkDevice device = NativeRenderer::Instance ().GetDevice ();
 
     for ( auto &program : destroyQueue )
     {
-        AV_TRACE ( "Destroy graphics program (%s)", program->GetName ().data () );
+        AV_TRACE ( "Destroy program" );
 
         // Calling method by pointer C++ syntax
         ( messageQueue.*_enqueueHandle ) (
             Message ( eMessageType::InvokeIO,
                 [ this, &messageQueue, device, program = std::move ( program ) ] () noexcept -> void* {
-                    pbr::GraphicsProgram &p = *program;
-                    AV_TRACE ( "Destroy graphics program (%s)", p.GetName ().data () );
-                    p.Destroy ( device );
+                    AV_TRACE ( "Destroy program" );
+                    program->Destroy ( device );
 
                     // Calling method by pointer C++ syntax
                     ( messageQueue.*_enqueueHandle ) (
                         Message ( eMessageType::InvokeRenderSession,
                             [ this ] () noexcept -> void* {
-                                AV_TRACE ( "Graphics program destroy complete" );
-                                --_graphicsProgramStorage._count;
+                                AV_TRACE ( "Program destroy complete" );
+                                --_programStorage._count;
                                 return nullptr;
                             }
                         )
@@ -951,21 +950,21 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
     );
 }
 
-void RenderSession::OnDestroyGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
-{
-    AV_TRACE ( "Destroy graphics program" )
-    messageQueue.DequeueEnd ();
-
-    _graphicsProgramStorage._toDestroy.push_back (
-        std::move ( *static_cast<GraphicsProgramRef*> ( message._action () ) )
-    );
-}
-
 void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Destroy mesh" )
     messageQueue.DequeueEnd ();
     _meshStorage._toDestroy.push_back ( std::move ( *static_cast<MeshGeometryRef*> ( message._action () ) ) );
+}
+
+void RenderSession::OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy program" )
+    messageQueue.DequeueEnd ();
+
+    _programStorage._toDestroy.push_back (
+        std::move ( *static_cast<ProgramRef*> ( message._action () ) )
+    );
 }
 
 void RenderSession::OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -989,12 +988,12 @@ void RenderSession::OnInvokeRenderSession ( MessageQueue &messageQueue, Message 
     std::ignore = message._action ();
 }
 
-void RenderSession::OnNewGraphicsProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+void RenderSession::OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    AV_TRACE ( "New graphics program" )
+    AV_TRACE ( "New program" )
     messageQueue.DequeueEnd ();
-    ++_graphicsProgramStorage._count;
-    auto &info = *static_cast<GraphicsProgramInfo*> ( message._action () );
+    ++_programStorage._count;
+    auto &info = *static_cast<ProgramInfo*> ( message._action () );
     info._notify ( std::move ( info._program ) );
 }
 
@@ -1045,7 +1044,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     FreeMeshTransferQueue ( messageQueue, commandBufferIndex );
     FreeTexture2DTransferQueue ( messageQueue, commandBufferIndex );
 
-    DestroyGraphicsPrograms ( messageQueue, commandBufferIndex );
+    DestroyPrograms ( messageQueue, commandBufferIndex );
     DestroyMeshes ( messageQueue, commandBufferIndex );
     DestroyStreamBuffers ( messageQueue, commandBufferIndex );
     DestroyTexture2DInstances ( messageQueue, commandBufferIndex );
@@ -1184,7 +1183,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     for ( ; ; )
     {
         bool const exit = _uiElements |
-            _graphicsProgramStorage._count |
+            _programStorage._count |
             _meshStorage._count |
             _streamBufferStorage._count |
             _texture2DStorage._count;
@@ -1204,7 +1203,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
             case eMessageType::Shutdown:
                 // All existing events should be processed first.
                 messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
-                DestroyGraphicsPrograms ( messageQueue, _writingCommandInfo );
+                DestroyPrograms ( messageQueue, _writingCommandInfo );
                 DestroyMeshes ( messageQueue, _writingCommandInfo );
                 DestroyStreamBuffers ( messageQueue, _writingCommandInfo );
 
@@ -1213,12 +1212,12 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
                 );
             break;
 
-            case eMessageType::DestroyGraphicsProgram:
-                OnDestroyGraphicsProgram ( messageQueue, std::move ( message ) );
-            break;
-
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyProgram:
+                OnDestroyProgram ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::DestroyStreamBuffer:
@@ -1284,7 +1283,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _toneMapper.Destroy ( device );
     resourceHeap.Destroy ( renderer );
 
-    _graphicsProgramStorage = {};
+    _programStorage = {};
     _meshStorage = {};
     _streamBufferStorage = {};
     _texture2DStorage = {};

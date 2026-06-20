@@ -74,6 +74,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/position_property_checker.cpp
     app/src/main/cpp/sources/pbr/position_property.cpp
     app/src/main/cpp/sources/pbr/property_checker.cpp
+    app/src/main/cpp/sources/pbr/program.cpp
     app/src/main/cpp/sources/pbr/property_parser.cpp
     app/src/main/cpp/sources/pbr/property.cpp
     app/src/main/cpp/sources/pbr/sampler.cpp

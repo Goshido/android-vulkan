@@ -21,7 +21,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    GraphicsProgram ( "pbr::ToneMapperProgram", sizeof ( PushConstants ) )
+    GraphicsProgram ( sizeof ( PushConstants ) )
 {
     // NOTHING
 }
@@ -69,6 +69,7 @@ bool ToneMapperProgram::Init ( VkDevice device,
 
         .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
         .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( vs, fs, &brightnessInfo, &specInfo, moduleInfo, stageInfo ),
         .pVertexInputState = InitVertexInputInfo (),
         .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
         .pTessellationState = nullptr,
@@ -84,28 +85,18 @@ bool ToneMapperProgram::Init ( VkDevice device,
         .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
         .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
         .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0U,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };
 
-    bool const result = InitShaderInfo ( pipelineInfo.pStages,
-            vs,
-            fs,
-            &brightnessInfo,
-            &specInfo,
-            moduleInfo,
-            stageInfo
-        ) &&
-
-        InitLayout ( device, pipelineInfo.layout ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-            "pbr::ToneMapperProgram::Init",
-            "Can't create pipeline"
-        );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::ToneMapperProgram::Init",
+        "Can't create pipeline"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -218,10 +209,10 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
     return &info;
 }
 
-bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout ToneMapperProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -248,11 +239,10 @@ bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout )
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* ToneMapperProgram::InitMultisampleInfo (
@@ -362,8 +352,7 @@ VkPipelineRenderingCreateInfo const* ToneMapperProgram::InitRenderingInfo ( VkFo
     return &info;
 }
 
-bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    std::vector<uint8_t> &vs,
+VkPipelineShaderStageCreateInfo const* ToneMapperProgram::InitShaderInfo ( std::vector<uint8_t> &vs,
     std::vector<uint8_t> &fs,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
@@ -377,7 +366,7 @@ bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* 
     android_vulkan::File fsFile ( cases[ static_cast<size_t> ( info._isDefaultBrightness ) ] );
 
     if ( !vsFile.LoadContent () || !fsFile.LoadContent () ) [[unlikely]]
-        return false;
+        return nullptr;
 
     vs = std::move ( vsFile.GetContent () );
     fs = std::move ( fsFile.GetContent () );
@@ -437,8 +426,7 @@ bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* 
         .pSpecializationInfo = specializationInfo
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 } // namespace pbr

@@ -36,7 +36,7 @@ class DummyGeometryProgram final : public DummyProgram
             VkPipelineDepthStencilStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
             VkPipelineRasterizationStateCreateInfo &info

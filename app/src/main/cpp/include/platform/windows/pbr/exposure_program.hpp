@@ -49,13 +49,12 @@ class ExposureProgram final : public ComputeProgram
         void Destroy ( VkDevice device ) noexcept override;
 
     private:
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( std::vector<uint8_t> &cs,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo InitShaderInfo ( std::vector<uint8_t> &cs,
             VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo &targetInfo
+            VkSpecializationInfo* specializationInfo
         ) noexcept override;
 };
 

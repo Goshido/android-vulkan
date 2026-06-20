@@ -1,7 +1,7 @@
 #include <precompiled_headers.hpp>
-#include <graphics_program_info.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
+#include <program_info.hpp>
 #include <resource_heap.hpp>
 #include <shading.hpp>
 #include <static_mesh_component.hpp>
@@ -157,11 +157,22 @@ void Workspace::Destroy () noexcept
     _history.Clear ();
     _actors.clear ();
 
+    if ( _idCollectProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _idCollectProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
     if ( _opaqueProgram ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
-            Message ( eMessageType::DestroyGraphicsProgram,
-                [ program = GraphicsProgramRef ( _opaqueProgram.release () ) ] () mutable noexcept -> void* {
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _opaqueProgram.release () ) ] () mutable noexcept -> void* {
                     return &program;
                 }
             )
@@ -171,8 +182,8 @@ void Workspace::Destroy () noexcept
     if ( _opaqueWithIDProgram ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
-            Message ( eMessageType::DestroyGraphicsProgram,
-                [ program = GraphicsProgramRef ( _opaqueWithIDProgram.release () ) ] () mutable noexcept -> void* {
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _opaqueWithIDProgram.release () ) ] () mutable noexcept -> void* {
                     return &program;
                 }
             )
@@ -849,6 +860,7 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = ( static_cast<bool> ( _viewport ) ) &
+        ( static_cast<bool> ( _idCollectProgram ) ) &
         ( static_cast<bool> ( _opaqueProgram ) ) &
         ( static_cast<bool> ( _opaqueWithIDProgram ) ) &
         ( static_cast<bool> ( _frameStream ) ) &
@@ -880,13 +892,37 @@ void Workspace::InitGraphicsResources () noexcept
 
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
                 VkDevice device = renderer.GetDevice ();
+                auto idCollectProgram = std::make_unique<pbr::IDCollectProgram> ();
+
+                if ( !idCollectProgram->Init ( device, nullptr ) ) [[unlikely]]
+                    return nullptr;
+
+                auto idCollectProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _idCollectProgram = std::unique_ptr<pbr::IDCollectProgram> (
+                        static_cast<pbr::IDCollectProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( idCollectProgram.release () ),
+                                std::move ( idCollectProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
                 VkFormat const depth = renderer.GetDefaultDepthFormat ();
                 auto opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
 
                 if ( !opaqueProgram->Init ( device, depth ) ) [[unlikely]]
                     return nullptr;
 
-                auto opaqueProgramReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                auto opaqueProgramReady = [ this ] ( ProgramRef program ) noexcept {
                     // NOLINTNEXTLINE - downcast
                     _opaqueProgram = std::unique_ptr<pbr::OpaqueProgram> (
                         static_cast<pbr::OpaqueProgram*> ( program.release () )
@@ -894,10 +930,9 @@ void Workspace::InitGraphicsResources () noexcept
                 };
 
                 messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewGraphicsProgram,
+                    Message ( eMessageType::NewProgram,
                         [
-                            info = GraphicsProgramInfo (
-                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueProgram.release () ),
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( opaqueProgram.release () ),
                                 std::move ( opaqueProgramReady )
                             )
                         ] () mutable noexcept -> void* {
@@ -911,7 +946,7 @@ void Workspace::InitGraphicsResources () noexcept
                 if ( !opaqueWithIDProgram->Init ( device, depth ) ) [[unlikely]]
                     return nullptr;
 
-                auto opaqueWithIDProgramReady = [ this ] ( GraphicsProgramRef program ) noexcept {
+                auto opaqueWithIDProgramReady = [ this ] ( ProgramRef program ) noexcept {
                     // NOLINTNEXTLINE - downcast
                     _opaqueWithIDProgram = std::unique_ptr<pbr::OpaqueWithIDProgram> (
                         static_cast<pbr::OpaqueWithIDProgram*> ( program.release () )
@@ -919,10 +954,9 @@ void Workspace::InitGraphicsResources () noexcept
                 };
 
                 messageQueue.EnqueueBack (
-                    Message ( eMessageType::NewGraphicsProgram,
+                    Message ( eMessageType::NewProgram,
                         [
-                            info = GraphicsProgramInfo (
-                                std::unique_ptr<pbr::GraphicsProgram> ( opaqueWithIDProgram.release () ),
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( opaqueWithIDProgram.release () ),
                                 std::move ( opaqueWithIDProgramReady )
                             )
                         ] () mutable noexcept -> void* {

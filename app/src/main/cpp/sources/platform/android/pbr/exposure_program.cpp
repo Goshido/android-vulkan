@@ -15,7 +15,7 @@ constexpr char const* SHADER = "shaders/android/exposure.cs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 ExposureProgram::ExposureProgram () noexcept:
-    ComputeProgram ( "pbr::ExposureProgram", sizeof ( ExposureProgram::PushConstants ) )
+    ComputeProgram ( sizeof ( ExposureProgram::PushConstants ) )
 {
     // NOTHING
 }
@@ -27,21 +27,22 @@ bool ExposureProgram::Init ( android_vulkan::Renderer const &renderer,
     VkDevice device = renderer.GetDevice ();
     VkSpecializationInfo specInfo {};
 
-    VkComputePipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    VkComputePipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = InitShaderInfo ( renderer, specializationData, &specInfo ),
+        .layout = InitLayout ( device ),
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    bool const result = InitShaderInfo ( renderer, specializationData, &specInfo, pipelineInfo.stage ) &&
-        InitLayout ( device, pipelineInfo.layout ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-            "pbr::ExposureProgram::Init",
-            "Can't create pipeline"
-        );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::ExposureProgram::Init",
+        "Can't create pipeline"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -70,10 +71,10 @@ void ExposureProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescri
     );
 }
 
-bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout ExposureProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -100,27 +101,19 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Exposure" )
-
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
-bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
+VkPipelineShaderStageCreateInfo ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData specializationData,
-    VkSpecializationInfo* specializationInfo,
-    VkPipelineShaderStageCreateInfo &targetInfo
+    VkSpecializationInfo* specializationInfo
 ) noexcept
 {
-    bool const result = renderer.CreateShader ( _computeShader,
-        SHADER,
-        "Can't create shader (pbr::ExposureProgram)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
+    if ( !renderer.CreateShader ( _computeShader, SHADER, "Can't create shader (pbr::ExposureProgram)" ) ) [[unlikely]]
+        return {};
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _computeShader, VK_OBJECT_TYPE_SHADER_MODULE, SHADER )
 
@@ -164,7 +157,7 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
         .pData = specializationData
     };
 
-    targetInfo =
+    return
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = nullptr,
@@ -174,8 +167,6 @@ bool ExposureProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
         .pName = COMPUTE_SHADER_ENTRY_POINT,
         .pSpecializationInfo = specializationInfo
     };
-
-    return true;
 }
 
 } // namespace pbr

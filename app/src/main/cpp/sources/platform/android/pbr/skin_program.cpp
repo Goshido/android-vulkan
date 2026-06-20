@@ -14,7 +14,7 @@ constexpr char const* SHADER = "shaders/skin.cs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 SkinProgram::SkinProgram () noexcept:
-    ComputeProgram ( "pbr::SkinProgram", sizeof ( SkinProgram::PushConstants ) )
+    ComputeProgram ( sizeof ( SkinProgram::PushConstants ) )
 {
     // NOTHING
 }
@@ -25,21 +25,18 @@ bool SkinProgram::Init ( android_vulkan::Renderer const &renderer,
 {
     VkDevice device = renderer.GetDevice ();
 
-    VkComputePipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
+    VkComputePipelineCreateInfo pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = InitShaderInfo ( renderer, nullptr, nullptr ),
+        .layout = InitLayout ( device ),
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    bool result = InitShaderInfo ( renderer, nullptr, nullptr, pipelineInfo.stage ) &&
-        InitLayout ( device, pipelineInfo.layout );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
-
-    result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "pbr::SkinProgram::Init",
         "Can't create pipeline"
@@ -72,10 +69,10 @@ void SkinProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer, VkDescriptor
     );
 }
 
-bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout SkinProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -102,30 +99,25 @@ bool SkinProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexc
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Skin" )
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
-bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
+VkPipelineShaderStageCreateInfo SkinProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
-    VkSpecializationInfo* /*specializationInfo*/,
-    VkPipelineShaderStageCreateInfo &targetInfo
+    VkSpecializationInfo* /*specializationInfo*/
 ) noexcept
 {
-    bool const result = renderer.CreateShader ( _computeShader,
-        SHADER,
-        "Can't create shader (pbr::SkinProgram)"
-    );
+    bool const result = renderer.CreateShader ( _computeShader, SHADER, "Can't create shader (pbr::SkinProgram)" );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return {};
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _computeShader, VK_OBJECT_TYPE_SHADER_MODULE, SHADER )
 
-    targetInfo =
+    return
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = nullptr,
@@ -135,8 +127,6 @@ bool SkinProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
         .pName = COMPUTE_SHADER_ENTRY_POINT,
         .pSpecializationInfo = nullptr
     };
-
-    return true;
 }
 
 } // namespace pbr

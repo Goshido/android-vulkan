@@ -16,7 +16,7 @@ constexpr char const* SHADER = "shaders/windows/exposure.cs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 ExposureProgram::ExposureProgram () noexcept:
-    ComputeProgram ( "pbr::ExposureProgram", sizeof ( ExposureProgram::PushConstants ) )
+    ComputeProgram ( sizeof ( ExposureProgram::PushConstants ) )
 {
     // NOTHING
 }
@@ -32,18 +32,17 @@ bool ExposureProgram::Init ( VkDevice device, SpecializationData specializationD
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stage = InitShaderInfo ( cs, moduleInfo, specializationData, &specInfo ),
+        .layout = InitLayout ( device ),
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };
 
-    bool const result = InitShaderInfo ( cs, moduleInfo, specializationData, &specInfo, pipelineInfo.stage ) &&
-        InitLayout ( device, pipelineInfo.layout ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-            "pbr::ExposureProgram::Init",
-            "Can't create pipeline"
-        );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::ExposureProgram::Init",
+        "Can't create pipeline"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -58,10 +57,10 @@ void ExposureProgram::Destroy ( VkDevice device ) noexcept
     _layout.Destroy ( device );
 }
 
-bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout ExposureProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -88,25 +87,22 @@ bool ExposureProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) n
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Exposure" )
-
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
-bool ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
+VkPipelineShaderStageCreateInfo ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
     VkShaderModuleCreateInfo &moduleInfo,
     SpecializationData specializationData,
-    VkSpecializationInfo* specializationInfo,
-    VkPipelineShaderStageCreateInfo &targetInfo
+    VkSpecializationInfo* specializationInfo
 ) noexcept
 {
     android_vulkan::File csFile ( SHADER );
 
     if ( !csFile.LoadContent () ) [[unlikely]]
-        return false;
+        return {};
 
     cs = std::move ( csFile.GetContent () );
 
@@ -159,7 +155,7 @@ bool ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
         .pData = specializationData
     };
 
-    targetInfo =
+    return
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = &moduleInfo,
@@ -169,8 +165,6 @@ bool ExposureProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
         .pName = COMPUTE_SHADER_ENTRY_POINT,
         .pSpecializationInfo = specializationInfo
     };
-
-    return true;
 }
 
 } // namespace pbr

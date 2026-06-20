@@ -14,7 +14,7 @@ constexpr char const* SHADER = "shaders/windows/id_collect.cs.spv";
 //----------------------------------------------------------------------------------------------------------------------
 
 IDCollectProgram::IDCollectProgram () noexcept:
-    ComputeProgram ( "pbr::IDCollectProgram", sizeof ( IDCollectProgram::PushConstants ) )
+    ComputeProgram ( sizeof ( IDCollectProgram::PushConstants ) )
 {
     // NOTHING
 }
@@ -29,18 +29,17 @@ bool IDCollectProgram::Init ( VkDevice device, SpecializationData /*specializati
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stage = InitShaderInfo ( cs, moduleInfo, nullptr, nullptr ),
+        .layout = InitLayout ( device ),
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };
 
-    bool const result = InitShaderInfo ( cs, moduleInfo, nullptr, nullptr, pipelineInfo.stage ) &&
-        InitLayout ( device, pipelineInfo.layout ) &&
-
-        android_vulkan::Renderer::CheckVkResult (
-            vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-            "pbr::IDCollectProgram::Init",
-            "Can't create pipeline"
-        );
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::IDCollectProgram::Init",
+        "Can't create pipeline"
+    );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -55,10 +54,10 @@ void IDCollectProgram::Destroy ( VkDevice device ) noexcept
     _layout.Destroy ( device );
 }
 
-bool IDCollectProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout IDCollectProgram::InitLayout ( VkDevice device ) noexcept
 {
     if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     constexpr VkPushConstantRange pushConstantRange
     {
@@ -85,25 +84,22 @@ bool IDCollectProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) 
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return VK_NULL_HANDLE;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Exposure" )
-
-    layout = _pipelineLayout;
-    return true;
+    return _pipelineLayout;
 }
 
-bool IDCollectProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
+VkPipelineShaderStageCreateInfo IDCollectProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
     VkShaderModuleCreateInfo &moduleInfo,
     SpecializationData /*specializationData*/,
-    VkSpecializationInfo* /*specializationInfo*/,
-    VkPipelineShaderStageCreateInfo &targetInfo
+    VkSpecializationInfo* /*specializationInfo*/
 ) noexcept
 {
     android_vulkan::File csFile ( SHADER );
 
     if ( !csFile.LoadContent () ) [[unlikely]]
-        return false;
+        return {};
 
     cs = std::move ( csFile.GetContent () );
 
@@ -116,7 +112,7 @@ bool IDCollectProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
         .pCode = reinterpret_cast<uint32_t const*> ( cs.data () )
     };
 
-    targetInfo =
+    return
     {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .pNext = &moduleInfo,
@@ -126,8 +122,6 @@ bool IDCollectProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
         .pName = COMPUTE_SHADER_ENTRY_POINT,
         .pSpecializationInfo = nullptr
     };
-
-    return true;
 }
 
 } // namespace pbr

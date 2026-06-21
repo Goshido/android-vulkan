@@ -97,7 +97,7 @@ VkPipelineLayout IDCollectProgram::InitLayout ( VkDevice device ) noexcept
     if ( !result ) [[unlikely]]
         return VK_NULL_HANDLE;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Exposure" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "ID collect" )
     return _pipelineLayout;
 }
 

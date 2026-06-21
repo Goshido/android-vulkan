@@ -77,20 +77,12 @@ void InsertID ( in uint64_t id )
     // https://developer.nvidia.com/blog/maximizing-performance-with-massively-parallel-hash-maps-on-gpus/
     RWStructuredBuffer<uint64_t> idSet = g_buffers[ g_pushConstants._idSet ];
 
-    for ( uint32_t i = BucketIndex ( id ); ; i = ++i % g_pushConstants._capacity )
+    for ( uint32_t i = BucketIndex ( id ); ; i = ( i + 1U ) % g_pushConstants._capacity )
     {
         uint64_t old;
-        InterlockedOr ( idSet[ i ], 0ULL, old );
-
-        if ( old == id )
-            return;
-
-        if ( old != 0ULL )
-            continue;
-
         InterlockedCompareExchange ( idSet[ i ], 0ULL, id, old );
 
-        if ( old == 0ULL )
+        if ( ( old == 0ULL ) | ( old == id ) )
         {
             return;
         }

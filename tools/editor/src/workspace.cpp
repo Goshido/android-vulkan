@@ -370,20 +370,32 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     _barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-    VkBufferMemoryBarrier &idSetBarrier = _selection._barrier;
-    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-    idSetBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
     vkCmdPipelineBarrier ( commandBuffer,
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,
         nullptr,
-        1U,
-        &idSetBarrier,
+        0U,
+        nullptr,
         1U,
         &_barrier
+    );
+
+    VkBufferMemoryBarrier &idSetBarrier = _selection._barrier;
+    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    idSetBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
+        nullptr,
+        1U,
+        &idSetBarrier,
+        0U,
+        nullptr
     );
 
     constexpr VkClearColorValue clearValue
@@ -406,19 +418,31 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     _barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     _barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-    idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,
         nullptr,
-        1U,
-        &idSetBarrier,
+        0U,
+        nullptr,
         1U,
         &_barrier
+    );
+
+    idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idSetBarrier,
+        0U,
+        nullptr
     );
 }
 
@@ -481,7 +505,7 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
     VkImageView view = _idImage.GetImageView ();
     AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "ID" )
 
-    auto idx = resourceHeap.RegisterNonUISampledImage ( device, view );
+    auto idx = resourceHeap.RegisterStorageImage ( device, view );
 
     if ( !idx ) [[unlikely]]
         return;

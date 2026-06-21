@@ -40,6 +40,9 @@ class IDCollectProgram final : public ComputeProgram
         [[nodiscard]] bool Init ( VkDevice device, SpecializationData specializationData ) noexcept override;
         void Destroy ( VkDevice device ) noexcept override;
 
+        // FUCK - use actual selection rectangle
+        [[nodiscard]] static VkExtent3D DispatchParams ( VkExtent2D const &resolution ) noexcept;
+
     private:
         [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 

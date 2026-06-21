@@ -1,5 +1,6 @@
 X ( vkCmdBeginRendering )
 X ( vkCmdBindDescriptorBuffersEXT )
+X ( vkCmdClearColorImage )
 X ( vkCmdCopyBuffer )
 X ( vkCmdEndRendering )
 X ( vkCmdPipelineBarrier2 )

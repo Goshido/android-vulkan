@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
+#include <platform/windows/pbr/id_collect.inc>
 #include <platform/windows/pbr/id_collect_program.hpp>
 
 
@@ -52,6 +53,16 @@ void IDCollectProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
     _layout.Destroy ( device );
+}
+
+VkExtent3D IDCollectProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
+{
+    return
+    {
+        .width = ( resolution.width + THREADS_X - 1U ) / THREADS_X,
+        .height = ( resolution.height + THREADS_Y - 1U ) / THREADS_Y,
+        .depth = 1U
+    };
 }
 
 VkPipelineLayout IDCollectProgram::InitLayout ( VkDevice device ) noexcept

@@ -44,10 +44,36 @@ class Workspace final
             uint32_t                                    _count = 0U;
         };
 
+        struct Selection final
+        {
+            VkDeviceMemory                              _memory = VK_NULL_HANDLE;
+            VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
+            std::deque<Actor const*>                    _items {};
+
+            pbr::IDCollectProgram::PushConstants        _pushConstants
+            {
+                ._idImage = 0U,
+                ._idSet = 0U,
+                ._capacity = 0U
+            };
+
+            VkBufferMemoryBarrier                       _barrier
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            };
+        };
+
     private:
         History                                         _history {};
         std::unordered_map<Actor const*, ActorRef>      _actors {};
-        std::deque<Actor const*>                        _selection {};
 
         MeshQueue                                       _opaqueQueue {};
         MeshMap                                         _opaqueMap {};
@@ -79,7 +105,7 @@ class Workspace final
         Texture2DRef                                    _defaultNormal {};
 
         android_vulkan::Texture2D                       _idImage {};
-        uint32_t                                        _idImageIdx = 0U;
+        Selection                                       _selection {};
 
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};

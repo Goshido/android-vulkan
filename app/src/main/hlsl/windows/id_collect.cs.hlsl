@@ -4,23 +4,22 @@
 
 struct PushConstants
 {
-    uint32_t                                        _idImage;
-    uint32_t                                        _idSet;
-    uint32_t                                        _capacity;
+    uint32_t                    _idImage;
+    uint32_t                    _idSet;
+    uint32_t                    _capacity;
 };
 
 [[vk::push_constant]]
-PushConstants                                       g_pushConstants;
+PushConstants                   g_pushConstants;
 
-// [2025/09/11] DXC has issue with 'globallycoherent' and 'ResourceDescriptorHeap'.
+// [2026/09/21] DXC has no syntax with atomics and 'ResourceDescriptorHeap'.
 // So the workaround is used.
-// See https://github.com/microsoft/DirectXShaderCompiler/issues/7740
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-Texture2D<uint32_t4>                                g_images[]:     register ( t0 );
+Texture2D<uint32_t4>            g_images[]:     register ( t0 );
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-globallycoherent RWStructuredBuffer<uint64_t>       g_buffers[]:    register ( u0 );
+RWStructuredBuffer<uint64_t>    g_buffers[]:    register ( u0 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -76,7 +75,7 @@ void InsertID ( in uint64_t id )
 
     // The implementation is based on ideas from
     // https://developer.nvidia.com/blog/maximizing-performance-with-massively-parallel-hash-maps-on-gpus/
-    globallycoherent RWStructuredBuffer<uint64_t> idSet = g_buffers[ g_pushConstants._idSet ];
+    RWStructuredBuffer<uint64_t> idSet = g_buffers[ g_pushConstants._idSet ];
 
     for ( uint32_t i = BucketIndex ( id ); ; i = ++i % g_pushConstants._capacity )
     {

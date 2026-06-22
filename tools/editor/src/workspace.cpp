@@ -153,7 +153,7 @@ void Workspace::Destroy () noexcept
 
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
-    if ( VkBuffer &buffer = _selection._barrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
+    if ( VkBuffer &buffer = _selection._bufferBarrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
         vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
 
     if ( _selection._memory != VK_NULL_HANDLE ) [[likely]]
@@ -365,10 +365,11 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "ID buffer" )
     AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
 
-    _barrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-    _barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    VkImageMemoryBarrier &imageBarrier = _selection._imageBarrier;
+    imageBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
@@ -379,12 +380,12 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &_barrier
+        &imageBarrier
     );
 
-    VkBufferMemoryBarrier &idSetBarrier = _selection._barrier;
-    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-    idSetBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    VkBufferMemoryBarrier &bufferBarrier = _selection._bufferBarrier;
+    bufferBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -393,7 +394,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &idSetBarrier,
+        &bufferBarrier,
         0U,
         nullptr
     );
@@ -408,15 +409,15 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         &clearValue,
         1U,
-        &_barrier.subresourceRange
+        &imageBarrier.subresourceRange
     );
 
-    vkCmdFillBuffer ( commandBuffer, idSetBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
+    vkCmdFillBuffer ( commandBuffer, bufferBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
 
-    _barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    _barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -427,11 +428,11 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &_barrier
+        &imageBarrier
     );
 
-    idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    bufferBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    bufferBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -440,7 +441,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &idSetBarrier,
+        &bufferBarrier,
         0U,
         nullptr
     );
@@ -499,8 +500,8 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
         return;
 
     VkDevice device = renderer.GetDevice ();
-    _barrier.image = _idImage.GetImage ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.image, VK_OBJECT_TYPE_IMAGE, "ID" )
+    _selection._imageBarrier.image = _idImage.GetImage ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, _selection._imageBarrier.image, VK_OBJECT_TYPE_IMAGE, "ID" )
 
     VkImageView view = _idImage.GetImageView ();
     AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "ID" )
@@ -512,9 +513,10 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
 
     pbr::IDCollectProgram::PushConstants &pushConstantants = _selection._pushConstants;
     pushConstantants._idImage = *idx;
+    VkBuffer &idSet = _selection._bufferBarrier.buffer;
 
-    if ( VkBuffer &buffer = _selection._barrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
+    if ( idSet != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( idSet, VK_NULL_HANDLE ), nullptr );
 
     if ( _selection._memory != VK_NULL_HANDLE ) [[likely]]
     {
@@ -542,7 +544,7 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
     };
 
     result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_selection._barrier.buffer ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &idSet ),
         "OnGBufferResolutionChanged",
         "Can't create buffer"
     );
@@ -550,10 +552,10 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
     if ( !result ) [[unlikely]]
         return;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _selection._barrier.buffer, VK_OBJECT_TYPE_BUFFER, "ID" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, idSet, VK_OBJECT_TYPE_BUFFER, "ID" )
 
     VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _selection._barrier.buffer, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, idSet, &memoryRequirements );
 
     result =
         renderer.TryAllocateMemory ( _selection._memory,
@@ -564,7 +566,7 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
         ) &&
 
         android_vulkan::Renderer::CheckVkResult (
-            vkBindBufferMemory ( device, _selection._barrier.buffer, _selection._memory, _selection._offset ),
+            vkBindBufferMemory ( device, idSet, _selection._memory, _selection._offset ),
             "OnGBufferResolutionChanged",
             "Can't bind memory"
         );
@@ -572,7 +574,7 @@ void Workspace::OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noex
     if ( !result ) [[unlikely]]
         return;
 
-    if ( idx = resourceHeap.RegisterBuffer ( device, _selection._barrier.buffer, bufferInfo.size ); idx )
+    if ( idx = resourceHeap.RegisterBuffer ( device, idSet, bufferInfo.size ); idx )
     {
         [[likely]]
         pushConstantants._idSet = *idx;
@@ -588,7 +590,7 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
-            [ this ] () noexcept -> void* {
+            [ this ]() noexcept -> void* {
                 _pendingSelect = true;
                 return nullptr;
             }
@@ -609,10 +611,11 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
     AV_TRACE ( "Select" )
     AV_VULKAN_GROUP ( commandBuffer, "Select" )
 
-    _barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    _barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+    VkImageMemoryBarrier &imageBarrier = _selection._imageBarrier;
+    imageBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -623,7 +626,7 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
         0U,
         nullptr,
         1U,
-        &_barrier
+        &imageBarrier
     );
 
     pbr::IDCollectProgram &program = *_idCollectProgram;

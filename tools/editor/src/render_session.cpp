@@ -519,10 +519,12 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
-    _workspace.OnGBufferResolutionChanged ( renderer.GetSurfaceSize () );
+    if ( !CreateRenderTargets () ) [[unlikely]]
+        return false;
 
-    result = CreateRenderTargets () &&
-        _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, _hdrRenderTargetIdx ) &&
+    _workspace.OnGBufferResolutionChanged ( _hdrRenderTarget.GetResolution () );
+
+    result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, _hdrRenderTargetIdx ) &&
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
@@ -1333,7 +1335,7 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     }
 
     _uiPass.OnSwapchainDestroyed ();
-    _workspace.OnGBufferResolutionChanged ( resolution );
+    _workspace.OnGBufferResolutionChanged ( _hdrRenderTarget.GetResolution () );
 
     bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
         _toneMapper.SetTarget ( renderer, _hdrRenderTargetIdx, _exposurePass.GetExposure () );

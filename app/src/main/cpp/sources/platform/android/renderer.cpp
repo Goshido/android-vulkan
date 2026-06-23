@@ -191,6 +191,86 @@ bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/ ) noex
     return false;
 }
 
+#ifdef AV_ENABLE_VVL
+
+void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateInfo,
+    VkLayerSettingsCreateInfoEXT &vvlSettings,
+    VkValidationFeaturesEXT &validationInfo,
+    VkDebugUtilsMessengerCreateInfoEXT const &debugCallback
+) noexcept
+{
+    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
+    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
+    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
+    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr static VkBool32 enable = VK_TRUE;
+
+    // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
+    constexpr static VkLayerSettingEXT const vvlChecks[] =
+    {
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_submit_time_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_shader_accesses_heuristic",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_load_op_after_store_op_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_message_extra_properties",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        }
+    };
+
+    vvlSettings =
+    {
+        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
+        .pNext = &debugCallback,
+        .settingCount = static_cast<uint32_t> ( std::size( vvlChecks ) ),
+        .pSettings = vvlChecks
+    };
+
+    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
+    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
+    constexpr static VkValidationFeatureEnableEXT const features[] =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    validationInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = &vvlSettings,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pEnabledValidationFeatures = features,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
+    instanceCreateInfo.pNext = &validationInfo;
+    instanceCreateInfo.enabledLayerCount = 1U;
+    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+}
+
+#endif // AV_ENABLE_VVL
+
 std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 {
     constexpr static char const* extensions[] =

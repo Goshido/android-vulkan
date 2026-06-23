@@ -264,6 +264,270 @@ bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
     return false;
 }
 
+#ifdef AV_ENABLE_VVL
+
+void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateInfo,
+    VkLayerSettingsCreateInfoEXT &vvlSettings,
+    VkValidationFeaturesEXT &validationInfo,
+    VkDebugUtilsMessengerCreateInfoEXT const &debugCallback
+) noexcept
+{
+    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
+    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
+    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
+    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr static VkBool32 enable = VK_TRUE;
+    constexpr static VkBool32 disable = VK_FALSE;
+
+    // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
+    // FUCK  - it's for VVL v1.4.354 9d629caf1dabce884cdebe4725e04bafbf8497f4
+    constexpr static VkLayerSettingEXT const vvlChecks[] =
+    {
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_enable",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_safe_mode",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shader_instrumentation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_descriptor_checks",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffer_address_oob",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_validate_trace_ray",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_mesh_shading",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_post_process_descriptor_indexing",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_vertex_attribute_fetch_oob",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shader_sanitizer",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shared_memory_data_race",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_select_instrumented_shaders",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffers_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_draws_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_dispatches_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_trace_rays_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffer_copies",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_copy_memory_indirect",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_index_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_acceleration_structures_builds",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_ray_tracing_buffers_consistency",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_submit_time_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_shader_accesses_heuristic",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_load_op_after_store_op_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_message_extra_properties",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_descriptors",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_copy_memory_indirect",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_generated_commands",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_to_stdout",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_copy",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        }
+    };
+
+    vvlSettings =
+    {
+        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
+        .pNext = &debugCallback,
+        .settingCount = static_cast<uint32_t> ( std::size( vvlChecks ) ),
+        .pSettings = vvlChecks
+    };
+
+    constexpr static VkValidationFeatureEnableEXT const features[] =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    validationInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = &vvlSettings,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pEnabledValidationFeatures = features,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
+    instanceCreateInfo.pNext = &validationInfo;
+    instanceCreateInfo.enabledLayerCount = 1U;
+    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+}
+
+#endif // AV_ENABLE_VVL
+
 std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 {
     constexpr static char const* const extensions[] =

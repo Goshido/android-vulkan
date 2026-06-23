@@ -303,6 +303,16 @@ class Renderer final
         [[nodiscard]] bool SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bool vSync ) const noexcept;
         [[nodiscard]] bool SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) noexcept;
 
+#ifdef AV_ENABLE_VVL
+
+        static void DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateInfo,
+            VkLayerSettingsCreateInfoEXT &vvlSettings,
+            VkValidationFeaturesEXT &validationInfo,
+            VkDebugUtilsMessengerCreateInfoEXT const &debugCallback
+        ) noexcept;
+
+#endif // AV_ENABLE_VVL
+
         [[nodiscard]] static bool CheckFeature ( VkBool32 feature, char const* name, bool initLogs ) noexcept;
         [[nodiscard]] static std::span<char const* const> GetDeviceExtensions () noexcept;
         [[nodiscard]] static std::span<char const* const> GetInstanceExtensions () noexcept;

@@ -348,7 +348,17 @@ std::unordered_set<uint32_t> g_validationFilter =
 
     // Using debug builds of the validation layers *will* adversely affect performance.
     // [2025/01/30] Yeah. I'm pretty aware about that. Thank you.
-    0x6CDE89AEU
+    0x6CDE89AEU,
+
+    // Both GPU Assisted Validation and Normal Core Check Validation are enabled, this is not recommend as it
+    // will be very slow. Once all errors in Core Check are solved, please disable, then only use GPU-AV for best performance.
+    // [2026/06/23] Yeah. I'm pretty aware about that. Thank you.
+    0x7F1922D7U,
+
+    // vkGetPhysicalDeviceProperties2(): Internal Warning: Setting
+    // VkPhysicalDeviceDescriptorBufferPropertiesEXT::maxResourceDescriptorBufferBindings to 31
+    // [2026/06/23] GPU-AV stuff magic is going on.
+    0x86FE6721U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -1550,50 +1560,9 @@ bool Renderer::DeployInstance () noexcept
 
 #ifdef AV_ENABLE_VVL
 
-    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
-    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
-    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
-    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
-    constexpr static VkBool32 activate = VK_TRUE;
-
-    constexpr static VkLayerSettingEXT vvlSync
-    {
-        .pLayerName = vvlLayerName,
-        .pSettingName = "syncval_shader_accesses_heuristic",
-        .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-        .valueCount = 1U,
-        .pValues = &activate
-    };
-
-    constexpr static VkLayerSettingsCreateInfoEXT vvlSettings
-    {
-        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
-        .pNext = &g_debugUtilsMessengerCreateInfo,
-        .settingCount = 1U,
-        .pSettings = &vvlSync
-    };
-
-    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
-    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
-    constexpr static VkValidationFeatureEnableEXT const validationFeatures[] =
-    {
-        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
-        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
-    };
-
-    constexpr VkValidationFeaturesEXT validationInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-        .pNext = &vvlSettings,
-        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
-        .pEnabledValidationFeatures = validationFeatures,
-        .disabledValidationFeatureCount = 0U,
-        .pDisabledValidationFeatures = nullptr
-    };
-
-    instanceCreateInfo.pNext = &validationInfo;
-    instanceCreateInfo.enabledLayerCount = 1U;
-    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+    VkLayerSettingsCreateInfoEXT vvlSettings;
+    VkValidationFeaturesEXT validationInfo;
+    DeployValidationFeatures ( instanceCreateInfo, vvlSettings, validationInfo, g_debugUtilsMessengerCreateInfo );
 
 #else
 

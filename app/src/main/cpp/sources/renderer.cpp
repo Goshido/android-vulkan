@@ -1216,7 +1216,9 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
     void* /*pUserData*/
 )
 {
-    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
+    auto const id = static_cast<uint32_t> ( pCallbackData->messageIdNumber );
+
+    if ( g_validationFilter.contains ( id ) )
         return VK_FALSE;
 
     constexpr auto encodeObjects = [] ( std::string &dst,
@@ -1257,18 +1259,6 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
         return dst.c_str ();
     };
 
-    constexpr char const format[] =
-        R"(Renderer::OnVulkanDebugReport:
-severity: %s
-type: %s
-message ID name: %s
-message ID: 0x%08X
-queues: %s
-command buffers: %s
-objects: %s
-message: %s
-)";
-
     std::string queues {};
     std::string commandBuffers {};
     std::string objects {};
@@ -1283,11 +1273,21 @@ message: %s
 
     constexpr size_t removeFirstSpace = 1U;
 
-    LogError ( format,
+    LogError (
+R"(Renderer::OnVulkanDebugReport:
+severity: %s
+type: %s
+message ID name: %s
+message ID: 0x%08X
+queues: %s
+command buffers: %s
+objects: %s
+message: %s
+)",
         severity.c_str () + removeFirstSpace,
         type.c_str () + removeFirstSpace,
         prettyMessage ( pCallbackData->pMessageIdName ),
-        pCallbackData->messageIdNumber,
+        id,
         encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
         encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
         encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),

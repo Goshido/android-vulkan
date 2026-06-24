@@ -280,7 +280,6 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
     constexpr static VkBool32 disable = VK_FALSE;
 
     // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
-    // FUCK  - it's for VVL v1.4.354 9d629caf1dabce884cdebe4725e04bafbf8497f4
     constexpr static VkLayerSettingEXT const vvlChecks[] =
     {
         {

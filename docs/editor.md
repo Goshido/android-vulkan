@@ -36,7 +36,7 @@
 * [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`
 * [_stb_image 2.30_](https://github.com/nothings/stb) `f1c79c02822848a9bed4315b12c8c8f3761e1296`
 * [_Vulkan SDK 1.4.328.1_](https://vulkan.lunarg.com/sdk/home)
-* [_Vulkan Validation Layers 1.4.332_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `fc24b1981d8e11ed35ee2af0d9f43b92285e38a8`
+* [_Vulkan Validation Layers 1.4.354_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `9d629caf1dabce884cdebe4725e04bafbf8497f4`
 
 [↬ table of content ⇧](#table-of-content)
 

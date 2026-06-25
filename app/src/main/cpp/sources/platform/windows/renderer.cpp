@@ -279,9 +279,73 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
     constexpr static VkBool32 enable = VK_TRUE;
     constexpr static VkBool32 disable = VK_FALSE;
 
+    // [2026/06/25] Spencer Fricke - LunarG told that GPU-AV and GPU Dump should be never used togather:
+    // "I think it is honestly I never tested with both GPU-AV and GPU Dump, the original idea is GPU Dump is the
+    // light weight version of GPU AV that might give false positives (if you are doing crazy stuff)
+    // but catch the "normal 90%" of stuff"
+
     // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
     constexpr static VkLayerSettingEXT const vvlChecks[] =
     {
+
+#ifdef AV_ENABLE_GPU_DUMP
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_descriptors",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_copy_memory_indirect",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_generated_commands",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_to_stdout",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_copy",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_enable",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+
+#else
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_enable",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+
+#endif // AV_ENABLE_GPU_DUMP
+
         {
             .pLayerName = vvlLayerName,
             .pSettingName = "gpuav_enable",
@@ -456,41 +520,6 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
             .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
             .valueCount = 1U,
             .pValues = &enable
-        },
-        {
-            .pLayerName = vvlLayerName,
-            .pSettingName = "gpu_dump_descriptors",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &enable
-        },
-        {
-            .pLayerName = vvlLayerName,
-            .pSettingName = "gpu_dump_copy_memory_indirect",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &enable
-        },
-        {
-            .pLayerName = vvlLayerName,
-            .pSettingName = "gpu_dump_device_generated_commands",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &enable
-        },
-        {
-            .pLayerName = vvlLayerName,
-            .pSettingName = "gpu_dump_to_stdout",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &disable
-        },
-        {
-            .pLayerName = vvlLayerName,
-            .pSettingName = "gpu_dump_device_copy",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &enable
         }
     };
 
@@ -504,8 +533,14 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
 
     constexpr static VkValidationFeatureEnableEXT const features[] =
     {
+
+#ifndef AV_ENABLE_GPU_DUMP
+
         VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
         VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+
+#endif // AV_ENABLE_GPU_DUMP
+
         VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
         VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
     };

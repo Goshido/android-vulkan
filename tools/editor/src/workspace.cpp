@@ -328,7 +328,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         GXProjectionClipPlanes frustum{};
         frustum.From ( frame._viewProj );
 
-        if ( _pendingSelect ) [[unlikely]]
+        if ( _selection._pendingSelect ) [[unlikely]]
         {
             ComputeTransformGBufferWithID ( frustum );
         }
@@ -350,7 +350,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         _transformStream->IssueSync ( commandBuffer );
         _shadingStream->IssueSync ( commandBuffer );
 
-        if ( _pendingSelect ) [[unlikely]]
+        if ( _selection._pendingSelect ) [[unlikely]]
         {
             _idStream->IssueSync ( commandBuffer );
         }
@@ -359,7 +359,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
 
 void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !IsReady () | !_pendingSelect ) [[likely]]
+    if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
         return;
 
     AV_TRACE ( "ID buffer" )
@@ -455,7 +455,7 @@ void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) n
     if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
         return;
 
-    if ( _pendingSelect ) [[unlikely]]
+    if ( _selection._pendingSelect ) [[unlikely]]
     {
         FillGBufferWithID ( commandBuffer );
         return;
@@ -591,7 +591,7 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
             [ this ]() noexcept -> void* {
-                _pendingSelect = true;
+                _selection._pendingSelect = true;
                 return nullptr;
             }
         )
@@ -605,20 +605,30 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
 
 void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t /*commandBufferIndex*/ ) noexcept
 {
-    if ( !_pendingSelect ) [[likely]]
+    if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
         return;
 
     AV_TRACE ( "Select" )
     AV_VULKAN_GROUP ( commandBuffer, "Select" )
 
     VkImageMemoryBarrier &imageBarrier = _selection._imageBarrier;
-    imageBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+
+    // FUCK - what should I use here?
+    imageBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_WRITE_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+
     imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     imageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
     imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+
+        // FUCK - what should I use here?
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
+
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_DEPENDENCY_BY_REGION_BIT,
         0U,
@@ -639,7 +649,7 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
 
     android_vulkan::LogDebug ( ">>> 0x%016p", _actors.cbegin ()->first );
 
-    _pendingSelect = false;
+    _selection._pendingSelect = false;
     // FUCK
 }
 

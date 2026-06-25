@@ -49,6 +49,7 @@ class Workspace final
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
             std::deque<Actor const*>                    _items {};
+            bool                                        _pendingSelect = false;
 
             pbr::IDCollectProgram::PushConstants        _pushConstants
             {
@@ -138,9 +139,6 @@ class Workspace final
         Hotkey                                          _saveAsWorkspace {};
 
         bool                                            _ready = false;
-        bool                                            _pendingSelect = false;
-
-
 
         static Workspace*                               _instance;
 

@@ -374,7 +374,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier ( commandBuffer,
         AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,
@@ -390,7 +390,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         1U,
@@ -422,7 +422,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,
@@ -611,26 +611,21 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
     AV_TRACE ( "Select" )
     AV_VULKAN_GROUP ( commandBuffer, "Select" )
 
+    pbr::IDCollectProgram &program = *_idCollectProgram;
+    program.Bind ( commandBuffer );
+    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, program.GetPipelineLayout () );
+    program.SetPushConstants ( commandBuffer, &_selection._pushConstants );
+
     VkImageMemoryBarrier &imageBarrier = _selection._imageBarrier;
-
-    // FUCK - what should I use here?
-    imageBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_WRITE_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
+    imageBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
     imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     imageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
     imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
-
-        // FUCK - what should I use here?
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ),
-
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,
@@ -638,11 +633,6 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
         1U,
         &imageBarrier
     );
-
-    pbr::IDCollectProgram &program = *_idCollectProgram;
-    program.Bind ( commandBuffer );
-    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, program.GetPipelineLayout () );
-    program.SetPushConstants ( commandBuffer, &_selection._pushConstants );
 
     VkExtent3D const params = pbr::IDCollectProgram::DispatchParams ( _idImage.GetResolution () );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );

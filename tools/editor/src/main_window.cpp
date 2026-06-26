@@ -760,7 +760,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSCHAR:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnChar ( wParam );
         break;
@@ -789,7 +789,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSKEYDOWN:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
         break;
@@ -799,7 +799,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSKEYUP:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
         break;

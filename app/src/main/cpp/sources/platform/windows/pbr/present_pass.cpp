@@ -77,9 +77,10 @@ void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuf
     auto const idx = static_cast<size_t> ( _swapchainImageIndex );
     _barrier.image = renderer.GetPresentImage ( idx );
 
-    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,
@@ -106,9 +107,10 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     _barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,

@@ -908,7 +908,7 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
             AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
             AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
 
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,
@@ -942,7 +942,7 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
         AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,

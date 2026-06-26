@@ -579,7 +579,7 @@ void ExposurePass::SyncBefore ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier ( commandBuffer,
         srcStage[ selector ],
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
+        0U,
         0U,
         nullptr,
         0U,

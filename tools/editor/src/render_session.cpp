@@ -20,15 +20,23 @@ constexpr float DEFAULT_BRIGHTNESS_BALANCE = 0.0F;
 
 constexpr VkFormat ALBEDO_RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
 constexpr size_t ALBEDO_ATTACHMENT_INDEX = 0U;
+constexpr size_t ALBEDO_BARRIER_INDEX = 0U;
 
 constexpr VkFormat HDR_RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 constexpr size_t HDR_ATTACHMENT_INDEX = 1U;
+constexpr size_t HDR_BARRIER_INDEX = 1U;
 
 constexpr VkFormat NORMAL_RENDER_TARGET_FORMAT = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
 constexpr size_t NORMAL_ATTACHMENT_INDEX = 2U;
+constexpr size_t NORMAL_BARRIER_INDEX = 2U;
 
 constexpr VkFormat PARAM_RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
 constexpr size_t PARAM_ATTACHMENT_INDEX = 3U;
+constexpr size_t PARAM_BARRIER_INDEX = 3U;
+
+constexpr VkFormat ID_RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_UINT;
+constexpr size_t ID_ATTACHMENT_INDEX = 4U;
+constexpr size_t ID_BARRIER_INDEX = 5U;
 
 constexpr size_t DEPTH_BARRIER_INDEX = 4U;
 
@@ -240,6 +248,12 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
             renderer
         ) &&
 
+        _idRenderTarget.CreateRenderTarget ( resolution,
+            ID_RENDER_TARGET_FORMAT,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+            renderer
+        ) &&
+
         _depthRenderTarget.CreateRenderTarget ( resolution,
             renderer.GetDefaultDepthFormat (),
             AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
@@ -251,11 +265,12 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
 
     auto const setup = [
         device = renderer.GetDevice (),
-        &resouceHeap = ResourceHeap::Instance ()
+        &resourceHeap = ResourceHeap::Instance ()
     ] ( android_vulkan::Texture2D &renderTarget,
         VkRenderingAttachmentInfo &attachment,
         VkImageMemoryBarrier &barrier,
         uint32_t &renderTargetIndex,
+        bool storageImage,
         [[maybe_unused]] char const *name
     ) noexcept -> bool {
         VkImage image = renderTarget.GetImage ();
@@ -266,7 +281,9 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
         attachment.imageView = view;
         AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "%s", name )
 
-        auto const idx = resouceHeap.RegisterNonUISampledImage ( device, view );
+        std::optional<uint32_t> idx = storageImage ?
+            resourceHeap.RegisterStorageImage ( device, view ) :
+            resourceHeap.RegisterNonUISampledImage ( device, view );
 
         if ( !idx ) [[unlikely]]
             return false;
@@ -278,36 +295,49 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
     return
         setup ( _albedoRenderTarget,
             _colorAttachments[ ALBEDO_ATTACHMENT_INDEX ],
-            _barriers[ ALBEDO_ATTACHMENT_INDEX ],
+            _barriers[ ALBEDO_BARRIER_INDEX ],
             _albedoRenderTargetIdx,
+            false,
             "Albedo"
         ) &&
 
         setup ( _hdrRenderTarget,
             _colorAttachments[ HDR_ATTACHMENT_INDEX ],
-            _barriers[ HDR_ATTACHMENT_INDEX ],
+            _barriers[ HDR_BARRIER_INDEX ],
             _hdrRenderTargetIdx,
+            false,
             "HDR"
         ) &&
 
         setup ( _normalRenderTarget,
             _colorAttachments[ NORMAL_ATTACHMENT_INDEX ],
-            _barriers[ NORMAL_ATTACHMENT_INDEX ],
+            _barriers[ NORMAL_BARRIER_INDEX ],
             _normalRenderTargetIdx,
+            false,
             "Normal"
         ) &&
 
         setup ( _paramRenderTarget,
             _colorAttachments[ PARAM_ATTACHMENT_INDEX ],
-            _barriers[ PARAM_ATTACHMENT_INDEX ],
+            _barriers[ PARAM_BARRIER_INDEX ],
             _paramRenderTargetIdx,
+            false,
             "Param"
+        ) &&
+
+        setup ( _idRenderTarget,
+            _colorAttachments[ ID_ATTACHMENT_INDEX ],
+            _barriers[ ID_BARRIER_INDEX ],
+            _idRenderTargetIdx,
+            true,
+            "ID"
         ) &&
 
         setup ( _depthRenderTarget,
             _depthAttachment,
             _barriers[ DEPTH_BARRIER_INDEX ],
             _depthRenderTargetIdx,
+            false,
             "Depth"
         );
 }
@@ -522,7 +552,7 @@ bool RenderSession::InitModules () noexcept
     if ( !CreateRenderTargets () ) [[unlikely]]
         return false;
 
-    _workspace.OnGBufferResolutionChanged ( _hdrRenderTarget.GetResolution () );
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, _idRenderTargetIdx );
 
     result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, _hdrRenderTargetIdx ) &&
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
@@ -544,9 +574,9 @@ bool RenderSession::InitModules () noexcept
     return true;
 }
 
-void RenderSession::FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
-    auto &queue = _meshStorage._freeTransferQueue[ commandBufferIndex ];
+    auto &queue = _meshStorage._freeTransferQueue[ fif ];
 
     if ( queue.empty () ) [[likely]]
         return;
@@ -571,9 +601,9 @@ void RenderSession::FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t c
     queue.clear ();
 }
 
-void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
-    auto &queue = _texture2DStorage._freeTransferQueue[ commandBufferIndex ];
+    auto &queue = _texture2DStorage._freeTransferQueue[ fif ];
 
     if ( queue.empty () ) [[likely]]
         return;
@@ -598,18 +628,18 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
     queue.clear ();
 }
 
-void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
     auto &toDestroy = _programStorage._toDestroy;
 
     // Destroy on next frame.
-    auto &scheduleToDestroy = _programStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+    auto &scheduleToDestroy = _programStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
 
     for ( auto &item : toDestroy )
         scheduleToDestroy.push_back ( std::move ( item ) );
 
     toDestroy.clear ();
-    auto &destroyQueue = _programStorage._destroyQueue[ commandBufferIndex ];
+    auto &destroyQueue = _programStorage._destroyQueue[ fif ];
 
     if ( destroyQueue.empty () ) [[likely]]
         return;
@@ -648,18 +678,18 @@ void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t command
     destroyQueue.clear ();
 }
 
-void RenderSession::DestroyMeshes ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyMeshes ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
     auto &toDestroy = _meshStorage._toDestroy;
 
     // Destroy on next frame.
-    auto &scheduleToDestroy = _meshStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+    auto &scheduleToDestroy = _meshStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
 
     for ( auto &item : toDestroy )
         scheduleToDestroy.push_back ( std::move ( item ) );
 
     toDestroy.clear ();
-    auto &destroyQueue = _meshStorage._destroyQueue[ commandBufferIndex ];
+    auto &destroyQueue = _meshStorage._destroyQueue[ fif ];
 
     if ( destroyQueue.empty () ) [[likely]]
         return;
@@ -699,18 +729,18 @@ void RenderSession::DestroyMeshes ( MessageQueue &messageQueue, size_t commandBu
     destroyQueue.clear ();
 }
 
-void RenderSession::DestroyStreamBuffers ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyStreamBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
     auto &toDestroy = _streamBufferStorage._toDestroy;
 
     // Destroy on next frame.
-    auto &scheduleToDestroy = _streamBufferStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+    auto &scheduleToDestroy = _streamBufferStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
 
     for ( auto &item : toDestroy )
         scheduleToDestroy.push_back ( std::move ( item ) );
 
     toDestroy.clear ();
-    auto &destroyQueue = _streamBufferStorage._destroyQueue[ commandBufferIndex ];
+    auto &destroyQueue = _streamBufferStorage._destroyQueue[ fif ];
 
     if ( destroyQueue.empty () ) [[likely]]
         return;
@@ -750,18 +780,18 @@ void RenderSession::DestroyStreamBuffers ( MessageQueue &messageQueue, size_t co
     destroyQueue.clear ();
 }
 
-void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept
+void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
     auto &toDestroy = _texture2DStorage._toDestroy;
 
     // Destroy on next frame.
-    auto &scheduleToDestroy = _texture2DStorage._destroyQueue[ ( commandBufferIndex + 1U ) % pbr::FIF_COUNT ];
+    auto &scheduleToDestroy = _texture2DStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
 
     for ( auto &item : toDestroy )
         scheduleToDestroy.push_back ( std::move ( item ) );
 
     toDestroy.clear ();
-    auto &destroyQueue = _texture2DStorage._destroyQueue[ commandBufferIndex ];
+    auto &destroyQueue = _texture2DStorage._destroyQueue[ fif ];
 
     if ( destroyQueue.empty () ) [[likely]]
         return;
@@ -806,7 +836,7 @@ void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size
     destroyQueue.clear ();
 }
 
-void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
 {
     auto &uploadQueue = _meshStorage._uploadQueue;
 
@@ -817,7 +847,7 @@ void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t command
     AV_VULKAN_GROUP ( commandBuffer, "Upload meshes" )
 
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    auto &transferQueue = _meshStorage._freeTransferQueue[ commandBufferIndex ];
+    auto &transferQueue = _meshStorage._freeTransferQueue[ fif ];
 
     for ( auto &info : uploadQueue )
     {
@@ -841,7 +871,7 @@ void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t command
     uploadQueue.clear ();
 }
 
-void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept
+void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
 {
     auto &uploadQueue = _texture2DStorage._uploadQueue;
 
@@ -852,7 +882,7 @@ void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, si
     AV_VULKAN_GROUP ( commandBuffer, "Upload texture 2D instances" )
 
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    auto &transferQueue = _texture2DStorage._freeTransferQueue[ commandBufferIndex ];
+    auto &transferQueue = _texture2DStorage._freeTransferQueue[ fif ];
 
     for ( auto &info : uploadQueue )
     {
@@ -885,16 +915,18 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
         barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     };
 
-    prepareColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
-    prepareColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
-    prepareColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
-    prepareColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+    prepareColor ( _barriers[ ALBEDO_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ HDR_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ NORMAL_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ PARAM_BARRIER_INDEX ] );
 
     VkImageMemoryBarrier &depth = _barriers[ DEPTH_BARRIER_INDEX ];
     depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     depth.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
     depth.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depth.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    constexpr auto barrierCount = static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U );
 
     vkCmdPipelineBarrier ( commandBuffer,
 
@@ -913,12 +945,13 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
         nullptr,
         0U,
         nullptr,
-        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U ),
+        barrierCount,
         _barriers
     );
 
     _workspace.PrepareIDBuffer ( commandBuffer );
 
+    _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) - 1U );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
     vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
     vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
@@ -934,22 +967,128 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
         barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     };
 
-    commitColor ( _barriers[ ALBEDO_ATTACHMENT_INDEX ] );
-    commitColor ( _barriers[ HDR_ATTACHMENT_INDEX ] );
-    commitColor ( _barriers[ NORMAL_ATTACHMENT_INDEX ] );
-    commitColor ( _barriers[ PARAM_ATTACHMENT_INDEX ] );
+    commitColor ( _barriers[ ALBEDO_BARRIER_INDEX ] );
+    commitColor ( _barriers[ HDR_BARRIER_INDEX ] );
+    commitColor ( _barriers[ NORMAL_BARRIER_INDEX ] );
+    commitColor ( _barriers[ PARAM_BARRIER_INDEX ] );
+
+    depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    depth.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depth.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
         AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
         0U,
         0U,
         nullptr,
         0U,
         nullptr,
-        static_cast<uint32_t> ( DEPTH_BARRIER_INDEX ),
+        barrierCount,
         _barriers
     );
+}
+
+void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
+{
+    constexpr auto prepareColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    };
+
+    prepareColor ( _barriers[ ALBEDO_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ HDR_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ NORMAL_BARRIER_INDEX ] );
+    prepareColor ( _barriers[ PARAM_BARRIER_INDEX ] );
+
+    VkImageMemoryBarrier &id = _barriers[ ID_BARRIER_INDEX ];
+    prepareColor ( id );
+
+    VkImageMemoryBarrier &depth = _barriers[ DEPTH_BARRIER_INDEX ];
+    depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    auto const barrierCount = static_cast<uint32_t> ( std::size ( _barriers ) );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        barrierCount,
+        _barriers
+    );
+
+    _workspace.PrepareIDBuffer ( commandBuffer );
+
+    _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+
+    _workspace.FillGBuffer ( commandBuffer );
+
+    vkCmdEndRendering ( commandBuffer );
+
+    constexpr auto commitColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
+        barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    };
+
+    commitColor ( _barriers[ ALBEDO_BARRIER_INDEX ] );
+    commitColor ( _barriers[ HDR_BARRIER_INDEX ] );
+    commitColor ( _barriers[ NORMAL_BARRIER_INDEX ] );
+    commitColor ( _barriers[ PARAM_BARRIER_INDEX ] );
+
+    depth.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    depth.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    depth.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depth.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    id.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    id.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    id.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    id.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT ) |
+            AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
+
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT ),
+        0U,
+        0U,
+        nullptr,
+        0U,
+        nullptr,
+        barrierCount,
+        _barriers
+    );
+
+    _workspace.ComputeSelect ( commandBuffer, fif );
 }
 
 void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -1021,7 +1160,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     float const deltaTime = seconds.count ();
     _timestamp = now;
 
-    size_t const commandBufferIndex = _writingCommandInfo;
+    size_t const fif = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
@@ -1043,13 +1182,13 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         return;
     }
 
-    FreeMeshTransferQueue ( messageQueue, commandBufferIndex );
-    FreeTexture2DTransferQueue ( messageQueue, commandBufferIndex );
+    FreeMeshTransferQueue ( messageQueue, fif );
+    FreeTexture2DTransferQueue ( messageQueue, fif );
 
-    DestroyPrograms ( messageQueue, commandBufferIndex );
-    DestroyMeshes ( messageQueue, commandBufferIndex );
-    DestroyStreamBuffers ( messageQueue, commandBufferIndex );
-    DestroyTexture2DInstances ( messageQueue, commandBufferIndex );
+    DestroyPrograms ( messageQueue, fif );
+    DestroyMeshes ( messageQueue, fif );
+    DestroyStreamBuffers ( messageQueue, fif );
+    DestroyTexture2DInstances ( messageQueue, fif );
 
     if ( ( vulkanResult != VK_SUCCESS ) & ( vulkanResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
     {
@@ -1084,8 +1223,8 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         return;
     }
 
-    UploadMeshes ( commandBuffer, commandBufferIndex );
-    UploadTexture2DInstances ( commandBuffer, commandBufferIndex );
+    UploadMeshes ( commandBuffer, fif );
+    UploadTexture2DInstances ( commandBuffer, fif );
 
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     resourceHeap.UploadGPUData ( commandBuffer );
@@ -1100,8 +1239,10 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
 
-    RenderScene ( commandBuffer );
-    _workspace.ComputeSelect ( commandBuffer, commandBufferIndex );
+    if ( _workspace.IsSelectionRequested () )
+        RenderSceneWithID ( commandBuffer, fif );
+    else
+        RenderScene ( commandBuffer );
 
     _exposurePass.Execute ( commandBuffer, deltaTime, resourceHeap );
 
@@ -1112,7 +1253,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         _presentRenderPass.Begin ( renderer, commandBuffer );
         _toneMapper.Execute ( commandBuffer, resourceHeap );
 
-        if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]
         {
             AV_ASSERT ( false )
             return;
@@ -1160,6 +1301,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     GX_ENABLE_WARNING ( 4061 )
 
     messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
+    std::this_thread::sleep_for ( std::chrono::milliseconds ( 250U ) );
 }
 
 void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
@@ -1275,6 +1417,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _hdrRenderTarget.FreeResources ( renderer );
     _normalRenderTarget.FreeResources ( renderer );
     _paramRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
     _depthRenderTarget.FreeResources ( renderer );
 
     _uiPass.OnSwapchainDestroyed ();
@@ -1326,6 +1469,7 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     _hdrRenderTarget.FreeResources ( renderer );
     _normalRenderTarget.FreeResources ( renderer );
     _paramRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
     _depthRenderTarget.FreeResources ( renderer );
 
     if ( !CreateRenderTargetImages ( resolution ) ) [[unlikely]]
@@ -1335,7 +1479,7 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     }
 
     _uiPass.OnSwapchainDestroyed ();
-    _workspace.OnGBufferResolutionChanged ( _hdrRenderTarget.GetResolution () );
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, _idRenderTargetIdx );
 
     bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
         _toneMapper.SetTarget ( renderer, _hdrRenderTargetIdx, _exposurePass.GetExposure () );

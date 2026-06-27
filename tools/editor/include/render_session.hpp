@@ -84,6 +84,9 @@ class RenderSession final
         android_vulkan::Texture2D               _paramRenderTarget {};
         uint32_t                                _paramRenderTargetIdx = 0U;
 
+        android_vulkan::Texture2D               _idRenderTarget {};
+        uint32_t                                _idRenderTargetIdx = 0U;
+
         android_vulkan::Texture2D               _depthRenderTarget {};
         uint32_t                                _depthRenderTargetIdx = 0U;
 
@@ -113,7 +116,7 @@ class RenderSession final
 
         bool                                    _broken = false;
 
-        VkRenderingAttachmentInfo               _colorAttachments[ 4U ] =
+        VkRenderingAttachmentInfo               _colorAttachments[ 5U ] =
         {
             // Albedo
             {
@@ -194,6 +197,26 @@ class RenderSession final
                         .float32 { 0.5F, 0.5F, 0.5F, 0.0F }
                     }
                 }
+            },
+            // ID
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .pNext = nullptr,
+                .imageView = VK_NULL_HANDLE,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .resolveMode = VK_RESOLVE_MODE_NONE,
+                .resolveImageView = VK_NULL_HANDLE,
+                .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+                .clearValue
+                {
+                    .color
+                    {
+                        .uint32 { 0U, 0U, 0U, 0U }
+                    }
+                }
             }
         };
 
@@ -215,27 +238,6 @@ class RenderSession final
                 {
                     .depth = 0.0F,
                     .stencil = 0U
-                }
-            }
-        };
-
-        VkRenderingAttachmentInfo               _idAttachment
-        {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .pNext = nullptr,
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .resolveMode = VK_RESOLVE_MODE_NONE,
-            .resolveImageView = VK_NULL_HANDLE,
-            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-
-            .clearValue
-            {
-                .color
-                {
-                    .uint32 { 0U, 0U, 0U, 0U }
                 }
             }
         };
@@ -269,7 +271,7 @@ class RenderSession final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier                    _barriers[ 5U ] =
+        VkImageMemoryBarrier                    _barriers[ 6U ] =
         {
             // Albedo
             {
@@ -375,6 +377,27 @@ class RenderSession final
                     .baseArrayLayer = 0U,
                     .layerCount = 1U
                 }
+            },
+            // ID
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+                .pNext = nullptr,
+                .srcAccessMask = VK_ACCESS_NONE,
+                .dstAccessMask = VK_ACCESS_NONE,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
             }
         };
 
@@ -403,18 +426,19 @@ class RenderSession final
         void EventLoop () noexcept;
         [[nodiscard]] bool InitModules () noexcept;
 
-        void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
-        void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept;
+        void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept;
 
-        void DestroyPrograms ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
-        void DestroyMeshes ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
-        void DestroyStreamBuffers ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
-        void DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t commandBufferIndex ) noexcept;
+        void DestroyPrograms ( MessageQueue &messageQueue, size_t fif ) noexcept;
+        void DestroyMeshes ( MessageQueue &messageQueue, size_t fif ) noexcept;
+        void DestroyStreamBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept;
+        void DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t fif ) noexcept;
 
-        void UploadMeshes ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
-        void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+        void UploadMeshes ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
+        void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
 
         void RenderScene ( VkCommandBuffer commandBuffer ) noexcept;
+        void RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
 
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;

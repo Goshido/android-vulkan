@@ -26,7 +26,6 @@ class GBufferProgram : public GraphicsProgram
         GBufferProgram &operator = ( GBufferProgram && ) = delete;
 
         void Destroy ( VkDevice device ) noexcept override;
-        [[nodiscard]] bool Init ( VkDevice device, VkFormat depthStencilFormat ) noexcept;
 
     protected:
         explicit GBufferProgram ( std::string_view vs,
@@ -36,12 +35,6 @@ class GBufferProgram : public GraphicsProgram
         ) noexcept;
 
         ~GBufferProgram () override = default;
-
-    private:
-        [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
-            VkPipelineColorBlendStateCreateInfo &info,
-            VkPipelineColorBlendAttachmentState* attachments
-        ) const noexcept override;
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
@@ -70,14 +63,6 @@ class GBufferProgram : public GraphicsProgram
             VkRect2D* scissorInfo,
             VkViewport* viewportInfo,
             VkExtent2D const* viewport
-        ) const noexcept override;
-
-        [[nodiscard]] VkPipelineRenderingCreateInfo const* InitRenderingInfo ( VkFormat nativeColor,
-            VkFormat nativeDepth,
-            VkFormat nativeStencil,
-            VkFormat nativeDepthStencil,
-            VkFormat* colorAttachments,
-            VkPipelineRenderingCreateInfo &info
         ) const noexcept override;
 
         [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,

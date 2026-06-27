@@ -49,6 +49,13 @@ class Workspace final
             VkDeviceMemory                              _memory = VK_NULL_HANDLE;
             VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
             std::deque<Actor const*>                    _items {};
+
+            VkExtent2D                                  _idImageResolution
+            {
+                .width = 0U,
+                .height = 0U
+            };
+
             bool                                        _pendingSelect = false;
 
             pbr::IDCollectProgram::PushConstants        _pushConstants
@@ -69,28 +76,6 @@ class Workspace final
                 .buffer = VK_NULL_HANDLE,
                 .offset = 0U,
                 .size = VK_WHOLE_SIZE
-            };
-
-            VkImageMemoryBarrier                        _imageBarrier
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .pNext = nullptr,
-                .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ),
-                .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .image = VK_NULL_HANDLE,
-
-                .subresourceRange
-                {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0U,
-                    .levelCount = 1U,
-                    .baseArrayLayer = 0U,
-                    .layerCount = 1U
-                }
             };
         };
 
@@ -127,7 +112,6 @@ class Workspace final
         Texture2DRef                                    _defaultParam {};
         Texture2DRef                                    _defaultNormal {};
 
-        android_vulkan::Texture2D                       _idImage {};
         Selection                                       _selection {};
 
         ViewportWidget*                                 _viewport = nullptr;
@@ -163,8 +147,9 @@ class Workspace final
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
-        void OnGBufferResolutionChanged ( VkExtent2D const &resolution ) noexcept;
+        void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
+        [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void Select ( Rect const &rect, bool invert ) noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;

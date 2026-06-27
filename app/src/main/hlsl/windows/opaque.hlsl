@@ -5,12 +5,20 @@
 #include "geometry_pass.hlsl"
 #include "platform/windows/pbr/samplers.inc"
 #include "windows/gbuffer_attributes.hlsl"
-#include "windows/gbuffer_push_constants.hlsl"
-#include "windows/gbuffer_render_targets.hlsl"
 #include "windows/gbuffer_streams.hlsl"
 
 
-OutputData Compute ( in Attributes attributes, in uint64_t shadingStream )
+struct OpaqueResult
+{
+    float32_t4      _albedo;
+    float32_t4      _emission;
+    float32_t4      _normal;
+    float32_t4      _param;
+};
+
+//----------------------------------------------------------------------------------------------------------------------
+
+OpaqueResult Compute ( in Attributes attributes, in uint64_t shadingStream )
 {
     Shading const shading = vk::RawBufferLoad<Shading> ( shadingStream + attributes._instanceID * sizeof ( Shading ),
         4U
@@ -37,7 +45,7 @@ OutputData Compute ( in Attributes attributes, in uint64_t shadingStream )
         (float16_t3)albedo.Sample ( materialSampler, attributes._uv ).xyz
     );
 
-    OutputData result;
+    OpaqueResult result;
     result._albedo = r._albedo;
     result._emission = r._emission;
     result._normal = r._normal;

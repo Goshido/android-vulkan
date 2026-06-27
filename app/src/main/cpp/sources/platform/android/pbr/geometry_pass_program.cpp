@@ -72,7 +72,7 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineViewportStateCreateInfo viewportInfo;
     VkDevice device = renderer.GetDevice ();
 
-    VkGraphicsPipelineCreateInfo pipelineInfo
+    VkGraphicsPipelineCreateInfo const pipelineInfo
     {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = nullptr,

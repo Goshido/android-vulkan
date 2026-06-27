@@ -19,7 +19,7 @@ constexpr std::string_view CONFIG_KEY_UI_ZOOM = "UI zoom";
 constexpr std::string_view CONFIG_KEY_VSYNC = "vSync";
 
 constexpr std::string_view CLI_USER_GPU = "--gpu";
-constexpr std::string_view CLI_NO_VULKAN_INIT_LOGS = "--no-vulkan-init-logs";
+constexpr std::string_view CLI_VULKAN_INIT_LOGS = "--vulkan-init-logs";
 
 // It prevents busy loop.
 // [2024/09/22] It's impossible to sleep less than 1 ms on Windows.
@@ -579,13 +579,13 @@ bool Editor::IsProvideVulkanInitLogs () const noexcept
 {
     for ( char const *arg : _commandLine )
     {
-        if ( arg == CLI_NO_VULKAN_INIT_LOGS ) [[unlikely]]
+        if ( arg == CLI_VULKAN_INIT_LOGS ) [[unlikely]]
         {
-            return false;
+            return true;
         }
     }
 
-    return true;
+    return false;
 }
 
 Editor::Config Editor::LoadConfig () noexcept

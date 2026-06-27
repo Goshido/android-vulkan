@@ -36,6 +36,22 @@ class OpaqueProgram final : public GBufferProgram
         OpaqueProgram &operator = ( OpaqueProgram && ) = delete;
 
         ~OpaqueProgram () override = default;
+
+        [[nodiscard]] bool Init ( VkDevice device, VkFormat depthStencilFormat ) noexcept;
+
+    private:
+        [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
+            VkPipelineColorBlendStateCreateInfo &info,
+            VkPipelineColorBlendAttachmentState* attachments
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineRenderingCreateInfo const* GBufferProgram::InitRenderingInfo ( VkFormat nativeColor,
+            VkFormat nativeDepth,
+            VkFormat nativeStencil,
+            VkFormat nativeDepthStencil,
+            VkFormat* colorAttachments,
+            VkPipelineRenderingCreateInfo &info
+        ) const noexcept override;
 };
 
 } // namespace pbr

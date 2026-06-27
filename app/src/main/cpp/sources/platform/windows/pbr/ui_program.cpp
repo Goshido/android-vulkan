@@ -53,7 +53,7 @@ bool UIProgram::Init ( VkDevice device,
     std::vector<uint8_t> vs {};
     std::vector<uint8_t> fs {};
 
-    VkGraphicsPipelineCreateInfo pipelineInfo
+    VkGraphicsPipelineCreateInfo const pipelineInfo
     {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 

@@ -503,7 +503,6 @@ bool RenderSession::InitModules () noexcept
     {
         std::lock_guard const lock ( _submitMutex );
         result = resourceHeap.Init ( renderer, commandBuffer ) && _exposurePass.Init ( renderer, resourceHeap, pool );
-        _workspace.InitFUCK ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
         {

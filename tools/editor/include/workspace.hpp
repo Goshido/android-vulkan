@@ -138,7 +138,6 @@ class Workspace final
         ~Workspace () = default;
 
         void Init () noexcept;
-        void InitFUCK ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy () noexcept;
 
         void Load ( std::string_view scene ) noexcept;

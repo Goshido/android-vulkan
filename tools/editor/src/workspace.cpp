@@ -114,9 +114,6 @@ void AppendComponentAction::Undo () noexcept
     _component = _actor->Remove ( *_key );
 }
 
-android_vulkan::Texture2D fuck_idImage {};
-uint32_t fuck_idImageIdx = std::numeric_limits<uint32_t>::max ();
-
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -137,47 +134,6 @@ void Workspace::Init () noexcept
     InitHotkeys ();
 
     FUCK ();
-}
-
-void Workspace::InitFUCK ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
-{
-    fuck_idImage.AssignName ( "FUCK ID Image" );
-
-    constexpr VkExtent2D res
-    {
-        .width = 960U,
-        .height = 640U
-    };
-
-    constexpr auto size = static_cast<size_t> ( res.width * res.height * sizeof ( uint64_t ) );
-    std::vector<uint8_t> data ( size );
-
-    std::ifstream stream ( R"(C:\Users\Goshido\Desktop\aaaa.bin)", std::ios::binary | std::ios::ate );
-    [[maybe_unused]] auto const dsize = static_cast<size_t> ( stream.tellg () );
-    stream.seekg ( 0, std::ios::beg );
-    stream.read ( reinterpret_cast<char*> ( data.data () ), size );
-
-    [[maybe_unused]] bool status = fuck_idImage.UploadToStagingBuffer ( renderer,
-        data.data (),
-        size,
-        res,
-        VK_FORMAT_R16G16B16A16_UINT,
-        AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
-        false
-    );
-
-    status = fuck_idImage.UploadToGPU ( renderer,
-        commandBuffer,
-        VK_ACCESS_SHADER_READ_BIT,
-        VK_IMAGE_LAYOUT_GENERAL,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        true,
-        VK_NULL_HANDLE
-    );
-
-    fuck_idImageIdx = *ResourceHeap::Instance ().RegisterStorageImage ( renderer.GetDevice (),
-        fuck_idImage.GetImageView ()
-    );
 }
 
 void Workspace::Destroy () noexcept
@@ -578,7 +534,6 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
     ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, program.GetPipelineLayout () );
     program.SetPushConstants ( commandBuffer, &_selection._pushConstants );
 
-    _selection._pushConstants._idImage = fuck_idImageIdx;
     VkExtent3D const params = pbr::IDCollectProgram::DispatchParams ( _selection._idImageResolution );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 

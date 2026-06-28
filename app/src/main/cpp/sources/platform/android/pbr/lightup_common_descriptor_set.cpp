@@ -166,7 +166,15 @@ bool LightupCommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result =
         _brdfLUT.UploadToStagingBuffer ( renderer, BRDF_LUT, android_vulkan::eColorSpace::Unorm, false ) &&
-        _brdfLUT.UploadToGPU ( renderer, textureCommandBuffer, false, VK_NULL_HANDLE );
+
+        _brdfLUT.UploadToGPU ( renderer,
+            textureCommandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;

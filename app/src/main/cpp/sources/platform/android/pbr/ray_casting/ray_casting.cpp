@@ -480,10 +480,17 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
             },
 
             VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
             false
         ) &&
 
-        texture->UploadToGPU ( renderer, *commandBuffers, false, VK_NULL_HANDLE );
+        texture->UploadToGPU ( renderer, *commandBuffers,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;

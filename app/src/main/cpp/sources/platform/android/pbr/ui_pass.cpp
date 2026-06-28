@@ -120,6 +120,9 @@ std::optional<Texture2DRef const> ImageStorage::GetImage ( std::string const &as
 
         texture->UploadToGPU ( *_renderer,
             _commandBuffers[ _commandBufferIndex ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             false,
             _fences[ _commandBufferIndex ]
         );
@@ -379,7 +382,15 @@ bool UIPass::CommonDescriptorSet::Init ( android_vulkan::Renderer &renderer,
 
     result =
         _textLUT.UploadToStagingBuffer ( renderer, TEXT_LUT, android_vulkan::eColorSpace::Unorm, false ) &&
-        _textLUT.UploadToGPU ( renderer, commandBuffer, false, _fence );
+
+        _textLUT.UploadToGPU ( renderer,
+            commandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            _fence
+        );
 
     if ( !result ) [[unlikely]]
         return false;

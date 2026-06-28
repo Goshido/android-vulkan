@@ -251,10 +251,18 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
             },
 
             VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
             false
         ) &&
 
-        t.UploadToGPU ( renderer, *cb, false, VK_NULL_HANDLE );
+        t.UploadToGPU ( renderer,
+            *cb,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;

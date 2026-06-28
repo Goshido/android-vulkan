@@ -166,6 +166,9 @@ std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset, bo
 
         ast._texture.UploadToGPU ( *_renderer,
             _commandBuffers[ _commandBufferIndex ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             false,
             _fences[ _commandBufferIndex ]
         );

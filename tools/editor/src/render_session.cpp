@@ -503,6 +503,7 @@ bool RenderSession::InitModules () noexcept
     {
         std::lock_guard const lock ( _submitMutex );
         result = resourceHeap.Init ( renderer, commandBuffer ) && _exposurePass.Init ( renderer, resourceHeap, pool );
+        _workspace.InitFUCK ( renderer, commandBuffer );
 
         if ( !result ) [[unlikely]]
         {
@@ -892,7 +893,16 @@ void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, si
         AV_TRACE ( "Upload '%s'", t.GetName ().c_str () );
         AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", t.GetName ().c_str () );
 
-        if ( !t.UploadToGPU ( renderer, commandBuffer, true, VK_NULL_HANDLE ) ) [[unlikely]]
+        bool const result = t.UploadToGPU ( renderer,
+            commandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            true,
+            VK_NULL_HANDLE
+        );
+
+        if ( !result ) [[unlikely]]
         {
             info._result ( std::nullopt );
             continue;

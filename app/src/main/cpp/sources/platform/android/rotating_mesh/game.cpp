@@ -115,7 +115,14 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
                 true
             ) &&
 
-            drawcall._diffuse.UploadToGPU ( renderer, commandBuffers[ i ], false, VK_NULL_HANDLE );
+            drawcall._diffuse.UploadToGPU ( renderer,
+                commandBuffers[ i ],
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                false,
+                VK_NULL_HANDLE
+            );
 
         if ( !result ) [[unlikely]]
         {
@@ -134,6 +141,9 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
         secondMaterial._normal.UploadToGPU ( renderer,
             commandBuffers[ 3U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             false,
             VK_NULL_HANDLE
         );
@@ -150,7 +160,14 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
             true
         ) &&
 
-        thirdMaterial._normal.UploadToGPU ( renderer, commandBuffers[ 4U ], false, VK_NULL_HANDLE );
+        thirdMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 4U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -164,10 +181,18 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
             std::size ( defaultNormal ),
             VkExtent2D { .width = 1U, .height = 1U },
             VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
             false
         ) &&
 
-        firstMaterial._normal.UploadToGPU ( renderer, commandBuffers[ 5U ], false, VK_NULL_HANDLE );
+        firstMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 5U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 }
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer ) noexcept

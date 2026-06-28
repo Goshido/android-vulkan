@@ -102,12 +102,16 @@ class Texture2D final
             size_t size,
             VkExtent2D const &resolution,
             VkFormat format,
+            VkImageUsageFlags usage,
             bool isGenerateMipmaps
         ) noexcept;
 
         // The method invocation must be externally synchronized because it's could call vkQueueSubmit.
         [[nodiscard]] bool UploadToGPU ( Renderer &renderer,
             VkCommandBuffer commandBuffer,
+            VkAccessFlagBits access,
+            VkImageLayout layout,
+            VkPipelineStageFlagBits stages,
             bool externalCommandBuffer,
             VkFence fence
         ) noexcept;
@@ -139,8 +143,17 @@ class Texture2D final
             VkImageCreateInfo const &imageInfo
         ) noexcept;
 
-        [[nodiscard]] bool UploadCompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept;
-        [[nodiscard]] bool UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] bool UploadCompressedToGPU ( VkCommandBuffer commandBuffer,
+            VkAccessFlagBits access,
+            VkImageLayout layout,
+            VkPipelineStageFlagBits stages
+        ) noexcept;
+
+        [[nodiscard]] bool UploadUncompressedToGPU ( VkCommandBuffer commandBuffer,
+            VkAccessFlagBits access,
+            VkImageLayout layout,
+            VkPipelineStageFlagBits stages
+        ) noexcept;
 
         [[nodiscard]] static bool IsCompressed ( std::string const &fileName ) noexcept;
 
@@ -153,7 +166,10 @@ class Texture2D final
 
         [[nodiscard]] static VkFormat PickupFormat ( int channels ) noexcept;
         [[nodiscard]] static VkFormat ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noexcept;
-        [[nodiscard]] static VkImageUsageFlags ResolveUsage ( bool isGenerateMipmaps ) noexcept;
+
+        [[nodiscard]] static VkImageUsageFlags ResolveUsage ( VkImageUsageFlags usage,
+            bool isGenerateMipmaps
+        ) noexcept;
 };
 
 } // namespace android_vulkan

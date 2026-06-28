@@ -136,7 +136,6 @@ void Texture2D::FreeResources ( Renderer &renderer ) noexcept
 
     _format = VK_FORMAT_UNDEFINED;
     std::memset ( &_resolution, 0, sizeof ( _resolution ) );
-    _fileName.clear ();
 }
 
 void Texture2D::FreeTransferResources ( Renderer &renderer ) noexcept
@@ -241,7 +240,7 @@ bool Texture2D::UploadToStagingBuffer ( Renderer &renderer,
             imageInfo,
             resolution,
             ResolveFormat ( PickupFormat ( channels ), space ),
-            ResolveUsage ( isGenerateMipmaps ),
+            ResolveUsage ( VK_IMAGE_USAGE_SAMPLED_BIT, isGenerateMipmaps ),
             isGenerateMipmaps ? CountMipLevels ( resolution ) : UINT8_C ( 1U )
         ) &&
 
@@ -273,6 +272,7 @@ bool Texture2D::UploadToStagingBuffer ( Renderer &renderer,
     size_t size,
     VkExtent2D const &resolution,
     VkFormat format,
+    VkImageUsageFlags usage,
     bool isGenerateMipmaps
 ) noexcept
 {
@@ -284,7 +284,7 @@ bool Texture2D::UploadToStagingBuffer ( Renderer &renderer,
             imageInfo,
             resolution,
             format,
-            ResolveUsage ( isGenerateMipmaps ),
+            ResolveUsage ( usage, isGenerateMipmaps ),
             isGenerateMipmaps ? CountMipLevels ( resolution ) : static_cast<uint8_t> ( 1U )
         ) &&
 
@@ -293,6 +293,9 @@ bool Texture2D::UploadToStagingBuffer ( Renderer &renderer,
 
 bool Texture2D::UploadToGPU ( Renderer &renderer,
     VkCommandBuffer commandBuffer,
+    VkAccessFlagBits access,
+    VkImageLayout layout,
+    VkPipelineStageFlagBits stages,
     bool externalCommandBuffer,
     VkFence fence
 ) noexcept
@@ -323,7 +326,9 @@ bool Texture2D::UploadToGPU ( Renderer &renderer,
     bool const isCompressed = ( _format == VK_FORMAT_ASTC_6x6_UNORM_BLOCK ) |
         ( _format == VK_FORMAT_ASTC_6x6_SRGB_BLOCK );
 
-    bool result = isCompressed ? UploadCompressedToGPU ( commandBuffer ) : UploadUncompressedToGPU ( commandBuffer );
+    bool result = isCompressed ?
+        UploadCompressedToGPU ( commandBuffer, access, layout, stages ) :
+        UploadUncompressedToGPU ( commandBuffer, access, layout, stages );
 
     if ( !result | externalCommandBuffer )
         return result;
@@ -400,7 +405,6 @@ bool Texture2D::CreateCommonResources ( Renderer &renderer,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
 
-
     VkDevice device = renderer.GetDevice ();
 
     bool result = Renderer::CheckVkResult ( vkCreateImage ( device, &imageInfo, nullptr, &_image ),
@@ -411,7 +415,12 @@ bool Texture2D::CreateCommonResources ( Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _image, VK_OBJECT_TYPE_IMAGE, "Image2D" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _image,
+        VK_OBJECT_TYPE_IMAGE,
+        "%s",
+        _fileName.empty () ? "Image2D" : _fileName.c_str ()
+    )
 
     VkMemoryRequirements memoryRequirements;
     vkGetImageMemoryRequirements ( device, _image, &memoryRequirements );
@@ -486,7 +495,13 @@ bool Texture2D::CreateCommonResources ( Renderer &renderer,
         return false;
     }
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Image2D" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _imageView,
+        VK_OBJECT_TYPE_IMAGE_VIEW,
+        "%s",
+        _fileName.empty () ? "Image2D" : _fileName.c_str ()
+    )
+
     return true;
 }
 
@@ -517,7 +532,12 @@ bool Texture2D::CreateTransferResources ( Renderer &renderer, uint8_t* &mappedBu
         return false;
     }
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _transfer, VK_OBJECT_TYPE_BUFFER, "Texture2D staging" )
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _transfer,
+        VK_OBJECT_TYPE_BUFFER,
+        "%s",
+        _fileName.empty () ? "Texture2D staging" : _fileName.c_str ()
+    )
 
     VkMemoryRequirements memoryRequirements;
     vkGetBufferMemoryRequirements ( device, _transfer, &memoryRequirements );
@@ -602,7 +622,7 @@ bool Texture2D::UploadCompressedToStagingBuffer ( Renderer &renderer, std::strin
         imageInfo,
         ktx.GetMip ( 0U )._resolution,
         ktx.GetFormat (),
-        ResolveUsage ( false ),
+        ResolveUsage ( VK_IMAGE_USAGE_SAMPLED_BIT, false ),
         ktx.GetMipCount ()
     );
 
@@ -661,7 +681,11 @@ bool Texture2D::UploadDataUncompressedToStagingBuffer ( Renderer &renderer,
     return true;
 }
 
-bool Texture2D::UploadCompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept
+bool Texture2D::UploadCompressedToGPU ( VkCommandBuffer commandBuffer,
+    VkAccessFlagBits access,
+    VkImageLayout layout,
+    VkPipelineStageFlagBits stages
+) noexcept
 {
     VkImageMemoryBarrier barrierInfo
     {
@@ -755,14 +779,14 @@ bool Texture2D::UploadCompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept
     _ktx = nullptr;
 
     barrierInfo.subresourceRange.levelCount = static_cast<uint32_t> ( _mipLevels );
-    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrierInfo.dstAccessMask = access;
+    barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrierInfo.newLayout = layout;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        stages,
         0U,
         0U,
         nullptr,
@@ -775,7 +799,11 @@ bool Texture2D::UploadCompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept
     return true;
 }
 
-bool Texture2D::UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexcept
+bool Texture2D::UploadUncompressedToGPU ( VkCommandBuffer commandBuffer,
+    VkAccessFlagBits access,
+    VkImageLayout layout,
+    VkPipelineStageFlagBits stages
+) noexcept
 {
     bool const needMips = _isGenerateMipmaps & ( _resolution.width + _resolution.height >= 3U );
     _mipLevels = needMips ? CountMipLevels ( _resolution ) : static_cast<uint8_t> ( 1U );
@@ -848,15 +876,15 @@ bool Texture2D::UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexce
 
     if ( !needMips )
     {
-        barrierInfo.subresourceRange.levelCount = 1U;
-        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        barrierInfo.dstAccessMask = access;
+        barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrierInfo.newLayout = layout;
+        barrierInfo.subresourceRange.levelCount = 1U;
 
         vkCmdPipelineBarrier ( commandBuffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT,
-            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            stages,
             0U,
             0U,
             nullptr,
@@ -869,11 +897,11 @@ bool Texture2D::UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexce
         return true;
     }
 
-    barrierInfo.subresourceRange.levelCount = 1U;
     barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrierInfo.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrierInfo.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    barrierInfo.subresourceRange.levelCount = 1U;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -981,15 +1009,15 @@ bool Texture2D::UploadUncompressedToGPU ( VkCommandBuffer commandBuffer ) noexce
     }
 
     barrierInfo.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    barrierInfo.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrierInfo.dstAccessMask = access;
     barrierInfo.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    barrierInfo.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrierInfo.newLayout = layout;
     barrierInfo.subresourceRange.levelCount = mipLevels;
     barrierInfo.subresourceRange.baseMipLevel = 0U;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        stages,
         0U,
         0U,
         nullptr,
@@ -1149,16 +1177,10 @@ VkFormat Texture2D::ResolveFormat ( VkFormat baseFormat, eColorSpace space ) noe
     return VK_FORMAT_UNDEFINED;
 }
 
-VkImageUsageFlags Texture2D::ResolveUsage ( bool isGenerateMipmaps ) noexcept
+VkImageUsageFlags Texture2D::ResolveUsage ( VkImageUsageFlags usage, bool isGenerateMipmaps ) noexcept
 {
-    constexpr VkImageUsageFlags const cases[] =
-    {
-        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ),
-
-        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT ) |
-            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT )
-    };
-
+    VkImageUsageFlags const base = usage | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_DST_BIT );
+    VkImageUsageFlags const cases[] = { base, base | AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSFER_SRC_BIT ) };
     return cases[ static_cast<size_t> ( isGenerateMipmaps ) ];
 }
 

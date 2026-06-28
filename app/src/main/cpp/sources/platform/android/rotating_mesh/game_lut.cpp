@@ -349,10 +349,18 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
             },
 
             VK_FORMAT_R16_SFLOAT,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
             false
         ) &&
 
-        _specularLUTTexture.UploadToGPU ( renderer, commandBuffer, false, VK_NULL_HANDLE );
+        _specularLUTTexture.UploadToGPU ( renderer,
+            commandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 }
 
 void GameLUT::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer ) noexcept

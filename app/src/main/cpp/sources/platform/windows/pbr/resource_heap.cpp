@@ -346,16 +346,30 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _layout.Destroy ( device );
 }
 
-void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
-    VkPipelineBindPoint bindPoint,
-    VkPipelineLayout layout
-) noexcept
+void ResourceHeap::Bind ( VkCommandBuffer commandBuffer, VkPipelineLayout graphics, VkPipelineLayout compute ) noexcept
 {
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
 
     constexpr uint32_t index = 0U;
     constexpr VkDeviceSize offset = 0U;
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
+
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        graphics,
+        0U,
+        1U,
+        &index,
+        &offset
+    );
+
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        compute,
+        0U,
+        1U,
+        &index,
+        &offset
+    );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,

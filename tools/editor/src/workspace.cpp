@@ -531,7 +531,6 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
 
     pbr::IDCollectProgram &program = *_idCollectProgram;
     program.Bind ( commandBuffer );
-    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, program.GetPipelineLayout () );
     program.SetPushConstants ( commandBuffer, &_selection._pushConstants );
 
     VkExtent3D const params = pbr::IDCollectProgram::DispatchParams ( _selection._idImageResolution );
@@ -843,7 +842,6 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 
     pbr::OpaqueProgram &program = *_opaqueProgram;
     VkPipelineLayout layout = program.GetPipelineLayout ();
-    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
     program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
@@ -893,7 +891,6 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
 
     pbr::OpaqueWithIDProgram &program = *_opaqueWithIDProgram;
     VkPipelineLayout layout = program.GetPipelineLayout ();
-    ResourceHeap::Instance ().Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout );
     program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.

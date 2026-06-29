@@ -619,8 +619,7 @@ void UIPass::InUseImageTracker::MarkInUse ( uint16_t image, size_t commandBuffer
 //----------------------------------------------------------------------------------------------------------------------
 
 UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
-    _fontStorage ( resourceHeap ),
-    _resourceHeap ( resourceHeap )
+    _fontStorage ( resourceHeap )
 {
     ImageStorage::SetResourceHeap ( resourceHeap );
 }
@@ -640,7 +639,6 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     }
 
     _program.Bind ( commandBuffer );
-    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
     _pushConstants._bdaStream0 = _uiVertices.GetStream0Address () +
         static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream0 ) );

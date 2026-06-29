@@ -1236,6 +1236,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     UploadTexture2DInstances ( commandBuffer, fif );
 
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+    resourceHeap.Bind ( commandBuffer, _toneMapper.GetPipelineLayout (), _exposurePass.GetPipelineLayout () );
     resourceHeap.UploadGPUData ( commandBuffer );
 
     if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
@@ -1253,14 +1254,14 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     else
         RenderScene ( commandBuffer );
 
-    _exposurePass.Execute ( commandBuffer, deltaTime, resourceHeap );
+    _exposurePass.Execute ( commandBuffer, deltaTime );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
         _workspace.DrawGizmo ( commandBuffer );
 
         _presentRenderPass.Begin ( renderer, commandBuffer );
-        _toneMapper.Execute ( commandBuffer, resourceHeap );
+        _toneMapper.Execute ( commandBuffer );
 
         if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]
         {

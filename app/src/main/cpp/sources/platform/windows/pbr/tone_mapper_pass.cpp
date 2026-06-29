@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <pbr/brightness_factor.inc>
 #include <platform/windows/pbr/tone_mapper_pass.hpp>
 #include <vulkan_utils.hpp>
 
@@ -11,11 +10,10 @@ void ToneMapperPass::Destroy ( VkDevice device ) noexcept
     _program.Destroy ( device );
 }
 
-void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer, ResourceHeap &resourceHeap ) noexcept
+void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
 {
     AV_VULKAN_GROUP ( commandBuffer, "Tone mapping" )
     _program.Bind ( commandBuffer );
-    resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
     _program.SetPushConstants ( commandBuffer, &_pushConstants );
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }
@@ -43,6 +41,11 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
     _pushConstants._hdrImage = hdrImage;
     UpdateTransform ( renderer );
     return true;
+}
+
+VkPipelineLayout ToneMapperPass::GetPipelineLayout () const noexcept
+{
+    return _program.GetPipelineLayout ();
 }
 
 bool ToneMapperPass::RecreateProgram ( android_vulkan::Renderer const& renderer ) noexcept

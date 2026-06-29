@@ -179,8 +179,7 @@ class ResourceHeap final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
-
-        void Bind ( VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint, VkPipelineLayout layout ) noexcept;
+        void Bind ( VkCommandBuffer commandBuffer, VkPipelineLayout graphics, VkPipelineLayout compute ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
             VkBuffer buffer,

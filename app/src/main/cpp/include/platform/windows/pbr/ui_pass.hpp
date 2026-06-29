@@ -7,12 +7,6 @@
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <span>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 
@@ -132,7 +126,6 @@ class UIPass final
         std::vector<uint16_t>               _usedImages {};
 
         FontStorage                         _fontStorage;
-        ResourceHeap                        &_resourceHeap;
 
         bool                                _hasChanges = false;
         bool                                _isTransformChanged = false;

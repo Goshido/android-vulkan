@@ -59,7 +59,7 @@ class ExposurePass final
 
         ~ExposurePass () = default;
 
-        void Execute ( VkCommandBuffer commandBuffer, float deltaTime, ResourceHeap &resourceHeap ) noexcept;
+        void Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void FreeTransferResources ( VkDevice device, VkCommandPool commandPool ) noexcept;
         [[nodiscard]] uint32_t GetExposure () const noexcept;
 
@@ -80,6 +80,8 @@ class ExposurePass final
             android_vulkan::Texture2D const &hdrImage,
             uint32_t hdrImageIndex
         ) noexcept;
+
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
 
     private:
         [[nodiscard]] bool CreateExposureResources ( android_vulkan::Renderer &renderer,

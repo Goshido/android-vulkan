@@ -2,7 +2,6 @@
 #define PBR_TONE_MAPPER_PASS_HPP
 
 
-#include "resource_heap.hpp"
 #include "tone_mapper_program.hpp"
 
 
@@ -27,10 +26,15 @@ class ToneMapperPass final
         ~ToneMapperPass () = default;
 
         void Destroy ( VkDevice device ) noexcept;
-        void Execute ( VkCommandBuffer commandBuffer, ResourceHeap &resourceHeap ) noexcept;
-
+        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer const &renderer, float brightnessBalance ) noexcept;
-        [[nodiscard]] bool SetTarget ( android_vulkan::Renderer const &renderer, uint32_t hdrImage, uint32_t exposure ) noexcept;
+
+        [[nodiscard]] bool SetTarget ( android_vulkan::Renderer const &renderer,
+            uint32_t hdrImage,
+            uint32_t exposure
+        ) noexcept;
+
+        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
 
     private:
         [[nodiscard]] bool RecreateProgram ( android_vulkan::Renderer const &renderer ) noexcept;

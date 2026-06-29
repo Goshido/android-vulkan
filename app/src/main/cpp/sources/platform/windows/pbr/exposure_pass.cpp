@@ -1,6 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <av_assert.hpp>
-#include <pbr/exposure.inc>
 #include <platform/windows/pbr/exposure_pass.hpp>
 #include <vulkan_utils.hpp>
 
@@ -22,14 +20,12 @@ constexpr size_t LUMA_IDX = 1U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime, ResourceHeap &resourceHeap ) noexcept
+void ExposurePass::Execute ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept
 {
     AV_VULKAN_GROUP ( commandBuffer, "Exposure" )
     SyncBefore ( commandBuffer );
 
     _program.Bind ( commandBuffer );
-    resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, _program.GetPipelineLayout () );
-
     _exposureInfo._eyeAdaptation = EyeAdaptationFactor ( deltaTime );
     _program.SetPushConstants ( commandBuffer, &_exposureInfo );
 
@@ -148,6 +144,11 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer,
     ExposureSpecialization const specData ( hdrImage.GetResolution () );
     _dispatch = specData._dispatch;
     return UpdateSyncMip5 ( renderer, resourceHeap, specData );
+}
+
+VkPipelineLayout ExposurePass::GetPipelineLayout () const noexcept
+{
+    return _program.GetPipelineLayout ();
 }
 
 bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,

@@ -209,41 +209,6 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
     return &info;
 }
 
-VkPipelineLayout ToneMapperProgram::InitLayout ( VkDevice device ) noexcept
-{
-    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _fullScreenTriangleLayout.GetLayout (),
-        _toneMapperLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::ToneMapperProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
-    return _pipelineLayout;
-}
-
 VkPipelineMultisampleStateCreateInfo const* ToneMapperProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -286,6 +251,82 @@ VkPipelineRasterizationStateCreateInfo const* ToneMapperProgram::InitRasterizati
     };
 
     return &info;
+}
+
+VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout ToneMapperProgram::InitLayout ( VkDevice device ) noexcept
+{
+    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _fullScreenTriangleLayout.GetLayout (),
+        _toneMapperLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::ToneMapperProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
+    return _pipelineLayout;
 }
 
 VkPipelineShaderStageCreateInfo const* ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
@@ -356,47 +397,6 @@ VkPipelineShaderStageCreateInfo const* ToneMapperProgram::InitShaderInfo ( andro
     };
 
     return sourceInfo;
-}
-
-VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
 }
 
 VkPipelineVertexInputStateCreateInfo const* ToneMapperProgram::InitVertexInputInfo (

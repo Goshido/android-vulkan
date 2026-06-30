@@ -3,7 +3,6 @@
 
 
 #include "graphics_program.hpp"
-#include "resource_heap_descriptor_set_layout.hpp"
 
 
 namespace pbr {
@@ -11,10 +10,8 @@ namespace pbr {
 class GBufferProgram : public GraphicsProgram
 {
     private:
-        std::string_view                    _vsSource {};
-        std::string_view                    _fsSource {};
-        ResourceHeapDescriptorSetLayout     _layout {};
-        std::string_view                    _name {};
+        std::string_view    _vsSource {};
+        std::string_view    _fsSource {};
 
     public:
         GBufferProgram () = delete;
@@ -28,12 +25,7 @@ class GBufferProgram : public GraphicsProgram
         void Destroy ( VkDevice device ) noexcept override;
 
     protected:
-        explicit GBufferProgram ( std::string_view vs,
-            std::string_view fs,
-            std::string_view name,
-            size_t pushConstantSize
-        ) noexcept;
-
+        explicit GBufferProgram ( std::string_view vs, std::string_view fs, size_t pushConstantSize ) noexcept;
         ~GBufferProgram () override = default;
 
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
@@ -47,8 +39,6 @@ class GBufferProgram : public GraphicsProgram
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
-
-        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

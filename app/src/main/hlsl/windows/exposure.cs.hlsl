@@ -14,6 +14,8 @@ struct PushConstants
     float32_t                                       _eyeAdaptation;
     float32_t                                       _maxLuma;
     float32_t                                       _minLuma;
+
+    uint32_t                                        _pad[ 23U ];
 };
 
 [[vk::push_constant]]

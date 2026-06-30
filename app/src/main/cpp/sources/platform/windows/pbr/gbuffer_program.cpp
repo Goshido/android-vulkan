@@ -1,7 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <platform/windows/pbr/gbuffer_program.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -9,18 +8,15 @@ namespace pbr {
 void GBufferProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );
-    _layout.Destroy ( device );
 }
 
 GBufferProgram::GBufferProgram ( std::string_view vs,
     std::string_view fs,
-    std::string_view name,
     size_t pushConstantSize
 ) noexcept:
     GraphicsProgram ( pushConstantSize ),
     _vsSource ( vs ),
-    _fsSource ( fs ),
-    _name ( name )
+    _fsSource ( fs )
 {
     // NOTHING
 }
@@ -101,42 +97,6 @@ VkPipelineInputAssemblyStateCreateInfo const* GBufferProgram::InitInputAssemblyI
     };
 
     return &info;
-}
-
-VkPipelineLayout GBufferProgram::InitLayout ( VkDevice device ) noexcept
-{
-    if ( !_layout.Init ( device ) ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    VkPushConstantRange const pushConstantRange
-    {
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-        .offset = 0U,
-        .size = _pushConstantSize
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_layout.GetLayout (),
-        .pushConstantRangeCount = 1U,
-        .pPushConstantRanges = &pushConstantRange
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::GBufferProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
-    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* GBufferProgram::InitMultisampleInfo (

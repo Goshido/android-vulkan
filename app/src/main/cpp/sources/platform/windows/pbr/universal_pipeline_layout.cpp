@@ -1,7 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/resource_heap.inc>
-#include <platform/windows/pbr/resource_heap_descriptor_set_layout.hpp>
+#include <platform/windows/pbr/push_constant_range.inc>
 #include <platform/windows/pbr/samplers.inc>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -9,42 +11,35 @@ namespace pbr {
 
 namespace {
 
-class DescriptorSetLayout final
+class PipelineLayout final
 {
     public:
-        VkDescriptorSetLayout       _layout = VK_NULL_HANDLE;
-
-    private:
-        std::atomic_size_t          _references = 0U;
+        VkDescriptorSetLayout       _descriptorSetLayout = VK_NULL_HANDLE;
+        VkPipelineLayout            _pipelineLayout = VK_NULL_HANDLE;
 
     public:
-        DescriptorSetLayout () = default;
+        PipelineLayout () = default;
 
-        DescriptorSetLayout ( DescriptorSetLayout const & ) = delete;
-        DescriptorSetLayout &operator = ( DescriptorSetLayout const & ) = delete;
+        PipelineLayout ( PipelineLayout const & ) = delete;
+        PipelineLayout &operator = ( PipelineLayout const & ) = delete;
 
-        DescriptorSetLayout ( DescriptorSetLayout && ) = delete;
-        DescriptorSetLayout &operator = ( DescriptorSetLayout && ) = delete;
+        PipelineLayout ( PipelineLayout && ) = delete;
+        PipelineLayout &operator = ( PipelineLayout && ) = delete;
 
-        ~DescriptorSetLayout () = default;
+        ~PipelineLayout () = default;
 
         void Destroy ( VkDevice device ) noexcept;
         [[nodiscard]] bool Init ( VkDevice device, uint32_t resourceCapacity ) noexcept;
 };
 
-void DescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void PipelineLayout::Destroy ( VkDevice device ) noexcept
 {
-    if ( _references > 0U && --_references == 0U )
-    {
-        vkDestroyDescriptorSetLayout ( device, std::exchange ( _layout, VK_NULL_HANDLE ), nullptr );
-    }
+    vkDestroyPipelineLayout ( device, std::exchange ( _pipelineLayout, VK_NULL_HANDLE ), nullptr );
+    vkDestroyDescriptorSetLayout ( device, std::exchange ( _descriptorSetLayout, VK_NULL_HANDLE ), nullptr );
 }
 
-bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) noexcept
+bool PipelineLayout::Init ( VkDevice device, uint32_t resourceCapacity ) noexcept
 {
-    if ( ++_references != 1U ) [[likely]]
-        return true;
-
     constexpr static VkDescriptorBindingFlags const bindingFlags[] =
     {
         VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT,
@@ -111,48 +106,77 @@ bool DescriptorSetLayout::Init ( VkDevice device, uint32_t resourceCapacity ) no
         .pBindings = bindings
     };
 
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_layout ),
-        "pbr::ResourceHeapDescriptorSetLayout::Init",
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateDescriptorSetLayout ( device, &info, nullptr, &_descriptorSetLayout ),
+        "pbr::UniversalPipelineLayout::Init",
         "Can't create descriptor set layout"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Resource heap" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _descriptorSetLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, "Universal" )
+
+    constexpr VkPushConstantRange pushConstantRange
+    {
+        .stageFlags = stages,
+        .offset = 0U,
+        .size = PUSH_CONSTANT_RANGE
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = 1U,
+        .pSetLayouts = &_descriptorSetLayout,
+        .pushConstantRangeCount = 1U,
+        .pPushConstantRanges = &pushConstantRange
+    };
+
+    result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::UniversalPipelineLayout::Init",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Universal" )
     return true;
 }
 
-DescriptorSetLayout g_descriptorSetLayout {};
+PipelineLayout g_pipelineLayout {};
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t ResourceHeapDescriptorSetLayout::_resourceCapacity = 0U;
+uint32_t UniversalPipelineLayout::_resourceCapacity = 0U;
 
-void ResourceHeapDescriptorSetLayout::Destroy ( VkDevice device ) noexcept
+void UniversalPipelineLayout::Destroy ( VkDevice device ) noexcept
 {
-    if ( _init )
-    {
-        g_descriptorSetLayout.Destroy ( device );
-        _init = false;
-    }
+    g_pipelineLayout.Destroy ( device );
 }
 
-bool ResourceHeapDescriptorSetLayout::Init ( VkDevice device ) noexcept
+bool UniversalPipelineLayout::Init ( VkDevice device ) noexcept
 {
-    _init = true;
-    return g_descriptorSetLayout.Init ( device, _resourceCapacity );
+    return g_pipelineLayout.Init ( device, _resourceCapacity );
 }
 
-VkDescriptorSetLayout &ResourceHeapDescriptorSetLayout::GetLayout () const noexcept
+VkDescriptorSetLayout &UniversalPipelineLayout::GetDescriptorSetLayout () noexcept
 {
-    return g_descriptorSetLayout._layout;
+    return g_pipelineLayout._descriptorSetLayout;
 }
 
-void ResourceHeapDescriptorSetLayout::SetResourceCapacity ( uint32_t capacity ) noexcept
+VkPipelineLayout &UniversalPipelineLayout::GetPipelineLayout () noexcept
+{
+    return g_pipelineLayout._pipelineLayout;
+}
+
+void UniversalPipelineLayout::SetResourceCapacity ( uint32_t capacity ) noexcept
 {
     _resourceCapacity = capacity;
 }

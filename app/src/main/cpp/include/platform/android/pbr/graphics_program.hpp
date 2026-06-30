@@ -11,6 +11,7 @@ namespace pbr {
 class GraphicsProgram : public GraphicsProgramBase
 {
     protected:
+        VkPipelineLayout    _pipelineLayout = VK_NULL_HANDLE;
         VkShaderModule      _fragmentShader = VK_NULL_HANDLE;
         VkShaderModule      _vertexShader = VK_NULL_HANDLE;
 
@@ -29,6 +30,8 @@ class GraphicsProgram : public GraphicsProgramBase
     protected:
         explicit GraphicsProgram ( size_t pushConstantSize ) noexcept;
         ~GraphicsProgram () override = default;
+
+        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineShaderStageCreateInfo const* InitShaderInfo (
             android_vulkan::Renderer const &renderer,

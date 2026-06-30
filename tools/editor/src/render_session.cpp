@@ -1236,7 +1236,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     UploadTexture2DInstances ( commandBuffer, fif );
 
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
-    resourceHeap.Bind ( commandBuffer, _toneMapper.GetPipelineLayout (), _exposurePass.GetPipelineLayout () );
+    resourceHeap.Bind ( commandBuffer );
     resourceHeap.UploadGPUData ( commandBuffer );
 
     if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]

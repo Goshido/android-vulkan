@@ -81,8 +81,6 @@ class ExposurePass final
             uint32_t hdrImageIndex
         ) noexcept;
 
-        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
-
     private:
         [[nodiscard]] bool CreateExposureResources ( android_vulkan::Renderer &renderer,
             VkDevice device,

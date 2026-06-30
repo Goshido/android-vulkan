@@ -146,11 +146,6 @@ bool ExposurePass::SetTarget ( android_vulkan::Renderer &renderer,
     return UpdateSyncMip5 ( renderer, resourceHeap, specData );
 }
 
-VkPipelineLayout ExposurePass::GetPipelineLayout () const noexcept
-{
-    return _program.GetPipelineLayout ();
-}
-
 bool ExposurePass::CreateExposureResources ( android_vulkan::Renderer &renderer,
     VkDevice device,
     ResourceHeap &resourceHeap

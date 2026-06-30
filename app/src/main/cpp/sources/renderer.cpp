@@ -358,7 +358,11 @@ std::unordered_set<uint32_t> g_validationFilter =
     // vkGetPhysicalDeviceProperties2(): Internal Warning: Setting
     // VkPhysicalDeviceDescriptorBufferPropertiesEXT::maxResourceDescriptorBufferBindings to 31
     // [2026/06/23] GPU-AV stuff magic is going on.
-    0x86FE6721U
+    0x86FE6721U,
+
+    // FUCK
+    0x1248C6A4U,
+    0x6A367C89U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =

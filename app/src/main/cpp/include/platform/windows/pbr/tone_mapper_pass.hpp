@@ -3,6 +3,7 @@
 
 
 #include "tone_mapper_program.hpp"
+#include <renderer.hpp>
 
 
 namespace pbr {
@@ -33,8 +34,6 @@ class ToneMapperPass final
             uint32_t hdrImage,
             uint32_t exposure
         ) noexcept;
-
-        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
 
     private:
         [[nodiscard]] bool RecreateProgram ( android_vulkan::Renderer const &renderer ) noexcept;

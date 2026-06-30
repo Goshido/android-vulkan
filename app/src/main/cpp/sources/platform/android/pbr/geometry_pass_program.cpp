@@ -295,49 +295,6 @@ VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAsse
     return &info;
 }
 
-VkPipelineLayout GeometryPassProgram::InitLayout ( VkDevice device ) noexcept
-{
-
-    if ( !_samplerLayout.Init ( device ) || !_textureLayout.Init ( device ) || !_instanceLayout.Init ( device ) )
-    {
-        [[unlikely]]
-        return VK_NULL_HANDLE;
-    }
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _samplerLayout.GetLayout (),
-        _textureLayout.GetLayout (),
-        _instanceLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    char where[ 512U ];
-    std::snprintf ( where, std::size ( where ), "%s::InitLayout", _name.data () );
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        where,
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
-    return _pipelineLayout;
-}
-
 VkPipelineMultisampleStateCreateInfo const* GeometryPassProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -380,6 +337,91 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
     };
 
     return &info;
+}
+
+VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
+    VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset =
+            {
+                .x = 0,
+                .y = 0
+            },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout GeometryPassProgram::InitLayout ( VkDevice device ) noexcept
+{
+
+    if ( !_samplerLayout.Init ( device ) || !_textureLayout.Init ( device ) || !_instanceLayout.Init ( device ) )
+    {
+        [[unlikely]]
+        return VK_NULL_HANDLE;
+    }
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _samplerLayout.GetLayout (),
+        _textureLayout.GetLayout (),
+        _instanceLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    char where[ 512U ];
+    std::snprintf ( where, std::size ( where ), "%s::InitLayout", _name.data () );
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        where,
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
+    return _pipelineLayout;
 }
 
 VkPipelineShaderStageCreateInfo const*  GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
@@ -431,48 +473,6 @@ VkPipelineShaderStageCreateInfo const*  GeometryPassProgram::InitShaderInfo ( an
     };
 
     return sourceInfo;
-}
-
-VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
-    VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset =
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
 }
 
 VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInputInfo (

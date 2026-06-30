@@ -276,9 +276,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout.cpp">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_info.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -422,6 +419,9 @@
     </ClCompile>
     <ClCompile Include="src\program_info.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\universal_pipeline_layout.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -719,9 +719,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp">
-      <Filter>Header Files\core\platform\window\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_info.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
@@ -926,6 +923,9 @@
     <ClInclude Include="include\program_ref.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\universal_pipeline_layout.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -977,8 +977,11 @@
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\push_constant_range.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

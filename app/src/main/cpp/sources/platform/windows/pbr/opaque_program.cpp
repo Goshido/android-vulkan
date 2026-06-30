@@ -1,6 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/gbuffer_pass_binds.inc>
 #include <platform/windows/pbr/opaque_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
 
 
 namespace pbr {
@@ -9,18 +11,13 @@ namespace {
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr std::string_view NAME = "Opaque";
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueProgram::OpaqueProgram () noexcept:
-    GBufferProgram ( "shaders/windows/gbuffer_mesh.vs.spv",
-        "shaders/windows/opaque.ps.spv",
-        NAME,
-        sizeof ( PushConstants )
-    )
+    GBufferProgram ( "shaders/windows/gbuffer_mesh.vs.spv", "shaders/windows/opaque.ps.spv", sizeof ( PushConstants ) )
 {
     // NOTHING
 }
@@ -76,7 +73,7 @@ bool OpaqueProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexce
         .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
         .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
         .pDynamicState = InitDynamicStateInfo ( &dynamicStateInfo ),
-        .layout = InitLayout ( device ),
+        .layout = UniversalPipelineLayout::GetPipelineLayout (),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0U,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -85,14 +82,14 @@ bool OpaqueProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) noexce
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::GBufferProgram::Init",
+        "pbr::OpaqueProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "%s", NAME.data () )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Opaque" )
     return true;
 }
 

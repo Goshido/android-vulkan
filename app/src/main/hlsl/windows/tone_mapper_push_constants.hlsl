@@ -7,6 +7,7 @@ struct PushConstants
     uint32_t        _exposure;
     uint32_t        _hdrImage;
     float32_t2x2    _transform;
+    uint32_t        _pad[ 26U ];
 };
 
 [[vk::push_constant]]

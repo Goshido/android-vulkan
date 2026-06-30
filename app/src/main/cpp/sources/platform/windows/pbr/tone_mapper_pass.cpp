@@ -43,11 +43,6 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
     return true;
 }
 
-VkPipelineLayout ToneMapperPass::GetPipelineLayout () const noexcept
-{
-    return _program.GetPipelineLayout ();
-}
-
 bool ToneMapperPass::RecreateProgram ( android_vulkan::Renderer const& renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();

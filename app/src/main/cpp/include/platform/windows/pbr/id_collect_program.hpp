@@ -3,7 +3,6 @@
 
 
 #include "compute_program.hpp"
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -23,9 +22,6 @@ class IDCollectProgram final : public ComputeProgram
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
-
     public:
         explicit IDCollectProgram () noexcept;
 
@@ -44,8 +40,6 @@ class IDCollectProgram final : public ComputeProgram
         [[nodiscard]] static VkExtent3D DispatchParams ( VkExtent2D const &resolution ) noexcept;
 
     private:
-        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
-
         [[nodiscard]] VkPipelineShaderStageCreateInfo InitShaderInfo ( std::vector<uint8_t> &cs,
             VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,

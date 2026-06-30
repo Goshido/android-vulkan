@@ -2,6 +2,8 @@
 #include <file.hpp>
 #include <pbr/brightness_factor.inc>
 #include <platform/windows/pbr/ui_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
 
 
 namespace pbr {
@@ -28,7 +30,6 @@ UIProgram::UIProgram () noexcept:
 void UIProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );
-    _layout.Destroy ( device );
 }
 
 bool UIProgram::Init ( VkDevice device,
@@ -83,7 +84,7 @@ bool UIProgram::Init ( VkDevice device,
         .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
         .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
         .pDynamicState = InitDynamicStateInfo ( nullptr ),
-        .layout = InitLayout ( device ),
+        .layout = UniversalPipelineLayout::GetPipelineLayout (),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0U,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -205,42 +206,6 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     };
 
     return &info;
-}
-
-VkPipelineLayout UIProgram::InitLayout ( VkDevice device ) noexcept
-{
-    if ( !_layout.Init ( device ) ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    constexpr VkPushConstantRange pushConstantRange
-    {
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-        .offset = 0U,
-        .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_layout.GetLayout (),
-        .pushConstantRangeCount = 1U,
-        .pPushConstantRanges = &pushConstantRange
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::UIProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
-    return _pipelineLayout;
 }
 
 VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (

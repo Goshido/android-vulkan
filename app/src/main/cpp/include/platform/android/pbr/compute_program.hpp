@@ -12,6 +12,7 @@ class ComputeProgram : public ComputeProgramBase
 {
     protected:
         VkShaderModule      _computeShader = VK_NULL_HANDLE;
+        VkPipelineLayout    _pipelineLayout = VK_NULL_HANDLE;
 
     public:
         ComputeProgram () = delete;
@@ -21,6 +22,8 @@ class ComputeProgram : public ComputeProgramBase
 
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
+
+        void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
     protected:
         explicit ComputeProgram ( size_t pushConstantSize ) noexcept;
@@ -32,6 +35,8 @@ class ComputeProgram : public ComputeProgramBase
 
         // Successor classes MUST call this method.
         void Destroy ( VkDevice device ) noexcept override;
+
+        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
 
         [[nodiscard]] virtual VkPipelineShaderStageCreateInfo InitShaderInfo ( android_vulkan::Renderer const &renderer,
             SpecializationData specializationData,

@@ -47,8 +47,6 @@ class GraphicsProgramBase : public Program
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept = 0;
 
-        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
-
         [[nodiscard]] virtual VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const noexcept = 0;

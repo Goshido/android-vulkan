@@ -4,6 +4,7 @@
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/samplers.inc>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <vulkan_api.hpp>
 
 
@@ -262,14 +263,14 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     constexpr size_t optimal = RESOURCE_CAPACITY + TOTAL_SAMPLERS;
     size_t const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     size_t const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
-    ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+    UniversalPipelineLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !_layout.Init ( device ) ) [[unlikely]]
+    if ( !UniversalPipelineLayout::Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layout = _layout.GetLayout ();
+    VkDescriptorSetLayout layout = UniversalPipelineLayout::GetDescriptorSetLayout ();
     VkDeviceSize layoutSize = 0U;
     vkGetDescriptorSetLayoutSizeEXT ( device, layout, &layoutSize );
 
@@ -343,19 +344,20 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
-    _layout.Destroy ( device );
+    UniversalPipelineLayout::Destroy ( device );
 }
 
-void ResourceHeap::Bind ( VkCommandBuffer commandBuffer, VkPipelineLayout graphics, VkPipelineLayout compute ) noexcept
+void ResourceHeap::Bind ( VkCommandBuffer commandBuffer ) noexcept
 {
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
 
     constexpr uint32_t index = 0U;
     constexpr VkDeviceSize offset = 0U;
+    VkPipelineLayout layout = UniversalPipelineLayout::GetPipelineLayout ();
 
     vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        graphics,
+        layout,
         0U,
         1U,
         &index,
@@ -364,7 +366,7 @@ void ResourceHeap::Bind ( VkCommandBuffer commandBuffer, VkPipelineLayout graphi
 
     vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
         VK_PIPELINE_BIND_POINT_COMPUTE,
-        compute,
+        layout,
         0U,
         1U,
         &index,

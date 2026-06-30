@@ -25,13 +25,9 @@ class ComputeProgramBase : public Program
         // The method assigns VkPipeline as active pipeline.
         void Bind ( VkCommandBuffer commandBuffer ) const noexcept;
 
-        void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
-
     protected:
         explicit ComputeProgramBase ( size_t pushConstantSize ) noexcept;
         virtual ~ComputeProgramBase () = default;
-
-        [[nodiscard]] virtual VkPipelineLayout InitLayout ( VkDevice device ) noexcept = 0;
 };
 
 } // namespace pbr

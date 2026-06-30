@@ -5,7 +5,6 @@
 #include "graphics_program.hpp"
 #include <GXCommon/GXMath.hpp>
 #include <pbr/brightness_info.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -27,9 +26,6 @@ class UIProgram final : public GraphicsProgram
         };
 
         AV_DX_ALIGNMENT_END
-
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit UIProgram () noexcept;
@@ -67,8 +63,6 @@ class UIProgram final : public GraphicsProgram
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
-
-        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

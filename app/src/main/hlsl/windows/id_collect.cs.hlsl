@@ -1,5 +1,6 @@
 #include "platform/windows/pbr/id_collect.inc"
 #include "platform/windows/pbr/resource_heap.inc"
+#include "platform/windows/pbr/push_constant_range.inc"
 
 
 struct PushConstants
@@ -7,6 +8,7 @@ struct PushConstants
     uint32_t                    _idImage;
     uint32_t                    _idSet;
     uint32_t                    _capacity;
+    uint32_t                    _pad[ 29 ];
 };
 
 [[vk::push_constant]]

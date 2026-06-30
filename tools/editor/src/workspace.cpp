@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <message_queue.hpp>
 #include <native_renderer.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <program_info.hpp>
 #include <resource_heap.hpp>
 #include <shading.hpp>
@@ -841,7 +842,6 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
     AV_VULKAN_GROUP ( commandBuffer, "GBuffer" )
 
     pbr::OpaqueProgram &program = *_opaqueProgram;
-    VkPipelineLayout layout = program.GetPipelineLayout ();
     program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
@@ -850,7 +850,7 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
         &shadingStream = *_shadingStream,
         &transformStream = *_transformStream,
         commandBuffer = commandBuffer,
-        layout = layout,
+        layout = pbr::UniversalPipelineLayout::GetPipelineLayout (),
 
         pushConstants = pbr::OpaqueProgram::PushConstants
         {
@@ -890,7 +890,6 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
     AV_VULKAN_GROUP ( commandBuffer, "GBuffer with ID" )
 
     pbr::OpaqueWithIDProgram &program = *_opaqueWithIDProgram;
-    VkPipelineLayout layout = program.GetPipelineLayout ();
     program.Bind ( commandBuffer );
 
     // FUCK - Do something with PushConstants structure. It is reused for opaque and stipple program.
@@ -900,7 +899,7 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
         &transformStream = *_transformStream,
         &idStream = *_idStream,
         commandBuffer = commandBuffer,
-        layout = layout,
+        layout = pbr::UniversalPipelineLayout::GetPipelineLayout (),
 
         pushConstants = pbr::OpaqueWithIDProgram::PushConstants
         {

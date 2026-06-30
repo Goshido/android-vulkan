@@ -2,9 +2,9 @@
 #define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
+#include <GXCommon/GXMath.hpp>
 #include "graphics_program.hpp"
 #include <pbr/brightness_info.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -24,9 +24,6 @@ class ToneMapperProgram final : public GraphicsProgram
         };
 
         AV_DX_ALIGNMENT_END
-
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit ToneMapperProgram () noexcept;
@@ -64,8 +61,6 @@ class ToneMapperProgram final : public GraphicsProgram
         [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
-
-        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
 
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info

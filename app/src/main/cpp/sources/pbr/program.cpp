@@ -7,9 +7,6 @@ namespace pbr {
 
 void Program::Destroy ( VkDevice device ) noexcept
 {
-    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyPipelineLayout ( device, std::exchange ( _pipelineLayout, VK_NULL_HANDLE ), nullptr );
-
     if ( _pipeline != VK_NULL_HANDLE ) [[likely]]
     {
         vkDestroyPipeline ( device, std::exchange ( _pipeline, VK_NULL_HANDLE ), nullptr );

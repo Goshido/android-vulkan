@@ -20,7 +20,6 @@ class Program
 
     protected:
         VkPipeline          _pipeline = VK_NULL_HANDLE;
-        VkPipelineLayout    _pipelineLayout = VK_NULL_HANDLE;
         uint32_t            _pushConstantSize = 0U;
 
     public:

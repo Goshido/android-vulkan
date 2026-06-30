@@ -1,6 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/gbuffer_pass_binds.inc>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
 
 
 namespace pbr {
@@ -9,7 +11,6 @@ namespace {
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 5U;
 constexpr size_t STAGE_COUNT = 2U;
-constexpr std::string_view NAME = "Opaque with ID";
 
 } // end of anonymous namespace
 
@@ -18,7 +19,6 @@ constexpr std::string_view NAME = "Opaque with ID";
 OpaqueWithIDProgram::OpaqueWithIDProgram () noexcept:
     GBufferProgram ( "shaders/windows/gbuffer_mesh_with_id.vs.spv",
         "shaders/windows/opaque_with_id.ps.spv",
-        NAME,
         sizeof ( PushConstants )
     )
 {
@@ -77,7 +77,7 @@ bool OpaqueWithIDProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) 
         .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
         .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
         .pDynamicState = InitDynamicStateInfo ( &dynamicStateInfo ),
-        .layout = InitLayout ( device ),
+        .layout = UniversalPipelineLayout::GetPipelineLayout (),
         .renderPass = VK_NULL_HANDLE,
         .subpass = 0U,
         .basePipelineHandle = VK_NULL_HANDLE,
@@ -86,14 +86,14 @@ bool OpaqueWithIDProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) 
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::GBufferProgram::Init",
+        "pbr::OpaqueWithIDProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "%s", NAME.data () )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Opaque with ID" )
     return true;
 }
 

@@ -24,13 +24,14 @@ class GraphicsProgram : public GraphicsProgramBase
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
-        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
         void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
         ~GraphicsProgram () override = default;
 
     protected:
         explicit GraphicsProgram ( size_t pushConstantSize ) noexcept;
+
+        void Destroy ( VkDevice device ) noexcept override;
 
         // 'nativeXXX' are needed when format is OS/platform specific and could be known in runtime only.
         // For example swapchain related pipelines or pipelines with depth/stencil features.

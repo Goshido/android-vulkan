@@ -190,40 +190,6 @@ VkPipelineInputAssemblyStateCreateInfo const* PointLightShadowmapGeneratorProgra
     return &info;
 }
 
-VkPipelineLayout PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device ) noexcept
-{
-    if ( !_instanceLayout.Init ( device ) ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_instanceLayout.GetLayout (),
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device,
-        _pipelineLayout,
-        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
-        "Point light shadowmap generator"
-    )
-
-    return _pipelineLayout;
-}
-
 VkPipelineMultisampleStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -266,6 +232,82 @@ VkPipelineRasterizationStateCreateInfo const* PointLightShadowmapGeneratorProgra
     };
 
     return &info;
+}
+
+VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (
+    VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout PointLightShadowmapGeneratorProgram::InitLayout ( VkDevice device ) noexcept
+{
+    if ( !_instanceLayout.Init ( device ) ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = 1U,
+        .pSetLayouts = &_instanceLayout.GetLayout (),
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::PointLightShadowmapGeneratorProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device,
+        _pipelineLayout,
+        VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+        "Point light shadowmap generator"
+    )
+
+    return _pipelineLayout;
 }
 
 VkPipelineShaderStageCreateInfo const* PointLightShadowmapGeneratorProgram::InitShaderInfo (
@@ -318,48 +360,6 @@ VkPipelineShaderStageCreateInfo const* PointLightShadowmapGeneratorProgram::Init
     };
 
     return sourceInfo;
-}
-
-VkPipelineViewportStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitViewportInfo (
-    VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
 }
 
 VkPipelineVertexInputStateCreateInfo const* PointLightShadowmapGeneratorProgram::InitVertexInputInfo (

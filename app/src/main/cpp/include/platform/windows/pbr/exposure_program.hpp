@@ -3,7 +3,6 @@
 
 
 #include "compute_program.hpp"
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -30,9 +29,6 @@ class ExposureProgram final : public ComputeProgram
 
         AV_DX_ALIGNMENT_END
 
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
-
     public:
         explicit ExposureProgram () noexcept;
 
@@ -49,8 +45,6 @@ class ExposureProgram final : public ComputeProgram
         void Destroy ( VkDevice device ) noexcept override;
 
     private:
-        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
-
         [[nodiscard]] VkPipelineShaderStageCreateInfo InitShaderInfo ( std::vector<uint8_t> &cs,
             VkShaderModuleCreateInfo &moduleInfo,
             SpecializationData specializationData,

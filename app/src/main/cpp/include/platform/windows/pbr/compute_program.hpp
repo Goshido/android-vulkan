@@ -18,7 +18,7 @@ class ComputeProgram : public ComputeProgramBase
         ComputeProgram ( ComputeProgram && ) = delete;
         ComputeProgram &operator = ( ComputeProgram && ) = delete;
 
-        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
+        void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
     protected:
         explicit ComputeProgram ( size_t pushConstantSize ) noexcept;

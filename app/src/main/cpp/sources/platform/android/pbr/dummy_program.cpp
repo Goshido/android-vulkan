@@ -160,6 +160,48 @@ VkPipelineMultisampleStateCreateInfo const* DummyProgram::InitMultisampleInfo (
     return &info;
 }
 
+VkPipelineViewportStateCreateInfo const* DummyProgram::InitViewportInfo (
+    VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset
+            {
+                .x = 0,
+                .y = 0
+            },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
 VkPipelineShaderStageCreateInfo const* DummyProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
@@ -209,48 +251,6 @@ VkPipelineShaderStageCreateInfo const* DummyProgram::InitShaderInfo ( android_vu
     };
 
     return sourceInfo;
-}
-
-VkPipelineViewportStateCreateInfo const* DummyProgram::InitViewportInfo (
-    VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
 }
 
 VkPipelineVertexInputStateCreateInfo const* DummyProgram::InitVertexInputInfo (

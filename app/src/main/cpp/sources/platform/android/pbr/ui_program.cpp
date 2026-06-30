@@ -218,45 +218,6 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     return &info;
 }
 
-VkPipelineLayout UIProgram::InitLayout ( VkDevice device ) noexcept
-{
-    if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
-    {
-        [[unlikely]]
-        return VK_NULL_HANDLE;
-    }
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _transformLayout.GetLayout (),
-        _commonLayout.GetLayout (),
-        _imageLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::UIProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return VK_NULL_HANDLE;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
-    return _pipelineLayout;
-}
-
 VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -299,6 +260,87 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
     };
 
     return &info;
+}
+
+VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
+    VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout UIProgram::InitLayout ( VkDevice device ) noexcept
+{
+    if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
+    {
+        [[unlikely]]
+        return VK_NULL_HANDLE;
+    }
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _transformLayout.GetLayout (),
+        _commonLayout.GetLayout (),
+        _imageLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::UIProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
+    return _pipelineLayout;
 }
 
 VkPipelineShaderStageCreateInfo const* UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
@@ -362,48 +404,6 @@ VkPipelineShaderStageCreateInfo const* UIProgram::InitShaderInfo ( android_vulka
     };
 
     return sourceInfo;
-}
-
-VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
-    VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
 }
 
 VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (

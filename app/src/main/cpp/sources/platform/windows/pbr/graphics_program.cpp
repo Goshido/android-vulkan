@@ -2,7 +2,6 @@
 #include <platform/windows/pbr/graphics_program.hpp>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <vulkan_api.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -20,12 +19,9 @@ void GraphicsProgram::Destroy ( VkDevice device ) noexcept
 
 void GraphicsProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept
 {
-    constexpr VkPipelineStageFlags stages =
-        AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT );
-
     vkCmdPushConstants ( commandBuffer,
         UniversalPipelineLayout::GetPipelineLayout (),
-        stages,
+        UniversalPipelineLayout::GetStages (),
         0U,
         _pushConstantSize,
         constants

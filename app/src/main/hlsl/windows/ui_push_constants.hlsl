@@ -9,7 +9,6 @@ struct PushConstants
     float32_t2x2    _rotateScale;
     float32_t2      _offset;
     uint32_t        _textLUT;
-    uint32_t        _pad[ 21U ];
 };
 
 [[vk::push_constant]]

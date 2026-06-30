@@ -2,13 +2,7 @@
 #define PBR_UNIVERSAL_PIPELINE_LAYOUT_HPP
 
 
-#include <GXCommon/GXWarning.hpp>
-
-GX_DISABLE_COMMON_WARNINGS
-
-#include <vulkan/vulkan_core.h>
-
-GX_RESTORE_WARNING_STATE
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
@@ -36,6 +30,13 @@ class UniversalPipelineLayout final
         [[nodiscard]] static VkPipelineLayout &GetPipelineLayout () noexcept;
 
         static void SetResourceCapacity ( uint32_t capacity ) noexcept;
+
+        [[nodiscard]] constexpr static VkPipelineStageFlags GetStages () noexcept
+        {
+            return AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) |
+                AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ) |
+                AV_VK_FLAG ( VK_SHADER_STAGE_COMPUTE_BIT );
+        }
 };
 
 } // namespace pbr

@@ -870,7 +870,7 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 
             vkCmdPushConstants ( commandBuffer,
                 layout,
-                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+                pbr::UniversalPipelineLayout::GetStages (),
                 0U,
                 sizeof ( pushConstants ),
                 &pushConstants
@@ -921,7 +921,7 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
 
             vkCmdPushConstants ( commandBuffer,
                 layout,
-                AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
+                pbr::UniversalPipelineLayout::GetStages (),
                 0U,
                 sizeof ( pushConstants ),
                 &pushConstants

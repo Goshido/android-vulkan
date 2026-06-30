@@ -341,6 +341,13 @@ std::unordered_set<uint32_t> g_validationFilter =
     // It happens at UI composition render pass which can not be multipass by design.
     0x00000000U,
 
+    // vkCmdDispatch(): Pipeline uses a push constant range with offset 0 and size 128, but 92 bytes were never
+    // set with vkCmdPushConstants.
+    // [2026/06/23] This message comes from best practices validation.
+    // Maitenance4 implicitly relaxes this requirement because using Vulkan 1.4. I need this for universal
+    // pipeline layout used on Windows to make simple and efficient descriptor system.
+    0x1248C6A4U,
+
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
@@ -351,18 +358,15 @@ std::unordered_set<uint32_t> g_validationFilter =
     0x6CDE89AEU,
 
     // Both GPU Assisted Validation and Normal Core Check Validation are enabled, this is not recommend as it
-    // will be very slow. Once all errors in Core Check are solved, please disable, then only use GPU-AV for best performance.
+    // will be very slow. Once all errors in Core Check are solved, please disable,
+    // then only use GPU-AV for best performance.
     // [2026/06/23] Yeah. I'm pretty aware about that. Thank you.
     0x7F1922D7U,
 
     // vkGetPhysicalDeviceProperties2(): Internal Warning: Setting
     // VkPhysicalDeviceDescriptorBufferPropertiesEXT::maxResourceDescriptorBufferBindings to 31
     // [2026/06/23] GPU-AV stuff magic is going on.
-    0x86FE6721U,
-
-    // FUCK
-    0x1248C6A4U,
-    0x6A367C89U
+    0x86FE6721U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =

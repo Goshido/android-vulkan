@@ -10,7 +10,7 @@ void ComputeProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void cons
 {
     vkCmdPushConstants ( commandBuffer,
         UniversalPipelineLayout::GetPipelineLayout (),
-        VK_SHADER_STAGE_COMPUTE_BIT,
+        UniversalPipelineLayout::GetStages (),
         0U,
         _pushConstantSize,
         constants

@@ -14,7 +14,6 @@ struct PushConstants
     uint64_t        _restStream;
     uint64_t        _indexStream;
     uint32_t        _indexType;
-    uint32_t        _pad[ 19U ];
 };
 
 struct PushConstantsWithID
@@ -28,7 +27,6 @@ struct PushConstantsWithID
     uint64_t        _indexStream;
     uint32_t        _indexType;
     uint32_t        _idImage;
-    uint32_t        _pad[ 16U ];
 };
 
 

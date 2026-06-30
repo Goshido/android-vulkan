@@ -75,9 +75,7 @@ bool PipelineLayout::Init ( VkDevice device, uint32_t resourceCapacity ) noexcep
         .pMutableDescriptorTypeLists = &mutableListInfo
     };
 
-    constexpr VkShaderStageFlags stages = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) |
-        AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ) |
-        AV_VK_FLAG ( VK_SHADER_STAGE_COMPUTE_BIT );
+    constexpr VkShaderStageFlags stages = UniversalPipelineLayout::GetStages ();
 
     VkDescriptorSetLayoutBinding const bindings[] =
     {

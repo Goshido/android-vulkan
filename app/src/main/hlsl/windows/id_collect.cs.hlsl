@@ -8,7 +8,6 @@ struct PushConstants
     uint32_t                    _idImage;
     uint32_t                    _idSet;
     uint32_t                    _capacity;
-    uint32_t                    _pad[ 29 ];
 };
 
 [[vk::push_constant]]

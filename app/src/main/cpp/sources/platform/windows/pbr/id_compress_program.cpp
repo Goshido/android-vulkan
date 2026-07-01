@@ -1,7 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
-#include <platform/windows/pbr/id_collect.inc>
-#include <platform/windows/pbr/id_collect_program.hpp>
+#include <platform/windows/pbr/id_compress.inc>
+#include <platform/windows/pbr/id_compress_program.hpp>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <renderer.hpp>
 
@@ -10,19 +10,19 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* SHADER = "shaders/windows/id_collect.cs.spv";
+constexpr char const* SHADER = "shaders/windows/id_compress.cs.spv";
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-IDCollectProgram::IDCollectProgram () noexcept:
-    ComputeProgram ( sizeof ( IDCollectProgram::PushConstants ) )
+IDCompressProgram::IDCompressProgram () noexcept:
+    ComputeProgram ( sizeof ( IDCompressProgram::PushConstants ) )
 {
     // NOTHING
 }
 
-bool IDCollectProgram::Init ( VkDevice device, SpecializationData /*specializationData*/ ) noexcept
+bool IDCompressProgram::Init ( VkDevice device, SpecializationData /*specializationData*/ ) noexcept
 {
     VkShaderModuleCreateInfo moduleInfo {};
     std::vector<uint8_t> cs{};
@@ -40,33 +40,35 @@ bool IDCollectProgram::Init ( VkDevice device, SpecializationData /*specializati
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
-        "pbr::IDCollectProgram::Init",
+        "pbr::IDCompressProgram::Init",
         "Can't create pipeline"
     );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "ID collect" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "ID compress" )
     return true;
 }
 
-void IDCollectProgram::Destroy ( VkDevice device ) noexcept
+void IDCompressProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgram::Destroy ( device );
 }
 
-VkExtent3D IDCollectProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
+VkExtent3D IDCompressProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
 {
+    uint32_t const pixels = resolution.width * resolution.height;
+
     return
     {
-        .width = ( resolution.width + THREADS_X - 1U ) / THREADS_X,
-        .height = ( resolution.height + THREADS_Y - 1U ) / THREADS_Y,
+        .width = ( pixels + THREADS - 1U ) / THREADS,
+        .height = 1U,
         .depth = 1U
     };
 }
 
-VkPipelineShaderStageCreateInfo IDCollectProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
+VkPipelineShaderStageCreateInfo IDCompressProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
     VkShaderModuleCreateInfo &moduleInfo,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/

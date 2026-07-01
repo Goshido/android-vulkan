@@ -9,7 +9,6 @@ struct PushConstants
 {
     uint32_t                    _idSet;
     uint32_t                    _uniqueIDs;
-    uint32_t                    _uniqueCount;
     uint32_t                    _capacity;
 };
 
@@ -21,7 +20,6 @@ PushConstants                   g_pushConstants;
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
 RWStructuredBuffer<uint64_t>    g_idBuffers[]:          register ( u0 );
-RWStructuredBuffer<uint32_t>    g_countBuffers[]:       register ( u1 );
 
 static uint64_t                 g_ids[ WINDOW ];
 
@@ -79,7 +77,6 @@ void BubbleSort ( in uint16_t stored )
 void Commit ( in uint16_t stored )
 {
     RWStructuredBuffer<uint64_t> uniqueIDSet = g_idBuffers[ g_pushConstants._uniqueIDs ];
-    RWStructuredBuffer<uint32_t> uniqueCount = g_countBuffers[ g_pushConstants._uniqueCount ];
     uint64_t last = 0ULL;
 
     for ( uint16_t i = 0U; i < stored; ++i )
@@ -89,9 +86,12 @@ void Commit ( in uint16_t stored )
         if ( last == id )
             continue;
 
-        uint32_t target;
-        InterlockedAdd ( uniqueCount[ 0U ], 1U, target );
-        uniqueIDSet[ target ] = g_ids[ i ];
+        uint64_t target;
+
+        // First item is counter
+        InterlockedAdd ( uniqueIDSet[ 0U ], 1ULL, target );
+
+        uniqueIDSet[ (uint32_t)target + 1U ] = g_ids[ i ];
         last = id;
     }
 }

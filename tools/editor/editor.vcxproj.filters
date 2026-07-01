@@ -423,6 +423,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\universal_pipeline_layout.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\id_compress_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -926,6 +929,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\universal_pipeline_layout.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -981,6 +987,9 @@
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>

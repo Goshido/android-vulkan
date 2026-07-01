@@ -9,6 +9,7 @@
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
 #include <platform/windows/pbr/id_collect_program.hpp>
+#include <platform/windows/pbr/id_compress_program.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include "point_light_node.hpp"
@@ -40,91 +41,143 @@ class Workspace final
 
         struct MeshInstance final
         {
-            android_vulkan::MeshGeometry*               _mesh = nullptr;
-            uint32_t                                    _count = 0U;
+            android_vulkan::MeshGeometry*                   _mesh = nullptr;
+            uint32_t                                        _count = 0U;
         };
 
-        struct Selection final
+        class Buffer final
         {
-            VkDeviceMemory                              _memory = VK_NULL_HANDLE;
-            VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
-            std::deque<Actor const*>                    _items {};
+            public:
+                VkDeviceMemory                              _memory = VK_NULL_HANDLE;
+                VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
+                void*                                       _data = nullptr;
+                std::optional<uint32_t>                     _resourceIdx = std::nullopt;
 
-            VkExtent2D                                  _idImageResolution
-            {
-                .width = 0U,
-                .height = 0U
-            };
+                VkBufferMemoryBarrier                       _barrier
+                {
+                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                    .pNext = nullptr,
+                    .srcAccessMask = VK_ACCESS_NONE,
+                    .dstAccessMask = VK_ACCESS_NONE,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .buffer = VK_NULL_HANDLE,
+                    .offset = 0U,
+                    .size = VK_WHOLE_SIZE
+                };
 
-            bool                                        _pendingSelect = false;
+            public:
+                explicit Buffer () = default;
 
-            pbr::IDCollectProgram::PushConstants        _pushConstants
-            {
-                ._idImage = 0U,
-                ._idSet = 0U,
-                ._capacity = 0U
-            };
+                Buffer ( Buffer const & ) = delete;
+                Buffer &operator = ( Buffer const & ) = delete;
 
-            VkBufferMemoryBarrier                       _bufferBarrier
-            {
-                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                .pNext = nullptr,
-                .srcAccessMask = VK_ACCESS_NONE,
-                .dstAccessMask = VK_ACCESS_NONE,
-                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                .buffer = VK_NULL_HANDLE,
-                .offset = 0U,
-                .size = VK_WHOLE_SIZE
-            };
+                Buffer ( Buffer && ) = delete;
+                Buffer &operator = ( Buffer && ) = delete;
+
+                ~Buffer () = default;
+
+                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
+                    size_t size,
+                    VkBufferUsageFlags usage,
+                    bool map,
+                    char const* name
+                ) noexcept;
+
+                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
+        };
+
+        class Selection final
+        {
+            public:
+                Buffer                                      _idSet {};
+                Buffer                                      _idDevice {};
+                Buffer                                      _idHost {};
+
+                std::deque<Actor const*>                    _items {};
+
+                VkExtent2D                                  _idImageResolution
+                {
+                    .width = 0U,
+                    .height = 0U
+                };
+
+                bool                                        _pendingSelect = false;
+
+                pbr::IDCollectProgram::PushConstants        _collectPushConstants
+                {
+                    ._idImage = 0U,
+                    ._idSet = 0U,
+                    ._capacity = 0U
+                };
+
+                pbr::IDCompressProgram::PushConstants       _compressPushConstants
+                {
+                    ._idSet = 0U,
+                    ._uniqueIDs = 0U,
+                    ._capacity = 0U
+                };
+
+            public:
+                explicit Selection () = default;
+
+                Selection ( Selection const & ) = delete;
+                Selection &operator = ( Selection const & ) = delete;
+
+                Selection ( Selection && ) = delete;
+                Selection &operator = ( Selection && ) = delete;
+
+                ~Selection () = default;
         };
 
     private:
-        History                                         _history {};
-        std::unordered_map<Actor const*, ActorRef>      _actors {};
+        History                                             _history {};
+        std::unordered_map<Actor const*, ActorRef>          _actors {};
 
-        MeshQueue                                       _opaqueQueue {};
-        MeshMap                                         _opaqueMap {};
-        std::vector<MeshInstance>                       _opaqueVisible {};
+        MeshQueue                                           _opaqueQueue {};
+        MeshMap                                             _opaqueMap {};
+        std::vector<MeshInstance>                           _opaqueVisible {};
 
-        MeshQueue                                       _stippleQueue {};
-        MeshMap                                         _stippleMap {};
-        std::vector<MeshInstance>                       _stippleVisible {};
+        MeshQueue                                           _stippleQueue {};
+        MeshMap                                             _stippleMap {};
+        std::vector<MeshInstance>                           _stippleVisible {};
 
-        GizmoQueue                                      _gizmoQueue {};
-        GizmoMap                                        _gizmoMap {};
+        GizmoQueue                                          _gizmoQueue {};
+        GizmoMap                                            _gizmoMap {};
 
-        PointLightQueue                                 _pointLightQueue {};
-        ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
-        ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
+        PointLightQueue                                     _pointLightQueue {};
+        ReflectionProbeLocalQueue                           _reflectionProbeLocalQueue {};
+        ReflectionProbeGlobalQueue                          _reflectionProbeGlobalQueue {};
 
-        std::unique_ptr<pbr::IDCollectProgram>          _idCollectProgram {};
-        std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
-        std::unique_ptr<pbr::OpaqueWithIDProgram>       _opaqueWithIDProgram {};
-        StreamBufferRef                                 _frameStream {};
-        StreamBufferRef                                 _transformStream {};
-        StreamBufferRef                                 _shadingStream {};
-        StreamBufferRef                                 _idStream {};
+        std::unique_ptr<pbr::IDCollectProgram>              _idCollectProgram {};
+        std::unique_ptr<pbr::IDCompressProgram>             _idCompressProgram {};
+        std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
+        std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
 
-        Texture2DRef                                    _defaultAlbedo {};
-        Texture2DRef                                    _defaultEmission {};
-        Texture2DRef                                    _defaultMask {};
-        Texture2DRef                                    _defaultParam {};
-        Texture2DRef                                    _defaultNormal {};
+        StreamBufferRef                                     _frameStream {};
+        StreamBufferRef                                     _transformStream {};
+        StreamBufferRef                                     _shadingStream {};
+        StreamBufferRef                                     _idStream {};
 
-        Selection                                       _selection {};
+        Texture2DRef                                        _defaultAlbedo {};
+        Texture2DRef                                        _defaultEmission {};
+        Texture2DRef                                        _defaultMask {};
+        Texture2DRef                                        _defaultParam {};
+        Texture2DRef                                        _defaultNormal {};
 
-        ViewportWidget*                                 _viewport = nullptr;
-        std::mutex                                      _mutex {};
+        Selection                                           _selection {};
 
-        Hotkey                                          _delete {};
-        Hotkey                                          _openWorkspace {};
-        Hotkey                                          _saveWorkspace {};
-        Hotkey                                          _saveAsWorkspace {};
+        ViewportWidget*                                     _viewport = nullptr;
+        std::mutex                                          _mutex {};
 
-        bool                                            _ready = false;
+        Hotkey                                              _delete {};
+        Hotkey                                              _openWorkspace {};
+        Hotkey                                              _saveWorkspace {};
+        Hotkey                                              _saveAsWorkspace {};
 
-        static Workspace*                               _instance;
+        bool                                                _ready = false;
+
+        static Workspace*                                   _instance;
 
     public:
         explicit Workspace () noexcept;

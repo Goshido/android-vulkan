@@ -119,6 +119,96 @@ void AppendComponentAction::Undo () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+bool Workspace::Buffer::Init ( android_vulkan::Renderer &renderer,
+    size_t size,
+    VkBufferUsageFlags usage,
+    bool map,
+    [[maybe_unused]] char const* name
+) noexcept
+{
+    VkBufferCreateInfo const bufferInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .size = static_cast<VkDeviceSize> ( size ),
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0U,
+        .pQueueFamilyIndices = nullptr
+    };
+
+    VkDevice device = renderer.GetDevice ();
+
+    bool result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_barrier.buffer ),
+        "Workspace::Buffer::Init",
+        "Can't create buffer"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.buffer, VK_OBJECT_TYPE_BUFFER, "%s", name )
+
+    VkMemoryRequirements memoryRequirements;
+    vkGetBufferMemoryRequirements ( device, _barrier.buffer, &memoryRequirements );
+
+    constexpr VkMemoryPropertyFlags cases[] =
+    {
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) | AV_VK_FLAG ( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT )
+    };
+
+    result =
+        renderer.TryAllocateMemory ( _memory,
+            _offset,
+            memoryRequirements,
+            cases[ static_cast<size_t> ( map ) ],
+            "Can't allocate memory (Workspace::Buffer::Init)"
+        ) &&
+
+        android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _barrier.buffer, _memory, _offset ),
+            "Workspace::Buffer::Init",
+            "Can't bind memory"
+        );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    if ( !map )
+    {
+        _resourceIdx = ResourceHeap::Instance ().RegisterBuffer ( device, _barrier.buffer, bufferInfo.size );
+        return static_cast<bool> ( _resourceIdx );
+    }
+
+    return renderer.MapMemory ( reinterpret_cast<void* &> ( _data ),
+        _memory,
+        _offset,
+        "Workspace::Buffer::Init",
+        "Can't map memory"
+    );
+}
+
+void Workspace::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
+{
+    if ( VkBuffer &buffer = _barrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
+
+    if ( std::exchange ( _data, nullptr ) )
+        renderer.UnmapMemory ( _memory );
+
+    if ( _memory != VK_NULL_HANDLE ) [[likely]]
+        renderer.FreeMemory ( std::exchange ( _memory, VK_NULL_HANDLE ), std::exchange ( _offset, 0U ) );
+
+    if ( _resourceIdx ) [[likely]]
+    {
+        ResourceHeap::Instance ().UnregisterResource ( *std::exchange ( _resourceIdx, std::nullopt ) );
+    }
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 Workspace* Workspace::_instance = nullptr;
 
 Workspace::Workspace () noexcept
@@ -144,19 +234,9 @@ void Workspace::Destroy () noexcept
     _viewport->Destroy ();
 
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-
-    if ( VkBuffer &buffer = _selection._bufferBarrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
-
-    if ( _selection._memory != VK_NULL_HANDLE ) [[likely]]
-    {
-        renderer.FreeMemory ( std::exchange ( _selection._memory, VK_NULL_HANDLE ),
-            std::exchange ( _selection._offset, 0U )
-        );
-    }
-
-    if ( _selection._pushConstants._idSet != 0U ) [[likely]]
-        ResourceHeap::Instance ().UnregisterResource ( std::exchange ( _selection._pushConstants._idSet, 0U ) );
+    _selection._idSet.Destroy ( renderer );
+    _selection._idDevice.Destroy ( renderer );
+    _selection._idHost.Destroy ( renderer );
 
     _delete = {};
     _openWorkspace = {};
@@ -171,6 +251,17 @@ void Workspace::Destroy () noexcept
         MessageQueue::Instance ().EnqueueBack (
             Message ( eMessageType::DestroyProgram,
                 [ program = ProgramRef ( _idCollectProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
+    if ( _idCompressProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _idCompressProgram.release () ) ] () mutable noexcept -> void* {
                     return &program;
                 }
             )
@@ -357,7 +448,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "ID buffer" )
     AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
 
-    VkBufferMemoryBarrier &bufferBarrier = _selection._bufferBarrier;
+    VkBufferMemoryBarrier &bufferBarrier = _selection._idSet._barrier;
     bufferBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
     bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -420,79 +511,56 @@ void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noe
 
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
-    pbr::IDCollectProgram::PushConstants &pushConstants = _selection._pushConstants;
-    pushConstants._idImage = idResourceIdx;
+    pbr::IDCollectProgram::PushConstants &collectPushConstants = _selection._collectPushConstants;
+    pbr::IDCompressProgram::PushConstants &compressPushConstants = _selection._compressPushConstants;
+    collectPushConstants._idImage = idResourceIdx;
 
-    VkBuffer &idSet = _selection._bufferBarrier.buffer;
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-
-    if ( idSet != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( idSet, VK_NULL_HANDLE ), nullptr );
-
-    if ( _selection._memory != VK_NULL_HANDLE ) [[likely]]
-    {
-        renderer.FreeMemory ( std::exchange ( _selection._memory, VK_NULL_HANDLE ),
-            std::exchange ( _selection._offset, 0U )
-        );
-    }
+    _selection._idSet.Destroy ( renderer );
+    _selection._idDevice.Destroy ( renderer );
+    _selection._idHost.Destroy ( renderer );
 
     VkExtent2D &resolution = _selection._idImageResolution;
     resolution = idImage.GetResolution ();
-    pushConstants._capacity = resolution.width * resolution.height;
+    collectPushConstants._capacity = resolution.width * resolution.height;
+    compressPushConstants._capacity = collectPushConstants._capacity;
+    auto const size = static_cast<size_t> ( collectPushConstants._capacity * sizeof ( uint64_t ) );
 
-    VkBufferCreateInfo const bufferInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .size = static_cast<VkDeviceSize> ( pushConstants._capacity * sizeof ( uint64_t ) ),
+    // First item is counter
+    auto const uniqueSize = sizeof ( uint64_t ) + size;
 
-        .usage = AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
-            AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
+    bool const result =
+        _selection._idSet.Init ( renderer,
+            size,
 
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        .queueFamilyIndexCount = 0U,
-        .pQueueFamilyIndices = nullptr
-    };
+            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
 
-    VkDevice device = renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &idSet ),
-        "OnGBufferResolutionChanged",
-        "Can't create buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, idSet, VK_OBJECT_TYPE_BUFFER, "ID" )
-
-    VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, idSet, &memoryRequirements );
-
-    result =
-        renderer.TryAllocateMemory ( _selection._memory,
-            _selection._offset,
-            memoryRequirements,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            "Can't allocate memory (OnGBufferResolutionChanged)"
+            false,
+            "ID set"
         ) &&
 
-        android_vulkan::Renderer::CheckVkResult (
-            vkBindBufferMemory ( device, idSet, _selection._memory, _selection._offset ),
-            "OnGBufferResolutionChanged",
-            "Can't bind memory"
-        );
+        _selection._idDevice.Init ( renderer,
+            uniqueSize,
 
-    if ( !result ) [[unlikely]]
+            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_SRC_BIT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ) |
+                AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ),
+
+            false,
+            "ID (device)"
+        ) &&
+
+        _selection._idHost.Init ( renderer, uniqueSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true, "ID (host)" );
+
+    if ( !result )
         return;
 
-    if ( auto const idx = ResourceHeap::Instance ().RegisterBuffer ( device, idSet, bufferInfo.size ); idx ) [[likely]]
-    {
-        pushConstants._idSet = *idx;
-    }
+    collectPushConstants._idSet = *_selection._idSet._resourceIdx;
+    compressPushConstants._idSet = collectPushConstants._idSet;
+    compressPushConstants._uniqueIDs = *_selection._idDevice._resourceIdx;
 }
 
 bool Workspace::IsSelectionRequested () const noexcept
@@ -532,7 +600,7 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
 
     pbr::IDCollectProgram &program = *_idCollectProgram;
     program.Bind ( commandBuffer );
-    program.SetPushConstants ( commandBuffer, &_selection._pushConstants );
+    program.SetPushConstants ( commandBuffer, &_selection._collectPushConstants );
 
     VkExtent3D const params = pbr::IDCollectProgram::DispatchParams ( _selection._idImageResolution );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
@@ -904,7 +972,7 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
         pushConstants = pbr::OpaqueWithIDProgram::PushConstants
         {
             ._frameStream = _frameStream->AcquireAndConsume ( 1U ),
-            ._idImage = _selection._pushConstants._idImage
+            ._idImage = _selection._collectPushConstants._idImage
         }
     ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
         for ( auto const &[ mesh, count ] : queueVisible )
@@ -942,6 +1010,7 @@ bool Workspace::IsReady () noexcept
 
     _ready = ( static_cast<bool> ( _viewport ) ) &
         ( static_cast<bool> ( _idCollectProgram ) ) &
+        ( static_cast<bool> ( _idCompressProgram ) ) &
         ( static_cast<bool> ( _opaqueProgram ) ) &
         ( static_cast<bool> ( _opaqueWithIDProgram ) ) &
         ( static_cast<bool> ( _frameStream ) ) &
@@ -990,6 +1059,30 @@ void Workspace::InitGraphicsResources () noexcept
                         [
                             info = ProgramInfo ( std::unique_ptr<pbr::Program> ( idCollectProgram.release () ),
                                 std::move ( idCollectProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                auto idCompressProgram = std::make_unique<pbr::IDCompressProgram> ();
+
+                if ( !idCompressProgram->Init ( device, nullptr ) ) [[unlikely]]
+                    return nullptr;
+
+                auto idCompressProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _idCompressProgram = std::unique_ptr<pbr::IDCompressProgram> (
+                        static_cast<pbr::IDCompressProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( idCompressProgram.release () ),
+                                std::move ( idCompressProgramReady )
                             )
                         ] () mutable noexcept -> void* {
                             return &info;

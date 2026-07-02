@@ -958,8 +958,6 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
         _barriers
     );
 
-    _workspace.PrepareIDBuffer ( commandBuffer );
-
     _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) - 1U );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
     vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
@@ -1048,7 +1046,7 @@ void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fi
         _barriers
     );
 
-    _workspace.PrepareIDBuffer ( commandBuffer );
+    _workspace.PrepareIDBuffer ( commandBuffer, fif );
 
     _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );

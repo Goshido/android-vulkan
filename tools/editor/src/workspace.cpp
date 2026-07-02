@@ -236,7 +236,9 @@ void Workspace::Destroy () noexcept
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _selection._idSet.Destroy ( renderer );
     _selection._idDevice.Destroy ( renderer );
-    _selection._idHost.Destroy ( renderer );
+
+    for ( Buffer &idHost : _selection._idHost )
+        idHost.Destroy ( renderer );
 
     _delete = {};
     _openWorkspace = {};
@@ -440,7 +442,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
     }
 }
 
-void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
+void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
 {
     if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
         return;
@@ -448,9 +450,9 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "ID buffer" )
     AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
 
-    VkBufferMemoryBarrier &bufferBarrier = _selection._idSet._barrier;
-    bufferBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-    bufferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    VkBufferMemoryBarrier &idSetBarrier = _selection._idSet._barrier;
+    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    idSetBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
@@ -459,15 +461,37 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &bufferBarrier,
+        &idSetBarrier,
         0U,
         nullptr
     );
 
-    vkCmdFillBuffer ( commandBuffer, bufferBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
+    VkBufferMemoryBarrier &idDeviceBarrier = _selection._idDevice._barrier;
 
-    bufferBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    bufferBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+    idDeviceBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_READ_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+
+    idDeviceBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    idDeviceBarrier.size = static_cast<VkDeviceSize> ( sizeof ( uint64_t ) );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idDeviceBarrier,
+        0U,
+        nullptr
+    );
+
+    vkCmdFillBuffer ( commandBuffer, idSetBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
+    vkCmdFillBuffer ( commandBuffer, idDeviceBarrier.buffer, 0U, idDeviceBarrier.size, 0U );
+
+    idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
 
     vkCmdPipelineBarrier ( commandBuffer,
         VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -476,7 +500,40 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         0U,
         nullptr,
         1U,
-        &bufferBarrier,
+        &idSetBarrier,
+        0U,
+        nullptr
+    );
+
+    idDeviceBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    idDeviceBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idDeviceBarrier,
+        0U,
+        nullptr
+    );
+
+    VkBufferMemoryBarrier &idHostBarrier = _selection._idHost[ fif ]._barrier;
+    idHostBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_HOST_READ_BIT );
+    idHostBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_HOST_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ),
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idHostBarrier,
         0U,
         nullptr
     );
@@ -518,7 +575,6 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _selection._idSet.Destroy ( renderer );
     _selection._idDevice.Destroy ( renderer );
-    _selection._idHost.Destroy ( renderer );
 
     VkExtent2D &resolution = _selection._idImageResolution;
     resolution = idImage.GetResolution ();
@@ -551,12 +607,23 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
             false,
             "ID (device)"
-        ) &&
-
-        _selection._idHost.Init ( renderer, uniqueSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true, "ID (host)" );
+        );
 
     if ( !result )
         return;
+
+    for ( Buffer &idHost : _selection._idHost )
+    {
+        idHost.Destroy ( renderer );
+
+        if ( !idHost.Init ( renderer, uniqueSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true, "ID (host)" ) )
+        {
+            return;
+        }
+    }
+
+    // FUCK - adjust it according actual selection
+    _selection._copy.size = static_cast<VkDeviceSize> ( uniqueSize );
 
     collectPushConstants._idSet = *_selection._idSet._resourceIdx;
     compressPushConstants._idSet = collectPushConstants._idSet;
@@ -590,7 +657,7 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
     );
 }
 
-void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t /*commandBufferIndex*/ ) noexcept
+void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t fif ) noexcept
 {
     if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
         return;
@@ -598,16 +665,79 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
     AV_TRACE ( "Select" )
     AV_VULKAN_GROUP ( commandBuffer, "Select" )
 
-    pbr::IDCollectProgram &program = *_idCollectProgram;
-    program.Bind ( commandBuffer );
-    program.SetPushConstants ( commandBuffer, &_selection._collectPushConstants );
+    pbr::IDCollectProgram &collectProgram = *_idCollectProgram;
+    collectProgram.Bind ( commandBuffer );
+    collectProgram.SetPushConstants ( commandBuffer, &_selection._collectPushConstants );
 
-    VkExtent3D const params = pbr::IDCollectProgram::DispatchParams ( _selection._idImageResolution );
+    VkExtent3D params = pbr::IDCollectProgram::DispatchParams ( _selection._idImageResolution );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 
-    android_vulkan::LogDebug ( ">>> 0x%016p", _actors.cbegin ()->first );
+    VkBufferMemoryBarrier &idSetBarrier = _selection._idSet._barrier;
+    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
 
+    idSetBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idSetBarrier,
+        0U,
+        nullptr
+    );
+
+    pbr::IDCompressProgram &compressProgram = *_idCompressProgram;
+    compressProgram.Bind ( commandBuffer );
+    compressProgram.SetPushConstants ( commandBuffer, &_selection._compressPushConstants );
+
+    params = pbr::IDCompressProgram::DispatchParams ( _selection._idImageResolution );
+    vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
+
+    VkBufferMemoryBarrier &idDeviceBarrier = _selection._idDevice._barrier;
+
+    idDeviceBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
+        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
+
+    idDeviceBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+    idDeviceBarrier.size = VK_WHOLE_SIZE;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idDeviceBarrier,
+        0U,
+        nullptr
+    );
+
+    VkBufferMemoryBarrier &idHostBarrier = _selection._idHost[ fif ]._barrier;
+    vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &_selection._copy );
+
+    idHostBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    idHostBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+
+    vkCmdPipelineBarrier ( commandBuffer,
+        VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_HOST_BIT,
+        0U,
+        0U,
+        nullptr,
+        1U,
+        &idHostBarrier,
+        0U,
+        nullptr
+    );
+
+    android_vulkan::LogDebug ( ">>> 0x%016p", _actors.cbegin ()->first );
     _selection._pendingSelect = false;
+
     // FUCK
 }
 

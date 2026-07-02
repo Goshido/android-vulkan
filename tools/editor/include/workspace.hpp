@@ -92,9 +92,10 @@ class Workspace final
             public:
                 Buffer                                      _idSet {};
                 Buffer                                      _idDevice {};
-                Buffer                                      _idHost {};
+                Buffer                                      _idHost[ pbr::FIF_COUNT ];
 
                 std::deque<Actor const*>                    _items {};
+                bool                                        _pendingSelect = false;
 
                 VkExtent2D                                  _idImageResolution
                 {
@@ -102,7 +103,12 @@ class Workspace final
                     .height = 0U
                 };
 
-                bool                                        _pendingSelect = false;
+                VkBufferCopy                                _copy
+                {
+                    .srcOffset = 0U,
+                    .dstOffset = 0U,
+                    .size = 0U
+                };
 
                 pbr::IDCollectProgram::PushConstants        _collectPushConstants
                 {
@@ -197,7 +203,7 @@ class Workspace final
         void Close () noexcept;
 
         void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
-        void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
+        void PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
@@ -205,7 +211,7 @@ class Workspace final
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void Select ( Rect const &rect, bool invert ) noexcept;
-        void ComputeSelect ( VkCommandBuffer commandBuffer, size_t commandBufferIndex ) noexcept;
+        void ComputeSelect ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;

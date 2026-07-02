@@ -2,9 +2,6 @@
 #include "platform/windows/pbr/resource_heap.inc"
 
 
-#define WINDOW                  8U
-
-
 struct PushConstants
 {
     uint32_t                    _idSet;

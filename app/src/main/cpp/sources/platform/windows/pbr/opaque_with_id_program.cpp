@@ -33,7 +33,7 @@ bool OpaqueWithIDProgram::Init ( VkDevice device, VkFormat depthStencilFormat ) 
         VK_FORMAT_R16G16B16A16_SFLOAT,
         VK_FORMAT_A2R10G10B10_UNORM_PACK32,
         VK_FORMAT_R8G8B8A8_UNORM,
-        VK_FORMAT_R16G16B16A16_UINT,
+        VK_FORMAT_R32G32_UINT
     };
 
     static_assert ( std::size ( colorFormats ) == COLOR_RENDER_TARGET_COUNT );

@@ -17,19 +17,18 @@ PushConstants                   g_pushConstants;
 // So the workaround is used.
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-[[vk::image_format ( "rgba16ui" )]]
-RWTexture2D<uint32_t4>          g_images[]:     register ( u0 );
+[[vk::image_format ( "rg32ui" )]]
+RWTexture2D<uint32_t2>          g_images[]:     register ( u0 );
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
 RWStructuredBuffer<uint64_t>    g_buffers[]:    register ( u1 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint64_t UnpackID ( in RWTexture2D<uint32_t4> ids, in uint32_t2 pix )
+uint64_t UnpackID ( in RWTexture2D<uint32_t2> ids, in uint32_t2 pix )
 {
-    uint64_t4 alpha = (uint64_t4)ids[ pix ];
-    alpha.yzw <<= uint64_t3 ( 16U, 32U, 48U );
-    return alpha.x | alpha.y | alpha.z | alpha.w;
+    uint64_t2 const alpha = (uint64_t2)ids[ pix ];
+    return alpha.x | ( alpha.y << 32U );
 }
 
 uint32_t BucketIndex ( in uint64_t id )
@@ -96,7 +95,7 @@ void InsertID ( in uint64_t id )
 [numthreads ( THREADS_X, THREADS_Y, 1U )]
 void CS ( in uint32_t3 pix : SV_DispatchThreadID )
 {
-    RWTexture2D<uint32_t4> ids = g_images[ g_pushConstants._idImage ];
+    RWTexture2D<uint32_t2> ids = g_images[ g_pushConstants._idImage ];
     uint32_t2 resolution;
     ids.GetDimensions ( resolution.x, resolution.y );
 

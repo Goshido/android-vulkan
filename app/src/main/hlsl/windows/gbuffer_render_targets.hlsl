@@ -35,7 +35,7 @@ struct OutputDataWithID
     float32_t4      _param:         SV_Target3;
 
     [[vk::location ( OUT_ID )]]
-    uint32_t4       _id:            SV_Target4;
+    uint32_t2       _id:            SV_Target4;
 };
 
 

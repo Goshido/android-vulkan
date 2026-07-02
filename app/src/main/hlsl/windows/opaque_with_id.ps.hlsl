@@ -11,10 +11,9 @@ PushConstantsWithID     g_pushConstants;
 OutputDataWithID PS ( in Attributes attributes )
 {
     OutputDataWithID result;
-    RWTexture2D<uint32_t4> id = ResourceDescriptorHeap[ g_pushConstants._idImage ];
 
-    result._id = (uint32_t4)vk::RawBufferLoad<uint16_t4> (
-        g_pushConstants._idStream + attributes._instanceID * sizeof ( uint16_t4 ),
+    result._id = vk::RawBufferLoad<uint32_t2> (
+        g_pushConstants._idStream + attributes._instanceID * sizeof ( uint32_t2 ),
         8U
     );
 

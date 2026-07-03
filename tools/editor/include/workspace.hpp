@@ -50,7 +50,7 @@ class Workspace final
             public:
                 VkDeviceMemory                              _memory = VK_NULL_HANDLE;
                 VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
-                void*                                       _data = nullptr;
+                uint64_t*                                   _data = nullptr;
                 std::optional<uint32_t>                     _resourceIdx = std::nullopt;
 
                 VkBufferMemoryBarrier                       _barrier
@@ -92,8 +92,13 @@ class Workspace final
             public:
                 Buffer                                      _idSet {};
                 Buffer                                      _idDevice {};
-                Buffer                                      _idHost[ pbr::FIF_COUNT ];
+                Buffer                                      _idHost[ 2U ];
 
+                Buffer*                                     _free[ 2U ] = { _idHost, _idHost + 1U };
+                Buffer*                                     _counting = nullptr;
+                Buffer*                                     _ready = nullptr;
+
+                std::vector<Actor const*>                   _lastSelection {};
                 std::deque<Actor const*>                    _items {};
                 bool                                        _pendingSelect = false;
 
@@ -101,13 +106,6 @@ class Workspace final
                 {
                     .width = 0U,
                     .height = 0U
-                };
-
-                VkBufferCopy                                _copy
-                {
-                    .srcOffset = 0U,
-                    .dstOffset = 0U,
-                    .size = 0U
                 };
 
                 pbr::IDCollectProgram::PushConstants        _collectPushConstants
@@ -203,7 +201,7 @@ class Workspace final
         void Close () noexcept;
 
         void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
-        void PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
+        void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
@@ -211,7 +209,7 @@ class Workspace final
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void Select ( Rect const &rect, bool invert ) noexcept;
-        void ComputeSelect ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
+        void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;

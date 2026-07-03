@@ -19,8 +19,15 @@ namespace editor {
 
 namespace {
 
-constexpr size_t PER_MESH_ELEMENTS = 1'000'000U;
-constexpr size_t VISIBLE_INITIAL_SIZE = 1'000U;
+constexpr size_t PER_MESH_ELEMENTS = 1'000'000UZ;
+constexpr size_t VISIBLE_INITIAL_SIZE = 1'000UZ;
+
+constexpr size_t ID_PREFETCH_ADDRESSES = 64UZ;
+
+constexpr auto ID_PREFETCH_SIZE =
+    static_cast<VkDeviceSize> ( sizeof ( uint64_t ) + ID_PREFETCH_ADDRESSES * sizeof ( uint64_t ) );
+
+//----------------------------------------------------------------------------------------------------------------------
 
 class CreateActorAction final : public Action
 {
@@ -442,13 +449,107 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
     }
 }
 
-void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
+void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
+    Buffer* &counting = _selection._counting;
+    Buffer* &ready = _selection._ready;
+
+    if ( ( !_selection._pendingSelect | !IsReady () ) & !counting & !ready ) [[likely]]
         return;
 
     AV_TRACE ( "ID buffer" )
     AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
+
+    VkBufferMemoryBarrier &idDeviceBarrier = _selection._idDevice._barrier;
+    auto &free = _selection._free;
+    constexpr size_t counterIdx = 0UZ;
+    constexpr size_t counterOffset = 1UZ;
+
+    if ( ready )
+    {
+        uint64_t const* data = ready->_data;
+        auto &lastSelection = _selection._lastSelection;
+
+        std::memcpy ( lastSelection.data () + ID_PREFETCH_ADDRESSES,
+            data + counterOffset + ID_PREFETCH_ADDRESSES,
+            ( data[ counterIdx ] - ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t )
+        );
+
+        // FUCK - handle in UI thread.
+        free[ 1UZ ] = std::exchange ( free[ 0UZ ], std::exchange ( ready, nullptr ) );
+    }
+
+    if ( counting )
+    {
+        uint64_t const* data = counting->_data;
+        uint64_t const items = data[ counterIdx ];
+
+        auto &lastSelection = _selection._lastSelection;
+        lastSelection.resize ( static_cast<size_t> ( items ) );
+
+        if ( items > 0ULL )
+        {
+            std::memcpy ( lastSelection.data (),
+                data + counterOffset,
+                std::min ( items, ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t )
+            );
+        }
+
+        if ( items <= ID_PREFETCH_ADDRESSES )
+        {
+            // FUCK - handle in UI thread.
+            free[ 1UZ ] = std::exchange ( free[ 0UZ ], std::exchange ( counting, nullptr ) );
+        }
+        else
+        {
+            auto const offset = static_cast<VkDeviceSize> ( ( counterOffset + ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t ) );
+
+            VkBufferCopy const copy
+            {
+                .srcOffset = offset,
+                .dstOffset = offset,
+                .size = static_cast<VkDeviceSize> ( ( items - ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t ) )
+            };
+
+            VkBufferMemoryBarrier &idHostBarrier = counting->_barrier;
+            idHostBarrier.srcAccessMask = VK_ACCESS_HOST_READ_BIT;
+            idHostBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+            vkCmdPipelineBarrier ( commandBuffer,
+                VK_PIPELINE_STAGE_HOST_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                0U,
+                0U,
+                nullptr,
+                1U,
+                &idHostBarrier,
+                0U,
+                nullptr
+            );
+
+            vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &copy );
+
+            idHostBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            idHostBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+
+            vkCmdPipelineBarrier ( commandBuffer,
+                VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_HOST_BIT,
+                0U,
+                0U,
+                nullptr,
+                1U,
+                &idHostBarrier,
+                0U,
+                nullptr
+            );
+
+            ready = std::exchange ( counting, nullptr );
+        }
+    }
+
+    if ( !_selection._pendingSelect )
+        return;
 
     VkBufferMemoryBarrier &idSetBarrier = _selection._idSet._barrier;
     idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
@@ -465,8 +566,6 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) no
         0U,
         nullptr
     );
-
-    VkBufferMemoryBarrier &idDeviceBarrier = _selection._idDevice._barrier;
 
     idDeviceBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_READ_BIT ) |
         AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
@@ -488,7 +587,13 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) no
     );
 
     vkCmdFillBuffer ( commandBuffer, idSetBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
-    vkCmdFillBuffer ( commandBuffer, idDeviceBarrier.buffer, 0U, idDeviceBarrier.size, 0U );
+
+    vkCmdFillBuffer ( commandBuffer,
+        idDeviceBarrier.buffer,
+        0U,
+        static_cast<VkDeviceSize> ( sizeof ( uint64_t ) ),
+        0U
+    );
 
     idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
@@ -522,7 +627,9 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer, size_t fif ) no
         nullptr
     );
 
-    VkBufferMemoryBarrier &idHostBarrier = _selection._idHost[ fif ]._barrier;
+    counting = std::exchange ( free[ 0UZ ], std::exchange ( free[ 1UZ ], nullptr ) );
+    VkBufferMemoryBarrier &idHostBarrier = counting->_barrier;
+
     idHostBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_HOST_READ_BIT );
     idHostBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
@@ -622,9 +729,6 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
         }
     }
 
-    // FUCK - adjust it according actual selection
-    _selection._copy.size = static_cast<VkDeviceSize> ( uniqueSize );
-
     collectPushConstants._idSet = *_selection._idSet._resourceIdx;
     compressPushConstants._idSet = collectPushConstants._idSet;
     compressPushConstants._uniqueIDs = *_selection._idDevice._resourceIdx;
@@ -657,7 +761,7 @@ void Workspace::Select ( Rect const &rect, bool invert ) noexcept
     );
 }
 
-void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, size_t fif ) noexcept
+void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !_selection._pendingSelect | !IsReady () ) [[likely]]
         return;
@@ -717,8 +821,15 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
         nullptr
     );
 
-    VkBufferMemoryBarrier &idHostBarrier = _selection._idHost[ fif ]._barrier;
-    vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &_selection._copy );
+    VkBufferCopy const copy
+    {
+        .srcOffset = 0U,
+        .dstOffset = 0U,
+        .size = ID_PREFETCH_SIZE
+    };
+
+    VkBufferMemoryBarrier &idHostBarrier = _selection._counting->_barrier;
+    vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &copy );
 
     idHostBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     idHostBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
@@ -735,10 +846,7 @@ void Workspace::ComputeSelect ( [[maybe_unused]] VkCommandBuffer commandBuffer, 
         nullptr
     );
 
-    android_vulkan::LogDebug ( ">>> 0x%016p", _actors.cbegin ()->first );
     _selection._pendingSelect = false;
-
-    // FUCK
 }
 
 MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept

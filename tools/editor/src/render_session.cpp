@@ -1000,7 +1000,7 @@ void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
     );
 }
 
-void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
+void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer ) noexcept
 {
     constexpr auto prepareColor = [] ( VkImageMemoryBarrier &barrier ) noexcept {
         barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -1045,8 +1045,6 @@ void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fi
         barrierCount,
         _barriers
     );
-
-    _workspace.PrepareIDBuffer ( commandBuffer, fif );
 
     _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
@@ -1095,7 +1093,7 @@ void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fi
         _barriers
     );
 
-    _workspace.ComputeSelect ( commandBuffer, fif );
+    _workspace.ComputeSelect ( commandBuffer );
 }
 
 void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -1246,9 +1244,10 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _uiManager.Submit ( renderer, _uiPass );
     _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
+    _workspace.PrepareIDBuffer ( commandBuffer );
 
     if ( _workspace.IsSelectionRequested () )
-        RenderSceneWithID ( commandBuffer, fif );
+        RenderSceneWithID ( commandBuffer );
     else
         RenderScene ( commandBuffer );
 
@@ -1309,7 +1308,6 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     GX_ENABLE_WARNING ( 4061 )
 
     messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
-    std::this_thread::sleep_for ( std::chrono::milliseconds ( 250U ) );
 }
 
 void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept

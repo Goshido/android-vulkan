@@ -438,7 +438,7 @@ class RenderSession final
         void UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
 
         void RenderScene ( VkCommandBuffer commandBuffer ) noexcept;
-        void RenderSceneWithID ( VkCommandBuffer commandBuffer, size_t fif ) noexcept;
+        void RenderSceneWithID ( VkCommandBuffer commandBuffer ) noexcept;
 
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;

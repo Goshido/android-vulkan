@@ -1,5 +1,5 @@
 #include <precompiled_headers.hpp>
-#include <game.hpp>
+#include <platform/android/game.hpp>
 
 
 namespace android_vulkan {

@@ -4,7 +4,7 @@
 
 #include "drawcall.hpp"
 #include <GXCommon/GXMath.hpp>
-#include <game.hpp>
+#include <platform/android/game.hpp>
 #include <platform/android/mesh_geometry.hpp>
 #include <uniform_buffer.hpp>
 #include <vulkan_utils.hpp>

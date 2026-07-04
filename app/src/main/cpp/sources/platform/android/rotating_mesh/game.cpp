@@ -693,9 +693,6 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
             return false;
 
         AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
-
-
-
         VkSemaphore semaphore;
 
         result = android_vulkan::Renderer::CheckVkResult (

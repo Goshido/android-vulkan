@@ -3,8 +3,8 @@
 
 
 #include "camera.hpp"
+#include <platform/android/game.hpp>
 #include "render_session.hpp"
-#include <game.hpp>
 
 
 namespace pbr {

@@ -2,20 +2,17 @@
 #define EDITOR_WORKSPACE_HPP
 
 
-#include "actor.hpp"
 #include "gizmo_node.hpp"
 #include "history.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "mesh_info.hpp"
 #include "mesh_node.hpp"
-#include <platform/windows/pbr/id_collect_program.hpp>
-#include <platform/windows/pbr/id_compress_program.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include "point_light_node.hpp"
-#include "rect.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
+#include "selection.hpp"
 #include "stream_buffer_ref.hpp"
 #include "viewport_widget.hpp"
 
@@ -45,97 +42,9 @@ class Workspace final
             uint32_t                                        _count = 0U;
         };
 
-        class Buffer final
-        {
-            public:
-                VkDeviceMemory                              _memory = VK_NULL_HANDLE;
-                VkDeviceSize                                _offset = std::numeric_limits<VkDeviceSize>::max ();
-                uint64_t*                                   _data = nullptr;
-                std::optional<uint32_t>                     _resourceIdx = std::nullopt;
-
-                VkBufferMemoryBarrier                       _barrier
-                {
-                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                    .pNext = nullptr,
-                    .srcAccessMask = VK_ACCESS_NONE,
-                    .dstAccessMask = VK_ACCESS_NONE,
-                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .buffer = VK_NULL_HANDLE,
-                    .offset = 0U,
-                    .size = VK_WHOLE_SIZE
-                };
-
-            public:
-                explicit Buffer () = default;
-
-                Buffer ( Buffer const & ) = delete;
-                Buffer &operator = ( Buffer const & ) = delete;
-
-                Buffer ( Buffer && ) = delete;
-                Buffer &operator = ( Buffer && ) = delete;
-
-                ~Buffer () = default;
-
-                [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer,
-                    size_t size,
-                    VkBufferUsageFlags usage,
-                    bool map,
-                    char const* name
-                ) noexcept;
-
-                void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
-        };
-
-        class Selection final
-        {
-            public:
-                Buffer                                      _idSet {};
-                Buffer                                      _idDevice {};
-                Buffer                                      _idHost[ 2U ];
-
-                Buffer*                                     _free[ 2U ] = { _idHost, _idHost + 1U };
-                Buffer*                                     _counting = nullptr;
-                Buffer*                                     _ready = nullptr;
-
-                std::vector<Actor const*>                   _lastSelection {};
-                std::deque<Actor const*>                    _items {};
-                bool                                        _pendingSelect = false;
-
-                VkExtent2D                                  _idImageResolution
-                {
-                    .width = 0U,
-                    .height = 0U
-                };
-
-                pbr::IDCollectProgram::PushConstants        _collectPushConstants
-                {
-                    ._idImage = 0U,
-                    ._idSet = 0U,
-                    ._capacity = 0U
-                };
-
-                pbr::IDCompressProgram::PushConstants       _compressPushConstants
-                {
-                    ._idSet = 0U,
-                    ._uniqueIDs = 0U,
-                    ._capacity = 0U
-                };
-
-            public:
-                explicit Selection () = default;
-
-                Selection ( Selection const & ) = delete;
-                Selection &operator = ( Selection const & ) = delete;
-
-                Selection ( Selection && ) = delete;
-                Selection &operator = ( Selection && ) = delete;
-
-                ~Selection () = default;
-        };
-
     private:
         History                                             _history {};
+        Selection                                           _selection {};
         std::unordered_map<Actor const*, ActorRef>          _actors {};
 
         MeshQueue                                           _opaqueQueue {};
@@ -153,8 +62,6 @@ class Workspace final
         ReflectionProbeLocalQueue                           _reflectionProbeLocalQueue {};
         ReflectionProbeGlobalQueue                          _reflectionProbeGlobalQueue {};
 
-        std::unique_ptr<pbr::IDCollectProgram>              _idCollectProgram {};
-        std::unique_ptr<pbr::IDCompressProgram>             _idCompressProgram {};
         std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
         std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
 
@@ -168,8 +75,6 @@ class Workspace final
         Texture2DRef                                        _defaultMask {};
         Texture2DRef                                        _defaultParam {};
         Texture2DRef                                        _defaultNormal {};
-
-        Selection                                           _selection {};
 
         ViewportWidget*                                     _viewport = nullptr;
         std::mutex                                          _mutex {};

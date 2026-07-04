@@ -2,7 +2,7 @@
 #define RAINBOW_HPP
 
 
-#include <game.hpp>
+#include <platform/android/game.hpp>
 
 
 namespace rainbow {

@@ -1115,6 +1115,7 @@
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
+    <ClCompile Include="src\selection.cpp" />
     <ClCompile Include="src\select_tool.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
     <ClCompile Include="src\texture2D_storage.cpp" />
@@ -1298,6 +1299,7 @@
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\selection.hpp" />
     <ClInclude Include="include\select_tool.hpp" />
     <ClInclude Include="include\shading.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />

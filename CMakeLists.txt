@@ -18,7 +18,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/css_unit_to_device_pixel.cpp
     app/src/main/cpp/sources/cyrus_beck.cpp
     app/src/main/cpp/sources/epa.cpp
-    app/src/main/cpp/sources/game.cpp
     app/src/main/cpp/sources/gamepad.cpp
     app/src/main/cpp/sources/gjk_base.cpp
     app/src/main/cpp/sources/gjk.cpp
@@ -97,6 +96,7 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/physics.cpp
     app/src/main/cpp/sources/platform/android/core.cpp
     app/src/main/cpp/sources/platform/android/file.cpp
+    app/src/main/cpp/sources/platform/android/game.cpp
     app/src/main/cpp/sources/platform/android/logger.cpp
     app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_analytic_color.cpp
     app/src/main/cpp/sources/platform/android/mandelbrot/mandelbrot_base.cpp

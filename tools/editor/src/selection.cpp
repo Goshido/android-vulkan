@@ -9,17 +9,6 @@
 
 namespace editor {
 
-namespace {
-
-constexpr size_t ID_PREFETCH_ADDRESSES = 64UZ;
-
-constexpr auto ID_PREFETCH_SIZE =
-    static_cast<VkDeviceSize> ( sizeof ( uint64_t ) + ID_PREFETCH_ADDRESSES * sizeof ( uint64_t ) );
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
 bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
     size_t size,
     VkBufferUsageFlags usage,
@@ -42,7 +31,7 @@ bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
     VkDevice device = renderer.GetDevice ();
 
     bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateBuffer ( device, &bufferInfo, nullptr, &_barrier.buffer ),
+        vkCreateBuffer ( device, &bufferInfo, nullptr, &_buffer ),
         "Selection::Buffer::Init",
         "Can't create buffer"
     );
@@ -50,10 +39,10 @@ bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
     if ( !result ) [[unlikely]]
         return false;
 
-    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.buffer, VK_OBJECT_TYPE_BUFFER, "%s", name )
+    AV_SET_VULKAN_OBJECT_NAME ( device, _buffer, VK_OBJECT_TYPE_BUFFER, "%s", name )
 
     VkMemoryRequirements memoryRequirements;
-    vkGetBufferMemoryRequirements ( device, _barrier.buffer, &memoryRequirements );
+    vkGetBufferMemoryRequirements ( device, _buffer, &memoryRequirements );
 
     constexpr VkMemoryPropertyFlags cases[] =
     {
@@ -69,7 +58,7 @@ bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
             "Can't allocate memory (Selection::Buffer::Init)"
         ) &&
 
-        android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _barrier.buffer, _memory, _offset ),
+        android_vulkan::Renderer::CheckVkResult ( vkBindBufferMemory ( device, _buffer, _memory, _offset ),
             "Selection::Buffer::Init",
             "Can't bind memory"
         );
@@ -79,7 +68,7 @@ bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
 
     if ( !map )
     {
-        _resourceIdx = ResourceHeap::Instance ().RegisterBuffer ( device, _barrier.buffer, bufferInfo.size );
+        _resourceIdx = ResourceHeap::Instance ().RegisterBuffer ( device, _buffer, bufferInfo.size );
         return static_cast<bool> ( _resourceIdx );
     }
 
@@ -93,8 +82,8 @@ bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
 
 void Selection::Buffer::Destroy ( android_vulkan::Renderer &renderer ) noexcept
 {
-    if ( VkBuffer &buffer = _barrier.buffer; buffer != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( buffer, VK_NULL_HANDLE ), nullptr );
+    if ( _buffer != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyBuffer ( renderer.GetDevice (), std::exchange ( _buffer, VK_NULL_HANDLE ), nullptr );
 
     if ( std::exchange ( _data, nullptr ) )
         renderer.UnmapMemory ( _memory );
@@ -216,7 +205,6 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "ID buffer" )
     AV_VULKAN_GROUP ( commandBuffer, "ID buffer" )
 
-    VkBufferMemoryBarrier &idDeviceBarrier = _idDevice._barrier;
     auto &free = _free;
     constexpr size_t counterIdx = 0UZ;
     constexpr size_t counterOffset = 1UZ;
@@ -234,6 +222,8 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         // FUCK - handle in UI thread.
         free[ 1UZ ] = std::exchange ( free[ 0UZ ], std::exchange ( ready, nullptr ) );
     }
+
+    _depInfo.bufferMemoryBarrierCount = 0U;
 
     if ( counting )
     {
@@ -258,48 +248,30 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         }
         else
         {
-            auto const offset =
-                static_cast<VkDeviceSize> ( ( counterOffset + ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t ) );
-
             VkBufferCopy const copy
             {
-                .srcOffset = offset,
-                .dstOffset = offset,
+                .srcOffset = ID_PREFETCH_SIZE,
+                .dstOffset = ID_PREFETCH_SIZE,
                 .size = static_cast<VkDeviceSize> ( ( items - ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t ) )
             };
 
-            VkBufferMemoryBarrier &idHostBarrier = counting->_barrier;
-            idHostBarrier.srcAccessMask = VK_ACCESS_HOST_READ_BIT;
-            idHostBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            VkBuffer idHostBuffer = counting->_buffer;
+            _idHostBarrier001.buffer = idHostBuffer;
+            _idHostBarrier001.size = copy.size;
+            _depInfo.bufferMemoryBarrierCount = 1U;
+            _depInfo.pBufferMemoryBarriers = &_idHostBarrier001;
+            vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
-            vkCmdPipelineBarrier ( commandBuffer,
-                VK_PIPELINE_STAGE_HOST_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                0U,
-                0U,
-                nullptr,
-                1U,
-                &idHostBarrier,
-                0U,
-                nullptr
-            );
+            vkCmdCopyBuffer ( commandBuffer, _idDevice._buffer, idHostBuffer, 1U, &copy );
 
-            vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &copy );
+            VkBufferMemoryBarrier2 &idHostBarrier = _barriers001[ 2U ];
+            idHostBarrier.size = copy.size;
 
-            idHostBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            idHostBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-
-            vkCmdPipelineBarrier ( commandBuffer,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_HOST_BIT,
-                0U,
-                0U,
-                nullptr,
-                1U,
-                &idHostBarrier,
-                0U,
-                nullptr
-            );
+            if ( !_pendingSelect )
+            {
+                _depInfo.pBufferMemoryBarriers = &idHostBarrier;
+                vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+            }
 
             ready = std::exchange ( counting, nullptr );
         }
@@ -308,99 +280,21 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     if ( !_pendingSelect )
         return;
 
-    VkBufferMemoryBarrier &idSetBarrier = _idSet._barrier;
-    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-    idSetBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    _depInfo.bufferMemoryBarrierCount += 2U;
+    _depInfo.pBufferMemoryBarriers = _barriers001;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idSetBarrier,
-        0U,
-        nullptr
-    );
-
-    idDeviceBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
-    idDeviceBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    idDeviceBarrier.size = static_cast<VkDeviceSize> ( sizeof ( uint64_t ) );
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ),
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idDeviceBarrier,
-        0U,
-        nullptr
-    );
-
-    vkCmdFillBuffer ( commandBuffer, idSetBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
-
-    vkCmdFillBuffer ( commandBuffer,
-        idDeviceBarrier.buffer,
-        0U,
-        static_cast<VkDeviceSize> ( sizeof ( uint64_t ) ),
-        0U
-    );
-
-    idSetBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    idSetBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idSetBarrier,
-        0U,
-        nullptr
-    );
-
-    idDeviceBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-    idDeviceBarrier.dstAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idDeviceBarrier,
-        0U,
-        nullptr
-    );
+    vkCmdFillBuffer ( commandBuffer, _idSet._buffer, 0U, VK_WHOLE_SIZE, 0U );
+    vkCmdFillBuffer ( commandBuffer, _idDevice._buffer, 0U, static_cast<VkDeviceSize> ( sizeof ( uint64_t ) ), 0U );
 
     counting = std::exchange ( free[ 0UZ ], std::exchange ( free[ 1UZ ], nullptr ) );
-    VkBufferMemoryBarrier &idHostBarrier = counting->_barrier;
 
-    idHostBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_TRANSFER_WRITE_BIT ) | AV_VK_FLAG ( VK_ACCESS_HOST_READ_BIT );
-    idHostBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    VkBufferMemoryBarrier2 &idHostBarrier = _barriers002[ 2U ];
+    idHostBarrier.buffer = counting->_buffer;
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_HOST_BIT ) | AV_VK_FLAG ( VK_PIPELINE_STAGE_TRANSFER_BIT ),
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idHostBarrier,
-        0U,
-        nullptr
-    );
+    _depInfo.bufferMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _barriers002 ) );
+    _depInfo.pBufferMemoryBarriers = _barriers002;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
 void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
@@ -448,6 +342,15 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     if ( !result )
         return;
+
+    _barriers001[ 0U ].buffer = _idSet._buffer;
+    _barriers001[ 1U ].buffer = _idDevice._buffer;
+
+    _barriers002[ 0U ].buffer = _idSet._buffer;
+    _barriers002[ 1U ].buffer = _idDevice._buffer;
+
+    _idSetBarrier.buffer = _idSet._buffer;
+    _idDeviceBarrier.buffer = _idDevice._buffer;
 
     for ( Buffer &idHost : _idHost )
     {
@@ -506,23 +409,9 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     VkExtent3D params = pbr::IDCollectProgram::DispatchParams ( _idImageResolution );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 
-    VkBufferMemoryBarrier &idSetBarrier = _idSet._barrier;
-    idSetBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
-    idSetBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idSetBarrier,
-        0U,
-        nullptr
-    );
+    _depInfo.bufferMemoryBarrierCount = 1U;
+    _depInfo.pBufferMemoryBarriers = &_idSetBarrier;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     pbr::IDCompressProgram &compressProgram = *_idCompressProgram;
     compressProgram.Bind ( commandBuffer );
@@ -531,25 +420,8 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     params = pbr::IDCompressProgram::DispatchParams ( _idImageResolution );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 
-    VkBufferMemoryBarrier &idDeviceBarrier = _idDevice._barrier;
-
-    idDeviceBarrier.srcAccessMask = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-        AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
-    idDeviceBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    idDeviceBarrier.size = VK_WHOLE_SIZE;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idDeviceBarrier,
-        0U,
-        nullptr
-    );
+    _depInfo.pBufferMemoryBarriers = &_idDeviceBarrier;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     VkBufferCopy const copy
     {
@@ -558,23 +430,12 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
         .size = ID_PREFETCH_SIZE
     };
 
-    VkBufferMemoryBarrier &idHostBarrier = _counting->_barrier;
-    vkCmdCopyBuffer ( commandBuffer, idDeviceBarrier.buffer, idHostBarrier.buffer, 1U, &copy );
+    VkBuffer idHostBuffer = _counting->_buffer;
+    vkCmdCopyBuffer ( commandBuffer, _idDevice._buffer, idHostBuffer, 1U, &copy );
 
-    idHostBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    idHostBarrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_HOST_BIT,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &idHostBarrier,
-        0U,
-        nullptr
-    );
+    _idHostBarrier002.buffer = idHostBuffer;
+    _depInfo.pBufferMemoryBarriers = &_idHostBarrier002;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _pendingSelect = false;
 }

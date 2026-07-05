@@ -19,23 +19,11 @@ class Selection final
         class Buffer final
         {
             public:
+                VkBuffer                            _buffer = VK_NULL_HANDLE;
                 VkDeviceMemory                      _memory = VK_NULL_HANDLE;
                 VkDeviceSize                        _offset = std::numeric_limits<VkDeviceSize>::max ();
                 uint64_t*                           _data = nullptr;
                 std::optional<uint32_t>             _resourceIdx = std::nullopt;
-
-                VkBufferMemoryBarrier               _barrier
-                {
-                    .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                    .pNext = nullptr,
-                    .srcAccessMask = VK_ACCESS_NONE,
-                    .dstAccessMask = VK_ACCESS_NONE,
-                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-                    .buffer = VK_NULL_HANDLE,
-                    .offset = 0U,
-                    .size = VK_WHOLE_SIZE
-                };
 
             public:
                 explicit Buffer () = default;
@@ -59,6 +47,11 @@ class Selection final
         };
 
     private:
+        constexpr static size_t ID_PREFETCH_ADDRESSES = 64UZ;
+
+        constexpr static auto ID_PREFETCH_SIZE =
+            static_cast<VkDeviceSize> ( sizeof ( uint64_t ) + ID_PREFETCH_ADDRESSES * sizeof ( uint64_t ) );
+
         std::unique_ptr<pbr::IDCollectProgram>      _idCollectProgram {};
         std::unique_ptr<pbr::IDCompressProgram>     _idCompressProgram {};
 
@@ -92,6 +85,175 @@ class Selection final
             ._idSet = 0U,
             ._uniqueIDs = 0U,
             ._capacity = 0U
+        };
+
+        VkDependencyInfo                            _depInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .pNext = nullptr,
+            .dependencyFlags = 0U,
+            .memoryBarrierCount = 0U,
+            .pMemoryBarriers = nullptr,
+            .bufferMemoryBarrierCount = 0U,
+            .pBufferMemoryBarriers = nullptr,
+            .imageMemoryBarrierCount = 0U,
+            .pImageMemoryBarriers = nullptr
+        };
+
+        VkBufferMemoryBarrier2                      _idSetBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0U,
+            .size = VK_WHOLE_SIZE
+        };
+
+        VkBufferMemoryBarrier2                      _idDeviceBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0U,
+            .size = ID_PREFETCH_SIZE
+        };
+
+        VkBufferMemoryBarrier2                      _idHostBarrier001
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+            .srcAccessMask = VK_ACCESS_2_HOST_READ_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = ID_PREFETCH_SIZE,
+            .size = 0U
+        };
+
+        VkBufferMemoryBarrier2                      _idHostBarrier002
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+            .dstAccessMask = VK_ACCESS_2_HOST_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0U,
+            .size = ID_PREFETCH_SIZE
+        };
+
+        VkBufferMemoryBarrier2                      _barriers001[ 3U ]
+        {
+            // ID Set
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // ID (device)
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT |
+                    VK_ACCESS_2_SHADER_READ_BIT |
+                    VK_ACCESS_2_SHADER_WRITE_BIT,
+
+                .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = static_cast<VkDeviceSize> ( sizeof ( uint64_t ) )
+            },
+            // ID (host)
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+                .dstAccessMask = VK_ACCESS_2_HOST_READ_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = ID_PREFETCH_SIZE,
+                .size = 0U
+            }
+        };
+
+        VkBufferMemoryBarrier2                      _barriers002[ 3U ]
+        {
+            // ID Set
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // ID (device)
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // ID (host)
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_HOST_BIT | VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT | VK_ACCESS_2_HOST_READ_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = ID_PREFETCH_SIZE
+            }
         };
 
     public:

@@ -12,9 +12,6 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr VkAccessFlags ACCESS_MASK = AV_VK_FLAG ( VK_ACCESS_SHADER_READ_BIT ) |
-    AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT );
-
 constexpr VkBufferUsageFlags USAGE = AV_VK_FLAG ( VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT ) |
     AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) |
     AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT );
@@ -450,12 +447,14 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
     vkCmdCopyBuffer ( commandBuffer, _transferBuffer, buffer, static_cast<uint32_t> ( jobCount ), bufferCopy );
     UploadJob const &last = jobs.back ();
 
-    VkBufferMemoryBarrier const barrierInfo
+    VkBufferMemoryBarrier2 const barrier
     {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-        .dstAccessMask = ACCESS_MASK,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = buffer,
@@ -463,20 +462,20 @@ bool MeshGeometry::GPUTransfer ( Renderer &renderer,
         .size = last._dstOffset + last._size
     };
 
-    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT );
+    VkDependencyInfo const depInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .pNext = nullptr,
+        .dependencyFlags = 0U,
+        .memoryBarrierCount = 0U,
+        .pMemoryBarriers = nullptr,
+        .bufferMemoryBarrierCount = 1U,
+        .pBufferMemoryBarriers = &barrier,
+        .imageMemoryBarrierCount = 0U,
+        .pImageMemoryBarriers = nullptr
+    };
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        dstStage,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &barrierInfo,
-        0U,
-        nullptr
-    );
+    vkCmdPipelineBarrier2 ( commandBuffer, &depInfo );
 
     if ( externalCommandBuffer ) [[likely]]
         return true;

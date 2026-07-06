@@ -30,17 +30,32 @@ class StreamBuffer final
         size_t                      _writeIndex = 0U;
         size_t                      _written = 0U;
 
-        VkBufferMemoryBarrier       _barrier
+        VkBufferMemoryBarrier2      _barrier
         {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
             .pNext = nullptr,
-            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-            .dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .buffer = VK_NULL_HANDLE,
             .offset = 0U,
             .size = 0U
+        };
+
+        VkDependencyInfo const      _depInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .pNext = nullptr,
+            .dependencyFlags = 0U,
+            .memoryBarrierCount = 0U,
+            .pMemoryBarriers = nullptr,
+            .bufferMemoryBarrierCount = 1U,
+            .pBufferMemoryBarriers = &_barrier,
+            .imageMemoryBarrierCount = 0U,
+            .pImageMemoryBarriers = nullptr
         };
 
     public:

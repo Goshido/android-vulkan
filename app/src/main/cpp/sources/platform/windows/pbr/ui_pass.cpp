@@ -554,25 +554,15 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
         copy
     );
 
-    VkBufferMemoryBarrier &b0 = _barriers[ 0U ];
+    VkBufferMemoryBarrier2 &b0 = _barriers[ 0U ];
     b0.offset = offset0;
     b0.size = copy[ 0U ].size;
 
-    VkBufferMemoryBarrier &b1 = _barriers[ 1U ];
+    VkBufferMemoryBarrier2 &b1 = _barriers[ 1U ];
     b1.offset = offset1;
     b1.size = copy[ 1U ].size;
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        std::size ( _barriers ),
-        _barriers,
-        0U,
-        nullptr
-    );
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

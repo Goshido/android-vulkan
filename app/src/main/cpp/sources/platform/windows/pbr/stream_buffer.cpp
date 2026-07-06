@@ -107,21 +107,7 @@ void StreamBuffer::IssueSync ( VkCommandBuffer commandBuffer ) noexcept
 
     _barrier.size = copy.size;
     _barrier.offset = copy.srcOffset;
-
-    constexpr VkPipelineStageFlags dstStage = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_SHADER_BIT ) |
-        AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        dstStage,
-        0U,
-        0U,
-        nullptr,
-        1U,
-        &_barrier,
-        0U,
-        nullptr
-    );
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
 void StreamBuffer::Push ( void const* item ) noexcept

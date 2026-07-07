@@ -69,25 +69,11 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 
 void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    _barrier.srcAccessMask = VK_ACCESS_NONE;
-    _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
     auto const idx = static_cast<size_t> ( _swapchainImageIndex );
-    _barrier.image = renderer.GetPresentImage ( idx );
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        0U,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &_barrier
-    );
+    _barrierStart.image = renderer.GetPresentImage ( idx );
+    _barrierEnd.image = _barrierStart.image;
+    _depInfo.pImageMemoryBarriers = &_barrierStart;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _colorAttachment.imageView = renderer.GetPresentImageView ( idx );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
@@ -102,22 +88,8 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
 {
     vkCmdEndRendering ( commandBuffer );
 
-    _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _barrier.dstAccessMask = VK_ACCESS_NONE;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        0U,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &_barrier
-    );
+    _depInfo.pImageMemoryBarriers = &_barrierEnd;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "pbr::PresentPass::Execute",

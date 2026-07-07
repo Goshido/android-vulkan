@@ -20,8 +20,6 @@ class ExposurePass final
         };
 
     private:
-        VkBufferMemoryBarrier               _exposureBeforeBarrier {};
-        VkBufferMemoryBarrier               _exposureAfterBarrier {};
         Memory                              _exposureMemory {};
 
         VkCommandBuffer                     _commandBuffer = VK_NULL_HANDLE;
@@ -30,22 +28,116 @@ class ExposurePass final
         ExposureProgram::PushConstants      _exposureInfo {};
         float                               _eyeAdaptationSpeed = 1.0F;
 
-        VkImage                             _syncMip5 = VK_NULL_HANDLE;
         VkImageView                         _syncMip5View = VK_NULL_HANDLE;
         Memory                              _syncMip5Memory {};
-
-        bool                                _isNeedTransitLayout = true;
-        VkBufferMemoryBarrier               _computeOnlyBarriers[ 2U ];
-
         Memory                              _globalCounterMemory {};
         Memory                              _lumaMemory {};
 
         ExposureProgram                     _program {};
+        bool                                _isNeedTransitLayout = true;
 
         VkExtent2D                          _mip5resolution
         {
             .width = 0U,
             .height = 0U
+        };
+
+        VkBufferMemoryBarrier2              _barriers[ 3U ] =
+        {
+            // Exposure before
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // Global counter
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // Luma
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            }
+        };
+
+        VkBufferMemoryBarrier2              _exposureAfterBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0U,
+            .size = VK_WHOLE_SIZE
+        };
+
+        VkImageMemoryBarrier2               _sync5Barrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+            .srcAccessMask = VK_ACCESS_2_NONE,
+            .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = VK_NULL_HANDLE,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = 1U
+            }
+        };
+
+        VkDependencyInfo                    _depInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .pNext = nullptr,
+            .dependencyFlags = 0U,
+            .memoryBarrierCount = 0U,
+            .pMemoryBarriers = nullptr,
+            .bufferMemoryBarrierCount = 0U,
+            .pBufferMemoryBarriers = nullptr,
+            .imageMemoryBarrierCount = 0U,
+            .pImageMemoryBarriers = &_sync5Barrier
         };
 
     public:
@@ -89,12 +181,14 @@ class ExposurePass final
 
         [[nodiscard]] bool CreateGlobalCounter ( android_vulkan::Renderer &renderer,
             VkDevice device,
-            ResourceHeap &resourceHeap
+            ResourceHeap &resourceHeap,
+            VkBuffer &buffer
         ) noexcept;
 
         [[nodiscard]] bool CreateLumaResources ( android_vulkan::Renderer &renderer,
             VkDevice device,
-            ResourceHeap &resourceHeap
+            ResourceHeap &resourceHeap,
+            VkBuffer &buffer
         ) noexcept;
 
         [[nodiscard]] float EyeAdaptationFactor ( float deltaTime ) const noexcept;
@@ -106,8 +200,6 @@ class ExposurePass final
 
         [[nodiscard]] bool StartCommandBuffer ( VkCommandPool commandPool, VkDevice device ) noexcept;
         [[nodiscard]] bool SubmitCommandBuffer ( android_vulkan::Renderer &renderer ) noexcept;
-
-        void SyncBefore ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] bool UpdateSyncMip5 ( android_vulkan::Renderer &renderer,
             ResourceHeap &resourceHeap,

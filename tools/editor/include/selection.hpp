@@ -46,6 +46,12 @@ class Selection final
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
+        struct Point final
+        {
+            int32_t                                 _x = 0;
+            int32_t                                 _y = 0;
+        };
+
     private:
         constexpr static size_t ID_PREFETCH_ADDRESSES = 64UZ;
 
@@ -65,6 +71,7 @@ class Selection final
 
         std::vector<Actor const*>                   _lastSelection {};
         std::deque<Actor const*>                    _items {};
+        std::optional<Point>                        _begin = std::nullopt;
         bool                                        _pendingSelect = false;
 
         VkExtent2D                                  _idImageResolution
@@ -275,10 +282,14 @@ class Selection final
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
+        void Begin ( int32_t x, int32_t y ) noexcept;
+        void Update ( int32_t x, int32_t y ) noexcept;
+        void End ( int32_t x, int32_t y, bool invert ) noexcept;
+
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
-        void Select ( Rect const &rect, bool invert ) noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
+        void CommitSelect () noexcept;
 };
 
 } // namespace editor

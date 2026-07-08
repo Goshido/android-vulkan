@@ -219,7 +219,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
             ( data[ counterIdx ] - ID_PREFETCH_ADDRESSES ) * sizeof ( uint64_t )
         );
 
-        // FUCK - handle in UI thread.
+        CommitSelect ();
         free[ 1UZ ] = std::exchange ( free[ 0UZ ], std::exchange ( ready, nullptr ) );
     }
 
@@ -243,7 +243,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 
         if ( items <= ID_PREFETCH_ADDRESSES )
         {
-            // FUCK - handle in UI thread.
+            CommitSelect ();
             free[ 1UZ ] = std::exchange ( free[ 0UZ ], std::exchange ( counting, nullptr ) );
         }
         else
@@ -367,17 +367,7 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     compressPushConstants._uniqueIDs = *_idDevice._resourceIdx;
 }
 
-bool Selection::IsSelectionRequested () const noexcept
-{
-    return _pendingSelect;
-}
-
-bool Selection::HasSelection () const noexcept
-{
-    return !_items.empty ();
-}
-
-void Selection::Select ( Rect const &rect, bool invert ) noexcept
+void Selection::Begin ( int32_t x, int32_t y ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
@@ -389,9 +379,57 @@ void Selection::Select ( Rect const &rect, bool invert ) noexcept
     );
 
     // FUCK
-    android_vulkan::LogDebug ( "[%d %d][%d %d] %s", rect._left, rect._top, rect._right, rect._bottom,
-        invert ? "invert" : "single"
+    _begin = std::optional<Point> (
+        {
+            ._x = x,
+            ._y = y
+        }
     );
+
+    android_vulkan::LogDebug ( ">> Begin [%d %d]", x, y );
+}
+
+void Selection::Update ( int32_t x, int32_t y ) noexcept
+{
+    if ( !_begin ) [[likely]]
+        return;
+
+    Point const &p = *_begin;
+    Rect r ( p._x, x, p._y, y );
+    r.Normalize ();
+    android_vulkan::LogDebug ( ">> Update [%d %d -> %d %d]", r._left, r._top, r._right, r._bottom );
+    // FUCK
+}
+
+void Selection::End ( int32_t x, int32_t y, bool invert ) noexcept
+{
+    if ( !_begin ) [[likely]]
+        return;
+
+    Point const &p = *_begin;
+    Rect r ( p._x, x, p._y, y );
+    r.Normalize ();
+
+    android_vulkan::LogDebug ( ">> End [%s: %d %d -> %d %d]",
+        invert ? "invert" : "no invert",
+        r._left,
+        r._top,
+        r._right,
+        r._bottom
+    );
+    // FUCK
+
+    _begin = std::nullopt;
+}
+
+bool Selection::IsSelectionRequested () const noexcept
+{
+    return _pendingSelect;
+}
+
+bool Selection::HasSelection () const noexcept
+{
+    return !_items.empty ();
 }
 
 void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -438,6 +476,19 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _pendingSelect = false;
+}
+
+void Selection::CommitSelect () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeIO,
+            [ selection = std::move ( _lastSelection ) ]() noexcept -> void* {
+                // FUCK - process selection properly
+                android_vulkan::LogDebug ( ">>> Commit %zu", selection.size () );
+                return nullptr;
+            }
+        )
+    );
 }
 
 } // namespace editor

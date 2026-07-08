@@ -53,6 +53,7 @@ class UIManager final
     private:
         void EventLoop () noexcept;
         void OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnInvokeUI ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnKillFocus ( MessageQueue &messageQueue ) noexcept;

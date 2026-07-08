@@ -173,12 +173,17 @@ void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 1U );
-    HandleSelection ( event );
+
+    if ( event._key == eKey::LeftMouseButton )
+    {
+        Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._x );
+    }
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
+    Workspace::Instance ().GetSelection ().End ( event._x, event._x, event._modifier.AnyShiftPressed () );
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -193,6 +198,8 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         ._x = event._x,
         ._y = event._y
     };
+
+    Workspace::Instance ().GetSelection ().Update ( event._x, event._x );
 }
 
 Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -407,17 +414,6 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
 void ViewportWidget::DoOrbit () noexcept
 {
     // FUCK
-}
-
-void ViewportWidget::HandleSelection ( MouseButtonEvent const &event ) noexcept
-{
-    if ( event._key != eKey::LeftMouseButton )
-        return;
-
-    // FUCK - rectangle select
-    Workspace::Instance ().Select ( Rect ( _mouseNow._x, _mouseNow._x, _mouseNow._y, _mouseNow._y ),
-        event._modifier.AnyShiftPressed ()
-    );
 }
 
 void ViewportWidget::SwitchTool ( Tool &tool ) noexcept

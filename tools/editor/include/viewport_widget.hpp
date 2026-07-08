@@ -111,7 +111,6 @@ class ViewportWidget final : public Widget
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;
         void DoOrbit () noexcept;
 
-        void HandleSelection ( MouseButtonEvent const &event ) noexcept;
         void SwitchTool ( Tool &tool ) noexcept;
 };
 

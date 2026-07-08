@@ -111,6 +111,10 @@ void UIManager::EventLoop () noexcept
                 OnDoubleClick ( messageQueue, std::move ( message ) );
             break;
 
+            case eMessageType::InvokeUI:
+                OnInvokeUI ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::KeyboardKeyDown:
                 OnKeyboardKeyDown ( messageQueue, std::move ( message ) );
             break;
@@ -215,6 +219,13 @@ void UIManager::OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) 
             }
         }
     }
+}
+
+void UIManager::OnInvokeUI ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Invoke" )
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
 void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept

@@ -81,8 +81,6 @@ class ResourceHeap final
                 std::vector<VkBufferCopy>               _copy {};
 
                 size_t                                  _readIndex = 0U;
-
-                // FUCK - handle overflow as StreamBuffer does
                 size_t                                  _writeIndex = 0U;
                 size_t                                  _written = 0U;
 

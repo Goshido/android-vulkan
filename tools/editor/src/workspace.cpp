@@ -368,27 +368,17 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
 }
 
-bool Workspace::IsSelectionRequested () const noexcept
-{
-    return _selection.IsSelectionRequested ();
-}
-
-bool Workspace::HasSelection () const noexcept
-{
-    return !_selection.HasSelection ();
-}
-
-void Workspace::Select ( Rect const &rect, bool invert ) noexcept
-{
-    _selection.Select ( rect, invert );
-}
-
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( IsReady () ) [[likely]]
     {
         _selection.ComputeSelect ( commandBuffer );
     }
+}
+
+Selection &Workspace::GetSelection () noexcept
+{
+    return _selection;
 }
 
 MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept

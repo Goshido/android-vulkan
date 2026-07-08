@@ -29,6 +29,7 @@ enum class eMessageType : uint32_t
     FrameComplete,
     InvokeIO,
     InvokeRenderSession,
+    InvokeUI,
     KeyboardKeyDown,
     KeyboardKeyUp,
     KillFocus,

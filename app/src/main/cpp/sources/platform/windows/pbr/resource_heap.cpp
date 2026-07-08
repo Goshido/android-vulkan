@@ -681,7 +681,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         .size = copy.size
     };
 
-    VkDependencyInfo const dependency
+    VkDependencyInfo const depInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .pNext = nullptr,
@@ -694,7 +694,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         .pImageMemoryBarriers = nullptr
     };
 
-    vkCmdPipelineBarrier2 ( commandBuffer, &dependency );
+    vkCmdPipelineBarrier2 ( commandBuffer, &depInfo );
     return true;
 }
 
@@ -724,33 +724,21 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
         .imageLayout = layout,
     };
 
-    VkDescriptorGetInfoEXT const getInfo[]
+    VkDescriptorGetInfoEXT const getInfo
     {
-        {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-            .pNext = nullptr,
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = type,
 
-            .data
-            {
-                .pStorageImage = &image
-            }
-        },
+        .data
         {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-            .pNext = nullptr,
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-
-            .data
-            {
-                .pSampledImage = &image
-            }
+            .pStorageImage = &image
         }
     };
 
     size_t const cases[] = { _storageImageSize, _sampledImageSize };
     auto const selector = static_cast<size_t> ( type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE );
-    vkGetDescriptorEXT ( device, getInfo + selector, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
+    vkGetDescriptorEXT ( device, &getInfo, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
     return std::optional<uint32_t> { index };
 }
 

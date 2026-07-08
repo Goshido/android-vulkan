@@ -111,10 +111,8 @@ class Workspace final
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
-        [[nodiscard]] bool IsSelectionRequested () const noexcept;
-        [[nodiscard]] bool HasSelection () const noexcept;
-        void Select ( Rect const &rect, bool invert ) noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] Selection &GetSelection () noexcept;
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;

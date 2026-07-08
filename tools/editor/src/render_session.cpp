@@ -1109,7 +1109,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
     _workspace.PrepareIDBuffer ( commandBuffer );
 
-    if ( _workspace.IsSelectionRequested () )
+    if ( _workspace.GetSelection ().IsSelectionRequested () )
         RenderSceneWithID ( commandBuffer );
     else
         RenderScene ( commandBuffer );

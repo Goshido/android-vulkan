@@ -1,6 +1,8 @@
 #include <precompiled_headers.hpp>
+#include <logger.hpp>
 #include <native_renderer.hpp>
 #include <program_info.hpp>
+#include <rect.hpp>
 #include <resource_heap.hpp>
 #include <selection.hpp>
 #include <trace.hpp>

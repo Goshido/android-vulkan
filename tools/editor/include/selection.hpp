@@ -6,7 +6,6 @@
 #include "message_queue.hpp"
 #include <platform/windows/pbr/id_collect_program.hpp>
 #include <platform/windows/pbr/id_compress_program.hpp>
-#include <rect.hpp>
 #include <renderer.hpp>
 #include <texture2D.hpp>
 

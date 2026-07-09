@@ -42,6 +42,14 @@ class ViewportWidget final : public Widget
         };
 
     private:
+        DIVUIElement            _div;
+
+        DIVUIElement            _selectionBody;
+        DIVUIElement            _selectionTop;
+        DIVUIElement            _selectionRight;
+        DIVUIElement            _selectionBottom;
+        DIVUIElement            _selectionLeft;
+
         MoveTool                _moveTool {};
         Hotkey                  _useMoveTool {};
 
@@ -57,7 +65,6 @@ class ViewportWidget final : public Widget
         Tool*                   _activeTool = nullptr;
 
         GXMat4                  _projection = GXMat4::IDENTITY;
-        DIVUIElement            _div;
         VkExtent2D              _resolution {};
         std::vector<float>      _lineHeights = { 0.0F };
         GXQuat                  _orientation = GXQuat::IDENTITY;
@@ -103,6 +110,9 @@ class ViewportWidget final : public Widget
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
         ) noexcept override;
+
+        void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
+        [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
 
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;

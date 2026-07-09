@@ -48,9 +48,174 @@ ViewportWidget::ViewportWidget () noexcept:
         },
 
         "viewport"
+    ),
+
+    _selectionBody ( _div,
+
+        {
+            ._backgroundColor = theme::YELLOW_PAINT_TRANSPARENT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::HEADER_HEIGHT,
+            ._right = theme::HEADER_HEIGHT,
+            ._top = theme::AUTO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 400.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 200.0F )
+        },
+
+        "Selection (body)"
+    ),
+
+    _selectionTop ( _selectionBody,
+
+        {
+            ._backgroundColor = theme::YELLOW_PAINT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F )
+        },
+
+        "Selection (top)"
+    ),
+
+    _selectionRight ( _selectionBody,
+
+        {
+            ._backgroundColor = theme::YELLOW_PAINT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::AUTO_LENGTH,
+            ._right = theme::ZERO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+        },
+
+        "Selection (right)"
+    ),
+
+    _selectionBottom ( _selectionBody,
+
+        {
+            ._backgroundColor = theme::YELLOW_PAINT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::ZERO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::AUTO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F )
+        },
+
+        "Selection (bottom)"
+    ),
+
+    _selectionLeft ( _selectionBody,
+
+        {
+            ._backgroundColor = theme::YELLOW_PAINT_COLOR,
+            ._backgroundSize = theme::ZERO_LENGTH,
+            ._bottom = theme::AUTO_LENGTH,
+            ._left = theme::ZERO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::ZERO_LENGTH,
+            ._color = theme::TRANSPARENT_COLOR,
+            ._display = pbr::DisplayProperty::eValue::Block,
+            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
+            ._fontSize = theme::NORMAL_FONT_SIZE,
+            ._lineHeight = theme::AUTO_LENGTH,
+            ._marginBottom = theme::ZERO_LENGTH,
+            ._marginLeft = theme::ZERO_LENGTH,
+            ._marginRight = theme::ZERO_LENGTH,
+            ._marginTop = theme::ZERO_LENGTH,
+            ._paddingBottom = theme::ZERO_LENGTH,
+            ._paddingLeft = theme::ZERO_LENGTH,
+            ._paddingRight = theme::ZERO_LENGTH,
+            ._paddingTop = theme::ZERO_LENGTH,
+            ._position = pbr::PositionProperty::eValue::Absolute,
+            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+        },
+
+        "Selection (left)"
     )
 {
-    // NOTHING
+    _selectionBody.AppendChildElement ( _selectionTop );
+    _selectionBody.AppendChildElement ( _selectionRight );
+    _selectionBody.AppendChildElement ( _selectionBottom );
+    _selectionBody.AppendChildElement ( _selectionLeft );
+
+    _div.AppendChildElement ( _selectionBody );
 }
 
 void ViewportWidget::Init () noexcept
@@ -206,26 +371,13 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     pbr::FontStorage &fontStorage
 ) noexcept
 {
-    VkExtent2D const viewport = renderer.GetViewportResolution ();
-
-    if ( ( viewport.width == _resolution.width ) & ( viewport.height == _resolution.height ) ) [[likely]]
-    {
-        return
-        {
-            ._hasChanges = false,
-            ._neededUIVertices = 0U
-        };
-    }
-
-    _resolution = viewport;
+    VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
     _projection.Perspective ( FOV_Y, size._data[ 0U ] / size._data[ 1U ], Z_NEAR, Z_FAR );
 
-    // It's needed to update widget boundaries according to HTML+CSS settings.
-    // The viewport widget itself does not have any child elements.
-    // Note that bounds are updated in DIVUIElement::UpdateCache method.
-    _lineHeights.resize ( 1U );
+    _lineHeights.clear ();
+    _lineHeights.push_back ( 0.0F );
 
     pbr::UIElement::ApplyInfo applyInfo
     {
@@ -241,24 +393,32 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
 
     _div.ApplyLayout ( applyInfo );
 
-    pbr::UIElement::UpdateInfo updateInfo
+    return
+    {
+        ._hasChanges = applyInfo._hasChanges,
+        ._neededUIVertices = applyInfo._vertices
+    };
+}
+
+void ViewportWidget::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
+{
+    _div.Submit ( info );
+    _rect.From ( _div.GetAbsoluteRect () );
+}
+
+bool ViewportWidget::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
+{
+    pbr::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
         ._line = 0U,
         ._parentLineHeights = _lineHeights.data (),
-        ._parentSize = size,
+        ._parentSize = GXVec2 ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) ),
         ._parentTopLeft = GXVec2::ZERO,
         ._pen = GXVec2::ZERO
     };
 
-    std::ignore = _div.UpdateCache ( updateInfo );
-    _rect.From ( _div.GetAbsoluteRect () );
-
-    return
-    {
-        ._hasChanges = false,
-        ._neededUIVertices = 0U
-    };
+    return _div.UpdateCache ( info );
 }
 
 void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept

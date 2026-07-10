@@ -2,7 +2,6 @@
 #include <logger.hpp>
 #include <native_renderer.hpp>
 #include <program_info.hpp>
-#include <rect.hpp>
 #include <resource_heap.hpp>
 #include <selection.hpp>
 #include <trace.hpp>
@@ -391,16 +390,15 @@ void Selection::Begin ( int32_t x, int32_t y ) noexcept
     android_vulkan::LogDebug ( ">> Begin [%d %d]", x, y );
 }
 
-void Selection::Update ( int32_t x, int32_t y ) noexcept
+std::optional<Rect> Selection::Update ( int32_t x, int32_t y ) noexcept
 {
     if ( !_begin ) [[likely]]
-        return;
+        return std::nullopt;
 
     Point const &p = *_begin;
     Rect r ( p._x, x, p._y, y );
     r.Normalize ();
-    android_vulkan::LogDebug ( ">> Update [%d %d -> %d %d]", r._left, r._top, r._right, r._bottom );
-    // FUCK
+    return std::optional<Rect> { std::move ( r ) };
 }
 
 void Selection::End ( int32_t x, int32_t y, bool invert ) noexcept

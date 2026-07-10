@@ -67,7 +67,8 @@ class UIManager final
         void OnStartWidgetCaptureMouse ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnStopWidgetCaptureMouse ( MessageQueue &messageQueue ) noexcept;
         void OnTyping ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnUIAddWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIAppendWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnUIPrependWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
 };
 

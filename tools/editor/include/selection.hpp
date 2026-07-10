@@ -6,6 +6,7 @@
 #include "message_queue.hpp"
 #include <platform/windows/pbr/id_collect_program.hpp>
 #include <platform/windows/pbr/id_compress_program.hpp>
+#include "rect.hpp"
 #include <renderer.hpp>
 #include <texture2D.hpp>
 
@@ -282,7 +283,7 @@ class Selection final
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
         void Begin ( int32_t x, int32_t y ) noexcept;
-        void Update ( int32_t x, int32_t y ) noexcept;
+        [[nodiscard]] std::optional<Rect> Update ( int32_t x, int32_t y ) noexcept;
         void End ( int32_t x, int32_t y, bool invert ) noexcept;
 
         [[nodiscard]] bool IsSelectionRequested () const noexcept;

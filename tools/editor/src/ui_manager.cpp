@@ -66,8 +66,11 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
     pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
-    for ( auto &widget : _widgets )
-        _needRefill |= widget->UpdateCache ( fontStorage, viewport );
+    auto const end = _widgets.rend ();
+    auto begin = _widgets.rbegin ();
+
+    for ( auto it = begin; it != end; ++it )
+        _needRefill |= ( *it )->UpdateCache ( fontStorage, viewport );
 
     if ( !_needRefill )
         return;
@@ -86,9 +89,9 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
         ._uiBufferStreams = *response
     };
 
-    for ( auto &widget : _widgets )
+    for ( auto it = begin; it != end; ++it )
     {
-        widget->Submit ( info );
+        ( *it )->Submit ( info );
     }
 }
 
@@ -167,8 +170,12 @@ void UIManager::EventLoop () noexcept
                 OnTyping ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::UIAddWidget:
-                OnUIAddWidget ( messageQueue, std::move ( message ) );
+            case eMessageType::UIAppendWidget:
+                OnUIAppendWidget ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UIPrependWidget:
+                OnUIPrependWidget ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIRemoveWidget:
@@ -480,13 +487,22 @@ void UIManager::OnTyping ( MessageQueue &messageQueue, Message &&message ) noexc
     }
 }
 
-void UIManager::OnUIAddWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
+void UIManager::OnUIAppendWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    AV_TRACE ( "Add widget" )
+    AV_TRACE ( "Append widget" )
     messageQueue.DequeueEnd ();
 
     std::lock_guard const lock ( _mutex );
     _widgets.emplace_back ( static_cast<Widget*> ( message._action () ) );
+}
+
+void UIManager::OnUIPrependWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Prepend widget" )
+    messageQueue.DequeueEnd ();
+
+    std::lock_guard const lock ( _mutex );
+    _widgets.emplace_front ( static_cast<Widget*> ( message._action () ) );
 }
 
 void UIManager::OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message ) noexcept

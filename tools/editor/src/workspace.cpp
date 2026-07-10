@@ -1034,7 +1034,7 @@ void Workspace::InitWidgets () noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
     messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAddWidget,
+        Message ( eMessageType::UIAppendWidget,
             [] () noexcept {
                 auto* dialogBox = new UIProps ();
                 dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
@@ -1049,7 +1049,7 @@ void Workspace::InitWidgets () noexcept
     _viewport = new ViewportWidget ();
 
     messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAddWidget,
+        Message ( eMessageType::UIAppendWidget,
             [ viewport = _viewport ] () noexcept {
                 viewport->Init ();
                 return viewport;

@@ -705,7 +705,7 @@ void UIComboBox::SwitchToMenuState () noexcept
     _updateRect = &UIComboBox::UpdatedRectMenu;
 
     MessageQueue::Instance ().EnqueueBack (
-        Message ( eMessageType::UIAddWidget,
+        Message ( eMessageType::UIPrependWidget,
             [ popup = _popup ] () noexcept {
                 return popup;
             }

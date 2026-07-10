@@ -57,8 +57,8 @@ ViewportWidget::ViewportWidget () noexcept:
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
             ._left = theme::HEADER_HEIGHT,
-            ._right = theme::HEADER_HEIGHT,
-            ._top = theme::AUTO_LENGTH,
+            ._right = theme::AUTO_LENGTH,
+            ._top = theme::HEADER_HEIGHT,
             ._color = theme::TRANSPARENT_COLOR,
             ._display = pbr::DisplayProperty::eValue::Block,
             ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
@@ -216,6 +216,7 @@ ViewportWidget::ViewportWidget () noexcept:
     _selectionBody.AppendChildElement ( _selectionLeft );
 
     _div.AppendChildElement ( _selectionBody );
+    _selectionBody.Hide ();
 }
 
 void ViewportWidget::Init () noexcept
@@ -339,16 +340,27 @@ void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcep
 {
     UpdateMouseState ( event, 1U );
 
-    if ( event._key == eKey::LeftMouseButton )
-    {
-        Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._x );
-    }
+    if ( event._key != eKey::LeftMouseButton )
+        return;
+
+    Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._y );
+    _selectionBody.Show ();
+    UpdateSelection ( _mouseNow._x, _mouseNow._y, 0, 0 );
+    CaptureMouse ();
+    SetFocus ();
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
     Workspace::Instance ().GetSelection ().End ( event._x, event._x, event._modifier.AnyShiftPressed () );
+
+    if ( event._key == eKey::LeftMouseButton )
+    {
+        ReleaseMouse ();
+        KillFocus ();
+        _selectionBody.Hide ();
+    }
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -364,7 +376,10 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         ._y = event._y
     };
 
-    Workspace::Instance ().GetSelection ().Update ( event._x, event._x );
+    if ( auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y ); rect ) [[unlikely]]
+    {
+        UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
+    }
 }
 
 Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -484,6 +499,17 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
         ._x = event._x,
         ._y = event._y
     };
+}
+
+void ViewportWidget::UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept
+{
+    pbr::CSSComputedValues &css = _selectionBody.GetCSS ();
+    float const scale = pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX;
+    css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( left ) );
+    css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( top ) );
+    css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( width ) );
+    css._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( height ) );
+    _selectionBody.Update ();
 }
 
 void ViewportWidget::ResolveNavigationMode () noexcept

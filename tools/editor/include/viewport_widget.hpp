@@ -116,6 +116,7 @@ class ViewportWidget final : public Widget
 
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
+        void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void ResolveNavigationMode () noexcept;
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;

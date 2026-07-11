@@ -1,4 +1,4 @@
-// version 1.17
+// version 1.18
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -210,6 +210,16 @@ namespace {
 [[maybe_unused]] GXVoid GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept
 {
     vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXFloat scale ) noexcept
+{
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( a._data ), scale ) );
+}
+
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept
+{
+    vst1q_f32 ( _data, vmulq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
 [[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const noexcept

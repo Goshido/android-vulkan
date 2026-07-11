@@ -200,7 +200,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     Buffer* &counting = _counting;
     Buffer* &ready = _ready;
 
-    if ( !_pendingSelect & !counting & !ready ) [[likely]]
+    if ( !_area & !counting & !ready ) [[likely]]
         return;
 
     AV_TRACE ( "ID buffer" )
@@ -268,7 +268,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
             VkBufferMemoryBarrier2 &idHostBarrier = _barriers001[ 2U ];
             idHostBarrier.size = copy.size;
 
-            if ( !_pendingSelect )
+            if ( !_area )
             {
                 _depInfo.pBufferMemoryBarriers = &idHostBarrier;
                 vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
@@ -278,7 +278,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         }
     }
 
-    if ( !_pendingSelect )
+    if ( !_area )
         return;
 
     _depInfo.bufferMemoryBarrierCount += 2U;
@@ -310,9 +310,13 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     VkExtent2D &resolution = _idImageResolution;
     resolution = idImage.GetResolution ();
-    collectPushConstants._capacity = resolution.width * resolution.height;
-    compressPushConstants._capacity = collectPushConstants._capacity;
-    auto const size = static_cast<size_t> ( collectPushConstants._capacity * sizeof ( uint64_t ) );
+
+    VkExtent2D const &v = NativeRenderer::Instance ().GetViewportResolution ();
+    float const convX = static_cast<float> ( resolution.width - 1U ) / static_cast<float> ( v.width - 1U );
+    float const convY = static_cast<float> ( resolution.height - 1U ) / static_cast<float> ( v.height - 1U );
+    _areaConv = GXVec4 ( convX, convY, convX, convY );
+
+    size_t const size = static_cast<size_t> ( resolution.width * resolution.height ) * sizeof ( uint64_t );
 
     // First item is counter
     auto const uniqueSize = sizeof ( uint64_t ) + size;
@@ -370,16 +374,6 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
 void Selection::Begin ( int32_t x, int32_t y ) noexcept
 {
-    MessageQueue::Instance ().EnqueueBack (
-        Message ( eMessageType::InvokeRenderSession,
-            [ this ]() noexcept -> void* {
-                _pendingSelect = true;
-                return nullptr;
-            }
-        )
-    );
-
-    // FUCK
     _begin = std::optional<Point> (
         {
             ._x = x,
@@ -387,7 +381,14 @@ void Selection::Begin ( int32_t x, int32_t y ) noexcept
         }
     );
 
-    android_vulkan::LogDebug ( ">> Begin [%d %d]", x, y );
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [ this, x, y ] () noexcept -> void* {
+                CommitArea ( Rect ( x, x, y, y ) );
+                return nullptr;
+            }
+        )
+    );
 }
 
 std::optional<Rect> Selection::Update ( int32_t x, int32_t y ) noexcept
@@ -395,36 +396,44 @@ std::optional<Rect> Selection::Update ( int32_t x, int32_t y ) noexcept
     if ( !_begin ) [[likely]]
         return std::nullopt;
 
-    Point const &p = *_begin;
-    Rect r ( p._x, x, p._y, y );
-    r.Normalize ();
-    return std::optional<Rect> { std::move ( r ) };
+    Rect area ( _begin->_x, x, _begin->_y, y );
+    area.Normalize ();
+
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [ this, area ] () mutable noexcept -> void* {
+                CommitArea ( std::move ( area ) );
+                return nullptr;
+            }
+        )
+    );
+
+    return std::optional<Rect> { std::move ( area ) };
 }
 
-void Selection::End ( int32_t x, int32_t y, bool invert ) noexcept
+void Selection::End ( int32_t x, int32_t y, bool /*invert*/ ) noexcept
 {
     if ( !_begin ) [[likely]]
         return;
 
-    Point const &p = *_begin;
-    Rect r ( p._x, x, p._y, y );
-    r.Normalize ();
+    Rect area ( _begin->_x, x, _begin->_y, y );
+    area.Normalize ();
 
-    android_vulkan::LogDebug ( ">> End [%s: %d %d -> %d %d]",
-        invert ? "invert" : "no invert",
-        r._left,
-        r._top,
-        r._right,
-        r._bottom
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [ this, area = std::move ( area ) ] () mutable noexcept -> void* {
+                CommitArea ( std::move ( area ) );
+                return nullptr;
+            }
+        )
     );
-    // FUCK
 
     _begin = std::nullopt;
 }
 
 bool Selection::IsSelectionRequested () const noexcept
 {
-    return _pendingSelect;
+    return static_cast<bool> ( _area );
 }
 
 bool Selection::HasSelection () const noexcept
@@ -434,7 +443,7 @@ bool Selection::HasSelection () const noexcept
 
 void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !_pendingSelect | !IsReady () ) [[likely]]
+    if ( !_area | !IsReady () ) [[likely]]
         return;
 
     AV_TRACE ( "Select" )
@@ -444,7 +453,12 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     collectProgram.Bind ( commandBuffer );
     collectProgram.SetPushConstants ( commandBuffer, &_collectPushConstants );
 
-    VkExtent3D params = pbr::IDCollectProgram::DispatchParams ( _idImageResolution );
+    VkExtent3D params = pbr::IDCollectProgram::DispatchParams ( _area->_left,
+        _area->_right,
+        _area->_top,
+        _area->_bottom
+    );
+
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 
     _depInfo.bufferMemoryBarrierCount = 1U;
@@ -455,7 +469,7 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     compressProgram.Bind ( commandBuffer );
     compressProgram.SetPushConstants ( commandBuffer, &_compressPushConstants );
 
-    params = pbr::IDCompressProgram::DispatchParams ( _idImageResolution );
+    params = pbr::IDCompressProgram::DispatchParams ( _compressPushConstants._capacity );
     vkCmdDispatch ( commandBuffer, params.width, params.height, params.depth );
 
     _depInfo.pBufferMemoryBarriers = &_idDeviceBarrier;
@@ -475,7 +489,7 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     _depInfo.pBufferMemoryBarriers = &_idHostBarrier002;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
-    _pendingSelect = false;
+    _area = std::nullopt;
 }
 
 void Selection::CommitSelect () noexcept
@@ -489,6 +503,46 @@ void Selection::CommitSelect () noexcept
             }
         )
     );
+}
+
+void Selection::CommitArea ( Rect &&canvasArea ) noexcept
+{
+    VkExtent2D const &v = NativeRenderer::Instance ().GetViewportResolution ();
+
+    GXVec4 a (
+        static_cast<float> ( std::max ( 0, canvasArea._left ) ),
+        static_cast<float> ( std::max ( 0, canvasArea._top ) ),
+        static_cast<float> ( std::min ( static_cast<int32_t> ( v.width - 1U ), canvasArea._right ) ),
+        static_cast<float> ( std::min ( static_cast<int32_t> ( v.height - 1U ), canvasArea._bottom ) )
+    );
+
+    a.Multiply ( a, _areaConv );
+
+    Rect area (
+        static_cast<int32_t> ( a._data[ 0U ] ),
+        static_cast<int32_t> ( a._data[ 2U ] ),
+        static_cast<int32_t> ( a._data[ 1U ] ),
+        static_cast<int32_t> ( a._data[ 3U ] )
+    );
+
+    _collectPushConstants._offset =
+    {
+        .width = static_cast<uint32_t> ( area._left ),
+        .height = static_cast<uint32_t> ( area._top )
+    };
+
+    int32_t w = area.GetWidth ();
+    int32_t h = area.GetHeight ();
+
+    _collectPushConstants._size =
+    {
+        .width = static_cast<uint32_t> ( w++ ),
+        .height = static_cast<uint32_t> ( h++ )
+    };
+
+    _collectPushConstants._capacity = static_cast<uint32_t> ( w * h );
+    _compressPushConstants._capacity = _collectPushConstants._capacity;
+    _area = std::optional<Rect> ( std::move ( area ) );
 }
 
 } // namespace editor

@@ -56,14 +56,13 @@ void IDCompressProgram::Destroy ( VkDevice device ) noexcept
     ComputeProgram::Destroy ( device );
 }
 
-VkExtent3D IDCompressProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
+VkExtent3D IDCompressProgram::DispatchParams ( uint32_t capacity ) noexcept
 {
-    uint32_t const pixels = resolution.width * resolution.height;
     constexpr uint32_t pixelsPerWorkgroup = THREADS * WINDOW;
 
     return
     {
-        .width = ( pixels + pixelsPerWorkgroup - 1U ) / pixelsPerWorkgroup,
+        .width = ( capacity + pixelsPerWorkgroup - 1U ) / pixelsPerWorkgroup,
         .height = 1U,
         .depth = 1U
     };

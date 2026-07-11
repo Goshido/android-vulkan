@@ -72,7 +72,9 @@ class Selection final
         std::vector<Actor const*>                   _lastSelection {};
         std::deque<Actor const*>                    _items {};
         std::optional<Point>                        _begin = std::nullopt;
-        bool                                        _pendingSelect = false;
+        std::optional<Rect>                         _area = std::nullopt;
+
+        GXVec4                                      _areaConv {};
 
         VkExtent2D                                  _idImageResolution
         {
@@ -83,6 +85,19 @@ class Selection final
         pbr::IDCollectProgram::PushConstants        _collectPushConstants
         {
             ._idImage = 0U,
+
+            ._offset
+            {
+                .width = 0U,
+                .height = 0U
+            },
+
+            ._size
+            {
+                .width = 0U,
+                .height = 0U
+            },
+
             ._idSet = 0U,
             ._capacity = 0U
         };
@@ -290,6 +305,7 @@ class Selection final
         [[nodiscard]] bool HasSelection () const noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
         void CommitSelect () noexcept;
+        void CommitArea ( Rect &&canvasArea ) noexcept;
 };
 
 } // namespace editor

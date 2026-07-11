@@ -16,6 +16,8 @@ class IDCollectProgram final : public ComputeProgram
         struct PushConstants final
         {
             [[maybe_unused]] uint32_t       _idImage;
+            [[maybe_unused]] VkExtent2D     _offset;
+            [[maybe_unused]] VkExtent2D     _size;
             [[maybe_unused]] uint32_t       _idSet;
             [[maybe_unused]] uint32_t       _capacity;
         };
@@ -36,8 +38,11 @@ class IDCollectProgram final : public ComputeProgram
         [[nodiscard]] bool Init ( VkDevice device, SpecializationData specializationData ) noexcept override;
         void Destroy ( VkDevice device ) noexcept override;
 
-        // FUCK - use actual selection rectangle
-        [[nodiscard]] static VkExtent3D DispatchParams ( VkExtent2D const &resolution ) noexcept;
+        [[nodiscard]] static VkExtent3D DispatchParams ( int32_t left,
+            int32_t right,
+            int32_t top,
+            int32_t bottom
+        ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineShaderStageCreateInfo InitShaderInfo ( std::vector<uint8_t> &cs,

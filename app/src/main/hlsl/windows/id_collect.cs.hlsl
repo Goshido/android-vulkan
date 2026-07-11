@@ -6,6 +6,8 @@
 struct PushConstants
 {
     uint32_t                    _idImage;
+    uint32_t2                   _offset;
+    uint32_t2                   _size;
     uint32_t                    _idSet;
     uint32_t                    _capacity;
 };
@@ -25,8 +27,9 @@ RWStructuredBuffer<uint64_t>    g_buffers[]:    register ( u1 );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-uint64_t UnpackID ( in RWTexture2D<uint32_t2> ids, in uint32_t2 pix )
+uint64_t UnpackID ( in uint32_t2 pix )
 {
+    RWTexture2D<uint32_t2> ids = g_images[ g_pushConstants._idImage ];
     uint64_t2 const alpha = (uint64_t2)ids[ pix ];
     return alpha.x | ( alpha.y << 32U );
 }
@@ -95,12 +98,8 @@ void InsertID ( in uint64_t id )
 [numthreads ( THREADS_X, THREADS_Y, 1U )]
 void CS ( in uint32_t3 pix : SV_DispatchThreadID )
 {
-    RWTexture2D<uint32_t2> ids = g_images[ g_pushConstants._idImage ];
-    uint32_t2 resolution;
-    ids.GetDimensions ( resolution.x, resolution.y );
-
-    if ( all ( pix.xy < resolution ) )
+    if ( all ( pix.xy <= g_pushConstants._size ) )
     {
-        InsertID ( UnpackID ( ids, pix.xy ) );
+        InsertID ( UnpackID ( pix.xy + g_pushConstants._offset ) );
     }
 }

@@ -56,12 +56,16 @@ void IDCollectProgram::Destroy ( VkDevice device ) noexcept
     ComputeProgram::Destroy ( device );
 }
 
-VkExtent3D IDCollectProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
+VkExtent3D IDCollectProgram::DispatchParams ( int32_t left,
+    int32_t right,
+    int32_t top,
+    int32_t bottom
+) noexcept
 {
     return
     {
-        .width = ( resolution.width + THREADS_X - 1U ) / THREADS_X,
-        .height = ( resolution.height + THREADS_Y - 1U ) / THREADS_Y,
+        .width = ( static_cast<uint32_t> ( right - left ) + THREADS_X ) / THREADS_X,
+        .height = ( static_cast<uint32_t> ( bottom - top ) + THREADS_Y ) / THREADS_Y,
         .depth = 1U
     };
 }

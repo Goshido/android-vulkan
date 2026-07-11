@@ -353,7 +353,7 @@ void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcep
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
-    Workspace::Instance ().GetSelection ().End ( event._x, event._x, event._modifier.AnyShiftPressed () );
+    Workspace::Instance ().GetSelection ().End ( event._x, event._y, event._modifier.AnyShiftPressed () );
 
     if ( event._key == eKey::LeftMouseButton )
     {

@@ -1,4 +1,4 @@
-// version 1.104
+// version 1.105
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -274,6 +274,8 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept;
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b ) noexcept;
     [[maybe_unused]] GXVoid Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXFloat scale ) noexcept;
+    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept;
 
     [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const noexcept;
 

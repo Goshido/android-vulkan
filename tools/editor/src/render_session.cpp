@@ -1108,6 +1108,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
     _workspace.PrepareIDBuffer ( commandBuffer );
+    _workspace.DrawOutline ( commandBuffer );
 
     if ( _workspace.GetSelection ().IsSelectionRequested () )
         RenderSceneWithID ( commandBuffer );
@@ -1118,10 +1119,10 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
-        _workspace.DrawGizmo ( commandBuffer );
-
         _presentRenderPass.Begin ( renderer, commandBuffer );
         _toneMapper.Execute ( commandBuffer );
+        _workspace.ApplyOutline ( commandBuffer );
+        _workspace.DrawGizmo ( commandBuffer );
 
         if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]
         {

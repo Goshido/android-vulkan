@@ -177,6 +177,17 @@ void Workspace::Destroy () noexcept
         );
     }
 
+    if ( _outlineMaskProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _outlineMaskProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
     if ( _frameStream ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
@@ -215,6 +226,17 @@ void Workspace::Destroy () noexcept
         MessageQueue::Instance ().EnqueueBack (
             Message ( eMessageType::DestroyStreamBuffer,
                 [ stream = std::move ( _idStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
+    if ( _outlineStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _outlineStream ) ] () mutable noexcept -> void* {
                     return &stream;
                 }
             )
@@ -283,6 +305,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         _frameStream->Commit ();
         _transformStream->Commit ();
         _shadingStream->Commit ();
+        _outlineStream->Commit ();
 
         // FUCK - correct DPI
         _viewport->Update ( deltaTime, 1.0F );
@@ -300,16 +323,19 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         frustum.From ( frame._viewProj );
 
         if ( pendingSelect ) [[unlikely]]
-        {
             ComputeTransformGBufferWithID ( frustum );
-        }
         else
-        {
             ComputeTransformGBufferOnly ( frustum );
-        }
+
+        ComputeTransformOutline ( frustum );
     }
 
-    if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
+    bool const noOpaque = _opaqueVisible.empty ();
+    bool const noStipple = _stippleVisible.empty ();
+    bool const noOutline = _outlineVisible.empty ();
+    bool const noOpaqueAndStipple = noOpaque & noStipple;
+
+    if ( noOpaqueAndStipple & noOutline ) [[unlikely]]
         return;
 
     _frameStream->Push ( &frame );
@@ -317,13 +343,21 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
     {
         AV_TRACE ( "Upload workspace data" )
         AV_VULKAN_GROUP ( commandBuffer, "Upload workspace data" )
-        _frameStream->IssueSync ( commandBuffer );
-        _transformStream->IssueSync ( commandBuffer );
-        _shadingStream->IssueSync ( commandBuffer );
 
-        if ( pendingSelect ) [[unlikely]]
+        _frameStream->IssueSync ( commandBuffer );
+
+        if ( !noOutline )
+            _outlineStream->IssueSync ( commandBuffer );
+
+        if ( !noOpaqueAndStipple ) [[likely]]
         {
-            _idStream->IssueSync ( commandBuffer );
+            _transformStream->IssueSync ( commandBuffer );
+            _shadingStream->IssueSync ( commandBuffer );
+
+            if ( pendingSelect ) [[unlikely]]
+            {
+                _idStream->IssueSync ( commandBuffer );
+            }
         }
     }
 }
@@ -363,6 +397,52 @@ void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noe
     // FUCK
 }
 
+void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
+{
+    if ( !IsReady () | _outlineVisible.empty () )
+        return;
+
+    AV_TRACE ( "Outline" )
+    AV_VULKAN_GROUP ( commandBuffer, "Outline" )
+
+    pbr::OutlineMaskProgram &program = *_outlineMaskProgram;
+    program.Bind ( commandBuffer );
+
+    pbr::StreamBuffer &stream = *_outlineStream;
+    [[maybe_unused]] VkPipelineLayout layout = pbr::UniversalPipelineLayout::GetPipelineLayout ();
+
+    pbr::OutlineMaskProgram::PushConstants pushConstants = pbr::OutlineMaskProgram::PushConstants
+    {
+        // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
+        ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+    };
+
+    for ( auto const &[ mesh, count ] : _outlineVisible )
+    {
+        pushConstants._outlineStream = stream.AcquireAndConsume ( count );
+
+        [[maybe_unused]] android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+        pushConstants._positionStream = info._bdaStream0;
+        pushConstants._indexStream = info._bdaIndex;
+        pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
+
+        vkCmdPushConstants ( commandBuffer,
+            layout,
+            pbr::UniversalPipelineLayout::GetStages (),
+            0U,
+            sizeof ( pushConstants ),
+            &pushConstants
+        );
+
+        vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
+    }
+}
+
+void Workspace::ApplyOutline ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+{
+    // FUCK
+}
+
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
@@ -388,7 +468,7 @@ MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
     // This will also act as search key for unregister operation.
     auto &m = *new MeshInfo;
 
-    m._isStipple = false;
+    m._material = eMaterial::Opaque;
     return RegisterMesh ( mesh, _opaqueQueue, _opaqueMap, m );
 }
 
@@ -399,8 +479,19 @@ MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
     // This will also act as search key for unregister operation.
     auto &m = *new MeshInfo;
 
-    m._isStipple = true;
+    m._material = eMaterial::Stipple;
     return RegisterMesh ( mesh, _stippleQueue, _stippleMap, m );
+}
+
+MeshNode Workspace::RegisterOutline ( MeshGeometryRef &mesh ) noexcept
+{
+    AV_TRACE ( "Workspace register stipple mesh" )
+
+    // This will also act as search key for unregister operation.
+    auto &m = *new MeshInfo;
+
+    m._material = eMaterial::Outline;
+    return RegisterMesh ( mesh, _outlineQueue, _outlineMap, m );
 }
 
 GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
@@ -461,19 +552,25 @@ ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
     return ReflectionProbeGlobalNode ( *this, node );
 }
 
-void Workspace::Unregister ( MeshNode &node ) noexcept
+void Workspace::UnregisterOpaque ( MeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
     node._workspace = nullptr;
-    MeshInfo &n = *node._meshInfo;
+    UnregisterMesh ( _opaqueQueue, _opaqueMap, *node._meshInfo );
+}
 
-    if ( n._isStipple )
-    {
-        UnregisterMesh ( _stippleQueue, _stippleMap, n );
-        return;
-    }
+void Workspace::UnregisterStipple ( MeshNode &node ) noexcept
+{
+    AV_TRACE ( "Workspace unregister stipple mesh" )
+    node._workspace = nullptr;
+    UnregisterMesh ( _stippleQueue, _stippleMap, *node._meshInfo );
+}
 
-    UnregisterMesh ( _opaqueQueue, _opaqueMap, n );
+void Workspace::UnregisterOutline ( MeshNode &node ) noexcept
+{
+    AV_TRACE ( "Workspace unregister outline" )
+    node._workspace = nullptr;
+    UnregisterMesh ( _outlineQueue, _outlineMap, *node._meshInfo );
 }
 
 void Workspace::Unregister ( GizmoNode const &node ) noexcept
@@ -674,6 +771,45 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
     traverse ( _stippleQueue, _stippleVisible );
 }
 
+void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept
+{
+    pbr::StreamBuffer &stream = *_outlineStream;
+    _outlineVisible.clear ();
+
+    uint32_t const defaultAlbedo = _defaultAlbedo->_heapIndex;
+    uint32_t const defaultEmission = _defaultEmission->_heapIndex;
+    uint32_t const defaultMask = _defaultMask->_heapIndex;
+    uint32_t const defaultParam = _defaultParam->_heapIndex;
+    uint32_t const defaultNormal = _defaultNormal->_heapIndex;
+
+    for ( auto const &instances : _outlineQueue )
+    {
+        uint32_t count = 0U;
+
+        for ( auto &mesh : instances.second )
+        {
+            // FUCK - make own class
+            mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
+
+            if ( !frustum.IsVisible ( mesh->_boundWorld ) )
+                continue;
+
+            ++count;
+            stream.Push ( &mesh->_transform._model );
+        }
+
+        if ( !count ) [[unlikely]]
+            continue;
+
+        _outlineVisible.push_back (
+            {
+                ._mesh = instances.first.get (),
+                ._count = count
+            }
+        );
+    }
+}
+
 void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 {
     AV_TRACE ( "GBuffer" )
@@ -692,6 +828,7 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 
         pushConstants = pbr::OpaqueProgram::PushConstants
         {
+            // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
             ._frameStream = _frameStream->AcquireAndConsume ( 1U )
         }
     ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
@@ -741,6 +878,7 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
 
         pushConstants = pbr::OpaqueWithIDProgram::PushConstants
         {
+            // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
             ._frameStream = _frameStream->AcquireAndConsume ( 1U ),
             ._idImage = _selection.GetIDImageResourceIndex ()
         }
@@ -781,10 +919,12 @@ bool Workspace::IsReady () noexcept
     _ready = static_cast<bool> ( _viewport ) &
         static_cast<bool> ( _opaqueProgram ) &
         static_cast<bool> ( _opaqueWithIDProgram ) &
+        static_cast<bool> ( _outlineMaskProgram ) &
         static_cast<bool> ( _frameStream ) &
         static_cast<bool> ( _transformStream ) &
         static_cast<bool> ( _shadingStream ) &
         static_cast<bool> ( _idStream ) &
+        static_cast<bool> ( _outlineStream ) &
         static_cast<bool> ( _defaultAlbedo ) &
         static_cast<bool> ( _defaultEmission ) &
         static_cast<bool> ( _defaultMask ) &
@@ -856,6 +996,30 @@ void Workspace::InitGraphicsResources () noexcept
                         [
                             info = ProgramInfo ( std::unique_ptr<pbr::Program> ( opaqueWithIDProgram.release () ),
                                 std::move ( opaqueWithIDProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                auto outlineMaskProgram = std::make_unique<pbr::OutlineMaskProgram> ();
+
+                if ( !outlineMaskProgram->Init ( device, depth ) ) [[unlikely]]
+                    return nullptr;
+
+                auto outlineMaskProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _outlineMaskProgram = std::unique_ptr<pbr::OutlineMaskProgram> (
+                        static_cast<pbr::OutlineMaskProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( outlineMaskProgram.release () ),
+                                std::move ( outlineMaskProgramReady )
                             )
                         ] () mutable noexcept -> void* {
                             return &info;
@@ -942,6 +1106,28 @@ void Workspace::InitGraphicsResources () noexcept
                     Message ( eMessageType::NewStreamBuffer,
                         [
                             info = StreamBufferInfo ( std::move ( id ), std::move ( idReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef outline = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !outline->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Model ), "Outline stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto outlineReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _outlineStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( outline ), std::move ( outlineReady ) )
                         ] () mutable noexcept -> void* {
                             return &info;
                         }

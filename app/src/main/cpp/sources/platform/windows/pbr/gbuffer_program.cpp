@@ -5,11 +5,6 @@
 
 namespace pbr {
 
-void GBufferProgram::Destroy ( VkDevice device ) noexcept
-{
-    GraphicsProgram::Destroy ( device );
-}
-
 GBufferProgram::GBufferProgram ( std::string_view vs,
     std::string_view fs,
     size_t pushConstantSize

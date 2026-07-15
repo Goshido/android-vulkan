@@ -1,31 +1,43 @@
-#ifndef PBR_GBUFFER_PROGRAM_HPP
-#define PBR_GBUFFER_PROGRAM_HPP
+#ifndef PBR_OUTLINE_MASK_PROGRAM_HPP
+#define PBR_OUTLINE_MASK_PROGRAM_HPP
 
 
 #include "graphics_program.hpp"
+#include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-class GBufferProgram : public GraphicsProgram
+class OutlineMaskProgram final : public GraphicsProgram
 {
-    private:
-        std::string_view    _vsSource {};
-        std::string_view    _fsSource {};
+    public:
+        AV_DX_ALIGNMENT_BEGIN
+
+        struct PushConstants final
+        {
+            VkDeviceAddress     _outlineStream;
+            VkDeviceAddress     _frameStream;
+            VkDeviceAddress     _positionStream;
+            VkDeviceAddress     _indexStream;
+            uint32_t            _indexType;
+        };
+
+        AV_DX_ALIGNMENT_END
 
     public:
-        GBufferProgram () = delete;
+        explicit OutlineMaskProgram () noexcept;
 
-        GBufferProgram ( GBufferProgram const & ) = delete;
-        GBufferProgram &operator = ( GBufferProgram const & ) = delete;
+        OutlineMaskProgram ( OutlineMaskProgram const & ) = delete;
+        OutlineMaskProgram &operator = ( OutlineMaskProgram const & ) = delete;
 
-        GBufferProgram ( GBufferProgram && ) = delete;
-        GBufferProgram &operator = ( GBufferProgram && ) = delete;
+        OutlineMaskProgram ( OutlineMaskProgram && ) = delete;
+        OutlineMaskProgram &operator = ( OutlineMaskProgram && ) = delete;
 
-    protected:
-        explicit GBufferProgram ( std::string_view vs, std::string_view fs, size_t pushConstantSize ) noexcept;
-        ~GBufferProgram () override = default;
+        ~OutlineMaskProgram () override = default;
 
+        [[nodiscard]] bool Init ( VkDevice device, VkFormat depthStencilFormat ) noexcept;
+
+    private:
         [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
             VkPipelineDepthStencilStateCreateInfo &info
         ) const noexcept override;
@@ -60,9 +72,22 @@ class GBufferProgram : public GraphicsProgram
             VkShaderModuleCreateInfo* moduleInfo,
             VkPipelineShaderStageCreateInfo* sourceInfo
         ) const noexcept override;
+
+                [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
+            VkPipelineColorBlendStateCreateInfo &info,
+            VkPipelineColorBlendAttachmentState* attachments
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineRenderingCreateInfo const* InitRenderingInfo ( VkFormat nativeColor,
+            VkFormat nativeDepth,
+            VkFormat nativeStencil,
+            VkFormat nativeDepthStencil,
+            VkFormat* colorAttachments,
+            VkPipelineRenderingCreateInfo &info
+        ) const noexcept override;
 };
 
 } // namespace pbr
 
 
-#endif // PBR_GBUFFER_PROGRAM_HPP
+#endif // PBR_OUTLINE_MASK_PROGRAM_HPP

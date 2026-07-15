@@ -16,6 +16,13 @@ namespace editor {
 
 class MeshNode;
 
+enum class eMaterial : uint8_t
+{
+    Opaque,
+    Outline,
+    Stipple
+};
+
 struct MeshInfo final
 {
     MeshNode*       _node = nullptr;
@@ -23,7 +30,7 @@ struct MeshInfo final
     GXAABB          _boundWorld {};
     Shading         _shading {};
     uint64_t        _id = std::bit_cast<uint64_t> ( nullptr );
-    bool            _isStipple = false;
+    eMaterial       _material = eMaterial::Opaque;
 };
 
 } // namespace editor

@@ -6,6 +6,7 @@
 #include "windows/gbuffer_attributes.hlsl"
 #include "windows/gbuffer_push_constants.hlsl"
 #include "windows/gbuffer_streams.hlsl"
+#include "windows/vertex_index.hlsl"
 
 
 struct InputData

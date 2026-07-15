@@ -1,0 +1,8 @@
+#ifndef OUTLINE_MASK_BINDS_INC
+#define OUTLINE_MASK_BINDS_INC
+
+
+#define OUT_MASK    0
+
+
+#endif // OUTLINE_MASK_BINDS_INC

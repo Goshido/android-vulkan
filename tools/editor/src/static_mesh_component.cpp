@@ -126,7 +126,6 @@ void StaticMeshComponent::QuitRendering () noexcept
 {
     if ( _node.IsConnected () ) [[likely]]
     {
-        Workspace::Instance ().Unregister ( _node );
         _node = {};
     }
 }

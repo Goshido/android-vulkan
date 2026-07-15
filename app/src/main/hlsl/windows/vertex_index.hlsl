@@ -1,0 +1,10 @@
+#ifndef VERTEX_INDEX_HLSL
+#define VERTEX_INDEX_HLSL
+
+
+#define VK_INDEX_TYPE_UINT16        0U
+#define VK_INDEX_TYPE_UINT32        1U
+#define VK_INDEX_TYPE_NONE_KHR      1000165000U
+
+
+#endif // VERTEX_INDEX_HLSL

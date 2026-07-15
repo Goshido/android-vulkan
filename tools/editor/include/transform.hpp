@@ -10,12 +10,17 @@ namespace editor {
 
 AV_DX_ALIGNMENT_BEGIN
 
-struct Transform final
+struct Model final
 {
     GXVec3      _x;
     GXVec3      _y;
     GXVec3      _z;
     GXVec3      _w;
+};
+
+struct Transform final
+{
+    Model       _model;
     uint64_t    _normal;
 };
 

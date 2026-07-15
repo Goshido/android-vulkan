@@ -41,6 +41,10 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\mandelbrot.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_mask.vs.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\outline_mask.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light_shadowmap_generator.vs.hlsl"                                                     `
     "$CORE_SHADER_DIRECTORY\point_light_shadowmap_generator.vs.spv"
 
@@ -100,6 +104,10 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\opaque_with_id.ps.hlsl"                                                                   `
     "$WINDOWS_SHADER_DIRECTORY\opaque_with_id.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_mask.ps.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\outline_mask.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light.ps.hlsl"                                                                         `

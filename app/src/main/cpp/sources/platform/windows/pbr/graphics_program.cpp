@@ -6,15 +6,15 @@
 
 namespace pbr {
 
+void GraphicsProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgramBase::Destroy ( device );
+}
+
 GraphicsProgram::GraphicsProgram ( size_t pushConstantSize ) noexcept:
     GraphicsProgramBase ( pushConstantSize )
 {
     // NOTHING
-}
-
-void GraphicsProgram::Destroy ( VkDevice device ) noexcept
-{
-    GraphicsProgramBase::Destroy ( device );
 }
 
 void GraphicsProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept

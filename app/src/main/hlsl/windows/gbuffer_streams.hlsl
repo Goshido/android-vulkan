@@ -5,22 +5,13 @@
 #include "color_packing.hlsl"
 #include "tbn32.hlsl"
 #include "tbn64.hlsl"
-
-
-#define VK_INDEX_TYPE_UINT16        0U
-#define VK_INDEX_TYPE_UINT32        1U
-#define VK_INDEX_TYPE_NONE_KHR      1000165000U
+#include "windows/frame_stream.hlsl"
 
 
 struct Rest
 {
     float16_t2      _uv;
     TBN32           _tbn;
-};
-
-struct Frame
-{
-    float32_t4x4    _viewProj;
 };
 
 struct Transform

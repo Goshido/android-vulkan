@@ -59,9 +59,22 @@ MeshNode::~MeshNode () noexcept
     if ( !_workspace || !TryLock () ) [[unlikely]]
         return;
 
-    _workspace->Unregister ( *this );
-    _workspace = nullptr;
+    switch ( _meshInfo->_material )
+    {
+        case eMaterial::Opaque:
+            _workspace->UnregisterOpaque ( *this );
+        break;
 
+        case eMaterial::Outline:
+            _workspace->UnregisterOutline ( *this );
+        break;
+
+        case eMaterial::Stipple:
+            _workspace->UnregisterStipple ( *this );
+        break;
+    }
+
+    _workspace = nullptr;
     Unlock ();
 }
 
@@ -91,10 +104,14 @@ void MeshNode::Commit ( uint32_t defaultAlbedo,
 
     meshInfo._transform =
     {
-        ._x = x,
-        ._y = y,
-        ._z = z,
-        ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
+        ._model
+        {
+            ._x = x,
+            ._y = y,
+            ._z = z,
+            ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
+        },
+
         ._normal = _rotation.ToTBN64 ()
     };
 

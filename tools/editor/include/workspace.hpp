@@ -9,6 +9,7 @@
 #include "mesh_node.hpp"
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
+#include <platform/windows/pbr/outline_mask_program.hpp>
 #include "point_light_node.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
@@ -55,6 +56,10 @@ class Workspace final
         MeshMap                                             _stippleMap {};
         std::vector<MeshInstance>                           _stippleVisible {};
 
+        MeshQueue                                           _outlineQueue {};
+        MeshMap                                             _outlineMap {};
+        std::vector<MeshInstance>                           _outlineVisible {};
+
         GizmoQueue                                          _gizmoQueue {};
         GizmoMap                                            _gizmoMap {};
 
@@ -64,11 +69,13 @@ class Workspace final
 
         std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
         std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
+        std::unique_ptr<pbr::OutlineMaskProgram>            _outlineMaskProgram {};
 
         StreamBufferRef                                     _frameStream {};
         StreamBufferRef                                     _transformStream {};
         StreamBufferRef                                     _shadingStream {};
         StreamBufferRef                                     _idStream {};
+        StreamBufferRef                                     _outlineStream {};
 
         Texture2DRef                                        _defaultAlbedo {};
         Texture2DRef                                        _defaultEmission {};
@@ -109,6 +116,10 @@ class Workspace final
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
+
+        void DrawOutline ( VkCommandBuffer commandBuffer ) noexcept;
+        void ApplyOutline ( VkCommandBuffer commandBuffer ) noexcept;
+
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
@@ -116,12 +127,15 @@ class Workspace final
 
         [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] MeshNode RegisterOutline ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] GizmoNode RegisterGizmo ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;
 
-        void Unregister ( MeshNode &node ) noexcept;
+        void UnregisterOpaque ( MeshNode &node ) noexcept;
+        void UnregisterStipple ( MeshNode &node ) noexcept;
+        void UnregisterOutline ( MeshNode &node ) noexcept;
         void Unregister ( GizmoNode const &node ) noexcept;
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
@@ -134,6 +148,7 @@ class Workspace final
 
         void ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept;
         void ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept;
+        void ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept;
 
         void FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept;

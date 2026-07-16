@@ -2,6 +2,7 @@
 #include <native_renderer.hpp>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <program_info.hpp>
+#include <resource_heap.hpp>
 #include <shading.hpp>
 #include <static_mesh_component.hpp>
 #include <stream_buffer_info.hpp>
@@ -146,6 +147,12 @@ void Workspace::Destroy () noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _selection.Destroy ( messageQueue, renderer );
+
+    if ( _idMaskIdx ) [[likely]]
+        ResourceHeap::Instance ().UnregisterResource ( *std::exchange ( _idMaskIdx, std::nullopt ) );
+
+    _idMask.FreeResources ( renderer );
+    _idDepth.FreeResources ( renderer );
 
     _delete = {};
     _openWorkspace = {};
@@ -372,10 +379,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 
 void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( !IsReady () ) [[unlikely]]
-        return;
-
-    if ( _opaqueVisible.empty () & _stippleVisible.empty () ) [[unlikely]]
+    if ( !IsReady () | ( _opaqueVisible.empty () & _stippleVisible.empty () ) ) [[unlikely]]
         return;
 
     if ( _selection.IsSelectionRequested () ) [[unlikely]]
@@ -405,23 +409,30 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "Outline" )
     AV_VULKAN_GROUP ( commandBuffer, "Outline" )
 
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _idBarrierStart ) );
+    _depInfo.pImageMemoryBarriers = _idBarrierStart;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    vkCmdBeginRendering ( commandBuffer, &_idRenderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_idViewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_idRenderingInfo.renderArea );
+
     pbr::OutlineMaskProgram &program = *_outlineMaskProgram;
     program.Bind ( commandBuffer );
 
     pbr::StreamBuffer &stream = *_outlineStream;
-    [[maybe_unused]] VkPipelineLayout layout = pbr::UniversalPipelineLayout::GetPipelineLayout ();
+    VkPipelineLayout layout = pbr::UniversalPipelineLayout::GetPipelineLayout ();
 
     pbr::OutlineMaskProgram::PushConstants pushConstants = pbr::OutlineMaskProgram::PushConstants
     {
-        // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
-        ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+        ._frameStream = AcquireFrameInstance ()
     };
 
     for ( auto const &[ mesh, count ] : _outlineVisible )
     {
         pushConstants._outlineStream = stream.AcquireAndConsume ( count );
 
-        [[maybe_unused]] android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
+        android_vulkan::MeshBufferInfo const &info = mesh->GetMeshBufferInfo ();
         pushConstants._positionStream = info._bdaStream0;
         pushConstants._indexStream = info._bdaIndex;
         pushConstants._indexType = static_cast<uint32_t> ( info._indexType );
@@ -436,16 +447,86 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
 
         vkCmdDraw ( commandBuffer, mesh->GetVertexCount (), count, 0U, 0U );
     }
+
+    vkCmdEndRendering ( commandBuffer );
+
+    _depInfo.imageMemoryBarrierCount = 1U;
+    _depInfo.pImageMemoryBarriers = &_idMaskReadyBarrier;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
 void Workspace::ApplyOutline ( VkCommandBuffer /*commandBuffer*/ ) noexcept
 {
-    // FUCK
+    _frameInstance = std::nullopt;
 }
 
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
+
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+
+    if ( _idMaskIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _idMaskIdx, std::nullopt ) );
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    _idMask.FreeResources ( renderer );
+    _idDepth.FreeResources ( renderer );
+
+    VkExtent2D &resolution = _idRenderingInfo.renderArea.extent;
+    resolution = renderer.GetViewportResolution ();
+
+    bool const status =
+        _idMask.CreateRenderTarget ( resolution,
+            VK_FORMAT_R8_UNORM,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ),
+            renderer
+        ) &&
+
+        _idDepth.CreateRenderTarget ( resolution,
+            renderer.GetDefaultDepthFormat (),
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            renderer
+        );
+
+    if ( !status ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    VkDevice device = renderer.GetDevice ();
+    VkImage mask = _idMask.GetImage ();
+    VkImageView maskView = _idMask.GetImageView ();
+
+    if ( _idMaskIdx = resourceHeap.RegisterNonUISampledImage ( device, maskView ); !_idMaskIdx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _idViewport =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( resolution.width ),
+        .height = static_cast<float> ( resolution.height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, mask, VK_OBJECT_TYPE_IMAGE, "ID mask" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, maskView, VK_OBJECT_TYPE_IMAGE_VIEW, "ID mask" )
+    _idMaskAttachment.imageView = maskView;
+    _idBarrierStart[ 0U ].image = mask;
+    _idMaskReadyBarrier.image = mask;
+
+    VkImage depth = _idDepth.GetImage ();
+    VkImageView depthView = _idDepth.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, depth, VK_OBJECT_TYPE_IMAGE, "ID depth" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, depthView, VK_OBJECT_TYPE_IMAGE_VIEW, "ID depth" )
+    _idDepthAttachment.imageView = depthView;
+    _idBarrierStart[ 1U ].image = depth;
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -643,6 +724,14 @@ Workspace &Workspace::Instance () noexcept
     return *_instance;
 }
 
+VkDeviceAddress Workspace::AcquireFrameInstance () noexcept
+{
+    if ( !_frameInstance ) [[unlikely]]
+        _frameInstance = std::optional<VkDeviceAddress> ( _frameStream->AcquireAndConsume ( 1U ) );
+
+    return *_frameInstance;
+}
+
 void Workspace::FUCK () noexcept
 {
     ActorRef actor = std::make_unique<Actor> ();
@@ -828,8 +917,7 @@ void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 
         pushConstants = pbr::OpaqueProgram::PushConstants
         {
-            // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
-            ._frameStream = _frameStream->AcquireAndConsume ( 1U )
+            ._frameStream = AcquireFrameInstance ()
         }
     ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
         for ( auto const &[ mesh, count ] : queueVisible )
@@ -878,8 +966,7 @@ void Workspace::FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept
 
         pushConstants = pbr::OpaqueWithIDProgram::PushConstants
         {
-            // FUCK - frame data is reused. Calling AcquireAndConsume more than 1 time is error!
-            ._frameStream = _frameStream->AcquireAndConsume ( 1U ),
+            ._frameStream = AcquireFrameInstance (),
             ._idImage = _selection.GetIDImageResourceIndex ()
         }
     ] ( std::vector<MeshInstance> const &queueVisible ) mutable noexcept {
@@ -930,8 +1017,12 @@ bool Workspace::IsReady () noexcept
         static_cast<bool> ( _defaultMask ) &
         static_cast<bool> ( _defaultParam ) &
         static_cast<bool> ( _defaultNormal ) &
+        _idDepth.IsInit () &
+        _idMask.IsInit () &
+        static_cast<bool> ( _idMaskIdx ) &
         ( _opaqueVisible.capacity () > 0U ) &
         ( _stippleVisible.capacity () > 0U ) &
+        ( _outlineVisible.capacity () > 0U ) &
         _selection.IsReady ();
 
     return _ready;
@@ -948,6 +1039,7 @@ void Workspace::InitGraphicsResources () noexcept
 
                 _opaqueVisible.reserve ( VISIBLE_INITIAL_SIZE );
                 _stippleVisible.reserve ( VISIBLE_INITIAL_SIZE );
+                _outlineVisible.reserve ( VISIBLE_INITIAL_SIZE );
                 android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
                 if ( !_selection.Init ( messageQueue, renderer ) ) [[unlikely]]

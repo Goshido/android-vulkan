@@ -1,11 +1,14 @@
 param
 (
     [Switch]
-    $shaderSource
+    $embedShaderSource,
+
+    [Switch]
+    $profileMode
 )
 
 Clear-Host
-. scripts\windows\make-env.ps1 $shaderSource
+. scripts\windows\make-env.ps1 $embedShaderSource $profileMode
 
 # vertex shaders
 scripts\windows\make-spv.ps1                                                                                           `

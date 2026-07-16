@@ -111,28 +111,29 @@ void StaticMeshComponent::JoinRendering () noexcept
     if ( !_actor || !_mesh ) [[unlikely]]
         return;
 
-    if ( !_node.IsConnected () ) [[unlikely]]
-        _node = Workspace::Instance ().RegisterOpaqueMesh ( _mesh );
+    if ( !_gbufferNode.IsConnected () ) [[unlikely]]
+        _gbufferNode = Workspace::Instance ().RegisterOpaqueMesh ( _mesh );
 
     GXColorUNORM const c ( 255U, 255U, 255U, 255 );
-    _node.SetColor ( c, c, c, c, 1.0F );
-    _node.SetMaterial ( _material );
-    _node.SetID ( _actor );
+    _gbufferNode.SetColor ( c, c, c, c, 1.0F );
+    _gbufferNode.SetMaterial ( _material );
+    _gbufferNode.SetID ( _actor );
+
+    if ( !_outlineNode.IsConnected () ) [[unlikely]]
+        _outlineNode = Workspace::Instance ().RegisterOutline ( _mesh );
 
     UpdateTransform ();
 }
 
 void StaticMeshComponent::QuitRendering () noexcept
 {
-    if ( _node.IsConnected () ) [[likely]]
-    {
-        _node = {};
-    }
+    _gbufferNode = {};
+    _outlineNode = {};
 }
 
 void StaticMeshComponent::UpdateTransform () noexcept
 {
-    if ( !_node.IsConnected () ) [[unlikely]]
+    if ( !_gbufferNode.IsConnected () ) [[unlikely]]
         return;
 
     GXMat4 parent {};
@@ -153,8 +154,11 @@ void StaticMeshComponent::UpdateTransform () noexcept
     GXMat4 transform {};
     transform.Multiply ( local, parent );
 
-    _node.SetLocal ( transform );
-    _node.SetBounds ( _mesh->GetBounds () );
+    _gbufferNode.SetLocal ( transform );
+    _gbufferNode.SetBounds ( _mesh->GetBounds () );
+
+    _outlineNode.SetLocal ( transform );
+    _outlineNode.SetBounds ( _mesh->GetBounds () );
 }
 
 } // namespace editor

@@ -1,4 +1,5 @@
 $embedSources = $args[ 0 ]
+$profileMode = ( $args.Length -lt 2 ) ? $false : $args[ 1 ]
 
 [string] $editorDirectory = "tools\editor"
 [string] $EDITOR_HLSL_DIRECTORY = "$editorDirectory\hlsl"
@@ -60,15 +61,29 @@ function Resolve-Type-HLSL
     }
 }
 
-if ( $embedSources )
+if ( !$embedSources )
 {
     $FLAGS += @(
-        "-Od",
-        "-Zi",
-        "-fspv-debug=vulkan-with-source"
+        "-O3"
     )
 
     return
 }
 
-$FLAGS += "-O3"
+$FLAGS += @(
+    "-Zi",
+    "-fspv-debug=vulkan-with-source"
+)
+
+if ( $profileMode )
+{
+    $FLAGS += @(
+        "-O3"
+    )
+
+    return;
+}
+
+$FLAGS += @(
+    "-Od"
+)

@@ -13,7 +13,8 @@ class StaticMeshComponent final : public Component
 {
     private:
         MeshGeometryRef                         _mesh {};
-        MeshNode                                _node {};
+        MeshNode                                _gbufferNode {};
+        MeshNode                                _outlineNode {};
         PBRMaterial                             _material {};
 
     public:

@@ -73,22 +73,22 @@ class RenderSession final
         pbr::PresentPass                        _presentRenderPass {};
 
         android_vulkan::Texture2D               _albedoRenderTarget {};
-        uint32_t                                _albedoRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _albedoRenderTargetIdx = std::nullopt;
 
         android_vulkan::Texture2D               _hdrRenderTarget {};
-        uint32_t                                _hdrRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _hdrRenderTargetIdx = std::nullopt;
 
         android_vulkan::Texture2D               _normalRenderTarget {};
-        uint32_t                                _normalRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _normalRenderTargetIdx = std::nullopt;
 
         android_vulkan::Texture2D               _paramRenderTarget {};
-        uint32_t                                _paramRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _paramRenderTargetIdx = std::nullopt;
 
         android_vulkan::Texture2D               _idRenderTarget {};
-        uint32_t                                _idRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _idRenderTargetIdx = std::nullopt;
 
         android_vulkan::Texture2D               _depthRenderTarget {};
-        uint32_t                                _depthRenderTargetIdx = 0U;
+        std::optional<uint32_t>                 _depthRenderTargetIdx = std::nullopt;
 
         ProgramStorage                          _programStorage {};
         MeshStorage                             _meshStorage {};
@@ -370,17 +370,19 @@ class RenderSession final
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
                 .pNext = nullptr,
 
-                .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
-                VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+                .srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+                    VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
+                    VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
 
-                .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT |
+                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 
                 .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
-                VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+                    VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
 
                 .dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 
                 .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
                 .newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,

@@ -270,7 +270,7 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
         VkRenderingAttachmentInfo &attachment,
         VkImageMemoryBarrier2 &barrierStart,
         VkImageMemoryBarrier2 &barrierFinish,
-        uint32_t &renderTargetIndex,
+        std::optional<uint32_t> &renderTargetIndex,
         bool storageImage,
         [[maybe_unused]] char const* name
     ) noexcept -> bool {
@@ -283,15 +283,11 @@ bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) no
         attachment.imageView = view;
         AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "%s", name )
 
-        std::optional<uint32_t> idx = storageImage ?
+        renderTargetIndex = storageImage ?
             resourceHeap.RegisterStorageImage ( device, view ) :
             resourceHeap.RegisterNonUISampledImage ( device, view );
 
-        if ( !idx ) [[unlikely]]
-            return false;
-
-        renderTargetIndex = *idx;
-        return true;
+        return static_cast<bool> ( renderTargetIndex );
     };
 
     return
@@ -560,13 +556,13 @@ bool RenderSession::InitModules () noexcept
     if ( !CreateRenderTargets () ) [[unlikely]]
         return false;
 
-    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, _idRenderTargetIdx );
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
 
-    result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, _hdrRenderTargetIdx ) &&
+    result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, *_hdrRenderTargetIdx ) &&
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        _toneMapper.SetTarget ( renderer, _hdrRenderTargetIdx, _exposurePass.GetExposure () ) &&
+        _toneMapper.SetTarget ( renderer, *_hdrRenderTargetIdx, _exposurePass.GetExposure () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
@@ -1280,8 +1276,23 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
 
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
+    if ( _albedoRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _albedoRenderTargetIdx, std::nullopt ) );
+
     if ( _hdrRenderTargetIdx ) [[likely]]
-        resourceHeap.UnregisterResource ( std::exchange ( _hdrRenderTargetIdx, 0U ) );
+        resourceHeap.UnregisterResource ( *std::exchange ( _hdrRenderTargetIdx, std::nullopt ) );
+
+    if ( _normalRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _normalRenderTargetIdx, std::nullopt ) );
+
+    if ( _paramRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _paramRenderTargetIdx, std::nullopt ) );
+
+    if ( _idRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _idRenderTargetIdx, std::nullopt ) );
+
+    if ( _depthRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _depthRenderTargetIdx, std::nullopt ) );
 
     _albedoRenderTarget.FreeResources ( renderer );
     _hdrRenderTarget.FreeResources ( renderer );
@@ -1332,8 +1343,25 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
         .maxDepth = 1.0F
     };
 
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+
+    if ( _albedoRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _albedoRenderTargetIdx, std::nullopt ) );
+
     if ( _hdrRenderTargetIdx ) [[likely]]
-        ResourceHeap::Instance ().UnregisterResource ( std::exchange ( _hdrRenderTargetIdx, 0U ) );
+        resourceHeap.UnregisterResource ( *std::exchange ( _hdrRenderTargetIdx, std::nullopt ) );
+
+    if ( _normalRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _normalRenderTargetIdx, std::nullopt ) );
+
+    if ( _paramRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _paramRenderTargetIdx, std::nullopt ) );
+
+    if ( _idRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _idRenderTargetIdx, std::nullopt ) );
+
+    if ( _depthRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _depthRenderTargetIdx, std::nullopt ) );
 
     _albedoRenderTarget.FreeResources ( renderer );
     _hdrRenderTarget.FreeResources ( renderer );
@@ -1349,10 +1377,10 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     }
 
     _uiPass.OnSwapchainDestroyed ();
-    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, _idRenderTargetIdx );
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
 
     bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
-        _toneMapper.SetTarget ( renderer, _hdrRenderTargetIdx, _exposurePass.GetExposure () );
+        _toneMapper.SetTarget ( renderer, *_hdrRenderTargetIdx, _exposurePass.GetExposure () );
 
     if ( result ) [[likely]]
         return;

@@ -147,12 +147,7 @@ void Workspace::Destroy () noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _selection.Destroy ( messageQueue, renderer );
-
-    if ( _idMaskIdx ) [[likely]]
-        ResourceHeap::Instance ().UnregisterResource ( *std::exchange ( _idMaskIdx, std::nullopt ) );
-
-    _idMask.FreeResources ( renderer );
-    _idDepth.FreeResources ( renderer );
+    FreeIDMask ();
 
     _delete = {};
     _openWorkspace = {};
@@ -178,6 +173,17 @@ void Workspace::Destroy () noexcept
         MessageQueue::Instance ().EnqueueBack (
             Message ( eMessageType::DestroyProgram,
                 [ program = ProgramRef ( _opaqueWithIDProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
+    if ( _outlineBorderProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _outlineBorderProgram.release () ) ] () mutable noexcept -> void* {
                     return &program;
                 }
             )
@@ -409,17 +415,15 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "Outline" )
     AV_VULKAN_GROUP ( commandBuffer, "Outline" )
 
-    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _idBarrierStart ) );
-    _depInfo.pImageMemoryBarriers = _idBarrierStart;
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _outlineBarrier0 ) );
+    _depInfo.pImageMemoryBarriers = _outlineBarrier0;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     vkCmdBeginRendering ( commandBuffer, &_idRenderingInfo );
     vkCmdSetViewport ( commandBuffer, 0U, 1U, &_idViewport );
     vkCmdSetScissor ( commandBuffer, 0U, 1U, &_idRenderingInfo.renderArea );
 
-    pbr::OutlineMaskProgram &program = *_outlineMaskProgram;
-    program.Bind ( commandBuffer );
-
+    _outlineMaskProgram->Bind ( commandBuffer );
     pbr::StreamBuffer &stream = *_outlineStream;
     VkPipelineLayout layout = pbr::UniversalPipelineLayout::GetPipelineLayout ();
 
@@ -450,8 +454,18 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
 
     vkCmdEndRendering ( commandBuffer );
 
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _outlineBarrier1 ) );
+    _depInfo.pImageMemoryBarriers = _outlineBarrier1;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    pbr::OutlineBorderProgram &borderProgram = *_outlineBorderProgram;
+    borderProgram.Bind ( commandBuffer );
+    borderProgram.SetPushConstants ( commandBuffer, &_outlineBorderPushConstants );
+
+    vkCmdDispatch ( commandBuffer, _borderDispatch.width, _borderDispatch.height, _borderDispatch.depth );
+
     _depInfo.imageMemoryBarrierCount = 1U;
-    _depInfo.pImageMemoryBarriers = &_idMaskReadyBarrier;
+    _depInfo.pImageMemoryBarriers = &_borderBarrier;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
@@ -464,28 +478,39 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 {
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
 
-    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
-
-    if ( _idMaskIdx ) [[likely]]
-        resourceHeap.UnregisterResource ( *std::exchange ( _idMaskIdx, std::nullopt ) );
-
-    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    _idMask.FreeResources ( renderer );
-    _idDepth.FreeResources ( renderer );
+    FreeIDMask ();
 
     VkExtent2D &resolution = _idRenderingInfo.renderArea.extent;
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     resolution = renderer.GetViewportResolution ();
+    _outlineBorderPushConstants._resolution = resolution;
+    _borderDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
+
+    _idMask = std::make_shared<Texture2D> ();
+    android_vulkan::Texture2D &idMask = _idMask->_resource;
+
+    _idDepth = std::make_shared<Texture2D> ();
+    android_vulkan::Texture2D &idDepth = _idDepth->_resource;
+
+    _border = std::make_shared<Texture2D> ();
+    android_vulkan::Texture2D &border = _border->_resource;
 
     bool const status =
-        _idMask.CreateRenderTarget ( resolution,
+        idMask.CreateRenderTarget ( resolution,
             VK_FORMAT_R8_UNORM,
             AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ),
             renderer
         ) &&
 
-        _idDepth.CreateRenderTarget ( resolution,
+        idDepth.CreateRenderTarget ( resolution,
             renderer.GetDefaultDepthFormat (),
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            renderer
+        ) &&
+
+        border.CreateRenderTarget ( resolution,
+            VK_FORMAT_R8_UNORM,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
             renderer
         );
 
@@ -495,15 +520,10 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
         return;
     }
 
-    VkDevice device = renderer.GetDevice ();
-    VkImage mask = _idMask.GetImage ();
-    VkImageView maskView = _idMask.GetImageView ();
-
-    if ( _idMaskIdx = resourceHeap.RegisterNonUISampledImage ( device, maskView ); !_idMaskIdx )
-    {
-        AV_ASSERT ( false )
-        return;
-    }
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
 
     _idViewport =
     {
@@ -515,18 +535,71 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
         .maxDepth = 1.0F
     };
 
+    GXVec2 alpha ( 1.0F / _idViewport.width, 1.0F / _idViewport.height );
+    _outlineBorderPushConstants._invResolution = alpha;
+
+    alpha.Multiply ( alpha, 0.5F );
+
+    _outlineBorderPushConstants._halfPixelMove = GXVec4 ( -alpha._data[ 0U ],
+        -alpha._data[ 1U ],
+        alpha._data[ 0U ],
+        alpha._data[ 1U ]
+    );
+
+    VkDevice device = renderer.GetDevice ();
+    VkImage mask = idMask.GetImage ();
+    VkImageView maskView = idMask.GetImageView ();
     AV_SET_VULKAN_OBJECT_NAME ( device, mask, VK_OBJECT_TYPE_IMAGE, "ID mask" )
     AV_SET_VULKAN_OBJECT_NAME ( device, maskView, VK_OBJECT_TYPE_IMAGE_VIEW, "ID mask" )
     _idMaskAttachment.imageView = maskView;
-    _idBarrierStart[ 0U ].image = mask;
-    _idMaskReadyBarrier.image = mask;
+    _outlineBarrier0[ 0U ].image = mask;
+    _outlineBarrier1[ 0U ].image = mask;
 
-    VkImage depth = _idDepth.GetImage ();
-    VkImageView depthView = _idDepth.GetImageView ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+    auto idx = resourceHeap.RegisterNonUISampledImage ( device, maskView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _outlineBorderPushConstants._idMask = *idx;
+    _idMask->_sampledIndex = std::move ( idx );
+
+    VkImage borderImage = border.GetImage ();
+    VkImageView borderView = border.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, borderImage, VK_OBJECT_TYPE_IMAGE, "Border" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, borderView, VK_OBJECT_TYPE_IMAGE_VIEW, "Border" )
+    _outlineBarrier1[ 1U ].image = borderImage;
+    _borderBarrier.image = borderImage;
+    idx = resourceHeap.RegisterStorageImage ( device, borderView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _outlineBorderPushConstants._outline = *idx;
+    _border->_storageIndex = std::move ( idx );
+
+    idx = resourceHeap.RegisterNonUISampledImage ( device, borderView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _border->_sampledIndex = std::move ( idx );
+
+    VkImage depth = idDepth.GetImage ();
+    VkImageView depthView = idDepth.GetImageView ();
     AV_SET_VULKAN_OBJECT_NAME ( device, depth, VK_OBJECT_TYPE_IMAGE, "ID depth" )
     AV_SET_VULKAN_OBJECT_NAME ( device, depthView, VK_OBJECT_TYPE_IMAGE_VIEW, "ID depth" )
     _idDepthAttachment.imageView = depthView;
-    _idBarrierStart[ 1U ].image = depth;
+    _outlineBarrier0[ 1U ].image = depth;
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -732,6 +805,47 @@ VkDeviceAddress Workspace::AcquireFrameInstance () noexcept
     return *_frameInstance;
 }
 
+void Workspace::FreeIDMask () noexcept
+{
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    if ( _idDepth ) [[likely]]
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyTexture2D,
+
+                [ texture = std::move ( _idDepth ) ] () mutable noexcept -> void* {
+                    return &texture;
+                }
+            )
+        );
+    }
+
+    if ( _idMask ) [[likely]]
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyTexture2D,
+
+                [ texture = std::move ( _idMask ) ] () mutable noexcept -> void* {
+                    return &texture;
+                }
+            )
+        );
+    }
+
+    if ( !_border ) [[unlikely]]
+        return;
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::DestroyTexture2D,
+
+            [ texture = std::move ( _border ) ] () mutable noexcept -> void* {
+                return &texture;
+            }
+        )
+    );
+}
+
 void Workspace::FUCK () noexcept
 {
     ActorRef actor = std::make_unique<Actor> ();
@@ -770,11 +884,11 @@ void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frus
         &shadingStream = *_shadingStream,
         &transformStream = *_transformStream,
         &frustum,
-        defaultAlbedo = _defaultAlbedo->_heapIndex,
-        defaultEmission = _defaultEmission->_heapIndex,
-        defaultMask = _defaultMask->_heapIndex,
-        defaultParam = _defaultParam->_heapIndex,
-        defaultNormal = _defaultNormal->_heapIndex
+        defaultAlbedo = *_defaultAlbedo->_sampledIndex,
+        defaultEmission = *_defaultEmission->_sampledIndex,
+        defaultMask = *_defaultMask->_sampledIndex,
+        defaultParam = *_defaultParam->_sampledIndex,
+        defaultNormal = *_defaultNormal->_sampledIndex
     ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
         queueVisible.clear ();
 
@@ -819,11 +933,11 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
         &transformStream = *_transformStream,
         &idStream = *_idStream,
         &frustum,
-        defaultAlbedo = _defaultAlbedo->_heapIndex,
-        defaultEmission = _defaultEmission->_heapIndex,
-        defaultMask = _defaultMask->_heapIndex,
-        defaultParam = _defaultParam->_heapIndex,
-        defaultNormal = _defaultNormal->_heapIndex
+        defaultAlbedo = *_defaultAlbedo->_sampledIndex,
+        defaultEmission = *_defaultEmission->_sampledIndex,
+        defaultMask = *_defaultMask->_sampledIndex,
+        defaultParam = *_defaultParam->_sampledIndex,
+        defaultNormal = *_defaultNormal->_sampledIndex
     ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
         queueVisible.clear ();
 
@@ -865,11 +979,11 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
     pbr::StreamBuffer &stream = *_outlineStream;
     _outlineVisible.clear ();
 
-    uint32_t const defaultAlbedo = _defaultAlbedo->_heapIndex;
-    uint32_t const defaultEmission = _defaultEmission->_heapIndex;
-    uint32_t const defaultMask = _defaultMask->_heapIndex;
-    uint32_t const defaultParam = _defaultParam->_heapIndex;
-    uint32_t const defaultNormal = _defaultNormal->_heapIndex;
+    uint32_t const defaultAlbedo = *_defaultAlbedo->_sampledIndex;
+    uint32_t const defaultEmission = *_defaultEmission->_sampledIndex;
+    uint32_t const defaultMask = *_defaultMask->_sampledIndex;
+    uint32_t const defaultParam = *_defaultParam->_sampledIndex;
+    uint32_t const defaultNormal = *_defaultNormal->_sampledIndex;
 
     for ( auto const &instances : _outlineQueue )
     {
@@ -1006,6 +1120,7 @@ bool Workspace::IsReady () noexcept
     _ready = static_cast<bool> ( _viewport ) &
         static_cast<bool> ( _opaqueProgram ) &
         static_cast<bool> ( _opaqueWithIDProgram ) &
+        static_cast<bool> ( _outlineBorderProgram ) &
         static_cast<bool> ( _outlineMaskProgram ) &
         static_cast<bool> ( _frameStream ) &
         static_cast<bool> ( _transformStream ) &
@@ -1017,9 +1132,9 @@ bool Workspace::IsReady () noexcept
         static_cast<bool> ( _defaultMask ) &
         static_cast<bool> ( _defaultParam ) &
         static_cast<bool> ( _defaultNormal ) &
-        _idDepth.IsInit () &
-        _idMask.IsInit () &
-        static_cast<bool> ( _idMaskIdx ) &
+        ( static_cast<bool> ( _idDepth ) && _idDepth->_resource.IsInit () ) &
+        ( static_cast<bool> ( _idMask ) && _idMask->_resource.IsInit () ) &
+        ( static_cast<bool> ( _border ) && _border->_resource.IsInit () ) &
         ( _opaqueVisible.capacity () > 0U ) &
         ( _stippleVisible.capacity () > 0U ) &
         ( _outlineVisible.capacity () > 0U ) &
@@ -1088,6 +1203,30 @@ void Workspace::InitGraphicsResources () noexcept
                         [
                             info = ProgramInfo ( std::unique_ptr<pbr::Program> ( opaqueWithIDProgram.release () ),
                                 std::move ( opaqueWithIDProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                auto outlineBorderProgram = std::make_unique<pbr::OutlineBorderProgram> ();
+
+                if ( !outlineBorderProgram->Init ( device, nullptr ) ) [[unlikely]]
+                    return nullptr;
+
+                auto outlineBorderProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _outlineBorderProgram = std::unique_ptr<pbr::OutlineBorderProgram> (
+                        static_cast<pbr::OutlineBorderProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( outlineBorderProgram.release () ),
+                                std::move ( outlineBorderProgramReady )
                             )
                         ] () mutable noexcept -> void* {
                             return &info;
@@ -1356,7 +1495,7 @@ MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
 void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo &nodeMeshInfo ) noexcept
 {
     std::lock_guard const lock ( _mutex );
-    auto const findResult = _opaqueQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
+    auto const findResult = meshQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
     Meshes &meshes = findResult->second;
 
     if ( meshes.size () == 1U )

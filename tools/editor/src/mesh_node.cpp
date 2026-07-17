@@ -119,11 +119,11 @@ void MeshNode::Commit ( uint32_t defaultAlbedo,
 
     meshInfo._shading =
     {
-        ._albedo = !_material._albedo ? defaultAlbedo : _material._albedo->_heapIndex,
-        ._emission = !_material._emission ? defaultEmission : _material._emission->_heapIndex,
-        ._mask = !_material._mask ? defaultMask : _material._mask->_heapIndex,
-        ._param = !_material._param ? defaultParam : _material._param->_heapIndex,
-        ._normal = !_material._normal ? defaultNormal : _material._normal->_heapIndex,
+        ._albedo = !_material._albedo ? defaultAlbedo : *_material._albedo->_sampledIndex,
+        ._emission = !_material._emission ? defaultEmission : *_material._emission->_sampledIndex,
+        ._mask = !_material._mask ? defaultMask : *_material._mask->_sampledIndex,
+        ._param = !_material._param ? defaultParam : *_material._param->_sampledIndex,
+        ._normal = !_material._normal ? defaultNormal : *_material._normal->_sampledIndex,
         ._colors = _colors
     };
 

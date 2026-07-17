@@ -96,7 +96,7 @@ void Commit ( in uint16_t stored )
 //----------------------------------------------------------------------------------------------------------------------
 
 [numthreads ( THREADS, 1U, 1U )]
-void CS ( in uint32_t3 idx : SV_DispatchThreadID )
+void CS ( in uint32_t3 idx: SV_DispatchThreadID )
 {
     uint16_t const stored = Fill ( idx.x );
 

@@ -41,6 +41,7 @@ enum class eMessageType : uint32_t
     MouseMoved,
     NewProgram,
     NewStreamBuffer,
+    NewTexture2D,
     ReadClipboardRequest,
     ReadClipboardResponse,
     RecreateSwapchain,

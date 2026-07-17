@@ -11,7 +11,8 @@ class Texture2D final
 {
     public:
         android_vulkan::Texture2D       _resource {};
-        uint32_t                        _heapIndex = 0U;
+        std::optional<uint32_t>         _sampledIndex = std::nullopt;
+        std::optional<uint32_t>         _storageIndex = std::nullopt;
 
     public:
         Texture2D () = default;

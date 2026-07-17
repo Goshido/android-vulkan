@@ -9,6 +9,7 @@
 #include "mesh_node.hpp"
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
+#include <platform/windows/pbr/outline_border_program.hpp>
 #include <platform/windows/pbr/outline_mask_program.hpp>
 #include "point_light_node.hpp"
 #include "reflection_probe_global_node.hpp"
@@ -69,7 +70,10 @@ class Workspace final
 
         std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
         std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
+        std::unique_ptr<pbr::OutlineBorderProgram>          _outlineBorderProgram {};
         std::unique_ptr<pbr::OutlineMaskProgram>            _outlineMaskProgram {};
+
+        pbr::OutlineBorderProgram::PushConstants            _outlineBorderPushConstants {};
 
         StreamBufferRef                                     _frameStream {};
         std::optional<VkDeviceAddress>                      _frameInstance = std::nullopt;
@@ -85,10 +89,12 @@ class Workspace final
         Texture2DRef                                        _defaultParam {};
         Texture2DRef                                        _defaultNormal {};
 
-        android_vulkan::Texture2D                           _idDepth {};
-        android_vulkan::Texture2D                           _idMask {};
-        std::optional<uint32_t>                             _idMaskIdx = std::nullopt;
+        Texture2DRef                                        _idDepth {};
+        Texture2DRef                                        _idMask {};
+        Texture2DRef                                        _border {};
         VkViewport                                          _idViewport {};
+
+        VkExtent3D                                          _borderDispatch {};
 
         ViewportWidget*                                     _viewport = nullptr;
         std::mutex                                          _mutex {};
@@ -172,7 +178,7 @@ class Workspace final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier2                               _idBarrierStart[ 2U ] =
+        VkImageMemoryBarrier2                               _outlineBarrier0[ 2U ] =
         {
             // ID mask
             {
@@ -231,15 +237,65 @@ class Workspace final
             }
         };
 
-        VkImageMemoryBarrier2                               _idMaskReadyBarrier
+        VkImageMemoryBarrier2                               _outlineBarrier1[ 2U ] =
+        {
+            // ID mask
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // Border
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            }
+        };
+
+        VkImageMemoryBarrier2                               _borderBarrier
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
-            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
             .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
             .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -320,6 +376,8 @@ class Workspace final
 
     private:
         [[nodiscard]] VkDeviceAddress AcquireFrameInstance () noexcept;
+        void FreeIDMask () noexcept;
+
         void FUCK () noexcept;
 
         void ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept;

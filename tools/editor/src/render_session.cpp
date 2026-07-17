@@ -394,6 +394,10 @@ void RenderSession::EventLoop () noexcept
                 OnNewStreamBuffer ( messageQueue, std::move ( message ) );
             break;
 
+            case eMessageType::NewTexture2D:
+                OnNewTexture2D ( messageQueue );
+            break;
+
             case eMessageType::RenderFrame:
                 OnRenderFrame ( messageQueue );
             break;
@@ -614,15 +618,23 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
 
     AV_TRACE ( "Free texture 2D transfer resources" )
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
     for ( auto &texture2D : queue )
     {
         messageQueue.EnqueueBack (
             Message ( eMessageType::InvokeIO,
-                [ &renderer, texture2D = texture2D ] () noexcept -> void* {
+                [ &renderer, &resourceHeap, texture2D = texture2D ] () noexcept -> void* {
+                    if ( texture2D->_sampledIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_sampledIndex );
+
+                    if ( texture2D->_storageIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_storageIndex );
+
                     android_vulkan::Texture2D &t = texture2D->_resource;
                     AV_TRACE ( "Free texture 2D resource (%s)", t.GetName ().c_str () );
                     t.FreeTransferResources ( renderer );
+
                     return nullptr;
                 }
             )
@@ -1009,6 +1021,13 @@ void RenderSession::OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&me
     ++_streamBufferStorage._count;
     auto &info = *static_cast<StreamBufferInfo*> ( message._action () );
     info._notify ( std::move ( info._buffer ) );
+}
+
+void RenderSession::OnNewTexture2D ( MessageQueue& messageQueue ) noexcept
+{
+    AV_TRACE ( "New texture 2D" )
+    messageQueue.DequeueEnd ();
+    ++_texture2DStorage._count;
 }
 
 void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept

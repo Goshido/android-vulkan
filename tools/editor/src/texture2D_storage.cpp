@@ -63,7 +63,7 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             return nullptr;
         }
 
-        auto const idx = ResourceHeap::Instance ().RegisterNonUISampledImage ( renderer.GetDevice (),
+        auto idx = ResourceHeap::Instance ().RegisterNonUISampledImage ( renderer.GetDevice (),
             resource.GetImageView ()
         );
 
@@ -73,7 +73,7 @@ void Texture2DStorage::Load ( std::string_view asset, Texture2DLoadResult &&resu
             return nullptr;
         }
 
-        texture->_heapIndex = *idx;
+        texture->_sampledIndex = std::move ( idx );
 
         auto uploadResult = [ this, &messageQueue, path ] ( std::optional<Texture2DRef> &&texture ) mutable noexcept {
             AV_TRACE ( "Upload done %s", path.c_str () )
@@ -154,8 +154,6 @@ void Texture2DStorage::Unload ( Texture2DRef &&texture ) noexcept
 
         if ( --findResult->second._references > 0U )
             return nullptr;
-
-        ResourceHeap::Instance ().UnregisterResource ( texture->_heapIndex );
 
         messageQueue.EnqueueBack (
             Message ( eMessageType::DestroyTexture2D,

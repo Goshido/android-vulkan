@@ -16,6 +16,7 @@ class StaticMeshComponent final : public Component
         MeshNode                                _gbufferNode {};
         MeshNode                                _outlineNode {};
         PBRMaterial                             _material {};
+        bool                                    _selected = false;
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";
@@ -37,6 +38,8 @@ class StaticMeshComponent final : public Component
     private:
         void Register ( Actor &actor ) noexcept override;
         void Unregister () noexcept override;
+        void Select () noexcept override;
+        void Deselect () noexcept override;
         void ActorTransformChanged () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
 

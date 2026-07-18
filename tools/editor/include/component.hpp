@@ -63,6 +63,9 @@ class Component
         // Method must be called in derived class
         virtual void Unregister () noexcept;
 
+        virtual void Select () noexcept;
+        virtual void Deselect () noexcept;
+
         virtual void ActorTransformChanged () noexcept;
         virtual void Save ( SaveState::Container &root ) const noexcept;
 

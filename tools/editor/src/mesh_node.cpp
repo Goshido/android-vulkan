@@ -7,13 +7,16 @@ namespace editor {
 
 MeshNode::MeshNode ( MeshNode &&other ) noexcept
 {
-    std::ignore = other.TryLock ();
+    bool const myLock = TryLock ();
+    Disconnect ();
+
+    bool const otherLock = other.TryLock ();
 
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::exchange ( other._hasChanges, false );
 
-    _meshInfo = std::exchange ( other._meshInfo, nullptr );
-    _meshInfo->_node = this;
+    if ( _meshInfo = std::exchange ( other._meshInfo, nullptr ); _meshInfo )
+        _meshInfo->_node = this;
 
     _colors = std::exchange ( other._colors, {} );
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
@@ -22,19 +25,29 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
     _boundLocal = std::exchange ( other._boundLocal, {} );
     _id = std::exchange ( other._id, std::bit_cast<uint64_t> ( nullptr ) );
 
-    other.Unlock ();
+    if ( otherLock )
+        other.Unlock ();
+
+    if ( myLock )
+    {
+        Unlock ();
+    }
 }
 
 MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
 {
-    if ( this == &other || !other.TryLock () ) [[unlikely]]
+    if ( this == &other ) [[unlikely]]
         return *this;
 
+    bool const locked = TryLock ();
+    Disconnect ();
+
+    bool const otherLock = other.TryLock ();
     _workspace = std::exchange ( other._workspace, nullptr );
     _hasChanges = std::exchange ( other._hasChanges, false );
 
-    _meshInfo = std::exchange ( other._meshInfo, nullptr );
-    _meshInfo->_node = this;
+    if ( _meshInfo = std::exchange ( other._meshInfo, nullptr ); _meshInfo )
+        _meshInfo->_node = this;
 
     _colors = std::exchange ( other._colors, {} );
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
@@ -43,7 +56,12 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
     _boundLocal = std::exchange ( other._boundLocal, {} );
     _id = std::exchange ( other._id, std::bit_cast<uint64_t> ( nullptr ) );
 
-    other.Unlock ();
+    if ( otherLock )
+        other.Unlock ();
+
+    if ( locked )
+        Unlock ();
+
     return *this;
 }
 
@@ -56,26 +74,12 @@ MeshNode::MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept:
 
 MeshNode::~MeshNode () noexcept
 {
-    if ( !_workspace || !TryLock () ) [[unlikely]]
+    std::ignore = TryLock ();
+
+    if ( !_workspace )
         return;
 
-    switch ( _meshInfo->_material )
-    {
-        case eMaterial::Opaque:
-            _workspace->UnregisterOpaque ( *this );
-        break;
-
-        case eMaterial::Outline:
-            _workspace->UnregisterOutline ( *this );
-        break;
-
-        case eMaterial::Stipple:
-            _workspace->UnregisterStipple ( *this );
-        break;
-    }
-
-    _workspace = nullptr;
-    Unlock ();
+    Disconnect ();
 }
 
 void MeshNode::Commit ( uint32_t defaultAlbedo,
@@ -295,6 +299,27 @@ void MeshNode::SetID ( void const* id ) noexcept
     _hasChanges = true;
 
     Unlock ();
+}
+
+void MeshNode::Disconnect () noexcept
+{
+    if ( !_workspace )
+        return;
+
+    switch ( _meshInfo->_material )
+    {
+        case eMaterial::Opaque:
+            _workspace->UnregisterOpaque ( *this );
+        break;
+
+        case eMaterial::Outline:
+            _workspace->UnregisterOutline ( *this );
+        break;
+
+        case eMaterial::Stipple:
+            _workspace->UnregisterStipple ( *this );
+        break;
+    }
 }
 
 } // namespace editor

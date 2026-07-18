@@ -496,9 +496,25 @@ void Selection::CommitSelect () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeIO,
-            [ selection = std::move ( _lastSelection ) ]() noexcept -> void* {
-                // FUCK - process selection properly
-                android_vulkan::LogDebug ( ">>> Commit %zu", selection.size () );
+            [ this, selection = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
+                std::unordered_set<Actor*> selected {};
+                selected.insert ( selection.cbegin (), selection.cend () );
+
+                for ( Actor* actor : _items )
+                {
+                    if ( selected.contains ( actor ) )
+                    {
+                        selected.erase ( actor );
+                        continue;
+                    }
+
+                    actor->Deselect ();
+                }
+
+                for ( Actor* actor : selected )
+                    actor->Select ();
+
+                _items.swap ( selection );
                 return nullptr;
             }
         )

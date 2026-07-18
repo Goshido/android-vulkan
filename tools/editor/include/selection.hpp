@@ -69,8 +69,8 @@ class Selection final
         Buffer*                                     _counting = nullptr;
         Buffer*                                     _ready = nullptr;
 
-        std::vector<Actor const*>                   _lastSelection {};
-        std::deque<Actor const*>                    _items {};
+        std::vector<Actor*>                         _lastSelection {};
+        std::vector<Actor*>                         _items {};
         std::optional<Point>                        _begin = std::nullopt;
         std::optional<Rect>                         _area = std::nullopt;
 

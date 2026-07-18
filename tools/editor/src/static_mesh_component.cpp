@@ -68,13 +68,32 @@ StaticMeshComponent::~StaticMeshComponent () noexcept
 void StaticMeshComponent::Register ( Actor &actor ) noexcept
 {
     Component::Register ( actor );
+
+    if ( _selected )
+        Select ();
+
     JoinRendering ();
 }
 
 void StaticMeshComponent::Unregister () noexcept
 {
     QuitRendering ();
+
+    if ( _selected )
+        Deselect ();
+
     Component::Unregister ();
+}
+
+void StaticMeshComponent::Select () noexcept
+{
+    _outlineNode = Workspace::Instance ().RegisterOutline ( _mesh );
+    UpdateTransform ();
+}
+
+void StaticMeshComponent::Deselect () noexcept
+{
+    _outlineNode = {};
 }
 
 void StaticMeshComponent::ActorTransformChanged () noexcept
@@ -119,8 +138,8 @@ void StaticMeshComponent::JoinRendering () noexcept
     _gbufferNode.SetMaterial ( _material );
     _gbufferNode.SetID ( _actor );
 
-    if ( !_outlineNode.IsConnected () ) [[unlikely]]
-        _outlineNode = Workspace::Instance ().RegisterOutline ( _mesh );
+    if ( _selected )
+        Select ();
 
     UpdateTransform ();
 }
@@ -133,7 +152,9 @@ void StaticMeshComponent::QuitRendering () noexcept
 
 void StaticMeshComponent::UpdateTransform () noexcept
 {
-    if ( !_gbufferNode.IsConnected () ) [[unlikely]]
+    bool const hasOutline = _outlineNode.IsConnected ();
+
+    if ( !_gbufferNode.IsConnected () & !hasOutline ) [[unlikely]]
         return;
 
     GXMat4 parent {};
@@ -154,11 +175,14 @@ void StaticMeshComponent::UpdateTransform () noexcept
     GXMat4 transform {};
     transform.Multiply ( local, parent );
 
+    if ( hasOutline )
+    {
+        _outlineNode.SetLocal ( transform );
+        _outlineNode.SetBounds ( _mesh->GetBounds () );
+    }
+
     _gbufferNode.SetLocal ( transform );
     _gbufferNode.SetBounds ( _mesh->GetBounds () );
-
-    _outlineNode.SetLocal ( transform );
-    _outlineNode.SetBounds ( _mesh->GetBounds () );
 }
 
 } // namespace editor

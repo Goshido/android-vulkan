@@ -55,6 +55,16 @@ void Component::Unregister () noexcept
     _actor = nullptr;
 }
 
+void Component::Select () noexcept
+{
+    // NOTHING
+}
+
+void Component::Deselect () noexcept
+{
+    // NOTHING
+}
+
 void Component::ActorTransformChanged () noexcept
 {
     // NOTHING

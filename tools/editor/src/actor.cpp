@@ -73,6 +73,22 @@ void Actor::Insert ( size_t before, ComponentRef &&component ) noexcept
     c.ActorTransformChanged ();
 }
 
+void Actor::Select () noexcept
+{
+    for ( auto &component : _components )
+    {
+        component->Select ();
+    }
+}
+
+void Actor::Deselect () noexcept
+{
+    for ( auto &component : _components )
+    {
+        component->Deselect ();
+    }
+}
+
 ComponentRef Actor::Remove ( Component const &component ) noexcept
 {
     auto end = _components.end ();

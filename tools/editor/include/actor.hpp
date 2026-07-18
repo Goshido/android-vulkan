@@ -45,6 +45,9 @@ class Actor final
         void Append ( ComponentRef &&component ) noexcept;
         void Insert ( size_t before, ComponentRef &&component ) noexcept;
 
+        void Select () noexcept;
+        void Deselect () noexcept;
+
         // Method returns just removed component.
         [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
 

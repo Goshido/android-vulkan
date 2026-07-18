@@ -67,6 +67,9 @@ class MeshNode final : public WorkspaceNode
         void SetMaterial ( PBRMaterial const &material ) noexcept;
 
         void SetID ( void const* id ) noexcept;
+
+    private:
+        void Disconnect () noexcept;
 };
 
 } // namespace editor

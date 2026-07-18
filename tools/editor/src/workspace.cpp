@@ -490,7 +490,7 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
-[[nodiscard]] std::optional<uint32_t> Workspace::GetOutlineBlurX () noexcept
+std::optional<uint32_t> Workspace::GetOutlineBlurX () noexcept
 {
     if ( !IsReady () | _outlineVisible.empty () )
         return std::nullopt;
@@ -931,9 +931,11 @@ void Workspace::FreeIDMask () noexcept
 
 void Workspace::FUCK () noexcept
 {
+    _history.Begin ();
+
     ActorRef actor = std::make_unique<Actor> ();
-    actor->SetName ( "FUCK" );
-    Actor &a = *actor;
+    actor->SetName ( "Full" );
+    Actor &a0 = *actor;
 
     ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
         "../editor-assets/textures/sonic-material-1-diffuse.png"
@@ -952,12 +954,57 @@ void Workspace::FUCK () noexcept
     );
 
     mesh3->SetName ( "mesh #3" );
+    a0.SetLocation ( GXVec3 ( -1.2F, -1.0F, 3.0F ) );
 
-    _history.Begin ();
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh1 ) ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh2 ) ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a, std::move ( mesh3 ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh1 ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh2 ) ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh3 ) ) );
+
+    actor = std::make_unique<Actor> ();
+    actor->SetName ( "Part #1" );
+    Actor &a1 = *actor;
+
+    mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
+        "../editor-assets/textures/sonic-material-1-diffuse.png"
+    );
+
+    mesh1->SetName ( "mesh #1" );
+
+    constexpr GXVec3 parts ( 1.2F, -1.0F, 3.0F );
+    a1.SetLocation ( parts );
+
+    _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a1, std::move ( mesh1 ) ) );
+
+    actor = std::make_unique<Actor> ();
+    actor->SetName ( "Part #2" );
+    Actor &a2 = *actor;
+
+    mesh2 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-2.mesh2",
+        "../editor-assets/textures/sonic-material-2-diffuse.png"
+    );
+
+    mesh2->SetName ( "mesh #2" );
+    a2.SetLocation ( parts );
+
+    _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a2, std::move ( mesh2 ) ) );
+
+    actor = std::make_unique<Actor> ();
+    actor->SetName ( "Part #3" );
+    Actor &a3 = *actor;
+
+    mesh3 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-3.mesh2",
+        "../editor-assets/textures/sonic-material-3-diffuse.png"
+    );
+
+    mesh3->SetName ( "mesh #3" );
+    a3.SetLocation ( parts );
+
+    _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
+    _history.Append ( std::make_unique<AppendComponentAction> ( a3, std::move ( mesh3 ) ) );
+
     _history.End ();
 }
 

@@ -68,14 +68,12 @@ class ViewportWidget final : public Widget
         VkExtent2D              _resolution {};
         std::vector<float>      _lineHeights = { 0.0F };
         GXQuat                  _orientation = GXQuat::IDENTITY;
-
-        // FUCK - must be GXVec3::ZERO
-        GXVec3                  _position { 0.0F, 1.0F, -3.0F };
+        GXVec3                  _position = GXVec3::ZERO;
 
         Mouse                   _mouseNow {};
         Mouse                   _mouseCommit {};
         size_t                  _eventID = 0U;
-        GXVec2                  _eulerAngles { 0.0F, 0.0F };
+        GXVec2                  _eulerAngles = GXVec2::ZERO;
         eNavigationMode         _navigationMode = eNavigationMode::None;
         State                   _state {};
 

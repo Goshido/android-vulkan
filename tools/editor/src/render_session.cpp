@@ -395,7 +395,7 @@ void RenderSession::EventLoop () noexcept
             break;
 
             case eMessageType::NewTexture2D:
-                OnNewTexture2D ( messageQueue );
+                OnNewTexture2D ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::RenderFrame:
@@ -1023,11 +1023,11 @@ void RenderSession::OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&me
     info._notify ( std::move ( info._buffer ) );
 }
 
-void RenderSession::OnNewTexture2D ( MessageQueue& messageQueue ) noexcept
+void RenderSession::OnNewTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "New texture 2D" )
     messageQueue.DequeueEnd ();
-    ++_texture2DStorage._count;
+    _texture2DStorage._count += std::bit_cast<size_t> ( message._action () );
 }
 
 void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept

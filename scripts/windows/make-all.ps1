@@ -178,6 +178,10 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\id_compress.cs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_blur_x.cs.hlsl"                                                                   `
+    "$WINDOWS_SHADER_DIRECTORY\outline_blur_x.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\outline_border.cs.hlsl"                                                                   `
     "$WINDOWS_SHADER_DIRECTORY\outline_border.cs.spv"
 

@@ -630,7 +630,7 @@ class RenderSession final
         void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnNewTexture2D ( MessageQueue &messageQueue ) noexcept;
+        void OnNewTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnRenderFrame ( MessageQueue &messageQueue ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
         void OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept;

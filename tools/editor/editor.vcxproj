@@ -902,6 +902,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_blur_x_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_border_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
@@ -1275,6 +1285,7 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_with_id_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_blur_x_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_mask_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\present_pass.hpp" />

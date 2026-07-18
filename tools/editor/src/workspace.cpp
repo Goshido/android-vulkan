@@ -179,6 +179,17 @@ void Workspace::Destroy () noexcept
         );
     }
 
+    if ( _outlineBlurXProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _outlineBlurXProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
     if ( _outlineBorderProgram ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
@@ -458,14 +469,24 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     _depInfo.pImageMemoryBarriers = _outlineBarrier1;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
-    pbr::OutlineBorderProgram &borderProgram = *_outlineBorderProgram;
-    borderProgram.Bind ( commandBuffer );
-    borderProgram.SetPushConstants ( commandBuffer, &_outlineBorderPushConstants );
+    pbr::OutlineBorderProgram &border = *_outlineBorderProgram;
+    border.Bind ( commandBuffer );
+    border.SetPushConstants ( commandBuffer, &_outlineBorderPushConstants );
 
-    vkCmdDispatch ( commandBuffer, _borderDispatch.width, _borderDispatch.height, _borderDispatch.depth );
+    vkCmdDispatch ( commandBuffer, _outlineDispatch.width, _outlineDispatch.height, _outlineDispatch.depth );
+
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _outlineBarrier2 ) );
+    _depInfo.pImageMemoryBarriers = _outlineBarrier2;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    pbr::OutlineBlurXProgram &blur = *_outlineBlurXProgram;
+    blur.Bind ( commandBuffer );
+    blur.SetPushConstants ( commandBuffer, &_outlineBlurXPushConstants );
+
+    vkCmdDispatch ( commandBuffer, _outlineDispatch.width, _outlineDispatch.height, _outlineDispatch.depth );
 
     _depInfo.imageMemoryBarrierCount = 1U;
-    _depInfo.pImageMemoryBarriers = &_borderBarrier;
+    _depInfo.pImageMemoryBarriers = &_blurXBarrier;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
@@ -484,7 +505,8 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     resolution = renderer.GetViewportResolution ();
     _outlineBorderPushConstants._resolution = resolution;
-    _borderDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
+    _outlineBlurXPushConstants._resolution = resolution;
+    _outlineDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
 
     _idMask = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &idMask = _idMask->_resource;
@@ -494,6 +516,9 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     _border = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &border = _border->_resource;
+
+    _blurX = std::make_shared<Texture2D> ();
+    android_vulkan::Texture2D &blurX = _blurX->_resource;
 
     bool const status =
         idMask.CreateRenderTarget ( resolution,
@@ -512,6 +537,12 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
             VK_FORMAT_R8_UNORM,
             AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
             renderer
+        ) &&
+
+        blurX.CreateRenderTarget ( resolution,
+            VK_FORMAT_R8_UNORM,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+            renderer
         );
 
     if ( !status ) [[unlikely]]
@@ -521,9 +552,13 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     }
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
-    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
-    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
-    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D ) );
+
+    messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D,
+            [] () noexcept -> void* {
+                return std::bit_cast<void*> ( 4UZ );
+            }
+        )
+    );
 
     _idViewport =
     {
@@ -537,14 +572,19 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     GXVec2 alpha ( 1.0F / _idViewport.width, 1.0F / _idViewport.height );
     _outlineBorderPushConstants._invResolution = alpha;
+    _outlineBlurXPushConstants._invResolution = alpha;
 
     alpha.Multiply ( alpha, 0.5F );
+    GXVec2 neg ( alpha );
+    neg.Reverse ();
 
-    _outlineBorderPushConstants._halfPixelMove = GXVec4 ( -alpha._data[ 0U ],
-        -alpha._data[ 1U ],
+    _outlineBorderPushConstants._halfPixelMove = GXVec4 ( neg._data[ 0U ],
+        neg._data[ 1U ],
         alpha._data[ 0U ],
         alpha._data[ 1U ]
     );
+
+    _outlineBlurXPushConstants._halfPixelMove = neg;
 
     VkDevice device = renderer.GetDevice ();
     VkImage mask = idMask.GetImage ();
@@ -572,7 +612,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     AV_SET_VULKAN_OBJECT_NAME ( device, borderImage, VK_OBJECT_TYPE_IMAGE, "Border" )
     AV_SET_VULKAN_OBJECT_NAME ( device, borderView, VK_OBJECT_TYPE_IMAGE_VIEW, "Border" )
     _outlineBarrier1[ 1U ].image = borderImage;
-    _borderBarrier.image = borderImage;
+    _outlineBarrier2[ 0U ].image = borderImage;
     idx = resourceHeap.RegisterStorageImage ( device, borderView );
 
     if ( !idx )
@@ -592,7 +632,35 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
         return;
     }
 
+    _outlineBlurXPushConstants._border = *idx;
     _border->_sampledIndex = std::move ( idx );
+
+    VkImage blurXImage = blurX.GetImage ();
+    VkImageView blurXView = blurX.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, blurXImage, VK_OBJECT_TYPE_IMAGE, "Blur X" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, blurXView, VK_OBJECT_TYPE_IMAGE_VIEW, "Blur X" )
+    _outlineBarrier2[ 1U ].image = blurXImage;
+    _blurXBarrier.image = blurXImage;
+    idx = resourceHeap.RegisterStorageImage ( device, blurXView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _outlineBlurXPushConstants._blurX = *idx;
+    _blurX->_storageIndex = std::move ( idx );
+
+    idx = resourceHeap.RegisterNonUISampledImage ( device, blurXView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _blurX->_sampledIndex = std::move ( idx );
 
     VkImage depth = idDepth.GetImage ();
     VkImageView depthView = idDepth.GetImageView ();
@@ -833,13 +901,25 @@ void Workspace::FreeIDMask () noexcept
         );
     }
 
-    if ( !_border ) [[unlikely]]
+    if ( _border ) [[likely]]
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyTexture2D,
+
+                [ texture = std::move ( _border ) ] () mutable noexcept -> void* {
+                    return &texture;
+                }
+            )
+        );
+    }
+
+    if ( !_blurX ) [[unlikely]]
         return;
 
     messageQueue.EnqueueBack (
         Message ( eMessageType::DestroyTexture2D,
 
-            [ texture = std::move ( _border ) ] () mutable noexcept -> void* {
+            [ texture = std::move ( _blurX ) ] () mutable noexcept -> void* {
                 return &texture;
             }
         )
@@ -1120,6 +1200,7 @@ bool Workspace::IsReady () noexcept
     _ready = static_cast<bool> ( _viewport ) &
         static_cast<bool> ( _opaqueProgram ) &
         static_cast<bool> ( _opaqueWithIDProgram ) &
+        static_cast<bool> ( _outlineBlurXProgram ) &
         static_cast<bool> ( _outlineBorderProgram ) &
         static_cast<bool> ( _outlineMaskProgram ) &
         static_cast<bool> ( _frameStream ) &
@@ -1135,6 +1216,7 @@ bool Workspace::IsReady () noexcept
         ( static_cast<bool> ( _idDepth ) && _idDepth->_resource.IsInit () ) &
         ( static_cast<bool> ( _idMask ) && _idMask->_resource.IsInit () ) &
         ( static_cast<bool> ( _border ) && _border->_resource.IsInit () ) &
+        ( static_cast<bool> ( _blurX ) && _blurX->_resource.IsInit () ) &
         ( _opaqueVisible.capacity () > 0U ) &
         ( _stippleVisible.capacity () > 0U ) &
         ( _outlineVisible.capacity () > 0U ) &
@@ -1203,6 +1285,30 @@ void Workspace::InitGraphicsResources () noexcept
                         [
                             info = ProgramInfo ( std::unique_ptr<pbr::Program> ( opaqueWithIDProgram.release () ),
                                 std::move ( opaqueWithIDProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                auto outlineBlurProgram = std::make_unique<pbr::OutlineBlurXProgram> ();
+
+                if ( !outlineBlurProgram->Init ( device, nullptr ) ) [[unlikely]]
+                    return nullptr;
+
+                auto outlineBlurXProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _outlineBlurXProgram = std::unique_ptr<pbr::OutlineBlurXProgram> (
+                        static_cast<pbr::OutlineBlurXProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( outlineBlurProgram.release () ),
+                                std::move ( outlineBlurXProgramReady )
                             )
                         ] () mutable noexcept -> void* {
                             return &info;

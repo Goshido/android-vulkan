@@ -435,6 +435,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_border_program.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_blur_x_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -948,6 +951,9 @@
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_blur_x_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>

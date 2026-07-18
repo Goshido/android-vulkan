@@ -1135,8 +1135,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
         _presentRenderPass.Begin ( renderer, commandBuffer );
-        _toneMapper.Execute ( commandBuffer );
-        _workspace.ApplyOutline ( commandBuffer );
+        _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
         _workspace.DrawGizmo ( commandBuffer );
 
         if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]

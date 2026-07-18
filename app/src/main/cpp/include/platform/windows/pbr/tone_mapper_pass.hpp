@@ -27,7 +27,7 @@ class ToneMapperPass final
         ~ToneMapperPass () = default;
 
         void Destroy ( VkDevice device ) noexcept;
-        void Execute ( VkCommandBuffer commandBuffer ) noexcept;
+        void Execute ( VkCommandBuffer commandBuffer, std::optional<uint32_t> &&outlineBlurX ) noexcept;
         [[nodiscard]] bool SetBrightness ( android_vulkan::Renderer const &renderer, float brightnessBalance ) noexcept;
 
         [[nodiscard]] bool SetTarget ( android_vulkan::Renderer const &renderer,

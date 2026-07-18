@@ -17,10 +17,13 @@ class ToneMapperProgram final : public GraphicsProgram
 
         struct PushConstants final
         {
-            uint32_t                        _exposure;
-            uint32_t                        _hdrImage;
-            GXVec2                          _transformRow0;
-            GXVec2                          _transformRow1;
+            [[maybe_unused]] uint32_t       _exposure;
+            [[maybe_unused]] uint32_t       _hdrImage;
+            [[maybe_unused]] uint32_t       _outlineBlurX;
+            [[maybe_unused]] GXVec2         _resolution;
+            [[maybe_unused]] GXVec2         _halfPixelMove;
+            [[maybe_unused]] GXVec2         _transformRow0;
+            [[maybe_unused]] GXVec2         _transformRow1;
         };
 
         AV_DX_ALIGNMENT_END

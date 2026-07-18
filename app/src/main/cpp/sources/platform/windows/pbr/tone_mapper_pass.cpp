@@ -10,10 +10,11 @@ void ToneMapperPass::Destroy ( VkDevice device ) noexcept
     _program.Destroy ( device );
 }
 
-void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer ) noexcept
+void ToneMapperPass::Execute ( VkCommandBuffer commandBuffer, std::optional<uint32_t> &&outlineBlurX ) noexcept
 {
     AV_VULKAN_GROUP ( commandBuffer, "Tone mapping" )
     _program.Bind ( commandBuffer );
+    _pushConstants._outlineBlurX = outlineBlurX ? *outlineBlurX : 0U;
     _program.SetPushConstants ( commandBuffer, &_pushConstants );
     vkCmdDraw ( commandBuffer, 3U, 1U, 0U, 0U );
 }
@@ -39,20 +40,25 @@ bool ToneMapperPass::SetTarget ( android_vulkan::Renderer const &renderer,
 
     _pushConstants._exposure = exposure;
     _pushConstants._hdrImage = hdrImage;
+    _pushConstants._outlineBlurX = 0U;
     UpdateTransform ( renderer );
     return true;
 }
 
-bool ToneMapperPass::RecreateProgram ( android_vulkan::Renderer const& renderer ) noexcept
+bool ToneMapperPass::RecreateProgram ( android_vulkan::Renderer const &renderer ) noexcept
 {
     VkDevice device = renderer.GetDevice ();
     _program.Destroy ( device );
 
-    return _program.Init ( device,
-        renderer.GetSurfaceFormat (),
-        _brightnessInfo,
-        renderer.GetSurfaceSize ()
-    );
+    VkExtent2D const &r = renderer.GetSurfaceSize ();
+    GXVec2 &resolution = _pushConstants._resolution;
+    resolution = GXVec2 ( static_cast<float> ( r.width ), static_cast<float> ( r.height ) );
+
+    GXVec2 &halfPixelMove = _pushConstants._halfPixelMove;
+    halfPixelMove = GXVec2 ( 1.0F / resolution._data[ 0U ], 1.0F / resolution._data[ 1U ] );
+    halfPixelMove.Multiply ( halfPixelMove, 0.5F );
+
+    return _program.Init ( device, renderer.GetSurfaceFormat (), _brightnessInfo, r );
 }
 
 void ToneMapperPass::UpdateTransform ( android_vulkan::Renderer const &renderer ) noexcept

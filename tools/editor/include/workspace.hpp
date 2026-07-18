@@ -403,7 +403,7 @@ class Workspace final
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
 
         void DrawOutline ( VkCommandBuffer commandBuffer ) noexcept;
-        void ApplyOutline ( VkCommandBuffer commandBuffer ) noexcept;
+        [[nodiscard]] std::optional<uint32_t> GetOutlineBlurX () noexcept;
 
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 

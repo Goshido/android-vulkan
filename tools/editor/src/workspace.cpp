@@ -490,9 +490,12 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
-void Workspace::ApplyOutline ( VkCommandBuffer /*commandBuffer*/ ) noexcept
+[[nodiscard]] std::optional<uint32_t> Workspace::GetOutlineBlurX () noexcept
 {
-    _frameInstance = std::nullopt;
+    if ( !IsReady () | _outlineVisible.empty () )
+        return std::nullopt;
+
+    return std::optional<uint32_t> ( _blurX->_sampledIndex );
 }
 
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept

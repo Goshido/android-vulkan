@@ -1,11 +1,11 @@
 #include <precompiled_headers.hpp>
-#include <mesh_node.hpp>
+#include <gbuffer_mesh_node.hpp>
 #include <workspace.hpp>
 
 
 namespace editor {
 
-MeshNode::MeshNode ( MeshNode &&other ) noexcept
+GBufferMeshNode::GBufferMeshNode ( GBufferMeshNode &&other ) noexcept
 {
     bool const myLock = TryLock ();
     Disconnect ();
@@ -18,6 +18,7 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
     if ( _meshInfo = std::exchange ( other._meshInfo, nullptr ); _meshInfo )
         _meshInfo->_node = this;
 
+    _material = std::exchange ( other._material, {} );
     _colors = std::exchange ( other._colors, {} );
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
     _location = std::exchange ( other._location, GXVec3::ZERO );
@@ -34,7 +35,7 @@ MeshNode::MeshNode ( MeshNode &&other ) noexcept
     }
 }
 
-MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
+GBufferMeshNode &GBufferMeshNode::operator = ( GBufferMeshNode &&other ) noexcept
 {
     if ( this == &other ) [[unlikely]]
         return *this;
@@ -49,6 +50,7 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
     if ( _meshInfo = std::exchange ( other._meshInfo, nullptr ); _meshInfo )
         _meshInfo->_node = this;
 
+    _material = std::exchange ( other._material, {} );
     _colors = std::exchange ( other._colors, {} );
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
     _location = std::exchange ( other._location, GXVec3::ZERO );
@@ -65,34 +67,30 @@ MeshNode &MeshNode::operator = ( MeshNode &&other ) noexcept
     return *this;
 }
 
-MeshNode::MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept:
+GBufferMeshNode::GBufferMeshNode ( Workspace &workspace, GBufferMeshInfo &meshInfo ) noexcept:
     WorkspaceNode ( workspace ),
     _meshInfo ( &meshInfo )
 {
     meshInfo._node = this;
 }
 
-MeshNode::~MeshNode () noexcept
+GBufferMeshNode::~GBufferMeshNode () noexcept
 {
     std::ignore = TryLock ();
-
-    if ( !_workspace )
-        return;
-
     Disconnect ();
 }
 
-void MeshNode::Commit ( uint32_t defaultAlbedo,
+void GBufferMeshNode::Commit ( uint32_t defaultAlbedo,
     uint32_t defaultEmission,
     uint32_t defaultMask,
     uint32_t defaultParam,
     uint32_t defaultNormal
 ) noexcept
 {
-    MeshInfo &meshInfo = *_meshInfo;
-
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
+
+    GBufferMeshInfo &meshInfo = *_meshInfo;
 
     GXMat4 local {};
     local.FromFast ( _rotation, _location );
@@ -113,7 +111,7 @@ void MeshNode::Commit ( uint32_t defaultAlbedo,
             ._x = x,
             ._y = y,
             ._z = z,
-            ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] ),
+            ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] )
         },
 
         ._normal = _rotation.ToTBN64 ()
@@ -136,7 +134,7 @@ void MeshNode::Commit ( uint32_t defaultAlbedo,
     Unlock ();
 }
 
-void MeshNode::SetColor ( GXColorUNORM color0,
+void GBufferMeshNode::SetColor ( GXColorUNORM color0,
     GXColorUNORM color1,
     GXColorUNORM color2,
     GXColorUNORM emission,
@@ -171,7 +169,7 @@ void MeshNode::SetColor ( GXColorUNORM color0,
     Unlock ();
 }
 
-void MeshNode::SetRotation ( GXQuat const &rotation ) noexcept
+void GBufferMeshNode::SetRotation ( GXQuat const &rotation ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -182,7 +180,7 @@ void MeshNode::SetRotation ( GXQuat const &rotation ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetRotation ( GXMat3 const &rotation ) noexcept
+void GBufferMeshNode::SetRotation ( GXMat3 const &rotation ) noexcept
 {
     GXQuat const r ( rotation );
 
@@ -195,7 +193,7 @@ void MeshNode::SetRotation ( GXMat3 const &rotation ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetRotation ( GXMat4 const &rotation ) noexcept
+void GBufferMeshNode::SetRotation ( GXMat4 const &rotation ) noexcept
 {
     GXQuat const r ( rotation );
 
@@ -208,7 +206,7 @@ void MeshNode::SetRotation ( GXMat4 const &rotation ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetLocation ( GXVec3 const &location ) noexcept
+void GBufferMeshNode::SetLocation ( GXVec3 const &location ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -219,7 +217,7 @@ void MeshNode::SetLocation ( GXVec3 const &location ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetScale ( GXVec3 const &scale ) noexcept
+void GBufferMeshNode::SetScale ( GXVec3 const &scale ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -230,7 +228,7 @@ void MeshNode::SetScale ( GXVec3 const &scale ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
+void GBufferMeshNode::SetLocal ( GXMat4 const &local ) noexcept
 {
     GXQuat const r ( local );
 
@@ -248,7 +246,7 @@ void MeshNode::SetLocal ( GXMat4 const &local ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept
+void GBufferMeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -260,7 +258,7 @@ void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexc
     Unlock ();
 }
 
-void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept
+void GBufferMeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -273,13 +271,13 @@ void MeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3
     Unlock ();
 }
 
-void MeshNode::SetBounds ( GXAABB const &boundLocal ) noexcept
+void GBufferMeshNode::SetBounds ( GXAABB const &boundLocal ) noexcept
 {
     _boundLocal = boundLocal;
     _hasChanges = true;
 }
 
-void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
+void GBufferMeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -290,7 +288,7 @@ void MeshNode::SetMaterial ( PBRMaterial const &material ) noexcept
     Unlock ();
 }
 
-void MeshNode::SetID ( void const* id ) noexcept
+void GBufferMeshNode::SetID ( void const* id ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;
@@ -301,7 +299,7 @@ void MeshNode::SetID ( void const* id ) noexcept
     Unlock ();
 }
 
-void MeshNode::Disconnect () noexcept
+void GBufferMeshNode::Disconnect () noexcept
 {
     if ( !_workspace )
         return;
@@ -310,10 +308,6 @@ void MeshNode::Disconnect () noexcept
     {
         case eMaterial::Opaque:
             _workspace->UnregisterOpaque ( *this );
-        break;
-
-        case eMaterial::Outline:
-            _workspace->UnregisterOutline ( *this );
         break;
 
         case eMaterial::Stipple:

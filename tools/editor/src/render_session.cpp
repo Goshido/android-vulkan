@@ -1111,7 +1111,6 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     resourceHeap.Bind ( commandBuffer );
-    resourceHeap.UploadGPUData ( commandBuffer );
 
     if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
     {
@@ -1122,6 +1121,9 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _uiManager.Submit ( renderer, _uiPass );
     _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
+
+    resourceHeap.UploadGPUData ( commandBuffer );
+
     _workspace.PrepareIDBuffer ( commandBuffer );
     _workspace.DrawOutline ( commandBuffer );
 

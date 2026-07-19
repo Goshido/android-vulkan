@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <logger.hpp>
 #include <native_renderer.hpp>
 #include <program_info.hpp>
 #include <resource_heap.hpp>
@@ -300,6 +299,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 
 void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
+    AV_TRACE ( "Recreating selection resources" )
     pbr::IDCollectProgram::PushConstants &collectPushConstants = _collectPushConstants;
     pbr::IDCompressProgram::PushConstants &compressPushConstants = _compressPushConstants;
     collectPushConstants._idImage = idResourceIdx;
@@ -497,6 +497,7 @@ void Selection::CommitSelect () noexcept
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeIO,
             [ this, selection = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
+                AV_TRACE ( "Process new selection" )
                 std::unordered_set<Actor*> selected {};
                 selected.insert ( selection.cbegin (), selection.cend () );
 

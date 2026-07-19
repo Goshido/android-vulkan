@@ -3,8 +3,9 @@
 
 
 #include "component.hpp"
+#include "gbuffer_mesh_node.hpp"
 #include "mesh_geometry_ref.hpp"
-#include "mesh_node.hpp"
+#include "outline_mesh_node.hpp"
 
 
 namespace editor {
@@ -13,8 +14,8 @@ class StaticMeshComponent final : public Component
 {
     private:
         MeshGeometryRef                         _mesh {};
-        MeshNode                                _gbufferNode {};
-        MeshNode                                _outlineNode {};
+        GBufferMeshNode                         _gbufferNode {};
+        OutlineMeshNode                         _outlineNode {};
         PBRMaterial                             _material {};
         bool                                    _selected = false;
 

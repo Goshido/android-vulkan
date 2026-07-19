@@ -1,8 +1,8 @@
-#ifndef EDITOR_MESH_NODE_HPP
-#define EDITOR_MESH_NODE_HPP
+#ifndef EDITOR_GBUFFER_MESH_NODE_HPP
+#define EDITOR_GBUFFER_MESH_NODE_HPP
 
 
-#include "mesh_info.hpp"
+#include "gbuffer_mesh_info.hpp"
 #include "pbr_material.hpp"
 #include "workspace_node.hpp"
 
@@ -11,32 +11,32 @@ namespace editor {
 
 class Workspace;
 
-class MeshNode final : public WorkspaceNode
+class GBufferMeshNode final : public WorkspaceNode
 {
     friend class Workspace;
 
     private:
-        MeshInfo*       _meshInfo = nullptr;
-        PBRMaterial     _material {};
-        ColorData       _colors {};
-        GXQuat          _rotation {};
-        GXVec3          _location {};
-        GXVec3          _scale {};
-        GXAABB          _boundLocal {};
-        uint64_t        _id = std::bit_cast<uint64_t> ( nullptr );
+        GBufferMeshInfo*    _meshInfo = nullptr;
+        PBRMaterial         _material {};
+        ColorData           _colors {};
+        GXQuat              _rotation {};
+        GXVec3              _location {};
+        GXVec3              _scale {};
+        GXAABB              _boundLocal {};
+        uint64_t            _id = std::bit_cast<uint64_t> ( nullptr );
 
     public:
-        MeshNode () = default;
+        GBufferMeshNode () = default;
 
-        MeshNode ( MeshNode const & ) = delete;
-        MeshNode &operator = ( MeshNode const & ) = delete;
+        GBufferMeshNode ( GBufferMeshNode const & ) = delete;
+        GBufferMeshNode &operator = ( GBufferMeshNode const & ) = delete;
 
-        MeshNode ( MeshNode &&other ) noexcept;
-        MeshNode &operator = ( MeshNode &&other ) noexcept;
+        GBufferMeshNode ( GBufferMeshNode &&other ) noexcept;
+        GBufferMeshNode &operator = ( GBufferMeshNode &&other ) noexcept;
 
-        explicit MeshNode ( Workspace &workspace, MeshInfo &meshInfo ) noexcept;
+        explicit GBufferMeshNode ( Workspace &workspace, GBufferMeshInfo &meshInfo ) noexcept;
 
-        ~MeshNode () noexcept override;
+        ~GBufferMeshNode () noexcept override;
 
         void Commit ( uint32_t defaultAlbedo,
             uint32_t defaultEmission,
@@ -75,4 +75,4 @@ class MeshNode final : public WorkspaceNode
 } // namespace editor
 
 
-#endif // EDITOR_MESH_NODE_HPP
+#endif // EDITOR_GBUFFER_MESH_NODE_HPP

@@ -2,11 +2,11 @@
 #define EDITOR_WORKSPACE_HPP
 
 
+#include "gbuffer_mesh_node.hpp"
 #include "gizmo_node.hpp"
 #include "history.hpp"
 #include "mesh_geometry_ref.hpp"
-#include "mesh_info.hpp"
-#include "mesh_node.hpp"
+#include "outline_mesh_node.hpp"
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include <platform/windows/pbr/outline_blur_x_program.hpp>
@@ -27,9 +27,13 @@ class Workspace final
     private:
         constexpr static size_t WORKERS = 4U;
 
-        using Meshes = std::deque<MeshInfo*>;
-        using MeshQueue = std::unordered_map<MeshGeometryRef, Meshes>;
-        using MeshMap = std::unordered_map<MeshInfo const*, MeshGeometryRef::weak_type>;
+        using GBufferMeshes = std::deque<GBufferMeshInfo*>;
+        using GBufferMeshQueue = std::unordered_map<MeshGeometryRef, GBufferMeshes>;
+        using GBufferMeshMap = std::unordered_map<GBufferMeshInfo const*, MeshGeometryRef::weak_type>;
+
+        using OutlineMeshes = std::deque<OutlineMeshInfo*>;
+        using OutlineMeshQueue = std::unordered_map<MeshGeometryRef, OutlineMeshes>;
+        using OutlineMeshMap = std::unordered_map<OutlineMeshInfo const*, MeshGeometryRef::weak_type>;
 
         using Gizmos = std::deque<GizmoInfo*>;
         using GizmoQueue = std::unordered_map<MeshGeometryRef, Gizmos>;
@@ -50,16 +54,16 @@ class Workspace final
         Selection                                           _selection {};
         std::unordered_map<Actor const*, ActorRef>          _actors {};
 
-        MeshQueue                                           _opaqueQueue {};
-        MeshMap                                             _opaqueMap {};
+        GBufferMeshQueue                                    _opaqueQueue {};
+        GBufferMeshMap                                      _opaqueMap {};
         std::vector<MeshInstance>                           _opaqueVisible {};
 
-        MeshQueue                                           _stippleQueue {};
-        MeshMap                                             _stippleMap {};
+        GBufferMeshQueue                                    _stippleQueue {};
+        GBufferMeshMap                                      _stippleMap {};
         std::vector<MeshInstance>                           _stippleVisible {};
 
-        MeshQueue                                           _outlineQueue {};
-        MeshMap                                             _outlineMap {};
+        OutlineMeshQueue                                    _outlineQueue {};
+        OutlineMeshMap                                      _outlineMap {};
         std::vector<MeshInstance>                           _outlineVisible {};
 
         GizmoQueue                                          _gizmoQueue {};
@@ -107,6 +111,8 @@ class Workspace final
         Hotkey                                              _openWorkspace {};
         Hotkey                                              _saveWorkspace {};
         Hotkey                                              _saveAsWorkspace {};
+        Hotkey                                              _undo {};
+        Hotkey                                              _redo {};
 
         bool                                                _ready = false;
 
@@ -410,17 +416,17 @@ class Workspace final
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] Selection &GetSelection () noexcept;
 
-        [[nodiscard]] MeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
-        [[nodiscard]] MeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
-        [[nodiscard]] MeshNode RegisterOutline ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] GBufferMeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] GBufferMeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] OutlineMeshNode RegisterOutline ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] GizmoNode RegisterGizmo ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;
 
-        void UnregisterOpaque ( MeshNode &node ) noexcept;
-        void UnregisterStipple ( MeshNode &node ) noexcept;
-        void UnregisterOutline ( MeshNode &node ) noexcept;
+        void UnregisterOpaque ( GBufferMeshNode &node ) noexcept;
+        void UnregisterStipple ( GBufferMeshNode &node ) noexcept;
+        void UnregisterOutline ( OutlineMeshNode &node ) noexcept;
         void Unregister ( GizmoNode const &node ) noexcept;
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
@@ -447,13 +453,16 @@ class Workspace final
         void InitHotkeys () noexcept;
         void InitWidgets () noexcept;
 
-        [[nodiscard]] MeshNode RegisterMesh ( MeshGeometryRef &mesh,
-            MeshQueue &meshQueue,
-            MeshMap &meshMap,
-            MeshInfo &nodeMeshInfo
+        [[nodiscard]] GBufferMeshNode RegisterMesh ( MeshGeometryRef &mesh,
+            GBufferMeshQueue &meshQueue,
+            GBufferMeshMap &meshMap,
+            GBufferMeshInfo &nodeMeshInfo
         ) noexcept;
 
-        void UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo &nodeMeshInfo ) noexcept;
+        void UnregisterMesh ( GBufferMeshQueue &meshQueue,
+            GBufferMeshMap &meshMap,
+            GBufferMeshInfo &nodeMeshInfo
+        ) noexcept;
 };
 
 } // namespace editor

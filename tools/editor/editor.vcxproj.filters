@@ -330,7 +330,7 @@
     <ClCompile Include="src\workspace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\mesh_node.cpp">
+    <ClCompile Include="src\gbuffer_mesh_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\point_light_node.cpp">
@@ -437,6 +437,9 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_blur_x_program.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outline_mesh_node.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -809,7 +812,7 @@
     <ClInclude Include="include\workspace.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\mesh_node.hpp">
+    <ClInclude Include="include\gbuffer_mesh_node.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\texture2D_ref.hpp">
@@ -824,7 +827,7 @@
     <ClInclude Include="include\color_data.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\mesh_info.hpp">
+    <ClInclude Include="include\gbuffer_mesh_info.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\point_light_node.hpp">
@@ -955,6 +958,12 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_blur_x_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\outline_mesh_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\outline_mesh_node.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

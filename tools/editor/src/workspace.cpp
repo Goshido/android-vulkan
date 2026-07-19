@@ -153,6 +153,8 @@ void Workspace::Destroy () noexcept
     _openWorkspace = {};
     _saveWorkspace = {};
     _saveAsWorkspace = {};
+    _undo = {};
+    _redo = {};
 
     _history.Clear ();
     _actors.clear ();
@@ -321,6 +323,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         return;
 
     Frame frame{};
+    _frameInstance = std::nullopt;
     bool const pendingSelect = _selection.IsSelectionRequested ();
 
     {
@@ -686,37 +689,44 @@ Selection &Workspace::GetSelection () noexcept
     return _selection;
 }
 
-MeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
+GBufferMeshNode Workspace::RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept
 {
     AV_TRACE ( "Workspace register opaque mesh" )
 
     // This will also act as search key for unregister operation.
-    auto &m = *new MeshInfo;
+    auto &m = *new GBufferMeshInfo;
 
     m._material = eMaterial::Opaque;
     return RegisterMesh ( mesh, _opaqueQueue, _opaqueMap, m );
 }
 
-MeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
+GBufferMeshNode Workspace::RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept
 {
     AV_TRACE ( "Workspace register stipple mesh" )
 
     // This will also act as search key for unregister operation.
-    auto &m = *new MeshInfo;
+    auto &m = *new GBufferMeshInfo;
 
     m._material = eMaterial::Stipple;
     return RegisterMesh ( mesh, _stippleQueue, _stippleMap, m );
 }
 
-MeshNode Workspace::RegisterOutline ( MeshGeometryRef &mesh ) noexcept
+OutlineMeshNode Workspace::RegisterOutline ( MeshGeometryRef &mesh ) noexcept
 {
     AV_TRACE ( "Workspace register stipple mesh" )
 
     // This will also act as search key for unregister operation.
-    auto &m = *new MeshInfo;
+    auto* node = new OutlineMeshInfo;
 
-    m._material = eMaterial::Outline;
-    return RegisterMesh ( mesh, _outlineQueue, _outlineMap, m );
+    auto w = MeshGeometryRef::weak_type ( mesh );
+
+    {
+        std::lock_guard const lock ( _mutex );
+        _outlineQueue[ mesh ].push_back ( node );
+        _outlineMap[ node ] = std::move ( w );
+    }
+
+    return OutlineMeshNode ( *this, *node );
 }
 
 GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
@@ -777,25 +787,46 @@ ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
     return ReflectionProbeGlobalNode ( *this, node );
 }
 
-void Workspace::UnregisterOpaque ( MeshNode &node ) noexcept
+void Workspace::UnregisterOpaque ( GBufferMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
     node._workspace = nullptr;
     UnregisterMesh ( _opaqueQueue, _opaqueMap, *node._meshInfo );
 }
 
-void Workspace::UnregisterStipple ( MeshNode &node ) noexcept
+void Workspace::UnregisterStipple ( GBufferMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister stipple mesh" )
     node._workspace = nullptr;
     UnregisterMesh ( _stippleQueue, _stippleMap, *node._meshInfo );
 }
 
-void Workspace::UnregisterOutline ( MeshNode &node ) noexcept
+void Workspace::UnregisterOutline ( OutlineMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister outline" )
     node._workspace = nullptr;
-    UnregisterMesh ( _outlineQueue, _outlineMap, *node._meshInfo );
+    OutlineMeshInfo &nodeMeshInfo = *node._meshInfo;
+
+    std::lock_guard const lock ( _mutex );
+    auto const findResult = _outlineQueue.find ( _outlineMap.extract ( &nodeMeshInfo ).mapped ().lock () );
+    OutlineMeshes &meshes = findResult->second;
+
+    if ( meshes.size () == 1U )
+    {
+        AV_ASSERT ( meshes.front () == &nodeMeshInfo )
+        _outlineQueue.erase ( findResult );
+        return;
+    }
+
+    for ( auto &mesh : meshes )
+    {
+        if ( mesh != &nodeMeshInfo )
+            continue;
+
+        mesh = meshes.back ();
+        meshes.pop_back ();
+        return;
+    }
 }
 
 void Workspace::Unregister ( GizmoNode const &node ) noexcept
@@ -1010,6 +1041,8 @@ void Workspace::FUCK () noexcept
 
 void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept
 {
+    AV_TRACE ( "G-buffer only" )
+
     auto const traverse = [
         &shadingStream = *_shadingStream,
         &transformStream = *_transformStream,
@@ -1019,7 +1052,7 @@ void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frus
         defaultMask = *_defaultMask->_sampledIndex,
         defaultParam = *_defaultParam->_sampledIndex,
         defaultNormal = *_defaultNormal->_sampledIndex
-    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
+    ] ( GBufferMeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
         queueVisible.clear ();
 
         for ( auto const &instances : queue )
@@ -1056,6 +1089,7 @@ void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frus
 
 void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept
 {
+    AV_TRACE ( "G-buffer with ID" )
     _idStream->Commit ();
 
     auto const traverse = [
@@ -1068,7 +1102,7 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
         defaultMask = *_defaultMask->_sampledIndex,
         defaultParam = *_defaultParam->_sampledIndex,
         defaultNormal = *_defaultNormal->_sampledIndex
-    ] ( MeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
+    ] ( GBufferMeshQueue &queue, std::vector<MeshInstance> &queueVisible ) noexcept {
         queueVisible.clear ();
 
         for ( auto const &instances : queue )
@@ -1106,14 +1140,9 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
 
 void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept
 {
+    AV_TRACE ( "Outline" )
     pbr::StreamBuffer &stream = *_outlineStream;
     _outlineVisible.clear ();
-
-    uint32_t const defaultAlbedo = *_defaultAlbedo->_sampledIndex;
-    uint32_t const defaultEmission = *_defaultEmission->_sampledIndex;
-    uint32_t const defaultMask = *_defaultMask->_sampledIndex;
-    uint32_t const defaultParam = *_defaultParam->_sampledIndex;
-    uint32_t const defaultNormal = *_defaultNormal->_sampledIndex;
 
     for ( auto const &instances : _outlineQueue )
     {
@@ -1121,14 +1150,13 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
 
         for ( auto &mesh : instances.second )
         {
-            // FUCK - make own class
-            mesh->_node->Commit ( defaultAlbedo, defaultEmission, defaultMask, defaultParam, defaultNormal );
+            mesh->_node->Commit ();
 
             if ( !frustum.IsVisible ( mesh->_boundWorld ) )
                 continue;
 
             ++count;
-            stream.Push ( &mesh->_transform._model );
+            stream.Push ( &mesh->_model );
         }
 
         if ( !count ) [[unlikely]]
@@ -1600,6 +1628,26 @@ void Workspace::InitHotkeys () noexcept
             android_vulkan::LogDebug ( ">>> Save as" );
         }
     );
+
+    _undo = Hotkey ( eKey::KeyZ,
+        false,
+        true,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Undo" );
+        }
+    );
+
+    _redo = Hotkey ( eKey::KeyZ,
+        false,
+        true,
+        true,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Redo" );
+        }
+    );
 }
 
 void Workspace::InitWidgets () noexcept
@@ -1631,10 +1679,10 @@ void Workspace::InitWidgets () noexcept
     );
 }
 
-MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
-    MeshQueue &meshQueue,
-    MeshMap &meshMap,
-    MeshInfo &node
+GBufferMeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
+    GBufferMeshQueue &meshQueue,
+    GBufferMeshMap &meshMap,
+    GBufferMeshInfo &node
 ) noexcept
 {
     auto w = MeshGeometryRef::weak_type ( mesh );
@@ -1645,14 +1693,17 @@ MeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
         meshMap[ &node ] = std::move ( w );
     }
 
-    return MeshNode ( *this, node );
+    return GBufferMeshNode ( *this, node );
 }
 
-void Workspace::UnregisterMesh ( MeshQueue &meshQueue, MeshMap &meshMap, MeshInfo &nodeMeshInfo ) noexcept
+void Workspace::UnregisterMesh ( GBufferMeshQueue &meshQueue,
+    GBufferMeshMap &meshMap,
+    GBufferMeshInfo &nodeMeshInfo
+) noexcept
 {
     std::lock_guard const lock ( _mutex );
     auto const findResult = meshQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
-    Meshes &meshes = findResult->second;
+    GBufferMeshes &meshes = findResult->second;
 
     if ( meshes.size () == 1U )
     {

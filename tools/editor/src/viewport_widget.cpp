@@ -329,11 +329,23 @@ GXVec3 const &ViewportWidget::GetPosition () const noexcept
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 1U );
+
+    if ( _selectionMode )
+    {
+        UpdateSelectionMode ();
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+    }
 }
 
 void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 0U );
+
+    if ( _selectionMode )
+    {
+        UpdateSelectionMode ();
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+    }
 }
 
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
@@ -343,7 +355,10 @@ void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcep
     if ( event._key != eKey::LeftMouseButton )
         return;
 
-    Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._y );
+    constexpr Selection::eMode const cases[] = { Selection::eMode::New, Selection::eMode::Toggle };
+    _selectionMode = std::optional<Selection::eMode> ( cases[ static_cast<size_t> ( _state._ctrl | _state._shift ) ] );
+    Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+
     _selectionBody.Show ();
     UpdateSelection ( _mouseNow._x, _mouseNow._y, 0, 0 );
     CaptureMouse ();
@@ -353,14 +368,20 @@ void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcep
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
-    Workspace::Instance ().GetSelection ().End ( event._x, event._y, event._modifier.AnyShiftPressed () );
 
-    if ( event._key == eKey::LeftMouseButton )
+    if ( _selectionMode )
     {
-        ReleaseMouse ();
-        KillFocus ();
-        _selectionBody.Hide ();
+        UpdateSelectionMode ();
+        Workspace::Instance ().GetSelection ().End ( event._x, event._y, *_selectionMode );
+        _selectionMode = std::nullopt;
     }
+
+    if ( event._key != eKey::LeftMouseButton )
+        return;
+
+    ReleaseMouse ();
+    KillFocus ();
+    _selectionBody.Hide ();
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -376,8 +397,9 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         ._y = event._y
     };
 
-    if ( auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y ); rect ) [[unlikely]]
+    if ( _selectionMode )
     {
+        auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y, *_selectionMode );
         UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
     }
 }
@@ -465,6 +487,7 @@ void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8
 
     GX_ENABLE_WARNING ( 4061 )
 
+    _state._ctrl = static_cast<uint8_t> ( modifier.AnyCtrlPressed () );
     _state._shift = static_cast<uint8_t> ( modifier.AnyShiftPressed () );
     _state._alt = static_cast<uint8_t> ( modifier.AnyAltPressed () );
 }
@@ -510,6 +533,19 @@ void ViewportWidget::UpdateSelection ( int32_t left, int32_t top, int32_t width,
     css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( width ) );
     css._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( height ) );
     _selectionBody.Update ();
+}
+
+void ViewportWidget::UpdateSelectionMode () noexcept
+{
+    constexpr Selection::eMode const cases[] =
+    {
+        Selection::eMode::New,
+        Selection::eMode::Add,
+        Selection::eMode::Remove,
+        Selection::eMode::Add
+    };
+
+    *_selectionMode = cases[ static_cast<size_t> ( _state._shift | ( _state._ctrl << 1U ) ) ];
 }
 
 void ViewportWidget::ResolveNavigationMode () noexcept

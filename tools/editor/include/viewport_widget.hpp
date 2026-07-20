@@ -8,6 +8,7 @@
 #include "rotate_tool.hpp"
 #include "scale_tool.hpp"
 #include "select_tool.hpp"
+#include "selection.hpp"
 #include "widget.hpp"
 
 
@@ -25,57 +26,59 @@ class ViewportWidget final : public Widget
 
         struct State final
         {
-            uint8_t             _forward: 1 = 0U;
-            uint8_t             _backward: 1 = 0U;
-            uint8_t             _left: 1 = 0U;
-            uint8_t             _right: 1 = 0U;
-            uint8_t             _shift: 1 = 0U;
-            uint8_t             _alt: 1 = 0U;
-            uint8_t             _middleMouseButton: 1 = 0U;
-            uint8_t             _leftMouseButton: 1 = 0U;
+            uint8_t                         _forward: 1 = 0U;
+            uint8_t                         _backward: 1 = 0U;
+            uint8_t                         _left: 1 = 0U;
+            uint8_t                         _right: 1 = 0U;
+            uint8_t                         _ctrl: 1 = 0U;
+            uint8_t                         _shift: 1 = 0U;
+            uint8_t                         _alt: 1 = 0U;
+            uint8_t                         _middleMouseButton: 1 = 0U;
+            uint8_t                         _leftMouseButton: 1 = 0U;
         };
 
         struct Mouse final
         {
-            int32_t             _x = 0;
-            int32_t             _y = 0;
+            int32_t                         _x = 0;
+            int32_t                         _y = 0;
         };
 
     private:
-        DIVUIElement            _div;
+        DIVUIElement                        _div;
 
-        DIVUIElement            _selectionBody;
-        DIVUIElement            _selectionTop;
-        DIVUIElement            _selectionRight;
-        DIVUIElement            _selectionBottom;
-        DIVUIElement            _selectionLeft;
+        DIVUIElement                        _selectionBody;
+        DIVUIElement                        _selectionTop;
+        DIVUIElement                        _selectionRight;
+        DIVUIElement                        _selectionBottom;
+        DIVUIElement                        _selectionLeft;
 
-        MoveTool                _moveTool {};
-        Hotkey                  _useMoveTool {};
+        MoveTool                            _moveTool {};
+        Hotkey                              _useMoveTool {};
 
-        RotateTool              _rotateTool {};
-        Hotkey                  _useRotateTool {};
+        RotateTool                          _rotateTool {};
+        Hotkey                              _useRotateTool {};
 
-        ScaleTool               _scaleTool {};
-        Hotkey                  _useScaleTool {};
+        ScaleTool                           _scaleTool {};
+        Hotkey                              _useScaleTool {};
 
-        SelectTool              _selectTool {};
-        Hotkey                  _useSelectTool {};
+        SelectTool                          _selectTool {};
+        Hotkey                              _useSelectTool {};
 
-        Tool*                   _activeTool = nullptr;
+        Tool*                               _activeTool = nullptr;
 
-        GXMat4                  _projection = GXMat4::IDENTITY;
-        VkExtent2D              _resolution {};
-        std::vector<float>      _lineHeights = { 0.0F };
-        GXQuat                  _orientation = GXQuat::IDENTITY;
-        GXVec3                  _position = GXVec3::ZERO;
+        GXMat4                              _projection = GXMat4::IDENTITY;
+        VkExtent2D                          _resolution {};
+        std::vector<float>                  _lineHeights = { 0.0F };
+        GXQuat                              _orientation = GXQuat::IDENTITY;
+        GXVec3                              _position = GXVec3::ZERO;
 
-        Mouse                   _mouseNow {};
-        Mouse                   _mouseCommit {};
-        size_t                  _eventID = 0U;
-        GXVec2                  _eulerAngles = GXVec2::ZERO;
-        eNavigationMode         _navigationMode = eNavigationMode::None;
-        State                   _state {};
+        Mouse                               _mouseNow {};
+        Mouse                               _mouseCommit {};
+        size_t                              _eventID = 0U;
+        GXVec2                              _eulerAngles = GXVec2::ZERO;
+        std::optional<Selection::eMode>     _selectionMode = std::nullopt;
+        eNavigationMode                     _navigationMode = eNavigationMode::None;
+        State                               _state {};
 
     public:
         explicit ViewportWidget () noexcept;
@@ -115,6 +118,7 @@ class ViewportWidget final : public Widget
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
+        void UpdateSelectionMode () noexcept;
         void ResolveNavigationMode () noexcept;
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;

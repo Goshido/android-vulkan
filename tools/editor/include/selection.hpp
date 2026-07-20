@@ -15,6 +15,15 @@ namespace editor {
 
 class Selection final
 {
+    public:
+        enum class eMode : uint8_t
+        {
+            Add,
+            New,
+            Remove,
+            Toggle
+        };
+
     private:
         class Buffer final
         {
@@ -71,7 +80,7 @@ class Selection final
 
         std::vector<Actor*>                         _lastSelection {};
         std::vector<Actor*>                         _items {};
-        std::optional<Point>                        _begin = std::nullopt;
+        Point                                       _begin {};
         std::optional<Rect>                         _area = std::nullopt;
 
         GXVec4                                      _areaConv {};
@@ -297,9 +306,9 @@ class Selection final
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
-        void Begin ( int32_t x, int32_t y ) noexcept;
-        [[nodiscard]] std::optional<Rect> Update ( int32_t x, int32_t y ) noexcept;
-        void End ( int32_t x, int32_t y, bool invert ) noexcept;
+        void Begin ( int32_t x, int32_t y, eMode mode ) noexcept;
+        [[nodiscard]] std::optional<Rect> Update ( int32_t x, int32_t y, eMode mode ) noexcept;
+        void End ( int32_t x, int32_t y, eMode mode ) noexcept;
 
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;

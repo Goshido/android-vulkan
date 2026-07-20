@@ -618,19 +618,12 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
 
     AV_TRACE ( "Free texture 2D transfer resources" )
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
     for ( auto &texture2D : queue )
     {
         messageQueue.EnqueueBack (
             Message ( eMessageType::InvokeIO,
-                [ &renderer, &resourceHeap, texture2D = texture2D ] () noexcept -> void* {
-                    if ( texture2D->_sampledIndex ) [[likely]]
-                        resourceHeap.UnregisterResource ( *texture2D->_sampledIndex );
-
-                    if ( texture2D->_storageIndex ) [[likely]]
-                        resourceHeap.UnregisterResource ( *texture2D->_storageIndex );
-
+                [ &renderer, texture2D = texture2D ] () noexcept -> void* {
                     android_vulkan::Texture2D &t = texture2D->_resource;
                     AV_TRACE ( "Free texture 2D resource (%s)", t.GetName ().c_str () );
                     t.FreeTransferResources ( renderer );
@@ -814,6 +807,7 @@ void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size
 
     AV_TRACE ( "Destroy textures" )
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
     for ( auto &texture2D : destroyQueue )
     {
@@ -826,10 +820,18 @@ void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size
                     this,
                     &messageQueue,
                     &renderer,
-                    texture2D = std::move ( texture2D )
+                    texture2D = std::move ( texture2D ),
+                    &resourceHeap
                 ] () noexcept -> void* {
                     android_vulkan::Texture2D &t = texture2D->_resource;
                     AV_TRACE ( "Destroy 2D texture (%s)", t.GetName ().c_str () );
+
+                    if ( texture2D->_sampledIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_sampledIndex );
+
+                    if ( texture2D->_storageIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_storageIndex );
+
                     t.FreeResources ( renderer );
 
                     // Calling method by pointer C++ syntax

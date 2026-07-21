@@ -826,6 +826,8 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_MOUSEMOVE:
+            // [2026/07/21] Windows 11 Pro 25H2 26200.8894: The OS triggers this handler more frequently while
+            // keyboard keys are held down (127 events/sec vs. 71 events/sec idle).
             mainWindow.OnMouseMove ( lParam );
         break;
 

@@ -9,33 +9,6 @@
 
 namespace editor {
 
-// FUCK
-namespace {
-
-void Fuck ( Selection::eMode mode ) noexcept
-{
-    switch ( mode )
-    {
-        case Selection::eMode::Add:
-            android_vulkan::LogDebug ( ">>> Add" );
-        break;
-
-        case Selection::eMode::New:
-            android_vulkan::LogDebug ( ">>> New" );
-        break;
-
-        case Selection::eMode::Remove:
-            android_vulkan::LogDebug ( ">>> Remove" );
-        break;
-
-        case Selection::eMode::Toggle:
-            android_vulkan::LogDebug ( ">>> Toggle" );
-        break;
-    }
-}
-
-} // end of anonymous namespace
-
 bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
     size_t size,
     VkBufferUsageFlags usage,
@@ -399,10 +372,8 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     compressPushConstants._uniqueIDs = *_idDevice._resourceIdx;
 }
 
-void Selection::Begin ( int32_t x, int32_t y, eMode mode ) noexcept
+void Selection::Begin ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
 {
-    Fuck ( mode );
-
     _begin =
     {
         ._x = x,
@@ -419,10 +390,8 @@ void Selection::Begin ( int32_t x, int32_t y, eMode mode ) noexcept
     );
 }
 
-std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexcept
+std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
 {
-    Fuck ( mode );
-
     Rect area ( _begin._x, x, _begin._y, y );
     area.Normalize ();
 
@@ -438,10 +407,8 @@ std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexc
     return std::optional<Rect> { std::move ( area ) };
 }
 
-void Selection::End ( int32_t x, int32_t y, eMode mode ) noexcept
+void Selection::End ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
 {
-    Fuck ( mode );
-
     Rect area ( _begin._x, x, _begin._y, y );
     area.Normalize ();
 

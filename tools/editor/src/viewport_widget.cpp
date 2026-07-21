@@ -330,9 +330,17 @@ void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexce
 {
     UpdateKeyboardState ( key, modifier, 1U );
 
-    if ( _selectionMode )
+    if ( !_selectionMode )
+        return;
+
+    // [2026/07/21] Windows 11 Pro 25H2 26200.8894: OS triggers this handler many times when
+    // any keyboard key is pressed. The behaviour is similar to autorepeat using long press during typing.
+    // It's needed to filter such repeat events.
+    Selection::eMode const old = *_selectionMode;
+    UpdateSelectionMode ();
+
+    if ( *_selectionMode != old )
     {
-        UpdateSelectionMode ();
         std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow._x, _mouseNow._y, *_selectionMode );
     }
 }
@@ -382,6 +390,7 @@ void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
     ReleaseMouse ();
     KillFocus ();
     _selectionBody.Hide ();
+    _selectionDrag = false;
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -397,11 +406,15 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         ._y = event._y
     };
 
-    if ( _selectionMode )
-    {
-        auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y, *_selectionMode );
-        UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
-    }
+    if ( !_selectionMode )
+        return;
+
+    // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
+    // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
+    // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
+    auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y, *_selectionMode );
+    UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
+    _selectionDrag = true;
 }
 
 Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -514,6 +527,7 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
     GX_ENABLE_WARNING ( 4061 )
 
     KeyModifier const &modifier = event._modifier;
+    _state._ctrl = static_cast<uint8_t> ( modifier.AnyCtrlPressed () );
     _state._shift = static_cast<uint8_t> ( modifier.AnyShiftPressed () );
     _state._alt = static_cast<uint8_t> ( modifier.AnyAltPressed () );
 
@@ -526,13 +540,29 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
 
 void ViewportWidget::UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept
 {
-    pbr::CSSComputedValues &css = _selectionBody.GetCSS ();
     float const scale = pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX;
-    css._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( left ) );
-    css._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( top ) );
-    css._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( width ) );
-    css._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( height ) );
-    _selectionBody.Update ();
+
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [
+                this,
+                left = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( left ) ),
+                top = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( top ) ),
+                width = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( width ) ),
+                height = pbr::LengthValue ( pbr::LengthValue::eType::PX, scale * static_cast<float> ( height ) )
+            ] () noexcept -> void* {
+                pbr::CSSComputedValues &css = _selectionBody.GetCSS ();
+                css._left = left;
+                css._top = top;
+                css._width = width;
+                css._height = height;
+
+                // NOLINTNEXTLINE - downcast
+                static_cast<pbr::DIVUIElement &> ( _selectionBody.GetNativeElement () ).Update ();
+                return nullptr;
+            }
+        )
+    );
 }
 
 void ViewportWidget::UpdateSelectionMode () noexcept
@@ -540,12 +570,22 @@ void ViewportWidget::UpdateSelectionMode () noexcept
     constexpr Selection::eMode const cases[] =
     {
         Selection::eMode::New,
+        Selection::eMode::Toggle,
+        Selection::eMode::Toggle,
+        Selection::eMode::Toggle,
+        Selection::eMode::New,
         Selection::eMode::Add,
         Selection::eMode::Remove,
         Selection::eMode::Add
     };
 
-    *_selectionMode = cases[ static_cast<size_t> ( _state._shift | ( _state._ctrl << 1U ) ) ];
+    *_selectionMode = cases[
+        static_cast<size_t> (
+            _state._shift |
+            ( _state._ctrl << 1U ) |
+            ( static_cast<uint8_t> ( _selectionDrag ) << 2U )
+        )
+    ];
 }
 
 void ViewportWidget::ResolveNavigationMode () noexcept

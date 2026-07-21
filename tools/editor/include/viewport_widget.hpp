@@ -76,7 +76,10 @@ class ViewportWidget final : public Widget
         Mouse                               _mouseCommit {};
         size_t                              _eventID = 0U;
         GXVec2                              _eulerAngles = GXVec2::ZERO;
+
         std::optional<Selection::eMode>     _selectionMode = std::nullopt;
+        bool                                _selectionDrag = false;
+
         eNavigationMode                     _navigationMode = eNavigationMode::None;
         State                               _state {};
 

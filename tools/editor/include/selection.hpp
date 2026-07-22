@@ -79,11 +79,13 @@ class Selection final
         Buffer*                                     _ready = nullptr;
 
         std::vector<Actor*>                         _lastSelection {};
-        std::vector<Actor*>                         _items {};
+        std::unordered_set<Actor*>                  _items {};
+        std::unordered_set<Actor*>                  _lastItems {};
         Point                                       _begin {};
         std::optional<Rect>                         _area = std::nullopt;
 
         GXVec4                                      _areaConv {};
+        eMode                                       _lastMode = eMode::New;
 
         VkExtent2D                                  _idImageResolution
         {
@@ -314,7 +316,12 @@ class Selection final
         [[nodiscard]] bool HasSelection () const noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
         void CommitSelect () noexcept;
-        void CommitArea ( Rect &&canvasArea ) noexcept;
+        void CommitArea ( Rect &&canvasArea, eMode mode ) noexcept;
+
+        void ProcessAdd ( std::unordered_set<Actor*> &&selected ) noexcept;
+        void ProcessNew ( std::unordered_set<Actor*> &&selected ) noexcept;
+        void ProcessRemove ( std::unordered_set<Actor*> &&selected ) noexcept;
+        void ProcessToggle ( std::vector<Actor*> const &selected ) noexcept;
 };
 
 } // namespace editor

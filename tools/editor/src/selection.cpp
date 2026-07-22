@@ -372,7 +372,7 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     compressPushConstants._uniqueIDs = *_idDevice._resourceIdx;
 }
 
-void Selection::Begin ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
+void Selection::Begin ( int32_t x, int32_t y, eMode mode ) noexcept
 {
     _begin =
     {
@@ -380,25 +380,27 @@ void Selection::Begin ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
         ._y = y
     };
 
+    _lastItems = _items;
+
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
-            [ this, x, y ] () noexcept -> void* {
-                CommitArea ( Rect ( x, x, y, y ) );
+            [ this, x, y, mode ] () noexcept -> void* {
+                CommitArea ( Rect ( x, x, y, y ), mode );
                 return nullptr;
             }
         )
     );
 }
 
-std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
+std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexcept
 {
     Rect area ( _begin._x, x, _begin._y, y );
     area.Normalize ();
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
-            [ this, area ] () mutable noexcept -> void* {
-                CommitArea ( std::move ( area ) );
+            [ this, area, mode ] () mutable noexcept -> void* {
+                CommitArea ( std::move ( area ), mode );
                 return nullptr;
             }
         )
@@ -407,19 +409,23 @@ std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode /*mode*/ ) n
     return std::optional<Rect> { std::move ( area ) };
 }
 
-void Selection::End ( int32_t x, int32_t y, eMode /*mode*/ ) noexcept
+//void Selection::End ( int32_t x, int32_t y, eMode mode ) noexcept
+void Selection::End ( int32_t /*x*/, int32_t /*y*/, eMode /*mode*/ ) noexcept
 {
-    Rect area ( _begin._x, x, _begin._y, y );
-    area.Normalize ();
+    //Rect area ( _begin._x, x, _begin._y, y );
+    //area.Normalize ();
 
-    MessageQueue::Instance ().EnqueueBack (
-        Message ( eMessageType::InvokeRenderSession,
-            [ this, area = std::move ( area ) ] () mutable noexcept -> void* {
-                CommitArea ( std::move ( area ) );
-                return nullptr;
-            }
-        )
-    );
+    //MessageQueue::Instance ().EnqueueBack (
+    //    Message ( eMessageType::InvokeRenderSession,
+    //        [ this, mode, area = std::move ( area ) ] () mutable noexcept -> void* {
+    //            CommitArea ( std::move ( area ), mode );
+    //            return nullptr;
+    //        }
+    //    )
+    //);
+
+    // FUCK
+    _items = std::move ( _lastItems );
 }
 
 bool Selection::IsSelectionRequested () const noexcept
@@ -487,34 +493,37 @@ void Selection::CommitSelect () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeIO,
-            [ this, selection = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
-                AV_TRACE ( "Process new selection" )
-                std::unordered_set<Actor*> selected {};
-                selected.insert ( selection.cbegin (), selection.cend () );
+            [ this, mode = _lastMode, s = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
+                AV_TRACE ( "Process selection" )
 
-                for ( Actor* actor : _items )
+                switch ( mode )
                 {
-                    if ( selected.contains ( actor ) )
-                    {
-                        selected.erase ( actor );
-                        continue;
-                    }
+                    case eMode::Add:
+                        ProcessAdd ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) );
+                    break;
 
-                    actor->Deselect ();
+                    case eMode::New:
+                        ProcessNew ( std::move ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) ) );
+                    break;
+
+                    case eMode::Remove:
+                        ProcessRemove ( std::move ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) ) );
+                    break;
+
+                    case eMode::Toggle:
+                        ProcessToggle ( s );
+                    break;
                 }
 
-                for ( Actor* actor : selected )
-                    actor->Select ();
-
-                _items.swap ( selection );
                 return nullptr;
             }
         )
     );
 }
 
-void Selection::CommitArea ( Rect &&canvasArea ) noexcept
+void Selection::CommitArea ( Rect &&canvasArea, eMode mode ) noexcept
 {
+    _lastMode = mode;
     VkExtent2D const &v = NativeRenderer::Instance ().GetViewportResolution ();
 
     GXVec4 a (
@@ -551,6 +560,117 @@ void Selection::CommitArea ( Rect &&canvasArea ) noexcept
     _collectPushConstants._capacity = static_cast<uint32_t> ( w * h );
     _compressPushConstants._capacity = _collectPushConstants._capacity;
     _area = std::optional<Rect> ( std::move ( area ) );
+}
+
+void Selection::ProcessAdd ( std::unordered_set<Actor*> &&selected ) noexcept
+{
+    AV_TRACE ( "Add" )
+    std::unordered_set<Actor*> d ( _lastItems );
+
+    for ( Actor* actor : selected )
+    {
+        if ( _lastItems.contains ( actor ) )
+        {
+            d.erase ( actor );
+            continue;
+        }
+
+        actor->Select ();
+        _lastItems.insert ( actor );
+    }
+
+    for ( Actor* actor : d )
+    {
+        if ( !_items.contains ( actor ) )
+        {
+            actor->Deselect ();
+            _lastItems.erase ( actor );
+        }
+    }
+
+    for ( Actor* actor : _items )
+    {
+        if ( !_lastItems.contains ( actor ) )
+        {
+            actor->Select ();
+            _lastItems.insert ( actor );
+        }
+    }
+}
+
+void Selection::ProcessNew ( std::unordered_set<Actor*> &&selected ) noexcept
+{
+    AV_TRACE ( "New" )
+    std::unordered_set s ( selected );
+
+    for ( Actor* actor : _lastItems )
+    {
+        if ( s.contains ( actor ) )
+        {
+            s.erase ( actor );
+            continue;
+        }
+
+        actor->Deselect ();
+    }
+
+    for ( Actor* actor : s )
+        actor->Select ();
+
+    _lastItems = std::move ( selected );
+}
+
+void Selection::ProcessRemove ( std::unordered_set<Actor*> &&selected ) noexcept
+{
+    AV_TRACE ( "Remove" )
+    std::unordered_set<Actor*> s ( _items );
+
+    for ( Actor* actor : selected )
+        s.erase ( actor );
+
+    std::unordered_set<Actor*> left {};
+
+    for ( Actor* actor : _lastItems )
+    {
+        if ( s.contains ( actor ) )
+        {
+            left.insert ( actor );
+            continue;
+        }
+
+        actor->Deselect ();
+    }
+
+    for ( Actor* actor : s )
+    {
+        if ( !left.contains ( actor ) )
+        {
+            actor->Select ();
+            left.insert ( actor );
+        }
+    }
+
+    _lastItems = std::move ( left );
+}
+
+void Selection::ProcessToggle ( std::vector<Actor*> const &selected ) noexcept
+{
+    AV_TRACE ( "Toggle" )
+
+    if ( selected.empty () )
+        return;
+
+    Actor* s = selected.front ();
+
+    if ( _lastItems.contains ( s ) )
+    {
+        s->Deselect ();
+        _lastItems.erase ( s );
+        return;
+    }
+
+    s->Select ();
+    _lastItems.insert ( s );
 }
 
 } // namespace editor

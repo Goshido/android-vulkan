@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <history.hpp>
 #include <native_renderer.hpp>
 #include <program_info.hpp>
 #include <resource_heap.hpp>
@@ -8,6 +9,82 @@
 
 
 namespace editor {
+
+namespace {
+
+class SelectAction final : public Action
+{
+    private:
+        Selection::Items*       _target = nullptr;
+        Selection::Items        _old {};
+        Selection::Items        _new {};
+
+    public:
+        SelectAction () = delete;
+
+        SelectAction ( SelectAction const & ) = delete;
+        SelectAction &operator = ( SelectAction const & ) = delete;
+
+        SelectAction ( SelectAction && ) = default;
+        SelectAction &operator = ( SelectAction && ) = default;
+
+        explicit SelectAction ( Selection::Items &target, Selection::Items &&now ) noexcept;
+
+        ~SelectAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+
+        void Update ( Selection::Items const &goal ) noexcept;
+};
+
+SelectAction::SelectAction ( Selection::Items &target, Selection::Items &&now ) noexcept:
+    _target ( &target ),
+    _old ( target ),
+    _new ( std::move ( now ) )
+{
+    // NOTHING
+}
+
+void SelectAction::Redo () noexcept
+{
+    AV_TRACE ( "Redo: selection" )
+    Update ( _new );
+}
+
+void SelectAction::Undo () noexcept
+{
+    AV_TRACE ( "Undo: selection" )
+    Update ( _old );
+}
+
+void SelectAction::Update ( Selection::Items const &goal ) noexcept
+{
+    Selection::Items t ( *_target );
+
+    for ( Actor* actor : t )
+    {
+        if ( !goal.contains ( actor ) )
+        {
+            actor->Deselect ();
+            _target->erase ( actor );
+        }
+    }
+
+    for ( Actor* actor : goal )
+    {
+        if ( !_target->contains ( actor ) )
+        {
+            actor->Select ();
+            _target->insert ( actor );
+        }
+    }
+}
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 bool Selection::Buffer::Init ( android_vulkan::Renderer &renderer,
     size_t size,
@@ -409,23 +486,27 @@ std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexc
     return std::optional<Rect> { std::move ( area ) };
 }
 
-//void Selection::End ( int32_t x, int32_t y, eMode mode ) noexcept
-void Selection::End ( int32_t /*x*/, int32_t /*y*/, eMode /*mode*/ ) noexcept
+void Selection::End ( int32_t x, int32_t y, eMode mode ) noexcept
 {
-    //Rect area ( _begin._x, x, _begin._y, y );
-    //area.Normalize ();
+    Rect area ( _begin._x, x, _begin._y, y );
+    area.Normalize ();
 
-    //MessageQueue::Instance ().EnqueueBack (
-    //    Message ( eMessageType::InvokeRenderSession,
-    //        [ this, mode, area = std::move ( area ) ] () mutable noexcept -> void* {
-    //            CommitArea ( std::move ( area ), mode );
-    //            return nullptr;
-    //        }
-    //    )
-    //);
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeRenderSession,
+            [ this, mode, area = std::move ( area ) ] () mutable noexcept -> void* {
+                // Toggle is already performed on 'Begin' method. Toggle again will rollback changes.
+                if ( mode != eMode::Toggle )
+                    CommitArea ( std::move ( area ), mode );
 
-    // FUCK
-    _items = std::move ( _lastItems );
+                History &history = History::Instance ();
+                history.Begin ();
+                history.Append ( std::make_unique<SelectAction> ( _items, std::move ( _lastItems ) ) );
+                history.End ();
+
+                return nullptr;
+            }
+        )
+    );
 }
 
 bool Selection::IsSelectionRequested () const noexcept
@@ -499,15 +580,15 @@ void Selection::CommitSelect () noexcept
                 switch ( mode )
                 {
                     case eMode::Add:
-                        ProcessAdd ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) );
+                        ProcessAdd ( Items ( s.cbegin (), s.cend () ) );
                     break;
 
                     case eMode::New:
-                        ProcessNew ( std::move ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) ) );
+                        ProcessNew ( std::move ( Items ( s.cbegin (), s.cend () ) ) );
                     break;
 
                     case eMode::Remove:
-                        ProcessRemove ( std::move ( std::unordered_set<Actor*> ( s.cbegin (), s.cend () ) ) );
+                        ProcessRemove ( std::move ( Items ( s.cbegin (), s.cend () ) ) );
                     break;
 
                     case eMode::Toggle:
@@ -562,10 +643,10 @@ void Selection::CommitArea ( Rect &&canvasArea, eMode mode ) noexcept
     _area = std::optional<Rect> ( std::move ( area ) );
 }
 
-void Selection::ProcessAdd ( std::unordered_set<Actor*> &&selected ) noexcept
+void Selection::ProcessAdd ( Items &&selected ) noexcept
 {
     AV_TRACE ( "Add" )
-    std::unordered_set<Actor*> d ( _lastItems );
+    Items d ( _lastItems );
 
     for ( Actor* actor : selected )
     {
@@ -598,10 +679,10 @@ void Selection::ProcessAdd ( std::unordered_set<Actor*> &&selected ) noexcept
     }
 }
 
-void Selection::ProcessNew ( std::unordered_set<Actor*> &&selected ) noexcept
+void Selection::ProcessNew ( Items &&selected ) noexcept
 {
     AV_TRACE ( "New" )
-    std::unordered_set s ( selected );
+    Items s ( selected );
 
     for ( Actor* actor : _lastItems )
     {
@@ -620,15 +701,15 @@ void Selection::ProcessNew ( std::unordered_set<Actor*> &&selected ) noexcept
     _lastItems = std::move ( selected );
 }
 
-void Selection::ProcessRemove ( std::unordered_set<Actor*> &&selected ) noexcept
+void Selection::ProcessRemove ( Items &&selected ) noexcept
 {
     AV_TRACE ( "Remove" )
-    std::unordered_set<Actor*> s ( _items );
+    Items s ( _items );
 
     for ( Actor* actor : selected )
         s.erase ( actor );
 
-    std::unordered_set<Actor*> left {};
+    Items left {};
 
     for ( Actor* actor : _lastItems )
     {

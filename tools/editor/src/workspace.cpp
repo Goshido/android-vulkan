@@ -31,13 +31,15 @@ class CreateActorAction final : public Action
         Actor*                                          _key = _actor.get ();
 
     public:
-        explicit CreateActorAction ( ActorRef &&actor, std::unordered_map<Actor const*, ActorRef> &actors ) noexcept;
+        CreateActorAction () = delete;
 
         CreateActorAction ( CreateActorAction const & ) = delete;
         CreateActorAction &operator = ( CreateActorAction const & ) = delete;
 
         CreateActorAction ( CreateActorAction && ) = default;
         CreateActorAction &operator = ( CreateActorAction && ) = default;
+
+        explicit CreateActorAction ( ActorRef &&actor, std::unordered_map<Actor const*, ActorRef> &actors ) noexcept;
 
         ~CreateActorAction () override = default;
 
@@ -84,13 +86,15 @@ class AppendComponentAction final : public Action
         Component*      _key = _component.get ();
 
     public:
-        explicit AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept;
+        AppendComponentAction () = delete;
 
         AppendComponentAction ( AppendComponentAction const & ) = delete;
         AppendComponentAction &operator = ( AppendComponentAction const & ) = delete;
 
         AppendComponentAction ( AppendComponentAction && ) = default;
         AppendComponentAction &operator = ( AppendComponentAction && ) = default;
+
+        explicit AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept;
 
         ~AppendComponentAction () override = default;
 
@@ -1634,8 +1638,8 @@ void Workspace::InitHotkeys () noexcept
         true,
         false,
 
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Undo" );
+        [ &history = _history ] () noexcept {
+            history.Undo ();
         }
     );
 
@@ -1644,8 +1648,8 @@ void Workspace::InitHotkeys () noexcept
         true,
         true,
 
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Redo" );
+        [ &history = _history ] () noexcept {
+            history.Redo ();
         }
     );
 }

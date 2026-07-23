@@ -36,6 +36,13 @@ void History::Transaction::Undo () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+History* History::_instance = nullptr;
+
+History::History () noexcept
+{
+    _instance = this;
+}
+
 History::~History () noexcept
 {
     Clear ();
@@ -97,14 +104,20 @@ void History::Undo () noexcept
         return;
 
     _undo->Undo ();
+    _redo = _undo;
 
-    if ( _undo == _transactions.cbegin () ) [[unlikely]]
+    if ( _undo != _transactions.cbegin () ) [[likely]]
     {
-        _undo = end;
+        --_undo;
         return;
     }
 
-    --_undo;
+    _undo = end;
+}
+
+History &History::Instance () noexcept
+{
+    return *_instance;
 }
 
 } // namespace editor

@@ -24,6 +24,8 @@ class Selection final
             Toggle
         };
 
+        using Items = std::unordered_set<Actor*>;
+
     private:
         class Buffer final
         {
@@ -79,8 +81,8 @@ class Selection final
         Buffer*                                     _ready = nullptr;
 
         std::vector<Actor*>                         _lastSelection {};
-        std::unordered_set<Actor*>                  _items {};
-        std::unordered_set<Actor*>                  _lastItems {};
+        Items                                       _items {};
+        Items                                       _lastItems {};
         Point                                       _begin {};
         std::optional<Rect>                         _area = std::nullopt;
 
@@ -318,9 +320,9 @@ class Selection final
         void CommitSelect () noexcept;
         void CommitArea ( Rect &&canvasArea, eMode mode ) noexcept;
 
-        void ProcessAdd ( std::unordered_set<Actor*> &&selected ) noexcept;
-        void ProcessNew ( std::unordered_set<Actor*> &&selected ) noexcept;
-        void ProcessRemove ( std::unordered_set<Actor*> &&selected ) noexcept;
+        void ProcessAdd ( Items &&selected ) noexcept;
+        void ProcessNew ( Items &&selected ) noexcept;
+        void ProcessRemove ( Items &&selected ) noexcept;
         void ProcessToggle ( std::vector<Actor*> const &selected ) noexcept;
 };
 

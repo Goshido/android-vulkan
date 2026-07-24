@@ -6,6 +6,14 @@
 #define UNORM_FACTOR_F16    3.9216e-3H
 #define UNORM_FACTOR_F32    3.921569e-3F
 
+struct ColorUNORM
+{
+    uint32_t        _r: 8;
+    uint32_t        _g: 8;
+    uint32_t        _b: 8;
+    uint32_t        _a: 8;
+};
+
 struct ColorData
 {
     uint32_t        _emiR: 8;
@@ -38,9 +46,9 @@ float16_t3 UnpackColorF16x3 ( in uint32_t r, in uint32_t g, in uint32_t b )
     return float16_t3 ( uint32_t3 ( r, g, b ) ) * UNORM_FACTOR_F16;
 }
 
-float32_t4 UnpackColorF32x4 ( in uint32_t r, in uint32_t g, in uint32_t b, in uint32_t a )
+float32_t4 UnpackColorF32x4 ( in ColorUNORM color )
 {
-    return float32_t4 ( uint32_t4 ( r, g, b, a ) ) * UNORM_FACTOR_F32;
+    return float32_t4 ( uint32_t4 ( color._r, color._g, color._b, color._a ) ) * UNORM_FACTOR_F32;
 }
 
 

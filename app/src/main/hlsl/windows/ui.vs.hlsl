@@ -11,10 +11,7 @@ struct UIVertexStream0
 {
     float32_t2                      _position;
     float16_t2                      _uv;
-    uint32_t                        _colorR: 8;
-    uint32_t                        _colorG: 8;
-    uint32_t                        _colorB: 8;
-    uint32_t                        _colorA: 8;
+    ColorUNORM                      _color;
 };
 
 struct UIVertexStream1
@@ -64,7 +61,7 @@ OutputData VS ( in uint32_t vertexID: SV_VertexID )
     result._uv = (float32_t2)s0._uv;
     result._image = (uint32_t)s1._image;
     result._uiPrimitiveType = (uint32_t)s1._uiPrimitiveType;
-    result._color = UnpackColorF32x4 ( s0._colorR, s0._colorG, s0._colorB, s0._colorA );
+    result._color = UnpackColorF32x4 ( s0._color );
 
     return result;
 }

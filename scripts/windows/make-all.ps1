@@ -36,6 +36,10 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh_with_id.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.vs.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_prepass.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\light_volume.vs.hlsl"                                                                        `
     "$CORE_SHADER_DIRECTORY\light_volume.vs.spv"
 
@@ -83,6 +87,10 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy_light.ps.hlsl"                                                                         `
     "$CORE_SHADER_DIRECTORY\dummy_light.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.ps.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_prepass.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\mandelbrot_analytic_color.ps.hlsl"                                                           `

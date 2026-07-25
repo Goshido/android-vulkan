@@ -1,6 +1,5 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/resource_heap.inc>
-#include <platform/windows/pbr/push_constant_range.inc>
 #include <platform/windows/pbr/samplers.inc>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <renderer.hpp>
@@ -10,6 +9,10 @@
 namespace pbr {
 
 namespace {
+
+constexpr uint32_t PUSH_CONSTANT_RANGE = 256U;
+
+//----------------------------------------------------------------------------------------------------------------------
 
 class PipelineLayout final
 {

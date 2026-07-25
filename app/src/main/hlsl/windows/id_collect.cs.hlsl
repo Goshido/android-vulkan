@@ -1,6 +1,5 @@
 #include "platform/windows/pbr/id_collect.inc"
 #include "platform/windows/pbr/resource_heap.inc"
-#include "platform/windows/pbr/push_constant_range.inc"
 
 
 struct PushConstants

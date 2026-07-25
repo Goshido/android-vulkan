@@ -441,6 +441,9 @@
     <ClCompile Include="src\outline_mesh_node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_prepass_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -964,6 +967,9 @@
     </ClInclude>
     <ClInclude Include="include\outline_mesh_node.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_prepass_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

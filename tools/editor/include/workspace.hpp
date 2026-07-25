@@ -7,6 +7,7 @@
 #include "history.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "outline_mesh_node.hpp"
+#include <platform/windows/pbr/gizmo_prepass_program.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include <platform/windows/pbr/outline_blur_x_program.hpp>
@@ -73,6 +74,7 @@ class Workspace final
         ReflectionProbeLocalQueue                           _reflectionProbeLocalQueue {};
         ReflectionProbeGlobalQueue                          _reflectionProbeGlobalQueue {};
 
+        std::unique_ptr<pbr::GizmoPrepassProgram>           _gizmoPrepassProgram {};
         std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
         std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
         std::unique_ptr<pbr::OutlineBlurXProgram>           _outlineBlurXProgram {};

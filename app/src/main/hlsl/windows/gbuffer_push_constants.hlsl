@@ -2,9 +2,6 @@
 #define GBUFFER_PUSH_CONSTANTS_HLSL
 
 
-#include "platform/windows/pbr/push_constant_range.inc"
-
-
 struct PushConstants
 {
     uint64_t        _transformStream;

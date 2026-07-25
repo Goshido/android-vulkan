@@ -163,6 +163,17 @@ void Workspace::Destroy () noexcept
     _history.Clear ();
     _actors.clear ();
 
+    if ( _gizmoPrepassProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _gizmoPrepassProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
     if ( _opaqueProgram ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
@@ -1280,6 +1291,7 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = static_cast<bool> ( _viewport ) &
+        static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
         static_cast<bool> ( _opaqueWithIDProgram ) &
         static_cast<bool> ( _outlineBlurXProgram ) &
@@ -1326,6 +1338,30 @@ void Workspace::InitGraphicsResources () noexcept
 
                 VkDevice device = renderer.GetDevice ();
                 VkFormat const depth = renderer.GetDefaultDepthFormat ();
+                auto gizmoPrepassProgram = std::make_unique<pbr::GizmoPrepassProgram> ();
+
+                if ( !gizmoPrepassProgram->Init ( device, renderer.GetSurfaceFormat (), depth ) ) [[unlikely]]
+                    return nullptr;
+
+                auto gizmoPrepassProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _gizmoPrepassProgram = std::unique_ptr<pbr::GizmoPrepassProgram> (
+                        static_cast<pbr::GizmoPrepassProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( gizmoPrepassProgram.release () ),
+                                std::move ( gizmoPrepassProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
                 auto opaqueProgram = std::make_unique<pbr::OpaqueProgram> ();
 
                 if ( !opaqueProgram->Init ( device, depth ) ) [[unlikely]]

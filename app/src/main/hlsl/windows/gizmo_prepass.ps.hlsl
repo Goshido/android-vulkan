@@ -86,32 +86,15 @@ float32_t SDFCappedTorus ( in float32_t3 p, in float32_t2 sinCosAngle, in float3
     return thickness + sqrt ( c + mad ( d, a.y, a.x ) );
 }
 
-float32_t SDF ( in float32_t3 p )
+float32_t SDF ( in float32_t3 p, in uint32_t shapeType, in float32_t4 sdfParams )
 {
-    switch ( g_pushConstants._shapeInfo._type )
+    switch ( shapeType )
     {
-        case SHAPE_LINE_SEGMENT_X:
-        return SDFLineSegmentX ( p, g_pushConstants._sdfParams.x, g_pushConstants._sdfParams.y );
-
-        case SHAPE_CONE:
-        return SDFConeX ( p,
-            g_pushConstants._sdfParams.xy,
-            g_pushConstants._sdfParams.z,
-            g_pushConstants._sdfParams.w
-        );
-
-        case SHAPE_SPHERE:
-        return SDFSphere ( p, g_pushConstants._sdfParams.x );
-
-        case SHAPE_BOX:
-        return SDFBox ( p, g_pushConstants._sdfParams.xyz, g_pushConstants._sdfParams.w );
-
-        case SHAPE_CAPPED_TORUS:
-        return SDFCappedTorus ( p,
-            g_pushConstants._sdfParams.xy,
-            g_pushConstants._sdfParams.z,
-            g_pushConstants._sdfParams.w
-        );
+        case SHAPE_LINE_SEGMENT_X: return SDFLineSegmentX ( p, sdfParams.x, sdfParams.y );
+        case SHAPE_CONE: return SDFConeX ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
+        case SHAPE_SPHERE: return SDFSphere ( p, sdfParams.x );
+        case SHAPE_BOX: return SDFBox ( p, sdfParams.xyz, sdfParams.w );
+        case SHAPE_CAPPED_TORUS: return SDFCappedTorus ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
 
         default:
             // IMPOSSIBLE
@@ -127,12 +110,17 @@ float32_t LinearStep ( in float32_t step, in float32_t x )
     return saturate ( ( x + s ) / s );
 }
 
-Pixel ComputeColor ( in Attributes inputData )
+Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
 {
-    float32_t3 const ray = normalize ( inputData._canvas - g_pushConstants._cameraPositionSDF );
+    SDFPixel const sdfPixel = vk::RawBufferLoad<SDFPixel> (
+        g_pushConstants._pixelStream + inputData._instanceID * sizeof ( SDFPixel ),
+        8U
+    );
+
+    float32_t3 const ray = normalize ( inputData._canvas - sdfPixel._cameraPositionSDF );
 
     // precomputing part of dot product due to dot product property: dot(S * a, b) = S * dot(a, b)
-    float32_t const pixelScale = dot ( ray, g_pushConstants._viSDF );
+    float32_t const pixelScale = dot ( ray, sdfPixel._viSDF );
 
     // x - current distance from SDF
     // y - maximum allowed distance (camera far plane)
@@ -150,7 +138,7 @@ Pixel ComputeColor ( in Attributes inputData )
 
     for ( uint32_t steps = 0U; steps < MAX_STEPS; ++steps )
     {
-        alpha.x = SDF ( mad ( ray, beta.y, g_pushConstants._cameraPositionSDF ) );
+        alpha.x = SDF ( mad ( ray, beta.y, sdfPixel._cameraPositionSDF ), sdfShape._type, sdfPixel._sdfParams );
         closest = lerp ( closest, float32_t2 ( alpha.x, beta.y ), closest.x > alpha.x );
         beta.y += alpha.x;
         beta.x = beta.y * dynamicThresholdFactor;
@@ -165,12 +153,14 @@ Pixel ComputeColor ( in Attributes inputData )
     result._depth = closest.y * g_pushConstants._invMaxRayDistanceFactor;
 
     float32_t const insideProbe = SDF (
-        mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), g_pushConstants._cameraPositionSDF )
+        mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), sdfPixel._cameraPositionSDF ),
+        sdfShape._type,
+        sdfPixel._sdfParams
     );
 
     float32_t4 const color = UnpackColorF32x4 (
         vk::RawBufferLoad<ColorUNORM> (
-            g_pushConstants._palette + g_pushConstants._shapeInfo._palette * sizeof ( ColorUNORM ),
+            g_pushConstants._palette + g_pushConstants._palette * sizeof ( ColorUNORM ),
             4U
         )
     );
@@ -187,7 +177,7 @@ Pixel ComputeColor ( in Attributes inputData )
     return result;
 }
 
-void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth )
+void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth, in uint32_t palette )
 {
     uint32_t2 const tile = pix >> uint32_t2 ( TILE_WIDTH_SHIFT, TILE_HEIGHT_SHIFT );
     uint32_t2 const item = pix & uint32_t2 ( TILE_LOCAL_X_MASK, TILE_LOCAL_Y_MASK );
@@ -212,11 +202,10 @@ void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth )
     );
 
     zeta <<= uint32_t4 ( 9U, 6U, 3U, 1U );
-    RWStructuredBuffer<uint32_t> tileSamples = ResourceDescriptorHeap[ g_pushConstants._tileSamples ];
 
-    tileSamples[ zeta.x + zeta.y + zeta.z + zeta.w + beta.y ] = PackSample ( g_pushConstants._shapeInfo._palette,
-        alpha,
-        depth
+    vk::RawBufferStore<uint> (
+        g_pushConstants._tileSamples + sizeof ( uint32_t ) * ( zeta.x + zeta.y + zeta.z + zeta.w + beta.y ),
+        PackSample ( palette, alpha, depth )
     );
 }
 
@@ -224,7 +213,12 @@ void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth )
 
 OutputData PS ( in Attributes inputData )
 {
-    Pixel pixel = ComputeColor ( inputData );
+    SDFShape const sdfShape = vk::RawBufferLoad<SDFShape> (
+        g_pushConstants._shapeStream + inputData._instanceID * sizeof ( SDFShape ),
+        4U
+    );
+
+    Pixel pixel = ComputeColor ( inputData, sdfShape );
 
     OutputData result;
     result._color = pixel._color;
@@ -236,7 +230,7 @@ OutputData PS ( in Attributes inputData )
         return result;
 
     if ( check.y )
-        AddSample ( (uint32_t2)inputData._vertexH.xy, pixel._color.w, pixel._depth );
+        AddSample ( (uint32_t2)inputData._vertexH.xy, pixel._color.w, pixel._depth, sdfShape._palette );
 
     discard;
     return result;

@@ -33,10 +33,10 @@ struct SDFPixel
 struct PushConstants
 {
     float32_t4x4                _toCVV;
-    float32_t3                  _cameraPositionWorld;
+    float32_t3                  _cameraLocationWorld;
     float32_t                   _maxRayDistance;
     float32_t3                  _viWorld;
-    float32_t                   _invMaxRayDistanceFactor;
+    float32_t                   _invMaxRayDistance;
     uint32_t                    _tileCountWidth;
     uint32_t                    _tileCounters;
     uint64_t                    _palette;

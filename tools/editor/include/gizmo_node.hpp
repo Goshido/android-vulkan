@@ -12,12 +12,17 @@ class Workspace;
 
 class GizmoNode final : public WorkspaceNode
 {
+    friend class Workspace;
+
     private:
-        GizmoInfo*      _internal = nullptr;
-        GizmoInfo       _info {};
+        GizmoInfo*      _gizmoInfo = nullptr;
+        GXQuat          _rotation {};
+        GXVec3          _location {};
+        GXVec3          _scale {};
+        uint8_t         _palette;
 
     public:
-        GizmoNode () = default;
+        GizmoNode () = delete;
 
         GizmoNode ( GizmoNode const & ) = delete;
         GizmoNode &operator = ( GizmoNode const & ) = delete;
@@ -25,12 +30,19 @@ class GizmoNode final : public WorkspaceNode
         GizmoNode ( GizmoNode &&other ) noexcept;
         GizmoNode &operator = ( GizmoNode &&other ) noexcept;
 
-        explicit GizmoNode ( Workspace &workspace, GizmoInfo &internal ) noexcept;
+        explicit GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo ) noexcept;
 
         ~GizmoNode () noexcept override;
 
-        void Commit () noexcept;
-        [[nodiscard]] GizmoInfo const &GetInternalInfo () const noexcept;
+        void Commit ( GXVec3 const &cameraLocation, GXVec3 const &viWorld ) noexcept;
+
+        void SetColor ( uint8_t palette ) noexcept;
+        void SetRotation ( GXQuat const &rotation ) noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetScale ( GXVec3 const &scale ) noexcept;
+
+    private:
+        void Disconnect () noexcept;
 };
 
 } // namespace editor

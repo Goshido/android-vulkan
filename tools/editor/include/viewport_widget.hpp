@@ -70,7 +70,7 @@ class ViewportWidget final : public Widget
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
         GXQuat                              _orientation = GXQuat::IDENTITY;
-        GXVec3                              _position = GXVec3::ZERO;
+        GXVec3                              _location = GXVec3::ZERO;
 
         Mouse                               _mouseNow {};
         Mouse                               _mouseCommit {};
@@ -101,7 +101,9 @@ class ViewportWidget final : public Widget
 
         [[nodiscard]] GXMat4 const &GetProjection () const noexcept;
         [[nodiscard]] GXQuat const &GetOrientation () const noexcept;
-        [[nodiscard]] GXVec3 const &GetPosition () const noexcept;
+        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
+
+        [[nodiscard]] static float GetFieldOfView () noexcept;
 
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;

@@ -7,35 +7,65 @@ namespace editor {
 
 GizmoNode::GizmoNode ( GizmoNode &&other ) noexcept
 {
-    std::ignore = other.TryLock ();
+    bool const myLock = TryLock ();
+    Disconnect ();
+
+    bool const otherLock = other.TryLock ();
 
     _workspace = std::exchange ( other._workspace, nullptr );
-    _hasChanges = std::move ( other._hasChanges );
-    _internal = std::exchange ( other._internal, nullptr );
-    _info = std::move ( other._info );
+    _hasChanges = std::exchange ( other._hasChanges, false );
 
-    other.Unlock ();
+    if ( _gizmoInfo = std::exchange ( other._gizmoInfo, nullptr ); _gizmoInfo )
+        _gizmoInfo->_node = this;
+
+    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
+    _location = std::exchange ( other._location, GXVec3::ZERO );
+    _scale = std::exchange ( other._scale, GXVec3::ONE );
+    _palette = static_cast<uint8_t> ( std::exchange ( other._palette, static_cast<uint8_t> ( 0U ) ) );
+
+    if ( otherLock )
+        other.Unlock ();
+
+    if ( myLock )
+    {
+        Unlock ();
+    }
 }
 
 GizmoNode &GizmoNode::operator = ( GizmoNode &&other ) noexcept
 {
-    if ( this == &other || !other.TryLock () ) [[unlikely]]
+    if ( this == &other ) [[unlikely]]
         return *this;
 
-    _workspace = std::exchange ( other._workspace, nullptr );
-    _hasChanges = std::move ( other._hasChanges );
-    _internal = std::exchange ( other._internal, nullptr );
-    _info = std::move ( other._info );
+    bool const locked = TryLock ();
+    Disconnect ();
 
-    other.Unlock ();
+    bool const otherLock = other.TryLock ();
+    _workspace = std::exchange ( other._workspace, nullptr );
+    _hasChanges = std::exchange ( other._hasChanges, false );
+
+    if ( _gizmoInfo = std::exchange ( other._gizmoInfo, nullptr ); _gizmoInfo )
+        _gizmoInfo->_node = this;
+
+    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
+    _location = std::exchange ( other._location, GXVec3::ZERO );
+    _scale = std::exchange ( other._scale, GXVec3::ONE );
+    _palette = static_cast<uint8_t> ( std::exchange ( other._palette, static_cast<uint8_t> ( 0U ) ) );
+
+    if ( otherLock )
+        other.Unlock ();
+
+    if ( locked )
+        Unlock ();
+
     return *this;
 }
 
-GizmoNode::GizmoNode ( Workspace &workspace, GizmoInfo &internal ) noexcept:
+GizmoNode::GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo ) noexcept:
     WorkspaceNode ( workspace ),
-    _internal ( &internal )
+    _gizmoInfo ( &gizmoInfo )
 {
-    // NOTHING
+    _gizmoInfo->_node = this;
 }
 
 GizmoNode::~GizmoNode () noexcept
@@ -48,21 +78,69 @@ GizmoNode::~GizmoNode () noexcept
     Unlock ();
 }
 
-void GizmoNode::Commit () noexcept
+void GizmoNode::Commit ( GXVec3 const &/*cameraLocation*/, GXVec3 const &/*viWorld*/ ) noexcept
 {
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
 
-    *_internal = _info;
+    [[maybe_unused]] GizmoInfo &gizmoInfo = *_gizmoInfo;
+
+    // FUCK
+
     _hasChanges = false;
+    Unlock ();
+}
+
+void GizmoNode::SetColor ( uint8_t palette ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _palette = palette;
+    _hasChanges = true;
 
     Unlock ();
 }
 
-GizmoInfo const &GizmoNode::GetInternalInfo () const noexcept
+void GizmoNode::SetRotation ( GXQuat const &rotation ) noexcept
 {
-    AV_ASSERT ( _internal )
-    return *_internal;
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _rotation = rotation;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void GizmoNode::SetLocation ( GXVec3 const &location ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _location = location;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void GizmoNode::SetScale ( GXVec3 const &scale ) noexcept
+{
+    if ( !TryLock () ) [[unlikely]]
+        return;
+
+    _scale = scale;
+    _hasChanges = true;
+
+    Unlock ();
+}
+
+void GizmoNode::Disconnect () noexcept
+{
+    if ( _workspace )
+    {
+        _workspace->Unregister ( *this );
+    }
 }
 
 } // namespace editor

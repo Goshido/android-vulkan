@@ -2,21 +2,12 @@
 #define EDITOR_TRANSFORM_HPP
 
 
-#include <GXCommon/GXMath.hpp>
-#include <vulkan_utils.hpp>
+#include "model.hpp"
 
 
 namespace editor {
 
 AV_DX_ALIGNMENT_BEGIN
-
-struct Model final
-{
-    GXVec3      _x;
-    GXVec3      _y;
-    GXVec3      _z;
-    GXVec3      _w;
-};
 
 struct Transform final
 {

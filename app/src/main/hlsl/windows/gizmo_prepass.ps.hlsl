@@ -150,7 +150,7 @@ Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
     }
 
     Pixel result;
-    result._depth = closest.y * g_pushConstants._invMaxRayDistanceFactor;
+    result._depth = closest.y * g_pushConstants._invMaxRayDistance;
 
     float32_t const insideProbe = SDF (
         mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), sdfPixel._cameraPositionSDF ),

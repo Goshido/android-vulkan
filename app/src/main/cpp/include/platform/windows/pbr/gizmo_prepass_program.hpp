@@ -17,10 +17,10 @@ class GizmoPrepassProgram final : public GraphicsProgram
         struct PushConstants final
         {
             [[maybe_unused]] GXMat4             _toCVV;
-            [[maybe_unused]] GXVec3             _cameraPositionWorld;
+            [[maybe_unused]] GXVec3             _cameraLocationWorld;
             [[maybe_unused]] float              _maxRayDistance;
             [[maybe_unused]] GXVec3             _viWorld;
-            [[maybe_unused]] float              _invMaxRayDistanceFactor;
+            [[maybe_unused]] float              _invMaxRayDistance;
             [[maybe_unused]] uint32_t           _tileCountWidth;
             [[maybe_unused]] uint32_t           _tileCounters;
             [[maybe_unused]] VkDeviceAddress    _palette;

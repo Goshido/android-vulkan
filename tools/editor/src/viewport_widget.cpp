@@ -321,9 +321,14 @@ GXQuat const &ViewportWidget::GetOrientation () const noexcept
     return _orientation;
 }
 
-GXVec3 const &ViewportWidget::GetPosition () const noexcept
+GXVec3 const &ViewportWidget::GetLocation () const noexcept
 {
-    return _position;
+    return _location;
+}
+
+float ViewportWidget::GetFieldOfView () noexcept
+{
+    return FOV_Y;
 }
 
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
@@ -670,7 +675,7 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
 
     GXVec3 displacementWorld {};
     _orientation.TransformFast ( displacementWorld, displacementLocal );
-    _position.Sum ( _position, displacementWorld );
+    _location.Sum ( _location, displacementWorld );
 }
 
 void ViewportWidget::DoOrbit () noexcept

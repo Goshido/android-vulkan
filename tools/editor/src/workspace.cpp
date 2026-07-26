@@ -3,6 +3,9 @@
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <program_info.hpp>
 #include <resource_heap.hpp>
+#include <sdf_pixel.hpp>
+#include <sdf_shape.hpp>
+#include <sdf_vertex.hpp>
 #include <shading.hpp>
 #include <static_mesh_component.hpp>
 #include <stream_buffer_info.hpp>
@@ -20,6 +23,11 @@ namespace {
 
 constexpr size_t PER_MESH_ELEMENTS = 1'000'000UZ;
 constexpr size_t VISIBLE_INITIAL_SIZE = 1'000UZ;
+
+constexpr size_t GIZMO_ELEMENTS = 128UZ;
+
+constexpr float MAX_GIZMO_RAY_DISTANCE = 2.0e+3F;
+constexpr float INVERSE_MAX_GIZMO_RAY_DISTANCE = 1.0F / MAX_GIZMO_RAY_DISTANCE;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -138,6 +146,9 @@ void Workspace::Init () noexcept
     InitWidgets ();
     InitGraphicsResources ();
     InitHotkeys ();
+
+    _gizmoPrepassPushContants._maxRayDistance = MAX_GIZMO_RAY_DISTANCE;
+    _gizmoPrepassPushContants._invMaxRayDistance = INVERSE_MAX_GIZMO_RAY_DISTANCE;
 
     FUCK ();
 }
@@ -284,6 +295,39 @@ void Workspace::Destroy () noexcept
         );
     }
 
+    if ( _sdfVertexStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _sdfVertexStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
+    if ( _sdfPixelStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _sdfPixelStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
+    if ( _sdfShapeStream ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyStreamBuffer,
+                [ stream = std::move ( _sdfShapeStream ) ] () mutable noexcept -> void* {
+                    return &stream;
+                }
+            )
+        );
+    }
+
     Texture2DStorage &storage = Texture2DStorage::Instance ();
     storage.Unload ( std::move ( _defaultAlbedo ) );
     storage.Unload ( std::move ( _defaultEmission ) );
@@ -315,8 +359,8 @@ void Workspace::Destroy () noexcept
 
     clearAlpha ( _opaqueQueue, _opaqueMap );
     clearAlpha ( _stippleQueue, _stippleMap );
-    clearAlpha ( _gizmoQueue, _gizmoMap );
 
+    clearBeta ( _gizmoQueue );
     clearBeta ( _pointLightQueue );
     clearBeta ( _reflectionProbeLocalQueue );
     clearBeta ( _reflectionProbeGlobalQueue );
@@ -348,18 +392,23 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         _transformStream->Commit ();
         _shadingStream->Commit ();
         _outlineStream->Commit ();
+        _sdfVertexStream->Commit ();
+        _sdfPixelStream->Commit ();
+        _sdfShapeStream->Commit ();
 
         // FUCK - correct DPI
         _viewport->Update ( deltaTime, 1.0F );
 
         GXQuat const& orientation = _viewport->GetOrientation ();
 
-        GXMat4 alpha{};
-        alpha.FromFast ( orientation, _viewport->GetPosition () );
+        GXVec3 const &location = _viewport->GetLocation ();
+        GXMat4 alpha {};
+        alpha.FromFast ( orientation, location );
 
         GXMat4 beta{};
         beta.Inverse ( alpha );
-        frame._viewProj.Multiply ( beta, _viewport->GetProjection () );
+        GXMat4 const &projection = _viewport->GetProjection ();
+        frame._viewProj.Multiply ( beta, projection );
 
         GXProjectionClipPlanes frustum{};
         frustum.From ( frame._viewProj );
@@ -370,6 +419,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
             ComputeTransformGBufferOnly ( frustum );
 
         ComputeTransformOutline ( frustum );
+        ComputeTransformGizmo ( projection, location, *reinterpret_cast<GXVec3 const*> ( alpha._data[ 2U ] ) );
     }
 
     bool const noOpaque = _opaqueVisible.empty ();
@@ -744,20 +794,20 @@ OutlineMeshNode Workspace::RegisterOutline ( MeshGeometryRef &mesh ) noexcept
     return OutlineMeshNode ( *this, *node );
 }
 
-GizmoNode Workspace::RegisterGizmo ( MeshGeometryRef &mesh ) noexcept
+GizmoNode Workspace::RegisterGizmo ( eSDFShape shape ) noexcept
 {
     AV_TRACE ( "Workspace register gizmo" )
 
-    auto &g = *new GizmoInfo;
-    auto w = MeshGeometryRef::weak_type ( mesh );
+    // This will also act as search key for unregister operation.
+    auto* info = new GizmoInfo;
+    info->_shape = shape;
 
     {
         std::lock_guard const lock ( _mutex );
-        _gizmoQueue[ mesh ].push_back ( &g );
-        _gizmoMap[ &g ] = std::move ( w );
+        _gizmoQueue.push_back ( info );
     }
 
-    return GizmoNode ( *this, g );
+    return GizmoNode ( *this, *info );
 }
 
 PointLightNode Workspace::RegisterPointLight () noexcept
@@ -805,69 +855,53 @@ ReflectionProbeGlobalNode Workspace::RegisterReflectionProbeGlobal () noexcept
 void Workspace::UnregisterOpaque ( GBufferMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister opaque mesh" )
-    node._workspace = nullptr;
-    UnregisterMesh ( _opaqueQueue, _opaqueMap, *node._meshInfo );
+    UnregisterMesh ( _opaqueQueue, _opaqueMap, node );
 }
 
 void Workspace::UnregisterStipple ( GBufferMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister stipple mesh" )
-    node._workspace = nullptr;
-    UnregisterMesh ( _stippleQueue, _stippleMap, *node._meshInfo );
+    UnregisterMesh ( _stippleQueue, _stippleMap, node );
 }
 
 void Workspace::UnregisterOutline ( OutlineMeshNode &node ) noexcept
 {
     AV_TRACE ( "Workspace unregister outline" )
     node._workspace = nullptr;
-    OutlineMeshInfo &nodeMeshInfo = *node._meshInfo;
+    OutlineMeshInfo* meshInfo = std::exchange ( node._meshInfo, nullptr );
 
     std::lock_guard const lock ( _mutex );
-    auto const findResult = _outlineQueue.find ( _outlineMap.extract ( &nodeMeshInfo ).mapped ().lock () );
+    auto const findResult = _outlineQueue.find ( _outlineMap.extract ( meshInfo ).mapped ().lock () );
     OutlineMeshes &meshes = findResult->second;
 
     if ( meshes.size () == 1U )
     {
-        AV_ASSERT ( meshes.front () == &nodeMeshInfo )
+        AV_ASSERT ( meshes.front () == meshInfo )
         _outlineQueue.erase ( findResult );
+        delete meshInfo;
         return;
     }
 
     for ( auto &mesh : meshes )
     {
-        if ( mesh != &nodeMeshInfo )
+        if ( mesh != meshInfo )
             continue;
 
         mesh = meshes.back ();
         meshes.pop_back ();
+        delete meshInfo;
         return;
     }
 }
 
-void Workspace::Unregister ( GizmoNode const &node ) noexcept
+void Workspace::Unregister ( GizmoNode &node ) noexcept
 {
-    GizmoInfo const &g = node.GetInternalInfo ();
-
+    AV_TRACE ( "Workspace unregister gizmo" )
+    node._workspace = nullptr;
+    GizmoInfo* gizmoInfo = std::exchange ( node._gizmoInfo, nullptr );
     std::lock_guard const lock ( _mutex );
-    auto const findResult = _gizmoQueue.find ( _gizmoMap.extract ( &g ).mapped ().lock () );
-    Gizmos &gizmos = findResult->second;
-
-    if ( gizmos.size () == 1U )
-    {
-        AV_ASSERT ( gizmos.front () == &g )
-        _gizmoQueue.erase ( findResult );
-        return;
-    }
-
-    for ( auto &gizmo : gizmos )
-    {
-        if ( gizmo != &g )
-            continue;
-
-        gizmo = gizmos.back ();
-        gizmos.pop_back ();
-        break;
-    }
+    _gizmoQueue.erase ( std::find ( _gizmoQueue.cbegin (), _gizmoQueue.cbegin (), gizmoInfo ) );
+    delete gizmoInfo;
 }
 
 void Workspace::Unregister ( PointLightNode &node ) noexcept
@@ -1186,6 +1220,39 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
     }
 }
 
+void Workspace::ComputeTransformGizmo ( GXMat4 const &projection,
+    GXVec3 const &cameraLocation,
+    GXVec3 const &cameraForward
+) noexcept
+{
+    if ( _gizmoQueue.empty () )
+        return;
+
+    AV_TRACE ( "Gizmo" )
+    pbr::StreamBuffer &vertexStream = *_sdfVertexStream;
+    pbr::StreamBuffer &pixelStream = *_sdfPixelStream;
+    pbr::StreamBuffer &shapeStream = *_sdfShapeStream;
+    _gizmoVisible = 0U;
+
+    _gizmoPrepassPushContants._toCVV = projection;
+    _gizmoPrepassPushContants._cameraLocationWorld = cameraLocation;
+
+    // See <repo>/docs/gizmo-rendering.md#pixel-coverage
+    float const t = std::tan ( 0.5F * ViewportWidget::GetFieldOfView () );
+    GXVec3 &viWorld = _gizmoPrepassPushContants._viWorld;
+    viWorld.Multiply ( cameraForward, ( t + t ) * _outlineBlurXPushConstants._invResolution._data[ 1U ] );
+
+    for ( GizmoInfo* gizmo : _gizmoQueue )
+    {
+        // FUCK - frustum culling
+        gizmo->_node->Commit ( cameraLocation, viWorld );
+        vertexStream.Push ( &gizmo->_vertex );
+        pixelStream.Push ( &gizmo->_pixel );
+        shapeStream.Push ( &gizmo->_shape );
+        ++_gizmoVisible;
+    }
+}
+
 void Workspace::FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept
 {
     AV_TRACE ( "GBuffer" )
@@ -1302,6 +1369,9 @@ bool Workspace::IsReady () noexcept
         static_cast<bool> ( _shadingStream ) &
         static_cast<bool> ( _idStream ) &
         static_cast<bool> ( _outlineStream ) &
+        static_cast<bool> ( _sdfVertexStream ) &
+        static_cast<bool> ( _sdfPixelStream ) &
+        static_cast<bool> ( _sdfShapeStream ) &
         static_cast<bool> ( _defaultAlbedo ) &
         static_cast<bool> ( _defaultEmission ) &
         static_cast<bool> ( _defaultMask ) &
@@ -1589,6 +1659,72 @@ void Workspace::InitGraphicsResources () noexcept
                     )
                 );
 
+                StreamBufferRef sdfVertex = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !sdfVertex->Init ( renderer, GIZMO_ELEMENTS, sizeof ( SDFVertex ), "SDF vertex stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto sdfVertexReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _sdfVertexStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( sdfVertex ), std::move ( sdfVertexReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef sdfPixel = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !sdfPixel->Init ( renderer, GIZMO_ELEMENTS, sizeof ( SDFPixel ), "SDF pixel stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto sdfPixelReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _sdfPixelStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( sdfPixel ), std::move ( sdfPixelReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
+                StreamBufferRef sdfShape = std::make_unique<pbr::StreamBuffer> ();
+
+                if ( !sdfShape->Init ( renderer, GIZMO_ELEMENTS, sizeof ( eSDFShape ), "SDF shape stream" ) )
+                {
+                    [[unlikely]]
+                    return nullptr;
+                }
+
+                auto sdfShapeReady = [ this ] ( StreamBufferRef buffer ) noexcept {
+                    _sdfShapeStream = std::move ( buffer );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewStreamBuffer,
+                        [
+                            info = StreamBufferInfo ( std::move ( sdfShape ), std::move ( sdfShapeReady ) )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
                 return nullptr;
             }
         )
@@ -1738,27 +1874,31 @@ GBufferMeshNode Workspace::RegisterMesh ( MeshGeometryRef &mesh,
 
 void Workspace::UnregisterMesh ( GBufferMeshQueue &meshQueue,
     GBufferMeshMap &meshMap,
-    GBufferMeshInfo &nodeMeshInfo
+    GBufferMeshNode &node
 ) noexcept
 {
     std::lock_guard const lock ( _mutex );
-    auto const findResult = meshQueue.find ( meshMap.extract ( &nodeMeshInfo ).mapped ().lock () );
+    node._workspace = nullptr;
+    GBufferMeshInfo* meshInfo = std::exchange ( node._meshInfo, nullptr );
+    auto const findResult = meshQueue.find ( meshMap.extract ( meshInfo ).mapped ().lock () );
     GBufferMeshes &meshes = findResult->second;
 
     if ( meshes.size () == 1U )
     {
-        AV_ASSERT ( meshes.front () == &nodeMeshInfo )
+        AV_ASSERT ( meshes.front () == meshInfo )
         meshQueue.erase ( findResult );
+        delete meshInfo;
         return;
     }
 
     for ( auto &mesh : meshes )
     {
-        if ( mesh != &nodeMeshInfo )
+        if ( mesh != meshInfo )
             continue;
 
         mesh = meshes.back ();
         meshes.pop_back ();
+        delete meshInfo;
         return;
     }
 }

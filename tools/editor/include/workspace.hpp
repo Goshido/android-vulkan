@@ -36,9 +36,7 @@ class Workspace final
         using OutlineMeshQueue = std::unordered_map<MeshGeometryRef, OutlineMeshes>;
         using OutlineMeshMap = std::unordered_map<OutlineMeshInfo const*, MeshGeometryRef::weak_type>;
 
-        using Gizmos = std::deque<GizmoInfo*>;
-        using GizmoQueue = std::unordered_map<MeshGeometryRef, Gizmos>;
-        using GizmoMap = std::unordered_map<GizmoInfo const*, MeshGeometryRef::weak_type>;
+        using GizmoQueue = std::deque<GizmoInfo*>;
 
         using PointLightQueue = std::unordered_set<PointLightInfo*>;
         using ReflectionProbeLocalQueue = std::unordered_set<ReflectionProbeLocalInfo*>;
@@ -68,7 +66,7 @@ class Workspace final
         std::vector<MeshInstance>                           _outlineVisible {};
 
         GizmoQueue                                          _gizmoQueue {};
-        GizmoMap                                            _gizmoMap {};
+        size_t                                              _gizmoVisible = 0U;
 
         PointLightQueue                                     _pointLightQueue {};
         ReflectionProbeLocalQueue                           _reflectionProbeLocalQueue {};
@@ -83,6 +81,7 @@ class Workspace final
 
         pbr::OutlineBorderProgram::PushConstants            _outlineBorderPushConstants {};
         pbr::OutlineBlurXProgram::PushConstants             _outlineBlurXPushConstants {};
+        pbr::GizmoPrepassProgram::PushConstants             _gizmoPrepassPushContants {};
 
         StreamBufferRef                                     _frameStream {};
         std::optional<VkDeviceAddress>                      _frameInstance = std::nullopt;
@@ -91,6 +90,9 @@ class Workspace final
         StreamBufferRef                                     _shadingStream {};
         StreamBufferRef                                     _idStream {};
         StreamBufferRef                                     _outlineStream {};
+        StreamBufferRef                                     _sdfVertexStream {};
+        StreamBufferRef                                     _sdfPixelStream {};
+        StreamBufferRef                                     _sdfShapeStream {};
 
         Texture2DRef                                        _defaultAlbedo {};
         Texture2DRef                                        _defaultEmission {};
@@ -421,7 +423,7 @@ class Workspace final
         [[nodiscard]] GBufferMeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] GBufferMeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] OutlineMeshNode RegisterOutline ( MeshGeometryRef &mesh ) noexcept;
-        [[nodiscard]] GizmoNode RegisterGizmo ( MeshGeometryRef &mesh ) noexcept;
+        [[nodiscard]] GizmoNode RegisterGizmo ( eSDFShape shape ) noexcept;
         [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;
@@ -429,7 +431,7 @@ class Workspace final
         void UnregisterOpaque ( GBufferMeshNode &node ) noexcept;
         void UnregisterStipple ( GBufferMeshNode &node ) noexcept;
         void UnregisterOutline ( OutlineMeshNode &node ) noexcept;
-        void Unregister ( GizmoNode const &node ) noexcept;
+        void Unregister ( GizmoNode &node ) noexcept;
         void Unregister ( PointLightNode &node ) noexcept;
         void Unregister ( ReflectionProbeLocalNode &node ) noexcept;
         void Unregister ( ReflectionProbeGlobalNode &node ) noexcept;
@@ -446,6 +448,11 @@ class Workspace final
         void ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept;
         void ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept;
 
+        void ComputeTransformGizmo ( GXMat4 const &projection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &cameraForward
+        ) noexcept;
+
         void FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept;
 
@@ -458,12 +465,12 @@ class Workspace final
         [[nodiscard]] GBufferMeshNode RegisterMesh ( MeshGeometryRef &mesh,
             GBufferMeshQueue &meshQueue,
             GBufferMeshMap &meshMap,
-            GBufferMeshInfo &nodeMeshInfo
+            GBufferMeshInfo &node
         ) noexcept;
 
         void UnregisterMesh ( GBufferMeshQueue &meshQueue,
             GBufferMeshMap &meshMap,
-            GBufferMeshInfo &nodeMeshInfo
+            GBufferMeshNode &node
         ) noexcept;
 };
 

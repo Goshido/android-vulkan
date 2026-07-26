@@ -2,16 +2,21 @@
 #define EDITOR_GIZMO_INFO_HPP
 
 
-#include <GXCommon/GXMath.hpp>
+#include "sdf_shape.hpp"
+#include "sdf_pixel.hpp"
+#include "sdf_vertex.hpp"
 
 
 namespace editor {
 
+class GizmoNode;
+
 struct GizmoInfo final
 {
-    GXMat4          _local {};
-    GXAABB          _bounds {};
-    GXColorUNORM    _color { 255U, 255U, 255U, 255U };
+    GizmoNode*      _node = nullptr;
+    SDFVertex       _vertex {};
+    SDFPixel        _pixel {};
+    eSDFShape       _shape = eSDFShape::Sphere;
 };
 
 } // namespace editor

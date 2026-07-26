@@ -67,7 +67,7 @@ Attributes VS ( in InputData inputData )
     );
 
     float32_t3 const v = mul ( sdfVertex._toWorld, ComputeVertex ( inputData ) ).xyz;
-    float32_t const omega = SQRT_3 * dot ( v - g_pushConstants._cameraPositionWorld, g_pushConstants._viWorld );
+    float32_t const omega = SQRT_3 * dot ( v - g_pushConstants._cameraLocationWorld, g_pushConstants._viWorld );
     float32_t3x3 const toSDFOrientation = ToMatrix ( sdfVertex._sdfOrientation );
 
     // SDF transformation contains shell expand transformation implicitly. Upper 3x3 matrix is orthogonal basis of

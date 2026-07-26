@@ -1338,6 +1338,7 @@
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\hotkey.hpp" />
+    <ClInclude Include="include\model.hpp" />
     <ClInclude Include="include\move_tool.hpp" />
     <ClInclude Include="include\outline_mesh_info.hpp" />
     <ClInclude Include="include\outline_mesh_node.hpp" />
@@ -1346,6 +1347,9 @@
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\sdf_pixel.hpp" />
+    <ClInclude Include="include\sdf_shape.hpp" />
+    <ClInclude Include="include\sdf_vertex.hpp" />
     <ClInclude Include="include\selection.hpp" />
     <ClInclude Include="include\select_tool.hpp" />
     <ClInclude Include="include\shading.hpp" />
@@ -1466,6 +1470,16 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_shapes.inc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>

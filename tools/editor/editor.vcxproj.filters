@@ -971,6 +971,18 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_prepass_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="include\model.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_pixel.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_shape.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_vertex.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -1035,6 +1047,9 @@
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_shapes.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>

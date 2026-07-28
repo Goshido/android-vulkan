@@ -3,6 +3,7 @@
 
 
 #include "gizmo_info.hpp"
+#include "sdf_palette.hpp"
 #include "workspace_node.hpp"
 
 
@@ -19,10 +20,10 @@ class GizmoNode final : public WorkspaceNode
         GXQuat          _rotation {};
         GXVec3          _location {};
         GXVec3          _scale {};
-        uint8_t         _palette;
+        eSDFPalette     _palette = eSDFPalette::White;
 
     public:
-        GizmoNode () = delete;
+        GizmoNode () = default;
 
         GizmoNode ( GizmoNode const & ) = delete;
         GizmoNode &operator = ( GizmoNode const & ) = delete;
@@ -36,7 +37,7 @@ class GizmoNode final : public WorkspaceNode
 
         void Commit ( GXVec3 const &cameraLocation, GXVec3 const &viWorld ) noexcept;
 
-        void SetColor ( uint8_t palette ) noexcept;
+        void SetColor ( eSDFPalette palette ) noexcept;
         void SetRotation ( GXQuat const &rotation ) noexcept;
         void SetLocation ( GXVec3 const &location ) noexcept;
         void SetScale ( GXVec3 const &scale ) noexcept;

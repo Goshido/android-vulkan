@@ -21,7 +21,7 @@ GizmoNode::GizmoNode ( GizmoNode &&other ) noexcept
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
     _location = std::exchange ( other._location, GXVec3::ZERO );
     _scale = std::exchange ( other._scale, GXVec3::ONE );
-    _palette = static_cast<uint8_t> ( std::exchange ( other._palette, static_cast<uint8_t> ( 0U ) ) );
+    _palette = std::exchange ( other._palette, eSDFPalette::White );
 
     if ( otherLock )
         other.Unlock ();
@@ -50,7 +50,7 @@ GizmoNode &GizmoNode::operator = ( GizmoNode &&other ) noexcept
     _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
     _location = std::exchange ( other._location, GXVec3::ZERO );
     _scale = std::exchange ( other._scale, GXVec3::ONE );
-    _palette = static_cast<uint8_t> ( std::exchange ( other._palette, static_cast<uint8_t> ( 0U ) ) );
+    _palette = std::exchange ( other._palette, eSDFPalette::White );
 
     if ( otherLock )
         other.Unlock ();
@@ -91,7 +91,7 @@ void GizmoNode::Commit ( GXVec3 const &/*cameraLocation*/, GXVec3 const &/*viWor
     Unlock ();
 }
 
-void GizmoNode::SetColor ( uint8_t palette ) noexcept
+void GizmoNode::SetColor ( eSDFPalette palette ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]
         return;

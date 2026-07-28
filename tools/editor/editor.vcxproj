@@ -1156,6 +1156,7 @@
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
+    <ClCompile Include="src\sdf_box.cpp" />
     <ClCompile Include="src\selection.cpp" />
     <ClCompile Include="src\select_tool.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
@@ -1347,6 +1348,8 @@
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\sdf_box.hpp" />
+    <ClInclude Include="include\sdf_palette.hpp" />
     <ClInclude Include="include\sdf_pixel.hpp" />
     <ClInclude Include="include\sdf_shape.hpp" />
     <ClInclude Include="include\sdf_vertex.hpp" />

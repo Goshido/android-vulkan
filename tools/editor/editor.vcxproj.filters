@@ -444,6 +444,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_prepass_program.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\sdf_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -982,6 +985,12 @@
     </ClInclude>
     <ClInclude Include="include\sdf_vertex.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_box.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_palette.hpp">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

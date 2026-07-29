@@ -12,7 +12,7 @@ enum class eSDFShape : uint32_t
     Sphere = SHAPE_SPHERE,
     Cone = SHAPE_CONE,
     Box = SHAPE_BOX,
-    LineSegmentX = SHAPE_LINE_SEGMENT_X,
+    LineSegment = SHAPE_LINE_SEGMENT,
     CappedTorus = SHAPE_CAPPED_TORUS
 };
 

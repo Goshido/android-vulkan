@@ -1157,6 +1157,9 @@
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
     <ClCompile Include="src\sdf_box.cpp" />
+    <ClCompile Include="src\sdf_cone.cpp" />
+    <ClCompile Include="src\sdf_line_segment.cpp" />
+    <ClCompile Include="src\sdf_sphere.cpp" />
     <ClCompile Include="src\selection.cpp" />
     <ClCompile Include="src\select_tool.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
@@ -1349,9 +1352,12 @@
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
     <ClInclude Include="include\sdf_box.hpp" />
+    <ClInclude Include="include\sdf_cone.hpp" />
+    <ClInclude Include="include\sdf_line_segment.hpp" />
     <ClInclude Include="include\sdf_palette.hpp" />
     <ClInclude Include="include\sdf_pixel.hpp" />
     <ClInclude Include="include\sdf_shape.hpp" />
+    <ClInclude Include="include\sdf_sphere.hpp" />
     <ClInclude Include="include\sdf_vertex.hpp" />
     <ClInclude Include="include\selection.hpp" />
     <ClInclude Include="include\select_tool.hpp" />

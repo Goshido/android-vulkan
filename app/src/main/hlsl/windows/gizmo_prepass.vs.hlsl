@@ -39,8 +39,8 @@ static float32_t3 const     g_expandDir[ 8U ] =
 // All SDF shapes use two shells:
 // - cube 2x2x2 with center in origin
 // - x axis aligned box 1x2x2 with center in (0.5, 0, 0)
-// The g_cube describes the cube geometry. In case of SHAPE_LINE_SEGMENT_X and SHAPE_CONE the cube geometry must be
-// transformed into box geometry. Shape type are assigned such a way that SHAPE_LINE_SEGMENT_X and SHAPE_CONE have odd
+// The g_cube describes the cube geometry. In case of SHAPE_LINE_SEGMENT and SHAPE_CONE the cube geometry must be
+// transformed into box geometry. Shape type are assigned such a way that SHAPE_LINE_SEGMENT and SHAPE_CONE have odd
 // value but SHAPE_SPHERE, SHAPE_BOX and CAPPED_TORUS have even value.
 float32_t4 ComputeVertex ( in InputData inputData )
 {

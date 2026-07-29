@@ -37,14 +37,14 @@ struct OutputData
 //----------------------------------------------------------------------------------------------------------------------
 
 // Idea is taken from https://iquilezles.org/articles/distfunctions/
-float32_t SDFLineSegmentX ( in float32_t3 p, in float32_t h, in float32_t r )
+float32_t SDFLineSegment ( in float32_t3 p, in float32_t h, in float32_t r )
 {
     return r + length ( float32_t3 ( p.x - clamp ( p.x, 0.0F, h ), p.yz ) );
 }
 
 // Idea is taken from https://iquilezles.org/articles/distfunctions/
 // [2026/02/23] In original paper the cone tip is touching (0, 0, 0). The cone base is below the origin.
-float32_t SDFConeX ( in float32_t3 p, in float32_t2 q, in float32_t qDotFactor, in float32_t r )
+float32_t SDFCone ( in float32_t3 p, in float32_t2 q, in float32_t qDotFactor, in float32_t r )
 {
     float32_t2 const nQ = -q;
 
@@ -90,8 +90,8 @@ float32_t SDF ( in float32_t3 p, in uint32_t shapeType, in float32_t4 sdfParams 
 {
     switch ( shapeType )
     {
-        case SHAPE_LINE_SEGMENT_X: return SDFLineSegmentX ( p, sdfParams.x, sdfParams.y );
-        case SHAPE_CONE: return SDFConeX ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
+        case SHAPE_LINE_SEGMENT: return SDFLineSegment ( p, sdfParams.x, sdfParams.y );
+        case SHAPE_CONE: return SDFCone ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
         case SHAPE_SPHERE: return SDFSphere ( p, sdfParams.x );
         case SHAPE_BOX: return SDFBox ( p, sdfParams.xyz, sdfParams.w );
         case SHAPE_CAPPED_TORUS: return SDFCappedTorus ( p, sdfParams.xy, sdfParams.z, sdfParams.w );

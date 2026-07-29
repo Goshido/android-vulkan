@@ -5,7 +5,7 @@
 #define SHAPE_SPHERE            0U
 #define SHAPE_CONE              1U
 #define SHAPE_BOX               2U
-#define SHAPE_LINE_SEGMENT_X    3U
+#define SHAPE_LINE_SEGMENT      3U
 #define SHAPE_CAPPED_TORUS      4U
 
 

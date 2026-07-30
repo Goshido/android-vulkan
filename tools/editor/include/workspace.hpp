@@ -423,7 +423,7 @@ class Workspace final
         [[nodiscard]] GBufferMeshNode RegisterOpaqueMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] GBufferMeshNode RegisterStippleMesh ( MeshGeometryRef &mesh ) noexcept;
         [[nodiscard]] OutlineMeshNode RegisterOutline ( MeshGeometryRef &mesh ) noexcept;
-        [[nodiscard]] GizmoNode RegisterGizmo ( eSDFShape shape ) noexcept;
+        [[nodiscard]] GizmoNode RegisterGizmo ( eSDFShape shape, GizmoNode::UpdateHandler &&update ) noexcept;
         [[nodiscard]] PointLightNode RegisterPointLight () noexcept;
         [[nodiscard]] ReflectionProbeLocalNode RegisterReflectionProbeLocal () noexcept;
         [[nodiscard]] ReflectionProbeGlobalNode RegisterReflectionProbeGlobal () noexcept;

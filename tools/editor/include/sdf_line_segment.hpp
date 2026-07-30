@@ -13,12 +13,12 @@ class SDFLineSegment final
     private:
         GizmoNode       _node {};
 
-        GXVec3 const    _location {};
         GXQuat const    _rotation {};
+        GXVec3 const    _location {};
         GXVec3 const    _scale {};
 
-        GXVec3          _locationWorld = GXVec3::ZERO;
         GXQuat          _rotationWorld = GXQuat::IDENTITY;
+        GXVec3          _locationWorld = GXVec3::ZERO;
         eSDFPalette     _palette = eSDFPalette::White;
 
     public:
@@ -41,7 +41,7 @@ class SDFLineSegment final
         void SetColor ( eSDFPalette palette ) noexcept;
         void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
         void Hide () noexcept;
-        void OnParentTransformUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
 };
 
 } // namespace editor

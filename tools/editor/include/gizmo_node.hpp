@@ -6,6 +6,12 @@
 #include "sdf_palette.hpp"
 #include "workspace_node.hpp"
 
+GX_DISABLE_COMMON_WARNINGS
+
+#include <functional>
+
+GX_RESTORE_WARNING_STATE
+
 
 namespace editor {
 
@@ -15,12 +21,13 @@ class GizmoNode final : public WorkspaceNode
 {
     friend class Workspace;
 
+    public:
+        using UpdateHandler =
+            std::move_only_function<void ( SDFVertex &, SDFPixel &, GXVec3 const &, GXVec3 const &, GXVec3 const & )>;
+
     private:
-        GizmoInfo*      _gizmoInfo = nullptr;
-        GXQuat          _rotation {};
-        GXVec3          _location {};
-        GXVec3          _scale {};
-        eSDFPalette     _palette = eSDFPalette::White;
+        GizmoInfo*          _gizmoInfo = nullptr;
+        UpdateHandler       _update = nullptr;
 
     public:
         GizmoNode () = default;
@@ -31,16 +38,12 @@ class GizmoNode final : public WorkspaceNode
         GizmoNode ( GizmoNode &&other ) noexcept;
         GizmoNode &operator = ( GizmoNode &&other ) noexcept;
 
-        explicit GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo ) noexcept;
+        explicit GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo, UpdateHandler &&update ) noexcept;
 
         ~GizmoNode () noexcept override;
 
-        void Commit ( GXVec3 const &cameraLocation, GXVec3 const &viWorld ) noexcept;
-
-        void SetColor ( eSDFPalette palette ) noexcept;
-        void SetRotation ( GXQuat const &rotation ) noexcept;
-        void SetLocation ( GXVec3 const &location ) noexcept;
-        void SetScale ( GXVec3 const &scale ) noexcept;
+        void Commit ( GXVec3 const &viewerLocation, GXVec3 const &viewerForward, GXVec3 const &viWorld ) noexcept;
+        void MarkUpdate () noexcept;
 
     private:
         void Disconnect () noexcept;

@@ -2,9 +2,10 @@
 #define EDITOR_MOVE_TOOL_HPP
 
 
-#include "sdf_box.hpp"
+#include "sdf_box_with_flip.hpp"
 #include "sdf_cone.hpp"
 #include "sdf_line_segment.hpp"
+#include "sdf_line_segment_with_flip.hpp"
 #include "sdf_sphere.hpp"
 #include "tool.hpp"
 
@@ -14,9 +15,9 @@ namespace editor {
 class MoveTool final : public Tool
 {
     private:
-        SDFSphere           _origin { GXVec3 ( 0.0F, 0.0F, 0.0F ), 1.0e-1F, eSDFPalette::White };
+        SDFSphere                   _origin { GXVec3 ( 0.0F, 0.0F, 0.0F ), 1.0e-1F, eSDFPalette::White };
 
-        SDFLineSegment      _xLine
+        SDFLineSegment              _xLine
         {
             GXVec3 ( 1.5e-1F, 0.0F, 0.0F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -24,32 +25,17 @@ class MoveTool final : public Tool
             eSDFPalette::Red
         };
 
-        SDFLineSegment      _xPlaneY
-        {
-            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
-            GXQuat ( 0.5F, 0.5F, 0.5F, 0.5F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Red
-        };
-
-        SDFLineSegment      _xPlaneZ
-        {
-            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
-            GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Red
-        };
-
-        SDFBox              _xPlane
+        SDFBoxWithFlip              _xPlane
         {
             GXVec3 ( 0.0F, 1.075F, 1.075F ),
             GXQuat ( 0.0F, 1.0F, 0.0F, 0.0F ),
             GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
             eSDFPalette::RedGhost,
-            0.0F
+            0.0F,
+            2.15F
         };
 
-        SDFCone             _xCone
+        SDFCone                     _xCone
         {
             GXVec3 ( 6.5F, 0.0F, 0.0F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -58,7 +44,7 @@ class MoveTool final : public Tool
             2.0e-2F
         };
 
-        SDFLineSegment      _yLine
+        SDFLineSegment              _yLine
         {
             GXVec3 ( 0.0F, 1.5e-1F, 0.0F ),
             GXQuat ( 7.071068e-1F, 0.0F, 0.0F, 7.071068e-1F ),
@@ -66,32 +52,17 @@ class MoveTool final : public Tool
             eSDFPalette::Green
         };
 
-        SDFLineSegment      _yPlaneZ
-        {
-            GXVec3 ( 2.0F, 0.0F, 1.5e-1F ),
-            GXQuat ( 0.5F, -0.5F, -0.5F, -0.5F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Green
-        };
-
-        SDFLineSegment      _yPlaneX
-        {
-            GXVec3 ( 1.5e-1F, 0.0F, 2.0F ),
-            GXQuat ( 7.071068e-1F, 7.071068e-1F, 0.0F, 0.0F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Green
-        };
-
-        SDFBox              _yPlane
+        SDFBoxWithFlip              _yPlane
         {
             GXVec3 ( 1.075F, 0.0F, 1.075F ),
             GXQuat ( 0.5F, -0.5F, -0.5F, 0.5F ),
             GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
             eSDFPalette::GreenGhost,
-            0.0F
+            0.0F,
+            2.15F
         };
 
-        SDFCone             _yCone
+        SDFCone                     _yCone
         {
             GXVec3 ( 0.0F, 6.5F, 0.0F ),
             GXQuat ( 7.071068e-1F, 0.0F, 0.0F, 7.071068e-1F ),
@@ -100,7 +71,7 @@ class MoveTool final : public Tool
             2.0e-2F
         };
 
-        SDFLineSegment      _zLine
+        SDFLineSegment              _zLine
         {
             GXVec3 ( 0.0F, 0.0F, 1.5e-1F ),
             GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
@@ -108,32 +79,17 @@ class MoveTool final : public Tool
             eSDFPalette::Blue
         };
 
-        SDFLineSegment      _zPlaneX
-        {
-            GXVec3 ( 1.5e-1F, 2.0F, 0.0F ),
-            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Blue
-        };
-
-        SDFLineSegment      _zPlaneY
-        {
-            GXVec3 ( 2.0F, 1.5e-1F, 0.0F ),
-            GXQuat ( 0.0F, 7.071068e-1F, 7.071068e-1F, 0.0F ),
-            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
-            eSDFPalette::Blue
-        };
-
-        SDFBox              _zPlane
+        SDFBoxWithFlip              _zPlane
         {
             GXVec3 ( 1.075F, 1.075F, 0.0F ),
             GXQuat ( 0.5F, 0.5F, -0.5F, 0.5F ),
             GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
             eSDFPalette::BlueGhost,
-            0.0F
+            0.0F,
+            2.15F
         };
 
-        SDFCone             _zCone
+        SDFCone                     _zCone
         {
             GXVec3 ( 0.0F, 0.0F, 6.5F ),
             GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
@@ -142,8 +98,92 @@ class MoveTool final : public Tool
             2.0e-2F
         };
 
+        SDFLineSegmentWithFlip      _xPlaneY
+        {
+            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
+            GXQuat ( 0.5F, 0.5F, 0.5F, 0.5F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Red,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -2.17F,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _xPlaneZ
+        {
+            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
+            GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Red,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -2.17F,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _yPlaneZ
+        {
+            GXVec3 ( 2.0F, 0.0F, 1.5e-1F ),
+            GXQuat ( 0.5F, -0.5F, -0.5F, -0.5F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Green,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -2.17F,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _yPlaneX
+        {
+            GXVec3 ( 1.5e-1F, 0.0F, 2.0F ),
+            GXQuat ( 7.071068e-1F, 7.071068e-1F, 0.0F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Green,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -2.17F,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _zPlaneX
+        {
+            GXVec3 ( 1.5e-1F, 2.0F, 0.0F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Blue,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -2.17F,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _zPlaneY
+        {
+            GXVec3 ( 2.0F, 1.5e-1F, 0.0F ),
+            GXQuat ( 0.0F, 7.071068e-1F, 7.071068e-1F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Blue,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -2.17F,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -4.0F
+        };
+
     public:
-        MoveTool () = default;
+        explicit MoveTool () noexcept;
 
         MoveTool ( MoveTool const & ) = delete;
         MoveTool &operator = ( MoveTool const & ) = delete;
@@ -161,6 +201,8 @@ class MoveTool final : public Tool
         void Move () noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
+
+        void Update () noexcept;
 };
 
 } // namespace editor

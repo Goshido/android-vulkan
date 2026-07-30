@@ -14,7 +14,7 @@ class SDFSphere final
         GizmoNode       _node {};
 
         GXVec3 const    _location {};
-        float const     _diameter = 1.0e-1F;
+        float const     _radius = 1.0e-1F;
 
         GXVec3          _locationWorld = GXVec3::ZERO;
         eSDFPalette     _palette = eSDFPalette::White;
@@ -35,7 +35,7 @@ class SDFSphere final
         void SetColor ( eSDFPalette palette ) noexcept;
         void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
         void Hide () noexcept;
-        void OnParentTransformUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
 };
 
 } // namespace editor

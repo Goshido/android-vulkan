@@ -1,42 +1,61 @@
 #include <precompiled_headers.hpp>
-#include <sdf_box.hpp>
+#include <sdf_box_with_flip.hpp>
 #include <workspace.hpp>
 
 
 namespace editor {
 
-SDFBox::SDFBox ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette, float radius ) noexcept:
+SDFBoxWithFlip::SDFBoxWithFlip ( GXVec3 &&location,
+    GXQuat &&rotation,
+    GXVec3 &&scale,
+    eSDFPalette palette,
+    float radius,
+    float flipOffset
+) noexcept:
     _rotation ( std::move ( rotation ) ),
     _location ( std::move ( location ) ),
     _radius ( radius ),
     _scale ( std::move ( scale ) ),
+    _flipOffset ( flipOffset ),
     _palette ( palette )
 {
     // NOTHING
 }
 
-GXQuat const &SDFBox::GetRotationWorld () const noexcept
+GXQuat const &SDFBoxWithFlip::GetRotationWorld () const noexcept
 {
     return _rotationWorld;
 }
 
-GXVec3 const &SDFBox::GetLocationWorld () const noexcept
+GXVec3 const &SDFBoxWithFlip::GetLocationWorld () const noexcept
 {
     return _locationWorld;
 }
 
-void SDFBox::SetColor ( eSDFPalette palette ) noexcept
+void SDFBoxWithFlip::SetFlipSensors ( GXQuat const &aFlipRotation,
+    GXVec3 const &aFlipLocation,
+    GXQuat const &bFlipRotation,
+    GXVec3 const &bFlipLocation
+) noexcept
+{
+    _aFlipRotation = &aFlipRotation;
+    _aFlipLocation = &aFlipLocation;
+    _bFlipRotation = &bFlipRotation;
+    _bFlipLocation = &bFlipLocation;
+}
+
+void SDFBoxWithFlip::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
     _node.MarkUpdate ();
 }
 
-void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
+void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
 {
     _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::Box,
         [ this ] ( SDFVertex &/*vertex*/,
             SDFPixel &/*pixel*/,
-            GXVec3 const &/*viewerPosition*/,
+            GXVec3 const &/*viewerLocation*/,
             GXVec3 const &/*viewerForward*/,
             GXVec3 const &/*viWorld*/
         ) noexcept {
@@ -48,12 +67,12 @@ void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent )
     OnParentUpdated ( locationParent, rotationParent );
 }
 
-void SDFBox::Hide () noexcept
+void SDFBoxWithFlip::Hide () noexcept
 {
     _node = {};
 }
 
-void SDFBox::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+void SDFBoxWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
     if ( !_node.IsConnected () ) [[unlikely]]
         return;

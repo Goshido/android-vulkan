@@ -5,9 +5,9 @@
 
 namespace editor {
 
-SDFSphere::SDFSphere ( GXVec3 &&location, float diameter, eSDFPalette palette ) noexcept:
+SDFSphere::SDFSphere ( GXVec3 &&location, float radius, eSDFPalette palette ) noexcept:
     _location ( std::move ( location ) ),
-    _diameter ( diameter ),
+    _radius ( radius ),
     _palette ( palette )
 {
     // NOTHING
@@ -15,13 +15,25 @@ SDFSphere::SDFSphere ( GXVec3 &&location, float diameter, eSDFPalette palette ) 
 
 void SDFSphere::SetColor ( eSDFPalette palette ) noexcept
 {
-    _node.SetColor ( palette );
+    _palette = palette;
+    _node.MarkUpdate ();
 }
 
 void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
 {
-    _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::Sphere );
-    OnParentTransformUpdated ( locationParent, rotationParent );
+    _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::Sphere,
+        [ this ] ( SDFVertex &/*vertex*/,
+            SDFPixel &/*pixel*/,
+            GXVec3 const &/*viewerLocation*/,
+            GXVec3 const &/*viewerForward*/,
+            GXVec3 const &/*viWorld*/
+        ) noexcept {
+            // TODO
+            std::printf ( "%p", this );
+        }
+    );
+
+    OnParentUpdated ( locationParent, rotationParent );
 }
 
 void SDFSphere::Hide () noexcept
@@ -29,9 +41,15 @@ void SDFSphere::Hide () noexcept
     _node = {};
 }
 
-void SDFSphere::OnParentTransformUpdated ( GXVec3 const &/*location*/, GXQuat const &/*rotation*/ ) noexcept
+void SDFSphere::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    // FUCK
+    if ( !_node.IsConnected () ) [[unlikely]]
+        return;
+
+    GXVec3 alpha {};
+    rotation.TransformFast ( alpha, _location );
+    _locationWorld.Sum ( location, alpha );
+    _node.MarkUpdate ();
 }
 
 } // namespace editor

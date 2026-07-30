@@ -360,7 +360,6 @@ void Workspace::Destroy () noexcept
     clearAlpha ( _opaqueQueue, _opaqueMap );
     clearAlpha ( _stippleQueue, _stippleMap );
 
-    clearBeta ( _gizmoQueue );
     clearBeta ( _pointLightQueue );
     clearBeta ( _reflectionProbeLocalQueue );
     clearBeta ( _reflectionProbeGlobalQueue );
@@ -794,7 +793,7 @@ OutlineMeshNode Workspace::RegisterOutline ( MeshGeometryRef &mesh ) noexcept
     return OutlineMeshNode ( *this, *node );
 }
 
-GizmoNode Workspace::RegisterGizmo ( eSDFShape shape ) noexcept
+GizmoNode Workspace::RegisterGizmo ( eSDFShape shape, GizmoNode::UpdateHandler &&update ) noexcept
 {
     AV_TRACE ( "Workspace register gizmo" )
 
@@ -807,7 +806,7 @@ GizmoNode Workspace::RegisterGizmo ( eSDFShape shape ) noexcept
         _gizmoQueue.push_back ( info );
     }
 
-    return GizmoNode ( *this, *info );
+    return GizmoNode ( *this, *info, std::move ( update ) );
 }
 
 PointLightNode Workspace::RegisterPointLight () noexcept
@@ -1245,7 +1244,7 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &projection,
     for ( GizmoInfo* gizmo : _gizmoQueue )
     {
         // FUCK - frustum culling
-        gizmo->_node->Commit ( cameraLocation, viWorld );
+        gizmo->_node->Commit ( cameraLocation, cameraForward, viWorld );
         vertexStream.Push ( &gizmo->_vertex );
         pixelStream.Push ( &gizmo->_pixel );
         shapeStream.Push ( &gizmo->_shape );

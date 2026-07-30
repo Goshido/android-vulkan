@@ -1,26 +1,42 @@
 #include <precompiled_headers.hpp>
-#include <sdf_line_segment.hpp>
+#include <sdf_line_segment_with_flip.hpp>
 #include <workspace.hpp>
 
 
 namespace editor {
 
-SDFLineSegment::SDFLineSegment ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette ) noexcept:
+SDFLineSegmentWithFlip::SDFLineSegmentWithFlip ( GXVec3 &&location,
+    GXQuat &&rotation,
+    GXVec3 &&scale,
+    eSDFPalette palette,
+    GXQuat const &xFlipRotation,
+    GXVec3 const &xFlipLocation,
+    float xFlipOffset,
+    GXQuat const &yFlipRotation,
+    GXVec3 const &yFlipLocation,
+    float yFlipOffset
+) noexcept:
     _rotation ( std::move ( rotation ) ),
     _location ( std::move ( location ) ),
     _scale ( std::move ( scale ) ),
+    _xFlipOffset ( xFlipOffset ),
+    _xFlipRotation ( xFlipRotation ),
+    _xFlipLocation ( xFlipLocation ),
+    _yFlipRotation ( yFlipRotation ),
+    _yFlipLocation ( yFlipLocation ),
+    _yFlipOffset ( yFlipOffset ),
     _palette ( palette )
 {
     // NOTHING
 }
 
-void SDFLineSegment::SetColor ( eSDFPalette palette ) noexcept
+void SDFLineSegmentWithFlip::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
     _node.MarkUpdate ();
 }
 
-void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
+void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
 {
     _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::LineSegment,
         [ this ] ( SDFVertex &/*vertex*/,
@@ -37,12 +53,12 @@ void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotation
     OnParentUpdated ( locationParent, rotationParent );
 }
 
-void SDFLineSegment::Hide () noexcept
+void SDFLineSegmentWithFlip::Hide () noexcept
 {
     _node = {};
 }
 
-void SDFLineSegment::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+void SDFLineSegmentWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
     if ( !_node.IsConnected () ) [[unlikely]]
         return;

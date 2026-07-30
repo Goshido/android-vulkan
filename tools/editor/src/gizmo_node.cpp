@@ -18,10 +18,7 @@ GizmoNode::GizmoNode ( GizmoNode &&other ) noexcept
     if ( _gizmoInfo = std::exchange ( other._gizmoInfo, nullptr ); _gizmoInfo )
         _gizmoInfo->_node = this;
 
-    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
-    _location = std::exchange ( other._location, GXVec3::ZERO );
-    _scale = std::exchange ( other._scale, GXVec3::ONE );
-    _palette = std::exchange ( other._palette, eSDFPalette::White );
+    _update = std::exchange ( other._update, nullptr );
 
     if ( otherLock )
         other.Unlock ();
@@ -47,10 +44,7 @@ GizmoNode &GizmoNode::operator = ( GizmoNode &&other ) noexcept
     if ( _gizmoInfo = std::exchange ( other._gizmoInfo, nullptr ); _gizmoInfo )
         _gizmoInfo->_node = this;
 
-    _rotation = std::exchange ( other._rotation, GXQuat::IDENTITY );
-    _location = std::exchange ( other._location, GXVec3::ZERO );
-    _scale = std::exchange ( other._scale, GXVec3::ONE );
-    _palette = std::exchange ( other._palette, eSDFPalette::White );
+    _update = std::exchange ( other._update, nullptr );
 
     if ( otherLock )
         other.Unlock ();
@@ -61,9 +55,10 @@ GizmoNode &GizmoNode::operator = ( GizmoNode &&other ) noexcept
     return *this;
 }
 
-GizmoNode::GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo ) noexcept:
+GizmoNode::GizmoNode ( Workspace &workspace, GizmoInfo &gizmoInfo, UpdateHandler &&update ) noexcept:
     WorkspaceNode ( workspace ),
-    _gizmoInfo ( &gizmoInfo )
+    _gizmoInfo ( &gizmoInfo ),
+    _update ( std::move ( update ) )
 {
     _gizmoInfo->_node = this;
 }
@@ -78,61 +73,24 @@ GizmoNode::~GizmoNode () noexcept
     Unlock ();
 }
 
-void GizmoNode::Commit ( GXVec3 const &/*cameraLocation*/, GXVec3 const &/*viWorld*/ ) noexcept
+void GizmoNode::Commit ( GXVec3 const &viewerLocation, GXVec3 const &viewerForward, GXVec3 const &viWorld ) noexcept
 {
     if ( !_hasChanges || !TryLock () ) [[likely]]
         return;
 
-    [[maybe_unused]] GizmoInfo &gizmoInfo = *_gizmoInfo;
-
-    // FUCK
-
+    GizmoInfo &gizmoInfo = *_gizmoInfo;
+    _update ( gizmoInfo._vertex, gizmoInfo._pixel, viewerLocation, viewerForward, viWorld );
     _hasChanges = false;
     Unlock ();
 }
 
-void GizmoNode::SetColor ( eSDFPalette palette ) noexcept
+void GizmoNode::MarkUpdate () noexcept
 {
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _palette = palette;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void GizmoNode::SetRotation ( GXQuat const &rotation ) noexcept
-{
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _rotation = rotation;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void GizmoNode::SetLocation ( GXVec3 const &location ) noexcept
-{
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _location = location;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void GizmoNode::SetScale ( GXVec3 const &scale ) noexcept
-{
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _scale = scale;
-    _hasChanges = true;
-
-    Unlock ();
+    if ( TryLock () ) [[likely]]
+    {
+        _hasChanges = true;
+        Unlock ();
+    }
 }
 
 void GizmoNode::Disconnect () noexcept

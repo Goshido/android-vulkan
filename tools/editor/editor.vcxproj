@@ -1361,6 +1361,7 @@
     <ClInclude Include="include\sdf_palette.hpp" />
     <ClInclude Include="include\sdf_pixel.hpp" />
     <ClInclude Include="include\sdf_shape.hpp" />
+    <ClInclude Include="include\sdf_size.hpp" />
     <ClInclude Include="include\sdf_sphere.hpp" />
     <ClInclude Include="include\sdf_vertex.hpp" />
     <ClInclude Include="include\selection.hpp" />

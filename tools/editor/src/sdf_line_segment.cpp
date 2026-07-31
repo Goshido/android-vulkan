@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <sdf_line_segment.hpp>
+#include <sdf_size.hpp>
 #include <workspace.hpp>
 
 
@@ -23,14 +24,54 @@ void SDFLineSegment::SetColor ( eSDFPalette palette ) noexcept
 void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
 {
     _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::LineSegment,
-        [ this ] ( SDFVertex &/*vertex*/,
-            SDFPixel &/*pixel*/,
-            GXVec3 const &/*viewerLocation*/,
-            GXVec3 const &/*viewerForward*/,
-            GXVec3 const &/*viWorld*/
+        [ this ] ( SDFVertex &vertex,
+            SDFPixel &pixel,
+            SDFShape &shape,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &/*cameraForward*/,
+            GXVec3 const &viWorld
         ) noexcept {
-            // TODO
-            std::printf ( "%p", this );
+            shape._palette = static_cast<uint32_t> ( _palette );
+
+            GXVec3 alpha{};
+            alpha.Subtract ( _parentLocation, cameraLocation );
+            float const pixelSize = SDF_PIXEL_SIZE_SCALE * viWorld.DotProduct ( alpha );
+
+            GXVec3 s {};
+            s.Multiply ( _scale, pixelSize );
+            float const side = std::min ( s._data[ 1U ], s._data[ 2U ] );
+            float const negativeR = -side;
+
+            Model &toWorld = vertex._toWorld;
+            alpha.Subtract ( _locationWorld, _parentLocation );
+            toWorld._w.Sum ( _parentLocation, pixelSize, alpha );
+
+            GXQuat sdfOrientation {};
+            sdfOrientation.InverseFast ( _rotationWorld );
+
+            GXMat3 &basis = *reinterpret_cast<GXMat3*> ( &toWorld );
+            basis.FromFast ( _rotationWorld );
+            alpha.Sum ( _locationWorld, side, toWorld._x );
+            alpha.Reverse ();
+
+            GXVec3 &sdfOffset = vertex._sdfOffset;
+            sdfOrientation.TransformFast ( sdfOffset, alpha );
+
+            toWorld._x.Multiply ( toWorld._x, s._data[ 0U ] );
+            toWorld._y.Multiply ( toWorld._y, side );
+            toWorld._z.Multiply ( toWorld._z, side );
+
+            GXVec4 &sdfParams = pixel._sdfParams;
+            sdfParams._data[ 0U ] = s._data[ 0U ] + negativeR + negativeR;
+            sdfParams._data[ 1U ] = negativeR;
+
+            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
+
+            GXVec3 &cameraLocationSDF = pixel._cameraLocationSDF;
+            sdfOrientation.TransformFast ( cameraLocationSDF, cameraLocation );
+            cameraLocationSDF.Sum ( cameraLocationSDF, sdfOffset );
+
+            sdfOrientation.TransformFast ( pixel._viSDF, viWorld );
         }
     );
 
@@ -51,6 +92,7 @@ void SDFLineSegment::OnParentUpdated ( GXVec3 const &location, GXQuat const &rot
     rotation.TransformFast ( alpha, _location );
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
+    _parentLocation = location;
     _node.MarkUpdate ();
 }
 

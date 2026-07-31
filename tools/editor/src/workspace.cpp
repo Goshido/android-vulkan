@@ -799,7 +799,7 @@ GizmoNode Workspace::RegisterGizmo ( eSDFShape shape, GizmoNode::UpdateHandler &
 
     // This will also act as search key for unregister operation.
     auto* info = new GizmoInfo;
-    info->_shape = shape;
+    info->_shape._type = static_cast<uint32_t> ( shape );
 
     {
         std::lock_guard const lock ( _mutex );
@@ -1704,7 +1704,7 @@ void Workspace::InitGraphicsResources () noexcept
 
                 StreamBufferRef sdfShape = std::make_unique<pbr::StreamBuffer> ();
 
-                if ( !sdfShape->Init ( renderer, GIZMO_ELEMENTS, sizeof ( eSDFShape ), "SDF shape stream" ) )
+                if ( !sdfShape->Init ( renderer, GIZMO_ELEMENTS, sizeof ( SDFShape ), "SDF shape stream" ) )
                 {
                     [[unlikely]]
                     return nullptr;

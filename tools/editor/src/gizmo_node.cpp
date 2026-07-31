@@ -79,7 +79,7 @@ void GizmoNode::Commit ( GXVec3 const &viewerLocation, GXVec3 const &viewerForwa
         return;
 
     GizmoInfo &gizmoInfo = *_gizmoInfo;
-    _update ( gizmoInfo._vertex, gizmoInfo._pixel, viewerLocation, viewerForward, viWorld );
+    _update ( gizmoInfo._vertex, gizmoInfo._pixel, gizmoInfo._shape, viewerLocation, viewerForward, viWorld );
     _hasChanges = false;
     Unlock ();
 }

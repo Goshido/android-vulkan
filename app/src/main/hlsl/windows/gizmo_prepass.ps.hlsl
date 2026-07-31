@@ -117,7 +117,7 @@ Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
         8U
     );
 
-    float32_t3 const ray = normalize ( inputData._canvas - sdfPixel._cameraPositionSDF );
+    float32_t3 const ray = normalize ( inputData._canvas - sdfPixel._cameraLocationSDF );
 
     // precomputing part of dot product due to dot product property: dot(S * a, b) = S * dot(a, b)
     float32_t const pixelScale = dot ( ray, sdfPixel._viSDF );
@@ -138,7 +138,7 @@ Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
 
     for ( uint32_t steps = 0U; steps < MAX_STEPS; ++steps )
     {
-        alpha.x = SDF ( mad ( ray, beta.y, sdfPixel._cameraPositionSDF ), sdfShape._type, sdfPixel._sdfParams );
+        alpha.x = SDF ( mad ( ray, beta.y, sdfPixel._cameraLocationSDF ), sdfShape._type, sdfPixel._sdfParams );
         closest = lerp ( closest, float32_t2 ( alpha.x, beta.y ), closest.x > alpha.x );
         beta.y += alpha.x;
         beta.x = beta.y * dynamicThresholdFactor;
@@ -153,7 +153,7 @@ Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
     result._depth = closest.y * g_pushConstants._invMaxRayDistance;
 
     float32_t const insideProbe = SDF (
-        mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), sdfPixel._cameraPositionSDF ),
+        mad ( ray, mad ( pixelScale * INSIDE_TEST_FACTOR, beta.y, closest.y ), sdfPixel._cameraLocationSDF ),
         sdfShape._type,
         sdfPixel._sdfParams
     );

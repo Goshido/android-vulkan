@@ -26,7 +26,7 @@ struct SDFVertex
 struct SDFPixel
 {
     float32_t4                  _sdfParams;
-    float32_t3                  _cameraPositionSDF;
+    float32_t3                  _cameraLocationSDF;
     float32_t3                  _viSDF;
 };
 

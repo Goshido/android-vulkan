@@ -16,7 +16,7 @@ struct GizmoInfo final
     GizmoNode*      _node = nullptr;
     SDFVertex       _vertex {};
     SDFPixel        _pixel {};
-    eSDFShape       _shape = eSDFShape::Sphere;
+    SDFShape        _shape {};
 };
 
 } // namespace editor

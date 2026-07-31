@@ -3,6 +3,7 @@
 
 
 #include <platform/windows/pbr/gizmo_shapes.inc>
+#include <vulkan_utils.hpp>
 
 
 namespace editor {
@@ -15,6 +16,16 @@ enum class eSDFShape : uint32_t
     LineSegment = SHAPE_LINE_SEGMENT,
     CappedTorus = SHAPE_CAPPED_TORUS
 };
+
+AV_DX_ALIGNMENT_BEGIN
+
+struct SDFShape final
+{
+    uint32_t    _palette: 24;
+    uint32_t    _type: 8;
+};
+
+AV_DX_ALIGNMENT_END
 
 } // namespace editor
 

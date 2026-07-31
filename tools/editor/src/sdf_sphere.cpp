@@ -24,8 +24,9 @@ void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParen
     _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::Sphere,
         [ this ] ( SDFVertex &/*vertex*/,
             SDFPixel &/*pixel*/,
-            GXVec3 const &/*viewerLocation*/,
-            GXVec3 const &/*viewerForward*/,
+            SDFShape &/*shape*/,
+            GXVec3 const &/*cameraLocation*/,
+            GXVec3 const &/*cameraForward*/,
             GXVec3 const &/*viWorld*/
         ) noexcept {
             // TODO

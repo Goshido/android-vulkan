@@ -22,8 +22,9 @@ class GizmoNode final : public WorkspaceNode
     friend class Workspace;
 
     public:
-        using UpdateHandler =
-            std::move_only_function<void ( SDFVertex &, SDFPixel &, GXVec3 const &, GXVec3 const &, GXVec3 const & )>;
+        using UpdateHandler = std::move_only_function<
+            void ( SDFVertex &, SDFPixel &, SDFShape &, GXVec3 const &, GXVec3 const &, GXVec3 const & )
+        >;
 
     private:
         GizmoInfo*          _gizmoInfo = nullptr;

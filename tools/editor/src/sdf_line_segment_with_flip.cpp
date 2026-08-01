@@ -47,9 +47,10 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
             GXVec3 const &/*cameraForward*/,
             GXVec3 const &viWorld
         ) noexcept {
+            // See <repo>/docs/gizmo-rendering.md#pixel-coverage
             shape._palette = static_cast<uint32_t> ( _palette );
 
-            GXVec3 alpha{};
+            GXVec3 alpha {};
             alpha.Subtract ( _parentLocation, cameraLocation );
             float const pixelSize = SDF_PIXEL_SIZE_SCALE * viWorld.DotProduct ( alpha );
 
@@ -59,10 +60,10 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
             float const negativeR = -side;
 
             Model &toWorld = vertex._toWorld;
-            GXMat3 &basis = *reinterpret_cast<GXMat3*> ( &toWorld );
-            basis.FromFast ( _rotationWorld );
+            reinterpret_cast<GXMat3*> ( &toWorld )->FromFast ( _rotationWorld );
 
             GXVec3 &p = toWorld._w;
+            p = _locationWorld;
             GXVec3 flipRight {};
             _xFlipRotation.GetRight ( flipRight );
             alpha.Subtract ( _xFlipLocation, cameraLocation );
@@ -83,7 +84,7 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
             sdfOrientation.InverseFast ( _rotationWorld );
 
             GXVec3 &sdfOffset = vertex._sdfOffset;
-            alpha.Sum ( _locationWorld, side, toWorld._x );
+            alpha.Sum ( p, side, toWorld._x );
             alpha.Reverse ();
             sdfOrientation.TransformFast ( sdfOffset, alpha );
 

@@ -21,6 +21,7 @@ class SDFBox final
         eSDFPalette     _palette = eSDFPalette::White;
         GXQuat          _rotationWorld = GXQuat::IDENTITY;
         GXVec3          _locationWorld = GXVec3::ZERO;
+        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFBox () = delete;

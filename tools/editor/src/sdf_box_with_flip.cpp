@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <sdf_box_with_flip.hpp>
+#include <sdf_size.hpp>
 #include <workspace.hpp>
 
 
@@ -53,15 +54,65 @@ void SDFBoxWithFlip::SetColor ( eSDFPalette palette ) noexcept
 void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
 {
     _node = Workspace::Instance ().RegisterGizmo ( eSDFShape::Box,
-        [ this ] ( SDFVertex &/*vertex*/,
-            SDFPixel &/*pixel*/,
-            SDFShape &/*shape*/,
-            GXVec3 const &/*cameraLocation*/,
+        [ this ] ( SDFVertex &vertex,
+            SDFPixel &pixel,
+            SDFShape &shape,
+            GXVec3 const &cameraLocation,
             GXVec3 const &/*cameraForward*/,
-            GXVec3 const &/*viWorld*/
+            GXVec3 const &viWorld
         ) noexcept {
-            // TODO
-            std::printf ( "%p", this );
+            // See <repo>/docs/gizmo-rendering.md#pixel-coverage
+            shape._palette = static_cast<uint32_t> ( _palette );
+
+            GXVec3 alpha {};
+            alpha.Subtract ( _parentLocation, cameraLocation );
+            float const pixelSize = SDF_PIXEL_SIZE_SCALE * viWorld.DotProduct ( alpha );
+
+            GXVec3 s {};
+            s.Multiply ( _scale, pixelSize );
+            float const r = _radius * pixelSize;
+            reinterpret_cast<GXVec3*> ( &pixel._sdfParams )->Subtract ( GXVec3 ( r, r, r ), s );
+            pixel._sdfParams._data[ 3U ] = -r;
+
+            Model &toWorld = vertex._toWorld;
+            reinterpret_cast<GXMat3*> ( &toWorld )->FromFast ( _rotationWorld );
+            GXVec3 &p = toWorld._w;
+            p = _locationWorld;
+
+            GXVec3 flipRight {};
+            _aFlipRotation->GetRight ( flipRight );
+            alpha.Subtract ( *_aFlipLocation, cameraLocation );
+
+            if ( flipRight.DotProduct ( alpha ) > 0.0F )
+                p.Sum ( p, _flipOffset, toWorld._y );
+
+            _bFlipRotation->GetRight ( flipRight );
+            alpha.Subtract ( *_bFlipLocation, cameraLocation );
+
+            if ( flipRight.DotProduct ( alpha ) > 0.0F )
+                p.Sum ( p, _flipOffset, toWorld._z );
+
+            alpha.Subtract ( p, _parentLocation );
+            p.Sum ( _parentLocation, pixelSize, alpha );
+
+            GXQuat sdfOrientation {};
+            sdfOrientation.InverseFast ( _rotationWorld );
+
+            toWorld._x.Multiply ( toWorld._x, s._data[ 0U ] );
+            toWorld._y.Multiply ( toWorld._y, s._data[ 1U ] );
+            toWorld._z.Multiply ( toWorld._z, s._data[ 2U ] );
+
+            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
+
+            GXVec3 &sdfOffset = vertex._sdfOffset;
+            sdfOrientation.TransformFast ( sdfOffset, p );
+            sdfOffset.Reverse ();
+
+            GXVec3 &cameraLocationSDF = pixel._cameraLocationSDF;
+            sdfOrientation.TransformFast ( cameraLocationSDF, cameraLocation );
+            cameraLocationSDF.Sum ( cameraLocationSDF, sdfOffset );
+
+            sdfOrientation.TransformFast ( pixel._viSDF, viWorld );
         }
     );
 
@@ -82,6 +133,7 @@ void SDFBoxWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rot
     rotation.TransformFast ( alpha, _location );
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
+    _parentLocation = location;
     _node.MarkUpdate ();
 }
 

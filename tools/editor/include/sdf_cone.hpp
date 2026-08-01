@@ -21,6 +21,7 @@ class SDFCone final
         GXQuat          _rotationWorld = GXQuat::IDENTITY;
         GXVec3          _locationWorld = GXVec3::ZERO;
         eSDFPalette     _palette = eSDFPalette::White;
+        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFCone () = delete;

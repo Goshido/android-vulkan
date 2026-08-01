@@ -13,7 +13,7 @@ constexpr float FREE_FLY_MOVE_SPEED = 4.0F;
 constexpr float FREE_FLY_SPRINT_SPEED = 10.0F;
 constexpr float Z_NEAR = 0.1F;
 constexpr float Z_FAR = 1.0e+3F;
-constexpr float FOV_Y = GXDegToRad ( 70.0F );
+constexpr float FOV_Y = GXDegToRad ( 60.0F );
 constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
 } // namespace

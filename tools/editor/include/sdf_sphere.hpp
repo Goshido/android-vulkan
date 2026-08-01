@@ -18,6 +18,7 @@ class SDFSphere final
 
         GXVec3          _locationWorld = GXVec3::ZERO;
         eSDFPalette     _palette = eSDFPalette::White;
+        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFSphere () = delete;

@@ -366,6 +366,10 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
+            case eMessageType::DestroyGPUBuffer:
+                OnDestroyGPUBuffer ( messageQueue, std::move ( message ) );
+            break;
+
             case eMessageType::DestroyMesh:
                 OnDestroyMesh ( messageQueue, std::move ( message ) );
             break;
@@ -384,6 +388,10 @@ void RenderSession::EventLoop () noexcept
 
             case eMessageType::InvokeRenderSession:
                 OnInvokeRenderSession ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewGPUBuffer:
+                OnNewGPUBuffer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::NewProgram:
@@ -635,6 +643,61 @@ void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, siz
     }
 
     queue.clear ();
+}
+
+void RenderSession::DestroyGPUBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _gpuBufferStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _gpuBufferStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _gpuBufferStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy GPU buffers" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &heap = ResourceHeap::Instance ();
+
+    for ( auto &buffer : destroyQueue )
+    {
+        AV_TRACE ( "Destroy GPU buffer" );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, &heap, buffer = std::move ( buffer ) ] () mutable noexcept -> void* {
+                    AV_TRACE ( "Destroy GPU buffer" );
+
+                    if ( buffer.IsConnectedToResourceHeap () )
+                        buffer.Destroy ( renderer, heap );
+                    else
+                        buffer.Destroy ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "GPU buffer destroy complete" );
+                                --_gpuBufferStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
 }
 
 void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t fif ) noexcept
@@ -969,6 +1032,13 @@ void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer ) noexcept
     _workspace.ComputeSelect ( commandBuffer );
 }
 
+void RenderSession::OnDestroyGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy GPU buffer" )
+    messageQueue.DequeueEnd ();
+    _gpuBufferStorage._toDestroy.push_back ( std::move ( *static_cast<pbr::GPUBuffer*> ( message._action () ) ) );
+}
+
 void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Destroy mesh" )
@@ -1005,6 +1075,13 @@ void RenderSession::OnInvokeRenderSession ( MessageQueue &messageQueue, Message 
     AV_TRACE ( "Invoke" )
     messageQueue.DequeueEnd ();
     std::ignore = message._action ();
+}
+
+void RenderSession::OnNewGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New GPU buffer" )
+    messageQueue.DequeueEnd ();
+    _gpuBufferStorage._count += static_cast<uint32_t> ( std::bit_cast<size_t> ( message._action () ) );
 }
 
 void RenderSession::OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -1070,6 +1147,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     FreeMeshTransferQueue ( messageQueue, fif );
     FreeTexture2DTransferQueue ( messageQueue, fif );
 
+    DestroyGPUBuffers ( messageQueue, fif );
     DestroyPrograms ( messageQueue, fif );
     DestroyMeshes ( messageQueue, fif );
     DestroyStreamBuffers ( messageQueue, fif );
@@ -1126,6 +1204,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
     resourceHeap.UploadGPUData ( commandBuffer );
 
+    _workspace.PrepareGizmo ( commandBuffer );
     _workspace.PrepareIDBuffer ( commandBuffer );
     _workspace.DrawOutline ( commandBuffer );
 
@@ -1235,6 +1314,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
             case eMessageType::Shutdown:
                 // All existing events should be processed first.
                 messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
+                DestroyGPUBuffers ( messageQueue, _writingCommandInfo );
                 DestroyPrograms ( messageQueue, _writingCommandInfo );
                 DestroyMeshes ( messageQueue, _writingCommandInfo );
                 DestroyStreamBuffers ( messageQueue, _writingCommandInfo );
@@ -1242,6 +1322,10 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
                 DestroyTexture2DInstances ( messageQueue,
                     std::exchange ( _writingCommandInfo, ( _writingCommandInfo + 1U ) % pbr::FIF_COUNT )
                 );
+            break;
+
+            case eMessageType::DestroyGPUBuffer:
+                OnDestroyGPUBuffer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::DestroyMesh:

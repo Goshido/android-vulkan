@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <file.hpp>
 #include <platform/windows/pbr/gizmo_prepass_program.hpp>
+#include <platform/windows/pbr/gizmo_tile_config.inc>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <renderer.hpp>
 
@@ -90,6 +91,25 @@ bool GizmoPrepassProgram::Init ( VkDevice device, VkFormat swapchainFormat, VkFo
 
     AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Gizmo prepass" )
     return true;
+}
+
+GizmoPrepassProgram::ResourceInfo GizmoPrepassProgram::ResolveResourceSize ( VkExtent2D const &resolution ) noexcept
+{
+    VkExtent2D const tiles
+    {
+        .width = ( resolution.width + TILE_WIDTH - 1U ) / TILE_WIDTH,
+        .height = ( resolution.height + TILE_HEIGHT - 1U ) / TILE_HEIGHT
+    };
+
+    auto const count = static_cast<size_t> ( tiles.width * tiles.height );
+    constexpr auto alpha = static_cast<size_t> ( TILE_HEIGHT * sizeof ( uint32_t ) );
+    constexpr auto beta = static_cast<size_t> ( TILE_WIDTH * TILE_LAYERS * alpha );
+
+    return
+    {
+        ._tileCounterSize = count * alpha,
+        ._tileSampleSize = count * beta
+    };
 }
 
 VkPipelineColorBlendStateCreateInfo const* GizmoPrepassProgram::InitColorBlendInfo (

@@ -32,6 +32,12 @@ class GizmoPrepassProgram final : public GraphicsProgram
 
         AV_DX_ALIGNMENT_END
 
+        struct ResourceInfo final
+        {
+            size_t                              _tileCounterSize = 0UZ;
+            size_t                              _tileSampleSize = 0UZ;
+        };
+
     public:
         explicit GizmoPrepassProgram () noexcept;
 
@@ -46,6 +52,8 @@ class GizmoPrepassProgram final : public GraphicsProgram
         void Destroy ( VkDevice device ) noexcept override;
 
         [[nodiscard]] bool Init ( VkDevice device, VkFormat swapchainFormat, VkFormat depthStencilFormat ) noexcept;
+
+        [[nodiscard]] static ResourceInfo ResolveResourceSize ( VkExtent2D const &resolution ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

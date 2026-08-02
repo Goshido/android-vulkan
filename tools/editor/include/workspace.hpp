@@ -8,6 +8,7 @@
 #include "mesh_geometry_ref.hpp"
 #include "outline_mesh_node.hpp"
 #include <platform/windows/pbr/gizmo_prepass_program.hpp>
+#include <platform/windows/pbr/gpu_buffer.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
 #include <platform/windows/pbr/opaque_with_id_program.hpp>
 #include <platform/windows/pbr/outline_blur_x_program.hpp>
@@ -104,6 +105,10 @@ class Workspace final
         Texture2DRef                                        _idMask {};
         Texture2DRef                                        _border {};
         Texture2DRef                                        _blurX {};
+
+        pbr::GPUBuffer                                      _tileCounters {};
+        pbr::GPUBuffer                                      _tileSamples {};
+
         VkViewport                                          _idViewport {};
 
         VkExtent3D                                          _outlineDispatch {};
@@ -375,6 +380,53 @@ class Workspace final
             }
         };
 
+        VkBufferMemoryBarrier2                              _tileBarriers[ 2U ]
+        {
+            // Tile counters
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            },
+            // Tile samplers
+            {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                .srcAccessMask = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+                .dstAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .buffer = VK_NULL_HANDLE,
+                .offset = 0U,
+                .size = VK_WHOLE_SIZE
+            }
+        };
+
+        VkBufferMemoryBarrier2                              _tileCounterBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+            .dstAccessMask =  VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0U,
+            .size = VK_WHOLE_SIZE
+        };
+
         VkDependencyInfo                                    _depInfo
         {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -409,6 +461,7 @@ class Workspace final
 
         void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
+        void PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
 
@@ -440,7 +493,7 @@ class Workspace final
 
     private:
         [[nodiscard]] VkDeviceAddress AcquireFrameInstance () noexcept;
-        void FreeIDMask () noexcept;
+        void FreeSwapchainResources () noexcept;
 
         void FUCK () noexcept;
 

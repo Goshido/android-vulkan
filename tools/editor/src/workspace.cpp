@@ -162,7 +162,7 @@ void Workspace::Destroy () noexcept
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _selection.Destroy ( messageQueue, renderer );
-    FreeIDMask ();
+    FreeSwapchainResources ();
 
     _delete = {};
     _openWorkspace = {};
@@ -461,6 +461,25 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
     }
 }
 
+void Workspace::PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept
+{
+    if ( IsReady () ) [[unlikely]]
+        return;
+
+    if ( _gizmoVisible < 1U )
+        return;
+
+    _depInfo.bufferMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _tileBarriers ) );
+    _depInfo.pBufferMemoryBarriers = _tileBarriers;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    vkCmdFillBuffer ( commandBuffer, _tileCounterBarrier.buffer, 0U, VK_WHOLE_SIZE, 0U );
+
+    _depInfo.bufferMemoryBarrierCount = 1U;
+    _depInfo.pBufferMemoryBarriers = &_tileCounterBarrier;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+}
+
 void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !IsReady () | ( _opaqueVisible.empty () & _stippleVisible.empty () ) ) [[unlikely]]
@@ -567,16 +586,21 @@ std::optional<uint32_t> Workspace::GetOutlineBlurX () noexcept
 
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
+    _ready = false;
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
 
-    FreeIDMask ();
+    FreeSwapchainResources ();
 
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     VkExtent2D &resolution = _idRenderingInfo.renderArea.extent;
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     resolution = renderer.GetViewportResolution ();
     _outlineBorderPushConstants._resolution = resolution;
     _outlineBlurXPushConstants._resolution = resolution;
     _outlineDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
+
+    pbr::GizmoPrepassProgram::ResourceInfo const gizmoResourceInfo =
+        pbr::GizmoPrepassProgram::ResolveResourceSize ( resolution );
 
     _idMask = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &idMask = _idMask->_resource;
@@ -613,6 +637,19 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
             VK_FORMAT_R8_UNORM,
             AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
             renderer
+        ) &&
+
+        _tileCounters.Init ( renderer,
+            resourceHeap,
+            gizmoResourceInfo._tileCounterSize,
+            AV_VK_FLAG ( VK_BUFFER_USAGE_STORAGE_BUFFER_BIT ) | AV_VK_FLAG ( VK_BUFFER_USAGE_TRANSFER_DST_BIT ),
+            "Tile counters"
+        ) &&
+
+        _tileSamples.Init ( renderer,
+            gizmoResourceInfo._tileSampleSize,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+            "Tile samples"
         );
 
     if ( !status ) [[unlikely]]
@@ -621,11 +658,24 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
         return;
     }
 
+    VkBuffer tileCounters = _tileCounters.GetBuffer ();
+    _tileBarriers[ 0U ].buffer = tileCounters;
+    _tileCounterBarrier.buffer = tileCounters;
+
+    _tileBarriers[ 1U ].buffer = _tileSamples.GetBuffer ();
+
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
     messageQueue.EnqueueBack ( Message ( eMessageType::NewTexture2D,
             [] () noexcept -> void* {
                 return std::bit_cast<void*> ( 4UZ );
+            }
+        )
+    );
+
+    messageQueue.EnqueueBack ( Message ( eMessageType::NewGPUBuffer,
+            [] () noexcept -> void* {
+                return std::bit_cast<void*> ( 2UZ );
             }
         )
     );
@@ -665,7 +715,6 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _outlineBarrier0[ 0U ].image = mask;
     _outlineBarrier1[ 0U ].image = mask;
 
-    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     auto idx = resourceHeap.RegisterNonUISampledImage ( device, maskView );
 
     if ( !idx )
@@ -955,7 +1004,7 @@ VkDeviceAddress Workspace::AcquireFrameInstance () noexcept
     return *_frameInstance;
 }
 
-void Workspace::FreeIDMask () noexcept
+void Workspace::FreeSwapchainResources () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
@@ -995,14 +1044,38 @@ void Workspace::FreeIDMask () noexcept
         );
     }
 
-    if ( !_blurX ) [[unlikely]]
+    if ( _blurX ) [[likely]]
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyTexture2D,
+
+                [ texture = std::move ( _blurX ) ] () mutable noexcept -> void* {
+                    return &texture;
+                }
+            )
+        );
+    }
+
+    if ( _tileCounters.IsInit () )
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyGPUBuffer,
+
+                [ buffer = std::move ( _tileCounters ) ] () mutable noexcept -> void* {
+                    return &buffer;
+                }
+            )
+        );
+    }
+
+    if ( !_tileSamples.IsInit () ) [[unlikely]]
         return;
 
     messageQueue.EnqueueBack (
-        Message ( eMessageType::DestroyTexture2D,
+        Message ( eMessageType::DestroyGPUBuffer,
 
-            [ texture = std::move ( _blurX ) ] () mutable noexcept -> void* {
-                return &texture;
+            [ buffer = std::move ( _tileSamples ) ] () mutable noexcept -> void* {
+                return &buffer;
             }
         )
     );
@@ -1380,6 +1453,8 @@ bool Workspace::IsReady () noexcept
         ( static_cast<bool> ( _idMask ) && _idMask->_resource.IsInit () ) &
         ( static_cast<bool> ( _border ) && _border->_resource.IsInit () ) &
         ( static_cast<bool> ( _blurX ) && _blurX->_resource.IsInit () ) &
+        _tileCounters.IsInit () &&
+        _tileSamples.IsInit () &&
         ( _opaqueVisible.capacity () > 0U ) &
         ( _stippleVisible.capacity () > 0U ) &
         ( _outlineVisible.capacity () > 0U ) &

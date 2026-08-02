@@ -62,6 +62,13 @@ class RenderSession final
             size_t                              _count = 0U;
         };
 
+        struct GPUBufferStorage final
+        {
+            std::deque<pbr::GPUBuffer>          _toDestroy {};
+            std::deque<pbr::GPUBuffer>          _destroyQueue[ pbr::FIF_COUNT ] {};
+            size_t                              _count = 0U;
+        };
+
         using Timestamp = std::chrono::time_point<std::chrono::steady_clock>;
         using EnqueueHandle = void ( MessageQueue::* ) ( Message &&message ) noexcept;
 
@@ -93,6 +100,7 @@ class RenderSession final
         ProgramStorage                          _programStorage {};
         MeshStorage                             _meshStorage {};
         StreamBufferStorage                     _streamBufferStorage {};
+        GPUBufferStorage                        _gpuBufferStorage {};
         Texture2DStorage                        _texture2DStorage {};
         ResourceHeap                            _resourceHeap {};
 
@@ -612,6 +620,7 @@ class RenderSession final
         void FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept;
         void FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept;
 
+        void DestroyGPUBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept;
         void DestroyPrograms ( MessageQueue &messageQueue, size_t fif ) noexcept;
         void DestroyMeshes ( MessageQueue &messageQueue, size_t fif ) noexcept;
         void DestroyStreamBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept;
@@ -623,11 +632,13 @@ class RenderSession final
         void RenderScene ( VkCommandBuffer commandBuffer ) noexcept;
         void RenderSceneWithID ( VkCommandBuffer commandBuffer ) noexcept;
 
+        void OnDestroyGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnNewGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnNewTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept;

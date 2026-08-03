@@ -425,8 +425,9 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
     bool const noStipple = _stippleVisible.empty ();
     bool const noOutline = _outlineVisible.empty ();
     bool const noOpaqueAndStipple = noOpaque & noStipple;
+    bool const noGizmo = _gizmoVisible < 1U;
 
-    if ( noOpaqueAndStipple & noOutline ) [[unlikely]]
+    if ( noOpaqueAndStipple & noOutline & noGizmo ) [[unlikely]]
         return;
 
     _frameStream->Push ( &frame );
@@ -450,6 +451,13 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
                 _idStream->IssueSync ( commandBuffer );
             }
         }
+
+        if ( noGizmo )
+            return;
+
+        _sdfVertexStream->IssueSync ( commandBuffer );
+        _sdfPixelStream->IssueSync ( commandBuffer );
+        _sdfShapeStream->IssueSync ( commandBuffer );
     }
 }
 
@@ -469,6 +477,10 @@ void Workspace::PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept
     if ( _gizmoVisible < 1U )
         return;
 
+    AV_TRACE ( "Prepare gizmo" )
+    AV_VULKAN_GROUP ( commandBuffer, "Prepare gizmo" )
+
+    _depInfo.imageMemoryBarrierCount = 0U;
     _depInfo.bufferMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _tileBarriers ) );
     _depInfo.pBufferMemoryBarriers = _tileBarriers;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
@@ -478,6 +490,62 @@ void Workspace::PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept
     _depInfo.bufferMemoryBarrierCount = 1U;
     _depInfo.pBufferMemoryBarriers = &_tileCounterBarrier;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+}
+
+void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
+    VkImage swapchainImage,
+    VkImageView swapchainView
+) noexcept
+{
+    if ( !IsReady () ) [[unlikely]]
+        return;
+
+    AV_TRACE ( "Gizmo" )
+    AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
+
+    _gizmoBeginBarriers[ 0U ].image = swapchainImage;
+
+    // FUCK - depth transition is conditional (outline, gizmo)
+    _depInfo.bufferMemoryBarrierCount = 0U;
+    _depInfo.imageMemoryBarrierCount = 2U;
+    _depInfo.pImageMemoryBarriers = _gizmoBeginBarriers;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _gizmoColorAttachment.imageView = swapchainView;
+    vkCmdBeginRendering ( commandBuffer, &_gizmoRenderingInfo );
+
+    _gizmoPrepassProgram->Bind ( commandBuffer );
+
+    _gizmoPrepassPushContants._vertexStream = _sdfVertexStream->AcquireAndConsume ( _gizmoVisible );
+    _gizmoPrepassPushContants._pixelStream = _sdfPixelStream->AcquireAndConsume ( _gizmoVisible );
+    _gizmoPrepassPushContants._shapeStream = _sdfShapeStream->AcquireAndConsume ( _gizmoVisible );
+
+    vkCmdPushConstants ( commandBuffer,
+        pbr::UniversalPipelineLayout::GetPipelineLayout (),
+        pbr::UniversalPipelineLayout::GetStages (),
+        0U,
+        sizeof ( _gizmoPrepassPushContants ),
+        &_gizmoPrepassPushContants
+    );
+
+    vkCmdDraw ( commandBuffer,
+        pbr::GizmoPrepassProgram::VertexCount (),
+        static_cast<uint32_t> ( _gizmoVisible ),
+        0U,
+        0U
+    );
+
+    vkCmdEndRendering ( commandBuffer );
+
+    _gizmoEndBarrier.image = swapchainImage;
+    _depInfo.imageMemoryBarrierCount = 1U;
+    _depInfo.pImageMemoryBarriers = &_gizmoEndBarrier;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+}
+
+bool Workspace::HasGizmo () const noexcept
+{
+    return _gizmoVisible > 0U;
 }
 
 void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
@@ -494,16 +562,6 @@ void Workspace::FillGBuffer ( [[maybe_unused]] VkCommandBuffer commandBuffer ) n
     FillGBufferOnly ( commandBuffer );
 }
 
-void Workspace::DrawGizmo ( [[maybe_unused]] VkCommandBuffer commandBuffer ) noexcept
-{
-    if ( !IsReady () ) [[unlikely]]
-        return;
-
-    AV_TRACE ( "Gizmo" )
-    AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
-    // FUCK
-}
-
 void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( !IsReady () | _outlineVisible.empty () )
@@ -512,6 +570,7 @@ void Workspace::DrawOutline ( VkCommandBuffer commandBuffer ) noexcept
     AV_TRACE ( "Outline" )
     AV_VULKAN_GROUP ( commandBuffer, "Outline" )
 
+    _depInfo.bufferMemoryBarrierCount = 0U;
     _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _outlineBarrier0 ) );
     _depInfo.pImageMemoryBarriers = _outlineBarrier0;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
@@ -595,6 +654,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     VkExtent2D &resolution = _idRenderingInfo.renderArea.extent;
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     resolution = renderer.GetViewportResolution ();
+    _gizmoRenderingInfo.renderArea.extent = resolution;
     _outlineBorderPushConstants._resolution = resolution;
     _outlineBlurXPushConstants._resolution = resolution;
     _outlineDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
@@ -602,11 +662,14 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     pbr::GizmoPrepassProgram::ResourceInfo const gizmoResourceInfo =
         pbr::GizmoPrepassProgram::ResolveResourceSize ( resolution );
 
+    _gizmoPrepassPushContants._tileCounters = gizmoResourceInfo._tileCounters;
+    _gizmoPrepassPushContants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
+
     _idMask = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &idMask = _idMask->_resource;
 
-    _idDepth = std::make_shared<Texture2D> ();
-    android_vulkan::Texture2D &idDepth = _idDepth->_resource;
+    _swapchainDepth = std::make_shared<Texture2D> ();
+    android_vulkan::Texture2D &swapchainDepth = _swapchainDepth->_resource;
 
     _border = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &border = _border->_resource;
@@ -621,7 +684,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
             renderer
         ) &&
 
-        idDepth.CreateRenderTarget ( resolution,
+        swapchainDepth.CreateRenderTarget ( resolution,
             renderer.GetDefaultDepthFormat (),
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             renderer
@@ -663,6 +726,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _tileCounterBarrier.buffer = tileCounters;
 
     _tileBarriers[ 1U ].buffer = _tileSamples.GetBuffer ();
+    _gizmoPrepassPushContants._tileSamples = _tileSamples.GetBDA ();
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
@@ -781,12 +845,14 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     _blurX->_sampledIndex = std::move ( idx );
 
-    VkImage depth = idDepth.GetImage ();
-    VkImageView depthView = idDepth.GetImageView ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, depth, VK_OBJECT_TYPE_IMAGE, "ID depth" )
-    AV_SET_VULKAN_OBJECT_NAME ( device, depthView, VK_OBJECT_TYPE_IMAGE_VIEW, "ID depth" )
+    VkImage depth = swapchainDepth.GetImage ();
+    VkImageView depthView = swapchainDepth.GetImageView ();
+    AV_SET_VULKAN_OBJECT_NAME ( device, depth, VK_OBJECT_TYPE_IMAGE, "Swapchain depth" )
+    AV_SET_VULKAN_OBJECT_NAME ( device, depthView, VK_OBJECT_TYPE_IMAGE_VIEW, "Swapchain depth" )
     _idDepthAttachment.imageView = depthView;
     _outlineBarrier0[ 1U ].image = depth;
+    _gizmoDepthAttachment.imageView = depthView;
+    _gizmoBeginBarriers[ 1U ].image = depth;
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -1008,12 +1074,12 @@ void Workspace::FreeSwapchainResources () noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
-    if ( _idDepth ) [[likely]]
+    if ( _swapchainDepth ) [[likely]]
     {
         messageQueue.EnqueueBack (
             Message ( eMessageType::DestroyTexture2D,
 
-                [ texture = std::move ( _idDepth ) ] () mutable noexcept -> void* {
+                [ texture = std::move ( _swapchainDepth ) ] () mutable noexcept -> void* {
                     return &texture;
                 }
             )
@@ -1449,7 +1515,7 @@ bool Workspace::IsReady () noexcept
         static_cast<bool> ( _defaultMask ) &
         static_cast<bool> ( _defaultParam ) &
         static_cast<bool> ( _defaultNormal ) &
-        ( static_cast<bool> ( _idDepth ) && _idDepth->_resource.IsInit () ) &
+        ( static_cast<bool> ( _swapchainDepth ) && _swapchainDepth->_resource.IsInit () ) &
         ( static_cast<bool> ( _idMask ) && _idMask->_resource.IsInit () ) &
         ( static_cast<bool> ( _border ) && _border->_resource.IsInit () ) &
         ( static_cast<bool> ( _blurX ) && _blurX->_resource.IsInit () ) &

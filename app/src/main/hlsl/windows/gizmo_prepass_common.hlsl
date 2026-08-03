@@ -39,7 +39,6 @@ struct PushConstants
     float32_t                   _invMaxRayDistance;
     uint32_t                    _tileCountWidth;
     uint32_t                    _tileCounters;
-    uint64_t                    _palette;
     uint64_t                    _tileSamples;
     uint64_t                    _vertexStream;
     uint64_t                    _pixelStream;

@@ -101,7 +101,7 @@ class Workspace final
         Texture2DRef                                        _defaultParam {};
         Texture2DRef                                        _defaultNormal {};
 
-        Texture2DRef                                        _idDepth {};
+        Texture2DRef                                        _swapchainDepth {};
         Texture2DRef                                        _idMask {};
         Texture2DRef                                        _border {};
         Texture2DRef                                        _blurX {};
@@ -427,6 +427,89 @@ class Workspace final
             .size = VK_WHOLE_SIZE
         };
 
+        VkImageMemoryBarrier2                               _gizmoBeginBarriers[ 2U ] =
+        {
+            // Swapchain color
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+                .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+                .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+                .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            },
+            // Swapchain depth
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+                .pNext = nullptr,
+
+                .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR |
+                    VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+
+                .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+
+                .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR |
+                    VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+
+                .dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                .image = VK_NULL_HANDLE,
+
+                .subresourceRange
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+                    .baseMipLevel = 0U,
+                    .levelCount = 1U,
+                    .baseArrayLayer = 0U,
+                    .layerCount = 1U
+                }
+            }
+        };
+
+        VkImageMemoryBarrier2                               _gizmoEndBarrier
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = VK_NULL_HANDLE,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = 1U
+            }
+        };
+
         VkDependencyInfo                                    _depInfo
         {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -438,6 +521,78 @@ class Workspace final
             .pBufferMemoryBarriers = nullptr,
             .imageMemoryBarrierCount = 0U,
             .pImageMemoryBarriers = nullptr
+        };
+
+        VkRenderingAttachmentInfo                           _gizmoColorAttachment
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = nullptr,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = VK_NULL_HANDLE,
+            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+            .clearValue
+            {
+                .color
+                {
+                    .float32 { 0.0F, 0.0F, 0.0F, 0.0F }
+                }
+            }
+        };
+
+        VkRenderingAttachmentInfo                           _gizmoDepthAttachment
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = nullptr,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .resolveMode = VK_RESOLVE_MODE_NONE,
+            .resolveImageView = VK_NULL_HANDLE,
+            .resolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+
+            .clearValue
+            {
+                .depthStencil
+                {
+                    .depth = 1.0F,
+                    .stencil = 0U
+                }
+            }
+        };
+
+        VkRenderingInfo                                     _gizmoRenderingInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .pNext = nullptr,
+            .flags = 0U,
+
+            .renderArea
+            {
+                .offset
+                {
+                    .x = 0,
+                    .y = 0
+                },
+
+                .extent
+                {
+                    .width = 0U,
+                    .height = 0U
+                }
+            },
+
+            .layerCount = 1U,
+            .viewMask = 0U,
+            .colorAttachmentCount = 1U,
+            .pColorAttachments = &_gizmoColorAttachment,
+            .pDepthAttachment = &_gizmoDepthAttachment,
+            .pStencilAttachment = nullptr
         };
 
         static Workspace*                                   _instance;
@@ -461,9 +616,11 @@ class Workspace final
 
         void UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime ) noexcept;
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
-        void PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBuffer ( VkCommandBuffer commandBuffer ) noexcept;
-        void DrawGizmo ( VkCommandBuffer commandBuffer ) noexcept;
+
+        void PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept;
+        void DrawGizmo ( VkCommandBuffer commandBuffer, VkImage swapchainImage, VkImageView swapchainView ) noexcept;
+        [[nodiscard]] bool HasGizmo () const noexcept;
 
         void DrawOutline ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] std::optional<uint32_t> GetOutlineBlurX () noexcept;

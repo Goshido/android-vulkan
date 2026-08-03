@@ -1218,8 +1218,19 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
         _presentRenderPass.Begin ( renderer, commandBuffer );
-        _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
-        _workspace.DrawGizmo ( commandBuffer );
+
+        if ( !_workspace.HasGizmo () )
+        {
+            _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
+        }
+        else
+        {
+            _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
+            pbr::PresentPass::SwapchainInfo info = _presentRenderPass.GetSwapchainInfo ( renderer );
+            _presentRenderPass.Pause ( commandBuffer );
+            _workspace.DrawGizmo ( commandBuffer, info._image, info._view );
+            _presentRenderPass.Continue ( commandBuffer, info._image, info._view );
+        }
 
         if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]
         {

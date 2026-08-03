@@ -15,6 +15,13 @@ namespace pbr {
 
 class PresentPass final
 {
+    public:
+        struct SwapchainInfo final
+        {
+            VkImage                     _image = VK_NULL_HANDLE;
+            VkImageView                 _view = VK_NULL_HANDLE;
+        };
+
     private:
         constexpr static VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
@@ -121,12 +128,36 @@ class PresentPass final
             }
         };
 
+        VkImageMemoryBarrier2           _barrierContiue
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .pNext = nullptr,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .image = VK_NULL_HANDLE,
+
+            .subresourceRange
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0U,
+                .levelCount = 1U,
+                .baseArrayLayer = 0U,
+                .layerCount = 1U
+            }
+        };
+
         VkImageMemoryBarrier2           _barrierEnd
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
             .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT,
             .dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
             .dstAccessMask = VK_ACCESS_2_NONE,
             .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -176,7 +207,11 @@ class PresentPass final
         void OnDestroyDevice ( VkDevice device ) noexcept;
         [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
 
+        [[nodiscard]] SwapchainInfo GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept;
+
         void Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept;
+        void Pause ( VkCommandBuffer commandBuffer ) noexcept;
+        void Continue ( VkCommandBuffer commandBuffer, VkImage swapchainImage, VkImageView swapchainView ) noexcept;
 
         [[nodiscard]] std::optional<VkResult> End ( android_vulkan::Renderer &renderer,
             VkCommandBuffer commandBuffer,

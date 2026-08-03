@@ -67,6 +67,17 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
+PresentPass::SwapchainInfo PresentPass::GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept
+{
+    auto const idx = static_cast<size_t> ( _swapchainImageIndex );
+
+    return
+    {
+        ._image = renderer.GetPresentImage ( static_cast<size_t> ( idx ) ),
+        ._view = renderer.GetPresentImageView ( static_cast<size_t> ( idx ) )
+    };
+}
+
 void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
     auto const idx = static_cast<size_t> ( _swapchainImageIndex );
@@ -76,6 +87,21 @@ void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuf
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _colorAttachment.imageView = renderer.GetPresentImageView ( idx );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+}
+
+void PresentPass::Pause ( VkCommandBuffer commandBuffer ) noexcept
+{
+    vkCmdEndRendering ( commandBuffer );
+}
+
+void PresentPass::Continue ( VkCommandBuffer commandBuffer, VkImage swapchainImage, VkImageView swapchainView ) noexcept
+{
+    _barrierContiue.image = swapchainImage;
+    _depInfo.pImageMemoryBarriers = &_barrierContiue;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _colorAttachment.imageView = swapchainView;
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }
 

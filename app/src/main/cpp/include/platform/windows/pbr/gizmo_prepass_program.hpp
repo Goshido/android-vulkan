@@ -23,7 +23,6 @@ class GizmoPrepassProgram final : public GraphicsProgram
             [[maybe_unused]] float              _invMaxRayDistance;
             [[maybe_unused]] uint32_t           _tileCountWidth;
             [[maybe_unused]] uint32_t           _tileCounters;
-            [[maybe_unused]] VkDeviceAddress    _palette;
             [[maybe_unused]] VkDeviceAddress    _tileSamples;
             [[maybe_unused]] VkDeviceAddress    _vertexStream;
             [[maybe_unused]] VkDeviceAddress    _pixelStream;
@@ -34,6 +33,8 @@ class GizmoPrepassProgram final : public GraphicsProgram
 
         struct ResourceInfo final
         {
+            uint32_t                            _tileCounters = 0U;
+            uint32_t                            _tileCountWidth = 0U;
             size_t                              _tileCounterSize = 0UZ;
             size_t                              _tileSampleSize = 0UZ;
         };
@@ -51,9 +52,14 @@ class GizmoPrepassProgram final : public GraphicsProgram
 
         void Destroy ( VkDevice device ) noexcept override;
 
-        [[nodiscard]] bool Init ( VkDevice device, VkFormat swapchainFormat, VkFormat depthStencilFormat ) noexcept;
+        [[nodiscard]] bool Init ( VkDevice device, VkFormat swapchainFormat, VkFormat depthFormat ) noexcept;
 
         [[nodiscard]] static ResourceInfo ResolveResourceSize ( VkExtent2D const &resolution ) noexcept;
+
+        [[nodiscard]] constexpr static uint32_t VertexCount () noexcept
+        {
+            return 36U;
+        }
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (

@@ -31,7 +31,7 @@ void GizmoPrepassProgram::Destroy ( VkDevice device ) noexcept
     GraphicsProgram::Destroy ( device );
 }
 
-bool GizmoPrepassProgram::Init ( VkDevice device, VkFormat swapchainFormat, VkFormat depthStencilFormat ) noexcept
+bool GizmoPrepassProgram::Init ( VkDevice device, VkFormat swapchainFormat, VkFormat depthFormat ) noexcept
 {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo {};
     VkPipelineColorBlendAttachmentState attachmentInfo[ COLOR_RENDER_TARGET_COUNT ];
@@ -54,9 +54,9 @@ bool GizmoPrepassProgram::Init ( VkDevice device, VkFormat swapchainFormat, VkFo
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 
         .pNext = InitRenderingInfo ( VK_FORMAT_UNDEFINED,
+            depthFormat,
             VK_FORMAT_UNDEFINED,
             VK_FORMAT_UNDEFINED,
-            depthStencilFormat,
             &swapchainFormat,
             renderingInfo
         ),
@@ -107,6 +107,8 @@ GizmoPrepassProgram::ResourceInfo GizmoPrepassProgram::ResolveResourceSize ( VkE
 
     return
     {
+        ._tileCounters = static_cast<uint32_t> ( count ),
+        ._tileCountWidth = tiles.width,
         ._tileCounterSize = count * alpha,
         ._tileSampleSize = count * beta
     };
@@ -160,7 +162,7 @@ VkPipelineDepthStencilStateCreateInfo const* GizmoPrepassProgram::InitDepthStenc
         .flags = 0U,
         .depthTestEnable = VK_TRUE,
         .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_OP_GREATER,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
         .depthBoundsTestEnable = VK_FALSE,
         .stencilTestEnable = VK_FALSE,
 
@@ -294,7 +296,7 @@ VkPipelineViewportStateCreateInfo const* GizmoPrepassProgram::InitViewportInfo (
 }
 
 VkPipelineRenderingCreateInfo const* GizmoPrepassProgram::InitRenderingInfo ( VkFormat /*nativeColor*/,
-    VkFormat /*nativeDepth*/,
+    VkFormat nativeDepth,
     VkFormat /*nativeStencil*/,
     VkFormat /*nativeDepthStencil*/,
     VkFormat* colorAttachments,
@@ -308,7 +310,7 @@ VkPipelineRenderingCreateInfo const* GizmoPrepassProgram::InitRenderingInfo ( Vk
         .viewMask = 0U,
         .colorAttachmentCount = static_cast<uint32_t> ( COLOR_RENDER_TARGET_COUNT ),
         .pColorAttachmentFormats = colorAttachments,
-        .depthAttachmentFormat = VK_FORMAT_UNDEFINED,
+        .depthAttachmentFormat = nativeDepth,
         .stencilAttachmentFormat = VK_FORMAT_UNDEFINED
     };
 

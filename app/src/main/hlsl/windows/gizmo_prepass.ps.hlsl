@@ -3,6 +3,7 @@
 #include "platform/windows/pbr/gizmo_shapes.inc"
 #include "platform/windows/pbr/resource_heap.inc"
 #include "windows/gizmo_pack.hlsl"
+#include "windows/gizmo_palette.hlsl"
 #include "windows/gizmo_prepass_common.hlsl"
 #include "windows/gizmo_tile.hlsl"
 
@@ -158,12 +159,7 @@ Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
         sdfPixel._sdfParams
     );
 
-    float32_t4 const color = UnpackColorF32x4 (
-        vk::RawBufferLoad<ColorUNORM> (
-            g_pushConstants._palette + g_pushConstants._palette * sizeof ( ColorUNORM ),
-            4U
-        )
-    );
+    float32_t4 const color = g_gizmoPalette[ sdfShape._palette ];
 
     float32_t2 const cases = float32_t2 (
         // inside SDF shape

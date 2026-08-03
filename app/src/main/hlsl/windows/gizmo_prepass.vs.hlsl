@@ -10,6 +10,16 @@ struct InputData
     uint32_t                _instanceID:    SV_InstanceID;
 };
 
+static uint16_t const       g_indices[ 36U ] =
+{
+    3U, 1U, 7U, 7U, 1U, 5U,
+    6U, 7U, 4U, 4U, 7U, 5U,
+    4U, 5U, 1U, 1U, 0U, 4U,
+    2U, 0U, 1U, 1U, 3U, 2U,
+    2U, 3U, 6U, 6U, 3U, 7U,
+    4U, 0U, 2U, 6U, 4U, 2U
+};
+
 static float32_t3 const     g_cube[ 8U ] =
 {
     float32_t3 ( -1.0F, -1.0F, -1.0F ),
@@ -49,7 +59,7 @@ float32_t4 ComputeVertex ( in InputData inputData )
         4U
     );
 
-    float32_t3 const v = g_cube[ inputData._vertexID ];
+    float32_t3 const v = g_cube[ g_indices[ inputData._vertexID ] ];
     float32_t2 const cases[ 2U ] = { float32_t2 ( 1.0F, 0.0F ), float32_t2 ( 0.5F, 0.5F ) };
     float32_t2 const params = cases[ sdfShape._type & 0x00000001U ];
     return float32_t4 ( mad ( v.x, params.x, params.y ), v.yz, 1.0F );
@@ -73,7 +83,7 @@ Attributes VS ( in InputData inputData )
     // SDF transformation contains shell expand transformation implicitly. Upper 3x3 matrix is orthogonal basis of
     // unit vectors. Taking inverse matrix from it will get shell expand basis. It's possible to use transpose trick to
     // compute inverse matrix in this case. Another thick is to swap multiplication order to achieve transpose effect.
-    float32_t3 const expandDir = mul ( toSDFOrientation, g_expandDir[ inputData._vertexID ] );
+    float32_t3 const expandDir = mul ( toSDFOrientation, g_expandDir[ g_indices[ inputData._vertexID ] ] );
     float32_t3 const shell = mad ( expandDir, omega, v );
 
     Attributes result;

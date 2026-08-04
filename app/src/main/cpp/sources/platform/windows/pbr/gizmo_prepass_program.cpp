@@ -107,10 +107,9 @@ GizmoPrepassProgram::ResourceInfo GizmoPrepassProgram::ResolveResourceSize ( VkE
 
     return
     {
-        ._tileCounters = static_cast<uint32_t> ( count ),
-        ._tileCountWidth = tiles.width,
         ._tileCounterSize = count * alpha,
-        ._tileSampleSize = count * beta
+        ._tileSampleSize = count * beta,
+        ._tileCountWidth = tiles.width
     };
 }
 

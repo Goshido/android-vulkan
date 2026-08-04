@@ -33,10 +33,9 @@ class GizmoPrepassProgram final : public GraphicsProgram
 
         struct ResourceInfo final
         {
-            uint32_t                            _tileCounters = 0U;
-            uint32_t                            _tileCountWidth = 0U;
             size_t                              _tileCounterSize = 0UZ;
             size_t                              _tileSampleSize = 0UZ;
+            uint32_t                            _tileCountWidth = 0U;
         };
 
     public:

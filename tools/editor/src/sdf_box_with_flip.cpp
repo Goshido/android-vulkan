@@ -48,7 +48,6 @@ void SDFBoxWithFlip::SetFlipSensors ( GXQuat const &aFlipRotation,
 void SDFBoxWithFlip::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
-    _node.MarkUpdate ();
 }
 
 void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -134,7 +133,6 @@ void SDFBoxWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rot
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
-    _node.MarkUpdate ();
 }
 
 } // namespace editor

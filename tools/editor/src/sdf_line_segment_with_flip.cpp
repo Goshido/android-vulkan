@@ -34,7 +34,6 @@ SDFLineSegmentWithFlip::SDFLineSegmentWithFlip ( GXVec3 &&location,
 void SDFLineSegmentWithFlip::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
-    _node.MarkUpdate ();
 }
 
 void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -124,7 +123,6 @@ void SDFLineSegmentWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat co
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
-    _node.MarkUpdate ();
 }
 
 } // namespace editor

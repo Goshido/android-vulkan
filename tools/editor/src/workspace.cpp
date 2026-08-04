@@ -418,7 +418,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
             ComputeTransformGBufferOnly ( frustum );
 
         ComputeTransformOutline ( frustum );
-        ComputeTransformGizmo ( projection, location, *reinterpret_cast<GXVec3 const*> ( alpha._data[ 2U ] ) );
+        ComputeTransformGizmo ( frame._viewProj, location, *reinterpret_cast<GXVec3 const*> ( alpha._data[ 2U ] ) );
     }
 
     bool const noOpaque = _opaqueVisible.empty ();
@@ -662,7 +662,6 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     pbr::GizmoPrepassProgram::ResourceInfo const gizmoResourceInfo =
         pbr::GizmoPrepassProgram::ResolveResourceSize ( resolution );
 
-    _gizmoPrepassPushContants._tileCounters = gizmoResourceInfo._tileCounters;
     _gizmoPrepassPushContants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
 
     _idMask = std::make_shared<Texture2D> ();
@@ -722,6 +721,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     }
 
     VkBuffer tileCounters = _tileCounters.GetBuffer ();
+    _gizmoPrepassPushContants._tileCounters = _tileCounters.GetHeapIndex ();
     _tileBarriers[ 0U ].buffer = tileCounters;
     _tileCounterBarrier.buffer = tileCounters;
 
@@ -1358,7 +1358,7 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
     }
 }
 
-void Workspace::ComputeTransformGizmo ( GXMat4 const &projection,
+void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
     GXVec3 const &cameraLocation,
     GXVec3 const &cameraForward
 ) noexcept
@@ -1372,7 +1372,7 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &projection,
     pbr::StreamBuffer &shapeStream = *_sdfShapeStream;
     _gizmoVisible = 0U;
 
-    _gizmoPrepassPushContants._toCVV = projection;
+    _gizmoPrepassPushContants._toCVV = viewProjection;
     _gizmoPrepassPushContants._cameraLocationWorld = cameraLocation;
 
     // See <repo>/docs/gizmo-rendering.md#pixel-coverage

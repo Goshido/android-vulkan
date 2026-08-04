@@ -114,7 +114,7 @@ class MoveTool final : public Tool
 
         SDFLineSegmentWithFlip      _xPlaneZ
         {
-            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
+            GXVec3 ( 0.0F, 2.0F, 1.5e-1F ),
             GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
             GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
             eSDFPalette::Red,

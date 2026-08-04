@@ -29,7 +29,6 @@ GXVec3 const &SDFBox::GetLocationWorld () const noexcept
 void SDFBox::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
-    _node.MarkUpdate ();
 }
 
 void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -102,7 +101,6 @@ void SDFBox::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) 
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
-    _node.MarkUpdate ();
 }
 
 } // namespace editor

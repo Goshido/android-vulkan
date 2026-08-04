@@ -17,7 +17,6 @@ SDFSphere::SDFSphere ( GXVec3 &&location, float radius, eSDFPalette palette ) no
 void SDFSphere::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
-    _node.MarkUpdate ();
 }
 
 void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -72,7 +71,6 @@ void SDFSphere::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation
     rotation.TransformFast ( alpha, _location );
     _locationWorld.Sum ( location, alpha );
     _parentLocation = location;
-    _node.MarkUpdate ();
 }
 
 } // namespace editor

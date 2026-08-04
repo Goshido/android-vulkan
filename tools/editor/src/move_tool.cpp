@@ -27,7 +27,6 @@ MoveTool::MoveTool () noexcept
         _yPlane.GetLocationWorld ()
     );
 
-    Update ();
     Activate ();
 }
 

@@ -198,11 +198,8 @@ void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth, in ui
     );
 
     zeta <<= uint32_t4 ( 9U, 6U, 3U, 1U );
-
-    vk::RawBufferStore<uint> (
-        g_pushConstants._tileSamples + sizeof ( uint32_t ) * ( zeta.x + zeta.y + zeta.z + zeta.w + beta.y ),
-        PackSample ( palette, alpha, depth )
-    );
+    uint64_t const offset = (uint64_t)( sizeof ( uint32_t ) * ( zeta.x + zeta.y + zeta.z + zeta.w + beta.y ) );
+    TileSamples ( (uint64_t)g_pushConstants._tileSamples + offset ).Get () = PackSample ( palette, alpha, depth );
 }
 
 //----------------------------------------------------------------------------------------------------------------------

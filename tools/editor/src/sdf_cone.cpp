@@ -19,7 +19,6 @@ SDFCone::SDFCone ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPal
 void SDFCone::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;
-    _node.MarkUpdate ();
 }
 
 void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -101,7 +100,6 @@ void SDFCone::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation )
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
-    _node.MarkUpdate ();
 }
 
 } // namespace editor

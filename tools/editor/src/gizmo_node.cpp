@@ -75,22 +75,12 @@ GizmoNode::~GizmoNode () noexcept
 
 void GizmoNode::Commit ( GXVec3 const &viewerLocation, GXVec3 const &viewerForward, GXVec3 const &viWorld ) noexcept
 {
-    if ( !_hasChanges || !TryLock () ) [[likely]]
+    if ( !TryLock () ) [[likely]]
         return;
 
     GizmoInfo &gizmoInfo = *_gizmoInfo;
     _update ( gizmoInfo._vertex, gizmoInfo._pixel, gizmoInfo._shape, viewerLocation, viewerForward, viWorld );
-    _hasChanges = false;
     Unlock ();
-}
-
-void GizmoNode::MarkUpdate () noexcept
-{
-    if ( TryLock () ) [[likely]]
-    {
-        _hasChanges = true;
-        Unlock ();
-    }
 }
 
 void GizmoNode::Disconnect () noexcept

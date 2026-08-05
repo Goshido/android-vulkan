@@ -28,6 +28,10 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\full_screen_triangle_no_uv.vs.hlsl"                                                       `
+    "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle_no_uv.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh.vs.hlsl"                                                                     `
     "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh.vs.spv"
 
@@ -87,6 +91,10 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy_light.ps.hlsl"                                                                         `
     "$CORE_SHADER_DIRECTORY\dummy_light.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_compose.ps.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_compose.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.ps.hlsl"                                                                    `

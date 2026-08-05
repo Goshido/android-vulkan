@@ -4,7 +4,6 @@
 #include "platform/windows/pbr/gizmo_shapes.inc"
 #include "platform/windows/pbr/resource_heap.inc"
 #include "windows/gizmo_pack.hlsl"
-#include "windows/gizmo_palette.hlsl"
 #include "windows/gizmo_prepass_common.hlsl"
 #include "windows/gizmo_tile.hlsl"
 
@@ -199,7 +198,7 @@ void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth, in ui
     );
 
     zeta <<= uint32_t4 ( 9U, 6U, 3U, 1U );
-    uint64_t const offset = (uint64_t)( sizeof ( uint32_t ) * ( zeta.x + zeta.y + zeta.z + zeta.w + beta.y ) );
+    uint64_t const offset = (uint64_t)( ( zeta.x + zeta.y + zeta.z + zeta.w + beta.y ) << 2U );
     TileSamples ( (uint64_t)g_pushConstants._tileSamples + offset ).Get () = PackSample ( palette, alpha, depth );
 }
 

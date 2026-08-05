@@ -82,7 +82,7 @@ class Workspace final
 
         pbr::OutlineBorderProgram::PushConstants            _outlineBorderPushConstants {};
         pbr::OutlineBlurXProgram::PushConstants             _outlineBlurXPushConstants {};
-        pbr::GizmoPrepassProgram::PushConstants             _gizmoPrepassPushContants {};
+        pbr::GizmoPrepassProgram::PushConstants             _gizmoPrepassPushConstants {};
 
         StreamBufferRef                                     _frameStream {};
         std::optional<VkDeviceAddress>                      _frameInstance = std::nullopt;
@@ -222,7 +222,7 @@ class Workspace final
                     .layerCount = 1U
                 }
             },
-            // ID depth
+            // Swapchain depth
             {
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
                 .pNext = nullptr,

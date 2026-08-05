@@ -1,4 +1,5 @@
 #include "color_packing.hlsl"
+#include "color_space.hlsl"
 #include "platform/windows/pbr/gizmo_binds.inc"
 #include "platform/windows/pbr/gizmo_shapes.inc"
 #include "platform/windows/pbr/resource_heap.inc"
@@ -212,19 +213,27 @@ OutputData PS ( in Attributes inputData )
     );
 
     Pixel pixel = ComputeColor ( inputData, sdfShape );
-
-    OutputData result;
-    result._color = pixel._color;
-    result._depth = pixel._depth;
-
     bool2 const check = pixel._color.ww > float32_t2 ( MAX_ALPHA_THRESHOLD, MIN_ALPHA_THRESHOLD );
 
     if ( check.x )
+    {
+        OutputData result;
+
+        result._color = float32_t4 (
+            (float32_t3)LinearToSRGB ( pow ( (float16_t3)pixel._color.xyz, (float16_t)g_pushConstants._brightness ) ),
+            1.0F
+        );
+
+        result._depth = pixel._depth;
         return result;
+    }
 
     if ( check.y )
         AddSample ( (uint32_t2)inputData._vertexH.xy, pixel._color.w, pixel._depth, sdfShape._palette );
 
     discard;
+    OutputData result;
+    result._color = (float32_t4)0.0F;
+    result._depth = 1.0F;
     return result;
 }

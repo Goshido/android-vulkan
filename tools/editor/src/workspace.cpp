@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <native_renderer.hpp>
+#include <pbr/brightness_info.hpp>
 #include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <program_info.hpp>
 #include <resource_heap.hpp>
@@ -28,6 +29,7 @@ constexpr size_t GIZMO_ELEMENTS = 128UZ;
 
 constexpr float MAX_GIZMO_RAY_DISTANCE = 2.0e+3F;
 constexpr float INVERSE_MAX_GIZMO_RAY_DISTANCE = 1.0F / MAX_GIZMO_RAY_DISTANCE;
+constexpr float DEFAULT_BRIGHTNESS_BALLANCE = 0.0F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -147,8 +149,8 @@ void Workspace::Init () noexcept
     InitGraphicsResources ();
     InitHotkeys ();
 
-    _gizmoPrepassPushContants._maxRayDistance = MAX_GIZMO_RAY_DISTANCE;
-    _gizmoPrepassPushContants._invMaxRayDistance = INVERSE_MAX_GIZMO_RAY_DISTANCE;
+    _gizmoPrepassPushConstants._maxRayDistance = MAX_GIZMO_RAY_DISTANCE;
+    _gizmoPrepassPushConstants._invMaxRayDistance = INVERSE_MAX_GIZMO_RAY_DISTANCE;
 
     FUCK ();
 }
@@ -505,9 +507,8 @@ void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
 
     _gizmoBeginBarriers[ 0U ].image = swapchainImage;
 
-    // FUCK - depth transition is conditional (outline, gizmo)
     _depInfo.bufferMemoryBarrierCount = 0U;
-    _depInfo.imageMemoryBarrierCount = 2U;
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _gizmoBeginBarriers ) );
     _depInfo.pImageMemoryBarriers = _gizmoBeginBarriers;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
@@ -516,16 +517,16 @@ void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
 
     _gizmoPrepassProgram->Bind ( commandBuffer );
 
-    _gizmoPrepassPushContants._vertexStream = _sdfVertexStream->AcquireAndConsume ( _gizmoVisible );
-    _gizmoPrepassPushContants._pixelStream = _sdfPixelStream->AcquireAndConsume ( _gizmoVisible );
-    _gizmoPrepassPushContants._shapeStream = _sdfShapeStream->AcquireAndConsume ( _gizmoVisible );
+    _gizmoPrepassPushConstants._vertexStream = _sdfVertexStream->AcquireAndConsume ( _gizmoVisible );
+    _gizmoPrepassPushConstants._pixelStream = _sdfPixelStream->AcquireAndConsume ( _gizmoVisible );
+    _gizmoPrepassPushConstants._shapeStream = _sdfShapeStream->AcquireAndConsume ( _gizmoVisible );
 
     vkCmdPushConstants ( commandBuffer,
         pbr::UniversalPipelineLayout::GetPipelineLayout (),
         pbr::UniversalPipelineLayout::GetStages (),
         0U,
-        sizeof ( _gizmoPrepassPushContants ),
-        &_gizmoPrepassPushContants
+        sizeof ( _gizmoPrepassPushConstants ),
+        &_gizmoPrepassPushConstants
     );
 
     vkCmdDraw ( commandBuffer,
@@ -662,7 +663,10 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     pbr::GizmoPrepassProgram::ResourceInfo const gizmoResourceInfo =
         pbr::GizmoPrepassProgram::ResolveResourceSize ( resolution );
 
-    _gizmoPrepassPushContants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
+    _gizmoPrepassPushConstants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
+
+    pbr::BrightnessInfo const brightness ( DEFAULT_BRIGHTNESS_BALLANCE );
+    _gizmoPrepassPushConstants._brightness = brightness._brightnessFactor;
 
     _idMask = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &idMask = _idMask->_resource;
@@ -721,12 +725,12 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     }
 
     VkBuffer tileCounters = _tileCounters.GetBuffer ();
-    _gizmoPrepassPushContants._tileCounters = _tileCounters.GetHeapIndex ();
+    _gizmoPrepassPushConstants._tileCounters = _tileCounters.GetHeapIndex ();
     _tileBarriers[ 0U ].buffer = tileCounters;
     _tileCounterBarrier.buffer = tileCounters;
 
     _tileBarriers[ 1U ].buffer = _tileSamples.GetBuffer ();
-    _gizmoPrepassPushContants._tileSamples = _tileSamples.GetBDA ();
+    _gizmoPrepassPushConstants._tileSamples = _tileSamples.GetBDA ();
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
@@ -1372,12 +1376,12 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
     pbr::StreamBuffer &shapeStream = *_sdfShapeStream;
     _gizmoVisible = 0U;
 
-    _gizmoPrepassPushContants._toCVV = viewProjection;
-    _gizmoPrepassPushContants._cameraLocationWorld = cameraLocation;
+    _gizmoPrepassPushConstants._toCVV = viewProjection;
+    _gizmoPrepassPushConstants._cameraLocationWorld = cameraLocation;
 
     // See <repo>/docs/gizmo-rendering.md#pixel-coverage
     float const t = std::tan ( 0.5F * ViewportWidget::GetFieldOfView () );
-    GXVec3 &viWorld = _gizmoPrepassPushContants._viWorld;
+    GXVec3 &viWorld = _gizmoPrepassPushConstants._viWorld;
     viWorld.Multiply ( cameraForward, ( t + t ) * _outlineBlurXPushConstants._invResolution._data[ 1U ] );
 
     for ( GizmoInfo* gizmo : _gizmoQueue )

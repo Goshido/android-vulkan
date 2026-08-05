@@ -27,6 +27,7 @@ class GizmoPrepassProgram final : public GraphicsProgram
             [[maybe_unused]] VkDeviceAddress    _vertexStream;
             [[maybe_unused]] VkDeviceAddress    _pixelStream;
             [[maybe_unused]] VkDeviceAddress    _shapeStream;
+            [[maybe_unused]] float              _brightness;
         };
 
         AV_DX_ALIGNMENT_END

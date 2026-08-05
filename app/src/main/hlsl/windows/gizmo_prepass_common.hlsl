@@ -45,6 +45,7 @@ struct PushConstants
     uint64_t                            _vertexStream;
     uint64_t                            _pixelStream;
     uint64_t                            _shapeStream;
+    float32_t                           _brightness;
 };
 
 [[vk::push_constant]]

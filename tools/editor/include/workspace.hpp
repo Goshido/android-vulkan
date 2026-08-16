@@ -7,6 +7,7 @@
 #include "history.hpp"
 #include "mesh_geometry_ref.hpp"
 #include "outline_mesh_node.hpp"
+#include <platform/windows/pbr/gizmo_compose_program.hpp>
 #include <platform/windows/pbr/gizmo_prepass_program.hpp>
 #include <platform/windows/pbr/gpu_buffer.hpp>
 #include <platform/windows/pbr/opaque_program.hpp>
@@ -45,87 +46,88 @@ class Workspace final
 
         struct MeshInstance final
         {
-            android_vulkan::MeshGeometry*                   _mesh = nullptr;
-            uint32_t                                        _count = 0U;
+            android_vulkan::MeshGeometry*               _mesh = nullptr;
+            uint32_t                                    _count = 0U;
         };
 
     private:
-        History                                             _history {};
-        Selection                                           _selection {};
-        std::unordered_map<Actor const*, ActorRef>          _actors {};
+        History                                         _history {};
+        Selection                                       _selection {};
+        std::unordered_map<Actor const*, ActorRef>      _actors {};
 
-        GBufferMeshQueue                                    _opaqueQueue {};
-        GBufferMeshMap                                      _opaqueMap {};
-        std::vector<MeshInstance>                           _opaqueVisible {};
+        GBufferMeshQueue                                _opaqueQueue {};
+        GBufferMeshMap                                  _opaqueMap {};
+        std::vector<MeshInstance>                       _opaqueVisible {};
 
-        GBufferMeshQueue                                    _stippleQueue {};
-        GBufferMeshMap                                      _stippleMap {};
-        std::vector<MeshInstance>                           _stippleVisible {};
+        GBufferMeshQueue                                _stippleQueue {};
+        GBufferMeshMap                                  _stippleMap {};
+        std::vector<MeshInstance>                       _stippleVisible {};
 
-        OutlineMeshQueue                                    _outlineQueue {};
-        OutlineMeshMap                                      _outlineMap {};
-        std::vector<MeshInstance>                           _outlineVisible {};
+        OutlineMeshQueue                                _outlineQueue {};
+        OutlineMeshMap                                  _outlineMap {};
+        std::vector<MeshInstance>                       _outlineVisible {};
 
-        GizmoQueue                                          _gizmoQueue {};
-        size_t                                              _gizmoVisible = 0U;
+        GizmoQueue                                      _gizmoQueue {};
+        size_t                                          _gizmoVisible = 0U;
 
-        PointLightQueue                                     _pointLightQueue {};
-        ReflectionProbeLocalQueue                           _reflectionProbeLocalQueue {};
-        ReflectionProbeGlobalQueue                          _reflectionProbeGlobalQueue {};
+        PointLightQueue                                 _pointLightQueue {};
+        ReflectionProbeLocalQueue                       _reflectionProbeLocalQueue {};
+        ReflectionProbeGlobalQueue                      _reflectionProbeGlobalQueue {};
 
-        std::unique_ptr<pbr::GizmoPrepassProgram>           _gizmoPrepassProgram {};
-        std::unique_ptr<pbr::OpaqueProgram>                 _opaqueProgram {};
-        std::unique_ptr<pbr::OpaqueWithIDProgram>           _opaqueWithIDProgram {};
-        std::unique_ptr<pbr::OutlineBlurXProgram>           _outlineBlurXProgram {};
-        std::unique_ptr<pbr::OutlineBorderProgram>          _outlineBorderProgram {};
-        std::unique_ptr<pbr::OutlineMaskProgram>            _outlineMaskProgram {};
+        std::unique_ptr<pbr::GizmoComposeProgram>       _gizmoComposeProgram {};
+        std::unique_ptr<pbr::GizmoPrepassProgram>       _gizmoPrepassProgram {};
+        std::unique_ptr<pbr::OpaqueProgram>             _opaqueProgram {};
+        std::unique_ptr<pbr::OpaqueWithIDProgram>       _opaqueWithIDProgram {};
+        std::unique_ptr<pbr::OutlineBlurXProgram>       _outlineBlurXProgram {};
+        std::unique_ptr<pbr::OutlineBorderProgram>      _outlineBorderProgram {};
+        std::unique_ptr<pbr::OutlineMaskProgram>        _outlineMaskProgram {};
 
-        pbr::OutlineBorderProgram::PushConstants            _outlineBorderPushConstants {};
-        pbr::OutlineBlurXProgram::PushConstants             _outlineBlurXPushConstants {};
-        pbr::GizmoPrepassProgram::PushConstants             _gizmoPrepassPushConstants {};
+        pbr::OutlineBorderProgram::PushConstants        _outlineBorderPushConstants {};
+        pbr::OutlineBlurXProgram::PushConstants         _outlineBlurXPushConstants {};
+        pbr::GizmoPrepassProgram::PushConstants         _gizmoPrepassPushConstants {};
 
-        StreamBufferRef                                     _frameStream {};
-        std::optional<VkDeviceAddress>                      _frameInstance = std::nullopt;
+        StreamBufferRef                                 _frameStream {};
+        std::optional<VkDeviceAddress>                  _frameInstance = std::nullopt;
 
-        StreamBufferRef                                     _transformStream {};
-        StreamBufferRef                                     _shadingStream {};
-        StreamBufferRef                                     _idStream {};
-        StreamBufferRef                                     _outlineStream {};
-        StreamBufferRef                                     _sdfVertexStream {};
-        StreamBufferRef                                     _sdfPixelStream {};
-        StreamBufferRef                                     _sdfShapeStream {};
+        StreamBufferRef                                 _transformStream {};
+        StreamBufferRef                                 _shadingStream {};
+        StreamBufferRef                                 _idStream {};
+        StreamBufferRef                                 _outlineStream {};
+        StreamBufferRef                                 _sdfVertexStream {};
+        StreamBufferRef                                 _sdfPixelStream {};
+        StreamBufferRef                                 _sdfShapeStream {};
 
-        Texture2DRef                                        _defaultAlbedo {};
-        Texture2DRef                                        _defaultEmission {};
-        Texture2DRef                                        _defaultMask {};
-        Texture2DRef                                        _defaultParam {};
-        Texture2DRef                                        _defaultNormal {};
+        Texture2DRef                                    _defaultAlbedo {};
+        Texture2DRef                                    _defaultEmission {};
+        Texture2DRef                                    _defaultMask {};
+        Texture2DRef                                    _defaultParam {};
+        Texture2DRef                                    _defaultNormal {};
 
-        Texture2DRef                                        _swapchainDepth {};
-        Texture2DRef                                        _idMask {};
-        Texture2DRef                                        _border {};
-        Texture2DRef                                        _blurX {};
+        Texture2DRef                                    _swapchainDepth {};
+        Texture2DRef                                    _idMask {};
+        Texture2DRef                                    _border {};
+        Texture2DRef                                    _blurX {};
 
-        pbr::GPUBuffer                                      _tileCounters {};
-        pbr::GPUBuffer                                      _tileSamples {};
+        pbr::GPUBuffer                                  _tileCounters {};
+        pbr::GPUBuffer                                  _tileSamples {};
 
-        VkViewport                                          _idViewport {};
+        VkViewport                                      _idViewport {};
 
-        VkExtent3D                                          _outlineDispatch {};
+        VkExtent3D                                      _outlineDispatch {};
 
-        ViewportWidget*                                     _viewport = nullptr;
-        std::mutex                                          _mutex {};
+        ViewportWidget*                                 _viewport = nullptr;
+        std::mutex                                      _mutex {};
 
-        Hotkey                                              _delete {};
-        Hotkey                                              _openWorkspace {};
-        Hotkey                                              _saveWorkspace {};
-        Hotkey                                              _saveAsWorkspace {};
-        Hotkey                                              _undo {};
-        Hotkey                                              _redo {};
+        Hotkey                                          _delete {};
+        Hotkey                                          _openWorkspace {};
+        Hotkey                                          _saveWorkspace {};
+        Hotkey                                          _saveAsWorkspace {};
+        Hotkey                                          _undo {};
+        Hotkey                                          _redo {};
 
-        bool                                                _ready = false;
+        bool                                            _ready = false;
 
-        VkRenderingAttachmentInfo                           _idMaskAttachment
+        VkRenderingAttachmentInfo                       _idMaskAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -146,7 +148,7 @@ class Workspace final
             }
         };
 
-        VkRenderingAttachmentInfo                           _idDepthAttachment
+        VkRenderingAttachmentInfo                       _idDepthAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -168,7 +170,7 @@ class Workspace final
             }
         };
 
-        VkRenderingInfo                                     _idRenderingInfo
+        VkRenderingInfo                                 _idRenderingInfo
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = nullptr,
@@ -197,7 +199,7 @@ class Workspace final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier2                               _outlineBarrier0[ 2U ] =
+        VkImageMemoryBarrier2                           _outlineBarrier0[ 2U ] =
         {
             // ID mask
             {
@@ -256,7 +258,7 @@ class Workspace final
             }
         };
 
-        VkImageMemoryBarrier2                               _outlineBarrier1[ 2U ] =
+        VkImageMemoryBarrier2                           _outlineBarrier1[ 2U ] =
         {
             // ID mask
             {
@@ -306,7 +308,7 @@ class Workspace final
             }
         };
 
-        VkImageMemoryBarrier2                               _outlineBarrier2[ 2U ] =
+        VkImageMemoryBarrier2                           _outlineBarrier2[ 2U ] =
         {
             // Border
             {
@@ -356,7 +358,7 @@ class Workspace final
             }
         };
 
-        VkImageMemoryBarrier2                               _blurXBarrier
+        VkImageMemoryBarrier2                           _blurXBarrier
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -380,7 +382,7 @@ class Workspace final
             }
         };
 
-        VkBufferMemoryBarrier2                              _tileBarriers[ 2U ]
+        VkBufferMemoryBarrier2                          _tileBarriers[ 2U ]
         {
             // Tile counters
             {
@@ -412,7 +414,7 @@ class Workspace final
             }
         };
 
-        VkBufferMemoryBarrier2                              _tileCounterBarrier
+        VkBufferMemoryBarrier2                          _tileCounterBarrier
         {
             .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -427,7 +429,7 @@ class Workspace final
             .size = VK_WHOLE_SIZE
         };
 
-        VkImageMemoryBarrier2                               _gizmoBeginBarriers[ 2U ] =
+        VkImageMemoryBarrier2                           _gizmoBeginBarriers[ 2U ] =
         {
             // Swapchain color
             {
@@ -486,7 +488,7 @@ class Workspace final
             }
         };
 
-        VkImageMemoryBarrier2                               _gizmoEndBarrier
+        VkImageMemoryBarrier2                           _gizmoEndBarrier
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -510,7 +512,7 @@ class Workspace final
             }
         };
 
-        VkDependencyInfo                                    _depInfo
+        VkDependencyInfo                                _depInfo
         {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
             .pNext = nullptr,
@@ -523,7 +525,7 @@ class Workspace final
             .pImageMemoryBarriers = nullptr
         };
 
-        VkRenderingAttachmentInfo                           _gizmoColorAttachment
+        VkRenderingAttachmentInfo                       _gizmoColorAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -544,7 +546,7 @@ class Workspace final
             }
         };
 
-        VkRenderingAttachmentInfo                           _gizmoDepthAttachment
+        VkRenderingAttachmentInfo                       _gizmoDepthAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -566,7 +568,7 @@ class Workspace final
             }
         };
 
-        VkRenderingInfo                                     _gizmoRenderingInfo
+        VkRenderingInfo                                 _gizmoRenderingInfo
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = nullptr,
@@ -595,7 +597,7 @@ class Workspace final
             .pStencilAttachment = nullptr
         };
 
-        static Workspace*                                   _instance;
+        static Workspace*                               _instance;
 
     public:
         explicit Workspace () noexcept;

@@ -465,6 +465,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gpu_buffer.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_compose_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1031,6 +1034,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gpu_buffer.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -1101,6 +1107,9 @@
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_tile_config.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>

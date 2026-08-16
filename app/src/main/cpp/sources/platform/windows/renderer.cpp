@@ -1134,4 +1134,12 @@ Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
     return VERSION;
 }
 
+VkImageUsageFlags Renderer::GetSwapchainUsage () noexcept
+{
+    constexpr VkImageUsageFlags usage = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT );
+
+    return usage;
+}
+
 } // namespace android_vulkan

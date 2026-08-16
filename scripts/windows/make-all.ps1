@@ -93,10 +93,6 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\dummy_light.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$WINDOWS_HLSL_DIRECTORY\gizmo_compose.ps.hlsl"                                                                    `
-    "$WINDOWS_SHADER_DIRECTORY\gizmo_compose.ps.spv"
-
-scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.ps.hlsl"                                                                    `
     "$WINDOWS_SHADER_DIRECTORY\gizmo_prepass.ps.spv"
 
@@ -184,6 +180,10 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\exposure.cs.hlsl"                                                                         `
     "$WINDOWS_SHADER_DIRECTORY\exposure.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_compose.cs.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_compose.cs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\id_collect.cs.hlsl"                                                                       `

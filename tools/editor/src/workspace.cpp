@@ -176,6 +176,17 @@ void Workspace::Destroy () noexcept
     _history.Clear ();
     _actors.clear ();
 
+    if ( _gizmoComposeProgram ) [[likely]]
+    {
+        MessageQueue::Instance ().EnqueueBack (
+            Message ( eMessageType::DestroyProgram,
+                [ program = ProgramRef ( _gizmoComposeProgram.release () ) ] () mutable noexcept -> void* {
+                    return &program;
+                }
+            )
+        );
+    }
+
     if ( _gizmoPrepassProgram ) [[likely]]
     {
         MessageQueue::Instance ().EnqueueBack (
@@ -1500,6 +1511,7 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = static_cast<bool> ( _viewport ) &
+        static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
         static_cast<bool> ( _opaqueWithIDProgram ) &
@@ -1552,6 +1564,31 @@ void Workspace::InitGraphicsResources () noexcept
 
                 VkDevice device = renderer.GetDevice ();
                 VkFormat const depth = renderer.GetDefaultDepthFormat ();
+
+                auto gizmoComposeProgram = std::make_unique<pbr::GizmoComposeProgram> ();
+
+                if ( !gizmoComposeProgram->Init ( device, nullptr ) ) [[unlikely]]
+                    return nullptr;
+
+                auto gizmoComposeProgramReady = [ this ] ( ProgramRef program ) noexcept {
+                    // NOLINTNEXTLINE - downcast
+                    _gizmoComposeProgram = std::unique_ptr<pbr::GizmoComposeProgram> (
+                        static_cast<pbr::GizmoComposeProgram*> ( program.release () )
+                    );
+                };
+
+                messageQueue.EnqueueBack (
+                    Message ( eMessageType::NewProgram,
+                        [
+                            info = ProgramInfo ( std::unique_ptr<pbr::Program> ( gizmoComposeProgram.release () ),
+                                std::move ( gizmoComposeProgramReady )
+                            )
+                        ] () mutable noexcept -> void* {
+                            return &info;
+                        }
+                    )
+                );
+
                 auto gizmoPrepassProgram = std::make_unique<pbr::GizmoPrepassProgram> ();
 
                 if ( !gizmoPrepassProgram->Init ( device, renderer.GetSurfaceFormat (), depth ) ) [[unlikely]]

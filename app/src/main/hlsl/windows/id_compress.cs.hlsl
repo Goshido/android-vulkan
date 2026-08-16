@@ -12,19 +12,13 @@ struct PushConstants
 [[vk::push_constant]]
 PushConstants                   g_pushConstants;
 
-// [2026/09/21] DXC has no syntax with atomics and 'ResourceDescriptorHeap'.
-// So the workaround is used.
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-RWStructuredBuffer<uint64_t>    g_idBuffers[]:          register ( u0 );
-
 static uint64_t                 g_ids[ WINDOW ];
 
 //----------------------------------------------------------------------------------------------------------------------
 
 uint16_t Fill ( in uint32_t idx )
 {
-    RWStructuredBuffer<uint64_t> idSet = g_idBuffers[ g_pushConstants._idSet ];
+    RWStructuredBuffer<uint64_t> idSet = ResourceDescriptorHeap[ g_pushConstants._idSet ];
     uint16_t stored = 0U;
     uint64_t last = 0ULL;
     idx *= WINDOW;
@@ -73,7 +67,7 @@ void BubbleSort ( in uint16_t stored )
 
 void Commit ( in uint16_t stored )
 {
-    RWStructuredBuffer<uint64_t> uniqueIDSet = g_idBuffers[ g_pushConstants._uniqueIDs ];
+    RWStructuredBuffer<uint64_t> uniqueIDSet = ResourceDescriptorHeap[ g_pushConstants._uniqueIDs ];
     uint64_t last = 0ULL;
 
     for ( uint16_t i = 0U; i < stored; ++i )

@@ -1730,7 +1730,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .imageColorSpace = colorSpace,
         .imageExtent = _surfaceSize,
         .imageArrayLayers = 1U,
-        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageUsage = GetSwapchainUsage (),
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr,

@@ -14,8 +14,10 @@ struct PushConstants
 [[vk::push_constant]]
 PushConstants                   g_pushConstants;
 
-// [2026/09/21] DXC has no syntax with atomics and 'ResourceDescriptorHeap'.
+// [2026/08/16] DXC has no syntax explicit image format and 'ResourceDescriptorHeap'.
 // So the workaround is used.
+// [2026/08/16] Never mix ResourceDescriptorHeap|SamplerDescriptorHeap and explicit descriptor indexing in same shader.
+// The DXC will produce unexpected 'Binding' locations in SPIR-V. Be consistent.
 
 [[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
 [[vk::image_format ( "rg32ui" )]]

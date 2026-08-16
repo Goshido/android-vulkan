@@ -1,4 +1,6 @@
 #include "color_space.hlsl"
+#include "platform/windows/pbr/gizmo_compose.inc"
+#include "platform/windows/pbr/resource_heap.inc"
 #include "windows/gizmo_pack.hlsl"
 #include "windows/gizmo_tile.hlsl"
 
@@ -10,13 +12,27 @@ struct PushConstants
 {
     TileCounters                            _tileCounters;
     TileSamples                             _tileSamples;
+    uint32_t2                               _resolution;
     float32_t                               _brightness;
     uint32_t                                _tileCountWidth;
+    uint32_t                                _color;
     uint32_t                                _depth;
 };
 
 [[vk::push_constant]]
 PushConstants                               g_pushConstants;
+
+// [2026/08/16] DXC has no syntax explicit image format and 'ResourceDescriptorHeap'.
+// So the workaround is used.
+// [2026/08/16] Never mix ResourceDescriptorHeap|SamplerDescriptorHeap and explicit descriptor indexing in same shader.
+// The DXC will produce unexpected 'Binding' locations in SPIR-V. Be consistent.
+
+[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
+[[vk::image_format ( "rgba8" )]]
+RWTexture2D<float32_t4>                     g_images[]:     register ( u0 );
+
+[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
+Texture2D<float32_t>                        g_depth[]:      register ( t0 );
 
 struct History
 {
@@ -30,7 +46,7 @@ static History                              g_history;
 
 bool DepthTestHistory ( in uint32_t2 pix, in uint32_t sampleCount )
 {
-    Texture2D<float32_t> depthImage = ResourceDescriptorHeap[ g_pushConstants._depth ];
+    Texture2D<float32_t> depthImage = g_depth[ g_pushConstants._depth ];
     uint32_t const depth = PackDepth ( depthImage[ pix ] );
     g_history._count = 0U;
 
@@ -86,7 +102,7 @@ void BubbleSort ()
     }
 }
 
-float32_t4 Compose ( in uint32_t2 pix )
+void Compose ( in uint32_t2 pix )
 {
     // Using premultiplied alpha technique to properly blend data as overlay.
     float16_t4 c = (float16_t4)0.0H;
@@ -97,38 +113,41 @@ float32_t4 Compose ( in uint32_t2 pix )
         c = mad ( c, 1.0H - overlay.w, overlay );
     }
 
-    c.xyz = LinearToSRGB ( pow ( c.xyz, (float16_t)g_pushConstants._brightness ) );
-    return (float32_t4)c;
+    c.xyz = pow ( c.xyz, (float16_t)g_pushConstants._brightness );
+
+    RWTexture2D<float32_t4> color = g_images[ g_pushConstants._color ];
+    float16_t3 const dst = SRGBToLinear ( (float16_t3)color[ pix ].xyz );
+    color[ pix ] = float32_t4 ( (float32_t3)LinearToSRGB ( mad ( dst, 1.0H - c.w, c.xyz ) ), 1.0F );
 }
 
-float32_t4 BlendPixel ( in uint32_t2 pix, in uint32_t sampleCount )
+void BlendPixel ( in uint32_t2 pix, in uint32_t sampleCount )
 {
     if ( !DepthTestHistory ( pix, sampleCount ) )
-        return (float32_t4)0.0F;
+        return;
 
     BubbleSort ();
-    return Compose ( pix );
+    Compose ( pix );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-float32_t4 PS ( in linear float32_t4 vertexH: SV_Position ): SV_Target0
+[numthreads ( THREADS_X, THREADS_Y, 1 )]
+void CS ( in uint32_t3 pix: SV_DispatchThreadID )
 {
-    uint32_t2 const pix = (uint32_t2)vertexH.xy;
-    uint32_t2 const tile = pix >> uint32_t2 ( TILE_WIDTH_SHIFT, TILE_HEIGHT_SHIFT );
-    uint32_t2 const item = pix & uint32_t2 ( TILE_LOCAL_X_MASK, TILE_LOCAL_Y_MASK );
+    if ( any ( pix.xy >= g_pushConstants._resolution ) )
+        return;
+
+    uint32_t2 const tile = pix.xy >> uint32_t2 ( TILE_WIDTH_SHIFT, TILE_HEIGHT_SHIFT );
+    uint32_t2 const item = pix.xy & uint32_t2 ( TILE_LOCAL_X_MASK, TILE_LOCAL_Y_MASK );
     uint32_t const tileIdx = tile.y * g_pushConstants._tileCountWidth + tile.x;
 
     uint64_t const address = (uint64_t)g_pushConstants._tileCounters + (uint64_t)( tileIdx * sizeof ( GizmoCounters ) );
     uint32_t const tileLineSampleCount = TileCounters ( address ).Get ()._counters[ item.y ];
 
     if ( tileLineSampleCount == 0U )
-    {
-        discard;
-        return (float32_t4)0.0F;
-    }
+        return;
 
     uint32_t const c = UnpackSampleCounter ( tileLineSampleCount, item.x );
     uint32_t const cases[ 2U ] = { c, TILE_LAYERS };
-    return BlendPixel ( pix, cases[ (uint32_t)( c > TILE_LAYERS ) ] );
+    BlendPixel ( pix.xy, cases[ (uint32_t)( c > TILE_LAYERS ) ] );
 }

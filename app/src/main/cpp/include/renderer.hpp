@@ -319,6 +319,7 @@ class Renderer final
         [[nodiscard]] static std::span<std::pair<VkFormat, char const* const> const> GetRequiredFormats () noexcept;
         [[nodiscard]] static VkPhysicalDeviceFeatures2 GetRequiredPhysicalDeviceFeatures () noexcept;
         [[nodiscard]] static VulkanVersion GetRequiredVulkanVersion () noexcept;
+        [[nodiscard]] static VkImageUsageFlags GetSwapchainUsage () noexcept;
 
         [[nodiscard]] static bool PrintCoreExtensions () noexcept;
         static void PrintFloatProp ( char const* indent, char const* name, float value ) noexcept;

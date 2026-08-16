@@ -505,4 +505,9 @@ Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
     return VERSION;
 }
 
+VkImageUsageFlags Renderer::GetSwapchainUsage () noexcept
+{
+    return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+}
+
 } // namespace android_vulkan

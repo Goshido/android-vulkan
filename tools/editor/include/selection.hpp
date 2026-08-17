@@ -165,7 +165,7 @@ class Selection final
             .size = ID_PREFETCH_SIZE
         };
 
-        VkBufferMemoryBarrier2                      _idHostBarrier001
+        VkBufferMemoryBarrier2                      _idHostBarrier0
         {
             .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -180,7 +180,7 @@ class Selection final
             .size = 0U
         };
 
-        VkBufferMemoryBarrier2                      _idHostBarrier002
+        VkBufferMemoryBarrier2                      _idHostBarrier1
         {
             .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -195,7 +195,7 @@ class Selection final
             .size = ID_PREFETCH_SIZE
         };
 
-        VkBufferMemoryBarrier2                      _barriers001[ 3U ]
+        VkBufferMemoryBarrier2                      _barriers0[ 3U ]
         {
             // ID Set
             {
@@ -245,7 +245,7 @@ class Selection final
             }
         };
 
-        VkBufferMemoryBarrier2                      _barriers002[ 3U ]
+        VkBufferMemoryBarrier2                      _barriers1[ 3U ]
         {
             // ID Set
             {

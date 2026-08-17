@@ -484,7 +484,7 @@ void Workspace::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 
 void Workspace::PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept
 {
-    if ( IsReady () ) [[unlikely]]
+    if ( !IsReady () ) [[unlikely]]
         return;
 
     if ( _gizmoVisible < 1U )
@@ -505,10 +505,7 @@ void Workspace::PrepareGizmo ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
-void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
-    VkImage swapchainImage,
-    VkImageView swapchainView
-) noexcept
+void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer, pbr::SwapchainInfo const &swapchain ) noexcept
 {
     if ( !IsReady () ) [[unlikely]]
         return;
@@ -516,29 +513,23 @@ void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
     AV_TRACE ( "Gizmo" )
     AV_VULKAN_GROUP ( commandBuffer, "Gizmo" )
 
-    _gizmoBeginBarriers[ 0U ].image = swapchainImage;
+    _gizmoBarriers0[ 0U ].image = swapchain._image;
 
     _depInfo.bufferMemoryBarrierCount = 0U;
-    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _gizmoBeginBarriers ) );
-    _depInfo.pImageMemoryBarriers = _gizmoBeginBarriers;
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _gizmoBarriers0 ) );
+    _depInfo.pImageMemoryBarriers = _gizmoBarriers0;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
-    _gizmoColorAttachment.imageView = swapchainView;
+    _gizmoColorAttachment.imageView = swapchain._view;
     vkCmdBeginRendering ( commandBuffer, &_gizmoRenderingInfo );
 
-    _gizmoPrepassProgram->Bind ( commandBuffer );
+    pbr::GizmoPrepassProgram &prepass = *_gizmoPrepassProgram;
+    prepass.Bind ( commandBuffer );
 
     _gizmoPrepassPushConstants._vertexStream = _sdfVertexStream->AcquireAndConsume ( _gizmoVisible );
     _gizmoPrepassPushConstants._pixelStream = _sdfPixelStream->AcquireAndConsume ( _gizmoVisible );
     _gizmoPrepassPushConstants._shapeStream = _sdfShapeStream->AcquireAndConsume ( _gizmoVisible );
-
-    vkCmdPushConstants ( commandBuffer,
-        pbr::UniversalPipelineLayout::GetPipelineLayout (),
-        pbr::UniversalPipelineLayout::GetStages (),
-        0U,
-        sizeof ( _gizmoPrepassPushConstants ),
-        &_gizmoPrepassPushConstants
-    );
+    prepass.SetPushConstants ( commandBuffer, &_gizmoPrepassPushConstants );
 
     vkCmdDraw ( commandBuffer,
         pbr::GizmoPrepassProgram::VertexCount (),
@@ -549,7 +540,23 @@ void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer,
 
     vkCmdEndRendering ( commandBuffer );
 
-    _gizmoEndBarrier.image = swapchainImage;
+    _gizmoBarriers1[ 0U ].image = swapchain._image;
+    _depInfo.pImageMemoryBarriers = _gizmoBarriers1;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    pbr::GizmoComposeProgram &compose = *_gizmoComposeProgram;
+    compose.Bind ( commandBuffer );
+
+    _gizmoComposePushConstants._color = swapchain._idx;
+    compose.SetPushConstants ( commandBuffer, &_gizmoComposePushConstants );
+
+    vkCmdDispatch ( commandBuffer,
+        _gizmoComposeDispatch.width,
+        _gizmoComposeDispatch.height,
+        _gizmoComposeDispatch.depth
+    );
+
+    _gizmoEndBarrier.image = swapchain._image;
     _depInfo.imageMemoryBarrierCount = 1U;
     _depInfo.pImageMemoryBarriers = &_gizmoEndBarrier;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
@@ -667,17 +674,21 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     resolution = renderer.GetViewportResolution ();
     _gizmoRenderingInfo.renderArea.extent = resolution;
+    _gizmoComposePushConstants._resolution = resolution;
     _outlineBorderPushConstants._resolution = resolution;
     _outlineBlurXPushConstants._resolution = resolution;
     _outlineDispatch = pbr::OutlineBorderProgram::DispatchParams ( resolution );
+    _gizmoComposeDispatch = pbr::GizmoComposeProgram::DispatchParams ( resolution );
 
     pbr::GizmoPrepassProgram::ResourceInfo const gizmoResourceInfo =
         pbr::GizmoPrepassProgram::ResolveResourceSize ( resolution );
 
     _gizmoPrepassPushConstants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
+    _gizmoComposePushConstants._tileCountWidth = gizmoResourceInfo._tileCountWidth;
 
     pbr::BrightnessInfo const brightness ( DEFAULT_BRIGHTNESS_BALLANCE );
     _gizmoPrepassPushConstants._brightness = brightness._brightnessFactor;
+    _gizmoComposePushConstants._brightness = brightness._brightnessFactor;
 
     _idMask = std::make_shared<Texture2D> ();
     android_vulkan::Texture2D &idMask = _idMask->_resource;
@@ -700,7 +711,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
         swapchainDepth.CreateRenderTarget ( resolution,
             renderer.GetDefaultDepthFormat (),
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
             renderer
         ) &&
 
@@ -737,11 +748,14 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 
     VkBuffer tileCounters = _tileCounters.GetBuffer ();
     _gizmoPrepassPushConstants._tileCounters = _tileCounters.GetHeapIndex ();
+    _gizmoComposePushConstants._tileCounters = _tileCounters.GetBDA ();
     _tileBarriers[ 0U ].buffer = tileCounters;
     _tileCounterBarrier.buffer = tileCounters;
 
     _tileBarriers[ 1U ].buffer = _tileSamples.GetBuffer ();
-    _gizmoPrepassPushConstants._tileSamples = _tileSamples.GetBDA ();
+    VkDeviceAddress const samples = _tileSamples.GetBDA ();
+    _gizmoPrepassPushConstants._tileSamples = samples;
+    _gizmoComposePushConstants._tileSamples = samples;
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
@@ -811,6 +825,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     AV_SET_VULKAN_OBJECT_NAME ( device, borderView, VK_OBJECT_TYPE_IMAGE_VIEW, "Border" )
     _outlineBarrier1[ 1U ].image = borderImage;
     _outlineBarrier2[ 0U ].image = borderImage;
+
     idx = resourceHeap.RegisterStorageImage ( device, borderView );
 
     if ( !idx )
@@ -839,6 +854,7 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     AV_SET_VULKAN_OBJECT_NAME ( device, blurXView, VK_OBJECT_TYPE_IMAGE_VIEW, "Blur X" )
     _outlineBarrier2[ 1U ].image = blurXImage;
     _blurXBarrier.image = blurXImage;
+
     idx = resourceHeap.RegisterStorageImage ( device, blurXView );
 
     if ( !idx )
@@ -867,7 +883,19 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _idDepthAttachment.imageView = depthView;
     _outlineBarrier0[ 1U ].image = depth;
     _gizmoDepthAttachment.imageView = depthView;
-    _gizmoBeginBarriers[ 1U ].image = depth;
+    _gizmoBarriers0[ 1U ].image = depth;
+    _gizmoBarriers1[ 1U ].image = depth;
+
+    idx = resourceHeap.RegisterNonUISampledImage ( device, depthView );
+
+    if ( !idx )
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _gizmoComposePushConstants._depth = *idx;
+    _swapchainDepth->_storageIndex = std::move ( idx );
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept

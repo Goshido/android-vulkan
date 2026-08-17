@@ -61,7 +61,7 @@ VkExtent3D GizmoComposeProgram::DispatchParams ( VkExtent2D const &resolution ) 
     return
     {
         .width = ( resolution.width + THREADS_X - 1U ) / THREADS_X,
-        .height = ( resolution.width + THREADS_Y - 1U ) / THREADS_Y,
+        .height = ( resolution.height + THREADS_Y - 1U ) / THREADS_Y,
         .depth = 1U
     };
 }

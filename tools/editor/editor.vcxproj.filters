@@ -1037,6 +1037,9 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose_program.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\swapchain_info.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">

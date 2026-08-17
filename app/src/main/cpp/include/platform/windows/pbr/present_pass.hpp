@@ -3,6 +3,8 @@
 
 
 #include <renderer.hpp>
+#include "resource_heap.hpp"
+#include "swapchain_info.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -15,21 +17,15 @@ namespace pbr {
 
 class PresentPass final
 {
-    public:
-        struct SwapchainInfo final
-        {
-            VkImage                     _image = VK_NULL_HANDLE;
-            VkImageView                 _view = VK_NULL_HANDLE;
-        };
-
     private:
         constexpr static VkPipelineStageFlags WAIT_STAGE = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
     private:
-        uint32_t                        _swapchainImageIndex = std::numeric_limits<uint32_t>::max ();
-        std::vector<VkSemaphore>        _renderEnd {};
+        uint32_t                                _swapchainImageIndex = std::numeric_limits<uint32_t>::max ();
+        std::vector<VkSemaphore>                _renderEnd {};
+        std::vector<std::optional<uint32_t>>    _heapIndex {};
 
-        VkSubmitInfo                    _submitInfo
+        VkSubmitInfo                            _submitInfo
         {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .pNext = nullptr,
@@ -42,7 +38,7 @@ class PresentPass final
             .pSignalSemaphores = nullptr
         };
 
-        VkPresentInfoKHR                _presentInfo
+        VkPresentInfoKHR                        _presentInfo
         {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .pNext = nullptr,
@@ -54,7 +50,7 @@ class PresentPass final
             .pResults = nullptr
         };
 
-        VkRenderingAttachmentInfo       _colorAttachment
+        VkRenderingAttachmentInfo               _colorAttachment
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .pNext = nullptr,
@@ -75,7 +71,7 @@ class PresentPass final
             }
         };
 
-        VkRenderingInfo                 _renderingInfo
+        VkRenderingInfo                         _renderingInfo
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = nullptr,
@@ -104,7 +100,7 @@ class PresentPass final
             .pStencilAttachment = nullptr
         };
 
-        VkImageMemoryBarrier2           _barrierStart
+        VkImageMemoryBarrier2                   _barrierStart
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -128,7 +124,7 @@ class PresentPass final
             }
         };
 
-        VkImageMemoryBarrier2           _barrierContiue
+        VkImageMemoryBarrier2                   _barrierContiue
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -152,7 +148,7 @@ class PresentPass final
             }
         };
 
-        VkImageMemoryBarrier2           _barrierEnd
+        VkImageMemoryBarrier2                   _barrierEnd
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
             .pNext = nullptr,
@@ -176,7 +172,7 @@ class PresentPass final
             }
         };
 
-        VkDependencyInfo                _depInfo
+        VkDependencyInfo                        _depInfo
         {
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
             .pNext = nullptr,
@@ -204,8 +200,11 @@ class PresentPass final
             VkSemaphore acquire
         ) noexcept;
 
-        void OnDestroyDevice ( VkDevice device ) noexcept;
-        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept;
+        void OnDestroyDevice ( VkDevice device, ResourceHeap &resourceHeap ) noexcept;
+
+        [[nodiscard]] bool OnSwapchainCreated ( android_vulkan::Renderer &renderer,
+            ResourceHeap &resourceHeap
+        ) noexcept;
 
         [[nodiscard]] SwapchainInfo GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept;
 
@@ -219,6 +218,9 @@ class PresentPass final
             VkFence fence,
             std::mutex* submitMutex
         ) noexcept;
+
+    private:
+        void FreeHeapResources ( ResourceHeap &resourceHeap ) noexcept;
 };
 
 } // namespace pbr

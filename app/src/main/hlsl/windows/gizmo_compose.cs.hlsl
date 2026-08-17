@@ -59,7 +59,7 @@ bool DepthTestHistory ( in uint32_t2 pix, in uint32_t sampleCount )
     );
 
     zeta += uint32_t3 ( beta.zx, alpha.y );
-    zeta <<= uint32_t3 ( 9U, 3U, 1U );
+    zeta <<= uint32_t3 ( 11U, 5U, 3U );
     uint32_t offset = zeta.x + zeta.y + zeta.z;
     uint32_t const cases[] = { 4U, 508U };
 
@@ -120,27 +120,15 @@ void Compose ( in uint32_t2 pix )
     color[ pix ] = float32_t4 ( (float32_t3)LinearToSRGB ( mad ( dst, 1.0H - c.w, c.xyz ) ), 1.0F );
 }
 
-void BlendPixel ( in uint32_t2 pix, in uint32_t sampleCount )
-{
-    if ( !DepthTestHistory ( pix, sampleCount ) )
-        return;
-
-    BubbleSort ();
-    Compose ( pix );
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 
 [numthreads ( THREADS_X, THREADS_Y, 1 )]
-void CS ( in uint32_t3 pix: SV_DispatchThreadID )
+void CS ( in uint32_t3 tile: SV_GroupID, in uint32_t3 pix: SV_DispatchThreadID, in uint32_t3 item: SV_GroupThreadID )
 {
     if ( any ( pix.xy >= g_pushConstants._resolution ) )
         return;
 
-    uint32_t2 const tile = pix.xy >> uint32_t2 ( TILE_WIDTH_SHIFT, TILE_HEIGHT_SHIFT );
-    uint32_t2 const item = pix.xy & uint32_t2 ( TILE_LOCAL_X_MASK, TILE_LOCAL_Y_MASK );
     uint32_t const tileIdx = tile.y * g_pushConstants._tileCountWidth + tile.x;
-
     uint64_t const address = (uint64_t)g_pushConstants._tileCounters + (uint64_t)( tileIdx * sizeof ( GizmoCounters ) );
     uint32_t const tileLineSampleCount = TileCounters ( address ).Get ()._counters[ item.y ];
 
@@ -149,5 +137,10 @@ void CS ( in uint32_t3 pix: SV_DispatchThreadID )
 
     uint32_t const c = UnpackSampleCounter ( tileLineSampleCount, item.x );
     uint32_t const cases[ 2U ] = { c, TILE_LAYERS };
-    BlendPixel ( pix.xy, cases[ (uint32_t)( c > TILE_LAYERS ) ] );
+
+    if ( !DepthTestHistory ( pix.xy, cases[ (uint32_t)( c > TILE_LAYERS ) ] ) )
+        return;
+
+    BubbleSort ();
+    Compose ( pix.xy );
 }

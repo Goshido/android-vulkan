@@ -333,15 +333,15 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
             };
 
             VkBuffer idHostBuffer = counting->_buffer;
-            _idHostBarrier001.buffer = idHostBuffer;
-            _idHostBarrier001.size = copy.size;
+            _idHostBarrier0.buffer = idHostBuffer;
+            _idHostBarrier0.size = copy.size;
             _depInfo.bufferMemoryBarrierCount = 1U;
-            _depInfo.pBufferMemoryBarriers = &_idHostBarrier001;
+            _depInfo.pBufferMemoryBarriers = &_idHostBarrier0;
             vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
             vkCmdCopyBuffer ( commandBuffer, _idDevice._buffer, idHostBuffer, 1U, &copy );
 
-            VkBufferMemoryBarrier2 &idHostBarrier = _barriers001[ 2U ];
+            VkBufferMemoryBarrier2 &idHostBarrier = _barriers0[ 2U ];
             idHostBarrier.size = copy.size;
 
             if ( !_area )
@@ -358,7 +358,7 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
         return;
 
     _depInfo.bufferMemoryBarrierCount += 2U;
-    _depInfo.pBufferMemoryBarriers = _barriers001;
+    _depInfo.pBufferMemoryBarriers = _barriers0;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     vkCmdFillBuffer ( commandBuffer, _idSet._buffer, 0U, VK_WHOLE_SIZE, 0U );
@@ -366,11 +366,11 @@ void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
 
     counting = std::exchange ( free[ 0UZ ], std::exchange ( free[ 1UZ ], nullptr ) );
 
-    VkBufferMemoryBarrier2 &idHostBarrier = _barriers002[ 2U ];
+    VkBufferMemoryBarrier2 &idHostBarrier = _barriers1[ 2U ];
     idHostBarrier.buffer = counting->_buffer;
 
-    _depInfo.bufferMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _barriers002 ) );
-    _depInfo.pBufferMemoryBarriers = _barriers002;
+    _depInfo.bufferMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _barriers1 ) );
+    _depInfo.pBufferMemoryBarriers = _barriers1;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
@@ -425,11 +425,11 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     if ( !result )
         return;
 
-    _barriers001[ 0U ].buffer = _idSet._buffer;
-    _barriers001[ 1U ].buffer = _idDevice._buffer;
+    _barriers0[ 0U ].buffer = _idSet._buffer;
+    _barriers0[ 1U ].buffer = _idDevice._buffer;
 
-    _barriers002[ 0U ].buffer = _idSet._buffer;
-    _barriers002[ 1U ].buffer = _idDevice._buffer;
+    _barriers1[ 0U ].buffer = _idSet._buffer;
+    _barriers1[ 1U ].buffer = _idDevice._buffer;
 
     _idSetBarrier.buffer = _idSet._buffer;
     _idDeviceBarrier.buffer = _idDevice._buffer;
@@ -563,8 +563,8 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     VkBuffer idHostBuffer = _counting->_buffer;
     vkCmdCopyBuffer ( commandBuffer, _idDevice._buffer, idHostBuffer, 1U, &copy );
 
-    _idHostBarrier002.buffer = idHostBuffer;
-    _depInfo.pBufferMemoryBarriers = &_idHostBarrier002;
+    _idHostBarrier1.buffer = idHostBuffer;
+    _depInfo.pBufferMemoryBarriers = &_idHostBarrier1;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _area = std::nullopt;

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -19,18 +20,40 @@ VkResult PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer,
     );
 }
 
-void PresentPass::OnDestroyDevice ( VkDevice device ) noexcept
+void PresentPass::OnDestroyDevice ( VkDevice device, ResourceHeap &resourceHeap ) noexcept
 {
+    FreeHeapResources ( resourceHeap );
+
     for ( auto renderEnd : _renderEnd )
         vkDestroySemaphore ( device, renderEnd, nullptr );
 
     _renderEnd.clear ();
     _renderEnd.shrink_to_fit ();
+
+    _heapIndex.clear ();
+    _heapIndex.shrink_to_fit ();
 }
 
-bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
+bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, ResourceHeap &resourceHeap ) noexcept
 {
+    FreeHeapResources ( resourceHeap );
     size_t const imageCount = renderer.GetPresentImageCount ();
+    _heapIndex.resize ( imageCount );
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < imageCount; ++i )
+    {
+        if ( auto idx = resourceHeap.RegisterStorageImage ( device, renderer.GetPresentImageView ( i ) ); idx )
+        {
+            [[likely]]
+            _heapIndex[ i ] = std::move ( idx );
+            continue;
+        }
+
+        AV_ASSERT ( false )
+        return false;
+    }
+
     size_t const semaphoreCount = _renderEnd.size ();
     _renderingInfo.renderArea.extent = renderer.GetSurfaceSize ();
 
@@ -44,7 +67,6 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
         .flags = 0U
     };
 
-    VkDevice device = renderer.GetDevice ();
     _renderEnd.resize ( imageCount );
     VkSemaphore* s = _renderEnd.data () + semaphoreCount;
 
@@ -67,14 +89,15 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
-PresentPass::SwapchainInfo PresentPass::GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept
+SwapchainInfo PresentPass::GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept
 {
     auto const idx = static_cast<size_t> ( _swapchainImageIndex );
 
     return
     {
         ._image = renderer.GetPresentImage ( static_cast<size_t> ( idx ) ),
-        ._view = renderer.GetPresentImageView ( static_cast<size_t> ( idx ) )
+        ._view = renderer.GetPresentImageView ( static_cast<size_t> ( idx ) ),
+        ._idx = *_heapIndex[ idx ]
     };
 }
 
@@ -157,6 +180,17 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     _presentInfo.pImageIndices = &_swapchainImageIndex;
     _presentInfo.pWaitSemaphores = renderEnd;
     return std::optional<VkResult> { vkQueuePresentKHR ( queue, &_presentInfo ) };
+}
+
+void PresentPass::FreeHeapResources ( ResourceHeap& resourceHeap ) noexcept
+{
+    for ( auto const &idx : _heapIndex )
+    {
+        if ( idx ) [[likely]]
+        {
+            resourceHeap.UnregisterResource ( *idx );
+        }
+    }
 }
 
 } // namespace pbr

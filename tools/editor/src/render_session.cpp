@@ -474,7 +474,7 @@ bool RenderSession::InitModules () noexcept
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     VkDevice device = renderer.GetDevice ();
 
-    if ( !AllocateCommandBuffers ( device ) || !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !AllocateCommandBuffers ( device ) ) [[unlikely]]
         return false;
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
@@ -565,7 +565,7 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
-    if ( !CreateRenderTargets () ) [[unlikely]]
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer, resourceHeap ) || !CreateRenderTargets () ) [[unlikely]]
         return false;
 
     _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
@@ -1226,9 +1226,9 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
         else
         {
             _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
-            pbr::PresentPass::SwapchainInfo info = _presentRenderPass.GetSwapchainInfo ( renderer );
+            pbr::SwapchainInfo const info = _presentRenderPass.GetSwapchainInfo ( renderer );
             _presentRenderPass.Pause ( commandBuffer );
-            _workspace.DrawGizmo ( commandBuffer, info._image, info._view );
+            _workspace.DrawGizmo ( commandBuffer, info );
             _presentRenderPass.Continue ( commandBuffer, info._image, info._view );
         }
 
@@ -1421,7 +1421,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
     _uiPass.OnSwapchainDestroyed ();
     _uiPass.OnDestroyDevice ( renderer );
 
-    _presentRenderPass.OnDestroyDevice ( device );
+    _presentRenderPass.OnDestroyDevice ( device, resourceHeap );
     _exposurePass.Destroy ( renderer, resourceHeap );
     _toneMapper.Destroy ( device );
     resourceHeap.Destroy ( renderer );
@@ -1439,8 +1439,9 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     AV_TRACE ( "Swapchain created" )
     messageQueue.DequeueEnd ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer, resourceHeap ) ) [[unlikely]]
     {
          AV_ASSERT ( false )
         return;
@@ -1459,8 +1460,6 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
         .minDepth = 0.0F,
         .maxDepth = 1.0F
     };
-
-    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
     if ( _albedoRenderTargetIdx ) [[likely]]
         resourceHeap.UnregisterResource ( *std::exchange ( _albedoRenderTargetIdx, std::nullopt ) );

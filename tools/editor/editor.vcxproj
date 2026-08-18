@@ -1172,6 +1172,9 @@
     <ClCompile Include="src\sdf_cone.cpp" />
     <ClCompile Include="src\sdf_line_segment.cpp" />
     <ClCompile Include="src\sdf_line_segment_with_flip.cpp" />
+    <ClCompile Include="src\sdf_ring.cpp" />
+    <ClCompile Include="src\sdf_ring_base.cpp" />
+    <ClCompile Include="src\sdf_ring_billboard.cpp" />
     <ClCompile Include="src\sdf_sphere.cpp" />
     <ClCompile Include="src\selection.cpp" />
     <ClCompile Include="src\select_tool.cpp" />
@@ -1374,6 +1377,9 @@
     <ClInclude Include="include\sdf_line_segment_with_flip.hpp" />
     <ClInclude Include="include\sdf_palette.hpp" />
     <ClInclude Include="include\sdf_pixel.hpp" />
+    <ClInclude Include="include\sdf_ring.hpp" />
+    <ClInclude Include="include\sdf_ring_base.hpp" />
+    <ClInclude Include="include\sdf_ring_billboard.hpp" />
     <ClInclude Include="include\sdf_shape.hpp" />
     <ClInclude Include="include\sdf_size.hpp" />
     <ClInclude Include="include\sdf_sphere.hpp" />

@@ -14,7 +14,7 @@ enum class eSDFShape : uint32_t
     Cone = SHAPE_CONE,
     Box = SHAPE_BOX,
     LineSegment = SHAPE_LINE_SEGMENT,
-    CappedTorus = SHAPE_CAPPED_TORUS
+    Ring = SHAPE_RING
 };
 
 AV_DX_ALIGNMENT_BEGIN

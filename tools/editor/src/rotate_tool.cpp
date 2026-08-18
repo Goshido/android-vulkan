@@ -9,7 +9,12 @@ namespace editor {
 
 void RotateTool::Activate () noexcept
 {
-    // FUCK
+    GXQuat const rotation = GXQuat::IDENTITY;
+    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
+    _x.Show ( location, rotation );
+    _y.Show ( location, rotation );
+    _z.Show ( location, rotation );
+    _ring.Show ( location, rotation );
     android_vulkan::LogInfo ( ">>> Rotate tool activated" );
 }
 
@@ -42,6 +47,16 @@ void RotateTool::End () noexcept
 void RotateTool::Cancel () noexcept
 {
     // FUCK
+}
+
+void RotateTool::Update () noexcept
+{
+    GXQuat const rotation = GXQuat::IDENTITY;
+    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
+    _x.OnParentUpdated ( location, rotation );
+    _y.OnParentUpdated ( location, rotation );
+    _z.OnParentUpdated ( location, rotation );
+    _ring.OnParentUpdated ( location, rotation );
 }
 
 } // namespace editor

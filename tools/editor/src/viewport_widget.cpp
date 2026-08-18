@@ -217,6 +217,9 @@ ViewportWidget::ViewportWidget () noexcept:
 
     _div.AppendChildElement ( _selectionBody );
     _selectionBody.Hide ();
+
+    _rotateTool.Activate ();
+    _moveTool.Activate ();
 }
 
 void ViewportWidget::Init () noexcept

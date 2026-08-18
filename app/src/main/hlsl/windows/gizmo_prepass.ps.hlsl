@@ -73,11 +73,11 @@ float32_t SDFBox ( in float32_t3 p, in float32_t3 size, in float32_t r )
 }
 
 // Idea is taken from https://iquilezles.org/articles/distfunctions/
-// [2026/03/16] 'sinCosAngle' accepts angles in range from 0 to pi. 0 - torus is single point. pi - complete torus.
-// Torus is aligned to XY plane.
-// Torus center is located in origin.
+// [2026/03/16] 'sinCosAngle' accepts angles in range from 0 to pi. 0 - ring is single point. pi - complete ring.
+// Ring is aligned to XY plane.
+// Ring center is located in origin.
 // The grow point is located on Y axis, positive direction: (0, radius, 0)
-float32_t SDFCappedTorus ( in float32_t3 p, in float32_t2 sinCosAngle, in float32_t radius, in float32_t thickness )
+float32_t SDFRing ( in float32_t3 p, in float32_t2 sinCosAngle, in float32_t radius, in float32_t thickness )
 {
     p.x = abs ( p.x );
     float32_t2 const a = (float32_t2)radius * float32_t2 ( radius, -2.0F );
@@ -95,7 +95,7 @@ float32_t SDF ( in float32_t3 p, in uint32_t shapeType, in float32_t4 sdfParams 
         case SHAPE_CONE: return SDFCone ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
         case SHAPE_SPHERE: return SDFSphere ( p, sdfParams.x );
         case SHAPE_BOX: return SDFBox ( p, sdfParams.xyz, sdfParams.w );
-        case SHAPE_CAPPED_TORUS: return SDFCappedTorus ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
+        case SHAPE_RING: return SDFRing ( p, sdfParams.xy, sdfParams.z, sdfParams.w );
 
         default:
             // IMPOSSIBLE

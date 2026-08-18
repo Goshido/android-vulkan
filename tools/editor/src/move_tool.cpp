@@ -26,14 +26,12 @@ MoveTool::MoveTool () noexcept
         _yPlane.GetRotationWorld (),
         _yPlane.GetLocationWorld ()
     );
-
-    Activate ();
 }
 
 void MoveTool::Activate () noexcept
 {
     GXQuat const rotation = GXQuat::IDENTITY;
-    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
+    GXVec3 const location ( -6.0F, 0.0F, 12.0F );
     _origin.Show ( location, rotation );
     _xLine.Show ( location, rotation );
     _xPlane.Show ( location, rotation );
@@ -88,8 +86,7 @@ void MoveTool::Update () noexcept
 {
     // FUCK
     GXQuat const rotation = GXQuat::IDENTITY;
-    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
-
+    GXVec3 const location ( -6.0F, 0.0F, 12.0F );
     _origin.OnParentUpdated ( location, rotation );
     _xLine.OnParentUpdated ( location, rotation );
     _xPlane.OnParentUpdated ( location, rotation );

@@ -411,13 +411,13 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         // FUCK - correct DPI
         _viewport->Update ( deltaTime, 1.0F );
 
-        GXQuat const& orientation = _viewport->GetOrientation ();
+        GXQuat const &orientation = _viewport->GetOrientation ();
 
         GXVec3 const &location = _viewport->GetLocation ();
         GXMat4 alpha {};
         alpha.FromFast ( orientation, location );
 
-        GXMat4 beta{};
+        GXMat4 beta {};
         beta.Inverse ( alpha );
         GXMat4 const &projection = _viewport->GetProjection ();
         frame._viewProj.Multiply ( beta, projection );

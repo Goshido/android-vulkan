@@ -263,6 +263,41 @@ class uint32_t2 final
 
 //----------------------------------------------------------------------------------------------------------------------
 
+class int32_t3 final
+{
+    public:
+        int32_t                 x;
+        int32_t                 y;
+        int32_t                 z;
+
+    public:
+        [[maybe_unused]] int32_t3 () = default;
+
+        [[maybe_unused]] int32_t3 ( int32_t3 const& other ) noexcept;
+        [[maybe_unused]] int32_t3 &operator = ( int32_t3 const &other ) noexcept;
+
+        [[maybe_unused]] int32_t3 ( int32_t3 &&other ) noexcept;
+        [[maybe_unused]] int32_t3 &operator = ( int32_t3 &&other ) noexcept;
+
+        [[maybe_unused]] int32_t3 ( int32_t v ) noexcept;
+        [[maybe_unused]] int32_t3 ( int32_t xVal, int32_t yVal, int32_t zVal ) noexcept;
+        [[maybe_unused]] int32_t3 ( uint32_t3 const &v ) noexcept;
+
+        [[maybe_unused]] ~int32_t3 () = default;
+
+        [[maybe_unused]] void operator += ( int32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator -= ( int32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator *= ( int32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator /= ( int32_t3 const &v ) noexcept;
+};
+
+[[maybe_unused, nodiscard]] int32_t3 operator + ( int32_t3 const &a, int32_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] int32_t3 operator - ( int32_t3 const &a, int32_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] int32_t3 operator * ( int32_t3 const &a, int32_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] int32_t3 operator / ( int32_t3 const &a, int32_t3 const &b ) noexcept;
+
+//----------------------------------------------------------------------------------------------------------------------
+
 class uint32_t3 final
 {
     public:
@@ -775,7 +810,8 @@ class float32_t3 final
 
         [[maybe_unused]] float32_t3 ( float32_t v ) noexcept;
         [[maybe_unused]] float32_t3 ( float32_t xVal, float32_t yVal, float32_t zVal ) noexcept;
-        [[maybe_unused]] float32_t3 ( uint32_t3 v ) noexcept;
+        [[maybe_unused]] float32_t3 ( int32_t3 const &v ) noexcept;
+        [[maybe_unused]] float32_t3 ( uint32_t3 const &v ) noexcept;
 
         [[maybe_unused]] ~float32_t3 () = default;
 

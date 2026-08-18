@@ -62,14 +62,12 @@ void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent )
             GXVec3 &p = toWorld._w;
             p.Sum ( _parentLocation, pixelSize, alpha );
 
-            GXQuat sdfOrientation {};
+            GXQuat &sdfOrientation = vertex._sdfOrientation;
             sdfOrientation.InverseFast ( _rotationWorld );
 
             toWorld._x.Multiply ( toWorld._x, s._data[ 0U ] );
             toWorld._y.Multiply ( toWorld._y, s._data[ 1U ] );
             toWorld._z.Multiply ( toWorld._z, s._data[ 2U ] );
-
-            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
 
             GXVec3 &sdfOffset = vertex._sdfOffset;
             sdfOrientation.TransformFast ( sdfOffset, p );

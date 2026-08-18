@@ -1425,7 +1425,6 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
 
     for ( GizmoInfo* gizmo : _gizmoQueue )
     {
-        // FUCK - frustum culling
         gizmo->_node->Commit ( cameraLocation, cameraForward, viWorld );
         vertexStream.Push ( &gizmo->_vertex );
         pixelStream.Push ( &gizmo->_pixel );

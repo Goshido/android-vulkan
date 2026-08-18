@@ -47,7 +47,7 @@ void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotation
             GXVec3 &p = toWorld._w;
             p.Sum ( _parentLocation, pixelSize, alpha );
 
-            GXQuat sdfOrientation {};
+            GXQuat &sdfOrientation = vertex._sdfOrientation;
             sdfOrientation.InverseFast ( _rotationWorld );
 
             reinterpret_cast<GXMat3*> ( &toWorld )->FromFast ( _rotationWorld );
@@ -64,8 +64,6 @@ void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotation
             GXVec4 &sdfParams = pixel._sdfParams;
             sdfParams._data[ 0U ] = s._data[ 0U ] + negativeR + negativeR;
             sdfParams._data[ 1U ] = negativeR;
-
-            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
 
             GXVec3 &cameraLocationSDF = pixel._cameraLocationSDF;
             sdfOrientation.TransformFast ( cameraLocationSDF, cameraLocation );

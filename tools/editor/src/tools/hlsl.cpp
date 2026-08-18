@@ -546,6 +546,115 @@ void uint32_t2::InitSwizzle () noexcept
 
 //----------------------------------------------------------------------------------------------------------------------
 
+int32_t3::int32_t3 ( int32_t3 const &other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    // NOTHING
+}
+
+int32_t3 &int32_t3::operator = ( int32_t3 const &other ) noexcept
+{
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    return *this;
+}
+
+int32_t3::int32_t3 ( int32_t3 &&other ) noexcept:
+    x ( other.x ),
+    y ( other.y ),
+    z ( other.z )
+{
+    // NOTHING
+}
+
+int32_t3 &int32_t3::operator = ( int32_t3 &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    x = other.x;
+    y = other.y;
+    z = other.z;
+    return *this;
+}
+
+int32_t3::int32_t3 ( int32_t v ) noexcept:
+    x ( v ),
+    y ( v ),
+    z ( v )
+{
+    // NOTHING
+}
+
+int32_t3::int32_t3 ( int32_t xVal, int32_t yVal, int32_t zVal ) noexcept:
+    x ( xVal ),
+    y ( yVal ),
+    z ( zVal )
+{
+    // NOTHING
+}
+
+int32_t3::int32_t3 ( uint32_t3 const &v ) noexcept:
+    x ( static_cast<int32_t> ( v.x ) ),
+    y ( static_cast<int32_t> ( v.y ) ),
+    z ( static_cast<int32_t> ( v.z ) )
+{
+    // NOTHING
+}
+
+void int32_t3::operator += ( int32_t3 const &v ) noexcept
+{
+    x += v.x;
+    y += v.y;
+    z += v.z;
+}
+
+void int32_t3::operator -= ( int32_t3 const &v ) noexcept
+{
+    x -= v.x;
+    y -= v.y;
+    z -= v.z;
+}
+
+void int32_t3::operator *= ( int32_t3 const &v ) noexcept
+{
+    x *= v.x;
+    y *= v.y;
+    z *= v.z;
+}
+
+void int32_t3::operator /= ( int32_t3 const &v ) noexcept
+{
+    x /= v.x;
+    y /= v.y;
+    z /= v.z;
+}
+
+int32_t3 operator + ( int32_t3 const &a, int32_t3 const &b ) noexcept
+{
+    return { a.x + b.x, a.y + b.y, a.z + b.z };
+}
+
+int32_t3 operator - ( int32_t3 const &a, int32_t3 const &b ) noexcept
+{
+    return { a.x - b.x, a.y - b.y, a.z - b.z };
+}
+
+int32_t3 operator * ( int32_t3 const &a, int32_t3 const &b ) noexcept
+{
+    return { a.x * b.x, a.y * b.y, a.z * b.z };
+}
+
+int32_t3 operator / ( int32_t3 const &a, int32_t3 const &b ) noexcept
+{
+    return { a.x / b.x, a.y / b.y, a.z / b.z };
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 uint32_t3::uint32_t3 () noexcept
 {
     InitSwizzle ();
@@ -2047,7 +2156,15 @@ float32_t3::float32_t3 ( float32_t xVal, float32_t yVal, float32_t zVal ) noexce
     InitSwizzle ();
 }
 
-float32_t3::float32_t3 ( uint32_t3 v ) noexcept:
+float32_t3::float32_t3 ( int32_t3 const &v ) noexcept:
+    x ( static_cast<float32_t> ( v.x ) ),
+    y ( static_cast<float32_t> ( v.y ) ),
+    z ( static_cast<float32_t> ( v.z ) )
+{
+    InitSwizzle ();
+}
+
+float32_t3::float32_t3 ( uint32_t3 const &v ) noexcept:
     x ( static_cast<float32_t> ( v.x ) ),
     y ( static_cast<float32_t> ( v.y ) ),
     z ( static_cast<float32_t> ( v.z ) )

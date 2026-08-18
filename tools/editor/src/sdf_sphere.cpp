@@ -42,7 +42,7 @@ void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParen
             toWorld._z = GXVec3 ( 0.0F, 0.0F, r );
             toWorld._w = _locationWorld;
 
-            vertex._sdfOrientation = GXQuat::IDENTITY.ToTBN64 ();
+            vertex._sdfOrientation = GXQuat::IDENTITY;
 
             GXVec3 &sdfOffset = vertex._sdfOffset;
             sdfOffset = _locationWorld;

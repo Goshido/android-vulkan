@@ -79,7 +79,7 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
             alpha.Subtract ( p, _parentLocation );
             p.Sum ( _parentLocation, pixelSize, alpha );
 
-            GXQuat sdfOrientation {};
+            GXQuat &sdfOrientation = vertex._sdfOrientation;
             sdfOrientation.InverseFast ( _rotationWorld );
 
             GXVec3 &sdfOffset = vertex._sdfOffset;
@@ -94,8 +94,6 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
             GXVec4 &sdfParams = pixel._sdfParams;
             sdfParams._data[ 0U ] = s._data[ 0U ] + negativeR + negativeR;
             sdfParams._data[ 1U ] = negativeR;
-
-            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
 
             GXVec3 &cameraLocationSDF = pixel._cameraLocationSDF;
             sdfOrientation.TransformFast ( cameraLocationSDF, cameraLocation );

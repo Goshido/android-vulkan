@@ -10,7 +10,7 @@ struct InputData
     uint32_t                _instanceID:    SV_InstanceID;
 };
 
-static uint16_t const       g_indices[ 36U ] =
+static uint32_t const       g_indices[ 36U ] =
 {
     3U, 1U, 7U, 7U, 1U, 5U,
     6U, 7U, 4U, 4U, 7U, 5U,
@@ -54,10 +54,8 @@ static float32_t3 const     g_expandDir[ 8U ] =
 // value but SHAPE_SPHERE, SHAPE_BOX and CAPPED_TORUS have even value.
 float32_t4 ComputeVertex ( in InputData inputData )
 {
-    SDFShape const sdfShape = vk::RawBufferLoad<SDFShape> (
-        g_pushConstants._shapeStream + inputData._instanceID * sizeof ( SDFShape ),
-        4U
-    );
+    uint64_t const offset = (uint64_t)( inputData._instanceID * sizeof ( SDFShape ) );
+    SDFShape const sdfShape = SDFShapes ( (uint64_t)g_pushConstants._shapeStream + offset ).Get ();
 
     float32_t3 const v = g_cube[ g_indices[ inputData._vertexID ] ];
     float32_t2 const cases[ 2U ] = { float32_t2 ( 1.0F, 0.0F ), float32_t2 ( 0.5F, 0.5F ) };
@@ -70,11 +68,8 @@ float32_t4 ComputeVertex ( in InputData inputData )
 Attributes VS ( in InputData inputData )
 {
     // See <repo>/docs/gizmo-rendering.md#shell-extend
-
-    SDFVertex const sdfVertex = vk::RawBufferLoad<SDFVertex> (
-        g_pushConstants._vertexStream + inputData._instanceID * sizeof ( SDFVertex ),
-        8U
-    );
+    uint64_t const offset = (uint64_t)( inputData._instanceID * sizeof ( SDFVertex ) );
+    SDFVertex const sdfVertex = SDFVertices ( (uint64_t)g_pushConstants._vertexStream + offset ).Get ();
 
     float32_t3 const v = mul ( sdfVertex._toWorld, ComputeVertex ( inputData ) ).xyz;
     float32_t const omega = SQRT_3 * dot ( v - g_pushConstants._cameraLocationWorld, g_pushConstants._viWorld );

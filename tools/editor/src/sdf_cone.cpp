@@ -55,7 +55,7 @@ void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent 
             GXVec3 &p = toWorld._w;
             p.Sum ( _parentLocation, pixelSize, alpha );
 
-            GXQuat sdfOrientation {};
+            GXQuat &sdfOrientation = vertex._sdfOrientation;
             sdfOrientation.InverseFast ( _rotationWorld );
 
             reinterpret_cast<GXMat3*> ( &toWorld )->FromFast ( _rotationWorld );
@@ -71,8 +71,6 @@ void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent 
 
             sdfParams._data[ 2U ] = 1.0F / q.DotProduct ( q );
             sdfParams._data[ 3U ] = nR;
-
-            vertex._sdfOrientation = sdfOrientation.ToTBN64 ();
 
             GXVec3 &cameraLocationSDF = pixel._cameraLocationSDF;
             sdfOrientation.TransformFast ( cameraLocationSDF, cameraLocation );

@@ -113,10 +113,8 @@ float32_t LinearStep ( in float32_t step, in float32_t x )
 
 Pixel ComputeColor ( in Attributes inputData, in SDFShape sdfShape )
 {
-    SDFPixel const sdfPixel = vk::RawBufferLoad<SDFPixel> (
-        g_pushConstants._pixelStream + inputData._instanceID * sizeof ( SDFPixel ),
-        8U
-    );
+    uint64_t const offset = (uint64_t)( inputData._instanceID * sizeof ( SDFPixel ) );
+    SDFPixel const sdfPixel = SDFPixels ( (uint64_t)g_pushConstants._pixelStream + offset ).Get ();
 
     float32_t3 const ray = normalize ( inputData._canvas - sdfPixel._cameraLocationSDF );
 
@@ -206,10 +204,8 @@ void AddSample ( in uint32_t2 pix, in float32_t alpha, in float32_t depth, in ui
 
 OutputData PS ( in Attributes inputData )
 {
-    SDFShape const sdfShape = vk::RawBufferLoad<SDFShape> (
-        g_pushConstants._shapeStream + inputData._instanceID * sizeof ( SDFShape ),
-        4U
-    );
+    uint64_t const offset = (uint64_t)( inputData._instanceID * sizeof ( SDFShape ) );
+    SDFShape const sdfShape = SDFShapes ( (uint64_t)g_pushConstants._shapeStream + offset ).Get ();
 
     Pixel pixel = ComputeColor ( inputData, sdfShape );
     bool2 const check = pixel._color.ww > float32_t2 ( MAX_ALPHA_THRESHOLD, MIN_ALPHA_THRESHOLD );

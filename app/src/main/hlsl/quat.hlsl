@@ -67,5 +67,40 @@ QuatH ToQuat ( in float16_t3x3 m )
     return QuatH ( b * omega, phi );
 }
 
+float32_t3x3 ToMatrix ( in QuatF q )
+{
+    float32_t3 const abc2 = q.yzw + q.yzw;
+
+    // Note 'T' is just notation for variable separation. Nothing more.
+    float32_t4 const rXrTabc2 = q.x * float32_t4 ( q.x, abc2 );
+    float32_t4 const caaaXcaTbc2 = float32_t4 ( q.wyyy ) * float32_t4 ( q.wy, abc2.yz );
+    float32_t2 const bXbTc2 = q.z * float32_t2 ( q.z, abc2.z );
+
+    float32_t4 const left0 = float32_t4 ( rXrTabc2.w, caaaXcaTbc2.w, caaaXcaTbc2.z, rXrTabc2.y );
+    float32_t4 const right0 = float32_t4 ( caaaXcaTbc2.z, -rXrTabc2.z, -rXrTabc2.w, bXbTc2.y );
+
+    float32_t2 const tmp1 = float32_t2 ( rXrTabc2.z, bXbTc2.y ) + float32_t2 ( caaaXcaTbc2.w, -rXrTabc2.y );
+    float32_t4 const tmp0 = left0 + right0;
+
+    // Note quaternion unpacks to matrix with column-major like behavior.
+    return float32_t3x3
+    (
+        // First row.
+        rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x,
+        tmp0.x,
+        tmp0.y,
+
+        // Second row.
+        tmp0.z,
+        rXrTabc2.x - caaaXcaTbc2.y + bXbTc2.x - caaaXcaTbc2.x,
+        tmp0.w,
+
+        // Third row.
+        tmp1.x,
+        tmp1.y,
+        rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x
+    );
+}
+
 
 #endif // QUAT_HLSL

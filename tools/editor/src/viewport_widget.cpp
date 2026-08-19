@@ -220,6 +220,7 @@ ViewportWidget::ViewportWidget () noexcept:
 
     _rotateTool.Activate ();
     _moveTool.Activate ();
+    _scaleTool.Activate ();
 }
 
 void ViewportWidget::Init () noexcept

@@ -42,7 +42,6 @@ void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent )
             GXVec3 const &viWorld
         ) noexcept {
             // See <repo>/docs/gizmo-rendering.md#pixel-coverage
-            // FUCK - validate with Unity reference
             shape._palette = static_cast<uint32_t> ( _palette );
 
             GXVec3 alpha {};

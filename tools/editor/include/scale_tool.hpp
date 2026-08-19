@@ -2,6 +2,11 @@
 #define EDITOR_SCALE_TOOL_HPP
 
 
+#include "sdf_box.hpp"
+#include "sdf_box_with_flip.hpp"
+#include "sdf_cone.hpp"
+#include "sdf_line_segment.hpp"
+#include "sdf_line_segment_with_flip.hpp"
 #include "tool.hpp"
 
 
@@ -9,8 +14,209 @@ namespace editor {
 
 class ScaleTool final : public Tool
 {
+    private:
+        SDFBox                      _origin
+        {
+            GXVec3 ( 0.0F, 0.0F, 0.0F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 4.5e-1F, 4.5e-1F, 4.5e-1F ),
+            eSDFPalette::White,
+            1.4e-1F
+        };
+
+        SDFLineSegment              _xLine
+        {
+            GXVec3 ( 4.8e-1F, 0.0F, 0.0F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 5.6F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Red
+        };
+
+        SDFBoxWithFlip              _xPlane
+        {
+            GXVec3 ( 0.0F, 1.075F, 1.075F ),
+            GXQuat ( 0.0F, 1.0F, 0.0F, 0.0F ),
+            GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
+            eSDFPalette::RedGhost,
+            0.0F,
+            2.15F
+        };
+
+        SDFBox                      _xCube
+        {
+            GXVec3 ( 6.5F, 0.0F, 0.0F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 4.5e-1F, 4.5e-1F, 4.5e-1F ),
+            eSDFPalette::Red,
+            1.4e-1F
+        };
+
+        SDFLineSegment              _yLine
+        {
+            GXVec3 ( 0.0F, 4.8e-1F, 0.0F ),
+            GXQuat ( 7.071068e-1F, 0.0F, 0.0F, 7.071068e-1F ),
+            GXVec3 ( 5.6F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Green
+        };
+
+        SDFBoxWithFlip              _yPlane
+        {
+            GXVec3 ( 1.075F, 0.0F, 1.075F ),
+            GXQuat ( 0.5F, -0.5F, -0.5F, 0.5F ),
+            GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
+            eSDFPalette::GreenGhost,
+            0.0F,
+            2.15F
+        };
+
+        SDFBox                      _yCube
+        {
+            GXVec3 ( 0.0F, 6.5F, 0.0F ),
+            GXQuat ( 7.071068e-1F, 0.0F, 0.0F, 7.071068e-1F ),
+            GXVec3 ( 4.5e-1F, 4.5e-1F, 4.5e-1F ),
+            eSDFPalette::Green,
+            1.4e-1F
+        };
+
+        SDFLineSegment              _zLine
+        {
+            GXVec3 ( 0.0F, 0.0F, 4.8e-1F ),
+            GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
+            GXVec3 ( 5.6F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Blue
+        };
+
+        SDFBoxWithFlip              _zPlane
+        {
+            GXVec3 ( 1.075F, 1.075F, 0.0F ),
+            GXQuat ( 0.5F, 0.5F, -0.5F, 0.5F ),
+            GXVec3 ( 1.0e-2F, 9.25e-1F, 9.25e-1F ),
+            eSDFPalette::BlueGhost,
+            0.0F,
+            2.15F
+        };
+
+        SDFBox                      _zCube
+        {
+            GXVec3 ( 0.0F, 0.0F, 6.5F ),
+            GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
+            GXVec3 ( 4.5e-1F, 4.5e-1F, 4.5e-1F ),
+            eSDFPalette::Blue,
+            1.4e-1F
+        };
+
+        SDFLineSegment              _scaleLine
+        {
+            GXVec3 ( -3.5F, 0.0F, 7.8F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 7.0F, 5.0e-2F, 5.0e-2F ),
+            eSDFPalette::Yellow
+        };
+
+        SDFCone                     _scaleDirectionA
+        {
+            GXVec3 ( 3.5F, 0.0F, 7.8F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 1.0F, 2.7e-1F, 2.7e-1F ),
+            eSDFPalette::Yellow,
+            0.0F
+        };
+
+        SDFCone                     _scaleDirectionB
+        {
+            GXVec3 ( -3.5F, 0.0F, 7.8F ),
+            GXQuat ( 0.0F, 0.0F, 1.0F, 0.0F ),
+            GXVec3 ( 1.0F, 2.7e-1F, 2.7e-1F ),
+            eSDFPalette::Yellow,
+            0.0F
+        };
+
+        SDFLineSegmentWithFlip      _xPlaneY
+        {
+            GXVec3 ( 0.0F, 1.5e-1F, 2.0F ),
+            GXQuat ( 0.5F, 0.5F, 0.5F, 0.5F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Red,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -2.17F,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _xPlaneZ
+        {
+            GXVec3 ( 0.0F, 2.0F, 1.5e-1F ),
+            GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Red,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -2.17F,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _yPlaneZ
+        {
+            GXVec3 ( 2.0F, 0.0F, 1.5e-1F ),
+            GXQuat ( 0.5F, -0.5F, -0.5F, -0.5F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Green,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -2.17F,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _yPlaneX
+        {
+            GXVec3 ( 1.5e-1F, 0.0F, 2.0F ),
+            GXQuat ( 7.071068e-1F, 7.071068e-1F, 0.0F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Green,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -2.17F,
+            _zPlane.GetRotationWorld (),
+            _zPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _zPlaneX
+        {
+            GXVec3 ( 1.5e-1F, 2.0F, 0.0F ),
+            GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Blue,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -2.17F,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -4.0F
+        };
+
+        SDFLineSegmentWithFlip      _zPlaneY
+        {
+            GXVec3 ( 2.0F, 1.5e-1F, 0.0F ),
+            GXQuat ( 0.0F, 7.071068e-1F, 7.071068e-1F, 0.0F ),
+            GXVec3 ( 1.87F, 2.0e-2F, 2.0e-2F ),
+            eSDFPalette::Blue,
+            _yPlane.GetRotationWorld (),
+            _yPlane.GetLocationWorld (),
+            -2.17F,
+            _xPlane.GetRotationWorld (),
+            _xPlane.GetLocationWorld (),
+            -4.0F
+        };
+
     public:
-        ScaleTool () = default;
+        explicit ScaleTool () noexcept;
 
         ScaleTool ( ScaleTool const & ) = delete;
         ScaleTool &operator = ( ScaleTool const & ) = delete;
@@ -28,6 +234,8 @@ class ScaleTool final : public Tool
         void Move () noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
+
+        void Update () noexcept;
 };
 
 } // namespace editor

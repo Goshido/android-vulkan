@@ -1154,6 +1154,7 @@
     <ClCompile Include="src\camera_component.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
+    <ClCompile Include="src\cylinder_collider.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\font_storage.cpp" />
@@ -1353,6 +1354,7 @@
     <ClInclude Include="include\component.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
     <ClInclude Include="include\cursor.hpp" />
+    <ClInclude Include="include\cylinder_collider.hpp" />
     <ClInclude Include="include\div_ui_element.hpp" />
     <ClInclude Include="include\editor.hpp" />
     <ClInclude Include="include\font_storage.hpp" />

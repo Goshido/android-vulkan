@@ -103,7 +103,8 @@ class ViewportWidget final : public Widget
         [[nodiscard]] GXQuat const &GetOrientation () const noexcept;
         [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
 
-        [[nodiscard]] static float GetFieldOfView () noexcept;
+        // See <repo>/docs/gizmo-rendering.md#pixel-coverage
+        [[nodiscard]] GXVec3 GetVI ( float invHeight ) const noexcept;
 
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;

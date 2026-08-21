@@ -1418,10 +1418,8 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
     _gizmoPrepassPushConstants._toCVV = viewProjection;
     _gizmoPrepassPushConstants._cameraLocationWorld = cameraLocation;
 
-    // See <repo>/docs/gizmo-rendering.md#pixel-coverage
-    float const t = std::tan ( 0.5F * ViewportWidget::GetFieldOfView () );
     GXVec3 &viWorld = _gizmoPrepassPushConstants._viWorld;
-    viWorld.Multiply ( cameraForward, ( t + t ) * _outlineBlurXPushConstants._invResolution._data[ 1U ] );
+    viWorld = _viewport->GetVI ( _outlineBlurXPushConstants._invResolution._data[ 1U ] );
 
     for ( GizmoInfo* gizmo : _gizmoQueue )
     {

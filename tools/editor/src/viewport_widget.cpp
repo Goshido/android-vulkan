@@ -330,9 +330,15 @@ GXVec3 const &ViewportWidget::GetLocation () const noexcept
     return _location;
 }
 
-float ViewportWidget::GetFieldOfView () noexcept
+GXVec3 ViewportWidget::GetVI ( float invHeight ) const noexcept
 {
-    return FOV_Y;
+    float const t = std::tan ( 0.5F * FOV_Y );
+    GXVec3 forward {};
+    _orientation.GetForward ( forward );
+
+    GXVec3 result {};
+    result.Multiply ( forward, ( t + t ) * invHeight );
+    return result;
 }
 
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept

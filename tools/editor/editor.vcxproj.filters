@@ -477,7 +477,13 @@
     <ClCompile Include="src\sdf_ring_base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\cylinder_collider.cpp">
+    <ClCompile Include="src\gizmo_cylinder_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_box_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_sphere_collider.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1061,7 +1067,13 @@
     <ClInclude Include="include\sdf_ring_base.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\cylinder_collider.hpp">
+    <ClInclude Include="include\gizmo_cylinder_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_box_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_sphere_collider.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

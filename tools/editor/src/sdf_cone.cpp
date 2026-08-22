@@ -28,7 +28,7 @@ void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent 
             SDFPixel &pixel,
             SDFShape &shape,
             GXVec3 const &cameraLocation,
-            GXVec3 const &/*cameraForward*/,
+            GXMat3 const &/*cameraBasis*/,
             GXVec3 const &viWorld
         ) noexcept {
             // See <repo>/docs/gizmo-rendering.md#pixel-coverage

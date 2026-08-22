@@ -431,7 +431,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
             ComputeTransformGBufferOnly ( frustum );
 
         ComputeTransformOutline ( frustum );
-        ComputeTransformGizmo ( frame._viewProj, location, *reinterpret_cast<GXVec3 const*> ( alpha._data[ 2U ] ) );
+        ComputeTransformGizmo ( frame._viewProj, alpha );
     }
 
     bool const noOpaque = _opaqueVisible.empty ();
@@ -1401,10 +1401,7 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
     }
 }
 
-void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
-    GXVec3 const &cameraLocation,
-    GXVec3 const &cameraForward
-) noexcept
+void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 const &cameraLocal ) noexcept
 {
     if ( _gizmoQueue.empty () )
         return;
@@ -1416,14 +1413,18 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection,
     _gizmoVisible = 0U;
 
     _gizmoPrepassPushConstants._toCVV = viewProjection;
+
+    auto const &cameraLocation = *reinterpret_cast<GXVec3 const*> ( cameraLocal._data[ 3U ] );
     _gizmoPrepassPushConstants._cameraLocationWorld = cameraLocation;
 
     GXVec3 &viWorld = _gizmoPrepassPushConstants._viWorld;
     viWorld = _viewport->GetVI ( _outlineBlurXPushConstants._invResolution._data[ 1U ] );
 
+    GXMat3 const cameraBasis ( cameraLocal );
+
     for ( GizmoInfo* gizmo : _gizmoQueue )
     {
-        gizmo->_node->Commit ( cameraLocation, cameraForward, viWorld );
+        gizmo->_node->Commit ( cameraLocation, cameraBasis, viWorld );
         vertexStream.Push ( &gizmo->_vertex );
         pixelStream.Push ( &gizmo->_pixel );
         shapeStream.Push ( &gizmo->_shape );

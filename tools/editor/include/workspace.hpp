@@ -724,11 +724,7 @@ class Workspace final
         void ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept;
         void ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept;
         void ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept;
-
-        void ComputeTransformGizmo ( GXMat4 const &viewProjection,
-            GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward
-        ) noexcept;
+        void ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 const &cameraLocal ) noexcept;
 
         void FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept;
         void FillGBufferWithID ( VkCommandBuffer commandBuffer ) noexcept;

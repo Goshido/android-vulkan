@@ -1160,6 +1160,7 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\font_storage.cpp" />
     <ClCompile Include="src\gizmo_node.cpp" />
+    <ClCompile Include="src\gizmo_ring_collider.cpp" />
     <ClCompile Include="src\gizmo_sphere_collider.cpp" />
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\hotkey.cpp" />
@@ -1168,6 +1169,7 @@
     <ClCompile Include="src\outline_mesh_node.cpp" />
     <ClCompile Include="src\program_info.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
+    <ClCompile Include="src\ring_math.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
     <ClCompile Include="src\sdf_box.cpp" />
@@ -1363,6 +1365,7 @@
     <ClInclude Include="include\font_storage.hpp" />
     <ClInclude Include="include\gizmo_info.hpp" />
     <ClInclude Include="include\gizmo_node.hpp" />
+    <ClInclude Include="include\gizmo_ring_collider.hpp" />
     <ClInclude Include="include\gizmo_sphere_collider.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
     <ClInclude Include="include\history.hpp" />
@@ -1374,6 +1377,7 @@
     <ClInclude Include="include\program_info.hpp" />
     <ClInclude Include="include\program_ref.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
+    <ClInclude Include="include\ring_math.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
     <ClInclude Include="include\sdf_box.hpp" />

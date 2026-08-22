@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <ring_math.hpp>
 #include <sdf_ring_billboard.hpp>
 #include <workspace.hpp>
 
@@ -22,12 +23,12 @@ void SDFRingBillboard::Show ( GXVec3 const &locationParent, GXQuat const &rotati
             SDFPixel &pixel,
             SDFShape &shape,
             GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward,
+            GXMat3 const &cameraBasis,
             GXVec3 const &viWorld
         ) noexcept {
-            Ring ( *reinterpret_cast<GXMat3*> ( &vertex._toWorld ),
+            RingMath::MakeBillboard ( *reinterpret_cast<GXMat3*> ( &vertex._toWorld ),
                 *reinterpret_cast<GXVec2*> ( &pixel._sdfParams ),
-                cameraForward
+                cameraBasis
             );
 
             ComputeParams ( vertex, pixel, shape, cameraLocation, viWorld );

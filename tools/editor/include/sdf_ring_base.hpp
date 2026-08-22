@@ -10,13 +10,6 @@ namespace editor {
 class SDFRingBase
 {
     protected:
-        static constexpr float BILLBOARD_BASIS_THRESHOLD = 1.0e-4F;
-
-        // Full ring - angle is pi
-        static constexpr float FULL_RING_SIN_ANGLE = 0.0F;
-        static constexpr float FULL_RING_COS_ANGLE = -1.0F;
-
-    protected:
         GizmoNode       _node {};
 
         GXQuat const    _rotation {};
@@ -59,8 +52,6 @@ class SDFRingBase
             GXVec3 const &cameraLocation,
             GXVec3 const &viWorld
         ) noexcept;
-
-        static void Ring ( GXMat3 &basis, GXVec2 &sinCosAngle, GXVec3 const &cameraForward ) noexcept;
 };
 
 } // namespace editor

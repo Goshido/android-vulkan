@@ -18,22 +18,11 @@ class SDFRing final : public SDFRingBase
         SDFRing ( SDFRing && ) = delete;
         SDFRing &operator = ( SDFRing && ) = delete;
 
-        explicit SDFRing ( GXVec3 &&location,
-            GXQuat &&rotation,
-            GXVec3 &&scale,
-            eSDFPalette palette
-        ) noexcept;
+        explicit SDFRing ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette ) noexcept;
 
         ~SDFRing () = default;
 
         void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
-
-    private:
-        static void Arc ( GXMat3 &basis,
-            GXVec2 &sinCosAngle,
-            GXVec3 const &cameraForward,
-            GXVec3 const &axis
-        ) noexcept;
 };
 
 } // namespace editor

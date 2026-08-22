@@ -46,32 +46,6 @@ void SDFRingBase::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotati
     _parentLocation = location;
 }
 
-void SDFRingBase::Ring ( GXMat3 &basis, GXVec2 &sinCosAngle, GXVec3 const &cameraForward ) noexcept
-{
-    GXVec3 v {};
-    v.CrossProduct ( GXVec3::UP, cameraForward );
-
-    GXVec3 &x = *reinterpret_cast<GXVec3*> ( basis._data[ 0U ] );
-    GXVec3 &y = *reinterpret_cast<GXVec3*> ( basis._data[ 1U ] );
-    GXVec3 &z = *reinterpret_cast<GXVec3*> ( basis._data[ 2U ] );
-
-    if ( v.DotProduct ( v ) > BILLBOARD_BASIS_THRESHOLD ) [[likely]]
-    {
-        v.Normalize ();
-        x = v;
-        y.CrossProduct ( cameraForward, x );
-    }
-    else
-    {
-        y.CrossProduct ( cameraForward, GXVec3::RIGHT );
-        y.Normalize ();
-        x.CrossProduct ( y, cameraForward );
-    }
-
-    z.CrossProduct ( x, y );
-    sinCosAngle = GXVec2 ( FULL_RING_SIN_ANGLE, FULL_RING_COS_ANGLE );
-}
-
 void SDFRingBase::ComputeParams ( SDFVertex &vertex,
     SDFPixel &pixel,
     SDFShape &shape,

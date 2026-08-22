@@ -23,7 +23,7 @@ class GizmoNode final : public WorkspaceNode
 
     public:
         using UpdateHandler = std::move_only_function<
-            void ( SDFVertex &, SDFPixel &, SDFShape &, GXVec3 const &, GXVec3 const &, GXVec3 const & )
+            void ( SDFVertex &, SDFPixel &, SDFShape &, GXVec3 const &, GXMat3 const &, GXVec3 const & )
         >;
 
     private:
@@ -43,7 +43,7 @@ class GizmoNode final : public WorkspaceNode
 
         ~GizmoNode () noexcept override;
 
-        void Commit ( GXVec3 const &viewerLocation, GXVec3 const &viewerForward, GXVec3 const &viWorld ) noexcept;
+        void Commit ( GXVec3 const &cameraLocation, GXMat3 const &cameraBasis, GXVec3 const &viWorld ) noexcept;
         void MarkUpdate () noexcept;
 
     private:

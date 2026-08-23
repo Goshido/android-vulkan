@@ -7,17 +7,10 @@
 namespace editor {
 
 SDFLineSegment::SDFLineSegment ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette ) noexcept:
-    _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
-    _scale ( std::move ( scale ) ),
-    _palette ( palette )
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
+    _rotation ( std::move ( rotation ) )
 {
     // NOTHING
-}
-
-void SDFLineSegment::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -74,11 +67,6 @@ void SDFLineSegment::Show ( GXVec3 const &locationParent, GXQuat const &rotation
     );
 
     OnParentUpdated ( locationParent, rotationParent );
-}
-
-void SDFLineSegment::Hide () noexcept
-{
-    _node = {};
 }
 
 void SDFLineSegment::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept

@@ -2,32 +2,21 @@
 #define EDITOR_SDF_BOX_WITH_FLIP_HPP
 
 
-#include <GXCommon/GXMath.hpp>
-#include "gizmo_node.hpp"
+#include "sdf.hpp"
 
 
 namespace editor {
 
-class SDFBoxWithFlip final
+class SDFBoxWithFlip final : public SDF
 {
     private:
-        GizmoNode       _node {};
-
         GXQuat const    _rotation {};
-        GXVec3 const    _location {};
         float const     _radius = 0.0F;
-        GXVec3 const    _scale {};
-
         float const     _flipOffset;
         GXQuat const*   _aFlipRotation = nullptr;
         GXVec3 const*   _aFlipLocation = nullptr;
         GXQuat const*   _bFlipRotation = nullptr;
         GXVec3 const*   _bFlipLocation = nullptr;
-
-        GXQuat          _rotationWorld = GXQuat::IDENTITY;
-        GXVec3          _locationWorld = GXVec3::ZERO;
-        eSDFPalette     _palette = eSDFPalette::White;
-        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFBoxWithFlip () = delete;
@@ -48,19 +37,14 @@ class SDFBoxWithFlip final
 
         ~SDFBoxWithFlip () = default;
 
-        [[nodiscard]] GXQuat const &GetRotationWorld () const noexcept;
-        [[nodiscard]] GXVec3 const &GetLocationWorld () const noexcept;
+        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
 
         void SetFlipSensors ( GXQuat const &aFlipRotation,
             GXVec3 const &aFlipLocation,
             GXQuat const &bFlipRotation,
             GXVec3 const &bFlipLocation
         ) noexcept;
-
-        void SetColor ( eSDFPalette palette ) noexcept;
-        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
-        void Hide () noexcept;
-        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
 };
 
 } // namespace editor

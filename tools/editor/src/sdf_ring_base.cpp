@@ -6,32 +6,10 @@
 namespace editor {
 
 SDFRingBase::SDFRingBase ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette ) noexcept:
-    _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
-    _scale ( std::move ( scale ) ),
-    _palette ( palette )
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
+    _rotation ( std::move ( rotation ) )
 {
     // NOTHING
-}
-
-GXQuat const &SDFRingBase::GetRotationWorld () const noexcept
-{
-    return _rotationWorld;
-}
-
-GXVec3 const &SDFRingBase::GetLocationWorld () const noexcept
-{
-    return _locationWorld;
-}
-
-void SDFRingBase::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
-}
-
-void SDFRingBase::Hide () noexcept
-{
-    _node = {};
 }
 
 void SDFRingBase::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept

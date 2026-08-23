@@ -229,6 +229,7 @@ class ScaleTool final : public Tool
         void Activate () noexcept override;
         void Deactivate () noexcept override;
 
+        void Hover () noexcept override;
         void Click () noexcept override;
         void Begin () noexcept override;
         void Move () noexcept override;

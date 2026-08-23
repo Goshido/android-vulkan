@@ -26,7 +26,7 @@ class SDFRingBillboard final : public SDFRingBase
 
         ~SDFRingBillboard () = default;
 
-        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
+        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
 };
 
 } // namespace editor

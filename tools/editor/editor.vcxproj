@@ -1172,6 +1172,7 @@
     <ClCompile Include="src\ring_math.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
     <ClCompile Include="src\scale_tool.cpp" />
+    <ClCompile Include="src\sdf.cpp" />
     <ClCompile Include="src\sdf_box.cpp" />
     <ClCompile Include="src\sdf_box_with_flip.cpp" />
     <ClCompile Include="src\sdf_cone.cpp" />
@@ -1380,6 +1381,7 @@
     <ClInclude Include="include\ring_math.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
     <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\sdf.hpp" />
     <ClInclude Include="include\sdf_box.hpp" />
     <ClInclude Include="include\sdf_box_with_flip.hpp" />
     <ClInclude Include="include\sdf_cone.hpp" />

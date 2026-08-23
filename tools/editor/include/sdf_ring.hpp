@@ -22,7 +22,7 @@ class SDFRing final : public SDFRingBase
 
         ~SDFRing () = default;
 
-        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
+        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
 };
 
 } // namespace editor

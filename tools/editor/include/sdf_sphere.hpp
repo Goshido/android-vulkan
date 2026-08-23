@@ -2,24 +2,13 @@
 #define EDITOR_SDF_SPHERE_HPP
 
 
-#include <GXCommon/GXMath.hpp>
-#include "gizmo_node.hpp"
+#include "sdf.hpp"
 
 
 namespace editor {
 
-class SDFSphere final
+class SDFSphere final : public SDF
 {
-    private:
-        GizmoNode       _node {};
-
-        GXVec3 const    _location {};
-        float const     _radius = 1.0e-1F;
-
-        GXVec3          _locationWorld = GXVec3::ZERO;
-        eSDFPalette     _palette = eSDFPalette::White;
-        GXVec3          _parentLocation = GXVec3::ZERO;
-
     public:
         SDFSphere () = delete;
 
@@ -29,14 +18,12 @@ class SDFSphere final
         SDFSphere ( SDFSphere && ) = delete;
         SDFSphere &operator = ( SDFSphere && ) = delete;
 
-        explicit SDFSphere ( GXVec3 &&location, float diameter, eSDFPalette palette ) noexcept;
+        explicit SDFSphere ( GXVec3 &&location, float radius, eSDFPalette palette ) noexcept;
 
         ~SDFSphere () = default;
 
-        void SetColor ( eSDFPalette palette ) noexcept;
-        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
-        void Hide () noexcept;
-        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
+        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
 };
 
 } // namespace editor

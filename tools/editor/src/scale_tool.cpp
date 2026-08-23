@@ -57,6 +57,11 @@ void ScaleTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Scale tool deactivated" );
 }
 
+void ScaleTool::Hover () noexcept
+{
+    // FUCK
+}
+
 void ScaleTool::Click () noexcept
 {
     // FUCK

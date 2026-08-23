@@ -13,41 +13,12 @@ SDFBoxWithFlip::SDFBoxWithFlip ( GXVec3 &&location,
     float radius,
     float flipOffset
 ) noexcept:
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
     _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
     _radius ( radius ),
-    _scale ( std::move ( scale ) ),
-    _flipOffset ( flipOffset ),
-    _palette ( palette )
+    _flipOffset ( flipOffset )
 {
     // NOTHING
-}
-
-GXQuat const &SDFBoxWithFlip::GetRotationWorld () const noexcept
-{
-    return _rotationWorld;
-}
-
-GXVec3 const &SDFBoxWithFlip::GetLocationWorld () const noexcept
-{
-    return _locationWorld;
-}
-
-void SDFBoxWithFlip::SetFlipSensors ( GXQuat const &aFlipRotation,
-    GXVec3 const &aFlipLocation,
-    GXQuat const &bFlipRotation,
-    GXVec3 const &bFlipLocation
-) noexcept
-{
-    _aFlipRotation = &aFlipRotation;
-    _aFlipLocation = &aFlipLocation;
-    _bFlipRotation = &bFlipRotation;
-    _bFlipLocation = &bFlipLocation;
-}
-
-void SDFBoxWithFlip::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -115,11 +86,6 @@ void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotation
     OnParentUpdated ( locationParent, rotationParent );
 }
 
-void SDFBoxWithFlip::Hide () noexcept
-{
-    _node = {};
-}
-
 void SDFBoxWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
     if ( !_node.IsConnected () ) [[unlikely]]
@@ -130,6 +96,18 @@ void SDFBoxWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rot
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
+}
+
+void SDFBoxWithFlip::SetFlipSensors ( GXQuat const &aFlipRotation,
+    GXVec3 const &aFlipLocation,
+    GXQuat const &bFlipRotation,
+    GXVec3 const &bFlipLocation
+) noexcept
+{
+    _aFlipRotation = &aFlipRotation;
+    _aFlipLocation = &aFlipLocation;
+    _bFlipRotation = &bFlipRotation;
+    _bFlipLocation = &bFlipLocation;
 }
 
 } // namespace editor

@@ -2,24 +2,15 @@
 #define EDITOR_SDF_RING_BASE_HPP
 
 
-#include "gizmo_node.hpp"
+#include "sdf.hpp"
 
 
 namespace editor {
 
-class SDFRingBase
+class SDFRingBase : public SDF
 {
     protected:
-        GizmoNode       _node {};
-
         GXQuat const    _rotation {};
-        GXVec3 const    _location {};
-        GXVec3 const    _scale {};
-
-        eSDFPalette     _palette = eSDFPalette::White;
-        GXQuat          _rotationWorld = GXQuat::IDENTITY;
-        GXVec3          _locationWorld = GXVec3::ZERO;
-        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFRingBase () = delete;
@@ -30,12 +21,7 @@ class SDFRingBase
         SDFRingBase ( SDFRingBase && ) = delete;
         SDFRingBase &operator = ( SDFRingBase && ) = delete;
 
-        [[nodiscard]] GXQuat const &GetRotationWorld () const noexcept;
-        [[nodiscard]] GXVec3 const &GetLocationWorld () const noexcept;
-
-        void SetColor ( eSDFPalette palette ) noexcept;
-        void Hide () noexcept;
-        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override final;
 
     protected:
         explicit SDFRingBase ( GXVec3 &&location,

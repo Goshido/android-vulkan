@@ -17,23 +17,16 @@ SDFLineSegmentWithFlip::SDFLineSegmentWithFlip ( GXVec3 &&location,
     GXVec3 const &yFlipLocation,
     float yFlipOffset
 ) noexcept:
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
     _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
-    _scale ( std::move ( scale ) ),
-    _xFlipOffset ( xFlipOffset ),
     _xFlipRotation ( xFlipRotation ),
     _xFlipLocation ( xFlipLocation ),
     _yFlipRotation ( yFlipRotation ),
     _yFlipLocation ( yFlipLocation ),
-    _yFlipOffset ( yFlipOffset ),
-    _palette ( palette )
+    _xFlipOffset ( xFlipOffset ),
+    _yFlipOffset ( yFlipOffset )
 {
     // NOTHING
-}
-
-void SDFLineSegmentWithFlip::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -104,11 +97,6 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
     );
 
     OnParentUpdated ( locationParent, rotationParent );
-}
-
-void SDFLineSegmentWithFlip::Hide () noexcept
-{
-    _node = {};
 }
 
 void SDFLineSegmentWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept

@@ -16,6 +16,7 @@ class Tool
         virtual void Activate () noexcept = 0;
         virtual void Deactivate () noexcept = 0;
 
+        virtual void Hover () noexcept = 0;
         virtual void Click () noexcept = 0;
         virtual void Begin () noexcept = 0;
         virtual void Move () noexcept = 0;

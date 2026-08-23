@@ -7,28 +7,11 @@
 namespace editor {
 
 SDFBox::SDFBox ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette, float radius ) noexcept:
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
     _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
-    _radius ( radius ),
-    _scale ( std::move ( scale ) ),
-    _palette ( palette )
+    _radius ( radius )
 {
     // NOTHING
-}
-
-GXQuat const &SDFBox::GetRotationWorld () const noexcept
-{
-    return _rotationWorld;
-}
-
-GXVec3 const &SDFBox::GetLocationWorld () const noexcept
-{
-    return _locationWorld;
-}
-
-void SDFBox::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -81,11 +64,6 @@ void SDFBox::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent )
     );
 
     OnParentUpdated ( locationParent, rotationParent );
-}
-
-void SDFBox::Hide () noexcept
-{
-    _node = {};
 }
 
 void SDFBox::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept

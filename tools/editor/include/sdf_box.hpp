@@ -2,26 +2,16 @@
 #define EDITOR_SDF_BOX_HPP
 
 
-#include <GXCommon/GXMath.hpp>
-#include "gizmo_node.hpp"
+#include "sdf.hpp"
 
 
 namespace editor {
 
-class SDFBox final
+class SDFBox final : public SDF
 {
     private:
-        GizmoNode       _node {};
-
         GXQuat const    _rotation {};
-        GXVec3 const    _location {};
         float const     _radius = 0.0F;
-        GXVec3 const    _scale {};
-
-        eSDFPalette     _palette = eSDFPalette::White;
-        GXQuat          _rotationWorld = GXQuat::IDENTITY;
-        GXVec3          _locationWorld = GXVec3::ZERO;
-        GXVec3          _parentLocation = GXVec3::ZERO;
 
     public:
         SDFBox () = delete;
@@ -41,13 +31,8 @@ class SDFBox final
 
         ~SDFBox () = default;
 
-        [[nodiscard]] GXQuat const &GetRotationWorld () const noexcept;
-        [[nodiscard]] GXVec3 const &GetLocationWorld () const noexcept;
-
-        void SetColor ( eSDFPalette palette ) noexcept;
-        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept;
-        void Hide () noexcept;
-        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
+        void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
+        void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
 };
 
 } // namespace editor

@@ -57,6 +57,11 @@ void MoveTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Move tool deactivated" );
 }
 
+void MoveTool::Hover () noexcept
+{
+    // FUCK
+}
+
 void MoveTool::Click () noexcept
 {
     // FUCK

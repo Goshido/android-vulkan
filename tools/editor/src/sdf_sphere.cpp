@@ -7,16 +7,9 @@
 namespace editor {
 
 SDFSphere::SDFSphere ( GXVec3 &&location, float radius, eSDFPalette palette ) noexcept:
-    _location ( std::move ( location ) ),
-    _radius ( radius ),
-    _palette ( palette )
+    SDF ( std::move ( location ), GXVec3 ( radius, radius, radius ), palette )
 {
     // NOTHING
-}
-
-void SDFSphere::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -34,7 +27,7 @@ void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParen
 
             GXVec3 alpha {};
             alpha.Subtract ( _parentLocation, cameraLocation );
-            float const r = _radius * SDF_PIXEL_SIZE_SCALE * viWorld.DotProduct ( alpha );
+            float const r = _scale._data[ 0U ] * SDF_PIXEL_SIZE_SCALE * viWorld.DotProduct ( alpha );
 
             Model &toWorld = vertex._toWorld;
             toWorld._x = GXVec3 ( r, 0.0F, 0.0F );
@@ -55,11 +48,6 @@ void SDFSphere::Show ( GXVec3 const &locationParent, GXQuat const &rotationParen
     );
 
     OnParentUpdated ( locationParent, rotationParent );
-}
-
-void SDFSphere::Hide () noexcept
-{
-    _node = {};
 }
 
 void SDFSphere::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept

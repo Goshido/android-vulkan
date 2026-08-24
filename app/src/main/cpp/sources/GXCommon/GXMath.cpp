@@ -1,4 +1,4 @@
-// version 1.103
+// version 1.104
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -952,6 +952,13 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     FromFast ( pureRotationMatrix );
 }
 
+[[maybe_unused]] GXVoid GXQuat::From ( GXVec3 const &forward, GXVec3 const &up ) noexcept
+{
+    GXMat3 m {};
+    m.From ( forward, up );
+    FromFast ( m );
+}
+
 [[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat3 const &pureRotationMatrix ) noexcept
 {
     // In ideal mathematics world all solutions are right.
@@ -1343,6 +1350,19 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
     SetX ( xAxis );
     SetY ( yAxis );
     SetZ ( zDirection );
+}
+
+[[maybe_unused]] GXVoid GXMat3::From ( GXVec3 const &forward, GXVec3 const &up ) noexcept
+{
+    auto &z = *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
+    auto &x = *reinterpret_cast<GXVec3*> ( _data );
+
+    z = forward;
+    auto &y = *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
+
+    x.CrossProduct ( up, forward );
+    x.Normalize ();
+    y.CrossProduct ( z, x );
 }
 
 [[maybe_unused]] GXVoid GXMat3::FromFast ( GXQuat const &quaternion ) noexcept

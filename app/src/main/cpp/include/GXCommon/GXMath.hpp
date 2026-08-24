@@ -1,4 +1,4 @@
-// version 1.105
+// version 1.106
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -635,6 +635,9 @@ struct [[maybe_unused]] GXQuat final
     // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
     [[maybe_unused]] GXVoid From ( GXMat4 const &rotationMatrix ) noexcept;
 
+    // Result is valid if forward is unit vector.
+    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
+
     // Result is valid if pureRotationMatrix is not scaled rotation matrix.
     [[maybe_unused]] GXVoid FromFast ( GXMat3 const &pureRotationMatrix ) noexcept;
 
@@ -693,6 +696,9 @@ struct [[maybe_unused]] GXMat3 final
 
     // Constructs orthonormal basis. Result is valid if zDirection is unit vector.
     [[maybe_unused]] GXVoid From ( GXVec3 const &zDirection ) noexcept;
+
+    // Constructs orthonormal basis. Result is valid if forward is unit vector.
+    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
 
     // Result is valid if quaternion is normalized.
     [[maybe_unused]] GXVoid FromFast ( GXQuat const &quaternion ) noexcept;
@@ -982,13 +988,13 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 [[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
 {
-    constexpr GXFloat toRadians = 0.0174533F;
+    constexpr GXFloat toRadians = 1.74532925e-2F;
     return degrees * toRadians;
 }
 
 [[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
 {
-    constexpr GXFloat toDegrees = 57.295779F;
+    constexpr GXFloat toDegrees = 5.72957795e+1F;
     return radians * toDegrees;
 }
 

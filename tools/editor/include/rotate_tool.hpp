@@ -23,14 +23,14 @@ class RotateTool final : public Tool
             Y,
             Z,
             ToCamera,
-            None,
+            None
         };
 
         struct TangentLine final
         {
-            GXVec3                          _tangentPosition {};
-            float                           _distance = 0.0F;
-            GXVec3                          _tangentDirection {};
+            GXVec3                                  _tangentPosition {};
+            float                                   _distance = 0.0F;
+            GXVec3                                  _tangentDirection {};
         };
 
     private:
@@ -40,7 +40,7 @@ class RotateTool final : public Tool
         constexpr static float SPHERE_SIZE = 6.6F;
 
     private:
-        SDFRing                             _x
+        SDFRing                                     _x
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
             GXQuat ( 7.071068e-1F, 0.0F, 7.071068e-1F, 0.0F ),
@@ -48,7 +48,7 @@ class RotateTool final : public Tool
             eSDFPalette::Red
         };
 
-        SDFRing                             _y
+        SDFRing                                     _y
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
             GXQuat ( 7.071068e-1F, 7.071068e-1F, 0.0F, 0.0F ),
@@ -56,7 +56,7 @@ class RotateTool final : public Tool
             eSDFPalette::Green
         };
 
-        SDFRing                             _z
+        SDFRing                                     _z
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -64,7 +64,7 @@ class RotateTool final : public Tool
             eSDFPalette::Blue
         };
 
-        SDFRingBillboard                    _ring
+        SDFRingBillboard                            _ring
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -72,9 +72,14 @@ class RotateTool final : public Tool
             eSDFPalette::Grey
         };
 
-        SDFSphere                           _body { GXVec3 ( 0.0F, 0.0F, 0.0F ), 7.54F, eSDFPalette::BlackGlass };
+        SDFSphere                                   _body
+        {
+            GXVec3 ( 0.0F, 0.0F, 0.0F ),
+            7.54F,
+            eSDFPalette::BlackGlass
+        };
 
-        SDFLineSegment                      _tangentLine
+        SDFLineSegment                              _tangentLine
         {
             GXVec3 ( -3.5F, 0.0F, 7.8F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -82,7 +87,7 @@ class RotateTool final : public Tool
             eSDFPalette::Yellow
         };
 
-        SDFCone                             _tangentDirectionA
+        SDFCone                                     _tangentDirectionA
         {
             GXVec3 ( 3.5F, 0.0F, 7.8F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -91,7 +96,7 @@ class RotateTool final : public Tool
             0.0F
         };
 
-        SDFCone                             _tangentDirectionB
+        SDFCone                                     _tangentDirectionB
         {
             GXVec3 ( -3.5F, 0.0F, 7.8F ),
             GXQuat ( 0.0F, 0.0F, 1.0F, 0.0F ),
@@ -100,15 +105,15 @@ class RotateTool final : public Tool
             0.0F
         };
 
-        GizmoRingCollider                   _xCollider { _x.GetScale ()._data[ 0U ], TORUS_THICKNESS };
-        GizmoRingCollider                   _yCollider { _y.GetScale ()._data[ 0U ], TORUS_THICKNESS };
-        GizmoRingCollider                   _zCollider { _z.GetScale ()._data[ 0U ], TORUS_THICKNESS };
-        GizmoRingCollider                   _ringCollider { RING_SIZE, RING_THICKNESS };
-        GizmoSphereCollider                 _bodyCollider { SPHERE_SIZE };
+        GizmoRingCollider                           _xCollider { _x.GetScale ()._data[ 0U ], TORUS_THICKNESS };
+        GizmoRingCollider                           _yCollider { _y.GetScale ()._data[ 0U ], TORUS_THICKNESS };
+        GizmoRingCollider                           _zCollider { _z.GetScale ()._data[ 0U ], TORUS_THICKNESS };
+        GizmoRingCollider                           _ringCollider { RING_SIZE, RING_THICKNESS };
+        GizmoSphereCollider                         _bodyCollider { SPHERE_SIZE };
 
-        SDF*                                _controlSDF = nullptr;
+        SDF*                                        _controlSDF = nullptr;
 
-        std::unordered_map<SDF*, GXVec3>    _inactiveSize
+        std::unordered_map<SDFRingBase*, GXVec3>    _inactiveSize
         {
             { &_x, _x.GetScale () },
             { &_y, _y.GetScale () },
@@ -116,24 +121,27 @@ class RotateTool final : public Tool
             { &_ring, _ring.GetScale () }
         };
 
-        GXVec3                              _rotateAxisVector {};
-        float                               _initialScalarDistance;
+        GXVec3                                      _rotateAxisVector {};
+        float                                       _initialScalarDistance;
 
-        GXVec3                              _tangentPosition {};
-        float                               _rotateSpeed;
+        GXVec3                                      _tangentPosition {};
+        float                                       _rotateSpeed;
 
-        GXQuat                              _tangentRenderRotation {};
-        GXQuat                              _tangentDirectionBRenderRotation {};
-        GXQuat                              _initialRotation {};
+        GXQuat                                      _tangentRenderRotation {};
+        GXQuat                                      _tangentDirectionBRenderRotation {};
+        GXQuat                                      _initialRotation {};
 
-        GXVec3                              _tangentDirection {};
-        GXVec3                              _tangentRenderPosition {};
-        GXVec3                              _tangentDirectionARenderPosition {};
+        GXQuat                                      _rotation = GXQuat::IDENTITY;
+        GXVec3                                      _location = GXVec3::ZERO;
 
-        bool                                _rotateBall = false;
-        eAxis                               _rotateAxis = eAxis::None;
+        GXVec3                                      _tangentDirection {};
+        GXVec3                                      _tangentRenderPosition {};
+        GXVec3                                      _tangentDirectionARenderPosition {};
 
-        GXVec2                              _lastMouse {};
+        bool                                        _rotateBall = false;
+        eAxis                                       _rotateAxis = eAxis::None;
+
+        GXVec2                                      _lastMouse {};
 
     public:
         RotateTool () = default;
@@ -159,6 +167,16 @@ class RotateTool final : public Tool
         void Update () noexcept;
 
     private:
+        void HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBasis ) noexcept;
+
+        // Method returns ring radius.
+        [[nodiscard]] float SetupRing ( SDFRingBase &ring, eSDFPalette color ) const noexcept;
+
+        void ResetVisuals () noexcept;
+
+        [[nodiscard]] bool LockAxis () noexcept;
+        [[nodiscard]] bool LockBall () noexcept;
+
         [[nodiscard]] static TangentLine ResolveTangentLine ( GXVec3 const &ringPosition,
             GXVec3 const &ringDirection,
             GXVec3 const &rayPosition,

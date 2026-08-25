@@ -10,7 +10,7 @@ namespace editor {
 class SDFLineSegment final : public SDF
 {
     private:
-        GXQuat const    _rotation {};
+        GXQuat      _rotation {};
 
     public:
         SDFLineSegment () = delete;
@@ -31,6 +31,8 @@ class SDFLineSegment final : public SDF
 
         void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
         void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
+
+        void SetLocationAndRotation ( GXVec3 const &location, GXQuat const &rotation ) noexcept;
 };
 
 } // namespace editor

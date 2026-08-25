@@ -9,7 +9,7 @@ namespace editor {
 
 namespace {
 
-//constexpr float AXIS_ACTIVE_SIZE = 6.0e-2F;
+constexpr float AXIS_ACTIVE_SIZE = 6.0e-2F;
 constexpr float ORTHOGONAL_THRESHOLD = 1.0e-4F;
 
 constexpr eSDFPalette ACTIVE_COLOR = eSDFPalette::Yellow;
@@ -31,18 +31,23 @@ constexpr float BALL_SENSITIVITY = 1.74532925e-2F;
 
 void RotateTool::Activate () noexcept
 {
-    GXQuat const rotation = GXQuat::IDENTITY;
-    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
-    _x.Show ( location, rotation );
-    _y.Show ( location, rotation );
-    _z.Show ( location, rotation );
-    _ring.Show ( location, rotation );
+    _x.Show ( _location, _rotation );
+    _y.Show ( _location, _rotation );
+    _z.Show ( _location, _rotation );
+    _ring.Show ( _location, _rotation );
     android_vulkan::LogInfo ( ">>> Rotate tool activated" );
 }
 
 void RotateTool::Deactivate () noexcept
 {
-    // FUCK
+    _x.Hide ();
+    _y.Hide ();
+    _z.Hide ();
+    _ring.Hide ();
+    _body.Hide ();
+    _tangentLine.Hide ();
+    _tangentDirectionA.Hide ();
+    _tangentDirectionB.Hide ();
     android_vulkan::LogInfo ( "<<< Rotate tool deactivated" );
 }
 
@@ -78,12 +83,55 @@ void RotateTool::Cancel () noexcept
 
 void RotateTool::Update () noexcept
 {
-    GXQuat const rotation = GXQuat::IDENTITY;
-    GXVec3 const location ( 0.0F, 0.0F, 12.0F );
-    _x.OnParentUpdated ( location, rotation );
-    _y.OnParentUpdated ( location, rotation );
-    _z.OnParentUpdated ( location, rotation );
-    _ring.OnParentUpdated ( location, rotation );
+    _x.OnParentUpdated ( _location, _rotation );
+    _y.OnParentUpdated ( _location, _rotation );
+    _z.OnParentUpdated ( _location, _rotation );
+    _ring.OnParentUpdated ( _location, _rotation );
+}
+
+void RotateTool::ActivateSDF ( SDF &sdf ) noexcept
+{
+    if ( &sdf == _controlSDF ) [[likely]]
+        return;
+
+    DeactivateSDF ();
+    _controlSDF = &sdf;
+
+    if ( &sdf == &_body )
+    {
+        sdf.Show ( _location, _rotation );
+        return;
+    }
+
+    GXVec3 const &s = _inactiveSize.at ( &sdf );
+    sdf.SetScale ( GXVec3 ( s._data[ 0U ], s._data[ 1U ], AXIS_ACTIVE_SIZE ) );
+}
+
+void RotateTool::DeactivateSDF () noexcept
+{
+    if ( !_controlSDF ) [[likely]]
+        return;
+
+    if ( _controlSDF == &_body )
+        _controlSDF->Hide ();
+    else
+        _controlSDF->SetScale ( _inactiveSize.at ( _controlSDF ) );
+
+    _controlSDF = nullptr;
+}
+
+void RotateTool::HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
+{
+    // See <repo>/docs/gizmo-rendering.md#inter-ring
+    float const f = ResolveSkewLines ( rayOrigin, rayDirection, _tangentPosition, _tangentDirection );
+
+    GXQuat alpha {};
+    alpha.FromAxisAngle ( _rotateAxisVector, _rotateSpeed * ( f - _initialScalarDistance ) );
+
+    _rotation.Multiply ( alpha, _initialRotation );
+    _tangentLine.SetLocationAndRotation ( _tangentRenderPosition, _tangentRenderRotation );
+    _tangentDirectionA.SetLocationAndRotation ( _tangentDirectionARenderPosition, _tangentRenderRotation );
+    _tangentDirectionB.SetLocationAndRotation ( _tangentRenderPosition, _tangentDirectionBRenderRotation );
 }
 
 void RotateTool::HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBasis ) noexcept
@@ -121,8 +169,7 @@ void RotateTool::ResetVisuals () noexcept
     std::ignore = SetupRing ( _y, Y_COLOR );
     std::ignore = SetupRing ( _z, Z_COLOR );
 
-    // FUCK - provide correct data
-    _ring.Show ( GXVec3 {}, GXQuat {} );
+    _ring.Show ( _location, _rotation );
     std::ignore = SetupRing ( _ring, RING_COLOR );
 
     _tangentLine.Hide ();
@@ -193,10 +240,9 @@ bool RotateTool::LockAxis () noexcept
     _tangentRenderPosition.Subtract ( pivot, s );
     _tangentDirectionARenderPosition.Sum ( pivot, s );
 
-    // FUCK - provide correct data
-    _tangentLine.Show ( GXVec3 {}, GXQuat {} );
-    _tangentDirectionA.Show ( GXVec3 {}, GXQuat {} );
-    _tangentDirectionB.Show ( GXVec3 {}, GXQuat {} );
+    _tangentLine.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
+    _tangentDirectionA.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
+    _tangentDirectionB.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
 
     return true;
 }
@@ -210,9 +256,7 @@ bool RotateTool::LockBall () noexcept
     std::ignore = SetupRing ( _y, ACTIVE_COLOR );
     std::ignore = SetupRing ( _z, ACTIVE_COLOR );
 
-    // FUCK - provide correct data
-    _body.Show ( GXVec3 {}, GXQuat {} );
-
+    _body.Show ( _location, _rotation );
     _ring.Hide ();
     _tangentLine.Hide ();
     _tangentDirectionA.Hide ();
@@ -222,7 +266,7 @@ bool RotateTool::LockBall () noexcept
 
 RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosition,
     GXVec3 const &ringDirection,
-    GXVec3 const &rayPosition,
+    GXVec3 const &rayOrigin,
     GXVec3 const &rayDirection,
     GXVec3 const &oppositeCameraDirection,
     float radius
@@ -240,10 +284,10 @@ RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosit
     else
     {
         GXVec3 lambda {};
-        lambda.Subtract ( ringPosition, rayPosition );
+        lambda.Subtract ( ringPosition, rayOrigin );
 
         GXVec3 g {};
-        g.Sum ( rayPosition, lambda.DotProduct ( ringDirection ) / alpha, rayDirection );
+        g.Sum ( rayOrigin, lambda.DotProduct ( ringDirection ) / alpha, rayDirection );
 
         lambda.Subtract ( g, ringPosition );
         lambda.Normalize ();
@@ -252,9 +296,7 @@ RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosit
         result._tangentPosition.Sum ( ringPosition, radius, lambda );
     }
 
-    result._distance =
-        ResolveSkewLines ( rayPosition, rayDirection, result._tangentPosition, result._tangentDirection );
-
+    result._distance = ResolveSkewLines ( rayOrigin, rayDirection, result._tangentPosition, result._tangentDirection );
     return result;
 }
 

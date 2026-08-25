@@ -7,18 +7,11 @@
 namespace editor {
 
 SDFCone::SDFCone ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale, eSDFPalette palette, float radius ) noexcept:
+    SDF ( std::move ( location ), std::move ( scale ), palette ),
     _rotation ( std::move ( rotation ) ),
-    _location ( std::move ( location ) ),
-    _radius ( radius ),
-    _scale ( std::move ( scale ) ),
-    _palette ( palette )
+    _radius ( radius )
 {
     // NOTHING
-}
-
-void SDFCone::SetColor ( eSDFPalette palette ) noexcept
-{
-    _palette = palette;
 }
 
 void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept
@@ -83,11 +76,6 @@ void SDFCone::Show ( GXVec3 const &locationParent, GXQuat const &rotationParent 
     OnParentUpdated ( locationParent, rotationParent );
 }
 
-void SDFCone::Hide () noexcept
-{
-    _node = {};
-}
-
 void SDFCone::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
     if ( !_node.IsConnected () ) [[unlikely]]
@@ -98,6 +86,12 @@ void SDFCone::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation )
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
+}
+
+void SDFCone::SetLocationAndRotation ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+{
+    _location = location;
+    _rotation = rotation;
 }
 
 } // namespace editor

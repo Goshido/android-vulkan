@@ -32,7 +32,7 @@ class SDF
         virtual void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept = 0;
 
         [[nodiscard]] GXVec3 const &GetScale () const noexcept;
-        [[nodiscard]] void SetScale ( GXVec3 const &scale ) noexcept;
+        void SetScale ( GXVec3 const &scale ) noexcept;
 
         [[nodiscard]] GXVec3 const &GetLocationWorld () const noexcept;
         [[nodiscard]] GXQuat const &GetRotationWorld () const noexcept;

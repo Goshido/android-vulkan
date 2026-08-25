@@ -113,7 +113,7 @@ class RotateTool final : public Tool
 
         SDF*                                        _controlSDF = nullptr;
 
-        std::unordered_map<SDFRingBase*, GXVec3>    _inactiveSize
+        std::unordered_map<SDF*, GXVec3>            _inactiveSize
         {
             { &_x, _x.GetScale () },
             { &_y, _y.GetScale () },
@@ -132,7 +132,9 @@ class RotateTool final : public Tool
         GXQuat                                      _initialRotation {};
 
         GXQuat                                      _rotation = GXQuat::IDENTITY;
-        GXVec3                                      _location = GXVec3::ZERO;
+
+        // FUCK
+        GXVec3                                      _location { 0.0F, 0.0F, 12.0F };
 
         GXVec3                                      _tangentDirection {};
         GXVec3                                      _tangentRenderPosition {};
@@ -167,6 +169,10 @@ class RotateTool final : public Tool
         void Update () noexcept;
 
     private:
+        void ActivateSDF ( SDF &sdf ) noexcept;
+        void DeactivateSDF () noexcept;
+
+        void HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
         void HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBasis ) noexcept;
 
         // Method returns ring radius.
@@ -179,7 +185,7 @@ class RotateTool final : public Tool
 
         [[nodiscard]] static TangentLine ResolveTangentLine ( GXVec3 const &ringPosition,
             GXVec3 const &ringDirection,
-            GXVec3 const &rayPosition,
+            GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             GXVec3 const &oppositeCameraDirection,
             float radius

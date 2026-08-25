@@ -81,4 +81,10 @@ void SDFLineSegment::OnParentUpdated ( GXVec3 const &location, GXQuat const &rot
     _parentLocation = location;
 }
 
+void SDFLineSegment::SetLocationAndRotation ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+{
+    _location = location;
+    _rotation = rotation;
+}
+
 } // namespace editor

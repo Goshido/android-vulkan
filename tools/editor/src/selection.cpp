@@ -449,29 +449,24 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     compressPushConstants._uniqueIDs = *_idDevice._resourceIdx;
 }
 
-void Selection::Begin ( int32_t x, int32_t y, eMode mode ) noexcept
+void Selection::Begin ( VkOffset2D const &mouse, eMode mode ) noexcept
 {
-    _begin =
-    {
-        ._x = x,
-        ._y = y
-    };
-
+    _begin = mouse;
     _lastItems = _items;
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
-            [ this, x, y, mode ] () noexcept -> void* {
-                CommitArea ( Rect ( x, x, y, y ), mode );
+            [ this, mouse, mode ] () noexcept -> void* {
+                CommitArea ( Rect ( mouse.x, mouse.x, mouse.y, mouse.y ), mode );
                 return nullptr;
             }
         )
     );
 }
 
-std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexcept
+std::optional<Rect> Selection::Update ( VkOffset2D const &mouse, eMode mode ) noexcept
 {
-    Rect area ( _begin._x, x, _begin._y, y );
+    Rect area ( _begin.x, mouse.x, _begin.y, mouse.y );
     area.Normalize ();
 
     MessageQueue::Instance ().EnqueueBack (
@@ -486,9 +481,9 @@ std::optional<Rect> Selection::Update ( int32_t x, int32_t y, eMode mode ) noexc
     return std::optional<Rect> { std::move ( area ) };
 }
 
-void Selection::End ( int32_t x, int32_t y, eMode mode ) noexcept
+void Selection::End ( VkOffset2D const &mouse, eMode mode ) noexcept
 {
-    Rect area ( _begin._x, x, _begin._y, y );
+    Rect area ( _begin.x, mouse.x, _begin.y, mouse.y );
     area.Normalize ();
 
     MessageQueue::Instance ().EnqueueBack (

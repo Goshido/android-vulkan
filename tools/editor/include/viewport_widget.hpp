@@ -37,12 +37,6 @@ class ViewportWidget final : public Widget
             uint8_t                         _leftMouseButton: 1 = 0U;
         };
 
-        struct Mouse final
-        {
-            int32_t                         _x = 0;
-            int32_t                         _y = 0;
-        };
-
     private:
         DIVUIElement                        _div;
 
@@ -72,8 +66,8 @@ class ViewportWidget final : public Widget
         GXQuat                              _orientation = GXQuat::IDENTITY;
         GXVec3                              _location = GXVec3::ZERO;
 
-        Mouse                               _mouseNow {};
-        Mouse                               _mouseCommit {};
+        VkOffset2D                          _mouseNow {};
+        VkOffset2D                          _mouseCommit {};
         size_t                              _eventID = 0U;
         GXVec2                              _eulerAngles = GXVec2::ZERO;
 

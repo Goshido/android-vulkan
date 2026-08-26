@@ -1,4 +1,4 @@
-// version 1.104
+// version 1.105
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -1426,6 +1426,36 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
 [[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const noexcept
 {
     std::memcpy ( &z, _data + 2U, sizeof ( GXVec3 ) );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Right () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Right () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Up () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Up () noexcept
+{
+    return *reinterpret_cast<GXVec3 *> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Forward () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Forward () noexcept
+{
+    return *reinterpret_cast<GXVec3 *> ( _data[ 2U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Identity () noexcept

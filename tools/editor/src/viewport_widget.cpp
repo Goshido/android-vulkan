@@ -356,7 +356,7 @@ void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexce
 
     if ( *_selectionMode != old )
     {
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
     }
 }
 
@@ -367,7 +367,7 @@ void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
     if ( _selectionMode )
     {
         UpdateSelectionMode ();
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
     }
 }
 
@@ -380,10 +380,10 @@ void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcep
 
     constexpr Selection::eMode const cases[] = { Selection::eMode::New, Selection::eMode::Toggle };
     _selectionMode = std::optional<Selection::eMode> ( cases[ static_cast<size_t> ( _state._ctrl | _state._shift ) ] );
-    Workspace::Instance ().GetSelection ().Begin ( _mouseNow._x, _mouseNow._y, *_selectionMode );
+    Workspace::Instance ().GetSelection ().Begin ( _mouseNow, *_selectionMode );
 
     _selectionBody.Show ();
-    UpdateSelection ( _mouseNow._x, _mouseNow._y, 0, 0 );
+    UpdateSelection ( _mouseNow.x, _mouseNow.y, 0, 0 );
     CaptureMouse ();
     SetFocus ();
 }
@@ -395,7 +395,17 @@ void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
     if ( _selectionMode )
     {
         UpdateSelectionMode ();
-        Workspace::Instance ().GetSelection ().End ( event._x, event._y, *_selectionMode );
+
+        Workspace::Instance ().GetSelection ().End (
+            VkOffset2D
+            {
+                .x = event._x,
+                .y = event._y
+            },
+
+            *_selectionMode
+        );
+
         _selectionMode = std::nullopt;
     }
 
@@ -417,8 +427,8 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 
     _mouseNow =
     {
-        ._x = event._x,
-        ._y = event._y
+        .x = event._x,
+        .y = event._y
     };
 
     if ( !_selectionMode )
@@ -427,7 +437,16 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
     // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
     // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
-    auto const rect = Workspace::Instance ().GetSelection ().Update ( event._x, event._y, *_selectionMode );
+    auto const rect = Workspace::Instance ().GetSelection ().Update ( 
+        VkOffset2D
+        {
+            .x = event._x,
+            .y = event._y
+        },
+
+        *_selectionMode
+    );
+
     UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
     _selectionDrag = true;
 }
@@ -548,8 +567,8 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
 
     _mouseNow =
     {
-        ._x = event._x,
-        ._y = event._y
+        .x = event._x,
+        .y = event._y
     };
 }
 
@@ -625,7 +644,7 @@ void ViewportWidget::ResolveNavigationMode () noexcept
 
     eNavigationMode const old = std::exchange ( _navigationMode, resultCases[ resultSelector ] );
 
-    Mouse const mouseCases[] = { _mouseCommit, _mouseNow };
+    VkOffset2D const mouseCases[] = { _mouseCommit, _mouseNow };
     _mouseCommit = mouseCases[ static_cast<size_t> ( old != _navigationMode ) ];
 }
 
@@ -634,8 +653,8 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     _eulerAngles.Sum ( _eulerAngles,
         FREE_FLY_ORIENTATION_SPEED / dpi,
 
-        GXVec2 ( static_cast<float> ( _mouseNow._y - _mouseCommit._y ),
-            static_cast<float> ( _mouseNow._x - _mouseCommit._x )
+        GXVec2 ( static_cast<float> ( _mouseNow.y - _mouseCommit.y ),
+            static_cast<float> ( _mouseNow.x - _mouseCommit.x )
         )
     );
 

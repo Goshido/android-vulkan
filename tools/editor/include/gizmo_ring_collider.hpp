@@ -29,12 +29,14 @@ class GizmoRingCollider final
         [[nodiscard]] float Raycast ( GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             GXVec3 const &ringLocation,
-            GXQuat const &ringOrientation,
+            GXQuat const &ringRotation,
             GXVec3 const &cameraLocation,
             GXMat3 const &cameraBasis,
             GXVec3 const &vi,
             bool billboard
         ) const noexcept;
+
+        [[nodiscard]] float GetRadius () const noexcept;
 
     private:
         // Note 'p' is intentionally sent by value.

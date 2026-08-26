@@ -26,7 +26,7 @@ GizmoRingCollider::GizmoRingCollider ( float radius, float thickness ) noexcept:
 float GizmoRingCollider::Raycast ( GXVec3 const &rayOrigin,
     GXVec3 const &rayDirection,
     GXVec3 const &ringLocation,
-    GXQuat const &ringOrientation,
+    GXQuat const &ringRotation,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
     GXVec3 const &vi,
@@ -39,7 +39,7 @@ float GizmoRingCollider::Raycast ( GXVec3 const &rayOrigin,
     if ( billboard )
         RingMath::MakeBillboard ( basis, sinCosAngle, cameraBasis );
     else
-        RingMath::MakeGeneral ( basis, sinCosAngle, ringOrientation, cameraBasis );
+        RingMath::MakeGeneral ( basis, sinCosAngle, ringRotation, cameraBasis );
 
     GXVec3 tmp {};
     tmp.Subtract ( ringLocation, cameraLocation );
@@ -89,6 +89,11 @@ float GizmoRingCollider::Raycast ( GXVec3 const &rayOrigin,
 
     float const cases[] = { beta._data[ 1U ], MISS };
     return cases[ static_cast<size_t> ( isMiss | ( steps >= MAX_STEPS ) ) ];
+}
+
+float GizmoRingCollider::GetRadius () const noexcept
+{
+    return _radius;
 }
 
 // Idea is taken from https://iquilezles.org/articles/distfunctions/

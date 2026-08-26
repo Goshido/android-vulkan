@@ -81,12 +81,122 @@ void RotateTool::Cancel () noexcept
     // FUCK
 }
 
-void RotateTool::Update () noexcept
+void RotateTool::Update ( GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    GXVec3 const &cameraLocation,
+    GXMat3 const &cameraBasis,
+    GXVec3 const &vi,
+    VkOffset2D const &mouse,
+    bool leftMouseButtonPressed
+) noexcept
 {
-    _x.OnParentUpdated ( _location, _rotation );
-    _y.OnParentUpdated ( _location, _rotation );
-    _z.OnParentUpdated ( _location, _rotation );
-    _ring.OnParentUpdated ( _location, _rotation );
+    bool const prevRotation = ( _rotateAxis != eAxis::None ) | _rotateBall;
+    bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
+    bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
+
+    eAxis const cases[] = { _rotateAxis, eAxis::None };
+    _rotateAxis = cases[ static_cast<size_t> ( lmbReleased ) ];
+
+    if ( _rotateAxis != eAxis::None )
+    {
+        HandleRingRotate ( rayOrigin, rayDirection );
+        return;
+    }
+
+    _rotateBall &= !lmbReleased;
+
+    if ( _rotateBall )
+    {
+        HandleBallRotate ( mouse, cameraBasis );
+        return;
+    }
+
+    if ( prevRotation )
+        ResetVisuals ();
+
+    GXVec3 d {};
+    d.Subtract ( _location, cameraLocation );
+
+    GXVec3 k ( cameraBasis.Forward () );
+    k.Reverse ();
+
+    float const s = vi.DotProduct ( d );
+    _rotateSpeed = 1.0F / s;
+
+    Closest closest {};
+
+    CheckRing ( closest,
+        _x,
+        _xCollider,
+        rayOrigin,
+        rayDirection,
+        cameraLocation,
+        cameraBasis,
+        k,
+        vi,
+        s,
+        false,
+        lmbPressed,
+        eAxis::X
+    );
+
+    CheckRing ( closest,
+        _y,
+        _yCollider,
+        rayOrigin,
+        rayDirection,
+        cameraLocation,
+        cameraBasis,
+        k,
+        vi,
+        s,
+        false,
+        lmbPressed,
+        eAxis::Y
+    );
+
+    CheckRing ( closest,
+        _z,
+        _zCollider,
+        rayOrigin,
+        rayDirection,
+        cameraLocation,
+        cameraBasis,
+        k,
+        vi,
+        s,
+        false,
+        lmbPressed,
+        eAxis::Z
+    );
+
+    CheckRing ( closest,
+        _ring,
+        _ringCollider,
+        rayOrigin,
+        rayDirection,
+        cameraLocation,
+        cameraBasis,
+        k,
+        vi,
+        s,
+        true,
+        lmbPressed,
+        eAxis::ToCamera
+    );
+
+    CheckBody ( closest, rayOrigin, rayDirection, cameraLocation, vi, mouse, lmbPressed );
+
+    if ( LockAxis () || LockBall () )
+        return;
+
+    if ( !closest._control )
+    {
+        DeactivateSDF ();
+        return;
+    }
+
+    ActivateSDF ( *closest._control );
 }
 
 void RotateTool::ActivateSDF ( SDF &sdf ) noexcept
@@ -123,7 +233,7 @@ void RotateTool::DeactivateSDF () noexcept
 void RotateTool::HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-ring
-    float const f = ResolveSkewLines ( rayOrigin, rayDirection, _tangentPosition, _tangentDirection );
+    float const f = ResolveSkewLines ( rayOrigin, rayDirection, _tangentLocation, _tangentDirection );
 
     GXQuat alpha {};
     alpha.FromAxisAngle ( _rotateAxisVector, _rotateSpeed * ( f - _initialScalarDistance ) );
@@ -134,17 +244,19 @@ void RotateTool::HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDi
     _tangentDirectionB.SetLocationAndRotation ( _tangentRenderPosition, _tangentDirectionBRenderRotation );
 }
 
-void RotateTool::HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBasis ) noexcept
+void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept
 {
+    int32_t dx = mouse.x - _lastMouse.x;
+    int32_t dy = mouse.y - _lastMouse.y;
+
     GXVec2 delta {};
-    delta.Subtract ( mouse, _lastMouse );
-    delta.Multiply ( delta, BALL_SENSITIVITY );
+    delta.Multiply ( GXVec2 ( static_cast<float> ( dx ), static_cast<float> ( dy ) ), BALL_SENSITIVITY );
 
     GXQuat alpha {};
-    alpha.FromAxisAngle ( *reinterpret_cast<GXVec3 const*> ( cameraBasis._data ), delta._data[ 1U ] );
+    alpha.FromAxisAngle ( cameraBasis.Right (), delta._data[ 1U ] );
 
     GXQuat beta {};
-    alpha.FromAxisAngle ( *reinterpret_cast<GXVec3 const*> ( cameraBasis._data[ 1U ] ), -delta._data[ 0U ] );
+    alpha.FromAxisAngle ( cameraBasis.Up (), -delta._data[ 0U ] );
 
     GXQuat zeta {};
     zeta.Multiply ( alpha, beta );
@@ -153,6 +265,97 @@ void RotateTool::HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBas
     _rotation = alpha;
 
     _lastMouse = mouse;
+}
+
+void RotateTool::CheckBody ( Closest &closest,
+    GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    GXVec3 const &cameraLocation,
+    GXVec3 const &vi,
+    VkOffset2D const &mouse,
+    bool lmbPressed
+) noexcept
+{
+    float const d = _bodyCollider.Raycast ( rayOrigin,
+        rayDirection,
+        _body.GetLocationWorld (),
+        cameraLocation,
+        vi
+    );
+
+    if ( d >= closest._distance )
+        return;
+
+    closest._control = &_body;
+
+    if ( !lmbPressed )
+        return;
+
+    _rotateBall = true;
+    _rotateAxis = eAxis::None;
+    _lastMouse = mouse;
+}
+
+void RotateTool::CheckRing ( Closest &closest,
+    SDF &sdf,
+    GizmoRingCollider const &collider,
+    GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    GXVec3 const &cameraLocation,
+    GXMat3 const &cameraBasis,
+    GXVec3 const &k,
+    GXVec3 const &vi,
+    float s,
+    bool billboard,
+    bool lmbPressed,
+    eAxis axis
+) noexcept
+{
+    GXQuat const &rotation = sdf.GetRotationWorld ();
+    GXVec3 const &location = sdf.GetLocationWorld ();
+
+    float const d = collider.Raycast ( rayOrigin,
+        rayDirection,
+        location,
+        rotation,
+        cameraLocation,
+        cameraBasis,
+        vi,
+        billboard
+    );
+
+    if ( d >= closest._distance )
+        return;
+
+    closest =
+    {
+        ._control = &sdf,
+        ._distance = d
+    };
+
+    if ( !lmbPressed )
+        return;
+
+    _rotateBall = false;
+    _rotateAxis = axis;
+
+    GXVec3 forward {};
+    rotation.GetForward ( forward );
+    GXVec3 const cases[] = { forward, k };
+    _rotateAxisVector = cases[ static_cast<size_t> ( billboard ) ];
+    _initialRotation = _rotation;
+
+    TangentLine const info = ResolveTangentLine ( location,
+        _rotateAxisVector,
+        rayOrigin,
+        rayDirection,
+        k,
+        s * collider.GetRadius ()
+    );
+
+    _initialScalarDistance = info._distance;
+    _tangentLocation = info._tangentLocation;
+    _tangentDirection = info._tangentDirection;
 }
 
 float RotateTool::SetupRing ( SDFRingBase &ring, eSDFPalette color ) const noexcept
@@ -229,7 +432,7 @@ bool RotateTool::LockAxis () noexcept
     _tangentRenderRotation.From ( _rotateAxisVector, up );
 
     GXVec3 a {};
-    a.Subtract ( _tangentPosition, _location );
+    a.Subtract ( _tangentLocation, _location );
     a.Normalize ();
 
     GXVec3 pivot {};
@@ -279,7 +482,7 @@ RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosit
     if ( std::abs ( alpha ) < ORTHOGONAL_THRESHOLD )
     {
         result._tangentDirection.CrossProduct ( ringDirection, rayDirection );
-        result._tangentPosition.Sum ( ringPosition, radius, oppositeCameraDirection );
+        result._tangentLocation.Sum ( ringPosition, radius, oppositeCameraDirection );
     }
     else
     {
@@ -293,10 +496,10 @@ RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosit
         lambda.Normalize ();
 
         result._tangentDirection.CrossProduct ( ringDirection, lambda );
-        result._tangentPosition.Sum ( ringPosition, radius, lambda );
+        result._tangentLocation.Sum ( ringPosition, radius, lambda );
     }
 
-    result._distance = ResolveSkewLines ( rayOrigin, rayDirection, result._tangentPosition, result._tangentDirection );
+    result._distance = ResolveSkewLines ( rayOrigin, rayDirection, result._tangentLocation, result._tangentDirection );
     return result;
 }
 

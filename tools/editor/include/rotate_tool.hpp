@@ -28,9 +28,15 @@ class RotateTool final : public Tool
 
         struct TangentLine final
         {
-            GXVec3                                  _tangentPosition {};
+            GXVec3                                  _tangentLocation {};
             float                                   _distance = 0.0F;
             GXVec3                                  _tangentDirection {};
+        };
+
+        struct Closest final
+        {
+            SDF*                                    _control = nullptr;
+            float                                   _distance = std::numeric_limits<float>::max ();
         };
 
     private:
@@ -124,7 +130,7 @@ class RotateTool final : public Tool
         GXVec3                                      _rotateAxisVector {};
         float                                       _initialScalarDistance;
 
-        GXVec3                                      _tangentPosition {};
+        GXVec3                                      _tangentLocation {};
         float                                       _rotateSpeed;
 
         GXQuat                                      _tangentRenderRotation {};
@@ -143,7 +149,8 @@ class RotateTool final : public Tool
         bool                                        _rotateBall = false;
         eAxis                                       _rotateAxis = eAxis::None;
 
-        GXVec2                                      _lastMouse {};
+        VkOffset2D                                  _lastMouse {};
+        bool                                        _lastLMBPressed = false;
 
     public:
         RotateTool () = default;
@@ -166,14 +173,45 @@ class RotateTool final : public Tool
         void End () noexcept override;
         void Cancel () noexcept override;
 
-        void Update () noexcept;
+        void Update ( GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXMat3 const &cameraBasis,
+            GXVec3 const &vi,
+            VkOffset2D const &mouse,
+            bool leftMouseButtonPressed
+        ) noexcept;
 
     private:
         void ActivateSDF ( SDF &sdf ) noexcept;
         void DeactivateSDF () noexcept;
 
         void HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
-        void HandleBallRotate ( GXVec2 const &mouse, GXMat3 const &cameraBasis ) noexcept;
+        void HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept;
+
+        void CheckBody ( Closest &closest,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &vi,
+            VkOffset2D const &mouse,
+            bool lmbPressed
+        ) noexcept;
+
+        void CheckRing ( Closest &closest,
+            SDF &sdf,
+            GizmoRingCollider const &collider,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXMat3 const &cameraBasis,
+            GXVec3 const &k,
+            GXVec3 const &vi,
+            float s,
+            bool billboard,
+            bool lmbPressed,
+            eAxis axis
+        ) noexcept;
 
         // Method returns ring radius.
         [[nodiscard]] float SetupRing ( SDFRingBase &ring, eSDFPalette color ) const noexcept;

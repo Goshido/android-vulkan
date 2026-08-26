@@ -57,12 +57,6 @@ class Selection final
                 void Destroy ( android_vulkan::Renderer &renderer ) noexcept;
         };
 
-        struct Point final
-        {
-            int32_t                                 _x = 0;
-            int32_t                                 _y = 0;
-        };
-
     private:
         constexpr static size_t ID_PREFETCH_ADDRESSES = 64UZ;
 
@@ -83,7 +77,7 @@ class Selection final
         std::vector<Actor*>                         _lastSelection {};
         Items                                       _items {};
         Items                                       _lastItems {};
-        Point                                       _begin {};
+        VkOffset2D                                  _begin {};
         std::optional<Rect>                         _area = std::nullopt;
 
         GXVec4                                      _areaConv {};
@@ -310,9 +304,9 @@ class Selection final
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
-        void Begin ( int32_t x, int32_t y, eMode mode ) noexcept;
-        [[nodiscard]] std::optional<Rect> Update ( int32_t x, int32_t y, eMode mode ) noexcept;
-        void End ( int32_t x, int32_t y, eMode mode ) noexcept;
+        void Begin ( VkOffset2D const &mouse, eMode mode ) noexcept;
+        [[nodiscard]] std::optional<Rect> Update ( VkOffset2D const &mouse, eMode mode ) noexcept;
+        void End ( VkOffset2D const &mouse, eMode mode ) noexcept;
 
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;

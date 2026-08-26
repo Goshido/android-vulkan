@@ -1,4 +1,4 @@
-// version 1.106
+// version 1.107
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -711,6 +711,15 @@ struct [[maybe_unused]] GXMat3 final
 
     [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z ) noexcept;
     [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Up () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Up () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Forward () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Forward () noexcept;
 
     [[maybe_unused]] GXVoid Identity () noexcept;
     [[maybe_unused]] GXVoid Zeros () noexcept;

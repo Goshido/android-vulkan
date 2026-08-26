@@ -437,7 +437,7 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
     // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
     // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
-    auto const rect = Workspace::Instance ().GetSelection ().Update ( 
+    auto const rect = Workspace::Instance ().GetSelection ().Update (
         VkOffset2D
         {
             .x = event._x,

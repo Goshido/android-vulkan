@@ -81,8 +81,7 @@ void RotateTool::Cancel () noexcept
     // FUCK
 }
 
-void RotateTool::Update ( GXVec3 const &rayOrigin,
-    GXVec3 const &rayDirection,
+void RotateTool::Update ( GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
     GXVec3 const &vi,
@@ -99,7 +98,7 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
 
     if ( _rotateAxis != eAxis::None )
     {
-        HandleRingRotate ( rayOrigin, rayDirection );
+        HandleRingRotate ( cameraLocation, rayDirection );
         return;
     }
 
@@ -128,7 +127,6 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
     CheckRing ( closest,
         _x,
         _xCollider,
-        rayOrigin,
         rayDirection,
         cameraLocation,
         cameraBasis,
@@ -143,7 +141,6 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
     CheckRing ( closest,
         _y,
         _yCollider,
-        rayOrigin,
         rayDirection,
         cameraLocation,
         cameraBasis,
@@ -158,7 +155,6 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
     CheckRing ( closest,
         _z,
         _zCollider,
-        rayOrigin,
         rayDirection,
         cameraLocation,
         cameraBasis,
@@ -173,7 +169,6 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
     CheckRing ( closest,
         _ring,
         _ringCollider,
-        rayOrigin,
         rayDirection,
         cameraLocation,
         cameraBasis,
@@ -185,7 +180,7 @@ void RotateTool::Update ( GXVec3 const &rayOrigin,
         eAxis::ToCamera
     );
 
-    CheckBody ( closest, rayOrigin, rayDirection, cameraLocation, vi, mouse, lmbPressed );
+    CheckBody ( closest, rayDirection, cameraLocation, vi, mouse, lmbPressed );
 
     if ( LockAxis () || LockBall () )
         return;
@@ -268,7 +263,6 @@ void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &camer
 }
 
 void RotateTool::CheckBody ( Closest &closest,
-    GXVec3 const &rayOrigin,
     GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXVec3 const &vi,
@@ -276,7 +270,7 @@ void RotateTool::CheckBody ( Closest &closest,
     bool lmbPressed
 ) noexcept
 {
-    float const d = _bodyCollider.Raycast ( rayOrigin,
+    float const d = _bodyCollider.Raycast ( cameraLocation,
         rayDirection,
         _body.GetLocationWorld (),
         cameraLocation,
@@ -299,7 +293,6 @@ void RotateTool::CheckBody ( Closest &closest,
 void RotateTool::CheckRing ( Closest &closest,
     SDF &sdf,
     GizmoRingCollider const &collider,
-    GXVec3 const &rayOrigin,
     GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
@@ -314,7 +307,7 @@ void RotateTool::CheckRing ( Closest &closest,
     GXQuat const &rotation = sdf.GetRotationWorld ();
     GXVec3 const &location = sdf.GetLocationWorld ();
 
-    float const d = collider.Raycast ( rayOrigin,
+    float const d = collider.Raycast ( cameraLocation,
         rayDirection,
         location,
         rotation,
@@ -347,7 +340,7 @@ void RotateTool::CheckRing ( Closest &closest,
 
     TangentLine const info = ResolveTangentLine ( location,
         _rotateAxisVector,
-        rayOrigin,
+        cameraLocation,
         rayDirection,
         k,
         s * collider.GetRadius ()

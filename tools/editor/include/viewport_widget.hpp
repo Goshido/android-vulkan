@@ -65,6 +65,7 @@ class ViewportWidget final : public Widget
         std::vector<float>                  _lineHeights = { 0.0F };
         GXQuat                              _orientation = GXQuat::IDENTITY;
         GXVec3                              _location = GXVec3::ZERO;
+        float                               _invHeight = 1.0F;
 
         VkOffset2D                          _mouseNow {};
         VkOffset2D                          _mouseCommit {};
@@ -98,7 +99,7 @@ class ViewportWidget final : public Widget
         [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
 
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
-        [[nodiscard]] GXVec3 GetVI ( float invHeight ) const noexcept;
+        [[nodiscard]] GXVec3 GetVI () const noexcept;
 
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
@@ -115,6 +116,7 @@ class ViewportWidget final : public Widget
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
 
+        [[nodiscard]] GXVec3 ComputeRayDirection ( GXMat3 const &basis ) const noexcept;
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;

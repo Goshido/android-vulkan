@@ -330,14 +330,14 @@ GXVec3 const &ViewportWidget::GetLocation () const noexcept
     return _location;
 }
 
-GXVec3 ViewportWidget::GetVI ( float invHeight ) const noexcept
+GXVec3 ViewportWidget::GetVI () const noexcept
 {
     float const t = std::tan ( 0.5F * FOV_Y );
     GXVec3 forward {};
     _orientation.GetForward ( forward );
 
     GXVec3 result {};
-    result.Multiply ( forward, ( t + t ) * invHeight );
+    result.Multiply ( forward, ( t + t ) * _invHeight );
     return result;
 }
 
@@ -431,6 +431,11 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         .y = event._y
     };
 
+    // FUCK
+    GXMat3 basis {};
+    basis.FromFast ( _orientation );
+    _rotateTool.Update ( ComputeRayDirection ( basis ), _location, basis, GetVI (), _mouseNow, false );
+
     if ( !_selectionMode )
         return;
 
@@ -458,7 +463,8 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
 
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _projection.Perspective ( FOV_Y, size._data[ 0U ] / size._data[ 1U ], Z_NEAR, Z_FAR );
+    _invHeight = 1.0F / size._data[ 1U ];
+    _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR, Z_FAR );
 
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
@@ -503,6 +509,27 @@ bool ViewportWidget::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D con
     };
 
     return _div.UpdateCache ( info );
+}
+
+GXVec3 ViewportWidget::ComputeRayDirection ( GXMat3 const &basis ) const noexcept
+{
+    // See <repo>/docs/gizmo-rendering.md#pixel-coverage
+    float const t = std::tan ( 0.5F * FOV_Y );
+    GXVec3 vi {};
+    GXVec3 const &forward = basis.Forward ();
+    vi.Multiply ( forward, ( t + t ) * _invHeight );
+
+    GXVec2 alpha ( static_cast<float> ( _mouseNow.x ), static_cast<float> ( _mouseNow.y ) );
+    GXVec2 beta ( alpha._data[ 0U ], -alpha._data[ 1U ] );
+    alpha.Multiply ( alpha, GXVec2 ( -0.5F, 0.5F ) );
+    alpha.Sum ( alpha, beta );
+    alpha.Sum ( alpha, GXVec2 ( 0.5F, -0.5F ) );
+    alpha.Multiply ( alpha, vi.DotProduct ( forward ) );
+
+    GXVec3 result {};
+    basis.MultiplyMatrixVector ( result, GXVec3 ( alpha._data[ 0U ], alpha._data[ 1U ], 1.0F ) );
+    result.Normalize ();
+    return result;
 }
 
 void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept

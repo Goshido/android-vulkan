@@ -173,8 +173,7 @@ class RotateTool final : public Tool
         void End () noexcept override;
         void Cancel () noexcept override;
 
-        void Update ( GXVec3 const &rayOrigin,
-            GXVec3 const &rayDirection,
+        void Update ( GXVec3 const &rayDirection,
             GXVec3 const &cameraLocation,
             GXMat3 const &cameraBasis,
             GXVec3 const &vi,
@@ -190,7 +189,6 @@ class RotateTool final : public Tool
         void HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept;
 
         void CheckBody ( Closest &closest,
-            GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             GXVec3 const &cameraLocation,
             GXVec3 const &vi,
@@ -201,7 +199,6 @@ class RotateTool final : public Tool
         void CheckRing ( Closest &closest,
             SDF &sdf,
             GizmoRingCollider const &collider,
-            GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             GXVec3 const &cameraLocation,
             GXMat3 const &cameraBasis,

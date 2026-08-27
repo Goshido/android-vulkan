@@ -27,6 +27,7 @@ class GizmoSphereCollider final
 
         ~GizmoSphereCollider () = default;
 
+        // FUCK - rayOrigin and cameraLocation are the same
         [[nodiscard]] float Raycast ( GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             GXVec3 const &sphereLocation,

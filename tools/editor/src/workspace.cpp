@@ -1418,7 +1418,7 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 con
     _gizmoPrepassPushConstants._cameraLocationWorld = cameraLocation;
 
     GXVec3 &viWorld = _gizmoPrepassPushConstants._viWorld;
-    viWorld = _viewport->GetVI ( _outlineBlurXPushConstants._invResolution._data[ 1U ] );
+    viWorld = _viewport->GetVI ();
 
     GXMat3 const cameraBasis ( cameraLocal );
 

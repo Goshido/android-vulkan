@@ -1057,7 +1057,7 @@ void Workspace::Unregister ( GizmoNode &node ) noexcept
     node._workspace = nullptr;
     GizmoInfo* gizmoInfo = std::exchange ( node._gizmoInfo, nullptr );
     std::lock_guard const lock ( _mutex );
-    _gizmoQueue.erase ( std::find ( _gizmoQueue.cbegin (), _gizmoQueue.cbegin (), gizmoInfo ) );
+    _gizmoQueue.erase ( std::find ( _gizmoQueue.cbegin (), _gizmoQueue.cend (), gizmoInfo ) );
     delete gizmoInfo;
 }
 

@@ -219,8 +219,8 @@ ViewportWidget::ViewportWidget () noexcept:
     _selectionBody.Hide ();
 
     _rotateTool.Activate ();
-    _moveTool.Activate ();
-    _scaleTool.Activate ();
+    //_moveTool.Activate ();
+    //_scaleTool.Activate ();
 }
 
 void ViewportWidget::Init () noexcept
@@ -434,7 +434,42 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     // FUCK
     GXMat3 basis {};
     basis.FromFast ( _orientation );
-    _rotateTool.Update ( ComputeRayDirection ( basis ), _location, basis, GetVI (), _mouseNow, false );
+
+    _rotateTool.Update ( ComputeRayDirection ( basis ),
+        _location,
+        basis,
+        GetVI (),
+        _mouseNow,
+        _state._leftMouseButton == 1U
+    );
+
+    //_mouseNow =
+    //{
+    //    .x = 795,
+    //    .y = 253
+    //};
+
+    //_rotateTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    basis,
+    //    GetVI (),
+    //    _mouseNow,
+    //    true
+    //);
+
+    //_mouseNow =
+    //{
+    //    .x = 796,
+    //    .y = 254
+    //};
+
+    //_rotateTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    basis,
+    //    GetVI (),
+    //    _mouseNow,
+    //    true
+    //);
 
     if ( !_selectionMode )
         return;
@@ -519,15 +554,15 @@ GXVec3 ViewportWidget::ComputeRayDirection ( GXMat3 const &basis ) const noexcep
     GXVec3 const &forward = basis.Forward ();
     vi.Multiply ( forward, ( t + t ) * _invHeight );
 
-    GXVec2 alpha ( static_cast<float> ( _mouseNow.x ), static_cast<float> ( _mouseNow.y ) );
-    GXVec2 beta ( alpha._data[ 0U ], -alpha._data[ 1U ] );
+    GXVec2 alpha ( _div.GetAbsoluteRect ()._bottomRight );
     alpha.Multiply ( alpha, GXVec2 ( -0.5F, 0.5F ) );
+    GXVec2 beta ( static_cast<float> ( _mouseNow.x ), static_cast<float> ( -_mouseNow.y ) );
     alpha.Sum ( alpha, beta );
     alpha.Sum ( alpha, GXVec2 ( 0.5F, -0.5F ) );
     alpha.Multiply ( alpha, vi.DotProduct ( forward ) );
 
     GXVec3 result {};
-    basis.MultiplyMatrixVector ( result, GXVec3 ( alpha._data[ 0U ], alpha._data[ 1U ], 1.0F ) );
+    basis.MultiplyVectorMatrix ( result, GXVec3 ( alpha._data[ 0U ], alpha._data[ 1U ], 1.0F ) );
     result.Normalize ();
     return result;
 }

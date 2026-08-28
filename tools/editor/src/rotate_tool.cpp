@@ -232,11 +232,23 @@ void RotateTool::HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDi
 
     GXQuat alpha {};
     alpha.FromAxisAngle ( _rotateAxisVector, _rotateSpeed * ( f - _initialScalarDistance ) );
-
     _rotation.Multiply ( alpha, _initialRotation );
-    _tangentLine.SetLocationAndRotation ( _tangentRenderPosition, _tangentRenderRotation );
-    _tangentDirectionA.SetLocationAndRotation ( _tangentDirectionARenderPosition, _tangentRenderRotation );
-    _tangentDirectionB.SetLocationAndRotation ( _tangentRenderPosition, _tangentDirectionBRenderRotation );
+
+    GXVec3 beta {};
+    beta.Subtract ( _tangentRenderPosition, _location );
+    _tangentLine.SetLocationAndRotation ( beta, _tangentRenderRotation );
+    _tangentLine.OnParentUpdated ( _location, GXQuat::IDENTITY );
+
+    _tangentDirectionB.SetLocationAndRotation ( beta, _tangentDirectionBRenderRotation );
+    _tangentDirectionB.OnParentUpdated ( _location, GXQuat::IDENTITY );
+
+    beta.Subtract ( _tangentDirectionARenderPosition, _location );
+    _tangentDirectionA.SetLocationAndRotation ( beta, _tangentRenderRotation );
+    _tangentDirectionA.OnParentUpdated ( _location, GXQuat::IDENTITY );
+
+    _x.OnParentUpdated ( _location, _rotation );
+    _y.OnParentUpdated ( _location, _rotation );
+    _z.OnParentUpdated ( _location, _rotation );
 }
 
 void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept
@@ -503,10 +515,11 @@ float RotateTool::ResolveSkewLines ( GXVec3 const &aPosition,
 ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-ring
-    GXVec3 eta {};
-    eta.CrossProduct ( bDirection, aDirection );
-
     GXVec3 alpha {};
+    alpha.CrossProduct ( bDirection, aDirection );
+
+    GXVec3 eta {};
+    eta.CrossProduct ( aDirection, alpha );
     alpha.Subtract ( aPosition, bPosition );
 
     return alpha.DotProduct ( eta ) / bDirection.DotProduct ( eta );

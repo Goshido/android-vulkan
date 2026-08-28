@@ -63,14 +63,16 @@ class ViewportWidget final : public Widget
         GXMat4                              _projection = GXMat4::IDENTITY;
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
-        GXQuat                              _orientation = GXQuat::IDENTITY;
-        GXVec3                              _location = GXVec3::ZERO;
+        // FUCK
+        GXQuat                              _orientation { 0.857574522F, 0.0446341783F, -0.511726856F, 0.0266338475F };
+        GXVec3                              _location { 6.62516165F, 2.08657217F, -2.31031871F };
         float                               _invHeight = 1.0F;
 
         VkOffset2D                          _mouseNow {};
         VkOffset2D                          _mouseCommit {};
         size_t                              _eventID = 0U;
-        GXVec2                              _eulerAngles = GXVec2::ZERO;
+        // FUCK
+        GXVec2                              _eulerAngles { 0.104000151F, -1.07599998F };
 
         std::optional<Selection::eMode>     _selectionMode = std::nullopt;
         bool                                _selectionDrag = false;

@@ -22,7 +22,8 @@ constexpr eSDFPalette RING_COLOR = eSDFPalette::Grey;
 
 constexpr float TANGENT_OFFSET_X = -3.5F;
 
-// FUCK - this value depends from DPI
+// FUCK - this values depend from DPI
+constexpr float RING_SENSITIVITY = 8.0e-4F;
 constexpr float BALL_SENSITIVITY = 1.74532925e-2F;
 
 } // end of anonymous namespace
@@ -98,7 +99,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
 
     if ( _rotateAxis != eAxis::None )
     {
-        HandleRingRotate ( cameraLocation, rayDirection );
+        HandleRingRotate ( mouse );
         return;
     }
 
@@ -120,7 +121,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
     k.Reverse ();
 
     float const s = vi.DotProduct ( d );
-    _rotateSpeed = 1.0F / s;
+    _rotateSpeed = RING_SENSITIVITY / s;
 
     Closest closest {};
 
@@ -132,6 +133,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
         cameraBasis,
         k,
         vi,
+        mouse,
         s,
         false,
         lmbPressed,
@@ -146,6 +148,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
         cameraBasis,
         k,
         vi,
+        mouse,
         s,
         false,
         lmbPressed,
@@ -160,6 +163,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
         cameraBasis,
         k,
         vi,
+        mouse,
         s,
         false,
         lmbPressed,
@@ -174,6 +178,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
         cameraBasis,
         k,
         vi,
+        mouse,
         s,
         true,
         lmbPressed,
@@ -225,10 +230,15 @@ void RotateTool::DeactivateSDF () noexcept
     _controlSDF = nullptr;
 }
 
-void RotateTool::HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
+void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-ring
-    float const f = ResolveSkewLines ( rayOrigin, rayDirection, _tangentLocation, _tangentDirection );
+    float const f = _projectedTangentLineDirection.DotProduct (
+        GXVec2 (
+            static_cast<float> ( mouse.x - _lastMouse.x ),
+            static_cast<float> ( mouse.y - _lastMouse.y )
+        )
+    );
 
     GXQuat alpha {};
     alpha.FromAxisAngle ( _rotateAxisVector, _rotateSpeed * ( f - _initialScalarDistance ) );
@@ -310,6 +320,7 @@ void RotateTool::CheckRing ( Closest &closest,
     GXMat3 const &cameraBasis,
     GXVec3 const &k,
     GXVec3 const &vi,
+    VkOffset2D const &mouse,
     float s,
     bool billboard,
     bool lmbPressed,
@@ -358,9 +369,16 @@ void RotateTool::CheckRing ( Closest &closest,
         s * collider.GetRadius ()
     );
 
-    _initialScalarDistance = info._distance;
+    _lastMouse = mouse;
     _tangentLocation = info._tangentLocation;
-    _tangentDirection = info._tangentDirection;
+
+    GXVec3 const &dir = info._tangentDirection;
+    _tangentDirection = dir;
+
+    // See <repo>/docs/gizmo-rendering.md#inter-ring
+    GXVec2 m ( dir.DotProduct ( cameraBasis.Right () ), dir.DotProduct ( cameraBasis.Up () ) );
+    m._data[ 1U ] = -m._data[ 1U ];
+    _projectedTangentLineDirection = m;
 }
 
 float RotateTool::SetupRing ( SDFRingBase &ring, eSDFPalette color ) const noexcept
@@ -448,9 +466,17 @@ bool RotateTool::LockAxis () noexcept
     _tangentRenderPosition.Subtract ( pivot, s );
     _tangentDirectionARenderPosition.Sum ( pivot, s );
 
-    _tangentLine.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
-    _tangentDirectionA.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
-    _tangentDirectionB.Show ( GXVec3::ZERO, GXQuat::IDENTITY );
+    GXVec3 beta {};
+    beta.Subtract ( _tangentRenderPosition, _location );
+    _tangentLine.SetLocationAndRotation ( beta, _tangentRenderRotation );
+    _tangentLine.Show ( _location, GXQuat::IDENTITY );
+
+    _tangentDirectionB.SetLocationAndRotation ( beta, _tangentDirectionBRenderRotation );
+    _tangentDirectionB.Show ( _location, GXQuat::IDENTITY );
+
+    beta.Subtract ( _tangentDirectionARenderPosition, _location );
+    _tangentDirectionA.SetLocationAndRotation ( beta, _tangentRenderRotation );
+    _tangentDirectionA.Show ( _location, GXQuat::IDENTITY );
 
     return true;
 }
@@ -488,41 +514,22 @@ RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosit
     {
         result._tangentDirection.CrossProduct ( ringDirection, rayDirection );
         result._tangentLocation.Sum ( ringPosition, radius, oppositeCameraDirection );
-    }
-    else
-    {
-        GXVec3 lambda {};
-        lambda.Subtract ( ringPosition, rayOrigin );
-
-        GXVec3 g {};
-        g.Sum ( rayOrigin, lambda.DotProduct ( ringDirection ) / alpha, rayDirection );
-
-        lambda.Subtract ( g, ringPosition );
-        lambda.Normalize ();
-
-        result._tangentDirection.CrossProduct ( ringDirection, lambda );
-        result._tangentLocation.Sum ( ringPosition, radius, lambda );
+        return result;
     }
 
-    result._distance = ResolveSkewLines ( rayOrigin, rayDirection, result._tangentLocation, result._tangentDirection );
+    GXVec3 lambda {};
+    lambda.Subtract ( ringPosition, rayOrigin );
+
+    GXVec3 g {};
+    g.Sum ( rayOrigin, lambda.DotProduct ( ringDirection ) / alpha, rayDirection );
+
+    lambda.Subtract ( g, ringPosition );
+    lambda.Normalize ();
+
+    result._tangentDirection.CrossProduct ( ringDirection, lambda );
+    result._tangentLocation.Sum ( ringPosition, radius, lambda );
+
     return result;
-}
-
-float RotateTool::ResolveSkewLines ( GXVec3 const &aPosition,
-    GXVec3 const &aDirection,
-    GXVec3 const &bPosition,
-    GXVec3 const &bDirection
-) noexcept
-{
-    // See <repo>/docs/gizmo-rendering.md#inter-ring
-    GXVec3 alpha {};
-    alpha.CrossProduct ( bDirection, aDirection );
-
-    GXVec3 eta {};
-    eta.CrossProduct ( aDirection, alpha );
-    alpha.Subtract ( aPosition, bPosition );
-
-    return alpha.DotProduct ( eta ) / bDirection.DotProduct ( eta );
 }
 
 } // namespace editor

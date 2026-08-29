@@ -514,13 +514,14 @@ where:
 - $\overrightarrow{A}$ is ring normal currently being manipulated by the mouse (📨provided)
 - $r$ is ring radius (📨provided)
 - $\overrightarrow{D}$ is tangent line direction (🧮will be computed)
+- $\overrightarrow{M}$ is 2D direction of projected tangent line direction in screen space (🧮will be computed)
 - $G$ is the ring plane intersection point with the initial ray cast from the mouse's screen position into the 3D scene (🧮will be computed)
-- $R$ is any fixed point on the tangent line (🧮will be computed)
+- $S$ initial hit point (📨provided)
 - $V$ is camera position (📨provided)
-- $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
-- $s$ is the scalar distance along tangent line, measured from the tangent line touch point to the initial 3D point of mouse interaction (🧮will be computed)
-- $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
-- $f$ is the scalar distance along tangent line, measured from the tangent line touch point to the current 3D point of mouse interaction (🧮will be computed)
+- $\overrightarrow{W}$ is 2D screen space horizontal axis
+- $\overrightarrow{H}$ is 2D screen space vertical axis
+- $\overrightarrow{F}$ is 2D point of current mouse location in screen space (📨provided)
+- $f$ is the scalar distance along screen space tangent line between initial and current mouse interaction (🧮will be computed)
 
 The first step is to find intersection point $G$ of mouse initial ray with ring plane. We gonna use the idea from the [_line–plane intersection paper_](https://en.wikipedia.org/wiki/Line%E2%80%93plane_intersection#Algebraic_form).
 
@@ -564,27 +565,23 @@ $$
     R=O-r\overrightarrow{K}
 $$
 
-At this stage we have full information about tangent line! 🥳
+At this stage we have enough information about tangent line.
 
-Next core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. So our primary goal is to compute $s$ and $f$ scalar distances.
+However, an important detail remains. Because the ray is fired from the camera through a pixel via projection, it distorts the perceptual rotation speed. As the user moves the mouse further away from the initial point $S$, the rotation appears to artificially accelerate or decelerate.
+
+To resolve this issue, we must transform the coordinates into a view-aligned space. Specifically, it's needed to project the system onto a plane that is perpendicular to the camera's optical axis and passes through the initial point $S$. The tangent line direction vector $\overrightarrow{D}$ is projected onto this plane to yield the mouse-space direction vector $\overrightarrow{M}$. Then it's needed to use $\overrightarrow{M}$ to measure the mouse displacement along the tangent line. This resulting distance maps directly and linearly to the rotation angle around the rotation axis $\overrightarrow{A}$.
 
 In the end of the day to compute the rotation of the gizmo, we follow a two-stage process:
 
 **1. Initialization (first click)**
 
-The first step is to establish the starting point $s$. We calculate the initial intersection point $s$ along and store the original gizmo orientation $\theta$ as [_quaternion_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations).
+The first step is to establish the starting mouse location as $S$ and store the original gizmo orientation $\theta$ as [_quaternion_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations).
 
 **2. Update (mouse movement)**
 
-On every frame the mouse moves, we compute the current intersection point $f$. The relationship between these values determines the transformation.
+On every frame the mouse moves, we compute scalar distance along screen space tangent line between initial and current mouse location $f$.
 
-The change $d$ is found by the difference between the current and initial intersection points:
-
-$$
-    d=f-s
-$$
-
-We need to construct orientation change $\omega$ quaternion using [_axis-angle formula_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations). The axis is $\overrightarrow{A}$. The angle is $d$.
+We need to construct orientation change $\omega$ quaternion using [_axis-angle formula_](https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Using_quaternions_as_rotations). The axis is $\overrightarrow{A}$. The angle is $f$ with [_DPI_](https://en.wikipedia.org/wiki/Dots_per_inch) correction.
 
 So the final orientation $\chi$ is:
 
@@ -592,39 +589,32 @@ $$
     \chi=\omega \theta
 $$
 
-Last question to answer is the formula to compute the the shortest distance between the mouse ray and the tangent line.
+Last question to answer is the formula to compute $f$.
 
-<img src="./images/rotate-gizmo-skew-lines.svg">
+<img src="./images/rotate-gizmo-ring-math.svg">
 
-The idea is taken from [_nearest points paper_](https://en.wikipedia.org/wiki/Skew_lines#Nearest_points). The first key observation is that the direction of the common perpendicular $\overrightarrow{\mu}$ is defined by the cross product of the two skew line directions:
+The core idea is to perform all remaining calculations directly in 2D screen space. Given that the current mouse location $F$ is already known, it's needed to project the 3D ring tangent direction $\overrightarrow{D}$ onto the screen plane to find $\overrightarrow{M}$.
 
-$$
-    \overrightarrow{\mu}=\overrightarrow{D}\times\overrightarrow{F}
-$$
-
-**🥳NOTE:** The mathematical model never fails because vectors $\overrightarrow{D}$ and $\overrightarrow{F}$ are never collinear. Why? Because we handled this case previously by computing $\overrightarrow{D}$ and $R$ two ways.
-
-Our next step is to precompute the vector $\overrightarrow{\eta}$:
+To achieve this, it's needed to establish the camera's screen-aligned basis vectors: $\overrightarrow{W}$, representing the camera's right direction, and $\overrightarrow{H}$, representing the camera's down direction. Because our final operations take place in 2D space, these two vectors provide a sufficient basis. We can then project the 3D tangent direction $\overrightarrow{D}$ onto the screen plane via dot products with this camera basis:
 
 $$
-    \overrightarrow{\eta}=\overrightarrow{F}\times\overrightarrow{\mu}
+\begin{aligned}
+    D'_x=\overrightarrow{D}\cdot\overrightarrow{W}                                                                    \\
+    D'_y=\overrightarrow{D}\cdot\overrightarrow{H}
+\end{aligned}
 $$
 
-Now the scalar distance $f$ equals:
+Because $\overrightarrow{D}$ is rarely perfectly parallel to the camera plane, the resulting projection $\overrightarrow{D'}$ must be normalized to obtain the unit direction vector $\overrightarrow{M}$:
 
 $$
-    f
-    =
-    \dfrac
-    {
-        \left(V-R\right)\cdot{\overrightarrow{\eta}}
-    }
-    {
-        \overrightarrow{D}\cdot\overrightarrow{\eta}
-    }
+    \overrightarrow{M}=\dfrac{\overrightarrow{D'}}{\left|\overrightarrow{D'}\right|}
 $$
 
-**⚠️ ATTENTION:** Since all calculations occur in 3D space, the scalar distances $s$ and $f$ are measured in scene units. This creates a "dynamic sensitivity" effect: the further the gizmo is from the camera, the faster it will rotate, leading to a frustrating and inconsistent user experience. To ensure a smooth, constant feel, you must normalize the final distance $d$ using the [_pixel size_](#pixel-coverage) value, calculated specifically at the gizmo’s origin $O$.
+At this stage, it's possible to compute the distance $f$ along the screen-space tangent line. This is achieved by projecting the mouse displacement vector calculated relative to the initial mouse location onto the normalized direction vector $\overrightarrow{M}$:
+
+$$
+    f=\left(F-S\right)\cdot\overrightarrow{M}
+$$
 
 And that's it!
 

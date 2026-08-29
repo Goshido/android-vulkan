@@ -29,7 +29,6 @@ class RotateTool final : public Tool
         struct TangentLine final
         {
             GXVec3                                  _tangentLocation {};
-            float                                   _distance = 0.0F;
             GXVec3                                  _tangentDirection {};
         };
 
@@ -143,6 +142,7 @@ class RotateTool final : public Tool
         GXVec3                                      _location { 0.0F, 0.0F, 12.0F };
 
         GXVec3                                      _tangentDirection {};
+        GXVec2                                      _projectedTangentLineDirection {};
         GXVec3                                      _tangentRenderPosition {};
         GXVec3                                      _tangentDirectionARenderPosition {};
 
@@ -185,7 +185,7 @@ class RotateTool final : public Tool
         void ActivateSDF ( SDF &sdf ) noexcept;
         void DeactivateSDF () noexcept;
 
-        void HandleRingRotate ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+        void HandleRingRotate ( VkOffset2D const &mouse ) noexcept;
         void HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept;
 
         void CheckBody ( Closest &closest,
@@ -204,6 +204,7 @@ class RotateTool final : public Tool
             GXMat3 const &cameraBasis,
             GXVec3 const &k,
             GXVec3 const &vi,
+            VkOffset2D const &mouse,
             float s,
             bool billboard,
             bool lmbPressed,
@@ -224,12 +225,6 @@ class RotateTool final : public Tool
             GXVec3 const &rayDirection,
             GXVec3 const &oppositeCameraDirection,
             float radius
-        ) noexcept;
-
-        [[nodiscard]] static float ResolveSkewLines ( GXVec3 const &aPosition,
-            GXVec3 const &aDirection,
-            GXVec3 const &bPosition,
-            GXVec3 const &bDirection
         ) noexcept;
 };
 

@@ -130,7 +130,9 @@ class RotateTool final : public Tool
         float                                       _initialScalarDistance;
 
         GXVec3                                      _tangentLocation {};
-        float                                       _rotateSpeed;
+
+        bool                                        _rotateBall = false;
+        eAxis                                       _rotateAxis = eAxis::None;
 
         GXQuat                                      _tangentRenderRotation {};
         GXQuat                                      _tangentDirectionBRenderRotation {};
@@ -142,12 +144,9 @@ class RotateTool final : public Tool
         GXVec3                                      _location { 0.0F, 0.0F, 12.0F };
 
         GXVec3                                      _tangentDirection {};
-        GXVec2                                      _projectedTangentLineDirection {};
         GXVec3                                      _tangentRenderPosition {};
         GXVec3                                      _tangentDirectionARenderPosition {};
-
-        bool                                        _rotateBall = false;
-        eAxis                                       _rotateAxis = eAxis::None;
+        GXVec2                                      _tangentProjection {};
 
         VkOffset2D                                  _lastMouse {};
         bool                                        _lastLMBPressed = false;

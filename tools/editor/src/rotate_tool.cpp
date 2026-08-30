@@ -23,7 +23,7 @@ constexpr eSDFPalette RING_COLOR = eSDFPalette::Grey;
 constexpr float TANGENT_OFFSET_X = -3.5F;
 
 // FUCK - this values depend from DPI
-constexpr float RING_SENSITIVITY = 8.0e-4F;
+constexpr float RING_SENSITIVITY = 1.5e-2F;
 constexpr float BALL_SENSITIVITY = 1.74532925e-2F;
 
 } // end of anonymous namespace
@@ -36,6 +36,7 @@ void RotateTool::Activate () noexcept
     _y.Show ( _location, _rotation );
     _z.Show ( _location, _rotation );
     _ring.Show ( _location, _rotation );
+    _body.OnParentUpdated ( _location, _rotation );
     android_vulkan::LogInfo ( ">>> Rotate tool activated" );
 }
 
@@ -121,8 +122,6 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
     k.Reverse ();
 
     float const s = vi.DotProduct ( d );
-    _rotateSpeed = RING_SENSITIVITY / s;
-
     Closest closest {};
 
     CheckRing ( closest,
@@ -233,7 +232,7 @@ void RotateTool::DeactivateSDF () noexcept
 void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-ring
-    float const f = _projectedTangentLineDirection.DotProduct (
+    float const f = _tangentProjection.DotProduct (
         GXVec2 (
             static_cast<float> ( mouse.x - _lastMouse.x ),
             static_cast<float> ( mouse.y - _lastMouse.y )
@@ -241,7 +240,7 @@ void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
     );
 
     GXQuat alpha {};
-    alpha.FromAxisAngle ( _rotateAxisVector, _rotateSpeed * ( f - _initialScalarDistance ) );
+    alpha.FromAxisAngle ( _rotateAxisVector, RING_SENSITIVITY * ( f - _initialScalarDistance ) );
     _rotation.Multiply ( alpha, _initialRotation );
 
     GXVec3 beta {};
@@ -263,8 +262,8 @@ void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
 
 void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept
 {
-    int32_t dx = mouse.x - _lastMouse.x;
-    int32_t dy = mouse.y - _lastMouse.y;
+    int32_t const dx = _lastMouse.x - mouse.x;
+    int32_t const dy = _lastMouse.y - mouse.y;
 
     GXVec2 delta {};
     delta.Multiply ( GXVec2 ( static_cast<float> ( dx ), static_cast<float> ( dy ) ), BALL_SENSITIVITY );
@@ -273,13 +272,18 @@ void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &camer
     alpha.FromAxisAngle ( cameraBasis.Right (), delta._data[ 1U ] );
 
     GXQuat beta {};
-    alpha.FromAxisAngle ( cameraBasis.Up (), -delta._data[ 0U ] );
+    beta.FromAxisAngle ( cameraBasis.Up (), delta._data[ 0U ] );
 
     GXQuat zeta {};
     zeta.Multiply ( alpha, beta );
 
     alpha.Multiply ( zeta, _rotation );
     _rotation = alpha;
+
+    _x.OnParentUpdated ( _location, _rotation );
+    _y.OnParentUpdated ( _location, _rotation );
+    _z.OnParentUpdated ( _location, _rotation );
+    _body.OnParentUpdated ( _location, _rotation );
 
     _lastMouse = mouse;
 }
@@ -378,7 +382,7 @@ void RotateTool::CheckRing ( Closest &closest,
     // See <repo>/docs/gizmo-rendering.md#inter-ring
     GXVec2 m ( dir.DotProduct ( cameraBasis.Right () ), dir.DotProduct ( cameraBasis.Up () ) );
     m._data[ 1U ] = -m._data[ 1U ];
-    _projectedTangentLineDirection = m;
+    _tangentProjection = m;
 }
 
 float RotateTool::SetupRing ( SDFRingBase &ring, eSDFPalette color ) const noexcept

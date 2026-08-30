@@ -14,9 +14,6 @@ SDFRingBase::SDFRingBase ( GXVec3 &&location, GXQuat &&rotation, GXVec3 &&scale,
 
 void SDFRingBase::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    if ( !_node.IsConnected () ) [[unlikely]]
-        return;
-
     GXVec3 alpha {};
     rotation.TransformFast ( alpha, _location );
     _locationWorld.Sum ( location, alpha );

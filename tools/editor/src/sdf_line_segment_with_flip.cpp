@@ -101,9 +101,6 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
 
 void SDFLineSegmentWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    if ( !_node.IsConnected () ) [[unlikely]]
-        return;
-
     GXVec3 alpha {};
     rotation.TransformFast ( alpha, _location );
     _locationWorld.Sum ( location, alpha );

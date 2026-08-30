@@ -15,6 +15,28 @@ namespace editor {
 class MoveTool final : public Tool
 {
     private:
+        enum class eAxis : uint8_t
+        {
+            X,
+            Y,
+            Z,
+            None
+        };
+
+        struct ColorSet final
+        {
+            eSDFPalette             _active = eSDFPalette::White;
+            eSDFPalette             _standby = eSDFPalette::White;
+        };
+
+        struct Closest final
+        {
+            SDF*                    _control = nullptr;
+            SDFCone*                _cone = nullptr;
+            float                   _distance = std::numeric_limits<float>::max ();
+        };
+
+    private:
         SDFSphere                   _origin { GXVec3 ( 0.0F, 0.0F, 0.0F ), 1.0e-1F, eSDFPalette::White };
 
         SDFLineSegment              _xLine
@@ -182,6 +204,22 @@ class MoveTool final : public Tool
             -4.0F
         };
 
+        SDF*                        _control = nullptr;
+        SDFCone*                    _cone = nullptr;
+
+        GXQuat                      _rotation = GXQuat::IDENTITY;
+        GXVec3                      _location { -0.6F, 0.0F, 12.0F };
+        float                       _initialNegativeScalarDistance = 0.0F;
+
+        GXVec3                      _moveAxisVector {};
+        eAxis                       _moveAxis = eAxis::None;
+
+        GXVec3                      _initialMoveLocation {};
+        eAxis                       _movePlane = eAxis::None;
+
+        GXVec3                      _initialNegativePlaneOffset {};
+        bool                        _lastLMBPressed = false;
+
     public:
         explicit MoveTool () noexcept;
 
@@ -203,7 +241,68 @@ class MoveTool final : public Tool
         void End () noexcept override;
         void Cancel () noexcept override;
 
-        void Update () noexcept;
+        void Update ( GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &vi,
+            bool leftMouseButtonPressed
+        ) noexcept;
+
+    private:
+        // Note method will return std::nullopt in case of unknown box.
+        [[nodiscard]] std::optional<ColorSet> AcquirePlaneColorSet ( SDF &plane ) noexcept;
+
+        void ActivateSDF ( SDF &sdf, SDFCone* cone ) noexcept;
+        void DeactivateSDF () noexcept;
+
+        void HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+        void HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+
+        void AxisCheck ( Closest &closest,
+            SDFLineSegment &sdf,
+            SDFCone &sdfCone,
+            bool test,
+            eAxis axis,
+            float axisRadius,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            float pixelSize,
+            bool lmbPressed
+        ) noexcept;
+
+        void PlaneCheck ( Closest &closest,
+            SDFBoxWithFlip &sdf,
+            GXVec3 const &offset,
+            bool aTest,
+            bool bTest,
+            eAxis axis,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            float pixelSize,
+            bool lmbPressed
+        ) noexcept;
+
+        void ResetVisuals () noexcept;
+        void SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept;
+        void HidePlane ( SDFBoxWithFlip &plane, SDFLineSegmentWithFlip &lineA, SDFLineSegmentWithFlip &lineB ) noexcept;
+
+        [[nodiscard]] bool LockAxis () noexcept;
+        [[nodiscard]] bool LockPlane () noexcept;
+
+        [[nodiscard]] std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
+            GXVec3 const &axisDirection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &cameraForward
+        ) noexcept;
+
+        [[nodiscard]] std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
+            GXVec3 const &planeNormal,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &cameraForward
+        ) noexcept;
+
+        void UpdateChildren () noexcept;
+
+        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
 };
 
 } // namespace editor

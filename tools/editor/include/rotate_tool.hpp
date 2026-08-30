@@ -116,7 +116,7 @@ class RotateTool final : public Tool
         GizmoRingCollider                           _ringCollider { RING_SIZE, RING_THICKNESS };
         GizmoSphereCollider                         _bodyCollider { SPHERE_SIZE };
 
-        SDF*                                        _controlSDF = nullptr;
+        SDF*                                        _control = nullptr;
 
         std::unordered_map<SDF*, GXVec3>            _inactiveSize
         {

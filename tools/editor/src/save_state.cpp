@@ -1239,10 +1239,8 @@ void SaveState::EncodeArray ( Binary &aData, Binary &bData, Container const &con
 
             case Container::eType::Array:
                 [[fallthrough]];
-
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;
@@ -1341,7 +1339,6 @@ void SaveState::EncodeContainer ( Binary &aData, Binary &bData, Container const 
 
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;
@@ -1659,10 +1656,8 @@ void SaveState::DecodeArray ( Container &root, uint8_t const* &aData, uint8_t co
 
         case Container::eType::Array:
             [[fallthrough]];
-
         case Container::eType::Null:
             [[fallthrough]];
-
         default:
             AV_ASSERT ( false )
         break;
@@ -1739,7 +1734,6 @@ void SaveState::DecodeContainer ( Container &root, uint8_t const* &aData, uint8_
 
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;

@@ -1262,7 +1262,6 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 
         case VK_SUBOPTIMAL_KHR:
             [[fallthrough]];
-
         case VK_ERROR_OUT_OF_DATE_KHR:
             NotifyRecreateSwapchain ( messageQueue );
         return;

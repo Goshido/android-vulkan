@@ -200,11 +200,11 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
 
 void RotateTool::ActivateSDF ( SDF &sdf ) noexcept
 {
-    if ( &sdf == _controlSDF ) [[likely]]
+    if ( &sdf == _control ) [[likely]]
         return;
 
     DeactivateSDF ();
-    _controlSDF = &sdf;
+    _control = &sdf;
 
     if ( &sdf == &_body )
     {
@@ -218,15 +218,15 @@ void RotateTool::ActivateSDF ( SDF &sdf ) noexcept
 
 void RotateTool::DeactivateSDF () noexcept
 {
-    if ( !_controlSDF ) [[likely]]
+    if ( !_control ) [[likely]]
         return;
 
-    if ( _controlSDF == &_body )
-        _controlSDF->Hide ();
+    if ( _control == &_body )
+        _control->Hide ();
     else
-        _controlSDF->SetScale ( _inactiveSize.at ( _controlSDF ) );
+        _control->SetScale ( _inactiveSize.at ( _control ) );
 
-    _controlSDF = nullptr;
+    _control = nullptr;
 }
 
 void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept

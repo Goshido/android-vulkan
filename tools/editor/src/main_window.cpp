@@ -639,7 +639,6 @@ void MainWindow::Save () noexcept
 
         case SW_SHOWNORMAL:
             [[fallthrough]];
-
         default:
             state = eWindowState::Normal;
         break;

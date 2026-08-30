@@ -1,4 +1,4 @@
-// version 1.105
+// version 1.106
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -1445,7 +1445,7 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
 
 [[maybe_unused]] GXVec3 &GXMat3::Up () noexcept
 {
-    return *reinterpret_cast<GXVec3 *> ( _data[ 1U ] );
+    return *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
 }
 
 [[maybe_unused]] GXVec3 const &GXMat3::Forward () const noexcept
@@ -1455,7 +1455,7 @@ GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
 
 [[maybe_unused]] GXVec3 &GXMat3::Forward () noexcept
 {
-    return *reinterpret_cast<GXVec3 *> ( _data[ 2U ] );
+    return *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Identity () noexcept

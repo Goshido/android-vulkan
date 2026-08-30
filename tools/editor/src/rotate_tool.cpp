@@ -450,13 +450,19 @@ bool RotateTool::LockAxis () noexcept
 
     _body.Hide ();
 
-    // FUCK - try to construct 3x3 matrix, convert to quaternion, reverse up and right, convert to quaternion.
-    GXVec3 up {};
+    GXMat3 m {};
+    GXVec3 &up = m.Up ();
     up.CrossProduct ( _rotateAxisVector, _tangentDirection );
-    _tangentDirectionBRenderRotation.From ( _rotateAxisVector, up );
+
+    GXVec3 &right = m.Right ();
+    right = _tangentDirection;
+
+    m.Forward () = _rotateAxisVector;
+    _tangentDirectionBRenderRotation.FromFast ( m );
 
     up.Reverse ();
-    _tangentRenderRotation.From ( _rotateAxisVector, up );
+    right.Reverse ();
+    _tangentRenderRotation.From ( m );
 
     GXVec3 a {};
     a.Subtract ( _tangentLocation, _location );

@@ -138,11 +138,22 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
     bool const prevMoving = _moveAxis != eAxis::None || _movePlane != eAxis::None;
     bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
     bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
-    _moveAxis = lmbReleased ? eAxis::None : _moveAxis;
+
+    eAxis cases[] = { _moveAxis, eAxis::None };
+    _moveAxis = cases[ static_cast<size_t> ( lmbReleased ) ];
 
     if ( _moveAxis != eAxis::None )
     {
         HandleAxisMove ( cameraLocation, rayDirection );
+        return;
+    }
+
+    cases[ 0U ] = _movePlane;
+    _movePlane = cases[ static_cast<size_t> ( lmbReleased ) ];
+
+    if ( _movePlane != eAxis::None )
+    {
+        HandlePlaneMove ( cameraLocation, rayDirection );
         return;
     }
 
@@ -233,7 +244,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    if ( LockAxis () || LockPlane () )
+    if ( LockAxis () || LockPlane ( cameraLocation ) )
         return;
 
     if ( !closest._control )
@@ -474,12 +485,15 @@ void MoveTool::ResetVisuals () noexcept
 
         planeA.Show ( _location, _rotation );
         planeA.SetColor ( color );
+        planeA.UnlockSensors ();
 
         planeB.Show ( _location, _rotation );
         planeB.SetColor ( color );
+        planeB.UnlockSensors ();
 
         plane.Show ( _location, _rotation );
         plane.SetColor ( planeColor );
+        plane.UnlockSensors ();
 
         constexpr GXVec3 coneSize ( CONE_STANDBY_LENGTH, CONE_STANDBY_SIZE, CONE_STANDBY_SIZE );
         cone.SetScale ( coneSize );
@@ -546,21 +560,27 @@ bool MoveTool::LockAxis () noexcept
     return true;
 }
 
-bool MoveTool::LockPlane () noexcept
+bool MoveTool::LockPlane ( GXVec3 const &cameraLocation ) noexcept
 {
     constexpr auto setup = [] ( SDFBoxWithFlip &plane,
         SDFLineSegmentWithFlip &lineA,
-        SDFLineSegmentWithFlip &lineB
+        SDFLineSegmentWithFlip &lineB,
+        GXVec3 const &cameraLocation
     ) noexcept {
         plane.SetColor ( MOVE_TRANSPARENT_COLOR );
+        plane.LockSensors ( cameraLocation );
+
         lineA.SetColor ( MOVE_OPAQUE_COLOR );
+        lineA.LockSensors ( cameraLocation );
+
         lineB.SetColor ( MOVE_OPAQUE_COLOR );
+        lineB.LockSensors ( cameraLocation );
     };
 
     switch ( _movePlane )
     {
         case eAxis::X:
-            setup ( _xPlane, _xPlaneY, _xPlaneZ );
+            setup ( _xPlane, _xPlaneY, _xPlaneZ, cameraLocation );
             HidePlane ( _yPlane, _yPlaneZ, _yPlaneX );
             HidePlane ( _zPlane, _zPlaneX, _zPlaneY );
             SetupAxis ( _xLine, _xCone, MOVE_INACTIVE_COLOR );
@@ -569,7 +589,7 @@ bool MoveTool::LockPlane () noexcept
         return true;
 
         case eAxis::Y:
-            setup ( _yPlane, _yPlaneZ, _yPlaneX );
+            setup ( _yPlane, _yPlaneZ, _yPlaneX, cameraLocation );
             HidePlane ( _zPlane, _zPlaneX, _zPlaneY );
             HidePlane ( _xPlane, _xPlaneY, _xPlaneZ );
             SetupAxis ( _xLine, _xCone, MOVE_OPAQUE_COLOR );
@@ -578,7 +598,7 @@ bool MoveTool::LockPlane () noexcept
         return true;
 
         case eAxis::Z:
-            setup ( _zPlane, _zPlaneX, _zPlaneY );
+            setup ( _zPlane, _zPlaneX, _zPlaneY, cameraLocation );
             HidePlane ( _xPlane, _xPlaneY, _xPlaneZ );
             HidePlane ( _yPlane, _yPlaneZ, _yPlaneX );
             SetupAxis ( _xLine, _xCone, MOVE_OPAQUE_COLOR );

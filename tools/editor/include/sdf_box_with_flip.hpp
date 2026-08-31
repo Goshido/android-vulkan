@@ -18,6 +18,10 @@ class SDFBoxWithFlip final : public SDF
         GXQuat const*   _bFlipRotation = nullptr;
         GXVec3 const*   _bFlipLocation = nullptr;
 
+        bool            _lockSensors = false;
+        bool            _aSensorResult = false;
+        bool            _bSensorResult = false;
+
     public:
         SDFBoxWithFlip () = delete;
 
@@ -45,6 +49,13 @@ class SDFBoxWithFlip final : public SDF
             GXQuat const &bFlipRotation,
             GXVec3 const &bFlipLocation
         ) noexcept;
+
+        void LockSensors ( GXVec3 const &cameraLocation ) noexcept;
+        void UnlockSensors () noexcept;
+
+    private:
+        void ReadSensors ( GXVec3 const &cameraLocation ) noexcept;
+        void UpdateSensors ( GXVec3 const &cameraLocation ) noexcept;
 };
 
 } // namespace editor

@@ -286,7 +286,7 @@ class MoveTool final : public Tool
         void HidePlane ( SDFBoxWithFlip &plane, SDFLineSegmentWithFlip &lineA, SDFLineSegmentWithFlip &lineB ) noexcept;
 
         [[nodiscard]] bool LockAxis () noexcept;
-        [[nodiscard]] bool LockPlane () noexcept;
+        [[nodiscard]] bool LockPlane ( GXVec3 const &cameraLocation ) noexcept;
 
         [[nodiscard]] std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
             GXVec3 const &axisDirection,

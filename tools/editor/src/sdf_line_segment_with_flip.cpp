@@ -10,21 +10,21 @@ SDFLineSegmentWithFlip::SDFLineSegmentWithFlip ( GXVec3 &&location,
     GXQuat &&rotation,
     GXVec3 &&scale,
     eSDFPalette palette,
-    GXQuat const &xFlipRotation,
-    GXVec3 const &xFlipLocation,
-    float xFlipOffset,
-    GXQuat const &yFlipRotation,
-    GXVec3 const &yFlipLocation,
-    float yFlipOffset
+    GXQuat const &aFlipRotation,
+    GXVec3 const &aFlipLocation,
+    float aFlipOffset,
+    GXQuat const &bFlipRotation,
+    GXVec3 const &bFlipLocation,
+    float bFlipOffset
 ) noexcept:
     SDF ( std::move ( location ), std::move ( scale ), palette ),
     _rotation ( std::move ( rotation ) ),
-    _xFlipRotation ( xFlipRotation ),
-    _xFlipLocation ( xFlipLocation ),
-    _yFlipRotation ( yFlipRotation ),
-    _yFlipLocation ( yFlipLocation ),
-    _xFlipOffset ( xFlipOffset ),
-    _yFlipOffset ( yFlipOffset )
+    _aFlipRotation ( aFlipRotation ),
+    _aFlipLocation ( aFlipLocation ),
+    _bFlipRotation ( bFlipRotation ),
+    _bFlipLocation ( bFlipLocation ),
+    _aFlipOffset ( aFlipOffset ),
+    _bFlipOffset ( bFlipOffset )
 {
     // NOTHING
 }
@@ -56,18 +56,14 @@ void SDFLineSegmentWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &
 
             GXVec3 &p = toWorld._w;
             p = _locationWorld;
-            GXVec3 flipRight {};
-            _xFlipRotation.GetRight ( flipRight );
-            alpha.Subtract ( _xFlipLocation, cameraLocation );
 
-            if ( flipRight.DotProduct ( alpha ) > 0.0F )
-                p.Sum ( p, _xFlipOffset, toWorld._x );
+            ReadSensors ( cameraLocation );
 
-            _yFlipRotation.GetRight ( flipRight );
-            alpha.Subtract ( _yFlipLocation, cameraLocation );
+            if ( _aSensorResult )
+                p.Sum ( p, _aFlipOffset, toWorld._x );
 
-            if ( flipRight.DotProduct ( alpha ) > 0.0F )
-                p.Sum ( p, _yFlipOffset, toWorld._y );
+            if ( _bSensorResult )
+                p.Sum ( p, _bFlipOffset, toWorld._y );
 
             alpha.Subtract ( p, _parentLocation );
             p.Sum ( _parentLocation, pixelSize, alpha );
@@ -106,6 +102,39 @@ void SDFLineSegmentWithFlip::OnParentUpdated ( GXVec3 const &location, GXQuat co
     _locationWorld.Sum ( location, alpha );
     _rotationWorld.Multiply ( rotation, _rotation );
     _parentLocation = location;
+}
+
+void SDFLineSegmentWithFlip::LockSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    _lockSensors = true;
+    UpdateSensors ( cameraLocation );
+}
+
+void SDFLineSegmentWithFlip::UnlockSensors () noexcept
+{
+    _lockSensors = false;
+}
+
+void SDFLineSegmentWithFlip::ReadSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    if ( !_lockSensors )
+    {
+        UpdateSensors ( cameraLocation );
+    }
+}
+
+void SDFLineSegmentWithFlip::UpdateSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    GXVec3 alpha {};
+    alpha.Subtract ( _aFlipLocation, cameraLocation );
+
+    GXVec3 right {};
+    _aFlipRotation.GetRight ( right );
+    _aSensorResult = alpha.DotProduct ( right ) > 0.0F;
+
+    alpha.Subtract ( _bFlipLocation, cameraLocation );
+    _bFlipRotation.GetRight ( right );
+    _bSensorResult = alpha.DotProduct ( right ) > 0.0F;
 }
 
 } // namespace editor

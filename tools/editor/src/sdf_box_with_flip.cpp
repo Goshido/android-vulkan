@@ -49,17 +49,12 @@ void SDFBoxWithFlip::Show ( GXVec3 const &locationParent, GXQuat const &rotation
             GXVec3 &p = toWorld._w;
             p = _locationWorld;
 
-            GXVec3 flipRight {};
-            _aFlipRotation->GetRight ( flipRight );
-            alpha.Subtract ( *_aFlipLocation, cameraLocation );
+            ReadSensors ( cameraLocation );
 
-            if ( flipRight.DotProduct ( alpha ) > 0.0F )
+            if ( _aSensorResult )
                 p.Sum ( p, _flipOffset, toWorld._y );
 
-            _bFlipRotation->GetRight ( flipRight );
-            alpha.Subtract ( *_bFlipLocation, cameraLocation );
-
-            if ( flipRight.DotProduct ( alpha ) > 0.0F )
+            if ( _bSensorResult )
                 p.Sum ( p, _flipOffset, toWorld._z );
 
             alpha.Subtract ( p, _parentLocation );
@@ -105,6 +100,39 @@ void SDFBoxWithFlip::SetFlipSensors ( GXQuat const &aFlipRotation,
     _aFlipLocation = &aFlipLocation;
     _bFlipRotation = &bFlipRotation;
     _bFlipLocation = &bFlipLocation;
+}
+
+void SDFBoxWithFlip::LockSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    _lockSensors = true;
+    UpdateSensors ( cameraLocation );
+}
+
+void SDFBoxWithFlip::UnlockSensors () noexcept
+{
+    _lockSensors = false;
+}
+
+void SDFBoxWithFlip::ReadSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    if ( !_lockSensors )
+    {
+        UpdateSensors ( cameraLocation );
+    }
+}
+
+void SDFBoxWithFlip::UpdateSensors ( GXVec3 const &cameraLocation ) noexcept
+{
+    GXVec3 alpha {};
+    alpha.Subtract ( *_aFlipLocation, cameraLocation );
+
+    GXVec3 right {};
+    _aFlipRotation->GetRight ( right );
+    _aSensorResult = alpha.DotProduct ( right ) > 0.0F;
+
+    alpha.Subtract ( *_bFlipLocation, cameraLocation );
+    _bFlipRotation->GetRight ( right );
+    _bSensorResult = alpha.DotProduct ( right ) > 0.0F;
 }
 
 } // namespace editor

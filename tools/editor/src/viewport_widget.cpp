@@ -439,15 +439,19 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 
     //_mouseNow =
     //{
-    //    .x = 795,
-    //    .y = 253
+    //    .x = 835,
+    //    .y = 274
     //};
+
+    //_moveTool.Update ( ComputeRayDirection ( basis ), _location, GetVI (), true );
 
     //_mouseNow =
     //{
-    //    .x = 796,
-    //    .y = 254
+    //    .x = 750,
+    //    .y = 350
     //};
+
+    //_moveTool.Update ( ComputeRayDirection ( basis ), _location, GetVI (), true );
 
     if ( !_selectionMode )
         return;

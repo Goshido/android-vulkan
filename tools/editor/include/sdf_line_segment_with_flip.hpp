@@ -12,13 +12,17 @@ class SDFLineSegmentWithFlip final : public SDF
     private:
         GXQuat const    _rotation {};
 
-        GXQuat const    &_xFlipRotation;
-        GXVec3 const    &_xFlipLocation;
-        GXQuat const    &_yFlipRotation;
-        GXVec3 const    &_yFlipLocation;
+        GXQuat const    &_aFlipRotation;
+        GXVec3 const    &_aFlipLocation;
+        GXQuat const    &_bFlipRotation;
+        GXVec3 const    &_bFlipLocation;
 
-        float const     _xFlipOffset;
-        float const     _yFlipOffset;
+        float const     _aFlipOffset;
+        float const     _bFlipOffset;
+
+        bool            _lockSensors = false;
+        bool            _aSensorResult = false;
+        bool            _bSensorResult = false;
 
     public:
         SDFLineSegmentWithFlip () = delete;
@@ -33,18 +37,25 @@ class SDFLineSegmentWithFlip final : public SDF
             GXQuat &&rotation,
             GXVec3 &&scale,
             eSDFPalette palette,
-            GXQuat const &xFlipRotation,
-            GXVec3 const &xFlipLocation,
-            float xFlipOffset,
-            GXQuat const &yFlipRotation,
-            GXVec3 const &yFlipLocation,
-            float yFlipOffset
+            GXQuat const &aFlipRotation,
+            GXVec3 const &aFlipLocation,
+            float aFlipOffset,
+            GXQuat const &bFlipRotation,
+            GXVec3 const &bFlipLocation,
+            float bFlipOffset
         ) noexcept;
 
         ~SDFLineSegmentWithFlip () = default;
 
         void Show ( GXVec3 const &locationParent, GXQuat const &rotationParent ) noexcept override;
         void OnParentUpdated ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
+
+        void LockSensors ( GXVec3 const &cameraLocation ) noexcept;
+        void UnlockSensors () noexcept;
+
+    private:
+        void ReadSensors ( GXVec3 const &cameraLocation ) noexcept;
+        void UpdateSensors ( GXVec3 const &cameraLocation ) noexcept;
 };
 
 } // namespace editor

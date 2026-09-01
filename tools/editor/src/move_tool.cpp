@@ -293,7 +293,7 @@ void MoveTool::ActivateSDF ( SDF &sdf, SDFCone* cone ) noexcept
     if ( &sdf == _control )
         return;
 
-    DeactivateSDF();
+    DeactivateSDF ();
     _control = &sdf;
     _cone = cone;
 
@@ -362,112 +362,6 @@ void MoveTool::HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirec
     UpdateChildren ();
 }
 
-void MoveTool::AxisCheck ( Closest &closest,
-    SDFLineSegment &sdf,
-    SDFCone &sdfCone,
-    bool test,
-    eAxis axis,
-    float axisRadius,
-    GXVec3 const &rayOrigin,
-    GXVec3 const &rayDirection,
-    float pixelSize,
-    bool lmbPressed
-) noexcept
-{
-    GXVec3 a {};
-    sdf.GetRotationWorld ().GetRight ( a );
-    float const cases[] = { AXIS_CLIP_OFFSET, 0.0F };
-    float const offset = cases[ static_cast<size_t> ( test  ) ];
-    GizmoCylinderCollider const cylinder ( axisRadius, ( AXIS_FULL_LENGTH - offset ) * pixelSize );
-
-    GXVec3 beta {};
-    beta.Sum ( _location, offset * pixelSize, a );
-    float const d = cylinder.Raycast ( rayOrigin, rayDirection, beta, a );
-
-    if ( d >= closest._distance )
-        return;
-
-    closest =
-    {
-        ._control = &sdf,
-        ._cone = &sdfCone,
-        ._distance = d
-    };
-
-    if ( !lmbPressed )
-        return;
-
-    _movePlane = eAxis::None;
-    auto const distance = ResolveAxisScalarDistance ( _location, a, rayOrigin, rayDirection );
-
-    if ( !distance )
-        return;
-
-    _moveAxis = axis;
-    _moveAxisVector = a;
-    _initialNegativeScalarDistance = -distance.value ();
-    _initialMoveLocation = _location;
-}
-
-void MoveTool::PlaneCheck ( Closest &closest,
-    SDFBoxWithFlip &sdf,
-    GXVec3 const &offset,
-    bool aTest,
-    bool bTest,
-    eAxis axis,
-    GXVec3 const &rayOrigin,
-    GXVec3 const &rayDirection,
-    float pixelSize,
-    bool lmbPressed
-) noexcept
-{
-    GXVec3 alpha {};
-    _rotation.TransformFast ( alpha, offset );
-
-    GXVec3 realP {};
-    realP.Sum ( _location, alpha );
-
-    GXQuat const &tr = sdf.GetRotationWorld ();
-    GXMat3 m {};
-    m.FromFast ( tr );
-
-    if ( aTest )
-        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
-
-    if ( bTest )
-        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
-
-    alpha.Multiply ( PLANE_SCALE, pixelSize );
-    GizmoBoxCollider const box ( tr, alpha );
-
-    alpha.Subtract ( realP, _location );
-
-    GXVec3 beta {};
-    beta.Sum ( _location, pixelSize, alpha );
-    float const d = box.Raycast ( rayOrigin, rayDirection, beta );
-
-    if ( d >= closest._distance )
-        return;
-
-    closest._distance = d;
-    closest._control = &sdf;
-
-    if ( !lmbPressed )
-        return;
-
-    _moveAxis = eAxis::None;
-    GXVec3 const &right = m.Right ();
-    auto const point = ResolvePlaneIntersection ( _location, right, rayOrigin, rayDirection );
-
-    if ( !point )
-        return;
-
-    _movePlane = axis;
-    _moveAxisVector = right;
-    _initialNegativePlaneOffset.Subtract ( _location, *point );
-    _initialMoveLocation = _location;
-}
-
 void MoveTool::ResetVisuals () noexcept
 {
     auto const reset = [ this ] ( SDFLineSegment &axis,
@@ -505,24 +399,24 @@ void MoveTool::ResetVisuals () noexcept
     reset ( _zLine, _zPlaneX, _zPlaneY, _zPlane, _zCone, Z_COLOR, Z_PLANE_STANDBY_COLOR );
 }
 
-void MoveTool::SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept
+void MoveTool::UpdateChildren () noexcept
 {
-    axis.SetColor ( color );
-    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0U ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
-
-    constexpr GXVec3 coneSize ( CONE_STANDBY_LENGTH, CONE_STANDBY_SIZE, CONE_STANDBY_SIZE );
-    cone.SetScale ( coneSize );
-    cone.SetColor ( color );
-}
-
-void MoveTool::HidePlane ( SDFBoxWithFlip &plane,
-    SDFLineSegmentWithFlip &lineA,
-    SDFLineSegmentWithFlip &lineB
-) noexcept
-{
-    plane.Hide ();
-    lineA.Hide ();
-    lineB.Hide ();
+    _origin.OnParentUpdated ( _location, _rotation );
+    _xLine.OnParentUpdated ( _location, _rotation );
+    _xPlane.OnParentUpdated ( _location, _rotation );
+    _xCone.OnParentUpdated ( _location, _rotation );
+    _yLine.OnParentUpdated ( _location, _rotation );
+    _yPlane.OnParentUpdated ( _location, _rotation );
+    _yCone.OnParentUpdated ( _location, _rotation );
+    _zLine.OnParentUpdated ( _location, _rotation );
+    _zPlane.OnParentUpdated ( _location, _rotation );
+    _zCone.OnParentUpdated ( _location, _rotation );
+    _xPlaneY.OnParentUpdated ( _location, _rotation );
+    _xPlaneZ.OnParentUpdated ( _location, _rotation );
+    _yPlaneZ.OnParentUpdated ( _location, _rotation );
+    _yPlaneX.OnParentUpdated ( _location, _rotation );
+    _zPlaneX.OnParentUpdated ( _location, _rotation );
+    _zPlaneY.OnParentUpdated ( _location, _rotation );
 }
 
 bool MoveTool::LockAxis () noexcept
@@ -616,6 +510,143 @@ bool MoveTool::LockPlane ( GXVec3 const &cameraLocation ) noexcept
     return false;
 }
 
+void MoveTool::AxisCheck ( Closest &closest,
+    SDFLineSegment &sdf,
+    SDFCone &sdfCone,
+    bool test,
+    eAxis axis,
+    float axisRadius,
+    GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    float pixelSize,
+    bool lmbPressed
+) noexcept
+{
+    GXVec3 a {};
+    sdf.GetRotationWorld ().GetRight ( a );
+    float const cases[] = { AXIS_CLIP_OFFSET, 0.0F };
+    float const offset = cases[ static_cast<size_t> ( test  ) ];
+    GizmoCylinderCollider const cylinder ( axisRadius, ( AXIS_FULL_LENGTH - offset ) * pixelSize );
+
+    GXVec3 alpha {};
+    alpha.Sum ( _location, offset * pixelSize, a );
+    float const d = cylinder.Raycast ( rayOrigin, rayDirection, alpha, a );
+
+    if ( d >= closest._distance )
+        return;
+
+    closest =
+    {
+        ._control = &sdf,
+        ._cone = &sdfCone,
+        ._distance = d
+    };
+
+    if ( !lmbPressed )
+        return;
+
+    _movePlane = eAxis::None;
+    auto const distance = ResolveAxisScalarDistance ( _location, a, rayOrigin, rayDirection );
+
+    if ( !distance )
+        return;
+
+    _moveAxis = axis;
+    _moveAxisVector = a;
+    _initialNegativeScalarDistance = -distance.value ();
+    _initialMoveLocation = _location;
+}
+
+void MoveTool::PlaneCheck ( Closest &closest,
+    SDFBoxWithFlip &sdf,
+    GXVec3 const &offset,
+    bool aTest,
+    bool bTest,
+    eAxis axis,
+    GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    float pixelSize,
+    bool lmbPressed
+) noexcept
+{
+    GXVec3 alpha {};
+    _rotation.TransformFast ( alpha, offset );
+
+    GXVec3 realP {};
+    realP.Sum ( _location, alpha );
+
+    GXQuat const &tr = sdf.GetRotationWorld ();
+    GXMat3 m {};
+    m.FromFast ( tr );
+
+    if ( aTest )
+        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
+
+    if ( bTest )
+        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
+
+    alpha.Multiply ( PLANE_SCALE, pixelSize );
+    GizmoBoxCollider const box ( tr, alpha );
+
+    alpha.Subtract ( realP, _location );
+
+    GXVec3 beta {};
+    beta.Sum ( _location, pixelSize, alpha );
+    float const d = box.Raycast ( rayOrigin, rayDirection, beta );
+
+    if ( d >= closest._distance )
+        return;
+
+    closest._distance = d;
+    closest._control = &sdf;
+
+    if ( !lmbPressed )
+        return;
+
+    _moveAxis = eAxis::None;
+    GXVec3 const &right = m.Right ();
+    auto const point = ResolvePlaneIntersection ( _location, right, rayOrigin, rayDirection );
+
+    if ( !point )
+        return;
+
+    _movePlane = axis;
+    _moveAxisVector = right;
+    _initialNegativePlaneOffset.Subtract ( _location, *point );
+    _initialMoveLocation = _location;
+}
+
+void MoveTool::SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept
+{
+    axis.SetColor ( color );
+    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0U ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
+
+    constexpr GXVec3 coneSize ( CONE_STANDBY_LENGTH, CONE_STANDBY_SIZE, CONE_STANDBY_SIZE );
+    cone.SetScale ( coneSize );
+    cone.SetColor ( color );
+}
+
+bool MoveTool::FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept
+{
+    GXVec3 alpha {};
+    alpha.Subtract ( plane.GetLocationWorld (), cameraLocation );
+
+    GXVec3 beta {};
+    plane.GetRotationWorld ().GetRight ( beta );
+
+    return beta.DotProduct ( alpha ) > 0.0F;
+}
+
+void MoveTool::HidePlane ( SDFBoxWithFlip &plane,
+    SDFLineSegmentWithFlip &lineA,
+    SDFLineSegmentWithFlip &lineB
+) noexcept
+{
+    plane.Hide ();
+    lineA.Hide ();
+    lineB.Hide ();
+}
+
 std::optional<float> MoveTool::ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
     GXVec3 const &axisDirection,
     GXVec3 const &cameraLocation,
@@ -636,7 +667,7 @@ std::optional<float> MoveTool::ResolveAxisScalarDistance ( GXVec3 const &axisOri
     return std::optional<float> { alpha.DotProduct ( omega ) / axisDirection.DotProduct ( omega ) };
 }
 
-[[nodiscard]] std::optional<GXVec3> MoveTool::ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
+std::optional<GXVec3> MoveTool::ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
     GXVec3 const &planeNormal,
     GXVec3 const &cameraLocation,
     GXVec3 const &cameraForward
@@ -652,37 +683,6 @@ std::optional<float> MoveTool::ResolveAxisScalarDistance ( GXVec3 const &axisOri
     alpha.Subtract ( planeOrigin, cameraLocation );
     alpha.Sum ( cameraLocation, alpha.DotProduct ( planeNormal ) / n, cameraForward );
     return std::optional<GXVec3> { std::move ( alpha ) };
-}
-
-void MoveTool::UpdateChildren () noexcept
-{
-    _origin.OnParentUpdated ( _location, _rotation );
-    _xLine.OnParentUpdated ( _location, _rotation );
-    _xPlane.OnParentUpdated ( _location, _rotation );
-    _xCone.OnParentUpdated ( _location, _rotation );
-    _yLine.OnParentUpdated ( _location, _rotation );
-    _yPlane.OnParentUpdated ( _location, _rotation );
-    _yCone.OnParentUpdated ( _location, _rotation );
-    _zLine.OnParentUpdated ( _location, _rotation );
-    _zPlane.OnParentUpdated ( _location, _rotation );
-    _zCone.OnParentUpdated ( _location, _rotation );
-    _xPlaneY.OnParentUpdated ( _location, _rotation );
-    _xPlaneZ.OnParentUpdated ( _location, _rotation );
-    _yPlaneZ.OnParentUpdated ( _location, _rotation );
-    _yPlaneX.OnParentUpdated ( _location, _rotation );
-    _zPlaneX.OnParentUpdated ( _location, _rotation );
-    _zPlaneY.OnParentUpdated ( _location, _rotation );
-}
-
-bool MoveTool::FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept
-{
-    GXVec3 alpha {};
-    alpha.Subtract ( plane.GetLocationWorld (), cameraLocation );
-
-    GXVec3 beta {};
-    plane.GetRotationWorld ().GetRight ( beta );
-
-    return beta.DotProduct ( alpha ) > 0.0F;
 }
 
 } // namespace editor

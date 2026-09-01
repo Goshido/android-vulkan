@@ -257,6 +257,12 @@ class MoveTool final : public Tool
         void HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
         void HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
 
+        void ResetVisuals () noexcept;
+        void UpdateChildren () noexcept;
+
+        [[nodiscard]] bool LockAxis () noexcept;
+        [[nodiscard]] bool LockPlane ( GXVec3 const &cameraLocation ) noexcept;
+
         void AxisCheck ( Closest &closest,
             SDFLineSegment &sdf,
             SDFCone &sdfCone,
@@ -281,28 +287,25 @@ class MoveTool final : public Tool
             bool lmbPressed
         ) noexcept;
 
-        void ResetVisuals () noexcept;
-        void SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept;
-        void HidePlane ( SDFBoxWithFlip &plane, SDFLineSegmentWithFlip &lineA, SDFLineSegmentWithFlip &lineB ) noexcept;
+        static void SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept;
+        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
 
-        [[nodiscard]] bool LockAxis () noexcept;
-        [[nodiscard]] bool LockPlane ( GXVec3 const &cameraLocation ) noexcept;
+        static void HidePlane ( SDFBoxWithFlip &plane,
+            SDFLineSegmentWithFlip &lineA,
+            SDFLineSegmentWithFlip &lineB
+        ) noexcept;
 
-        [[nodiscard]] std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
+        [[nodiscard]] static std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
             GXVec3 const &axisDirection,
             GXVec3 const &cameraLocation,
             GXVec3 const &cameraForward
         ) noexcept;
 
-        [[nodiscard]] std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
+        [[nodiscard]] static std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
             GXVec3 const &planeNormal,
             GXVec3 const &cameraLocation,
             GXVec3 const &cameraForward
         ) noexcept;
-
-        void UpdateChildren () noexcept;
-
-        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
 };
 
 } // namespace editor

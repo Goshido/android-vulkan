@@ -32,6 +32,12 @@ GXQuat const &SDF::GetRotationWorld () const noexcept
     return _rotationWorld;
 }
 
+void SDF::SetLocationAndScale ( GXVec3 const& location, GXVec3 const& scale ) noexcept
+{
+    _location = location;
+    _scale = scale;
+}
+
 void SDF::SetColor ( eSDFPalette palette ) noexcept
 {
     _palette = palette;

@@ -15,6 +15,28 @@ namespace editor {
 class ScaleTool final : public Tool
 {
     private:
+        enum class eAxis : uint8_t
+        {
+            X,
+            Y,
+            Z,
+            None,
+        };
+
+        struct ColorSet final
+        {
+            eSDFPalette             _active = eSDFPalette::White;
+            eSDFPalette             _standby = eSDFPalette::White;
+        };
+
+        struct Closest final
+        {
+            SDF*                    _control = nullptr;
+            SDFBox*                 _box = nullptr;
+            float                   _distance = std::numeric_limits<float>::max ();
+        };
+
+    private:
         SDFBox                      _origin
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
@@ -215,6 +237,31 @@ class ScaleTool final : public Tool
             -4.0F
         };
 
+        SDF*                        _control = nullptr;
+        SDFBox*                     _box = nullptr;
+
+        GXQuat                      _rotation = GXQuat::IDENTITY;
+        GXVec3                      _location { 0.6F, 0.0F, 12.0F };
+        float                       _negativeScalarDistance;
+
+        GXVec3                      _initialScale {};
+        bool                        _scaleAll = false;
+
+        GXVec3                      _controlLocation {};
+        eAxis                       _scalePlane = eAxis::None;
+
+        GXVec3                      _controlDirection {};
+        bool                        _lastLMBPressed = false;
+
+        GXVec3                      _target = GXVec3::ONE;
+        eAxis                       _scaleAxis = eAxis::None;
+
+        GXVec3                      _globalAxisA {};
+        GXVec3                      _globalAxisB {};
+
+        GXVec3                      _localAxisA {};
+        GXVec3                      _localAxisB {};
+
     public:
         explicit ScaleTool () noexcept;
 
@@ -236,7 +283,63 @@ class ScaleTool final : public Tool
         void End () noexcept override;
         void Cancel () noexcept override;
 
-        void Update () noexcept;
+        void Update ( GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXMat3 const &cameraBasis,
+            GXVec3 const &vi,
+            int32_t mouseY,
+            bool leftMouseButtonPressed
+        ) noexcept;
+
+    private:
+        // Note method will return std::nullopt in case of unknown box.
+        [[nodiscard]] std::optional<ColorSet> AcquirePlaneColorSet ( SDF &plane ) noexcept;
+
+        void ActivateSDF ( SDF &sdf, SDFBox* box ) noexcept;
+        void DeactivateSDF () noexcept;
+
+        void HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+        void HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+        void HandleScaleAll ( int32_t mouseY ) noexcept;
+
+        void ResetVisuals () noexcept;
+
+        [[nodiscard]] bool LockPlane () noexcept;
+        [[nodiscard]] bool LockAxis () noexcept;
+        [[nodiscard]] bool LockAllAxes ( GXMat3 const &cameraBasis ) noexcept;
+
+        void AxisCheck ( Closest &closest,
+            SDFLineSegment &sdf,
+            SDFBox &sdfBox,
+            bool test,
+            eAxis axis,
+            GXVec3 const &scaleAxis,
+            float axisRadius,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            float pixelSize,
+            bool lmbPressed
+        ) noexcept;
+
+        static void SetupAxis ( SDFLineSegment &axis, SDFBox &box, eSDFPalette color ) noexcept;
+        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
+
+        static void HidePlane ( SDFBoxWithFlip &plane,
+            SDFLineSegmentWithFlip &lineA,
+            SDFLineSegmentWithFlip &lineB
+        ) noexcept;
+
+        [[nodiscard]] static std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
+            GXVec3 const &axisDirection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &cameraForward
+        ) noexcept;
+
+        [[nodiscard]] static std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
+            GXVec3 const &planeNormal,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &cameraForward
+        ) noexcept;
 };
 
 } // namespace editor

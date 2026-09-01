@@ -37,6 +37,7 @@ class SDF
         [[nodiscard]] GXVec3 const &GetLocationWorld () const noexcept;
         [[nodiscard]] GXQuat const &GetRotationWorld () const noexcept;
 
+        void SetLocationAndScale ( GXVec3 const &location, GXVec3 const &scale ) noexcept;
         void SetColor ( eSDFPalette palette ) noexcept;
         void Hide () noexcept;
 

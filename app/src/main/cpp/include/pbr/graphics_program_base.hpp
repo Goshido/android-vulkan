@@ -7,8 +7,8 @@
 
 namespace pbr {
 
-constexpr static char const* VERTEX_SHADER_ENTRY_POINT = "VS";
-constexpr static char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
+constexpr char const* VERTEX_SHADER_ENTRY_POINT = "VS";
+constexpr char const* FRAGMENT_SHADER_ENTRY_POINT = "PS";
 
 //----------------------------------------------------------------------------------------------------------------------
 

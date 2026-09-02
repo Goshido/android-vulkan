@@ -19,8 +19,7 @@ GizmoSphereCollider::GizmoSphereCollider ( float radius ) noexcept:
     // NOTHING
 }
 
-float GizmoSphereCollider::Raycast ( GXVec3 const &rayOrigin,
-    GXVec3 const &rayDirection,
+float GizmoSphereCollider::Raycast ( GXVec3 const &rayDirection,
     GXVec3 const &sphereLocation,
     GXVec3 const &cameraLocation,
     GXVec3 const &vi
@@ -29,8 +28,6 @@ float GizmoSphereCollider::Raycast ( GXVec3 const &rayOrigin,
     GXVec3 alpha {};
     alpha.Subtract ( sphereLocation, cameraLocation );
     float const r = _radius * vi.DotProduct ( alpha );
-
-    alpha.Subtract ( sphereLocation, rayOrigin );
     float const tca = alpha.DotProduct ( rayDirection );
     float const d2 = alpha.DotProduct ( alpha ) - tca * tca;
     float const r2 = r * r;

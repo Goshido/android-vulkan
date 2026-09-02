@@ -296,8 +296,7 @@ void RotateTool::CheckBody ( Closest &closest,
     bool lmbPressed
 ) noexcept
 {
-    float const d = _bodyCollider.Raycast ( cameraLocation,
-        rayDirection,
+    float const d = _bodyCollider.Raycast ( rayDirection,
         _body.GetLocationWorld (),
         cameraLocation,
         vi

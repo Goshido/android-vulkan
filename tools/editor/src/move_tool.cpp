@@ -95,7 +95,22 @@ void MoveTool::Activate () noexcept
 
 void MoveTool::Deactivate () noexcept
 {
-    // FUCK
+    _origin.Hide ();
+    _xLine.Hide ();
+    _xPlane.Hide ();
+    _xCone.Hide ();
+    _yLine.Hide ();
+    _yPlane.Hide ();
+    _yCone.Hide ();
+    _zLine.Hide ();
+    _zPlane.Hide ();
+    _zCone.Hide ();
+    _xPlaneY.Hide ();
+    _xPlaneZ.Hide ();
+    _yPlaneZ.Hide ();
+    _yPlaneX.Hide ();
+    _zPlaneX.Hide ();
+    _zPlaneY.Hide ();
     android_vulkan::LogInfo ( "<<< Move tool deactivated" );
 }
 
@@ -572,18 +587,19 @@ void MoveTool::PlaneCheck ( Closest &closest,
     GXVec3 alpha {};
     _rotation.TransformFast ( alpha, offset );
 
-    GXVec3 realP {};
+    GXVec3 cases[ 2U ];
+    GXVec3 &realP = cases[ 0U ];
     realP.Sum ( _location, alpha );
 
     GXQuat const &tr = sdf.GetRotationWorld ();
     GXMat3 m {};
     m.FromFast ( tr );
 
-    if ( aTest )
-        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
+    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
+    realP = cases[ static_cast<size_t> ( aTest ) ];
 
-    if ( bTest )
-        realP.Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
+    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
+    realP = cases[ static_cast<size_t> ( bTest ) ];
 
     alpha.Multiply ( PLANE_SCALE, pixelSize );
     GizmoBoxCollider const box ( tr, alpha );

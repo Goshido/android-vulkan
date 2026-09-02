@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <gizmo_box_collider.hpp>
 #include <gizmo_cylinder_collider.hpp>
 #include <scale_tool.hpp>
 #include <sdf_size.hpp>
@@ -22,14 +23,12 @@ constexpr float             AXIS_CLIP_OFFSET = 2.4F;
 constexpr float             AXIS_FULL_LENGTH = 8.8F;
 constexpr float             AXIS_RADIUS = 0.5F;
 
-//constexpr float             ORIGIN_RADIUS = 0.8F;
-
 constexpr float             CUBE_ACTIVE_SIZE = 0.5F;
 constexpr float             CUBE_STANDBY_SIZE = 0.45F;
 
-//constexpr GXVec3            PLANE_SCALE ( 0.2F, 2.4F, 2.4F );
-//constexpr GXVec2            PLANE_OFFSET ( -0.2F, 1.1F );
-//constexpr float             PLANE_FLIP_OFFSET = 2.15F;
+constexpr GXVec3            PLANE_SCALE ( 0.2F, 2.4F, 2.4F );
+constexpr GXVec2            PLANE_OFFSET ( -0.2F, 1.1F );
+constexpr float             PLANE_FLIP_OFFSET = 2.15F;
 
 constexpr float             UNIFORM_SCALE_FACTOR = 0.01F;
 constexpr float             GIZMO_RADIUS = 8.3F;
@@ -101,7 +100,22 @@ void ScaleTool::Activate () noexcept
 
 void ScaleTool::Deactivate () noexcept
 {
-    // FUCK
+    _origin.Hide ();
+    _xLine.Hide ();
+    _xPlane.Hide ();
+    _xCube.Hide ();
+    _yLine.Hide ();
+    _yPlane.Hide ();
+    _yCube.Hide ();
+    _zLine.Hide ();
+    _zPlane.Hide ();
+    _zCube.Hide ();
+    _xPlaneY.Hide ();
+    _xPlaneZ.Hide ();
+    _yPlaneZ.Hide ();
+    _yPlaneX.Hide ();
+    _zPlaneX.Hide ();
+    _zPlaneY.Hide ();
     android_vulkan::LogInfo ( "<<< Scale tool deactivated" );
 }
 
@@ -226,116 +240,62 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    //Action<SDFShape, Vector3, bool, bool, Axis, Vector3, Vector3> planeCheck = (sdf,
-    //    offset,
-    //    aTest,
-    //    bTest,
-    //    planeAxis,
-    //    scaleAxisA,
-    //    scaleAxisB
-    //) =>
-    //{
-    //    Vector3 realP = p + r * offset;
-    //    Transform tr = sdf.transform;
+    constexpr GXVec3 xOffset ( PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 1U ] );
 
-    //    if (aTest)
-    //        realP += tr.up * PLANE_FLIP_OFFSET;
+    PlaneCheck ( closest,
+        _xPlane,
+        xOffset,
+        yTest,
+        zTest,
+        eAxis::X,
+        GXVec3::UP,
+        GXVec3::FORWARD,
+        cameraLocation,
+        rayDirection,
+        pixelSize,
+        lmbPressed
+    );
 
-    //    if (bTest)
-    //        realP += tr.forward * PLANE_FLIP_OFFSET;
+    constexpr GXVec3 yOffset ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ] );
 
-    //    BoxCollider box = new(tr.rotation, PLANE_SCALE * pixelSize);
-    //    float d = box.Raycast(ray.origin, ray.direction, p + (realP - p) * pixelSize);
+    PlaneCheck ( closest,
+        _yPlane,
+        yOffset,
+        zTest,
+        xTest,
+        eAxis::Y,
+        GXVec3::FORWARD,
+        GXVec3::RIGHT,
+        cameraLocation,
+        rayDirection,
+        pixelSize,
+        lmbPressed
+    );
 
-    //    if (d >= closest)
-    //        return;
+    constexpr GXVec3 zOffset ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ] );
 
-    //    closest = d;
-    //    control = sdf;
+    PlaneCheck ( closest,
+        _zPlane,
+        zOffset,
+        xTest,
+        yTest,
+        eAxis::Z,
+        GXVec3::RIGHT,
+        GXVec3::UP,
+        cameraLocation,
+        rayDirection,
+        pixelSize,
+        lmbPressed
+    );
 
-    //    if (!lmbPressed)
-    //        return;
+    AllAxesCheck ( closest, rayDirection, cameraLocation, vi, mouseY, lmbPressed );
 
-    //    _scaleAxis = Axis.None;
-    //    _scaleAll = false;
-
-    //    var (hasSolution, point) = Utils.ResolvePlaneIntersection(p, tr.right, ray.origin, ray.direction);
-
-    //    if (!hasSolution)
-    //        return;
-
-    //    _controlPosition = point;
-    //    _controlDirection = tr.right;
-    //    _localAxisA = scaleAxisA;
-    //    _localAxisB = scaleAxisB;
-
-    //    Quaternion planeOrientation = tr.rotation;
-    //    _globalAxisA = planeOrientation * Vector3.up;
-
-    //    if (aTest)
-    //        _globalAxisA = -_globalAxisA;
-
-    //    _globalAxisB = planeOrientation * Vector3.forward;
-
-    //    if (bTest)
-    //        _globalAxisB = -_globalAxisB;
-
-    //    _scalePlane = planeAxis;
-    //    _initialScale = _target.localScale;
-    //};
-
-    //planeCheck(_xPlane,
-    //    new(PLANE_OFFSET.x, PLANE_OFFSET.y, PLANE_OFFSET.y),
-    //    tests.y,
-    //    tests.z,
-    //    Axis.X,
-    //    Vector3.up,
-    //    Vector3.forward
-    //);
-
-    //planeCheck(_yPlane,
-    //    new(PLANE_OFFSET.y, PLANE_OFFSET.x, PLANE_OFFSET.y),
-    //    tests.z,
-    //    tests.x,
-    //    Axis.Y,
-    //    Vector3.forward,
-    //    Vector3.right
-    //);
-
-    //planeCheck(_zPlane,
-    //    new(PLANE_OFFSET.y, PLANE_OFFSET.y, PLANE_OFFSET.x),
-    //    tests.x,
-    //    tests.y,
-    //    Axis.Z,
-    //    Vector3.right,
-    //    Vector3.up
-    //);
-
-    //Action allAxisCheck = () =>
-    //{
-    //    if (_originCollider.Raycast(ray.origin, ray.direction, p, camera) >= closest)
-    //        return;
-
-    //    control = _origin;
-
-    //    if (!lmbPressed)
-    //        return;
-
-    //    _scaleAxis = Axis.None;
-    //    _scalePlane = Axis.None;
-    //    _scaleAll = true;
-    //    _initialScale = _target.localScale;
-    //    _controlPosition.y = mouse.y;
-    //};
-
-    //allAxisCheck();
-
-    if (LockAxis() || LockPlane() || LockAllAxes ( cameraBasis ) )
+    if ( LockAxis () || LockPlane () || LockAllAxes ( cameraBasis ) )
         return;
 
     if ( !closest._control )
     {
-        DeactivateSDF();
+        DeactivateSDF ();
         return;
     }
 
@@ -488,19 +448,16 @@ void ScaleTool::ResetVisuals () noexcept
         p._data[ axisIdx ] = AXIS_SDF_OFFSET;
         axis.SetLocationAndScale ( p, axisScale );
         axis.SetColor ( color );
+        axis.OnParentUpdated ( _location, _rotation );
 
-        planeA.Show ( _location, _rotation );
         planeA.SetColor ( color );
-
-        planeB.Show ( _location, _rotation );
         planeB.SetColor ( color );
-
-        plane.Show ( _location, _rotation );
         plane.SetColor ( planeColor );
 
         constexpr GXVec3 cubeScale ( CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE );
         cube.SetScale ( cubeScale );
         cube.SetColor ( color );
+        cube.OnParentUpdated ( _location, _rotation );
     };
 
     reset ( _xLine, _xPlaneY, _xPlaneZ, _xPlane, _xCube, 0UZ, X_COLOR, X_PLANE_STANDBY_COLOR );
@@ -527,7 +484,7 @@ void ScaleTool::ResetVisuals () noexcept
 
 bool ScaleTool::LockPlane () noexcept
 {
-    constexpr auto setup = [] ( SDFBoxWithFlip &plane,
+    auto const setup = [ this ] ( SDFBoxWithFlip &plane,
         SDFLineSegmentWithFlip &lineA,
         SDFLineSegmentWithFlip &lineB,
         SDFLineSegment &axisA,
@@ -539,7 +496,10 @@ bool ScaleTool::LockPlane () noexcept
 
         constexpr GXVec3 s ( AXIS_SDF_FULL_LENGTH, AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE );
         axisA.SetLocationAndScale ( GXVec3::ZERO, s );
+        axisA.OnParentUpdated ( _location, _rotation );
+
         axisB.SetLocationAndScale ( GXVec3::ZERO, s );
+        axisB.OnParentUpdated ( _location, _rotation );
     };
 
     switch ( _scalePlane )
@@ -659,16 +619,30 @@ bool ScaleTool::LockAllAxes ( GXMat3 const &cameraBasis ) noexcept
     alpha.Reverse ();
     anchorRotation.From ( right, alpha );
 
-    _scaleLine.SetLocationAndRotation ( anchorLocation, anchorRotation );
+    alpha.Subtract ( anchorLocation, _location );
+
+    GXQuat toParent {};
+    toParent.InverseFast ( _rotation );
+
+    GXVec3 beta {};
+    toParent.TransformFast ( beta, alpha );
+
+    GXQuat eta {};
+    eta.Multiply ( toParent, anchorRotation );
+    _scaleLine.SetLocationAndRotation ( beta, eta );
     _scaleLine.Show ( _location, _rotation );
 
-    alpha.Sum ( pivot, s );
-    _scaleDirectionA.SetLocationAndRotation ( alpha, anchorRotation );
-    _scaleDirectionA.Show ( _location, _rotation );
-
     anchorRotation.From ( right, forward );
-    _scaleDirectionB.SetLocationAndRotation ( anchorLocation, anchorRotation );
+    GXQuat omega {};
+    omega.Multiply ( toParent, anchorRotation );
+    _scaleDirectionB.SetLocationAndRotation ( beta, omega );
     _scaleDirectionB.Show ( _location, _rotation );
+
+    alpha.Sum ( pivot, s );
+    alpha.Subtract ( alpha, _location );
+    toParent.TransformFast ( beta, alpha );
+    _scaleDirectionA.SetLocationAndRotation ( beta, eta );
+    _scaleDirectionA.Show ( _location, _rotation );
 
     return true;
 }
@@ -725,6 +699,110 @@ void ScaleTool::AxisCheck ( Closest &closest,
 
     _scaleAxis = axis;
     _initialScale = _target;
+}
+
+void ScaleTool::PlaneCheck ( Closest &closest,
+    SDFBoxWithFlip &sdf,
+    GXVec3 const &offset,
+    bool aTest,
+    bool bTest,
+    eAxis planeAxis,
+    GXVec3 const &aScaleAxis,
+    GXVec3 const &bScaleAxis,
+    GXVec3 const &rayOrigin,
+    GXVec3 const &rayDirection,
+    float pixelSize,
+    bool lmbPressed
+) noexcept
+{
+    GXVec3 alpha {};
+    _rotation.TransformFast ( alpha, offset );
+
+    GXVec3 cases[ 2U ];
+    GXVec3 &realP = cases[ 0U ];
+    realP.Sum ( _location, alpha );
+
+    GXQuat const &tr = sdf.GetRotationWorld ();
+    GXMat3 m {};
+    m.FromFast ( tr );
+    GXVec3 const &up = m.Up ();
+    GXVec3 const &forward = m.Forward ();
+
+    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, up );
+    auto const aTestIdx = static_cast<size_t> ( aTest );
+    realP = cases[ aTestIdx ];
+
+    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, forward );
+    auto const bTestIdx = static_cast<size_t> ( bTest );
+    realP = cases[ bTestIdx ];
+
+    alpha.Multiply ( PLANE_SCALE, pixelSize );
+    GizmoBoxCollider const box ( tr, alpha );
+
+    alpha.Subtract ( realP, _location );
+
+    GXVec3 beta {};
+    beta.Sum ( _location, pixelSize, alpha );
+    float const d = box.Raycast ( rayOrigin, rayDirection, beta );
+
+    if ( d >= closest._distance )
+        return;
+
+    closest._distance = d;
+    closest._control = &sdf;
+
+    if ( !lmbPressed )
+        return;
+
+    _scaleAxis = eAxis::None;
+    _scaleAll = false;
+
+    GXVec3 const &right = m.Right ();
+    auto const point = ResolvePlaneIntersection ( _location, right, rayOrigin, rayDirection );
+
+    if ( !point )
+        return;
+
+    _controlLocation = *point;
+    _controlDirection = right;
+    _localAxisA = aScaleAxis;
+    _localAxisB = bScaleAxis;
+
+    cases[ 0U ] = up;
+    cases[ 1U ] = up;
+    cases[ 1U ].Reverse ();
+    _globalAxisA = cases[ aTestIdx ];
+
+    cases[ 0U ] = forward;
+    cases[ 1U ] = forward;
+    cases[ 1U ].Reverse ();
+    _globalAxisB = cases[ bTestIdx ];
+
+    _scalePlane = planeAxis;
+    _initialScale = _target;
+}
+
+void ScaleTool::AllAxesCheck ( Closest &closest,
+    GXVec3 const &rayDirection,
+    GXVec3 const &cameraLocation,
+    GXVec3 const &vi,
+    int32_t mouseY,
+    bool lmbPressed
+) noexcept
+{
+    if ( _originCollider.Raycast ( rayDirection, _location, cameraLocation, vi ) >= closest._distance )
+        return;
+
+    closest._control = &_origin;
+
+    if ( !lmbPressed )
+        return;
+
+    _scaleAxis = eAxis::None;
+    _scalePlane = eAxis::None;
+    _scaleAll = true;
+    _initialScale = _target;
+    _controlLocation._data[ 1U ] = static_cast<float> ( mouseY );
 }
 
 void ScaleTool::SetupAxis ( SDFLineSegment &axis, SDFBox &box, eSDFPalette color ) noexcept

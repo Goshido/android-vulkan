@@ -2,6 +2,7 @@
 #define EDITOR_SCALE_TOOL_HPP
 
 
+#include "gizmo_sphere_collider.hpp"
 #include "sdf_box.hpp"
 #include "sdf_box_with_flip.hpp"
 #include "sdf_cone.hpp"
@@ -37,6 +38,8 @@ class ScaleTool final : public Tool
         };
 
     private:
+        constexpr static float      ORIGIN_RADIUS = 0.8F;
+
         SDFBox                      _origin
         {
             GXVec3 ( 0.0F, 0.0F, 0.0F ),
@@ -237,11 +240,13 @@ class ScaleTool final : public Tool
             -4.0F
         };
 
+        GizmoSphereCollider         _originCollider { ORIGIN_RADIUS };
+
         SDF*                        _control = nullptr;
         SDFBox*                     _box = nullptr;
 
         GXQuat                      _rotation = GXQuat::IDENTITY;
-        GXVec3                      _location { 0.6F, 0.0F, 12.0F };
+        GXVec3                      _location { -12.0F, 0.0F, 12.0F };
         float                       _negativeScalarDistance;
 
         GXVec3                      _initialScale {};
@@ -318,6 +323,28 @@ class ScaleTool final : public Tool
             GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,
             float pixelSize,
+            bool lmbPressed
+        ) noexcept;
+
+        void PlaneCheck ( Closest &closest,
+            SDFBoxWithFlip &sdf,
+            GXVec3 const &offset,
+            bool aTest,
+            bool bTest,
+            eAxis planeAxis,
+            GXVec3 const &aScaleAxis,
+            GXVec3 const &bScaleAxis,
+            GXVec3 const &rayOrigin,
+            GXVec3 const &rayDirection,
+            float pixelSize,
+            bool lmbPressed
+        ) noexcept;
+
+        void AllAxesCheck ( Closest &closest,
+            GXVec3 const &rayDirection,
+            GXVec3 const &cameraLocation,
+            GXVec3 const &vi,
+            int32_t mouseY,
             bool lmbPressed
         ) noexcept;
 

@@ -163,7 +163,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
         return;
     }
 
-    cases[ 0U ] = _movePlane;
+    cases[ 0UZ ] = _movePlane;
     _movePlane = cases[ static_cast<size_t> ( lmbReleased ) ];
 
     if ( _movePlane != eAxis::None )
@@ -224,7 +224,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
 
     PlaneCheck ( closest,
         _xPlane,
-        GXVec3 ( PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ],
+        GXVec3 ( PLANE_OFFSET._data[ 0UZ ], PLANE_OFFSET._data[ 1UZ ],
         PLANE_OFFSET._data[ 1U ] ),
         yTest,
         zTest,
@@ -237,7 +237,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
 
     PlaneCheck ( closest,
         _yPlane,
-        GXVec3 ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ] ),
+        GXVec3 ( PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 0UZ ], PLANE_OFFSET._data[ 1UZ ] ),
         zTest,
         xTest,
         eAxis::Y,
@@ -249,7 +249,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
 
     PlaneCheck ( closest,
         _zPlane,
-        GXVec3 ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ] ),
+        GXVec3 ( PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 0UZ ] ),
         xTest,
         yTest,
         eAxis::Z,
@@ -587,18 +587,18 @@ void MoveTool::PlaneCheck ( Closest &closest,
     GXVec3 alpha {};
     _rotation.TransformFast ( alpha, offset );
 
-    GXVec3 cases[ 2U ];
-    GXVec3 &realP = cases[ 0U ];
+    GXVec3 cases[ 2UZ ];
+    GXVec3 &realP = cases[ 0UZ ];
     realP.Sum ( _location, alpha );
 
     GXQuat const &tr = sdf.GetRotationWorld ();
     GXMat3 m {};
     m.FromFast ( tr );
 
-    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
+    cases[ 1UZ ].Sum ( realP, PLANE_FLIP_OFFSET, m.Up () );
     realP = cases[ static_cast<size_t> ( aTest ) ];
 
-    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
+    cases[ 1UZ ].Sum ( realP, PLANE_FLIP_OFFSET, m.Forward () );
     realP = cases[ static_cast<size_t> ( bTest ) ];
 
     alpha.Multiply ( PLANE_SCALE, pixelSize );
@@ -635,7 +635,7 @@ void MoveTool::PlaneCheck ( Closest &closest,
 void MoveTool::SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept
 {
     axis.SetColor ( color );
-    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0U ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
+    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0UZ ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
 
     constexpr GXVec3 coneSize ( CONE_STANDBY_LENGTH, CONE_STANDBY_SIZE, CONE_STANDBY_SIZE );
     cone.SetScale ( coneSize );

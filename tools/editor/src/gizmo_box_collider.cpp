@@ -36,49 +36,49 @@ float GizmoBoxCollider::Raycast ( GXVec3 const &rayOrigin,
     bMin.Subtract ( bMax, _size );
 
     _toBox.Transform ( alpha, rayDirection );
-    GXVec3 const invD ( 1.0F / alpha._data[ 0U ], 1.0F / alpha._data[ 1U ], 1.0F / alpha._data[ 2U ] );
+    GXVec3 const invD ( 1.0F / alpha._data[ 0UZ ], 1.0F / alpha._data[ 1UZ ], 1.0F / alpha._data[ 2UZ ] );
 
     GXVec2 const casesT[] =
     {
-        GXVec2 ( bMax._data[ 0U ], bMin._data[ 0U ] ),
-        GXVec2 ( bMin._data[ 0U ], bMax._data[ 0U ] )
+        GXVec2 ( bMax._data[ 0UZ ], bMin._data[ 0UZ ] ),
+        GXVec2 ( bMin._data[ 0UZ ], bMax._data[ 0UZ ] )
     };
 
-    GXVec2 t = casesT[ static_cast<size_t> ( invD._data[ 0U ] >= 0.0F ) ];
-    t.Multiply ( t, invD._data[ 0U ] );
+    GXVec2 t = casesT[ static_cast<size_t> ( invD._data[ 0UZ ] >= 0.0F ) ];
+    t.Multiply ( t, invD._data[ 0UZ ] );
 
     GXVec2 const casesI[] =
     {
-        GXVec2 ( bMax._data[ 1U ], bMin._data[ 1U ] ),
-        GXVec2 ( bMin._data[ 1U ], bMax._data[ 1U ] )
+        GXVec2 ( bMax._data[ 1UZ ], bMin._data[ 1UZ ] ),
+        GXVec2 ( bMin._data[ 1UZ ], bMax._data[ 1UZ ] )
     };
 
-    GXVec2 i = casesI[ static_cast<size_t> ( invD._data[ 1U ] >= 0.0F ) ];
-    i.Multiply ( i, invD._data[ 1U ] );
+    GXVec2 i = casesI[ static_cast<size_t> ( invD._data[ 1UZ ] >= 0.0F ) ];
+    i.Multiply ( i, invD._data[ 1UZ ] );
 
-    if ( ( t._data[ 0U ] > i._data[ 1U ] ) | ( i._data[ 0U ] > t._data[ 1U ] ) )
+    if ( ( t._data[ 0UZ ] > i._data[ 1UZ ] ) | ( i._data[ 0UZ ] > t._data[ 1UZ ] ) )
         return MISS;
 
-    float const casesX[] = { t._data[ 0U ], i._data[ 0U ] };
-    t._data[ 0U ] = casesX[ static_cast<size_t> ( i._data[ 0U ] > t._data[ 0U ] ) ];
+    float const casesX[] = { t._data[ 0UZ ], i._data[ 0UZ ] };
+    t._data[ 0U ] = casesX[ static_cast<size_t> ( i._data[ 0UZ ] > t._data[ 0UZ ] ) ];
 
-    float const casesY[] = { t._data[ 1U ], i._data[ 1U ] };
-    t._data[ 1U ] = casesY[ static_cast<size_t> ( i._data[ 1U ] > t._data[ 1U ] ) ];
+    float const casesY[] = { t._data[ 1UZ ], i._data[ 1UZ ] };
+    t._data[ 1U ] = casesY[ static_cast<size_t> ( i._data[ 1UZ ] < t._data[ 1UZ ] ) ];
 
     GXVec2 const casesZ[] =
     {
-        GXVec2 ( bMax._data[ 2U ], bMin._data[ 2U ] ),
-        GXVec2 ( bMin._data[ 2U ], bMax._data[ 2U ] )
+        GXVec2 ( bMax._data[ 2UZ ], bMin._data[ 2UZ ] ),
+        GXVec2 ( bMin._data[ 2UZ ], bMax._data[ 2UZ ] )
     };
 
-    i = casesZ[ static_cast<size_t> ( invD._data[ 2U ] >= 0.0F ) ];
-    i.Multiply ( i, invD._data[ 2U ] );
+    i = casesZ[ static_cast<size_t> ( invD._data[ 2UZ ] >= 0.0F ) ];
+    i.Multiply ( i, invD._data[ 2UZ ] );
 
-    if ( ( t._data[ 0U ] > i._data[ 1U ] ) | ( i._data[ 0U ] > t._data[ 1U ] ) )
+    if ( ( t._data[ 0UZ ] > i._data[ 1UZ ] ) | ( i._data[ 0UZ ] > t._data[ 1UZ ] ) )
         return MISS;
 
-    float const casesResult[] = { t._data[ 0U ], i._data[ 0U ] };
-    return casesResult[ static_cast<size_t> ( i._data[ 0U ] > t._data[ 0U ] ) ];
+    float const casesResult[] = { t._data[ 0UZ ], i._data[ 0UZ ] };
+    return casesResult[ static_cast<size_t> ( i._data[ 0UZ ] > t._data[ 0UZ ] ) ];
 }
 
 } // namespace editor

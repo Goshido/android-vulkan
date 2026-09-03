@@ -82,13 +82,13 @@ void ScaleTool::Activate () noexcept
     _origin.Show ( _location, _rotation );
     _xLine.Show ( _location, _rotation );
     _xPlane.Show ( _location, _rotation );
-    _xCube.Show ( _location, _rotation );
+    _xBox.Show ( _location, _rotation );
     _yLine.Show ( _location, _rotation );
     _yPlane.Show ( _location, _rotation );
-    _yCube.Show ( _location, _rotation );
+    _yBox.Show ( _location, _rotation );
     _zLine.Show ( _location, _rotation );
     _zPlane.Show ( _location, _rotation );
-    _zCube.Show ( _location, _rotation );
+    _zBox.Show ( _location, _rotation );
     _xPlaneY.Show ( _location, _rotation );
     _xPlaneZ.Show ( _location, _rotation );
     _yPlaneZ.Show ( _location, _rotation );
@@ -103,13 +103,13 @@ void ScaleTool::Deactivate () noexcept
     _origin.Hide ();
     _xLine.Hide ();
     _xPlane.Hide ();
-    _xCube.Hide ();
+    _xBox.Hide ();
     _yLine.Hide ();
     _yPlane.Hide ();
-    _yCube.Hide ();
+    _yBox.Hide ();
     _zLine.Hide ();
     _zPlane.Hide ();
-    _zCube.Hide ();
+    _zBox.Hide ();
     _xPlaneY.Hide ();
     _xPlaneZ.Hide ();
     _yPlaneZ.Hide ();
@@ -170,7 +170,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         return;
     }
 
-    cases[ 0U ] = _scalePlane;
+    cases[ 0UZ ] = _scalePlane;
     _scalePlane = cases[ static_cast<size_t> ( lmbReleased ) ];
 
     if ( _scalePlane != eAxis::None )
@@ -203,7 +203,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
 
     AxisCheck ( closest,
         _xLine,
-        _xCube,
+        _xBox,
         xTest,
         eAxis::X,
         GXVec3::RIGHT,
@@ -216,7 +216,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
 
     AxisCheck ( closest,
         _yLine,
-        _yCube,
+        _yBox,
         yTest,
         eAxis::Y,
         GXVec3::UP,
@@ -229,7 +229,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
 
     AxisCheck ( closest,
         _zLine,
-        _zCube,
+        _zBox,
         zTest,
         eAxis::Z,
         GXVec3::FORWARD,
@@ -240,7 +240,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    constexpr GXVec3 xOffset ( PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 1U ] );
+    constexpr GXVec3 xOffset ( PLANE_OFFSET._data[ 0UZ ], PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 1UZ ] );
 
     PlaneCheck ( closest,
         _xPlane,
@@ -256,7 +256,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    constexpr GXVec3 yOffset ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ], PLANE_OFFSET._data[ 1U ] );
+    constexpr GXVec3 yOffset ( PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 0UZ ], PLANE_OFFSET._data[ 1UZ ] );
 
     PlaneCheck ( closest,
         _yPlane,
@@ -272,7 +272,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    constexpr GXVec3 zOffset ( PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 1U ], PLANE_OFFSET._data[ 0U ] );
+    constexpr GXVec3 zOffset ( PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 0UZ ] );
 
     PlaneCheck ( closest,
         _zPlane,
@@ -460,9 +460,9 @@ void ScaleTool::ResetVisuals () noexcept
         cube.OnParentUpdated ( _location, _rotation );
     };
 
-    reset ( _xLine, _xPlaneY, _xPlaneZ, _xPlane, _xCube, 0UZ, X_COLOR, X_PLANE_STANDBY_COLOR );
-    reset ( _yLine, _yPlaneZ, _yPlaneX, _yPlane, _yCube, 1UZ, Y_COLOR, Y_PLANE_STANDBY_COLOR );
-    reset ( _zLine, _zPlaneX, _zPlaneY, _zPlane, _zCube, 2UZ, Z_COLOR, Z_PLANE_STANDBY_COLOR );
+    reset ( _xLine, _xPlaneY, _xPlaneZ, _xPlane, _xBox, 0UZ, X_COLOR, X_PLANE_STANDBY_COLOR );
+    reset ( _yLine, _yPlaneZ, _yPlaneX, _yPlane, _yBox, 1UZ, Y_COLOR, Y_PLANE_STANDBY_COLOR );
+    reset ( _zLine, _zPlaneX, _zPlaneY, _zPlane, _zBox, 2UZ, Z_COLOR, Z_PLANE_STANDBY_COLOR );
 
     _origin.SetColor ( ORIGIN_COLOR );
 
@@ -508,27 +508,27 @@ bool ScaleTool::LockPlane () noexcept
             setup ( _xPlane, _xPlaneY, _xPlaneZ, _yLine, _zLine );
             HidePlane( _yPlane, _yPlaneZ, _yPlaneX );
             HidePlane( _zPlane, _zPlaneX, _zPlaneY );
-            SetupAxis( _xLine, _xCube, MOVE_INACTIVE_COLOR );
-            SetupAxis( _yLine, _yCube, MOVE_OPAQUE_COLOR );
-            SetupAxis( _zLine, _zCube, MOVE_OPAQUE_COLOR );
+            SetupAxis( _xLine, _xBox, MOVE_INACTIVE_COLOR );
+            SetupAxis( _yLine, _yBox, MOVE_OPAQUE_COLOR );
+            SetupAxis( _zLine, _zBox, MOVE_OPAQUE_COLOR );
         break;
 
         case eAxis::Y:
             setup ( _yPlane, _yPlaneZ, _yPlaneX, _zLine, _xLine );
             HidePlane ( _zPlane, _zPlaneX, _zPlaneY );
             HidePlane ( _xPlane, _xPlaneY, _xPlaneZ );
-            SetupAxis ( _xLine, _xCube, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _yLine, _yCube, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zCube, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _xLine, _xBox, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, MOVE_OPAQUE_COLOR );
         break;
 
         case eAxis::Z:
             setup ( _zPlane, _zPlaneX, _zPlaneY, _xLine, _yLine );
             HidePlane( _xPlane, _xPlaneY, _xPlaneZ );
             HidePlane( _yPlane, _yPlaneZ, _yPlaneX );
-            SetupAxis( _xLine, _xCube, MOVE_OPAQUE_COLOR );
-            SetupAxis( _yLine, _yCube, MOVE_OPAQUE_COLOR );
-            SetupAxis( _zLine, _zCube, MOVE_INACTIVE_COLOR );
+            SetupAxis( _xLine, _xBox, MOVE_OPAQUE_COLOR );
+            SetupAxis( _yLine, _yBox, MOVE_OPAQUE_COLOR );
+            SetupAxis( _zLine, _zBox, MOVE_INACTIVE_COLOR );
         break;
 
         case eAxis::None:
@@ -547,21 +547,21 @@ bool ScaleTool::LockAxis () noexcept
     switch ( _scaleAxis )
     {
         case eAxis::X:
-            SetupAxis ( _xLine, _xCube, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _yLine, _yCube, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zCube, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _xLine, _xBox, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, MOVE_INACTIVE_COLOR );
         break;
 
         case eAxis::Y:
-            SetupAxis ( _xLine, _xCube, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _yLine, _yCube, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _zLine, _zCube, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _xLine, _xBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _yLine, _yBox, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _zLine, _zBox, MOVE_INACTIVE_COLOR );
         break;
 
         case eAxis::Z:
-            SetupAxis ( _xLine, _xCube, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _yLine, _yCube, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zCube, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _xLine, _xBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, MOVE_OPAQUE_COLOR );
         break;
 
         case eAxis::None:
@@ -585,11 +585,11 @@ bool ScaleTool::LockAllAxes ( GXMat3 const &cameraBasis ) noexcept
 
     _origin.SetColor ( MOVE_OPAQUE_COLOR );
     _xLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _xCube.SetColor ( MOVE_OPAQUE_COLOR );
+    _xBox.SetColor ( MOVE_OPAQUE_COLOR );
     _yLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _yCube.SetColor ( MOVE_OPAQUE_COLOR );
+    _yBox.SetColor ( MOVE_OPAQUE_COLOR );
     _zLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _zCube.SetColor ( MOVE_OPAQUE_COLOR );
+    _zBox.SetColor ( MOVE_OPAQUE_COLOR );
 
     _origin.Hide ();
 
@@ -718,8 +718,8 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     GXVec3 alpha {};
     _rotation.TransformFast ( alpha, offset );
 
-    GXVec3 cases[ 2U ];
-    GXVec3 &realP = cases[ 0U ];
+    GXVec3 cases[ 2UZ ];
+    GXVec3 &realP = cases[ 0UZ ];
     realP.Sum ( _location, alpha );
 
     GXQuat const &tr = sdf.GetRotationWorld ();
@@ -728,11 +728,11 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     GXVec3 const &up = m.Up ();
     GXVec3 const &forward = m.Forward ();
 
-    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, up );
+    cases[ 1UZ ].Sum ( realP, PLANE_FLIP_OFFSET, up );
     auto const aTestIdx = static_cast<size_t> ( aTest );
     realP = cases[ aTestIdx ];
 
-    cases[ 1U ].Sum ( realP, PLANE_FLIP_OFFSET, forward );
+    cases[ 1UZ ].Sum ( realP, PLANE_FLIP_OFFSET, forward );
     auto const bTestIdx = static_cast<size_t> ( bTest );
     realP = cases[ bTestIdx ];
 
@@ -768,14 +768,14 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     _localAxisA = aScaleAxis;
     _localAxisB = bScaleAxis;
 
-    cases[ 0U ] = up;
-    cases[ 1U ] = up;
-    cases[ 1U ].Reverse ();
+    cases[ 0UZ ] = up;
+    cases[ 1UZ ] = up;
+    cases[ 1UZ ].Reverse ();
     _globalAxisA = cases[ aTestIdx ];
 
-    cases[ 0U ] = forward;
-    cases[ 1U ] = forward;
-    cases[ 1U ].Reverse ();
+    cases[ 0UZ ] = forward;
+    cases[ 1UZ ] = forward;
+    cases[ 1UZ ].Reverse ();
     _globalAxisB = cases[ bTestIdx ];
 
     _scalePlane = planeAxis;
@@ -808,7 +808,7 @@ void ScaleTool::AllAxesCheck ( Closest &closest,
 void ScaleTool::SetupAxis ( SDFLineSegment &axis, SDFBox &box, eSDFPalette color ) noexcept
 {
     axis.SetColor ( color );
-    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0U ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
+    axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0UZ ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
 
     constexpr GXVec3 boxSize ( CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE );
     box.SetScale ( boxSize );

@@ -67,7 +67,7 @@ class ScaleTool final : public Tool
             2.15F
         };
 
-        SDFBox                      _xCube
+        SDFBox                      _xBox
         {
             GXVec3 ( 6.5F, 0.0F, 0.0F ),
             GXQuat ( 1.0F, 0.0F, 0.0F, 0.0F ),
@@ -94,7 +94,7 @@ class ScaleTool final : public Tool
             2.15F
         };
 
-        SDFBox                      _yCube
+        SDFBox                      _yBox
         {
             GXVec3 ( 0.0F, 6.5F, 0.0F ),
             GXQuat ( 7.071068e-1F, 0.0F, 0.0F, 7.071068e-1F ),
@@ -121,7 +121,7 @@ class ScaleTool final : public Tool
             2.15F
         };
 
-        SDFBox                      _zCube
+        SDFBox                      _zBox
         {
             GXVec3 ( 0.0F, 0.0F, 6.5F ),
             GXQuat ( 7.071068e-1F, 0.0F, -7.071068e-1F, 0.0F ),

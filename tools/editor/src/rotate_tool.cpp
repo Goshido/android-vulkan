@@ -213,7 +213,7 @@ void RotateTool::ActivateSDF ( SDF &sdf ) noexcept
     }
 
     GXVec3 const &s = _inactiveSize.at ( &sdf );
-    sdf.SetScale ( GXVec3 ( s._data[ 0U ], s._data[ 1U ], AXIS_ACTIVE_SIZE ) );
+    sdf.SetScale ( GXVec3 ( s._data[ 0UZ ], s._data[ 1UZ ], AXIS_ACTIVE_SIZE ) );
 }
 
 void RotateTool::DeactivateSDF () noexcept
@@ -269,10 +269,10 @@ void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &camer
     delta.Multiply ( GXVec2 ( static_cast<float> ( dx ), static_cast<float> ( dy ) ), BALL_SENSITIVITY );
 
     GXQuat alpha {};
-    alpha.FromAxisAngle ( cameraBasis.Right (), delta._data[ 1U ] );
+    alpha.FromAxisAngle ( cameraBasis.Right (), delta._data[ 1UZ ] );
 
     GXQuat beta {};
-    beta.FromAxisAngle ( cameraBasis.Up (), delta._data[ 0U ] );
+    beta.FromAxisAngle ( cameraBasis.Up (), delta._data[ 0UZ ] );
 
     GXQuat zeta {};
     zeta.Multiply ( alpha, beta );
@@ -380,7 +380,7 @@ void RotateTool::CheckRing ( Closest &closest,
 
     // See <repo>/docs/gizmo-rendering.md#inter-ring
     GXVec2 m ( dir.DotProduct ( cameraBasis.Right () ), dir.DotProduct ( cameraBasis.Up () ) );
-    m._data[ 1U ] = -m._data[ 1U ];
+    m._data[ 1U ] = -m._data[ 1UZ ];
     _tangentProjection = m;
 }
 

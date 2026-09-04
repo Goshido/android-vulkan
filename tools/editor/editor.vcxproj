@@ -1154,6 +1154,7 @@
     <ClCompile Include="src\camera_component.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
+    <ClCompile Include="src\cross_like_tool.cpp" />
     <ClCompile Include="src\gizmo_box_collider.cpp" />
     <ClCompile Include="src\gizmo_cylinder_collider.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
@@ -1358,6 +1359,7 @@
     <ClInclude Include="include\color_data.hpp" />
     <ClInclude Include="include\component.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
+    <ClInclude Include="include\cross_like_tool.hpp" />
     <ClInclude Include="include\cursor.hpp" />
     <ClInclude Include="include\gizmo_box_collider.hpp" />
     <ClInclude Include="include\gizmo_cylinder_collider.hpp" />

@@ -16,8 +16,6 @@ extern Actor* fuck_actor;
 
 namespace {
 
-constexpr float             COLINEAR_THRESHOLD = 1.0e-4F;
-
 constexpr float             AXIS_SDF_ACTIVE_SIZE = 0.08F;
 constexpr float             AXIS_SDF_STANDBY_SIZE = 0.02F;
 constexpr float             AXIS_SDF_FULL_LENGTH = 6.08F;
@@ -27,12 +25,8 @@ constexpr float             AXIS_CLIP_OFFSET = 2.4F;
 constexpr float             AXIS_FULL_LENGTH = 8.8F;
 constexpr float             AXIS_RADIUS = 0.5F;
 
-constexpr float             CUBE_ACTIVE_SIZE = 0.5F;
-constexpr float             CUBE_STANDBY_SIZE = 0.45F;
-
-constexpr GXVec3            PLANE_SCALE ( 0.2F, 2.4F, 2.4F );
-constexpr GXVec2            PLANE_OFFSET ( -0.2F, 1.1F );
-constexpr float             PLANE_FLIP_OFFSET = 2.15F;
+constexpr float             BOX_ACTIVE_SIZE = 0.5F;
+constexpr float             BOX_STANDBY_SIZE = 0.45F;
 
 constexpr float             UNIFORM_SCALE_FACTOR = 0.01F;
 constexpr float             GIZMO_RADIUS = 8.3F;
@@ -40,21 +34,6 @@ constexpr float             SCALE_LINE_OFFSET_Y = -3.5F;
 
 constexpr eSDFPalette       ORIGIN_COLOR = eSDFPalette::White;
 
-constexpr eSDFPalette       X_COLOR = eSDFPalette::Red;
-constexpr eSDFPalette       X_PLANE_ACTIVE_COLOR = eSDFPalette::RedGlass;
-constexpr eSDFPalette       X_PLANE_STANDBY_COLOR = eSDFPalette::RedGhost;
-
-constexpr eSDFPalette       Y_COLOR = eSDFPalette::Green;
-constexpr eSDFPalette       Y_PLANE_ACTIVE_COLOR = eSDFPalette::GreenGlass;
-constexpr eSDFPalette       Y_PLANE_STANDBY_COLOR = eSDFPalette::GreenGhost;
-
-constexpr eSDFPalette       Z_COLOR = eSDFPalette::Blue;
-constexpr eSDFPalette       Z_PLANE_ACTIVE_COLOR = eSDFPalette::BlueGlass;
-constexpr eSDFPalette       Z_PLANE_STANDBY_COLOR = eSDFPalette::BlueGhost;
-
-constexpr eSDFPalette       MOVE_OPAQUE_COLOR = eSDFPalette::Yellow;
-constexpr eSDFPalette       MOVE_TRANSPARENT_COLOR = eSDFPalette::YellowGlass;
-constexpr eSDFPalette       MOVE_INACTIVE_COLOR = eSDFPalette::Grey;
 
 } // end of anonymous namespace
 
@@ -161,23 +140,23 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     bool leftMouseButtonPressed
 ) noexcept
 {
-    bool const prevMoving = ( _scaleAxis != eAxis::None ) | ( _scalePlane != eAxis::None ) | _scaleAll;
+    bool const prevMoving = ( _workAxis != eAxis::None ) | ( _workPlane != eAxis::None ) | _scaleAll;
     bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
     bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
 
-    eAxis cases[] = { _scaleAxis, eAxis::None };
-    _scaleAxis = cases[ static_cast<size_t> ( lmbReleased ) ];
+    eAxis cases[] = { _workAxis, eAxis::None };
+    _workAxis = cases[ static_cast<size_t> ( lmbReleased ) ];
 
-    if ( _scaleAxis != eAxis::None )
+    if ( _workAxis != eAxis::None )
     {
         HandleAxisScale ( cameraLocation, rayDirection );
         return;
     }
 
-    cases[ 0UZ ] = _scalePlane;
-    _scalePlane = cases[ static_cast<size_t> ( lmbReleased ) ];
+    cases[ 0UZ ] = _workPlane;
+    _workPlane = cases[ static_cast<size_t> ( lmbReleased ) ];
 
-    if ( _scalePlane != eAxis::None )
+    if ( _workPlane != eAxis::None )
     {
         HandlePlaneScale ( cameraLocation, rayDirection );
         return;
@@ -303,7 +282,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         return;
     }
 
-    ActivateSDF ( *closest._control, closest._box );
+    ActivateSDF ( *closest._control, closest._cap );
 }
 
 std::optional<ScaleTool::ColorSet> ScaleTool::AcquirePlaneColorSet ( SDF &plane ) noexcept
@@ -338,16 +317,16 @@ std::optional<ScaleTool::ColorSet> ScaleTool::AcquirePlaneColorSet ( SDF &plane 
     return std::nullopt;
 }
 
-void ScaleTool::ActivateSDF ( SDF &sdf, SDFBox* box ) noexcept
+void ScaleTool::ActivateSDF ( SDF &sdf, SDF* cap ) noexcept
 {
     if ( &sdf == _control )
         return;
 
     DeactivateSDF ();
     _control = &sdf;
-    _box = box;
+    _cap = cap;
 
-    constexpr GXVec3 cubeSize ( CUBE_ACTIVE_SIZE, CUBE_ACTIVE_SIZE, CUBE_ACTIVE_SIZE );
+    constexpr GXVec3 cubeSize ( BOX_ACTIVE_SIZE, BOX_ACTIVE_SIZE, BOX_ACTIVE_SIZE );
 
     if ( &sdf == &_origin )
     {
@@ -367,7 +346,7 @@ void ScaleTool::ActivateSDF ( SDF &sdf, SDFBox* box ) noexcept
     );
 
     sdf.SetScale ( axisSize );
-    box->SetScale ( cubeSize );
+    cap->SetScale ( cubeSize );
 }
 
 void ScaleTool::DeactivateSDF () noexcept
@@ -376,7 +355,7 @@ void ScaleTool::DeactivateSDF () noexcept
         return;
 
     SDF* c = std::exchange ( _control, nullptr );
-    constexpr GXVec3 cubeSize ( CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE );
+    constexpr GXVec3 cubeSize ( BOX_STANDBY_SIZE, BOX_STANDBY_SIZE, BOX_STANDBY_SIZE );
 
     if ( c == &_origin )
     {
@@ -396,17 +375,17 @@ void ScaleTool::DeactivateSDF () noexcept
     );
 
     c->SetScale ( axisSize );
-    _box->SetScale ( cubeSize );
+    _cap->SetScale ( cubeSize );
 }
 
 void ScaleTool::HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-scale-axis
-    auto const distance = ResolveAxisScalarDistance ( _controlLocation, _controlDirection, rayOrigin, rayDirection );
+    auto const distance = ResolveAxisScalarDistance ( _controlLocation, _workDirection, rayOrigin, rayDirection );
 
     if ( distance )
     {
-        _target.Sum ( _initialScale, *distance + _negativeScalarDistance, _localAxisA );
+        _target.Sum ( _initialState, *distance + _initialNegativeScalarDistance, _localAxisA );
         fuck_actor->SetScale ( _target );
     }
 }
@@ -414,14 +393,14 @@ void ScaleTool::HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDire
 void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-scale-plane
-    auto const point = ResolvePlaneIntersection ( _controlLocation, _controlDirection, rayOrigin, rayDirection );
+    auto const point = ResolvePlaneIntersection ( _controlLocation, _workDirection, rayOrigin, rayDirection );
 
     if ( !point )
         return;
 
     GXVec3 d {};
     d.Subtract ( _controlLocation, *point );
-    _target.Sum ( _initialScale, d.DotProduct ( _globalAxisA ), _localAxisA );
+    _target.Sum ( _initialState, d.DotProduct ( _globalAxisA ), _localAxisA );
     _target.Sum ( _target, d.DotProduct ( _globalAxisB ), _localAxisB );
     fuck_actor->SetScale ( _target );
 }
@@ -429,7 +408,7 @@ void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDir
 void ScaleTool::HandleScaleAll ( int32_t mouseY ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-uniform-scale
-    _target.Multiply ( _initialScale,
+    _target.Multiply ( _initialState,
         std::exp ( UNIFORM_SCALE_FACTOR * ( _controlLocation._data[ 1UZ ] - static_cast<float> ( mouseY ) ) )
     );
 
@@ -462,7 +441,7 @@ void ScaleTool::ResetVisuals () noexcept
         planeB.SetColor ( color );
         plane.SetColor ( planeColor );
 
-        constexpr GXVec3 cubeScale ( CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE );
+        constexpr GXVec3 cubeScale ( BOX_STANDBY_SIZE, BOX_STANDBY_SIZE, BOX_STANDBY_SIZE );
         cube.SetScale ( cubeScale );
         cube.SetColor ( color );
         cube.OnParentUpdated ( _location, _rotation );
@@ -498,9 +477,9 @@ bool ScaleTool::LockPlane () noexcept
         SDFLineSegment &axisA,
         SDFLineSegment &axisB
     ) noexcept {
-        plane.SetColor ( MOVE_TRANSPARENT_COLOR );
-        lineA.SetColor ( MOVE_OPAQUE_COLOR );
-        lineB.SetColor ( MOVE_OPAQUE_COLOR );
+        plane.SetColor ( WORK_TRANSPARENT_COLOR );
+        lineA.SetColor ( WORK_OPAQUE_COLOR );
+        lineB.SetColor ( WORK_OPAQUE_COLOR );
 
         constexpr GXVec3 s ( AXIS_SDF_FULL_LENGTH, AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE );
         axisA.SetLocationAndScale ( GXVec3::ZERO, s );
@@ -510,33 +489,33 @@ bool ScaleTool::LockPlane () noexcept
         axisB.OnParentUpdated ( _location, _rotation );
     };
 
-    switch ( _scalePlane )
+    switch ( _workPlane )
     {
         case eAxis::X:
             setup ( _xPlane, _xPlaneY, _xPlaneZ, _yLine, _zLine );
             HidePlane( _yPlane, _yPlaneZ, _yPlaneX );
             HidePlane( _zPlane, _zPlaneX, _zPlaneY );
-            SetupAxis( _xLine, _xBox, MOVE_INACTIVE_COLOR );
-            SetupAxis( _yLine, _yBox, MOVE_OPAQUE_COLOR );
-            SetupAxis( _zLine, _zBox, MOVE_OPAQUE_COLOR );
+            SetupAxis( _xLine, _xBox, WORK_INACTIVE_COLOR );
+            SetupAxis( _yLine, _yBox, WORK_OPAQUE_COLOR );
+            SetupAxis( _zLine, _zBox, WORK_OPAQUE_COLOR );
         break;
 
         case eAxis::Y:
             setup ( _yPlane, _yPlaneZ, _yPlaneX, _zLine, _xLine );
             HidePlane ( _zPlane, _zPlaneX, _zPlaneY );
             HidePlane ( _xPlane, _xPlaneY, _xPlaneZ );
-            SetupAxis ( _xLine, _xBox, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zBox, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _xLine, _xBox, WORK_OPAQUE_COLOR );
+            SetupAxis ( _yLine, _yBox, WORK_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, WORK_OPAQUE_COLOR );
         break;
 
         case eAxis::Z:
             setup ( _zPlane, _zPlaneX, _zPlaneY, _xLine, _yLine );
             HidePlane( _xPlane, _xPlaneY, _xPlaneZ );
             HidePlane( _yPlane, _yPlaneZ, _yPlaneX );
-            SetupAxis( _xLine, _xBox, MOVE_OPAQUE_COLOR );
-            SetupAxis( _yLine, _yBox, MOVE_OPAQUE_COLOR );
-            SetupAxis( _zLine, _zBox, MOVE_INACTIVE_COLOR );
+            SetupAxis( _xLine, _xBox, WORK_OPAQUE_COLOR );
+            SetupAxis( _yLine, _yBox, WORK_OPAQUE_COLOR );
+            SetupAxis( _zLine, _zBox, WORK_INACTIVE_COLOR );
         break;
 
         case eAxis::None:
@@ -552,24 +531,24 @@ bool ScaleTool::LockPlane () noexcept
 
 bool ScaleTool::LockAxis () noexcept
 {
-    switch ( _scaleAxis )
+    switch ( _workAxis )
     {
         case eAxis::X:
-            SetupAxis ( _xLine, _xBox, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _xLine, _xBox, WORK_OPAQUE_COLOR );
+            SetupAxis ( _yLine, _yBox, WORK_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, WORK_INACTIVE_COLOR );
         break;
 
         case eAxis::Y:
-            SetupAxis ( _xLine, _xBox, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _yLine, _yBox, MOVE_OPAQUE_COLOR );
-            SetupAxis ( _zLine, _zBox, MOVE_INACTIVE_COLOR );
+            SetupAxis ( _xLine, _xBox, WORK_INACTIVE_COLOR );
+            SetupAxis ( _yLine, _yBox, WORK_OPAQUE_COLOR );
+            SetupAxis ( _zLine, _zBox, WORK_INACTIVE_COLOR );
         break;
 
         case eAxis::Z:
-            SetupAxis ( _xLine, _xBox, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _yLine, _yBox, MOVE_INACTIVE_COLOR );
-            SetupAxis ( _zLine, _zBox, MOVE_OPAQUE_COLOR );
+            SetupAxis ( _xLine, _xBox, WORK_INACTIVE_COLOR );
+            SetupAxis ( _yLine, _yBox, WORK_INACTIVE_COLOR );
+            SetupAxis ( _zLine, _zBox, WORK_OPAQUE_COLOR );
         break;
 
         case eAxis::None:
@@ -591,13 +570,13 @@ bool ScaleTool::LockAllAxes ( GXMat3 const &cameraBasis ) noexcept
     if ( !_scaleAll )
         return false;
 
-    _origin.SetColor ( MOVE_OPAQUE_COLOR );
-    _xLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _xBox.SetColor ( MOVE_OPAQUE_COLOR );
-    _yLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _yBox.SetColor ( MOVE_OPAQUE_COLOR );
-    _zLine.SetColor ( MOVE_OPAQUE_COLOR );
-    _zBox.SetColor ( MOVE_OPAQUE_COLOR );
+    _origin.SetColor ( WORK_OPAQUE_COLOR );
+    _xLine.SetColor ( WORK_OPAQUE_COLOR );
+    _xBox.SetColor ( WORK_OPAQUE_COLOR );
+    _yLine.SetColor ( WORK_OPAQUE_COLOR );
+    _yBox.SetColor ( WORK_OPAQUE_COLOR );
+    _zLine.SetColor ( WORK_OPAQUE_COLOR );
+    _zBox.SetColor ( WORK_OPAQUE_COLOR );
 
     _origin.Hide ();
 
@@ -686,14 +665,14 @@ void ScaleTool::AxisCheck ( Closest &closest,
     closest =
     {
         ._control = &sdf,
-        ._box = &sdfBox,
+        ._cap = &sdfBox,
         ._distance = d
     };
 
     if ( !lmbPressed )
         return;
 
-    _scalePlane = eAxis::None;
+    _workPlane = eAxis::None;
     _scaleAll = false;
     auto const distance = ResolveAxisScalarDistance ( _location, a, rayOrigin, rayDirection );
 
@@ -701,12 +680,12 @@ void ScaleTool::AxisCheck ( Closest &closest,
         return;
 
     _controlLocation = _location;
-    _controlDirection = a;
+    _workDirection = a;
     _localAxisA = scaleAxis;
-    _negativeScalarDistance = -distance.value ();
+    _initialNegativeScalarDistance = -distance.value ();
 
-    _scaleAxis = axis;
-    _initialScale = _target;
+    _workAxis = axis;
+    _initialState = _target;
 }
 
 void ScaleTool::PlaneCheck ( Closest &closest,
@@ -762,7 +741,7 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     if ( !lmbPressed )
         return;
 
-    _scaleAxis = eAxis::None;
+    _workAxis = eAxis::None;
     _scaleAll = false;
 
     GXVec3 const &right = m.Right ();
@@ -772,7 +751,7 @@ void ScaleTool::PlaneCheck ( Closest &closest,
         return;
 
     _controlLocation = *point;
-    _controlDirection = right;
+    _workDirection = right;
     _localAxisA = aScaleAxis;
     _localAxisB = bScaleAxis;
 
@@ -786,8 +765,8 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     cases[ 1UZ ].Reverse ();
     _globalAxisB = cases[ bTestIdx ];
 
-    _scalePlane = planeAxis;
-    _initialScale = _target;
+    _workPlane = planeAxis;
+    _initialState = _target;
 }
 
 void ScaleTool::AllAxesCheck ( Closest &closest,
@@ -806,10 +785,10 @@ void ScaleTool::AllAxesCheck ( Closest &closest,
     if ( !lmbPressed )
         return;
 
-    _scaleAxis = eAxis::None;
-    _scalePlane = eAxis::None;
+    _workAxis = eAxis::None;
+    _workPlane = eAxis::None;
     _scaleAll = true;
-    _initialScale = _target;
+    _initialState = _target;
     _controlLocation._data[ 1U ] = static_cast<float> ( mouseY );
 }
 
@@ -818,68 +797,9 @@ void ScaleTool::SetupAxis ( SDFLineSegment &axis, SDFBox &box, eSDFPalette color
     axis.SetColor ( color );
     axis.SetScale ( GXVec3 ( axis.GetScale ()._data[ 0UZ ], AXIS_SDF_STANDBY_SIZE, AXIS_SDF_STANDBY_SIZE ) );
 
-    constexpr GXVec3 boxSize ( CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE, CUBE_STANDBY_SIZE );
+    constexpr GXVec3 boxSize ( BOX_STANDBY_SIZE, BOX_STANDBY_SIZE, BOX_STANDBY_SIZE );
     box.SetScale ( boxSize );
     box.SetColor ( color );
-}
-
-bool ScaleTool::FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept
-{
-    GXVec3 alpha {};
-    alpha.Subtract ( plane.GetLocationWorld (), cameraLocation );
-
-    GXVec3 beta {};
-    plane.GetRotationWorld ().GetRight ( beta );
-
-    return beta.DotProduct ( alpha ) > 0.0F;
-}
-
-void ScaleTool::HidePlane ( SDFBoxWithFlip &plane,
-    SDFLineSegmentWithFlip &lineA,
-    SDFLineSegmentWithFlip &lineB
-) noexcept
-{
-    plane.Hide ();
-    lineA.Hide ();
-    lineB.Hide ();
-}
-
-std::optional<float> ScaleTool::ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
-    GXVec3 const &axisDirection,
-    GXVec3 const &cameraLocation,
-    GXVec3 const &cameraForward
-) noexcept
-{
-    // See <repo>/docs/gizmo-rendering.md#inter-axis
-    if ( 1.0F - std::abs ( cameraForward.DotProduct ( axisDirection ) ) < COLINEAR_THRESHOLD )
-        return std::nullopt;
-
-    GXVec3 alpha {};
-    alpha.CrossProduct ( axisDirection, cameraForward );
-
-    GXVec3 omega {};
-    omega.CrossProduct ( cameraForward, alpha );
-
-    alpha.Subtract ( cameraLocation, axisOrigin );
-    return std::optional<float> { alpha.DotProduct ( omega ) / axisDirection.DotProduct ( omega ) };
-}
-
-std::optional<GXVec3> ScaleTool::ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
-    GXVec3 const &planeNormal,
-    GXVec3 const &cameraLocation,
-    GXVec3 const &cameraForward
-) noexcept
-{
-    // See <repo>/docs/gizmo-rendering.md#inter-plane
-    float const n = planeNormal.DotProduct ( cameraForward );
-
-    if ( 1.0F - std::abs ( n ) < COLINEAR_THRESHOLD )
-        return std::nullopt;
-
-    GXVec3 alpha {};
-    alpha.Subtract ( planeOrigin, cameraLocation );
-    alpha.Sum ( cameraLocation, alpha.DotProduct ( planeNormal ) / n, cameraForward );
-    return std::optional<GXVec3> { std::move ( alpha ) };
 }
 
 } // namespace editor

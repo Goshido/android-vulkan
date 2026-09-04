@@ -219,7 +219,7 @@ ViewportWidget::ViewportWidget () noexcept:
     _selectionBody.Hide ();
 
     //_rotateTool.Activate ();
-    // _moveTool.Activate ();
+    //_moveTool.Activate ();
     _scaleTool.Activate ();
 }
 
@@ -443,11 +443,11 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     //    _state._leftMouseButton == 1U
     //);
 
-    // _moveTool.Update ( ComputeRayDirection ( basis ),
-    //     _location,
-    //     GetVI (),
-    //     _state._leftMouseButton == 1U
-    // );
+    //_moveTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    GetVI (),
+    //    _state._leftMouseButton == 1U
+    //);
 
     _scaleTool.Update ( ComputeRayDirection ( basis ),
        _location,

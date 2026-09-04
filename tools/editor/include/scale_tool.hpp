@@ -2,41 +2,17 @@
 #define EDITOR_SCALE_TOOL_HPP
 
 
+#include "cross_like_tool.hpp"
 #include "gizmo_sphere_collider.hpp"
 #include "sdf_box.hpp"
-#include "sdf_box_with_flip.hpp"
 #include "sdf_cone.hpp"
 #include "sdf_line_segment.hpp"
-#include "sdf_line_segment_with_flip.hpp"
-#include "tool.hpp"
 
 
 namespace editor {
 
-class ScaleTool final : public Tool
+class ScaleTool final : public CrossLikeTool
 {
-    private:
-        enum class eAxis : uint8_t
-        {
-            X,
-            Y,
-            Z,
-            None,
-        };
-
-        struct ColorSet final
-        {
-            eSDFPalette             _active = eSDFPalette::White;
-            eSDFPalette             _standby = eSDFPalette::White;
-        };
-
-        struct Closest final
-        {
-            SDF*                    _control = nullptr;
-            SDFBox*                 _box = nullptr;
-            float                   _distance = std::numeric_limits<float>::max ();
-        };
-
     private:
         constexpr static float      ORIGIN_RADIUS = 0.8F;
 
@@ -242,27 +218,10 @@ class ScaleTool final : public Tool
 
         GizmoSphereCollider         _originCollider { ORIGIN_RADIUS };
 
-        SDF*                        _control = nullptr;
-        SDFBox*                     _box = nullptr;
-
-        GXQuat                      _rotation = GXQuat::IDENTITY;
-
-        // FUCK
-        GXVec3                      _location { -1.2F, -1.0F, 3.0F };
-
-        float                       _negativeScalarDistance;
-
-        GXVec3                      _initialScale {};
+        GXVec3                      _controlLocation {};
         bool                        _scaleAll = false;
 
-        GXVec3                      _controlLocation {};
-        eAxis                       _scalePlane = eAxis::None;
-
-        GXVec3                      _controlDirection {};
-        bool                        _lastLMBPressed = false;
-
         GXVec3                      _target = GXVec3::ONE;
-        eAxis                       _scaleAxis = eAxis::None;
 
         GXVec3                      _globalAxisA {};
         GXVec3                      _globalAxisB {};
@@ -303,7 +262,7 @@ class ScaleTool final : public Tool
         // Note method will return std::nullopt in case of unknown box.
         [[nodiscard]] std::optional<ColorSet> AcquirePlaneColorSet ( SDF &plane ) noexcept;
 
-        void ActivateSDF ( SDF &sdf, SDFBox* box ) noexcept;
+        void ActivateSDF ( SDF &sdf, SDF* cap ) noexcept;
         void DeactivateSDF () noexcept;
 
         void HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
@@ -352,24 +311,6 @@ class ScaleTool final : public Tool
         ) noexcept;
 
         static void SetupAxis ( SDFLineSegment &axis, SDFBox &box, eSDFPalette color ) noexcept;
-        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
-
-        static void HidePlane ( SDFBoxWithFlip &plane,
-            SDFLineSegmentWithFlip &lineA,
-            SDFLineSegmentWithFlip &lineB
-        ) noexcept;
-
-        [[nodiscard]] static std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
-            GXVec3 const &axisDirection,
-            GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward
-        ) noexcept;
-
-        [[nodiscard]] static std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
-            GXVec3 const &planeNormal,
-            GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward
-        ) noexcept;
 };
 
 } // namespace editor

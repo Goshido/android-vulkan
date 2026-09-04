@@ -495,6 +495,9 @@
     <ClCompile Include="src\sdf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\cross_like_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1092,6 +1095,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\sdf.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cross_like_tool.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

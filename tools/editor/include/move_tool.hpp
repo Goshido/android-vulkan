@@ -2,40 +2,16 @@
 #define EDITOR_MOVE_TOOL_HPP
 
 
-#include "sdf_box_with_flip.hpp"
+#include "cross_like_tool.hpp"
 #include "sdf_cone.hpp"
 #include "sdf_line_segment.hpp"
-#include "sdf_line_segment_with_flip.hpp"
 #include "sdf_sphere.hpp"
-#include "tool.hpp"
 
 
 namespace editor {
 
-class MoveTool final : public Tool
+class MoveTool final : public CrossLikeTool
 {
-    private:
-        enum class eAxis : uint8_t
-        {
-            X,
-            Y,
-            Z,
-            None
-        };
-
-        struct ColorSet final
-        {
-            eSDFPalette             _active = eSDFPalette::White;
-            eSDFPalette             _standby = eSDFPalette::White;
-        };
-
-        struct Closest final
-        {
-            SDF*                    _control = nullptr;
-            SDFCone*                _cone = nullptr;
-            float                   _distance = std::numeric_limits<float>::max ();
-        };
-
     private:
         SDFSphere                   _origin { GXVec3 ( 0.0F, 0.0F, 0.0F ), 1.0e-1F, eSDFPalette::White };
 
@@ -204,24 +180,7 @@ class MoveTool final : public Tool
             -4.0F
         };
 
-        SDF*                        _control = nullptr;
-        SDFCone*                    _cone = nullptr;
-
-        GXQuat                      _rotation = GXQuat::IDENTITY;
-
-        // FUCK
-        GXVec3                      _location { -1.2F, -1.0F, 3.0F };
-
-        float                       _initialNegativeScalarDistance = 0.0F;
-
-        GXVec3                      _moveAxisVector {};
-        eAxis                       _moveAxis = eAxis::None;
-
-        GXVec3                      _initialMoveLocation {};
-        eAxis                       _movePlane = eAxis::None;
-
         GXVec3                      _initialNegativePlaneOffset {};
-        bool                        _lastLMBPressed = false;
 
     public:
         explicit MoveTool () noexcept;
@@ -254,7 +213,7 @@ class MoveTool final : public Tool
         // Note method will return std::nullopt in case of unknown box.
         [[nodiscard]] std::optional<ColorSet> AcquirePlaneColorSet ( SDF &plane ) noexcept;
 
-        void ActivateSDF ( SDF &sdf, SDFCone* cone ) noexcept;
+        void ActivateSDF ( SDF &sdf, SDF* cap ) noexcept;
         void DeactivateSDF () noexcept;
 
         void HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
@@ -291,24 +250,6 @@ class MoveTool final : public Tool
         ) noexcept;
 
         static void SetupAxis ( SDFLineSegment &axis, SDFCone &cone, eSDFPalette color ) noexcept;
-        [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
-
-        static void HidePlane ( SDFBoxWithFlip &plane,
-            SDFLineSegmentWithFlip &lineA,
-            SDFLineSegmentWithFlip &lineB
-        ) noexcept;
-
-        [[nodiscard]] static std::optional<float> ResolveAxisScalarDistance ( GXVec3 const &axisOrigin,
-            GXVec3 const &axisDirection,
-            GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward
-        ) noexcept;
-
-        [[nodiscard]] static std::optional<GXVec3> ResolvePlaneIntersection ( GXVec3 const &planeOrigin,
-            GXVec3 const &planeNormal,
-            GXVec3 const &cameraLocation,
-            GXVec3 const &cameraForward
-        ) noexcept;
 };
 
 } // namespace editor

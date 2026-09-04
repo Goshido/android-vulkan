@@ -43,7 +43,6 @@ class OutlineMeshNode final : public WorkspaceNode
         void SetLocation ( GXVec3 const &location ) noexcept;
         void SetScale ( GXVec3 const &scale ) noexcept;
 
-        void SetLocal ( GXMat4 const &local ) noexcept;
         void SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept;
         void SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept;
 

@@ -83,22 +83,22 @@ void OutlineMeshNode::Commit () noexcept
 
     GXMat4 local {};
     local.FromFast ( _rotation, _location );
-    auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
-    GXVec3 const &s = _scale;
+    GXVec3 &x = local.Right ();
+    auto const &s = _scale._data;
 
-    auto &y = *reinterpret_cast<GXVec3*> ( local._data[ 1U ] );
-    x.Multiply ( x, s._data[ 0U ] );
+    GXVec3 &y = local.Up ();
+    x.Multiply ( x, s[ 0UZ ] );
 
-    auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
-    y.Multiply ( y, s._data[ 1U ] );
-    z.Multiply ( z, s._data[ 2U ] );
+    GXVec3 &z = local.Forward ();
+    y.Multiply ( y, s[ 1UZ ] );
+    z.Multiply ( z, s[ 2UZ ] );
 
     meshInfo._model =
     {
         ._x = x,
         ._y = y,
         ._z = z,
-        ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] )
+        ._w = local.Location ()
     };
 
     _boundLocal.Transform ( meshInfo._boundWorld, local );
@@ -160,24 +160,6 @@ void OutlineMeshNode::SetScale ( GXVec3 const &scale ) noexcept
         return;
 
     _scale = scale;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
-void OutlineMeshNode::SetLocal ( GXMat4 const &local ) noexcept
-{
-    GXQuat const r ( local );
-
-    GXVec3 s {};
-    local.ClearScale ( s );
-
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _rotation = r;
-    _location = *reinterpret_cast<GXVec3 const*> ( local._data[ 3U ] );
-    _scale = s;
     _hasChanges = true;
 
     Unlock ();

@@ -219,7 +219,7 @@ ViewportWidget::ViewportWidget () noexcept:
     _selectionBody.Hide ();
 
     //_rotateTool.Activate ();
-    //_moveTool.Activate ();
+    // _moveTool.Activate ();
     _scaleTool.Activate ();
 }
 
@@ -435,41 +435,27 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     GXMat3 basis {};
     basis.FromFast ( _orientation );
 
+    //_rotateTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    basis,
+    //    GetVI (),
+    //    _mouseNow,
+    //    _state._leftMouseButton == 1U
+    //);
+
+    // _moveTool.Update ( ComputeRayDirection ( basis ),
+    //     _location,
+    //     GetVI (),
+    //     _state._leftMouseButton == 1U
+    // );
+
     _scaleTool.Update ( ComputeRayDirection ( basis ),
-        _location,
-        basis,
-        GetVI (),
-        _mouseNow.y,
-        _state._leftMouseButton == 1U
+       _location,
+       basis,
+       GetVI (),
+       _mouseNow.y,
+       _state._leftMouseButton == 1U
     );
-
-    //_mouseNow =
-    //{
-    //    .x = 349,
-    //    .y = 228
-    //};
-
-    //_scaleTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    basis,
-    //    GetVI (),
-    //    _mouseNow.y,
-    //    true
-    //);
-
-    //_mouseNow =
-    //{
-    //    .x = 349,
-    //    .y = 240
-    //};
-
-    //_scaleTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    basis,
-    //    GetVI (),
-    //    _mouseNow.y,
-    //    true
-    //);
 
     if ( !_selectionMode )
         return;

@@ -5,10 +5,14 @@
 #include <sdf_size.hpp>
 
 // FUCK - remove
+#include <actor.hpp>
 #include <logger.hpp>
 
 
 namespace editor {
+
+// FUCK
+extern Actor* fuck_actor;
 
 namespace {
 
@@ -403,6 +407,7 @@ void ScaleTool::HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDire
     if ( distance )
     {
         _target.Sum ( _initialScale, *distance + _negativeScalarDistance, _localAxisA );
+        fuck_actor->SetScale ( _target );
     }
 }
 
@@ -418,14 +423,17 @@ void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDir
     d.Subtract ( _controlLocation, *point );
     _target.Sum ( _initialScale, d.DotProduct ( _globalAxisA ), _localAxisA );
     _target.Sum ( _target, d.DotProduct ( _globalAxisB ), _localAxisB );
+    fuck_actor->SetScale ( _target );
 }
 
 void ScaleTool::HandleScaleAll ( int32_t mouseY ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-uniform-scale
     _target.Multiply ( _initialScale,
-        std::exp ( UNIFORM_SCALE_FACTOR * ( static_cast<float> ( mouseY ) - _controlLocation._data[ 1U ] ) )
+        std::exp ( UNIFORM_SCALE_FACTOR * ( _controlLocation._data[ 1UZ ] - static_cast<float> ( mouseY ) ) )
     );
+
+    fuck_actor->SetScale ( _target );
 }
 
 void ScaleTool::ResetVisuals () noexcept

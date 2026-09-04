@@ -123,6 +123,11 @@ void Actor::Save ( SaveState::Container &root ) const noexcept
     }
 }
 
+GXQuat const &Actor::GetRotation () const noexcept
+{
+    return _rotation;
+}
+
 void Actor::SetRotation ( GXQuat const &rotation ) noexcept
 {
     _rotation = rotation;
@@ -141,23 +146,25 @@ void Actor::SetRotation ( GXMat4 const &rotation ) noexcept
     NotifyTransformChanged ();
 }
 
+GXVec3 const &Actor::GetLocation () const noexcept
+{
+    return _location;
+}
+
 void Actor::SetLocation ( GXVec3 const &location ) noexcept
 {
     _location = location;
     NotifyTransformChanged ();
 }
 
+GXVec3 const &Actor::GetScale () const noexcept
+{
+    return _scale;
+}
+
 void Actor::SetScale ( GXVec3 const &scale ) noexcept
 {
     _scale = scale;
-    NotifyTransformChanged ();
-}
-
-void Actor::SetLocal ( GXMat4 const &local ) noexcept
-{
-    _rotation =  GXQuat ( local );
-    _location = *reinterpret_cast<GXVec3 const*> ( local._data[ 3U ] );
-    local.ClearScale ( _scale );
     NotifyTransformChanged ();
 }
 
@@ -174,20 +181,6 @@ void Actor::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 co
     _location = location;
     _scale = scale;
     NotifyTransformChanged ();
-}
-
-void Actor::GetTransform ( GXMat4 &dst ) noexcept
-{
-    dst.FromFast ( _rotation, _location );
-    auto &x = *reinterpret_cast<GXVec3*> ( dst._data[ 0U ] );
-    GXVec3 const &s = _scale;
-
-    auto &y = *reinterpret_cast<GXVec3*> ( dst._data[ 1U ] );
-    x.Multiply ( x, s._data[ 0U ] );
-
-    auto &z = *reinterpret_cast<GXVec3*> ( dst._data[ 2U ] );
-    y.Multiply ( y, s._data[ 1U ] );
-    z.Multiply ( z, s._data[ 2U ] );
 }
 
 void Actor::NotifyTransformChanged () noexcept

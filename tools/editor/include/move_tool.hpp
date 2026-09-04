@@ -208,7 +208,10 @@ class MoveTool final : public Tool
         SDFCone*                    _cone = nullptr;
 
         GXQuat                      _rotation = GXQuat::IDENTITY;
-        GXVec3                      _location { -0.6F, 0.0F, 12.0F };
+
+        // FUCK
+        GXVec3                      _location { -1.2F, -1.0F, 3.0F };
+
         float                       _initialNegativeScalarDistance = 0.0F;
 
         GXVec3                      _moveAxisVector {};

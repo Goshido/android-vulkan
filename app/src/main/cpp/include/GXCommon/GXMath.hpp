@@ -1,4 +1,4 @@
-// version 1.107
+// version 1.108
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -819,6 +819,18 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid SetW ( GXVec3 const &w ) noexcept;
     [[maybe_unused]] GXVoid GetW ( GXVec3 &w ) const noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Up () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Up () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Forward () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Forward () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Location () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Location () noexcept;
 
     [[maybe_unused]] GXVoid Identity () noexcept;
 

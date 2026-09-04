@@ -20,6 +20,9 @@
 
 namespace editor {
 
+// FUCK
+Actor* fuck_actor = nullptr;
+
 namespace {
 
 constexpr size_t PER_MESH_ELEMENTS = 1'000'000UZ;
@@ -1197,6 +1200,7 @@ void Workspace::FUCK () noexcept
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "Full" );
     Actor &a0 = *actor;
+    fuck_actor = &a0;
 
     ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
         "../editor-assets/textures/sonic-material-1-diffuse.png"

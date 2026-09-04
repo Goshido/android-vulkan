@@ -2,10 +2,14 @@
 #include <rotate_tool.hpp>
 
 // FUCK - remove
+#include <actor.hpp>
 #include <logger.hpp>
 
 
 namespace editor {
+
+// FUCK
+extern Actor* fuck_actor;
 
 namespace {
 
@@ -258,6 +262,8 @@ void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
     _x.OnParentUpdated ( _location, _rotation );
     _y.OnParentUpdated ( _location, _rotation );
     _z.OnParentUpdated ( _location, _rotation );
+
+    fuck_actor->SetRotation ( _rotation );
 }
 
 void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept
@@ -286,6 +292,7 @@ void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &camer
     _body.OnParentUpdated ( _location, _rotation );
 
     _lastMouse = mouse;
+    fuck_actor->SetRotation ( _rotation );
 }
 
 void RotateTool::CheckBody ( Closest &closest,

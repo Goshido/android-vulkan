@@ -157,31 +157,25 @@ void StaticMeshComponent::UpdateTransform () noexcept
     if ( !_gbufferNode.IsConnected () & !hasOutline ) [[unlikely]]
         return;
 
-    GXMat4 parent {};
-    _actor->GetTransform ( parent );
+    GXQuat rotation {};
+    Actor &parent = *_actor;
+    GXQuat const &parentRotation = parent.GetRotation ();
+    rotation.Multiply ( parentRotation, _rotation );
 
-    GXMat4 local {};
-    local.FromFast ( _rotation, _location );
-    auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
-    GXVec3 const &s = _scale;
+    GXVec3 scale {};
+    scale.Multiply ( parent.GetScale (), _scale );
 
-    auto &y = *reinterpret_cast<GXVec3*> ( local._data[ 1U ] );
-    x.Multiply ( x, s._data[ 0U ] );
-
-    auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
-    y.Multiply ( y, s._data[ 1U ] );
-    z.Multiply ( z, s._data[ 2U ] );
-
-    GXMat4 transform {};
-    transform.Multiply ( local, parent );
+    GXVec3 location {};
+    parentRotation.TransformFast ( location, _location );
+    location.Sum ( parent.GetLocation (), location );
 
     if ( hasOutline )
     {
-        _outlineNode.SetLocal ( transform );
+        _outlineNode.SetLocal ( rotation, location, scale );
         _outlineNode.SetBounds ( _mesh->GetBounds () );
     }
 
-    _gbufferNode.SetLocal ( transform );
+    _gbufferNode.SetLocal ( rotation, location, scale );
     _gbufferNode.SetBounds ( _mesh->GetBounds () );
 }
 

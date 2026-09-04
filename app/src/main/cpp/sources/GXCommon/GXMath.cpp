@@ -1,4 +1,4 @@
-// version 1.106
+// version 1.107
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -1854,6 +1854,46 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 [[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const noexcept
 {
     std::memcpy ( &w, _data + 3U, sizeof ( GXVec3 ) );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Right () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Right () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Up () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Up () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Forward () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Forward () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Location () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 3U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Location () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 3U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat4::Identity () noexcept

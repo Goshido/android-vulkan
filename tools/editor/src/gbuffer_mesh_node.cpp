@@ -228,24 +228,6 @@ void GBufferMeshNode::SetScale ( GXVec3 const &scale ) noexcept
     Unlock ();
 }
 
-void GBufferMeshNode::SetLocal ( GXMat4 const &local ) noexcept
-{
-    GXQuat const r ( local );
-
-    GXVec3 s {};
-    local.ClearScale ( s );
-
-    if ( !TryLock () ) [[unlikely]]
-        return;
-
-    _rotation = r;
-    _location = *reinterpret_cast<GXVec3 const*> ( local._data[ 3U ] );
-    _scale = s;
-    _hasChanges = true;
-
-    Unlock ();
-}
-
 void GBufferMeshNode::SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept
 {
     if ( !TryLock () ) [[unlikely]]

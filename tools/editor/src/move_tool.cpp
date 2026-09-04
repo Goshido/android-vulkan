@@ -5,10 +5,14 @@
 #include <sdf_size.hpp>
 
 // FUCK - remove
+#include <actor.hpp>
 #include <logger.hpp>
 
 
 namespace editor {
+
+// FUCK
+extern Actor* fuck_actor;
 
 namespace {
 
@@ -359,6 +363,8 @@ void MoveTool::HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirect
 
     _location.Sum ( _initialMoveLocation, *d + _initialNegativeScalarDistance, _moveAxisVector );
     UpdateChildren ();
+
+    fuck_actor->SetLocation ( _location );
 }
 
 void MoveTool::HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
@@ -375,6 +381,8 @@ void MoveTool::HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirec
 
     _location.Sum ( *p, _initialNegativePlaneOffset );
     UpdateChildren ();
+
+    fuck_actor->SetLocation ( _location );
 }
 
 void MoveTool::ResetVisuals () noexcept

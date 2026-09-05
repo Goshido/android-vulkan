@@ -647,7 +647,7 @@ $$
 
 The core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. This relationship is visualized in the illustration below:
 
-<img src="./images/move-gizmo-axis-math.svg">
+<img src="./images/scale-gizmo-axis-math.svg">
 
 where:
 

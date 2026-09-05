@@ -2,7 +2,9 @@ Clear-Host
 
 tokei                                                                                                                  `
     "./scripts/windows"                                                                                                `
+                                                                                                                       `
     "./docs"                                                                                                           `
+    --exclude "*.svg"                                                                                                  `
                                                                                                                        `
     "./tools/3ds-max-plugin/include"                                                                                   `
     --exclude "tools/3ds-max-plugin/include/mikkt/mikktspace.h"                                                        `
@@ -12,6 +14,7 @@ tokei                                                                           
                                                                                                                        `
     "./tools/editor/include"                                                                                           `
     --exclude "tools/editor/include/WinPixEventRuntime/*"                                                              `
+                                                                                                                       `
     "./tools/editor/scripts"                                                                                           `
     "./tools/editor/src"                                                                                               `
                                                                                                                        `
@@ -24,10 +27,13 @@ tokei                                                                           
     --exclude "app/src/main/cpp/include/ogg/*"                                                                         `
     --exclude "app/src/main/cpp/include/stb/*"                                                                         `
     --exclude "app/src/main/cpp/include/vorbis/*"                                                                      `
+                                                                                                                       `
     "./app/src/main/cpp/sources"                                                                                       `
+                                                                                                                       `
     "./app/src/main/hlsl"                                                                                              `
     --exclude "app/src/main/hlsl/disassm/*"                                                                            `
     --exclude "app/src/main/hlsl/validation/*"                                                                         `
+                                                                                                                       `
     "./app/src/main/kotlin/com/goshidoInc/androidVulkan"                                                               `
     "./app/src/main/assets/pbr/assets/Props/experimental/character-sandbox/scripts"                                    `
     "./app/src/main/assets/pbr/assets/Props/experimental/character-sandbox/bobby/bobby.lua"                            `

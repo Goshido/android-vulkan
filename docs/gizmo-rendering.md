@@ -683,17 +683,17 @@ On every frame the mouse moves, we compute the factor $k$. This factor is amount
 The goal is to operate within 2D screen space. Accordingly, the screen-space origin $p$ must be derived using the camera view-projection matrix $M$ and the render target resolution $R$:
 
 $$
-    \begin{aligned}
-        p'=M
-            \begin{bmatrix}
-                O_x \\
-                O_y \\
-                O_z \\
-                1
-            \end{bmatrix} \\
+    p'=M
+        \begin{bmatrix}
+            O_x \\
+            O_y \\
+            O_z \\
+            1
+        \end{bmatrix}
+$$
 
-        p=R\left(\dfrac{p_{xy}'}{2p'_w}+\dfrac{1}{2}\right)
-    \end{aligned}
+$$
+    p=R\left(\dfrac{p_{xy}'}{2p'_w}+\dfrac{1}{2}\right)
 $$
 
 Finding point $r$ requires intersecting the mouse ray with scale axis via the [_ray vs cylinder intersection test_](./ray-cylinder-intersection.md). If an intersection is found, $r$ is current mouse position by design.

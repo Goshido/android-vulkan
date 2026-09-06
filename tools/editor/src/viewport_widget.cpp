@@ -481,13 +481,13 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
-    if ( ( _resolution.width != viewport.width ) | ( _resolution.height != viewport.height ) ) [[unlikely]]
-    {
-        _invHeight = 1.0F / size._data[ 1U ];
-        _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR, Z_FAR );
-        UpdateViewProjection ();
-        _resolution = viewport;
-    }
+    // FUCK - figure out why updating state only if resolution changed does not work. Doing so minimize and
+    // maximize operations produce crashes.
+    // Current implementation shows random artifacts after several resize operations. It's random.
+    _invHeight = 1.0F / size._data[ 1U ];
+    _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR, Z_FAR );
+    UpdateViewProjection ();
+    _resolution = viewport;
 
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );

@@ -229,6 +229,9 @@ class ScaleTool final : public CrossLikeTool
         GXVec3                      _localAxisA {};
         GXVec3                      _localAxisB {};
 
+        GXVec2                      _projectionOrigin {};
+        GXVec2                      _projectionAxisA {};
+
     public:
         explicit ScaleTool () noexcept;
 
@@ -253,8 +256,10 @@ class ScaleTool final : public CrossLikeTool
         void Update ( GXVec3 const &rayDirection,
             GXVec3 const &cameraLocation,
             GXMat3 const &cameraBasis,
+            GXMat4 const &cameraViewProjection,
+            VkExtent2D const &resolution,
             GXVec3 const &vi,
-            int32_t mouseY,
+            VkOffset2D const &mouse,
             bool leftMouseButtonPressed
         ) noexcept;
 
@@ -265,7 +270,7 @@ class ScaleTool final : public CrossLikeTool
         void ActivateSDF ( SDF &sdf, SDF* cap ) noexcept;
         void DeactivateSDF () noexcept;
 
-        void HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
+        void HandleAxisScale ( VkOffset2D const &mouse ) noexcept;
         void HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept;
         void HandleScaleAll ( int32_t mouseY ) noexcept;
 
@@ -280,7 +285,6 @@ class ScaleTool final : public CrossLikeTool
             SDFBox &sdfBox,
             bool test,
             eAxis axis,
-            GXVec3 const &scaleAxis,
             float axisRadius,
             GXVec3 const &rayOrigin,
             GXVec3 const &rayDirection,

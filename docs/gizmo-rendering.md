@@ -645,76 +645,74 @@ $$
 
 ### <a id="inter-scale-axis">Scale axis</a>
 
-The core idea relies on the unique geometric properties of [_skew lines_](https://en.wikipedia.org/wiki/Skew_lines). The geometry focuses on the common perpendicular - the unique line segment that connects both skew lines at a right angle. This segment represents the shortest possible distance between them and serves as the primary "axis" for our calculations. This relationship is visualized in the illustration below:
+The algorithm projects both the object origin and the mouse-axis intersection point onto the 2D screen space. The vector spanning from the object origin to the mouse position serves as the identity scale reference. By projecting the current mouse position onto this reference vector, the system calculates the scalar transformation required for the target object axis.
 
 <img src="./images/scale-gizmo-axis-math.svg">
 
 where:
 
-- $O$ is gizmo position (📨provided)
-- $\overrightarrow{A}$ is unit vector of the axis currently being manipulated by the mouse (📨provided)
-- $V$ is camera position (📨provided)
-- $\overrightarrow{S}$ is the unit vector representing the initial ray cast from the mouse's screen position into the 3D scene (📨provided)
-- $s$ is the scalar distance along the active axis, measured from the gizmo origin to the initial 3D point of mouse interaction (🧮will be computed)
-- $\overrightarrow{\mu}$ is the common perpendicular axis between the two skew lines, to solve for the distance $s$ (🧮will be computed)
-- $\overrightarrow{F}$ is the unit vector representing the current ray cast from the mouse's screen position into the 3D scene (📨provided)
-- $f$ is the scalar distance along the active axis, measured from the gizmo origin to the current 3D point of mouse interaction (🧮will be computed)
-- $\overrightarrow{\lambda}$ is the common perpendicular axis between the two skew lines, to solve for the distance $f$ (🧮will be computed)
+- $O$ object origin in 3D space (📨provided)
+- $\overrightarrow{F}$ current mouse ray; the unit vector cast from the current screen mouse position into the 3D scene (📨provided)
+- $f$ current mouse screen position in 2D coordinates (📨provided)
+- $\overrightarrow{S}$ initial mouse ray; the unit vector cast from the starting screen mouse position into the 3D scene (📨provided)
+- $j$ current intersection point of the scale axis and the current mouse ray (🧮will be computed)
+- $p$ screen-space object origin; the 2D projection of object origin onto the screen plane (🧮will be computed)
+- $r$ initial intersection point of the scale axis and the initial mouse ray (📨provided)
+- $k$ final scale factor applied to the target object axis (🧮will be computed)
 
 ---
 
-To compute the scale of the object, we follow a two-stage process based on the geometry of skew lines:
+To compute the scale of the object, we follow a two-stage process:
 
 **1. Initialization (first click)**
 
-The first step is to establish the starting point. We calculate the initial distance $s$ along the axis and store the original object local scale $W_0$. We also store local scale axis $\overrightarrow{I}$ which will affect object local scale.
+The first step is to establish starting parameters. Those parameters will correspond initial scaling. Those are:
+
+- screen-space projection of the origin $p$
+- screen-space scale axis direction
+- axis of the object basis which must be scaled $\overrightarrow{B_0}$
 
 **2. Update (mouse movement)**
 
-On every frame the mouse moves, we compute the current distance $f$. The relationship between these values determines the transformation:
-
-- scale amount $d$: the scalar change is found by the difference between the current and initial distances: $d=f-s$
-- direction: since $d$ is a scalar, we apply it to the unit vector $\overrightarrow{I}$ to determine the how much scale to apply
-- final scale: the new object scale is calculated as $W_n=W_0+d\overrightarrow{I}$
+On every frame the mouse moves, we compute the factor $k$. This factor is amount of scaling of object basis axis $\overrightarrow{B}$.
 
 ---
 
 **Deriving the formula**
 
-We will now derive the formula to compute the scalar distance along the active axis by finding the shortest distance between the mouse ray and the gizmo axis.
-
-<img src="./images/skew-lines-common-perpendicular.svg">
-
-The idea is taken from [_nearest points paper_](https://en.wikipedia.org/wiki/Skew_lines#Nearest_points). The first key observation is that the direction of the common perpendicular $\overrightarrow{\lambda}$ is defined by the cross product of the two skew line directions:
+The goal is to operate within 2D screen space. Accordingly, the screen-space origin $p$ must be derived using the camera view-projection matrix $M$ and the render target resolution $R$:
 
 $$
-    \overrightarrow{\lambda}=\overrightarrow{A}\times\overrightarrow{F}
+    \begin{aligned}
+        p'=M
+            \begin{bmatrix}
+                O_x \\
+                O_y \\
+                O_z \\
+                1
+            \end{bmatrix} \\
+
+        p=R\left(\dfrac{p_{xy}'}{2p'_w}+\dfrac{1}{2}\right)
+    \end{aligned}
 $$
 
-**⚠️ATTENTION:** The mathematical model fails if vectors $\overrightarrow{A}$ and $\overrightarrow{F}$ are collinear. This occurs during the "edge case" where the manipulation axis aligns perfectly with the view direction. Intuitively, attempting to scale an object along an axis pointing directly at the camera would result in the object resizing to infinity, as the system cannot resolve depth changes from that perspective. To prevent this instability, we must implement a dot product test to detect it:
+Finding point $r$ requires intersecting the mouse ray with scale axis via the [_ray vs cylinder intersection test_](./ray-cylinder-intersection.md). If an intersection is found, $r$ is current mouse position by design.
+
+**⚠️ ATTENTION:** If point $r$ is too close to point $p$, it is best to ignore the scaling. Otherwise, the user could accidentally scale the object to infinity almost instantly.
+
+The projected axis direction $\overrightarrow{D}$ is computed as follows:
 
 $$
-    \left|\overrightarrow{A}\cdot\overrightarrow{F}\right| \lt 1
+    \overrightarrow{D}=r-p
 $$
 
-Assuming the manipulation axis is not collinear with the view direction, we can proceed. Our next step is to precompute the vector $\overrightarrow{\omega}$:
+At this stage, the mouse position $f$ can be used to determine the final scale factor $k$. This factor is then used to compute the final scale of the target axis $\overrightarrow{B}$:
 
 $$
-    \overrightarrow{\omega}=\overrightarrow{F}\times\overrightarrow{\lambda}
-$$
-
-Now the scalar distance $f$ equals:
-
-$$
-    f
-    =
-    \dfrac
-    {
-        \left(V-O\right)\cdot{\overrightarrow{\omega}}
-    }
-    {
-        \overrightarrow{A}\cdot\overrightarrow{\omega}
-    }
+    \begin{aligned}
+        k=\dfrac{\overrightarrow{D}\cdot\left(f-p\right)}{\left|\overrightarrow{D}\right|^2}\\
+        \overrightarrow{B}=k\overrightarrow{B_0}
+    \end{aligned}
 $$
 
 And that's it!

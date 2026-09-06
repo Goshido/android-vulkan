@@ -60,7 +60,10 @@ class ViewportWidget final : public Widget
 
         Tool*                               _activeTool = nullptr;
 
+        GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;
+        GXMat4                              _viewProjection = GXMat4::IDENTITY;
+
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
         // FUCK
@@ -96,9 +99,8 @@ class ViewportWidget final : public Widget
 
         void Update ( float deltaTime, float dpi ) noexcept;
 
-        [[nodiscard]] GXMat4 const &GetProjection () const noexcept;
-        [[nodiscard]] GXQuat const &GetOrientation () const noexcept;
-        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
+        [[nodiscard]] GXMat4 const &GetLocal () const noexcept;
+        [[nodiscard]] GXMat4 const &GetViewProjection () const noexcept;
 
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
         [[nodiscard]] GXVec3 GetVI () const noexcept;
@@ -123,6 +125,7 @@ class ViewportWidget final : public Widget
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
+        void UpdateViewProjection () noexcept;
         void ResolveNavigationMode () noexcept;
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;

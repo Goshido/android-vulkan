@@ -315,19 +315,14 @@ void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
     _state = {};
 }
 
-GXMat4 const &ViewportWidget::GetProjection () const noexcept
+GXMat4 const &ViewportWidget::GetLocal () const noexcept
 {
-    return _projection;
+    return _local;
 }
 
-GXQuat const &ViewportWidget::GetOrientation () const noexcept
+GXMat4 const &ViewportWidget::GetViewProjection () const noexcept
 {
-    return _orientation;
-}
-
-GXVec3 const &ViewportWidget::GetLocation () const noexcept
-{
-    return _location;
+    return _viewProjection;
 }
 
 GXVec3 ViewportWidget::GetVI () const noexcept
@@ -450,11 +445,13 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     //);
 
     _scaleTool.Update ( ComputeRayDirection ( basis ),
-       _location,
-       basis,
-       GetVI (),
-       _mouseNow.y,
-       _state._leftMouseButton == 1U
+        _location,
+        basis,
+        _viewProjection,
+        _resolution,
+        GetVI (),
+        _mouseNow,
+        _state._leftMouseButton == 1U
     );
 
     if ( !_selectionMode )
@@ -482,10 +479,15 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
 ) noexcept
 {
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
-
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
-    _invHeight = 1.0F / size._data[ 1U ];
-    _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR, Z_FAR );
+
+    if ( ( _resolution.width != viewport.width ) | ( _resolution.height != viewport.height ) ) [[unlikely]]
+    {
+        _invHeight = 1.0F / size._data[ 1U ];
+        _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR, Z_FAR );
+        UpdateViewProjection ();
+        _resolution = viewport;
+    }
 
     _lineHeights.clear ();
     _lineHeights.push_back ( 0.0F );
@@ -696,6 +698,15 @@ void ViewportWidget::ResolveNavigationMode () noexcept
     _mouseCommit = mouseCases[ static_cast<size_t> ( old != _navigationMode ) ];
 }
 
+void ViewportWidget::UpdateViewProjection () noexcept
+{
+    _local.FromFast ( _orientation, _location );
+
+    GXMat4 view {};
+    view.Inverse ( _local );
+    _viewProjection.Multiply ( view, _projection );
+}
+
 void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
 {
     _eulerAngles.Sum ( _eulerAngles,
@@ -729,7 +740,10 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     _orientation.Multiply ( yawFactor, pitchFactor );
 
     if ( !( _state._right | _state._left | _state._forward | _state._backward ) )
+    {
+        UpdateViewProjection ();
         return;
+    }
 
     constexpr float directionCases[] = { 0.0F, 1.0F };
     GXVec3 displacementLocal = GXVec3::ZERO;
@@ -753,6 +767,7 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     GXVec3 displacementWorld {};
     _orientation.TransformFast ( displacementWorld, displacementLocal );
     _location.Sum ( _location, displacementWorld );
+    UpdateViewProjection ();
 }
 
 void ViewportWidget::DoOrbit () noexcept

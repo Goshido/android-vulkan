@@ -59,7 +59,7 @@ class CrossLikeTool : public Tool
         SDF*                            _cap = nullptr;
 
         GXQuat                          _rotation = GXQuat::IDENTITY;
-        float                           _initialNegativeScalarDistance = 0.0F;
+        float                           _initialDistanceFactor = 0.0F;
 
         // FUCK
         GXVec3                          _location { -1.2F, -1.0F, 3.0F };

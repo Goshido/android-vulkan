@@ -16,6 +16,8 @@ extern Actor* fuck_actor;
 
 namespace {
 
+constexpr float             AXIS_SCALE_THRESHOLD = 49.0F;
+
 constexpr float             AXIS_SDF_ACTIVE_SIZE = 0.08F;
 constexpr float             AXIS_SDF_STANDBY_SIZE = 0.02F;
 constexpr float             AXIS_SDF_FULL_LENGTH = 6.08F;
@@ -135,8 +137,10 @@ void ScaleTool::Cancel () noexcept
 void ScaleTool::Update ( GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
+    GXMat4 const &cameraViewProjection,
+    VkExtent2D const &resolution,
     GXVec3 const &vi,
-    int32_t mouseY,
+    VkOffset2D const &mouse,
     bool leftMouseButtonPressed
 ) noexcept
 {
@@ -149,7 +153,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
 
     if ( _workAxis != eAxis::None )
     {
-        HandleAxisScale ( cameraLocation, rayDirection );
+        HandleAxisScale ( mouse );
         return;
     }
 
@@ -166,7 +170,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
 
     if ( _scaleAll )
     {
-        HandleScaleAll ( mouseY );
+        HandleScaleAll ( mouse.y );
         return;
     }
 
@@ -177,51 +181,68 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     alpha.Subtract ( _location, cameraLocation );
     float const pixelSize = SDF_PIXEL_SIZE_SCALE * vi.DotProduct ( alpha );
 
+    GXVec4 p {};
+    auto const &xyz = _location._data;
+    cameraViewProjection.MultiplyVectorMatrix ( p, GXVec4 ( xyz[ 0U ], xyz[ 1U ], xyz[ 2U ], 1.0F ) );
+
+    GXVec2 projectionOrigin {};
+    projectionOrigin.Sum ( GXVec2 ( 0.5F, 0.5F ), 0.5F / p._data[ 3U ], *reinterpret_cast<GXVec2 const*> ( &p ) );
+
+    _projectionOrigin.Multiply ( projectionOrigin,
+        GXVec2 ( static_cast<float> ( resolution.width ), static_cast<float> ( resolution.height ) )
+    );
+
+    GXVec2 const m ( static_cast<float> ( mouse.x ), static_cast<float> ( mouse.y ) );
+    _projectionAxisA.Subtract ( m, _projectionOrigin );
+    float const w = _projectionAxisA.SquaredLength ();
+
     bool const xTest = FlipTest ( _xPlane, cameraLocation );
     bool const yTest = FlipTest ( _yPlane, cameraLocation );
     bool const zTest = FlipTest ( _zPlane, cameraLocation );
 
-    float axisRadius = AXIS_RADIUS * pixelSize;
+    float const axisRadius = AXIS_RADIUS * pixelSize;
     Closest closest {};
 
-    AxisCheck ( closest,
-        _xLine,
-        _xBox,
-        xTest,
-        eAxis::X,
-        GXVec3::RIGHT,
-        axisRadius,
-        cameraLocation,
-        rayDirection,
-        pixelSize,
-        lmbPressed
-    );
+    if ( w > AXIS_SCALE_THRESHOLD ) [[likely]]
+    {
+        _initialDistanceFactor = 1.0F / w;
 
-    AxisCheck ( closest,
-        _yLine,
-        _yBox,
-        yTest,
-        eAxis::Y,
-        GXVec3::UP,
-        axisRadius,
-        cameraLocation,
-        rayDirection,
-        pixelSize,
-        lmbPressed
-    );
+        AxisCheck ( closest,
+            _xLine,
+            _xBox,
+            xTest,
+            eAxis::X,
+            axisRadius,
+            cameraLocation,
+            rayDirection,
+            pixelSize,
+            lmbPressed
+        );
 
-    AxisCheck ( closest,
-        _zLine,
-        _zBox,
-        zTest,
-        eAxis::Z,
-        GXVec3::FORWARD,
-        axisRadius,
-        cameraLocation,
-        rayDirection,
-        pixelSize,
-        lmbPressed
-    );
+        AxisCheck ( closest,
+            _yLine,
+            _yBox,
+            yTest,
+            eAxis::Y,
+            axisRadius,
+            cameraLocation,
+            rayDirection,
+            pixelSize,
+            lmbPressed
+        );
+
+        AxisCheck ( closest,
+            _zLine,
+            _zBox,
+            zTest,
+            eAxis::Z,
+            axisRadius,
+            cameraLocation,
+            rayDirection,
+            pixelSize,
+            lmbPressed
+        );
+    }
 
     constexpr GXVec3 xOffset ( PLANE_OFFSET._data[ 0UZ ], PLANE_OFFSET._data[ 1UZ ], PLANE_OFFSET._data[ 1UZ ] );
 
@@ -271,7 +292,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
         lmbPressed
     );
 
-    AllAxesCheck ( closest, rayDirection, cameraLocation, vi, mouseY, lmbPressed );
+    AllAxesCheck ( closest, rayDirection, cameraLocation, vi, mouse.y, lmbPressed );
 
     if ( LockAxis () || LockPlane () || LockAllAxes ( cameraBasis ) )
         return;
@@ -378,16 +399,17 @@ void ScaleTool::DeactivateSDF () noexcept
     _cap->SetScale ( cubeSize );
 }
 
-void ScaleTool::HandleAxisScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
+void ScaleTool::HandleAxisScale ( VkOffset2D const &mouse ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-scale-axis
-    auto const distance = ResolveAxisScalarDistance ( _controlLocation, _workDirection, rayOrigin, rayDirection );
+    GXVec2 alpha {};
+    alpha.Subtract ( GXVec2 ( static_cast<float> ( mouse.x ), static_cast<float> ( mouse.y ) ), _projectionOrigin );
+    _target = _initialState;
 
-    if ( distance )
-    {
-        _target.Sum ( _initialState, *distance + _initialNegativeScalarDistance, _localAxisA );
-        fuck_actor->SetScale ( _target );
-    }
+    _target._data[ static_cast<size_t> ( _workAxis ) ] *=
+        _initialDistanceFactor * alpha.DotProduct ( _projectionAxisA );
+
+    fuck_actor->SetScale ( _target );
 }
 
 void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
@@ -639,7 +661,6 @@ void ScaleTool::AxisCheck ( Closest &closest,
     SDFBox &sdfBox,
     bool test,
     eAxis axis,
-    GXVec3 const &scaleAxis,
     float axisRadius,
     GXVec3 const &rayOrigin,
     GXVec3 const &rayDirection,
@@ -674,16 +695,6 @@ void ScaleTool::AxisCheck ( Closest &closest,
 
     _workPlane = eAxis::None;
     _scaleAll = false;
-    auto const distance = ResolveAxisScalarDistance ( _location, a, rayOrigin, rayDirection );
-
-    if ( !distance )
-        return;
-
-    _controlLocation = _location;
-    _workDirection = a;
-    _localAxisA = scaleAxis;
-    _initialNegativeScalarDistance = -distance.value ();
-
     _workAxis = axis;
     _initialState = _target;
 }

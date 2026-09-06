@@ -335,7 +335,7 @@ void MoveTool::HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirect
     if ( !d )
         return;
 
-    _location.Sum ( _initialState, *d + _initialNegativeScalarDistance, _workDirection );
+    _location.Sum ( _initialState, *d + _initialDistanceFactor, _workDirection );
     UpdateChildren ();
 
     fuck_actor->SetLocation ( _location );
@@ -550,7 +550,7 @@ void MoveTool::AxisCheck ( Closest &closest,
 
     _workAxis = axis;
     _workDirection = a;
-    _initialNegativeScalarDistance = -distance.value ();
+    _initialDistanceFactor = -distance.value ();
     _initialState = _location;
 }
 

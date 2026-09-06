@@ -413,17 +413,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
 
         // FUCK - correct DPI
         _viewport->Update ( deltaTime, 1.0F );
-
-        GXQuat const &orientation = _viewport->GetOrientation ();
-
-        GXVec3 const &location = _viewport->GetLocation ();
-        GXMat4 alpha {};
-        alpha.FromFast ( orientation, location );
-
-        GXMat4 beta {};
-        beta.Inverse ( alpha );
-        GXMat4 const &projection = _viewport->GetProjection ();
-        frame._viewProj.Multiply ( beta, projection );
+        frame._viewProj = _viewport->GetViewProjection ();
 
         GXProjectionClipPlanes frustum{};
         frustum.From ( frame._viewProj );
@@ -434,7 +424,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
             ComputeTransformGBufferOnly ( frustum );
 
         ComputeTransformOutline ( frustum );
-        ComputeTransformGizmo ( frame._viewProj, alpha );
+        ComputeTransformGizmo ( frame._viewProj, _viewport->GetLocal () );
     }
 
     bool const noOpaque = _opaqueVisible.empty ();

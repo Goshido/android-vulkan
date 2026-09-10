@@ -630,10 +630,10 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
 
     _program.Bind ( commandBuffer );
 
-    _pushConstants._bdaStream0 = _uiVertices.GetStream0Address () +
+    _pushConstants._uiVertices0 = _uiVertices.GetStream0Address () +
         static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream0 ) );
 
-    _pushConstants._bdaStream1 = _uiVertices.GetStream1Address () +
+    _pushConstants._uiVertices1 = _uiVertices.GetStream1Address () +
         static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream1 ) );
 
     _program.SetPushConstants ( commandBuffer, &_pushConstants );

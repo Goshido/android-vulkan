@@ -5,7 +5,7 @@
 #include "geometry_pass.hlsl"
 #include "platform/windows/pbr/samplers.inc"
 #include "windows/gbuffer_attributes.hlsl"
-#include "windows/gbuffer_streams.hlsl"
+#include "windows/gbuffer_streams_new.hlsl"
 
 
 struct OpaqueResult

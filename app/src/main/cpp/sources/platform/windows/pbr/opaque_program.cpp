@@ -17,7 +17,8 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 OpaqueProgram::OpaqueProgram () noexcept:
-    GBufferProgram ( "shaders/windows/gbuffer_mesh.vs.spv", "shaders/windows/opaque.ps.spv", sizeof ( PushConstants ) )
+    //GBufferProgram ( "shaders/windows/gbuffer_mesh.vs.spv", "shaders/windows/opaque.ps.spv", sizeof ( PushConstants ) )
+    GBufferProgram ( "shaders/windows/gbuffer_mesh_new.vs.spv", "shaders/windows/opaque_new.ps.spv", sizeof ( PushConstants ) )
 {
     // NOTHING
 }

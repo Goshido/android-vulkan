@@ -567,11 +567,11 @@ std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
     constexpr static char const* const extensions[] =
     {
 
-#if defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_AFTERMATH ) || defined ( AV_ENABLE_RENDERDOC )
 
         VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
 
-#endif // AV_ENABLE_NSIGHT || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_NSIGHT || AV_ENABLE_AFTERMATH || AV_ENABLE_RENDERDOC
 
         VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
         VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
@@ -778,6 +778,11 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
         AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features11.multiview, "multiview", _initLogs ) ) &
+
+        // 2026/09/10 It's needed because DXC bug:
+        // https://github.com/microsoft/DirectXShaderCompiler/issues/8895
+        AV_BITWISE ( CheckFeature ( features11.storagePushConstant16, "storagePushConstant16", _initLogs ) ) &
+
         AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress", _initLogs ) ) &
 
         AV_BITWISE (
@@ -947,7 +952,11 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .pNext = const_cast<VkPhysicalDeviceDescriptorBufferFeaturesEXT*> ( &descriptorBufferFeatures ),
         .storageBuffer16BitAccess = VK_FALSE,
         .uniformAndStorageBuffer16BitAccess = VK_FALSE,
-        .storagePushConstant16 = VK_FALSE,
+
+        // 2026/09/10 It's needed because DXC bug:
+        // https://github.com/microsoft/DirectXShaderCompiler/issues/8895
+        .storagePushConstant16 = VK_TRUE,
+
         .storageInputOutput16 = VK_FALSE,
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,

@@ -5,8 +5,8 @@
 #include "color_packing.hlsl"
 #include "tbn32.hlsl"
 #include "tbn64.hlsl"
-#include "windows/frame_stream.hlsl"
-#include "windows/position_stream.hlsl"
+#include "windows/frame_stream_new.hlsl"
+#include "windows/position_stream_new.hlsl"
 
 
 struct Rest

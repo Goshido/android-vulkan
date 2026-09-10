@@ -175,6 +175,8 @@ Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShade
 [SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | 🛡️ Not an issue
 [SPIR-V] Incorrect ignoring `globallycoherent` with buffer device address approach | [#7661](https://github.com/microsoft/DirectXShaderCompiler/issues/7661) | ⚠️ Submitted
 [SPIR-V] Incorrect ignoring `globallycoherent` with `ResourceDescriptorHeap` approach | [#7740](https://github.com/microsoft/DirectXShaderCompiler/issues/7740) | ⚠️ Submitted
-_Visual Studio 2026_ support | [#7918](https://github.com/microsoft/DirectXShaderCompiler/issues/7918) | ⚠️ Submitted
+_Visual Studio 2026_ support | [#7918](https://github.com/microsoft/DirectXShaderCompiler/issues/7918) | ✔️ Fixed
+Shader with source info broken | [#8543](https://github.com/microsoft/DirectXShaderCompiler/issues/8543) | ⚠️ Submitted
+[SPIR-V] Requesting useless `OpCapability StoragePushConstant16` when using `vk::BufferPointer` | [#8895](https://github.com/microsoft/DirectXShaderCompiler/issues/8895) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

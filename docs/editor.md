@@ -142,7 +142,7 @@ Now you will be able to use [_NVIDIA Aftermath_](https://developer.nvidia.com/ns
 
 <img src="./images/editor-aftermath.png">
 
-ℹ️ Pay attention that [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics) already contains [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) components. So all you need is to activate [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) tool and wait for application crash.
+ℹ️ Pay attention that [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics) already contains [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) components. So all you need is to activate [_NVIDIA Aftermath Monitor_](https://developer.nvidia.com/nsight-aftermath) tool and wait for application crash.
 
 [↬ table of content ⇧](#table-of-content)
 

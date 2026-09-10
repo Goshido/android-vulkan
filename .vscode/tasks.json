@@ -115,6 +115,27 @@
             ]
         },
         {
+            "label": "Preprocess Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/scripts/windows/preprocess.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
             "label": "Disassemble Shader",
             "type": "shell",
             "group": "build",

@@ -17,8 +17,8 @@ class UIProgram final : public GraphicsProgram
 
         struct PushConstants final
         {
-            VkDeviceAddress                 _bdaStream0;
-            VkDeviceAddress                 _bdaStream1;
+            VkDeviceAddress                 _uiVertices0;
+            VkDeviceAddress                 _uiVertices1;
             GXVec2                          _rotateScaleRow0;
             GXVec2                          _rotateScaleRow1;
             GXVec2                          _offset;

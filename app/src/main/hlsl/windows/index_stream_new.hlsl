@@ -7,8 +7,8 @@
 #define VK_INDEX_TYPE_NONE_KHR      1000165000U
 
 
-typedef vk::BufferPointer<int16_t, 2U>      Indices16;
-typedef vk::BufferPointer<int32_t, 4U>      Indices32;
+typedef vk::BufferPointer<uint16_t, 2U>     Indices16;
+typedef vk::BufferPointer<uint32_t, 4U>     Indices32;
 
 
 #endif // INDEX_STREAM_HLSL

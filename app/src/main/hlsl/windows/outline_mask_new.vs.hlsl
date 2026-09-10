@@ -1,32 +1,32 @@
-#include "windows/frame_stream.hlsl"
-#include "windows/index_stream.hlsl"
-#include "windows/position_stream.hlsl"
+#include "windows/frame_stream_new.hlsl"
+#include "windows/index_stream_new.hlsl"
+#include "windows/position_stream_new.hlsl"
 
 
 struct InputData
 {
-    uint32_t        _vertexID:      SV_VertexID;
-    uint32_t        _instanceID:    SV_InstanceID;
+    uint32_t        _vertexID:              SV_VertexID;
+    uint32_t        _instanceID:            SV_InstanceID;
 };
 
 struct Outline
 {
-    float32_t3x4    _model;
+    float32_t3x4                            _model;
 };
 
 typedef vk::BufferPointer<Outline, 8U>      Outlines;
 
 struct PushConstants
 {
-    Outlines        _outlineStream;
-    Frames          _frameStream;
-    Positions       _positionStream;
-    uint64_t        _indexStream;
-    uint32_t        _indexType;
+    Outlines                                _outlineStream;
+    Frames                                  _frameStream;
+    Positions                               _positionStream;
+    uint64_t                                _indexStream;
+    uint32_t                                _indexType;
 };
 
 [[vk::push_constant]]
-PushConstants       g_pushConstants;
+PushConstants                               g_pushConstants;
 
 //----------------------------------------------------------------------------------------------------------------------
 

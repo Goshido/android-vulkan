@@ -4,18 +4,15 @@
 
 
 [[vk::push_constant]]
-PushConstantsWithID     g_pushConstants;
+PushConstants       g_pushConstants;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OutputDataWithID PS ( in Attributes attributes )
+OutputData PS ( in Attributes attributes )
 {
-    OutputDataWithID result;
+    OpaqueResult const r = Compute ( attributes, g_pushConstants._shadingStream );
 
-    uint64_t const idOffset = (uint64_t)( attributes._instanceID * sizeof ( uint32_t2 ) );
-    result._id = IDs ( (uint64_t)g_pushConstants._idStream + idOffset ).Get ();
-
-    OpaqueResult r = Compute ( attributes, g_pushConstants._shadingStream );
+    OutputData result;
     result._albedo = r._albedo;
     result._emission = r._emission;
     result._normal = r._normal;

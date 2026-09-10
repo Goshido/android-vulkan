@@ -2,8 +2,8 @@
 #define GBUFFER_PUSH_CONSTANTS_HLSL
 
 
-#include "windows/gbuffer_streams.hlsl"
-#include "windows/id_stream.hlsl"
+#include "windows/gbuffer_streams_new.hlsl"
+#include "windows/id_stream_new.hlsl"
 
 
 struct PushConstants

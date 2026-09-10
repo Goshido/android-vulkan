@@ -4,8 +4,8 @@
 
 #include "tbn.hlsl"
 #include "windows/gbuffer_attributes.hlsl"
-#include "windows/gbuffer_push_constants.hlsl"
-#include "windows/index_stream.hlsl"
+#include "windows/gbuffer_push_constants_new.hlsl"
+#include "windows/index_stream_new.hlsl"
 
 
 struct InputData

@@ -10,8 +10,7 @@ namespace pbr {
 
 namespace {
 
-//constexpr char const VERTEX_SHADER[] = "shaders/windows/outline_mask.vs.spv";
-constexpr char const VERTEX_SHADER[] = "shaders/windows/outline_mask_new.vs.spv";
+constexpr char const VERTEX_SHADER[] = "shaders/windows/outline_mask.vs.spv";
 constexpr char const FRAGMENT_SHADER[] = "shaders/windows/outline_mask.ps.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 1U;

@@ -4,6 +4,7 @@
 
 #include "windows/gbuffer_streams.hlsl"
 #include "windows/id_stream.hlsl"
+#include "windows/index_stream.hlsl"
 
 
 struct PushConstants
@@ -14,7 +15,7 @@ struct PushConstants
     Positions       _positionStream;
     Rests           _restStream;
     uint64_t        _indexStream;
-    uint32_t        _indexType;
+    eIndex          _indexType;
 };
 
 struct PushConstantsWithID
@@ -26,7 +27,7 @@ struct PushConstantsWithID
     Positions       _positionStream;
     Rests           _restStream;
     uint64_t        _indexStream;
-    uint32_t        _indexType;
+    eIndex          _indexType;
     uint32_t        _idImage;
 };
 

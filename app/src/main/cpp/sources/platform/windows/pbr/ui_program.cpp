@@ -10,8 +10,7 @@ namespace pbr {
 
 namespace {
 
-//constexpr char const VERTEX_SHADER[] = "shaders/windows/ui.vs.spv";
-constexpr char const VERTEX_SHADER[] = "shaders/windows/ui_new.vs.spv";
+constexpr char const VERTEX_SHADER[] = "shaders/windows/ui.vs.spv";
 constexpr char const CUSTOM_BRIGHTNESS_FRAGMENT_SHADER[] = "shaders/windows/ui_custom_brightness.ps.spv";
 constexpr char const DEFAULT_BRIGHTNESS_FRAGMENT_SHADER[] = "shaders/windows/ui_default_brightness.ps.spv";
 

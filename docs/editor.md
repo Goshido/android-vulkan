@@ -32,7 +32,7 @@
 * [_RenderDoc v1.41_](https://renderdoc.org/)
 * [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2509.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
-* [_DirectX Shader Compiler 1.8.2505.10178_](https://github.com/microsoft/DirectXShaderCompiler) `b1cf2cad8f19f2ce733bd108e63485b33fbd4774`
+* [_DirectX Shader Compiler v1.9.2607.10104_](https://github.com/microsoft/DirectXShaderCompiler) `1b949a448e4c9e821f010c488defebfbb1a50b27`
 * [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`
 * [_stb_image 2.30_](https://github.com/nothings/stb) `f1c79c02822848a9bed4315b12c8c8f3761e1296`
 * [_Vulkan SDK 1.4.328.1_](https://vulkan.lunarg.com/sdk/home)

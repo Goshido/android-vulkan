@@ -18,11 +18,10 @@ struct OpaqueResult
 
 //----------------------------------------------------------------------------------------------------------------------
 
-OpaqueResult Compute ( in Attributes attributes, in uint64_t shadingStream )
+OpaqueResult Compute ( in Attributes attributes, in Shadings shadingStream )
 {
-    Shading const shading = vk::RawBufferLoad<Shading> ( shadingStream + attributes._instanceID * sizeof ( Shading ),
-        4U
-    );
+    uint64_t const shadingOffset = (uint64_t)( attributes._instanceID * sizeof ( Shading ) );
+    Shading const shading = Shadings ( (uint64_t)shadingStream + shadingOffset ).Get ();
 
     SamplerState materialSampler = SamplerDescriptorHeap[ MATERIAL_SAMPLER ];
 

@@ -2,25 +2,29 @@
 #define GBUFFER_PUSH_CONSTANTS_HLSL
 
 
+#include "windows/gbuffer_streams.hlsl"
+#include "windows/id_stream.hlsl"
+
+
 struct PushConstants
 {
-    uint64_t        _transformStream;
-    uint64_t        _shadingStream;
-    uint64_t        _frameStream;
-    uint64_t        _positionStream;
-    uint64_t        _restStream;
+    Transforms      _transformStream;
+    Shadings        _shadingStream;
+    Frames          _frameStream;
+    Positions       _positionStream;
+    Rests           _restStream;
     uint64_t        _indexStream;
     uint32_t        _indexType;
 };
 
 struct PushConstantsWithID
 {
-    uint64_t        _transformStream;
-    uint64_t        _shadingStream;
-    uint64_t        _frameStream;
-    uint64_t        _idStream;
-    uint64_t        _positionStream;
-    uint64_t        _restStream;
+    Transforms      _transformStream;
+    Shadings        _shadingStream;
+    Frames          _frameStream;
+    IDs             _idStream;
+    Positions       _positionStream;
+    Rests           _restStream;
     uint64_t        _indexStream;
     uint32_t        _indexType;
     uint32_t        _idImage;

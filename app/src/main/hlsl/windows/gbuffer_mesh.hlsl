@@ -5,8 +5,7 @@
 #include "tbn.hlsl"
 #include "windows/gbuffer_attributes.hlsl"
 #include "windows/gbuffer_push_constants.hlsl"
-#include "windows/gbuffer_streams.hlsl"
-#include "windows/vertex_index.hlsl"
+#include "windows/index_stream.hlsl"
 
 
 struct InputData
@@ -18,35 +17,41 @@ struct InputData
 //----------------------------------------------------------------------------------------------------------------------
 
 Attributes Compute ( in InputData inputData,
-    in uint64_t frameStream,
-    in uint64_t transformStream,
+    in Frames frameStream,
+    in Transforms transformStream,
     in uint64_t indexStream,
     in uint32_t indexType,
-    in uint64_t positionStream,
-    in uint64_t restStream
+    in Positions positionStream,
+    in Rests restStream
 )
 {
-    Frame const frame = vk::RawBufferLoad<Frame> ( frameStream, 4U );
+    Frame const frame = frameStream.Get ();
 
-    Transform const transform = vk::RawBufferLoad<Transform> (
-        transformStream + inputData._instanceID * sizeof ( Transform ),
-        8U
-    );
+    uint64_t const transformOffset = (uint64_t)( inputData._instanceID * sizeof ( Transform ) );
+    Transform const transform = Transforms ( (uint64_t)transformStream + transformOffset ).Get ();
 
     uint32_t idx;
 
     switch ( indexType )
     {
         case VK_INDEX_TYPE_NONE_KHR:
+        {
             idx = inputData._vertexID;
+        }
         break;
 
         case VK_INDEX_TYPE_UINT16:
-            idx = (uint32_t)vk::RawBufferLoad<uint16_t> ( indexStream + inputData._vertexID * sizeof ( uint16_t ), 2U );
+        {
+            uint64_t const indexOffset = (uint64_t)( inputData._vertexID * sizeof ( uint16_t ) );
+            idx = (uint32_t)Indices16 ( indexStream + indexOffset ).Get ();
+        }
         break;
 
         case VK_INDEX_TYPE_UINT32:
-            idx = vk::RawBufferLoad<uint32_t> ( indexStream + inputData._vertexID * sizeof ( uint32_t ), 4U );
+        {
+            uint64_t const indexOffset = (uint64_t)( inputData._vertexID * sizeof ( uint32_t ) );
+            idx = Indices32 ( indexStream + indexOffset ).Get ();
+        }
         break;
 
         default:
@@ -54,8 +59,11 @@ Attributes Compute ( in InputData inputData,
         break;
     }
 
-    float32_t3 const position = vk::RawBufferLoad<float32_t3> ( positionStream + idx * sizeof ( float32_t3 ), 4U );
-    Rest const rest = vk::RawBufferLoad<Rest> ( restStream + idx * sizeof ( Rest ), 4U );
+    uint64_t const positionOffset = (uint64_t)( idx * sizeof ( float32_t3 ) );
+    float32_t3 const position = Positions ( (uint64_t)positionStream + positionOffset ).Get ();
+
+    uint64_t const restOffset = (uint64_t)( idx * sizeof ( Rest ) );
+    Rest const rest = Rests ( (uint64_t)restStream + restOffset ).Get ();
 
     Attributes result;
 

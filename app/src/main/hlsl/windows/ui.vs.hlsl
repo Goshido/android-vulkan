@@ -1,24 +1,6 @@
-#include "color_packing.hlsl"
-#include "platform/windows/pbr/resource_heap.inc"
 #include "ui_bindings.hlsl"
 #include "ui_push_constants.hlsl"
 
-
-// [2025/09/25] The whole UI vertex is described by 18 bytes. There is no way to read float32_t from offset
-// non multiple of 4. So it's needed to use SoA pattern. One example where flexible vertex pulling is worse
-// than classical input assembly.
-struct UIVertexStream0
-{
-    float32_t2                      _position;
-    float16_t2                      _uv;
-    ColorUNORM                      _color;
-};
-
-struct UIVertexStream1
-{
-    uint16_t                        _image: UI_IMAGE_BITS;
-    uint16_t                        _uiPrimitiveType: ( 16 - UI_IMAGE_BITS );
-};
 
 struct OutputData
 {
@@ -41,27 +23,23 @@ struct OutputData
 
 OutputData VS ( in uint32_t vertexID: SV_VertexID )
 {
-    UIVertexStream0 const s0 = vk::RawBufferLoad<UIVertexStream0> (
-        g_pushConstants._bdaStream0 + vertexID * sizeof ( UIVertexStream0 ),
-        4U
-    );
+    uint64_t const vertexOffset0 = (uint64_t)( vertexID * sizeof ( UIVertex0 ) );
+    UIVertex0 const v0 = UIVertices0 ( (uint64_t)g_pushConstants._uiVertices0 + vertexOffset0 ).Get ();
 
-    UIVertexStream1 const s1 = vk::RawBufferLoad<UIVertexStream1> (
-        g_pushConstants._bdaStream1 + vertexID * sizeof ( UIVertexStream1 ),
-        2U
-    );
+    uint64_t const vertexOffset1 = (uint64_t)( vertexID * sizeof ( UIVertex1 ) );
+    UIVertex1 const v1 = UIVertices1 ( (uint64_t)g_pushConstants._uiVertices1 + vertexOffset1 ).Get ();
 
     OutputData result;
 
-    result._vertexH = float32_t4 ( mul ( g_pushConstants._rotateScale, s0._position + g_pushConstants._offset ),
+    result._vertexH = float32_t4 ( mul ( g_pushConstants._rotateScale, v0._position + g_pushConstants._offset ),
         0.5F,
         1.0F
     );
 
-    result._uv = (float32_t2)s0._uv;
-    result._image = (uint32_t)s1._image;
-    result._uiPrimitiveType = (uint32_t)s1._uiPrimitiveType;
-    result._color = UnpackColorF32x4 ( s0._color );
+    result._uv = (float32_t2)v0._uv;
+    result._image = (uint32_t)v1._image;
+    result._uiPrimitiveType = (uint32_t)v1._uiPrimitiveType;
+    result._color = UnpackColorF32x4 ( v0._color );
 
     return result;
 }

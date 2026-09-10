@@ -4,8 +4,8 @@
 
 #include "pbr/ui_primitive_type.inc"
 #include "platform/windows/pbr/samplers.inc"
-#include "ui_bindings.hlsl"
-#include "ui_push_constants.hlsl"
+#include "windows/ui_bindings.hlsl"
+#include "windows/ui_push_constants.hlsl"
 
 
 struct InputData

@@ -23,8 +23,7 @@ GizmoRingCollider::GizmoRingCollider ( float radius, float thickness ) noexcept:
     // NOTHING
 }
 
-float GizmoRingCollider::Raycast ( GXVec3 const &rayOrigin,
-    GXVec3 const &rayDirection,
+float GizmoRingCollider::Raycast ( GXVec3 const &rayDirection,
     GXVec3 const &ringLocation,
     GXQuat const &ringRotation,
     GXVec3 const &cameraLocation,
@@ -57,7 +56,7 @@ float GizmoRingCollider::Raycast ( GXVec3 const &rayOrigin,
     GXVec2 beta = GXVec2::ZERO;
 
     // Note it's needed to use inverse standard basis. So using matrix/vector multiplication in reverse order trick.
-    tmp.Subtract ( rayOrigin, ringLocation );
+    tmp.Reverse ();
     GXVec3 ro {};
     basis.MultiplyMatrixVector ( ro, tmp );
 

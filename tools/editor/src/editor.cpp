@@ -418,7 +418,10 @@ void Editor::OnDPIChanged ( Message &&message ) noexcept
 {
     AV_TRACE ( "DPI changed" )
     _messageQueue.DequeueEnd ();
-    NativeRenderer::Instance ().OnSetDPI ( _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._action () ) ) );
+
+    NativeRenderer::Instance ().OnSetDPI (
+        _uiZoom * static_cast<float> ( reinterpret_cast<uintptr_t> ( message._action () ) )
+    );
     // FUCK
 }
 

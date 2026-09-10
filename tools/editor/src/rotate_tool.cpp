@@ -340,8 +340,7 @@ void RotateTool::CheckRing ( Closest &closest,
     GXQuat const &rotation = sdf.GetRotationWorld ();
     GXVec3 const &location = sdf.GetLocationWorld ();
 
-    float const d = collider.Raycast ( cameraLocation,
-        rayDirection,
+    float const d = collider.Raycast ( rayDirection,
         location,
         rotation,
         cameraLocation,

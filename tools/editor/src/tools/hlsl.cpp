@@ -180,6 +180,13 @@ void swizzle_uint32_t3::operator |= ( uint32_t3 const &v ) noexcept
     *z |= v.z;
 }
 
+void swizzle_uint32_t3::operator ^= ( uint32_t3 const &v ) noexcept
+{
+    *x ^= v.x;
+    *y ^= v.y;
+    *z ^= v.z;
+}
+
 void swizzle_uint32_t3::operator += ( swizzle_uint32_t3 const &v ) noexcept
 {
     *x += *v.x;
@@ -234,6 +241,13 @@ void swizzle_uint32_t3::operator |= ( swizzle_uint32_t3 const &v ) noexcept
     *x |= *v.x;
     *y |= *v.y;
     *z |= *v.z;
+}
+
+void swizzle_uint32_t3::operator ^= ( swizzle_uint32_t3 const &v ) noexcept
+{
+    *x ^= *v.x;
+    *y ^= *v.y;
+    *z ^= *v.z;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -785,6 +799,13 @@ void uint32_t3::operator |= ( uint32_t3 const &v ) noexcept
     z |= v.z;
 }
 
+void uint32_t3::operator ^= ( uint32_t3 const &v ) noexcept
+{
+    x ^= v.x;
+    y ^= v.y;
+    z ^= v.z;
+}
+
 void uint32_t3::InitSwizzle () noexcept
 {
     xy = swizzle_uint32_t2 ( &x, &y );
@@ -833,6 +854,16 @@ uint32_t3 operator & ( uint32_t3 const &a, uint32_t3 const &b ) noexcept
 uint32_t3 operator | ( uint32_t3 const &a, uint32_t3 const &b ) noexcept
 {
     return { a.x | b.x, a.y | b.y, a.z | b.z };
+}
+
+uint32_t3 operator ^ ( uint32_t3 const &a, uint32_t3 const &b ) noexcept
+{
+    return { a.x ^ b.x, a.y ^ b.y, a.z ^ b.z };
+}
+
+float32_t3 asfloat ( uint32_t3 const &v ) noexcept
+{
+    return { std::bit_cast<float32_t> ( v.x ), std::bit_cast<float32_t> ( v.y ), std::bit_cast<float32_t> ( v.z ) };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -2225,6 +2256,11 @@ float32_t3 operator * ( float32_t3 const &a, float32_t3 const &b ) noexcept
 float32_t3 operator / ( float32_t3 const &a, float32_t3 const &b ) noexcept
 {
     return { a.x / b.x, a.y / b.y, a.z / b.z };
+}
+
+uint32_t3 asuint ( float32_t3 const &v ) noexcept
+{
+    return { std::bit_cast<uint32_t> ( v.x ), std::bit_cast<uint32_t> ( v.y ), std::bit_cast<uint32_t> ( v.z ) };
 }
 
 float32_t dot ( float32_t3 const &a, float32_t3 const &b ) noexcept

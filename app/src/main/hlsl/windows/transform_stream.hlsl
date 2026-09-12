@@ -7,12 +7,12 @@
 
 struct Transform
 {
-    TBN64           _rotation;
-    float32_t3      _location;
-    float32_t3      _scale;
+    TBN64                                   _rotation;
+    float32_t3                              _location;
+    float32_t3                              _scale;
 };
 
-typedef vk::BufferPointer<Transform, 8U>        Transforms;
+typedef vk::BufferPointer<Transform, 8U>    Transforms;
 
 
 #endif // TRANSFORM_STREAM_HLSL

@@ -1,5 +1,6 @@
 #include "windows/frame_stream.hlsl"
 #include "windows/index_stream.hlsl"
+#include "windows/negative_scaling.hlsl"
 #include "windows/position_stream.hlsl"
 #include "windows/transform_stream.hlsl"
 
@@ -31,12 +32,12 @@ linear float32_t4 VS ( in InputData inputData ): SV_Position
     uint64_t const transformOffset = (uint64_t)( inputData._instanceID * sizeof ( Transform ) );
     Transform const transform = Transforms ( (uint64_t)g_pushConstants._transformStream + transformOffset ).Get ();
 
-    // FUCK - resolve face toggle
+    uint16_t3 const negativeScalingInfo = ComputeNegativeScalingInfo ( transform._scale );
 
     uint32_t const idx = ResolveIndex ( g_pushConstants._indexStream,
         g_pushConstants._indexType,
         inputData._vertexID,
-        false
+        NeedFaceToggle ( negativeScalingInfo )
     );
 
     uint64_t const positionOffset = (uint64_t)( idx * sizeof ( float32_t3 ) );

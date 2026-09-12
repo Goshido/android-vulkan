@@ -20,7 +20,7 @@ struct InputData
     float32_t2              _uv:                UV;
 
     [[vk::location ( IN_SLOT_TBN )]]
-    TBN32F                  _tbn:               TBN;
+    QuatF                   _tbn:               TBN;
 };
 
 struct OutputData

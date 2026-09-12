@@ -5,7 +5,7 @@
 #include "quat.hlsl"
 
 
-void GetNormalAndTangent ( out float16_t3 normalView, out float16_t3 tangentView, in float16_t4 tbn )
+void GetNormalAndTangent ( out float16_t3 normal, out float16_t3 tangent, in float16_t4 tbn )
 {
     float16_t3 const abc2 = tbn.yzw + tbn.yzw;
 
@@ -18,9 +18,9 @@ void GetNormalAndTangent ( out float16_t3 normalView, out float16_t3 tangentView
     float16_t4 const right = float16_t4 ( caaaXcaTbc2.z, -rXrTabc2.z, caaaXcaTbc2.w, -rXrTabc2.y );
     float16_t4 const tmp = left + right;
 
-    // Note quaternion unpacks to matrix with column-major like behaviour.
-    normalView = float16_t3 ( tmp.zw, rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x );
-    tangentView = float16_t3 ( rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x, tmp.xy );
+    // Note quaternion unpacks to matrix with column-major like behavior.
+    normal = float16_t3 ( tmp.zw, rXrTabc2.x - caaaXcaTbc2.y - bXbTc2.x + caaaXcaTbc2.x );
+    tangent = float16_t3 ( rXrTabc2.x + caaaXcaTbc2.y - bXbTc2.x - caaaXcaTbc2.x, tmp.xy );
 }
 
 

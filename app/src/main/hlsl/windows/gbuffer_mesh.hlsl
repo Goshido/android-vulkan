@@ -5,6 +5,7 @@
 #include "tbn.hlsl"
 #include "windows/gbuffer_attributes.hlsl"
 #include "windows/gbuffer_push_constants.hlsl"
+#include "windows/negative_scaling.hlsl"
 
 
 struct InputData
@@ -29,8 +30,14 @@ Attributes Compute ( in InputData inputData,
     uint64_t const transformOffset = (uint64_t)( inputData._instanceID * sizeof ( Transform ) );
     Transform const transform = Transforms ( (uint64_t)transformStream + transformOffset ).Get ();
 
-    // FUCK - resolve face toggle
-    uint32_t const idx = ResolveIndex ( indexStream, indexType, inputData._vertexID, false );
+    uint16_t3 const negativeScalingInfo = ComputeNegativeScalingInfo ( transform._scale );
+
+    uint32_t const idx = ResolveIndex ( indexStream,
+        indexType,
+        inputData._vertexID,
+        NeedFaceToggle ( negativeScalingInfo )
+    );
+
     uint64_t const positionOffset = (uint64_t)( idx * sizeof ( float32_t3 ) );
     float32_t3 const position = Positions ( (uint64_t)positionStream + positionOffset ).Get ();
 
@@ -50,11 +57,13 @@ Attributes Compute ( in InputData inputData,
 
     float16_t3 normalLocal;
     float16_t3 tangentLocal;
-
     GetNormalAndTangent ( normalLocal, tangentLocal, ToQuat ( rest._tbn ) );
+
     float16_t3 bitangentLocal = cross ( normalLocal, tangentLocal ) * GetBitangentMirroring ( rest._tbn );
 
-    // FUCK - do magic with scale
+    normalLocal = CorrectUnitVector ( normalLocal, negativeScalingInfo );
+    tangentLocal = CorrectUnitVector ( tangentLocal, negativeScalingInfo );
+    bitangentLocal = CorrectUnitVector ( bitangentLocal, negativeScalingInfo );
 
     float16_t3x3 const r = ToMatrix ( Rotate ( ToQuat ( transform._rotation ), ToQuat ( frame._toView ) ) );
 

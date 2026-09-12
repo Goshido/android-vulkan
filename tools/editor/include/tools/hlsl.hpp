@@ -118,6 +118,7 @@ class swizzle_uint32_t3 final
         [[maybe_unused]] void operator <<= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( uint32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator ^= ( uint32_t3 const &v ) noexcept;
 
         [[maybe_unused]] void operator += ( swizzle_uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator -= ( swizzle_uint32_t3 const &v ) noexcept;
@@ -127,6 +128,7 @@ class swizzle_uint32_t3 final
         [[maybe_unused]] void operator <<= ( swizzle_uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( swizzle_uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( swizzle_uint32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator ^= ( swizzle_uint32_t3 const &v ) noexcept;
 
     private:
         [[maybe_unused]] swizzle_uint32_t3 () = default;
@@ -336,6 +338,7 @@ class uint32_t3 final
         [[maybe_unused]] void operator <<= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator &= ( uint32_t3 const &v ) noexcept;
         [[maybe_unused]] void operator |= ( uint32_t3 const &v ) noexcept;
+        [[maybe_unused]] void operator ^= ( uint32_t3 const &v ) noexcept;
 
     private:
         void InitSwizzle () noexcept;
@@ -349,6 +352,9 @@ class uint32_t3 final
 [[maybe_unused, nodiscard]] uint32_t3 operator << ( uint32_t3 const &a, uint32_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint32_t3 operator & ( uint32_t3 const &a, uint32_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] uint32_t3 operator | ( uint32_t3 const &a, uint32_t3 const &b ) noexcept;
+[[maybe_unused, nodiscard]] uint32_t3 operator ^ ( uint32_t3 const &a, uint32_t3 const &b ) noexcept;
+
+[[maybe_unused, nodiscard]] float32_t3 asfloat ( uint32_t3 const &v ) noexcept;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -829,6 +835,7 @@ class float32_t3 final
 [[maybe_unused, nodiscard]] float32_t3 operator * ( float32_t3 const &a, float32_t3 const &b ) noexcept;
 [[maybe_unused, nodiscard]] float32_t3 operator / ( float32_t3 const &a, float32_t3 const &b ) noexcept;
 
+[[maybe_unused, nodiscard]] uint32_t3 asuint ( float32_t3 const &v ) noexcept;
 [[maybe_unused, nodiscard]] float32_t dot ( float32_t3 const &a, float32_t3 const &b ) noexcept;
 
 [[maybe_unused, nodiscard]] float32_t3 mad ( float32_t3 const &a, float32_t3 const &b, float32_t c ) noexcept;

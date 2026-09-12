@@ -92,6 +92,13 @@ void GBufferMeshNode::Commit ( uint32_t defaultAlbedo,
 
     GBufferMeshInfo &meshInfo = *_meshInfo;
 
+    meshInfo._transform =
+    {
+        ._rotation = _rotation.ToTBN64 (),
+        ._location = _location,
+        ._scale = _scale
+    };
+
     GXMat4 local {};
     local.FromFast ( _rotation, _location );
     auto &x = *reinterpret_cast<GXVec3*> ( local._data[ 0U ] );
@@ -103,19 +110,6 @@ void GBufferMeshNode::Commit ( uint32_t defaultAlbedo,
     auto &z = *reinterpret_cast<GXVec3*> ( local._data[ 2U ] );
     y.Multiply ( y, s._data[ 1U ] );
     z.Multiply ( z, s._data[ 2U ] );
-
-    meshInfo._transform =
-    {
-        ._model
-        {
-            ._x = x,
-            ._y = y,
-            ._z = z,
-            ._w = *reinterpret_cast<GXVec3*> ( local._data[ 3U ] )
-        },
-
-        ._normal = _rotation.ToTBN64 ()
-    };
 
     _boundLocal.Transform ( meshInfo._boundWorld, local );
 

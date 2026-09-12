@@ -81,6 +81,13 @@ void OutlineMeshNode::Commit () noexcept
 
     OutlineMeshInfo &meshInfo = *_meshInfo;
 
+    meshInfo._transform =
+    {
+        ._rotation = _rotation.ToTBN64 (),
+        ._location = _location,
+        ._scale = _scale
+    };
+
     GXMat4 local {};
     local.FromFast ( _rotation, _location );
     GXVec3 &x = local.Right ();
@@ -92,14 +99,6 @@ void OutlineMeshNode::Commit () noexcept
     GXVec3 &z = local.Forward ();
     y.Multiply ( y, s[ 1UZ ] );
     z.Multiply ( z, s[ 2UZ ] );
-
-    meshInfo._model =
-    {
-        ._x = x,
-        ._y = y,
-        ._z = z,
-        ._w = local.Location ()
-    };
 
     _boundLocal.Transform ( meshInfo._boundWorld, local );
     _hasChanges = false;

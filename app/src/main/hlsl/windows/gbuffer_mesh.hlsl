@@ -29,7 +29,8 @@ Attributes Compute ( in InputData inputData,
     uint64_t const transformOffset = (uint64_t)( inputData._instanceID * sizeof ( Transform ) );
     Transform const transform = Transforms ( (uint64_t)transformStream + transformOffset ).Get ();
 
-    uint32_t const idx = ResolveIndex ( indexStream, indexType, inputData._vertexID );
+    // FUCK - resolve face toggle
+    uint32_t const idx = ResolveIndex ( indexStream, indexType, inputData._vertexID, false );
     uint64_t const positionOffset = (uint64_t)( idx * sizeof ( float32_t3 ) );
     float32_t3 const position = Positions ( (uint64_t)positionStream + positionOffset ).Get ();
 
@@ -39,18 +40,27 @@ Attributes Compute ( in InputData inputData,
     Attributes result;
 
     result._vertexH = mul ( frame._viewProj,
-        float32_t4 ( mul ( transform._model, float32_t4 ( position, 1.0F ) ), 1.0F )
+        float32_t4 (
+            transform._location + mul ( ToMatrix ( transform._rotation ), position * transform._scale ),
+            1.0F
+        )
     );
 
     result._uv = (float32_t2)rest._uv;
 
-    float16_t3 normalView;
-    float16_t3 tangentView;
-    GetNormalAndTangent ( normalView, tangentView, Rotate ( ToQuat ( rest._tbn ), ToQuat ( transform._normal ) ) );
+    float16_t3 normalLocal;
+    float16_t3 tangentLocal;
 
-    result._tangentView = (float32_t3)tangentView;
-    result._bitangentView = (float32_t3)( cross ( normalView, tangentView ) * GetBitangentMirroring ( rest._tbn ) );
-    result._normalView = (float32_t3)normalView;
+    GetNormalAndTangent ( normalLocal, tangentLocal, ToQuat ( rest._tbn ) );
+    float16_t3 bitangentLocal = cross ( normalLocal, tangentLocal ) * GetBitangentMirroring ( rest._tbn );
+
+    // FUCK - do magic with scale
+
+    float16_t3x3 const r = ToMatrix ( Rotate ( ToQuat ( transform._rotation ), ToQuat ( frame._toView ) ) );
+
+    result._tangentView = (float32_t3)mul ( tangentLocal, r );
+    result._bitangentView = (float32_t3)mul ( bitangentLocal, r );
+    result._normalView = (float32_t3)mul ( normalLocal, r );
 
     result._instanceID = inputData._instanceID;
     return result;

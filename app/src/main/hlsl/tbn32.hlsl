@@ -6,6 +6,8 @@
 
 
 using TBN32 = uint32_t;
+
+// FUCK - is it QuatF type?
 using TBN32F = float32_t4;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -26,7 +28,7 @@ QuatH ToQuat ( in TBN32 tbn )
     comp.xy >>= uint32_t2 ( 20U, 10U );
 
     // 2 / ( ( 2 ^ 10 ) - 1 ) = 1.955034213098729227761485826e-3
-    return Recover ( mad ( (float16_t3)comp, 1.955e-3H, -1.0H ) );
+    return Recover ( mad ( (float16_t3)comp, 1.95503421e-3H, -1.0H ) );
 }
 
 float16_t GetBitangentMirroring ( in TBN32 tbn )

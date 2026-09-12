@@ -12,7 +12,7 @@ class OutlineMeshNode;
 struct OutlineMeshInfo final
 {
     OutlineMeshNode*    _node = nullptr;
-    Model               _model {};
+    Transform           _transform {};
     GXAABB              _boundWorld {};
 };
 

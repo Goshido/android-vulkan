@@ -4,9 +4,9 @@
 
 #include "color_packing.hlsl"
 #include "tbn32.hlsl"
-#include "tbn64.hlsl"
 #include "windows/frame_stream.hlsl"
 #include "windows/position_stream.hlsl"
+#include "windows/transform_stream.hlsl"
 
 
 struct Rest
@@ -16,14 +16,6 @@ struct Rest
 };
 
 typedef vk::BufferPointer<Rest, 4U>             Rests;
-
-struct Transform
-{
-    float32_t3x4    _model;
-    TBN64           _normal;
-};
-
-typedef vk::BufferPointer<Transform, 8U>        Transforms;
 
 struct Shading
 {

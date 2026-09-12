@@ -18,10 +18,20 @@ enum class eIndex: uint32_t
 typedef vk::BufferPointer<uint16_t, 2U>     Indices16;
 typedef vk::BufferPointer<uint32_t, 4U>     Indices32;
 
+static const uint32_t g_FrontFaceToggle[] =
+{
+    0U, 1U, 2U,
+    0U, 2U, 1U
+};
+
 //----------------------------------------------------------------------------------------------------------------------
 
-uint32_t ResolveIndex ( in uint64_t indexStream, in eIndex indexType, in uint32_t vertexID )
+uint32_t ResolveIndex ( in uint64_t indexStream, in eIndex indexType, in uint32_t vertexID, bool toggleFrontFace )
 {
+    uint32_t const triLocal = vertexID % 3U;
+    uint32_t const triStart = vertexID - triLocal;
+    vertexID = triStart + g_FrontFaceToggle[ (uint32_t)toggleFrontFace * 3U + triLocal ];
+
     switch ( indexType )
     {
         case eIndex::None:

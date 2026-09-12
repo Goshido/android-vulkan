@@ -85,6 +85,7 @@ AV_DX_ALIGNMENT_BEGIN
 struct Frame final
 {
     GXMat4      _viewProj;
+    uint64_t    _toView;
 };
 
 AV_DX_ALIGNMENT_END
@@ -414,6 +415,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         // FUCK - correct DPI
         _viewport->Update ( deltaTime, 1.0F );
         frame._viewProj = _viewport->GetViewProjection ();
+        frame._toView = _viewport->GetToView ();
 
         GXProjectionClipPlanes frustum{};
         frustum.From ( frame._viewProj );
@@ -1380,7 +1382,7 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
                 continue;
 
             ++count;
-            stream.Push ( &mesh->_model );
+            stream.Push ( &mesh->_transform );
         }
 
         if ( !count ) [[unlikely]]
@@ -1840,7 +1842,7 @@ void Workspace::InitGraphicsResources () noexcept
 
                 StreamBufferRef outline = std::make_unique<pbr::StreamBuffer> ();
 
-                if ( !outline->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Model ), "Outline stream" ) )
+                if ( !outline->Init ( renderer, PER_MESH_ELEMENTS, sizeof ( Transform ), "Outline stream" ) )
                 {
                     [[unlikely]]
                     return nullptr;

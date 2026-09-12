@@ -320,6 +320,11 @@ GXMat4 const &ViewportWidget::GetLocal () const noexcept
     return _local;
 }
 
+uint64_t ViewportWidget::GetToView () const noexcept
+{
+    return _toView;
+}
+
 GXMat4 const &ViewportWidget::GetViewProjection () const noexcept
 {
     return _viewProjection;
@@ -704,6 +709,11 @@ void ViewportWidget::UpdateViewProjection () noexcept
 
     GXMat4 view {};
     view.Inverse ( _local );
+
+    GXQuat toView {};
+    toView.FromFast ( view );
+    _toView = toView.ToTBN64 ();
+
     _viewProjection.Multiply ( view, _projection );
 }
 

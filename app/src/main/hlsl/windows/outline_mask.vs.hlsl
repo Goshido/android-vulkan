@@ -1,6 +1,7 @@
 #include "windows/frame_stream.hlsl"
 #include "windows/index_stream.hlsl"
 #include "windows/position_stream.hlsl"
+#include "windows/transform_stream.hlsl"
 
 
 struct InputData
@@ -9,16 +10,9 @@ struct InputData
     uint32_t        _instanceID:            SV_InstanceID;
 };
 
-struct Outline
-{
-    float32_t3x4                            _model;
-};
-
-typedef vk::BufferPointer<Outline, 8U>      Outlines;
-
 struct PushConstants
 {
-    Outlines                                _outlineStream;
+    Transforms                              _transformStream;
     Frames                                  _frameStream;
     Positions                               _positionStream;
     uint64_t                                _indexStream;
@@ -34,12 +28,24 @@ linear float32_t4 VS ( in InputData inputData ): SV_Position
 {
     Frame const frame = g_pushConstants._frameStream.Get ();
 
-    uint64_t const outlineOffset = (uint64_t)( inputData._instanceID * sizeof ( Outline ) );
-    Outline const outline = Outlines ( (uint64_t)g_pushConstants._outlineStream + outlineOffset ).Get ();
+    uint64_t const transformOffset = (uint64_t)( inputData._instanceID * sizeof ( Transform ) );
+    Transform const transform = Transforms ( (uint64_t)g_pushConstants._transformStream + transformOffset ).Get ();
 
-    uint32_t const idx = ResolveIndex ( g_pushConstants._indexStream, g_pushConstants._indexType, inputData._vertexID );
+    // FUCK - resolve face toggle
+
+    uint32_t const idx = ResolveIndex ( g_pushConstants._indexStream,
+        g_pushConstants._indexType,
+        inputData._vertexID,
+        false
+    );
+
     uint64_t const positionOffset = (uint64_t)( idx * sizeof ( float32_t3 ) );
     float32_t3 const position = Positions ( (uint64_t)g_pushConstants._positionStream + positionOffset ).Get ();
 
-    return mul ( frame._viewProj, float32_t4 ( mul ( outline._model, float32_t4 ( position, 1.0F ) ), 1.0F ) );
+    return mul ( frame._viewProj,
+        float32_t4 (
+            transform._location + mul ( ToMatrix ( transform._rotation ), position * transform._scale ),
+            1.0F
+        )
+    );
 }

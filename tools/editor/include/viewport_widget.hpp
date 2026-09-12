@@ -63,6 +63,7 @@ class ViewportWidget final : public Widget
         GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;
         GXMat4                              _viewProjection = GXMat4::IDENTITY;
+        uint64_t                            _toView = 0U;
 
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
@@ -100,6 +101,7 @@ class ViewportWidget final : public Widget
         void Update ( float deltaTime, float dpi ) noexcept;
 
         [[nodiscard]] GXMat4 const &GetLocal () const noexcept;
+        [[nodiscard]] uint64_t GetToView () const noexcept;
         [[nodiscard]] GXMat4 const &GetViewProjection () const noexcept;
 
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage

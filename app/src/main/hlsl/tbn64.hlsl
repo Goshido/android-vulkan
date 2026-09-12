@@ -21,7 +21,7 @@ QuatH ToQuat ( in TBN64 tbn )
     // 2 / ( 2 ^ 21 - 1 ) = 9.5367477115381772700201368427929e-7F
     // 2 / ( 2 ^ 22 - 1 ) = 4.7683727188998982667680422706705e-7F
     return Recover (
-        (float16_t3)mad ( (float32_t3)comp, float32_t3 ( 9.53675e-7F, 9.53675e-7F, 4.76837e-7F ), -1.0F )
+        (float16_t3)mad ( (float32_t3)comp, float32_t3 ( 9.53674771e-7F, 9.53674771e-7F, 4.76837272e-7F ), -1.0F )
     );
 }
 
@@ -31,7 +31,11 @@ float32_t3x3 ToMatrix ( in TBN64 tbn )
     // 2 / ( 2 ^ 22 - 1 ) = 4.7683727188998982667680422706705e-7F
 
     uint32_t3 const comp = uint32_t3 ( (uint32_t)tbn._a, (uint32_t)tbn._b, (uint32_t)tbn._c );
-    float32_t3 const imaginary = mad ( (float32_t3)comp, float32_t3 ( 9.53675e-7F, 9.53675e-7F, 4.76837e-7F ), -1.0F );
+
+    float32_t3 const imaginary = mad ( (float32_t3)comp,
+        float32_t3 ( 9.53674771e-7F, 9.53674771e-7F, 4.76837272e-7F ),
+        -1.0F
+    );
 
     // By convention xyz contains imaginary part of quaternion.
     // Real part of quaternion must be restored. By convention it's used unit quaternions to represent rotation.

@@ -2,7 +2,8 @@
 #define EDITOR_TRANSFORM_HPP
 
 
-#include "model.hpp"
+#include <GXCommon/GXMath.hpp>
+#include <vulkan_utils.hpp>
 
 
 namespace editor {
@@ -11,8 +12,9 @@ AV_DX_ALIGNMENT_BEGIN
 
 struct Transform final
 {
-    Model       _model;
-    uint64_t    _normal;
+    uint64_t    _rotation;
+    GXVec3      _location;
+    GXVec3      _scale;
 };
 
 AV_DX_ALIGNMENT_END

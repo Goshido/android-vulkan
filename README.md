@@ -40,7 +40,7 @@ Pay attention that all 3<sup>rd</sup> party libraries are prebuilt already and p
 * _CMake 4.1.2_
 * [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
 * [_Gradle 9.2.0-bin_](https://services.gradle.org/distributions/)
-* [_DirectX Shader Compiler v1.9.2607.10104_](https://github.com/microsoft/DirectXShaderCompiler) `1b949a448e4c9e821f010c488defebfbb1a50b27`
+* [_DirectX Shader Compiler v1.9.2607.10118_](https://github.com/microsoft/DirectXShaderCompiler) `b9e9f840b3ed530a7f67010ee899a02a613d3586`
 * [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`
 * [_libogg 1.3.6_](https://gitlab.xiph.org/xiph/ogg) `0288fadac3ac62d453409dfc83e9c4ab617d2472`
 * [_libvorbis 1.3.7_](https://gitlab.xiph.org/xiph/vorbis) `851cce991da34adf5e1f3132588683758a6369ec`

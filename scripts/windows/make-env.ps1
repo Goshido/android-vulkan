@@ -61,6 +61,17 @@ function Resolve-Type-HLSL
     }
 }
 
+function Test-Windows-Platform
+{
+    param
+    (
+        [Parameter(Mandatory)]
+        [string] $SPV
+    )
+
+    return $SPV.Contains($WINDOWS_HLSL_DIRECTORY)
+}
+
 if ( !$embedSources )
 {
     $FLAGS += @(

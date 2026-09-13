@@ -6,10 +6,25 @@ Clear-Host
 [PSCustomObject] $type = Resolve-Type-HLSL                                                                             `
     -Src $src
 
-$params = @(
+[string[]] $params = @(
     "-E", $type._entryPoint,
     "-T", $type._profile,
-    "-Fc", "$CORE_HLSL_DIRECTORY\disassm\blob.spvasm",
+    "-Fc", "$CORE_HLSL_DIRECTORY\disassm\blob.spvasm"
+)
+
+if (Test-Windows-Platform -SPV $src)
+{
+    $params += @(
+        "-fvk-bind-resource-heap",
+        "0",
+        "0",
+        "-fvk-bind-sampler-heap",
+        "1",
+        "0"
+    )
+}
+
+$params += @(
     $src
 )
 

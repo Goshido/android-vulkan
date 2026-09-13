@@ -53,23 +53,30 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## <a id="compile-vs">Compile and deploy vertex shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T vs_6_10                                                  ^
-    -E VS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.vs.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T vs_6_10
+    -E VS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.vs.spv
     <file name>.vs
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -77,23 +84,30 @@ dxc.exe                                                         ^
 ## <a id="compile-fs">Compile and deploy fragment shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T ps_6_10                                                  ^
-    -E PS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.ps.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T ps_6_10
+    -E PS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.ps.spv
     <file name>.ps
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -101,23 +115,30 @@ dxc.exe                                                         ^
 ## <a id="compile-cs">Compile and deploy compute shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T cs_6_10                                                  ^
-    -E CS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.cs.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T cs_6_10
+    -E CS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.cs.spv
     <file name>.cs
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)

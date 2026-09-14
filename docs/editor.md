@@ -30,7 +30,7 @@
     - Windows Universal C Runtime
 * [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
 * [_RenderDoc v1.41_](https://renderdoc.org/)
-* [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
+* [_NVIDIA Nsight Graphics 2026.3.1.0 (build 38722833) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2509.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
 * [_DirectX Shader Compiler v1.9.2607.10118_](https://github.com/microsoft/DirectXShaderCompiler) `b9e9f840b3ed530a7f67010ee899a02a613d3586`
 * [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`

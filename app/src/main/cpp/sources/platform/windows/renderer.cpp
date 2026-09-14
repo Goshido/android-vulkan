@@ -21,96 +21,6 @@ constexpr Renderer::VulkanVersion VERSION
     ._patch = 0U,
 };
 
-constexpr char const INDENT_2[] = "        ";
-
-//----------------------------------------------------------------------------------------------------------------------
-
-[[nodiscard]] bool CheckExtensionDescriptorBuffer ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions,
-    bool initLogs
-) noexcept
-{
-    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME, initLogs );
-
-    if ( !status ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceDescriptorBufferFeaturesEXT hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-        .pNext = nullptr,
-        .descriptorBuffer = VK_FALSE,
-        .descriptorBufferCaptureReplay = VK_FALSE,
-        .descriptorBufferImageLayoutIgnored = VK_FALSE,
-        .descriptorBufferPushDescriptors = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
-    status = hardwareSupport.descriptorBuffer == VK_TRUE;
-
-    if ( !initLogs )
-        return status;
-
-    if ( status ) [[likely]]
-    {
-        LogInfo ( "%sOK: descriptorBuffer", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: descriptorBuffer", INDENT_2 );
-    return false;
-}
-
-[[nodiscard]] bool CheckExtensionMutableDescriptorType ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions,
-    bool initLogs
-) noexcept
-{
-    bool status = Renderer::CheckExtensionCommon ( allExtensions,
-        VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
-        initLogs
-    );
-
-    if ( !status ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
-        .pNext = nullptr,
-        .mutableDescriptorType = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
-    status = hardwareSupport.mutableDescriptorType == VK_TRUE;
-
-    if ( !initLogs )
-        return status;
-
-    if ( status ) [[likely]]
-    {
-        LogInfo ( "%sOK: mutableDescriptorType", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: mutableDescriptorType", INDENT_2 );
-    return false;
-}
-
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -720,10 +630,27 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         .pushDescriptor = VK_FALSE
     };
 
+    VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferCaps
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+        .pNext = &features14,
+        .descriptorBuffer = VK_FALSE,
+        .descriptorBufferCaptureReplay = VK_FALSE,
+        .descriptorBufferImageLayoutIgnored = VK_FALSE,
+        .descriptorBufferPushDescriptors = VK_FALSE
+    };
+
+    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT mutableTypeCaps
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
+        .pNext = &descriptorBufferCaps,
+        .mutableDescriptorType = VK_FALSE
+    };
+
     VkPhysicalDeviceFeatures2 probe
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &features14,
+        .pNext = &mutableTypeCaps,
         .features {}
     };
 
@@ -738,8 +665,8 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
 
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionDescriptorBuffer ( _physicalDevice, allExtensions, _initLogs ) ) &
-        AV_BITWISE ( CheckExtensionMutableDescriptorType ( _physicalDevice, allExtensions, _initLogs ) ) &
+    return AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME, _initLogs ) ) &
         AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, _initLogs ) ) &
 
 #ifdef AV_ENABLE_NSIGHT
@@ -754,6 +681,11 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64", _initLogs ) ) &
+
+        AV_BITWISE ( CheckFeature ( features.shaderStorageImageWriteWithoutFormat,
+            "shaderStorageImageWriteWithoutFormat",
+            _initLogs )
+        ) &
 
         AV_BITWISE (
             CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
@@ -830,7 +762,10 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering", _initLogs ) ) &
         AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5", _initLogs ) ) &
+
+        AV_BITWISE ( CheckFeature ( descriptorBufferCaps.descriptorBuffer, "descriptor buffer", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( mutableTypeCaps.mutableDescriptorType, "mutable descriptor type", _initLogs ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept
@@ -1111,7 +1046,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .shaderStorageImageExtendedFormats = VK_FALSE,
             .shaderStorageImageMultisample = VK_FALSE,
             .shaderStorageImageReadWithoutFormat = VK_FALSE,
-            .shaderStorageImageWriteWithoutFormat = VK_FALSE,
+            .shaderStorageImageWriteWithoutFormat = VK_TRUE,
             .shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
             .shaderSampledImageArrayDynamicIndexing = VK_TRUE,
             .shaderStorageBufferArrayDynamicIndexing = VK_TRUE,

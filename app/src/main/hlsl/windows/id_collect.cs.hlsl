@@ -1,36 +1,23 @@
 #include "platform/windows/pbr/id_collect.inc"
-#include "platform/windows/pbr/resource_heap.inc"
 
 
 struct PushConstants
 {
-    uint32_t                    _idImage;
-    uint32_t2                   _offset;
-    uint32_t2                   _size;
-    uint32_t                    _idSet;
-    uint32_t                    _capacity;
+    uint32_t        _idImage;
+    uint32_t2       _offset;
+    uint32_t2       _size;
+    uint32_t        _idSet;
+    uint32_t        _capacity;
 };
 
 [[vk::push_constant]]
-PushConstants                   g_pushConstants;
-
-// [2026/08/16] DXC has no syntax explicit image format and 'ResourceDescriptorHeap'.
-// So the workaround is used.
-// [2026/08/16] Never mix ResourceDescriptorHeap|SamplerDescriptorHeap and explicit descriptor indexing in same shader.
-// The DXC will produce unexpected 'Binding' locations in SPIR-V. Be consistent.
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-[[vk::image_format ( "rg32ui" )]]
-RWTexture2D<uint32_t2>          g_images[]:     register ( u0 );
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-RWStructuredBuffer<uint64_t>    g_buffers[]:    register ( u1 );
+PushConstants       g_pushConstants;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 uint64_t UnpackID ( in uint32_t2 pix )
 {
-    RWTexture2D<uint32_t2> ids = g_images[ g_pushConstants._idImage ];
+    RWTexture2D<uint32_t2> ids = ResourceDescriptorHeap[ g_pushConstants._idImage ];
     uint64_t2 const alpha = (uint64_t2)ids[ pix ];
     return alpha.x | ( alpha.y << 32U );
 }
@@ -80,7 +67,7 @@ void InsertID ( in uint64_t id )
 
     // The implementation is based on ideas from
     // https://developer.nvidia.com/blog/maximizing-performance-with-massively-parallel-hash-maps-on-gpus/
-    RWStructuredBuffer<uint64_t> idSet = g_buffers[ g_pushConstants._idSet ];
+    RWStructuredBuffer<uint64_t> idSet = ResourceDescriptorHeap[ g_pushConstants._idSet ];
 
     for ( uint32_t i = BucketIndex ( id ); ; i = ( i + 1U ) % g_pushConstants._capacity )
     {

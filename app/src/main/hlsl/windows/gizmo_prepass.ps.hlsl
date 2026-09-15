@@ -2,7 +2,6 @@
 #include "color_space.hlsl"
 #include "platform/windows/pbr/gizmo_binds.inc"
 #include "platform/windows/pbr/gizmo_shapes.inc"
-#include "platform/windows/pbr/resource_heap.inc"
 #include "windows/gizmo_pack.hlsl"
 #include "windows/gizmo_prepass_common.hlsl"
 #include "windows/gizmo_tile.hlsl"

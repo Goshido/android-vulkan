@@ -1,18 +1,17 @@
 #include "platform/windows/pbr/id_compress.inc"
-#include "platform/windows/pbr/resource_heap.inc"
 
 
 struct PushConstants
 {
-    uint32_t                    _idSet;
-    uint32_t                    _uniqueIDs;
-    uint32_t                    _capacity;
+    uint32_t        _idSet;
+    uint32_t        _uniqueIDs;
+    uint32_t        _capacity;
 };
 
 [[vk::push_constant]]
-PushConstants                   g_pushConstants;
+PushConstants       g_pushConstants;
 
-static uint64_t                 g_ids[ WINDOW ];
+static uint64_t     g_ids[ WINDOW ];
 
 //----------------------------------------------------------------------------------------------------------------------
 

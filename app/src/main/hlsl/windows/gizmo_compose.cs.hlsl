@@ -1,6 +1,5 @@
 #include "color_space.hlsl"
 #include "platform/windows/pbr/gizmo_compose.inc"
-#include "platform/windows/pbr/resource_heap.inc"
 #include "windows/gizmo_pack.hlsl"
 #include "windows/gizmo_tile.hlsl"
 
@@ -22,18 +21,6 @@ struct PushConstants
 [[vk::push_constant]]
 PushConstants                               g_pushConstants;
 
-// [2026/08/16] DXC has no syntax explicit image format and 'ResourceDescriptorHeap'.
-// So the workaround is used.
-// [2026/08/16] Never mix ResourceDescriptorHeap|SamplerDescriptorHeap and explicit descriptor indexing in same shader.
-// The DXC will produce unexpected 'Binding' locations in SPIR-V. Be consistent.
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-[[vk::image_format ( "rgba8" )]]
-RWTexture2D<float32_t4>                     g_images[]:     register ( u0 );
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-Texture2D<float32_t>                        g_depth[]:      register ( t0 );
-
 struct History
 {
     uint32_t                                _count;
@@ -46,7 +33,7 @@ static History                              g_history;
 
 bool DepthTestHistory ( in uint32_t2 pix, in uint32_t sampleCount )
 {
-    Texture2D<float32_t> depthImage = g_depth[ g_pushConstants._depth ];
+    Texture2D<float32_t> depthImage = ResourceDescriptorHeap[ g_pushConstants._depth ];
     uint32_t const depth = PackDepth ( depthImage[ pix ] );
     g_history._count = 0U;
 
@@ -115,7 +102,7 @@ void Compose ( in uint32_t2 pix )
 
     c.xyz = pow ( c.xyz, (float16_t)g_pushConstants._brightness );
 
-    RWTexture2D<float32_t4> color = g_images[ g_pushConstants._color ];
+    RWTexture2D<float32_t4> color = ResourceDescriptorHeap[ g_pushConstants._color ];
     float16_t3 const dst = SRGBToLinear ( (float16_t3)color[ pix ].xyz );
     color[ pix ] = float32_t4 ( (float32_t3)LinearToSRGB ( mad ( dst, 1.0H - c.w, c.xyz ) ), 1.0F );
 }

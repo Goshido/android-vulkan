@@ -888,7 +888,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .storageBuffer16BitAccess = VK_FALSE,
         .uniformAndStorageBuffer16BitAccess = VK_FALSE,
 
-        // 2026/09/10 It's needed because DXC bug:
+        // 2026/09/10 It's needed because DXC issue:
         // https://github.com/microsoft/DirectXShaderCompiler/issues/8895
         .storagePushConstant16 = VK_TRUE,
 
@@ -1046,7 +1046,10 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .shaderStorageImageExtendedFormats = VK_FALSE,
             .shaderStorageImageMultisample = VK_FALSE,
             .shaderStorageImageReadWithoutFormat = VK_FALSE,
+
+            // It's needed for HLSL resource descriptor heap patterns with RWTexture access.
             .shaderStorageImageWriteWithoutFormat = VK_TRUE,
+
             .shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
             .shaderSampledImageArrayDynamicIndexing = VK_TRUE,
             .shaderStorageBufferArrayDynamicIndexing = VK_TRUE,

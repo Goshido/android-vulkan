@@ -274,45 +274,44 @@ void ViewportWidget::Destroy () noexcept
     _useScaleTool = {};
 }
 
-void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
+void ViewportWidget::Update ( float /*deltaTime*/, float /*dpi*/ ) noexcept
 {
-    eNavigationMode const old = _navigationMode;
+    //eNavigationMode const old = _navigationMode;
 
-    auto const captureInput = [ this, old ] () noexcept {
-        if ( old == eNavigationMode::None ) [[unlikely]]
-        {
-            CaptureMouse ();
-            SetFocus ();
-        }
-    };
+    //auto const captureInput = [ this, old ] () noexcept {
+    //    if ( old == eNavigationMode::None ) [[unlikely]]
+    //    {
+    //        CaptureMouse ();
+    //        SetFocus ();
+    //    }
+    //};
 
-    ResolveNavigationMode ();
+    //ResolveNavigationMode ();
 
-    switch ( _navigationMode )
-    {
-        case eNavigationMode::FreeFly:
-            captureInput ();
-            DoFreeFly ( deltaTime, dpi );
-        return;
+    //switch ( _navigationMode )
+    //{
+    //    case eNavigationMode::FreeFly:
+    //        captureInput ();
+    //        DoFreeFly ( deltaTime, dpi );
+    //    return;
 
-        case eNavigationMode::Orbit:
-            captureInput ();
-            DoOrbit ();
-        return;
+    //    case eNavigationMode::Orbit:
+    //        captureInput ();
+    //    return;
 
-        case eNavigationMode::None:
-            [[fallthrough]];
-        default:
-            // IMPOSSIBLE
-        break;
-    }
+    //    case eNavigationMode::None:
+    //        [[fallthrough]];
+    //    default:
+    //        // IMPOSSIBLE
+    //    break;
+    //}
 
-    if ( old == eNavigationMode::None ) [[likely]]
-        return;
+    //if ( old == eNavigationMode::None ) [[likely]]
+    //    return;
 
-    ReleaseMouse ();
-    KillFocus ();
-    _state = {};
+    //ReleaseMouse ();
+    //KillFocus ();
+    //_state = {};
 }
 
 GXMat4 const &ViewportWidget::GetLocal () const noexcept
@@ -374,48 +373,13 @@ void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 1U );
-
-    if ( event._key != eKey::LeftMouseButton )
-        return;
-
-    constexpr Selection::eMode const cases[] = { Selection::eMode::New, Selection::eMode::Toggle };
-    _selectionMode = std::optional<Selection::eMode> ( cases[ static_cast<size_t> ( _state._ctrl | _state._shift ) ] );
-    Workspace::Instance ().GetSelection ().Begin ( _mouseNow, *_selectionMode );
-
-    _selectionBody.Show ();
-    UpdateSelection ( _mouseNow.x, _mouseNow.y, 0, 0 );
-    CaptureMouse ();
-    SetFocus ();
+    ( this->*_stateHandlers._mouseDown ) ();
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
-
-    if ( _selectionMode )
-    {
-        UpdateSelectionMode ();
-
-        Workspace::Instance ().GetSelection ().End (
-            VkOffset2D
-            {
-                .x = event._x,
-                .y = event._y
-            },
-
-            *_selectionMode
-        );
-
-        _selectionMode = std::nullopt;
-    }
-
-    if ( event._key != eKey::LeftMouseButton )
-        return;
-
-    ReleaseMouse ();
-    KillFocus ();
-    _selectionBody.Hide ();
-    _selectionDrag = false;
+    ( this->*_stateHandlers._mouseUp ) ();
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -431,52 +395,7 @@ void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         .y = event._y
     };
 
-    // FUCK
-    GXMat3 basis {};
-    basis.FromFast ( _orientation );
-
-    //_rotateTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    basis,
-    //    GetVI (),
-    //    _mouseNow,
-    //    _state._leftMouseButton == 1U
-    //);
-
-    //_moveTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    GetVI (),
-    //    _state._leftMouseButton == 1U
-    //);
-
-    _scaleTool.Update ( ComputeRayDirection ( basis ),
-        _location,
-        basis,
-        _viewProjection,
-        _resolution,
-        GetVI (),
-        _mouseNow,
-        _state._leftMouseButton == 1U
-    );
-
-    if ( !_selectionMode )
-        return;
-
-    // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
-    // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
-    // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
-    auto const rect = Workspace::Instance ().GetSelection ().Update (
-        VkOffset2D
-        {
-            .x = event._x,
-            .y = event._y
-        },
-
-        *_selectionMode
-    );
-
-    UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
-    _selectionDrag = true;
+    ( this->*_stateHandlers._mouseMove ) ();
 }
 
 Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &renderer,
@@ -582,6 +501,10 @@ void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8
             _state._right = matchValue;
         break;
 
+        case eKey::KeyEsc:
+            _state._esc = matchValue;
+        break;
+
         default:
             // NOTHING
         break;
@@ -601,11 +524,15 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
     switch ( event._key )
     {
         case eKey::LeftMouseButton:
-            _state._leftMouseButton = matchValue;
+            _state._lmb = matchValue;
         break;
 
         case eKey::MiddleMouseButton:
-            _state._middleMouseButton = matchValue;
+            _state._mmb = matchValue;
+        break;
+
+        case eKey::RightMouseButton:
+            _state._rmb = matchValue;
         break;
 
         default:
@@ -669,38 +596,10 @@ void ViewportWidget::UpdateSelectionMode () noexcept
     };
 
     *_selectionMode = cases[
-        static_cast<size_t> (
-            _state._shift |
+            ( static_cast<uint8_t> ( _selectionDrag ) << 2U ) |
             ( _state._ctrl << 1U ) |
-            ( static_cast<uint8_t> ( _selectionDrag ) << 2U )
-        )
+            _state._shift
     ];
-}
-
-void ViewportWidget::ResolveNavigationMode () noexcept
-{
-    constexpr eNavigationMode const cases[] =
-    {
-        eNavigationMode::None,
-        eNavigationMode::FreeFly,
-        eNavigationMode::Orbit,
-        eNavigationMode::Orbit
-    };
-
-    auto const selector = static_cast<size_t> (
-        _state._middleMouseButton | ( ( _state._leftMouseButton & _state._alt ) << 1U )
-    );
-
-    eNavigationMode const current = cases[ selector ];
-    eNavigationMode const resultCases[] = { _navigationMode, current };
-
-    auto const resultSelector =
-        static_cast<size_t> ( ( _navigationMode == eNavigationMode::None ) | ( current == eNavigationMode::None ) );
-
-    eNavigationMode const old = std::exchange ( _navigationMode, resultCases[ resultSelector ] );
-
-    VkOffset2D const mouseCases[] = { _mouseCommit, _mouseNow };
-    _mouseCommit = mouseCases[ static_cast<size_t> ( old != _navigationMode ) ];
 }
 
 void ViewportWidget::UpdateViewProjection () noexcept
@@ -715,6 +614,241 @@ void ViewportWidget::UpdateViewProjection () noexcept
     _toView = toView.ToTBN64 ();
 
     _viewProjection.Multiply ( view, _projection );
+}
+
+void ViewportWidget::OnFreeFlyMouseButtonUp () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnNothing,
+            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        }
+    };
+
+    _stateHandlers = cases[ static_cast<uint32_t> ( _state._mmb ) ];
+}
+
+void ViewportWidget::OnIdleMouseButtonDown () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
+            ._stateEnter = &ViewportWidget::OnSelectionStateEnter
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnToolMouseMove,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnNothing,
+            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnNothing,
+            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnNothing,
+            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnNothing,
+            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        }
+    };
+
+    _stateHandlers = cases[ ( _state._mmb << 2U ) | ( _state._lmb << 1U ) | _state._toolHit ];
+    ( this->*_stateHandlers._stateEnter ) ();
+}
+
+void ViewportWidget::OnSelectionMouseButtonDown () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
+            ._stateEnter = &ViewportWidget::OnSelectionStateEnter
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        }
+    };
+
+    _stateHandlers = cases[ _state._rmb | _state._esc ];
+}
+
+void ViewportWidget::OnSelectionMouseButtonUp () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing,
+            ._stateEnter = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
+            ._stateEnter = &ViewportWidget::OnSelectionStateEnter
+        }
+    };
+
+    _stateHandlers = cases[ _state._lmb ];
+
+    if ( _selectionMode )
+    {
+        UpdateSelectionMode ();
+        Workspace::Instance ().GetSelection ().End ( _mouseNow, *_selectionMode );
+        _selectionMode = std::nullopt;
+    }
+
+    if ( _state._lmb )
+        return;
+
+    ReleaseMouse ();
+    KillFocus ();
+    _selectionBody.Hide ();
+    _selectionDrag = false;
+}
+
+void ViewportWidget::OnSelectionMouseMove () noexcept
+{
+    if ( !_selectionMode )
+        return;
+
+    // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
+    // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
+    // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
+    auto const rect = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
+
+    UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
+    _selectionDrag = true;
+}
+
+void ViewportWidget::OnSelectionStateEnter () noexcept
+{
+    constexpr Selection::eMode const cases[] = { Selection::eMode::New, Selection::eMode::Toggle };
+    _selectionMode = std::optional<Selection::eMode> ( cases[ _state._ctrl | _state._shift ] );
+    Workspace::Instance ().GetSelection ().Begin ( _mouseNow, *_selectionMode );
+
+    _selectionBody.Show ();
+    UpdateSelection ( _mouseNow.x, _mouseNow.y, 0, 0 );
+    CaptureMouse ();
+    SetFocus ();
+}
+
+void ViewportWidget::OnToolMouseButtonDown () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnToolMouseMove
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing
+        }
+    };
+
+    _stateHandlers = cases[ _state._rmb | _state._esc ];
+}
+
+void ViewportWidget::OnToolMouseButtonUp () noexcept
+{
+    constexpr StateHandlers const cases[] =
+    {
+        {
+            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnNothing
+        },
+        {
+            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
+            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
+            ._mouseMove = &ViewportWidget::OnToolMouseMove
+        }
+    };
+
+    _stateHandlers = cases[ _state._lmb ];
+}
+
+void ViewportWidget::OnToolMouseMove () noexcept
+{
+    GXMat3 basis {};
+    basis.FromFast ( _orientation );
+
+    //_rotateTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    basis,
+    //    GetVI (),
+    //    _mouseNow,
+    //    _state._leftMouseButton == 1U
+    //);
+
+    //_moveTool.Update ( ComputeRayDirection ( basis ),
+    //    _location,
+    //    GetVI (),
+    //    _state._leftMouseButton == 1U
+    //);
+
+    _scaleTool.Update ( ComputeRayDirection ( basis ),
+        _location,
+        basis,
+        _viewProjection,
+        _resolution,
+        GetVI (),
+        _mouseNow,
+        _state._lmb == 1U
+    );
+}
+
+void ViewportWidget::OnNothing () noexcept
+{
+    // NOTHING
 }
 
 void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
@@ -778,11 +912,6 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     _orientation.TransformFast ( displacementWorld, displacementLocal );
     _location.Sum ( _location, displacementWorld );
     UpdateViewProjection ();
-}
-
-void ViewportWidget::DoOrbit () noexcept
-{
-    // FUCK
 }
 
 void ViewportWidget::SwitchTool ( Tool &tool ) noexcept

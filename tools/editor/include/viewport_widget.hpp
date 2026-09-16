@@ -17,13 +17,6 @@ namespace editor {
 class ViewportWidget final : public Widget
 {
     private:
-        enum class eNavigationMode : uint8_t
-        {
-            FreeFly,
-            Orbit,
-            None
-        };
-
         struct State final
         {
             uint8_t                         _forward: 1 = 0U;
@@ -33,11 +26,26 @@ class ViewportWidget final : public Widget
             uint8_t                         _ctrl: 1 = 0U;
             uint8_t                         _shift: 1 = 0U;
             uint8_t                         _alt: 1 = 0U;
-            uint8_t                         _middleMouseButton: 1 = 0U;
-            uint8_t                         _leftMouseButton: 1 = 0U;
+            uint8_t                         _mmb: 1 = 0U;
+            uint8_t                         _lmb: 1 = 0U;
+            uint8_t                         _rmb: 1 = 0U;
+            uint8_t                         _esc: 1 = 0U;
+            uint8_t                         _toolHit: 1 = 0U;
+        };
+
+        using Handler = void ( ViewportWidget::* ) () noexcept;
+
+        struct StateHandlers final
+        {
+            Handler                         _mouseDown = &ViewportWidget::OnIdleMouseButtonDown;
+            Handler                         _mouseUp = &ViewportWidget::OnNothing;
+            Handler                         _mouseMove = &ViewportWidget::OnNothing;
+            Handler                         _stateEnter = &ViewportWidget::OnNothing;
         };
 
     private:
+        StateHandlers                       _stateHandlers {};
+
         DIVUIElement                        _div;
 
         DIVUIElement                        _selectionBody;
@@ -81,7 +89,6 @@ class ViewportWidget final : public Widget
         std::optional<Selection::eMode>     _selectionMode = std::nullopt;
         bool                                _selectionDrag = false;
 
-        eNavigationMode                     _navigationMode = eNavigationMode::None;
         State                               _state {};
 
     public:
@@ -128,11 +135,22 @@ class ViewportWidget final : public Widget
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
         void UpdateViewProjection () noexcept;
-        void ResolveNavigationMode () noexcept;
+
+        void OnFreeFlyMouseButtonUp () noexcept;
+        void OnIdleMouseButtonDown () noexcept;
+
+        void OnSelectionMouseButtonDown () noexcept;
+        void OnSelectionMouseButtonUp () noexcept;
+        void OnSelectionMouseMove () noexcept;
+        void OnSelectionStateEnter () noexcept;
+
+        void OnToolMouseButtonDown () noexcept;
+        void OnToolMouseButtonUp () noexcept;
+        void OnToolMouseMove () noexcept;
+
+        void OnNothing () noexcept;
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;
-        void DoOrbit () noexcept;
-
         void SwitchTool ( Tool &tool ) noexcept;
 };
 

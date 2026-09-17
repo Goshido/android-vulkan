@@ -19,11 +19,6 @@ void SelectTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Select tool deactivated" );
 }
 
-void SelectTool::Hover () noexcept
-{
-    // FUCK
-}
-
 void SelectTool::Click () noexcept
 {
     // FUCK

@@ -7,10 +7,11 @@
 
 namespace editor {
 
+// FUCK - is it needed?
 class SelectTool final : public Tool
 {
     public:
-        SelectTool () = default;
+        explicit SelectTool () = default;
 
         SelectTool ( SelectTool const & ) = delete;
         SelectTool &operator = ( SelectTool const & ) = delete;
@@ -18,12 +19,11 @@ class SelectTool final : public Tool
         SelectTool ( SelectTool && ) = delete;
         SelectTool &operator = ( SelectTool && ) = delete;
 
-        ~SelectTool () = default;
+        ~SelectTool () override = default;
 
         void Activate () noexcept override;
         void Deactivate () noexcept override;
 
-        void Hover () noexcept override;
         void Click () noexcept override;
         void Begin () noexcept override;
         void Move () noexcept override;

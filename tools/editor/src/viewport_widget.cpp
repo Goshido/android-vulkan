@@ -232,6 +232,7 @@ void ViewportWidget::Init () noexcept
 
         [ this ] () noexcept {
             SwitchTool ( _moveTool );
+            _toolMouseMove = &ViewportWidget::OnMoveToolMouseMove;
         }
     );
 
@@ -242,6 +243,7 @@ void ViewportWidget::Init () noexcept
 
         [ this ] () noexcept {
             SwitchTool ( _rotateTool );
+            _toolMouseMove = &ViewportWidget::OnRotateToolMouseMove;
         }
     );
 
@@ -252,6 +254,7 @@ void ViewportWidget::Init () noexcept
 
         [ this ] () noexcept {
             SwitchTool ( _selectTool );
+            _toolMouseMove = &ViewportWidget::OnNothing;
         }
     );
 
@@ -262,6 +265,7 @@ void ViewportWidget::Init () noexcept
 
         [ this ] () noexcept {
             SwitchTool ( _scaleTool );
+            _toolMouseMove = &ViewportWidget::OnScaleToolMouseMove;
         }
     );
 }
@@ -274,44 +278,12 @@ void ViewportWidget::Destroy () noexcept
     _useScaleTool = {};
 }
 
-void ViewportWidget::Update ( float /*deltaTime*/, float /*dpi*/ ) noexcept
+void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
 {
-    //eNavigationMode const old = _navigationMode;
-
-    //auto const captureInput = [ this, old ] () noexcept {
-    //    if ( old == eNavigationMode::None ) [[unlikely]]
-    //    {
-    //        CaptureMouse ();
-    //        SetFocus ();
-    //    }
-    //};
-
-    //ResolveNavigationMode ();
-
-    //switch ( _navigationMode )
-    //{
-    //    case eNavigationMode::FreeFly:
-    //        captureInput ();
-    //        DoFreeFly ( deltaTime, dpi );
-    //    return;
-
-    //    case eNavigationMode::Orbit:
-    //        captureInput ();
-    //    return;
-
-    //    case eNavigationMode::None:
-    //        [[fallthrough]];
-    //    default:
-    //        // IMPOSSIBLE
-    //    break;
-    //}
-
-    //if ( old == eNavigationMode::None ) [[likely]]
-    //    return;
-
-    //ReleaseMouse ();
-    //KillFocus ();
-    //_state = {};
+    if ( _stateHandlers._keyUp == &ViewportWidget::OnFreeFlyKeyUp )
+    {
+        DoFreeFly ( deltaTime, dpi );
+    }
 }
 
 GXMat4 const &ViewportWidget::GetLocal () const noexcept
@@ -343,43 +315,25 @@ GXVec3 ViewportWidget::GetVI () const noexcept
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 1U );
-
-    if ( !_selectionMode )
-        return;
-
-    // [2026/07/21] Windows 11 Pro 25H2 26200.8894: OS triggers this handler many times when
-    // any keyboard key is pressed. The behaviour is similar to autorepeat using long press during typing.
-    // It's needed to filter such repeat events.
-    Selection::eMode const old = *_selectionMode;
-    UpdateSelectionMode ();
-
-    if ( *_selectionMode != old )
-    {
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
-    }
+    ( this->*_stateHandlers._keyDown ) ();
 }
 
 void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 0U );
-
-    if ( _selectionMode )
-    {
-        UpdateSelectionMode ();
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
-    }
+    ( this->*_stateHandlers._keyUp ) ();
 }
 
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 1U );
-    ( this->*_stateHandlers._mouseDown ) ();
+    ( this->*_stateHandlers._keyDown ) ();
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
     UpdateMouseState ( event, 0U );
-    ( this->*_stateHandlers._mouseUp ) ();
+    ( this->*_stateHandlers._keyUp ) ();
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -616,78 +570,81 @@ void ViewportWidget::UpdateViewProjection () noexcept
     _viewProjection.Multiply ( view, _projection );
 }
 
-void ViewportWidget::OnFreeFlyMouseButtonUp () noexcept
+void ViewportWidget::OnFreeFlyKeyUp () noexcept
 {
-    constexpr StateHandlers const cases[] =
-    {
-        {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
-        },
-        {
-            ._mouseDown = &ViewportWidget::OnNothing,
-            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
-            ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
-        }
-    };
+    if ( _state._mmb ) [[unlikely]]
+        return;
 
-    _stateHandlers = cases[ static_cast<uint32_t> ( _state._mmb ) ];
+    ReleaseMouse ();
+    KillFocus ();
+
+    _stateHandlers =
+    {
+        ._keyDown = &ViewportWidget::OnIdleKeyDown,
+        ._keyUp = &ViewportWidget::OnNothing,
+        ._mouseMove = &ViewportWidget::OnIdleMouseMove,
+        ._stateEnter = &ViewportWidget::OnNothing
+    };
 }
 
-void ViewportWidget::OnIdleMouseButtonDown () noexcept
+void ViewportWidget::OnFreeFlyStateEnter () noexcept
+{
+    _mouseCommit = _mouseNow;
+    CaptureMouse ();
+    SetFocus ();
+}
+
+void ViewportWidget::OnIdleKeyDown () noexcept
 {
     constexpr StateHandlers const cases[] =
     {
         {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing,
+            ._keyDown = &ViewportWidget::OnIdleKeyDown,
+            ._keyUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnIdleMouseMove,
             ._stateEnter = &ViewportWidget::OnNothing
         },
         {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing,
+            ._keyDown = &ViewportWidget::OnIdleKeyDown,
+            ._keyUp = &ViewportWidget::OnNothing,
+            ._mouseMove = &ViewportWidget::OnIdleMouseMove,
             ._stateEnter = &ViewportWidget::OnNothing
         },
         {
-            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnSelectionKeyDown,
+            ._keyUp = &ViewportWidget::OnSelectionKeyUp,
             ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
             ._stateEnter = &ViewportWidget::OnSelectionStateEnter
         },
         {
-            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnToolKeyDown,
+            ._keyUp = &ViewportWidget::OnToolKeyUp,
             ._mouseMove = &ViewportWidget::OnToolMouseMove,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnToolStateEnter
         },
         {
-            ._mouseDown = &ViewportWidget::OnNothing,
-            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnNothing,
+            ._keyUp = &ViewportWidget::OnFreeFlyKeyUp,
             ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnFreeFlyStateEnter
         },
         {
-            ._mouseDown = &ViewportWidget::OnNothing,
-            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnNothing,
+            ._keyUp = &ViewportWidget::OnFreeFlyKeyUp,
             ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnFreeFlyStateEnter
         },
         {
-            ._mouseDown = &ViewportWidget::OnNothing,
-            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnNothing,
+            ._keyUp = &ViewportWidget::OnFreeFlyKeyUp,
             ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnFreeFlyStateEnter
         },
         {
-            ._mouseDown = &ViewportWidget::OnNothing,
-            ._mouseUp = &ViewportWidget::OnFreeFlyMouseButtonUp,
+            ._keyDown = &ViewportWidget::OnNothing,
+            ._keyUp = &ViewportWidget::OnFreeFlyKeyUp,
             ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnFreeFlyStateEnter
         }
     };
 
@@ -695,61 +652,48 @@ void ViewportWidget::OnIdleMouseButtonDown () noexcept
     ( this->*_stateHandlers._stateEnter ) ();
 }
 
-void ViewportWidget::OnSelectionMouseButtonDown () noexcept
+void ViewportWidget::OnIdleMouseMove () noexcept
 {
-    constexpr StateHandlers const cases[] =
-    {
-        {
-            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
-            ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
-            ._stateEnter = &ViewportWidget::OnSelectionStateEnter
-        },
-        {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
-        }
-    };
-
-    _stateHandlers = cases[ _state._rmb | _state._esc ];
+    ( this->*_toolMouseMove ) ();
 }
 
-void ViewportWidget::OnSelectionMouseButtonUp () noexcept
+void ViewportWidget::OnSelectionKeyDown () noexcept
 {
-    constexpr StateHandlers const cases[] =
+    if ( _state._rmb | _state._esc ) [[likely]]
     {
-        {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing,
-            ._stateEnter = &ViewportWidget::OnNothing
-        },
-        {
-            ._mouseDown = &ViewportWidget::OnSelectionMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnSelectionMouseButtonUp,
-            ._mouseMove = &ViewportWidget::OnSelectionMouseMove,
-            ._stateEnter = &ViewportWidget::OnSelectionStateEnter
-        }
-    };
+        // Restore previous
+        StopSelection ();
+        return;
+    }
 
-    _stateHandlers = cases[ _state._lmb ];
+    if ( !_selectionMode )
+        return;
+
+    // [2026/07/21] Windows 11 Pro 25H2 26200.8894: OS triggers this handler many times when
+    // any keyboard key is pressed. The behaviour is similar to autorepeat using long press during typing.
+    // It's needed to filter such repeat events.
+    Selection::eMode const old = *_selectionMode;
+    UpdateSelectionMode ();
+
+    if ( *_selectionMode != old )
+    {
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
+    }
+}
+
+void ViewportWidget::OnSelectionKeyUp () noexcept
+{
+    if ( !_state._lmb ) [[likely]]
+    {
+        StopSelection ();
+        return;
+    }
 
     if ( _selectionMode )
     {
         UpdateSelectionMode ();
-        Workspace::Instance ().GetSelection ().End ( _mouseNow, *_selectionMode );
-        _selectionMode = std::nullopt;
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
     }
-
-    if ( _state._lmb )
-        return;
-
-    ReleaseMouse ();
-    KillFocus ();
-    _selectionBody.Hide ();
-    _selectionDrag = false;
 }
 
 void ViewportWidget::OnSelectionMouseMove () noexcept
@@ -778,71 +722,106 @@ void ViewportWidget::OnSelectionStateEnter () noexcept
     SetFocus ();
 }
 
-void ViewportWidget::OnToolMouseButtonDown () noexcept
+void ViewportWidget::StopSelection () noexcept
 {
-    constexpr StateHandlers const cases[] =
+    if ( _selectionMode )
     {
-        {
-            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
-            ._mouseMove = &ViewportWidget::OnToolMouseMove
-        },
-        {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing
-        }
+        UpdateSelectionMode ();
+        Workspace::Instance ().GetSelection ().End ( _mouseNow, *_selectionMode );
+        _selectionMode = std::nullopt;
+    }
+
+    _stateHandlers =
+    {
+        ._keyDown = &ViewportWidget::OnIdleKeyDown,
+        ._keyUp = &ViewportWidget::OnNothing,
+        ._mouseMove = &ViewportWidget::OnIdleMouseMove,
+        ._stateEnter = &ViewportWidget::OnNothing
     };
 
-    _stateHandlers = cases[ _state._rmb | _state._esc ];
+    ReleaseMouse ();
+    KillFocus ();
+    _selectionBody.Hide ();
+    _selectionDrag = false;
 }
 
-void ViewportWidget::OnToolMouseButtonUp () noexcept
+void ViewportWidget::OnToolKeyDown () noexcept
 {
-    constexpr StateHandlers const cases[] =
+    if ( _state._rmb | _state._esc ) [[likely]]
     {
-        {
-            ._mouseDown = &ViewportWidget::OnIdleMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnNothing,
-            ._mouseMove = &ViewportWidget::OnNothing
-        },
-        {
-            ._mouseDown = &ViewportWidget::OnToolMouseButtonDown,
-            ._mouseUp = &ViewportWidget::OnToolMouseButtonUp,
-            ._mouseMove = &ViewportWidget::OnToolMouseMove
-        }
-    };
+        _activeTool->Cancel ();
+        StopTool ();
+    }
+}
 
-    _stateHandlers = cases[ _state._lmb ];
+void ViewportWidget::OnToolKeyUp () noexcept
+{
+    if ( !_state._lmb ) [[likely]]
+    {
+        StopTool ();
+    }
 }
 
 void ViewportWidget::OnToolMouseMove () noexcept
 {
+    ( this->*_toolMouseMove ) ();
+}
+
+void ViewportWidget::OnToolStateEnter () noexcept
+{
+    CaptureMouse ();
+    SetFocus ();
+}
+
+void ViewportWidget::StopTool () noexcept
+{
+    ReleaseMouse ();
+    KillFocus ();
+
+    _stateHandlers =
+    {
+        ._keyDown = &ViewportWidget::OnIdleKeyDown,
+        ._keyUp = &ViewportWidget::OnNothing,
+        ._mouseMove = &ViewportWidget::OnIdleMouseMove,
+        ._stateEnter = &ViewportWidget::OnNothing
+    };
+}
+
+void ViewportWidget::OnMoveToolMouseMove () noexcept
+{
     GXMat3 basis {};
     basis.FromFast ( _orientation );
 
-    //_rotateTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    basis,
-    //    GetVI (),
-    //    _mouseNow,
-    //    _state._leftMouseButton == 1U
-    //);
+    _state._toolHit = static_cast<uint8_t> (
+        _moveTool.Update ( ComputeRayDirection ( basis ), _location, GetVI (), _state._lmb == 1U )
+    );
+}
 
-    //_moveTool.Update ( ComputeRayDirection ( basis ),
-    //    _location,
-    //    GetVI (),
-    //    _state._leftMouseButton == 1U
-    //);
+void ViewportWidget::OnRotateToolMouseMove () noexcept
+{
+    GXMat3 basis {};
+    basis.FromFast ( _orientation );
 
-    _scaleTool.Update ( ComputeRayDirection ( basis ),
-        _location,
-        basis,
-        _viewProjection,
-        _resolution,
-        GetVI (),
-        _mouseNow,
-        _state._lmb == 1U
+    _state._toolHit = static_cast<uint8_t> (
+        _rotateTool.Update ( ComputeRayDirection ( basis ), _location, basis, GetVI (), _mouseNow, _state._lmb == 1U )
+    );
+}
+
+void ViewportWidget::OnScaleToolMouseMove () noexcept
+{
+    GXMat3 basis {};
+    basis.FromFast ( _orientation );
+
+    _state._toolHit = static_cast<uint8_t> (
+        _scaleTool.Update ( ComputeRayDirection ( basis ),
+            _location,
+            basis,
+            _viewProjection,
+            _resolution,
+            GetVI (),
+            _mouseNow,
+            _state._lmb == 1U
+        )
     );
 }
 

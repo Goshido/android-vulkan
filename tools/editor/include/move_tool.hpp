@@ -191,19 +191,19 @@ class MoveTool final : public CrossLikeTool
         MoveTool ( MoveTool && ) = delete;
         MoveTool &operator = ( MoveTool && ) = delete;
 
-        ~MoveTool () = default;
+        ~MoveTool () override = default;
 
         void Activate () noexcept override;
         void Deactivate () noexcept override;
 
-        void Hover () noexcept override;
         void Click () noexcept override;
         void Begin () noexcept override;
         void Move () noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
 
-        void Update ( GXVec3 const &rayDirection,
+        // Method returns true if mouse interacts with any of gizmo control.
+        [[nodiscard]] bool Update ( GXVec3 const &rayDirection,
             GXVec3 const &cameraLocation,
             GXVec3 const &vi,
             bool leftMouseButtonPressed

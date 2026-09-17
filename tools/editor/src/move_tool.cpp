@@ -96,11 +96,6 @@ void MoveTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Move tool deactivated" );
 }
 
-void MoveTool::Hover () noexcept
-{
-    // FUCK
-}
-
 void MoveTool::Click () noexcept
 {
     // FUCK
@@ -126,7 +121,7 @@ void MoveTool::Cancel () noexcept
     // FUCK
 }
 
-void MoveTool::Update ( GXVec3 const &rayDirection,
+bool MoveTool::Update ( GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXVec3 const &vi,
     bool leftMouseButtonPressed
@@ -142,7 +137,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
     if ( _workAxis != eAxis::None )
     {
         HandleAxisMove ( cameraLocation, rayDirection );
-        return;
+        return true;
     }
 
     cases[ 0UZ ] = _workPlane;
@@ -151,7 +146,7 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
     if ( _workPlane != eAxis::None )
     {
         HandlePlaneMove ( cameraLocation, rayDirection );
-        return;
+        return true;
     }
 
     if ( prevMoving )
@@ -242,15 +237,16 @@ void MoveTool::Update ( GXVec3 const &rayDirection,
     );
 
     if ( LockAxis () || LockPlane ( cameraLocation ) )
-        return;
+        return true;
 
     if ( !closest._control )
     {
         DeactivateSDF ();
-        return;
+        return false;
     }
 
     ActivateSDF ( *closest._control, closest._cap );
+    return true;
 }
 
 std::optional<MoveTool::ColorSet> MoveTool::AcquirePlaneColorSet ( SDF &plane ) noexcept

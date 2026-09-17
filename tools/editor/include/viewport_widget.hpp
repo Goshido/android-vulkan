@@ -37,14 +37,17 @@ class ViewportWidget final : public Widget
 
         struct StateHandlers final
         {
-            Handler                         _mouseDown = &ViewportWidget::OnIdleMouseButtonDown;
-            Handler                         _mouseUp = &ViewportWidget::OnNothing;
+            Handler                         _keyDown = &ViewportWidget::OnIdleKeyDown;
+            Handler                         _keyUp = &ViewportWidget::OnNothing;
             Handler                         _mouseMove = &ViewportWidget::OnNothing;
             Handler                         _stateEnter = &ViewportWidget::OnNothing;
         };
 
     private:
         StateHandlers                       _stateHandlers {};
+
+        // FUCK - load this from editor save, last used tool
+        Handler                             _toolMouseMove = &ViewportWidget::OnScaleToolMouseMove;
 
         DIVUIElement                        _div;
 
@@ -66,7 +69,7 @@ class ViewportWidget final : public Widget
         SelectTool                          _selectTool {};
         Hotkey                              _useSelectTool {};
 
-        Tool*                               _activeTool = nullptr;
+        Tool*                               _activeTool = &_scaleTool;
 
         GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;
@@ -136,17 +139,27 @@ class ViewportWidget final : public Widget
         void UpdateSelectionMode () noexcept;
         void UpdateViewProjection () noexcept;
 
-        void OnFreeFlyMouseButtonUp () noexcept;
-        void OnIdleMouseButtonDown () noexcept;
+        void OnFreeFlyKeyUp () noexcept;
+        void OnFreeFlyStateEnter () noexcept;
 
-        void OnSelectionMouseButtonDown () noexcept;
-        void OnSelectionMouseButtonUp () noexcept;
+        void OnIdleKeyDown () noexcept;
+        void OnIdleMouseMove () noexcept;
+
+        void OnSelectionKeyDown () noexcept;
+        void OnSelectionKeyUp () noexcept;
         void OnSelectionMouseMove () noexcept;
         void OnSelectionStateEnter () noexcept;
+        void StopSelection () noexcept;
 
-        void OnToolMouseButtonDown () noexcept;
-        void OnToolMouseButtonUp () noexcept;
+        void OnToolKeyDown () noexcept;
+        void OnToolKeyUp () noexcept;
         void OnToolMouseMove () noexcept;
+        void OnToolStateEnter () noexcept;
+        void StopTool () noexcept;
+
+        void OnMoveToolMouseMove () noexcept;
+        void OnRotateToolMouseMove () noexcept;
+        void OnScaleToolMouseMove () noexcept;
 
         void OnNothing () noexcept;
 

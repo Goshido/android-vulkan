@@ -57,11 +57,6 @@ void RotateTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Rotate tool deactivated" );
 }
 
-void RotateTool::Hover () noexcept
-{
-    // FUCK
-}
-
 void RotateTool::Click () noexcept
 {
     // FUCK
@@ -87,7 +82,7 @@ void RotateTool::Cancel () noexcept
     // FUCK
 }
 
-void RotateTool::Update ( GXVec3 const &rayDirection,
+bool RotateTool::Update ( GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
     GXVec3 const &vi,
@@ -105,7 +100,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
     if ( _rotateAxis != eAxis::None )
     {
         HandleRingRotate ( mouse );
-        return;
+        return true;
     }
 
     _rotateBall &= !lmbReleased;
@@ -113,7 +108,7 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
     if ( _rotateBall )
     {
         HandleBallRotate ( mouse, cameraBasis );
-        return;
+        return true;
     }
 
     if ( prevRotation )
@@ -191,15 +186,16 @@ void RotateTool::Update ( GXVec3 const &rayDirection,
     CheckBody ( closest, rayDirection, cameraLocation, vi, mouse, lmbPressed );
 
     if ( LockAxis () || LockBall () )
-        return;
+        return true;
 
     if ( !closest._control )
     {
         DeactivateSDF ();
-        return;
+        return false;
     }
 
     ActivateSDF ( *closest._control );
+    return true;
 }
 
 void RotateTool::ActivateSDF ( SDF &sdf ) noexcept

@@ -80,7 +80,7 @@ class CrossLikeTool : public Tool
 
     protected:
         explicit CrossLikeTool () = default;
-        ~CrossLikeTool () = default;
+        ~CrossLikeTool () override = default;
 
         [[nodiscard]] static bool FlipTest ( SDFBoxWithFlip const &plane, GXVec3 const &cameraLocation ) noexcept;
 

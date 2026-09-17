@@ -104,11 +104,6 @@ void ScaleTool::Deactivate () noexcept
     android_vulkan::LogInfo ( "<<< Scale tool deactivated" );
 }
 
-void ScaleTool::Hover () noexcept
-{
-    // FUCK
-}
-
 void ScaleTool::Click () noexcept
 {
     // FUCK
@@ -134,7 +129,7 @@ void ScaleTool::Cancel () noexcept
     // FUCK
 }
 
-void ScaleTool::Update ( GXVec3 const &rayDirection,
+bool ScaleTool::Update ( GXVec3 const &rayDirection,
     GXVec3 const &cameraLocation,
     GXMat3 const &cameraBasis,
     GXMat4 const &cameraViewProjection,
@@ -154,7 +149,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     if ( _workAxis != eAxis::None )
     {
         HandleAxisScale ( mouse );
-        return;
+        return true;
     }
 
     cases[ 0UZ ] = _workPlane;
@@ -163,7 +158,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     if ( _workPlane != eAxis::None )
     {
         HandlePlaneScale ( cameraLocation, rayDirection );
-        return;
+        return true;
     }
 
     _scaleAll &= !lmbReleased;
@@ -171,7 +166,7 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     if ( _scaleAll )
     {
         HandleScaleAll ( mouse.y );
-        return;
+        return true;
     }
 
     if ( prevMoving )
@@ -295,15 +290,16 @@ void ScaleTool::Update ( GXVec3 const &rayDirection,
     AllAxesCheck ( closest, rayDirection, cameraLocation, vi, mouse.y, lmbPressed );
 
     if ( LockAxis () || LockPlane () || LockAllAxes ( cameraBasis ) )
-        return;
+        return true;
 
     if ( !closest._control )
     {
         DeactivateSDF ();
-        return;
+        return false;
     }
 
     ActivateSDF ( *closest._control, closest._cap );
+    return true;
 }
 
 std::optional<ScaleTool::ColorSet> ScaleTool::AcquirePlaneColorSet ( SDF &plane ) noexcept

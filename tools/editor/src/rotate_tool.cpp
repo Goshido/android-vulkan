@@ -235,12 +235,12 @@ void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
     float const f = _tangentProjection.DotProduct (
         GXVec2 (
             static_cast<float> ( mouse.x - _lastMouse.x ),
-            static_cast<float> ( mouse.y - _lastMouse.y )
+            static_cast<float> ( _lastMouse.y - mouse.y )
         )
     );
 
     GXQuat alpha {};
-    alpha.FromAxisAngle ( _rotateAxisVector, RING_SENSITIVITY * ( f - _initialScalarDistance ) );
+    alpha.FromAxisAngle ( _rotateAxisVector, f * RING_SENSITIVITY );
     _rotation.Multiply ( alpha, _initialRotation );
 
     GXVec3 beta {};
@@ -382,7 +382,6 @@ void RotateTool::CheckRing ( Closest &closest,
 
     // See <repo>/docs/gizmo-rendering.md#inter-ring
     GXVec2 m ( dir.DotProduct ( cameraBasis.Right () ), dir.DotProduct ( cameraBasis.Up () ) );
-    m._data[ 1U ] = -m._data[ 1UZ ];
     _tangentProjection = m;
 }
 

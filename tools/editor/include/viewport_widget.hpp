@@ -47,7 +47,7 @@ class ViewportWidget final : public Widget
         StateHandlers                       _stateHandlers {};
 
         // FUCK - load this from editor save, last used tool
-        Handler                             _toolMouseMove = &ViewportWidget::OnScaleToolMouseMove;
+        Handler                             _toolMouseMove = &ViewportWidget::OnRotateToolMouseMove;
 
         DIVUIElement                        _div;
 
@@ -69,7 +69,7 @@ class ViewportWidget final : public Widget
         SelectTool                          _selectTool {};
         Hotkey                              _useSelectTool {};
 
-        Tool*                               _activeTool = &_scaleTool;
+        Tool*                               _activeTool = &_rotateTool;
 
         GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;

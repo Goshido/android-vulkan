@@ -48,7 +48,7 @@ Attributes Compute ( in InputData inputData,
 
     result._vertexH = mul ( frame._viewProj,
         float32_t4 (
-            transform._location + mul ( ToMatrix ( transform._rotation ), position * transform._scale ),
+            transform._location + mul ( position * transform._scale, ToMatrix ( transform._rotation ) ),
             1.0F
         )
     );

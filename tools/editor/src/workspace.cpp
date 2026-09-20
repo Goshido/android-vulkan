@@ -893,6 +893,12 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _swapchainDepth->_storageIndex = std::move ( idx );
 }
 
+void Workspace::OnSelectionChanged () noexcept
+{
+    AV_TRACE ( "Selection changed" )
+    _viewport->OnSelectionChanged ( _selection.GetSelection () );
+}
+
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
 {
     if ( IsReady () ) [[likely]]
@@ -1399,6 +1405,8 @@ void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum 
 
 void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 const &cameraLocal ) noexcept
 {
+    _gizmoVisible = 0U;
+
     if ( _gizmoQueue.empty () )
         return;
 
@@ -1406,7 +1414,6 @@ void Workspace::ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 con
     pbr::StreamBuffer &vertexStream = *_sdfVertexStream;
     pbr::StreamBuffer &pixelStream = *_sdfPixelStream;
     pbr::StreamBuffer &shapeStream = *_sdfShapeStream;
-    _gizmoVisible = 0U;
 
     _gizmoPrepassPushConstants._toCVV = viewProjection;
 

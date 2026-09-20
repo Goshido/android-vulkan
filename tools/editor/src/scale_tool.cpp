@@ -6,7 +6,6 @@
 
 // FUCK - remove
 #include <actor.hpp>
-#include <logger.hpp>
 
 
 namespace editor {
@@ -80,7 +79,6 @@ void ScaleTool::Activate () noexcept
     _yPlaneX.Show ( _location, _rotation );
     _zPlaneX.Show ( _location, _rotation );
     _zPlaneY.Show ( _location, _rotation );
-    android_vulkan::LogInfo ( ">>> Scale tool activated" );
 }
 
 void ScaleTool::Deactivate () noexcept
@@ -101,22 +99,29 @@ void ScaleTool::Deactivate () noexcept
     _yPlaneX.Hide ();
     _zPlaneX.Hide ();
     _zPlaneY.Hide ();
-    android_vulkan::LogInfo ( "<<< Scale tool deactivated" );
 }
 
-void ScaleTool::Click () noexcept
+void ScaleTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    // FUCK
-}
+    _location = location;
+    _rotation = rotation;
 
-void ScaleTool::Begin () noexcept
-{
-    // FUCK
-}
-
-void ScaleTool::Move () noexcept
-{
-    // FUCK
+    _origin.OnParentUpdated ( location, rotation );
+    _xLine.OnParentUpdated ( location, rotation );
+    _xPlane.OnParentUpdated ( location, rotation );
+    _xBox.OnParentUpdated ( location, rotation );
+    _yLine.OnParentUpdated ( location, rotation );
+    _yPlane.OnParentUpdated ( location, rotation );
+    _yBox.OnParentUpdated ( location, rotation );
+    _zLine.OnParentUpdated ( location, rotation );
+    _zPlane.OnParentUpdated ( location, rotation );
+    _zBox.OnParentUpdated ( location, rotation );
+    _xPlaneY.OnParentUpdated ( location, rotation );
+    _xPlaneZ.OnParentUpdated ( location, rotation );
+    _yPlaneZ.OnParentUpdated ( location, rotation );
+    _yPlaneX.OnParentUpdated ( location, rotation );
+    _zPlaneX.OnParentUpdated ( location, rotation );
+    _zPlaneY.OnParentUpdated ( location, rotation );
 }
 
 void ScaleTool::End () noexcept

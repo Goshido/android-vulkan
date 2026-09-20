@@ -301,6 +301,9 @@ class Selection final
         [[nodiscard]] bool IsReady () const noexcept;
         [[nodiscard]] uint32_t GetIDImageResourceIndex () const noexcept;
 
+        // FUCK - could be race condition
+        [[nodiscard]] Items &GetSelection () noexcept;
+
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
 
@@ -318,6 +321,8 @@ class Selection final
         void ProcessNew ( Items &&selected ) noexcept;
         void ProcessRemove ( Items &&selected ) noexcept;
         void ProcessToggle ( std::vector<Actor*> const &selected ) noexcept;
+
+        static void NotifySelectionChanged () noexcept;
 };
 
 } // namespace editor

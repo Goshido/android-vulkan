@@ -1,35 +1,20 @@
 #include <precompiled_headers.hpp>
 #include <select_tool.hpp>
 
-// FUCK - remove
-#include <logger.hpp>
-
 
 namespace editor {
 
 void SelectTool::Activate () noexcept
 {
     // FUCK
-    android_vulkan::LogInfo ( ">>> Select tool activated" );
 }
 
 void SelectTool::Deactivate () noexcept
 {
     // FUCK
-    android_vulkan::LogInfo ( "<<< Select tool deactivated" );
 }
 
-void SelectTool::Click () noexcept
-{
-    // FUCK
-}
-
-void SelectTool::Begin () noexcept
-{
-    // FUCK
-}
-
-void SelectTool::Move () noexcept
+void SelectTool::Begin ( GXVec3 const &/*location*/, GXQuat const &/*rotation*/ ) noexcept
 {
     // FUCK
 }

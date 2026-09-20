@@ -3,7 +3,6 @@
 
 // FUCK - remove
 #include <actor.hpp>
-#include <logger.hpp>
 
 
 namespace editor {
@@ -41,7 +40,6 @@ void RotateTool::Activate () noexcept
     _z.Show ( _location, _rotation );
     _ring.Show ( _location, _rotation );
     _body.OnParentUpdated ( _location, _rotation );
-    android_vulkan::LogInfo ( ">>> Rotate tool activated" );
 }
 
 void RotateTool::Deactivate () noexcept
@@ -54,22 +52,17 @@ void RotateTool::Deactivate () noexcept
     _tangentLine.Hide ();
     _tangentDirectionA.Hide ();
     _tangentDirectionB.Hide ();
-    android_vulkan::LogInfo ( "<<< Rotate tool deactivated" );
 }
 
-void RotateTool::Click () noexcept
+void RotateTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    // FUCK
-}
+    _location = location;
+    _rotation = rotation;
 
-void RotateTool::Begin () noexcept
-{
-    // FUCK
-}
-
-void RotateTool::Move () noexcept
-{
-    // FUCK
+    _x.OnParentUpdated ( location, rotation );
+    _y.OnParentUpdated ( location, rotation );
+    _z.OnParentUpdated ( location, rotation );
+    _ring.OnParentUpdated ( location, rotation );
 }
 
 void RotateTool::End () noexcept

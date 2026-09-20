@@ -6,6 +6,7 @@
 #include <selection.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
@@ -269,6 +270,11 @@ bool Selection::IsReady () const noexcept
 uint32_t Selection::GetIDImageResourceIndex () const noexcept
 {
     return _collectPushConstants._idImage;
+}
+
+Selection::Items &Selection::GetSelection () noexcept
+{
+    return _lastItems;
 }
 
 void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
@@ -642,6 +648,7 @@ void Selection::ProcessAdd ( Items &&selected ) noexcept
 {
     AV_TRACE ( "Add" )
     Items d ( _lastItems );
+    bool hasChanges = false;
 
     for ( Actor* actor : selected )
     {
@@ -653,6 +660,7 @@ void Selection::ProcessAdd ( Items &&selected ) noexcept
 
         actor->Select ();
         _lastItems.insert ( actor );
+        hasChanges = true;
     }
 
     for ( Actor* actor : d )
@@ -661,6 +669,7 @@ void Selection::ProcessAdd ( Items &&selected ) noexcept
         {
             actor->Deselect ();
             _lastItems.erase ( actor );
+            hasChanges = true;
         }
     }
 
@@ -670,7 +679,13 @@ void Selection::ProcessAdd ( Items &&selected ) noexcept
         {
             actor->Select ();
             _lastItems.insert ( actor );
+            hasChanges = true;
         }
+    }
+
+    if ( hasChanges )
+    {
+        NotifySelectionChanged ();
     }
 }
 
@@ -678,6 +693,7 @@ void Selection::ProcessNew ( Items &&selected ) noexcept
 {
     AV_TRACE ( "New" )
     Items s ( selected );
+    bool hasChanges = false;
 
     for ( Actor* actor : _lastItems )
     {
@@ -688,18 +704,25 @@ void Selection::ProcessNew ( Items &&selected ) noexcept
         }
 
         actor->Deselect ();
+        hasChanges = true;
     }
 
     for ( Actor* actor : s )
         actor->Select ();
 
     _lastItems = std::move ( selected );
+
+    if ( hasChanges | !s.empty () )
+    {
+        NotifySelectionChanged ();
+    }
 }
 
 void Selection::ProcessRemove ( Items &&selected ) noexcept
 {
     AV_TRACE ( "Remove" )
     Items s ( _items );
+    bool hasChanges = false;
 
     for ( Actor* actor : selected )
         s.erase ( actor );
@@ -715,6 +738,7 @@ void Selection::ProcessRemove ( Items &&selected ) noexcept
         }
 
         actor->Deselect ();
+        hasChanges = true;
     }
 
     for ( Actor* actor : s )
@@ -723,10 +747,16 @@ void Selection::ProcessRemove ( Items &&selected ) noexcept
         {
             actor->Select ();
             left.insert ( actor );
+            hasChanges = true;
         }
     }
 
     _lastItems = std::move ( left );
+
+    if ( hasChanges )
+    {
+        NotifySelectionChanged ();
+    }
 }
 
 void Selection::ProcessToggle ( std::vector<Actor*> const &selected ) noexcept
@@ -742,11 +772,26 @@ void Selection::ProcessToggle ( std::vector<Actor*> const &selected ) noexcept
     {
         s->Deselect ();
         _lastItems.erase ( s );
+        NotifySelectionChanged ();
         return;
     }
 
     s->Select ();
     _lastItems.insert ( s );
+    NotifySelectionChanged ();
+}
+
+void Selection::NotifySelectionChanged () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [] () noexcept -> void* {
+                AV_TRACE ( "Selection changed" )
+                Workspace::Instance ().OnSelectionChanged ();
+                return nullptr;
+            }
+        )
+    );
 }
 
 } // namespace editor

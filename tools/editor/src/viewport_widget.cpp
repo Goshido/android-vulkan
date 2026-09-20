@@ -217,10 +217,6 @@ ViewportWidget::ViewportWidget () noexcept:
 
     _div.AppendChildElement ( _selectionBody );
     _selectionBody.Hide ();
-
-    _rotateTool.Activate ();
-    //_moveTool.Activate ();
-    //_scaleTool.Activate ();
 }
 
 void ViewportWidget::Init () noexcept
@@ -268,6 +264,17 @@ void ViewportWidget::Init () noexcept
             _toolMouseMove = &ViewportWidget::OnScaleToolMouseMove;
         }
     );
+
+    _toggleCoordinates = Hotkey ( eKey::KeyX,
+        false,
+        false,
+        false,
+
+        [ this ] () noexcept {
+            _coordinates = static_cast<eCoordinates> ( UINT8_C ( 1 ) - static_cast<uint8_t> ( _coordinates ) );
+            OnSelectionChanged ( Workspace::Instance ().GetSelection ().GetSelection () );
+        }
+    );
 }
 
 void ViewportWidget::Destroy () noexcept
@@ -312,6 +319,20 @@ GXVec3 ViewportWidget::GetVI () const noexcept
     return result;
 }
 
+void ViewportWidget::OnSelectionChanged ( Selection::Items &items ) noexcept
+{
+    if ( items.empty () )
+    {
+        _activeTool->Deactivate ();
+        _toolVisible = false;
+        _state._toolHit = UINT8_C ( 0 );
+        return;
+    }
+
+    UpdateToolCoordinates ( items );
+    _toolVisible = true;
+}
+
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
     UpdateKeyboardState ( key, modifier, 1U );
@@ -339,9 +360,7 @@ void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
-
-    if ( event._eventID - std::exchange ( _eventID, event._eventID ) > 1U ) [[unlikely]]
-        ChangeCursor ( eCursor::Arrow );
+    ChangeCursor ( eCursor::Arrow );
 
     _mouseNow =
     {
@@ -550,10 +569,27 @@ void ViewportWidget::UpdateSelectionMode () noexcept
     };
 
     *_selectionMode = cases[
-            ( static_cast<uint8_t> ( _selectionDrag ) << 2U ) |
-            ( _state._ctrl << 1U ) |
-            _state._shift
+        ( static_cast<uint8_t> ( _selectionDrag ) << 2U ) |
+        ( _state._ctrl << 1U ) |
+        _state._shift
     ];
+}
+
+void ViewportWidget::UpdateToolCoordinates ( Selection::Items &items ) noexcept
+{
+    GXQuat const rCases[] = { GXQuat::IDENTITY, ( *items.cbegin () )->GetRotation () };
+    eCoordinates const cCases[] = { _coordinates, eCoordinates::Local };
+
+    _activeTool->Begin ( GetSelectionCenter ( items ),
+        rCases[
+            static_cast<uint32_t> (
+                ( items.size () == 1UZ ) &
+                ( cCases[ static_cast<uint32_t> ( _activeTool == &_scaleTool ) ] == eCoordinates::Local )
+            )
+        ]
+    );
+
+    _activeTool->Activate ();
 }
 
 void ViewportWidget::UpdateViewProjection () noexcept
@@ -654,7 +690,10 @@ void ViewportWidget::OnIdleKeyDown () noexcept
 
 void ViewportWidget::OnIdleMouseMove () noexcept
 {
-    ( this->*_toolMouseMove ) ();
+    if ( _toolVisible )
+    {
+        ( this->*_toolMouseMove ) ();
+    }
 }
 
 void ViewportWidget::OnSelectionKeyDown () noexcept
@@ -785,6 +824,13 @@ void ViewportWidget::StopTool () noexcept
         ._mouseMove = &ViewportWidget::OnIdleMouseMove,
         ._stateEnter = &ViewportWidget::OnNothing
     };
+
+    Selection::Items const &items = Workspace::Instance ().GetSelection ().GetSelection ();
+
+    if ( ( _activeTool == &_rotateTool ) & ( _coordinates == eCoordinates::Global ) & ( items.size () == 1UZ ) )
+    {
+        _rotateTool.Begin ( GetSelectionCenter ( items ), GXQuat::IDENTITY );
+    }
 }
 
 void ViewportWidget::OnMoveToolMouseMove () noexcept
@@ -903,7 +949,22 @@ void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
     if ( old ) [[likely]]
         old->Deactivate ();
 
-    tool.Activate ();
+    if ( _toolVisible )
+    {
+        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
+    }
+}
+
+GXVec3 ViewportWidget::GetSelectionCenter ( Selection::Items const &items ) noexcept
+{
+    GXAABB bounds {};
+
+    for ( Actor *actor : items )
+        bounds.AddVertex ( actor->GetLocation () );
+
+    GXVec3 result;
+    bounds.GetCenter ( result );
+    return result;
 }
 
 } // namespace editor

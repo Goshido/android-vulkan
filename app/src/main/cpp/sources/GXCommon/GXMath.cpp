@@ -1,4 +1,4 @@
-// version 1.107
+// version 1.108
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -2260,13 +2260,12 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 
     if ( _vertices == 0U )
     {
-        ++_vertices;
-
+        _vertices = 1U;
         _min.Init ( x, y, z );
         return;
     }
 
-    ++_vertices;
+    _vertices += static_cast<GXUByte> ( _vertices < std::numeric_limits<GXUByte>::max () );
 
     if ( minData[ 0U ] > x )
     {
@@ -2300,8 +2299,11 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 
 [[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const noexcept
 {
-    center.Sum ( _min, _max );
-    center.Multiply ( center, 0.5F );
+    GXVec3 cases[] = { GXVec3::ZERO, _min };
+    GXVec3 &c = cases[ 0U ];
+    c.Sum ( _min, _max );
+    c.Multiply ( c, 0.5F );
+    center = cases[ static_cast<uint32_t> ( _vertices == 1U ) ];
 }
 
 [[maybe_unused]] GXFloat GXAABB::GetWidth () const noexcept

@@ -17,6 +17,12 @@ namespace editor {
 class ViewportWidget final : public Widget
 {
     private:
+        enum class eCoordinates : uint8_t
+        {
+            Global = UINT8_C ( 0 ),
+            Local = UINT8_C ( 1 )
+        };
+
         struct State final
         {
             uint8_t                         _forward: 1 = 0U;
@@ -46,7 +52,7 @@ class ViewportWidget final : public Widget
     private:
         StateHandlers                       _stateHandlers {};
 
-        // FUCK - load this from editor save, last used tool
+        // FUCK - load this from editor save, last used tool.
         Handler                             _toolMouseMove = &ViewportWidget::OnRotateToolMouseMove;
 
         DIVUIElement                        _div;
@@ -68,6 +74,8 @@ class ViewportWidget final : public Widget
 
         SelectTool                          _selectTool {};
         Hotkey                              _useSelectTool {};
+
+        Hotkey                              _toggleCoordinates {};
 
         Tool*                               _activeTool = &_rotateTool;
 
@@ -93,6 +101,10 @@ class ViewportWidget final : public Widget
         bool                                _selectionDrag = false;
 
         State                               _state {};
+        bool                                _toolVisible = false;
+
+        // FUCK - load this from editor save, last used coordinates.
+        eCoordinates                        _coordinates = eCoordinates::Local;
 
     public:
         explicit ViewportWidget () noexcept;
@@ -117,6 +129,8 @@ class ViewportWidget final : public Widget
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
         [[nodiscard]] GXVec3 GetVI () const noexcept;
 
+        void OnSelectionChanged ( Selection::Items &items ) noexcept;
+
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
         void OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept override;
@@ -137,6 +151,7 @@ class ViewportWidget final : public Widget
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
+        void UpdateToolCoordinates ( Selection::Items &items ) noexcept;
         void UpdateViewProjection () noexcept;
 
         void OnFreeFlyKeyUp () noexcept;
@@ -165,6 +180,8 @@ class ViewportWidget final : public Widget
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;
         void SwitchTool ( Tool &tool ) noexcept;
+
+        [[nodiscard]] GXVec3 GetSelectionCenter ( Selection::Items const &items ) noexcept;
 };
 
 } // namespace editor

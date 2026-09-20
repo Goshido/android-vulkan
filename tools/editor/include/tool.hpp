@@ -16,9 +16,7 @@ class Tool
         virtual void Activate () noexcept = 0;
         virtual void Deactivate () noexcept = 0;
 
-        virtual void Click () noexcept = 0;
-        virtual void Begin () noexcept = 0;
-        virtual void Move () noexcept = 0;
+        virtual void Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept = 0;
         virtual void End () noexcept = 0;
         virtual void Cancel () noexcept = 0;
 

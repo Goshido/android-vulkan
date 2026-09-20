@@ -6,7 +6,6 @@
 
 // FUCK - remove
 #include <actor.hpp>
-#include <logger.hpp>
 
 
 namespace editor {
@@ -72,7 +71,6 @@ void MoveTool::Activate () noexcept
     _yPlaneX.Show ( _location, _rotation );
     _zPlaneX.Show ( _location, _rotation );
     _zPlaneY.Show ( _location, _rotation );
-    android_vulkan::LogInfo ( ">>> Move tool activated" );
 }
 
 void MoveTool::Deactivate () noexcept
@@ -93,22 +91,29 @@ void MoveTool::Deactivate () noexcept
     _yPlaneX.Hide ();
     _zPlaneX.Hide ();
     _zPlaneY.Hide ();
-    android_vulkan::LogInfo ( "<<< Move tool deactivated" );
 }
 
-void MoveTool::Click () noexcept
+void MoveTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
 {
-    // FUCK
-}
+    _location = location;
+    _rotation = rotation;
 
-void MoveTool::Begin () noexcept
-{
-    // FUCK
-}
-
-void MoveTool::Move () noexcept
-{
-    // FUCK
+    _origin.OnParentUpdated ( location, rotation );
+    _xLine.OnParentUpdated ( location, rotation );
+    _xPlane.OnParentUpdated ( location, rotation );
+    _xCone.OnParentUpdated ( location, rotation );
+    _yLine.OnParentUpdated ( location, rotation );
+    _yPlane.OnParentUpdated ( location, rotation );
+    _yCone.OnParentUpdated ( location, rotation );
+    _zLine.OnParentUpdated ( location, rotation );
+    _zPlane.OnParentUpdated ( location, rotation );
+    _zCone.OnParentUpdated ( location, rotation );
+    _xPlaneY.OnParentUpdated ( location, rotation );
+    _xPlaneZ.OnParentUpdated ( location, rotation );
+    _yPlaneZ.OnParentUpdated ( location, rotation );
+    _yPlaneX.OnParentUpdated ( location, rotation );
+    _zPlaneX.OnParentUpdated ( location, rotation );
+    _zPlaneY.OnParentUpdated ( location, rotation );
 }
 
 void MoveTool::End () noexcept

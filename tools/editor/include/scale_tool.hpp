@@ -246,9 +246,7 @@ class ScaleTool final : public CrossLikeTool
         void Activate () noexcept override;
         void Deactivate () noexcept override;
 
-        void Click () noexcept override;
-        void Begin () noexcept override;
-        void Move () noexcept override;
+        void Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
 

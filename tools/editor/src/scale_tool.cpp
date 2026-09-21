@@ -101,27 +101,30 @@ void ScaleTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void ScaleTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+void ScaleTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
 {
-    _location = location;
+    //Selection &selection = Workspace::Instance ().GetSelection ();
+    GXVec3 const c = GetCenter ( items );
+
+    _location = c;
     _rotation = rotation;
 
-    _origin.OnParentUpdated ( location, rotation );
-    _xLine.OnParentUpdated ( location, rotation );
-    _xPlane.OnParentUpdated ( location, rotation );
-    _xBox.OnParentUpdated ( location, rotation );
-    _yLine.OnParentUpdated ( location, rotation );
-    _yPlane.OnParentUpdated ( location, rotation );
-    _yBox.OnParentUpdated ( location, rotation );
-    _zLine.OnParentUpdated ( location, rotation );
-    _zPlane.OnParentUpdated ( location, rotation );
-    _zBox.OnParentUpdated ( location, rotation );
-    _xPlaneY.OnParentUpdated ( location, rotation );
-    _xPlaneZ.OnParentUpdated ( location, rotation );
-    _yPlaneZ.OnParentUpdated ( location, rotation );
-    _yPlaneX.OnParentUpdated ( location, rotation );
-    _zPlaneX.OnParentUpdated ( location, rotation );
-    _zPlaneY.OnParentUpdated ( location, rotation );
+    _origin.OnParentUpdated ( c, rotation );
+    _xLine.OnParentUpdated ( c, rotation );
+    _xPlane.OnParentUpdated ( c, rotation );
+    _xBox.OnParentUpdated ( c, rotation );
+    _yLine.OnParentUpdated ( c, rotation );
+    _yPlane.OnParentUpdated ( c, rotation );
+    _yBox.OnParentUpdated ( c, rotation );
+    _zLine.OnParentUpdated ( c, rotation );
+    _zPlane.OnParentUpdated ( c, rotation );
+    _zBox.OnParentUpdated ( c, rotation );
+    _xPlaneY.OnParentUpdated ( c, rotation );
+    _xPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneY.OnParentUpdated ( c, rotation );
 }
 
 void ScaleTool::End () noexcept

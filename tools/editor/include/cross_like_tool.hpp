@@ -54,9 +54,10 @@ class CrossLikeTool : public Tool
         constexpr static eSDFPalette    WORK_TRANSPARENT_COLOR = eSDFPalette::YellowGlass;
         constexpr static eSDFPalette    WORK_INACTIVE_COLOR = eSDFPalette::Grey;
 
-
         SDF*                            _control = nullptr;
         SDF*                            _cap = nullptr;
+
+        std::vector<GXVec3>             _itemOffsets {};
 
         GXQuat                          _rotation = GXQuat::IDENTITY;
         float                           _initialDistanceFactor = 0.0F;

@@ -1215,6 +1215,7 @@
     <ClCompile Include="src\text_ui_element.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\timer_manager.cpp" />
+    <ClCompile Include="src\tool.cpp" />
     <ClCompile Include="src\tools\hlsl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>

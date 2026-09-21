@@ -54,15 +54,17 @@ void RotateTool::Deactivate () noexcept
     _tangentDirectionB.Hide ();
 }
 
-void RotateTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+void RotateTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
 {
-    _location = location;
+    GXVec3 const c = GetCenter ( items );
+
+    _location = c;
     _rotation = rotation;
 
-    _x.OnParentUpdated ( location, rotation );
-    _y.OnParentUpdated ( location, rotation );
-    _z.OnParentUpdated ( location, rotation );
-    _ring.OnParentUpdated ( location, rotation );
+    _x.OnParentUpdated ( c, rotation );
+    _y.OnParentUpdated ( c, rotation );
+    _z.OnParentUpdated ( c, rotation );
+    _ring.OnParentUpdated ( c, rotation );
 }
 
 void RotateTool::End () noexcept

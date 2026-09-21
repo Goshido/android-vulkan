@@ -274,7 +274,7 @@ uint32_t Selection::GetIDImageResourceIndex () const noexcept
 
 Selection::Items &Selection::GetSelection () noexcept
 {
-    return _lastItems;
+    return _items;
 }
 
 void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept

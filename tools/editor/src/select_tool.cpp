@@ -14,7 +14,7 @@ void SelectTool::Deactivate () noexcept
     // FUCK
 }
 
-void SelectTool::Begin ( GXVec3 const &/*location*/, GXQuat const &/*rotation*/ ) noexcept
+void SelectTool::Begin ( Selection::Items &/*items*/, GXQuat const &/*rotation*/) noexcept
 {
     // FUCK
 }

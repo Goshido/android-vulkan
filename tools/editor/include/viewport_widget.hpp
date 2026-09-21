@@ -180,8 +180,6 @@ class ViewportWidget final : public Widget
 
         void DoFreeFly ( float deltaTime, float dpi ) noexcept;
         void SwitchTool ( Tool &tool ) noexcept;
-
-        [[nodiscard]] GXVec3 GetSelectionCenter ( Selection::Items const &items ) noexcept;
 };
 
 } // namespace editor

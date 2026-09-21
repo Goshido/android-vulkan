@@ -580,7 +580,7 @@ void ViewportWidget::UpdateToolCoordinates ( Selection::Items &items ) noexcept
     GXQuat const rCases[] = { GXQuat::IDENTITY, ( *items.cbegin () )->GetRotation () };
     eCoordinates const cCases[] = { _coordinates, eCoordinates::Local };
 
-    _activeTool->Begin ( GetSelectionCenter ( items ),
+    _activeTool->Begin ( items,
         rCases[
             static_cast<uint32_t> (
                 ( items.size () == 1UZ ) &
@@ -825,11 +825,11 @@ void ViewportWidget::StopTool () noexcept
         ._stateEnter = &ViewportWidget::OnNothing
     };
 
-    Selection::Items const &items = Workspace::Instance ().GetSelection ().GetSelection ();
+    Selection::Items &items = Workspace::Instance ().GetSelection ().GetSelection ();
 
     if ( ( _activeTool == &_rotateTool ) & ( _coordinates == eCoordinates::Global ) & ( items.size () == 1UZ ) )
     {
-        _rotateTool.Begin ( GetSelectionCenter ( items ), GXQuat::IDENTITY );
+        _rotateTool.Begin ( items, GXQuat::IDENTITY );
     }
 }
 
@@ -953,18 +953,6 @@ void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
     {
         UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
     }
-}
-
-GXVec3 ViewportWidget::GetSelectionCenter ( Selection::Items const &items ) noexcept
-{
-    GXAABB bounds {};
-
-    for ( Actor *actor : items )
-        bounds.AddVertex ( actor->GetLocation () );
-
-    GXVec3 result;
-    bounds.GetCenter ( result );
-    return result;
 }
 
 } // namespace editor

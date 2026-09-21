@@ -2,6 +2,9 @@
 #define EDITOR_TOOL_HPP
 
 
+#include "selection.hpp"
+
+
 namespace editor {
 
 class Tool
@@ -16,13 +19,15 @@ class Tool
         virtual void Activate () noexcept = 0;
         virtual void Deactivate () noexcept = 0;
 
-        virtual void Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept = 0;
+        virtual void Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept = 0;
         virtual void End () noexcept = 0;
         virtual void Cancel () noexcept = 0;
 
     protected:
         explicit Tool () = default;
         virtual ~Tool () = default;
+
+        [[nodiscard]] static GXVec3 GetCenter ( Selection::Items const &items ) noexcept;
 };
 
 } // namespace editor

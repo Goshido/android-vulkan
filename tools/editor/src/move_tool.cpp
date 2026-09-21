@@ -3,15 +3,10 @@
 #include <gizmo_cylinder_collider.hpp>
 #include <move_tool.hpp>
 #include <sdf_size.hpp>
-
-// FUCK - remove
-#include <actor.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
-
-// FUCK
-extern Actor* fuck_actor;
 
 namespace {
 
@@ -93,27 +88,47 @@ void MoveTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void MoveTool::Begin ( GXVec3 const &location, GXQuat const &rotation ) noexcept
+void MoveTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
 {
-    _location = location;
+    size_t const count = items.size ();
+
+    _itemOffsets.clear ();
+    _itemOffsets.reserve ( count );
+
+    _itemBackup.clear ();
+    _itemBackup.reserve ( count );
+
+    GXVec3 const c = GetCenter ( items );
+    GXVec3 alpha {};
+
+    for ( Actor const *actor : items )
+    {
+        GXVec3 const &w = actor->GetLocation ();
+        _itemBackup.push_back ( w );
+
+        alpha.Subtract ( w, c );
+        _itemOffsets.push_back ( alpha );
+    }
+
+    _location = c;
     _rotation = rotation;
 
-    _origin.OnParentUpdated ( location, rotation );
-    _xLine.OnParentUpdated ( location, rotation );
-    _xPlane.OnParentUpdated ( location, rotation );
-    _xCone.OnParentUpdated ( location, rotation );
-    _yLine.OnParentUpdated ( location, rotation );
-    _yPlane.OnParentUpdated ( location, rotation );
-    _yCone.OnParentUpdated ( location, rotation );
-    _zLine.OnParentUpdated ( location, rotation );
-    _zPlane.OnParentUpdated ( location, rotation );
-    _zCone.OnParentUpdated ( location, rotation );
-    _xPlaneY.OnParentUpdated ( location, rotation );
-    _xPlaneZ.OnParentUpdated ( location, rotation );
-    _yPlaneZ.OnParentUpdated ( location, rotation );
-    _yPlaneX.OnParentUpdated ( location, rotation );
-    _zPlaneX.OnParentUpdated ( location, rotation );
-    _zPlaneY.OnParentUpdated ( location, rotation );
+    _origin.OnParentUpdated ( c, rotation );
+    _xLine.OnParentUpdated ( c, rotation );
+    _xPlane.OnParentUpdated ( c, rotation );
+    _xCone.OnParentUpdated ( c, rotation );
+    _yLine.OnParentUpdated ( c, rotation );
+    _yPlane.OnParentUpdated ( c, rotation );
+    _yCone.OnParentUpdated ( c, rotation );
+    _zLine.OnParentUpdated ( c, rotation );
+    _zPlane.OnParentUpdated ( c, rotation );
+    _zCone.OnParentUpdated ( c, rotation );
+    _xPlaneY.OnParentUpdated ( c, rotation );
+    _xPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneY.OnParentUpdated ( c, rotation );
 }
 
 void MoveTool::End () noexcept
@@ -333,13 +348,11 @@ void MoveTool::HandleAxisMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirect
     // See <repo>/docs/gizmo-rendering.md#inter-move-axis
     auto const d = ResolveAxisScalarDistance ( _initialState, _workDirection, rayOrigin, rayDirection );
 
-    if ( !d )
-        return;
-
-    _location.Sum ( _initialState, *d + _initialDistanceFactor, _workDirection );
-    UpdateChildren ();
-
-    fuck_actor->SetLocation ( _location );
+    if ( d ) [[likely]]
+    {
+        _location.Sum ( _initialState, *d + _initialDistanceFactor, _workDirection );
+        UpdateChildren ();
+    }
 }
 
 void MoveTool::HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
@@ -351,13 +364,11 @@ void MoveTool::HandlePlaneMove ( GXVec3 const &rayOrigin, GXVec3 const &rayDirec
         rayDirection
     );
 
-    if ( !p )
-        return;
-
-    _location.Sum ( *p, _initialNegativePlaneOffset );
-    UpdateChildren ();
-
-    fuck_actor->SetLocation ( _location );
+    if ( p ) [[likely]]
+    {
+        _location.Sum ( *p, _initialNegativePlaneOffset );
+        UpdateChildren ();
+    }
 }
 
 void MoveTool::ResetVisuals () noexcept
@@ -399,6 +410,15 @@ void MoveTool::ResetVisuals () noexcept
 
 void MoveTool::UpdateChildren () noexcept
 {
+    GXVec3 alpha {};
+    auto offsets = _itemOffsets.cbegin ();
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    {
+        alpha.Sum ( _location, *offsets++ );
+        actor->SetLocation ( alpha );
+    }
+
     _origin.OnParentUpdated ( _location, _rotation );
     _xLine.OnParentUpdated ( _location, _rotation );
     _xPlane.OnParentUpdated ( _location, _rotation );

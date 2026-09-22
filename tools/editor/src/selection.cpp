@@ -81,6 +81,8 @@ void SelectAction::Update ( Selection::Items const &goal ) noexcept
             _target->insert ( actor );
         }
     }
+
+    Selection::NotifySelectionChanged ();
 }
 
 } // end of anonymous namespace
@@ -274,7 +276,7 @@ uint32_t Selection::GetIDImageResourceIndex () const noexcept
 
 Selection::Items &Selection::GetSelection () noexcept
 {
-    return _items;
+    return _mode == eMode::Standby ? _items : _lastItems;
 }
 
 void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
@@ -487,18 +489,18 @@ std::optional<Rect> Selection::Update ( VkOffset2D const &mouse, eMode mode ) no
     return std::optional<Rect> { std::move ( area ) };
 }
 
-void Selection::End ( VkOffset2D const &mouse, eMode mode ) noexcept
+void Selection::End ( bool cancel ) noexcept
 {
-    Rect area ( _begin.x, mouse.x, _begin.y, mouse.y );
-    area.Normalize ();
+    if ( cancel )
+    {
+        Cancel ();
+        return;
+    }
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
-            [ this, mode, area = std::move ( area ) ] () mutable noexcept -> void* {
-                // Toggle is already performed on 'Begin' method. Toggle again will rollback changes.
-                if ( mode != eMode::Toggle )
-                    CommitArea ( std::move ( area ), mode );
-
+            [ this ]() mutable noexcept -> void* {
+                _mode = eMode::Standby;
                 History &history = History::Instance ();
                 history.Begin ();
                 history.Append ( std::make_unique<SelectAction> ( _items, std::move ( _lastItems ) ) );
@@ -571,11 +573,53 @@ void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
     _area = std::nullopt;
 }
 
+void Selection::NotifySelectionChanged () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [] () noexcept -> void* {
+                AV_TRACE ( "Selection changed" )
+                Workspace::Instance ().OnSelectionChanged ();
+                return nullptr;
+            }
+        )
+    );
+}
+
+void Selection::Cancel () noexcept
+{
+    _mode = eMode::Standby;
+    bool hasChanges = false;
+
+    for ( Actor* actor : _lastItems )
+    {
+        if ( !_items.contains ( actor ) )
+        {
+            actor->Deselect ();
+            hasChanges = true;
+        }
+    }
+
+    for ( Actor* actor : _items )
+    {
+        if ( !_lastItems.contains ( actor ) )
+        {
+            actor->Select ();
+            hasChanges = true;
+        }
+    }
+
+    if ( hasChanges ) [[likely]]
+    {
+        NotifySelectionChanged ();
+    }
+}
+
 void Selection::CommitSelect () noexcept
 {
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeIO,
-            [ this, mode = _lastMode, s = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
+            [ this, mode = _mode, s = std::move ( _lastSelection ) ] () mutable noexcept -> void* {
                 AV_TRACE ( "Process selection" )
 
                 switch ( mode )
@@ -595,6 +639,12 @@ void Selection::CommitSelect () noexcept
                     case eMode::Toggle:
                         ProcessToggle ( s );
                     break;
+
+                    case eMode::Standby:
+                        [[fallthrough]];
+                    default:
+                        // IMPOSSIBLE
+                    break;
                 }
 
                 return nullptr;
@@ -605,7 +655,7 @@ void Selection::CommitSelect () noexcept
 
 void Selection::CommitArea ( Rect &&canvasArea, eMode mode ) noexcept
 {
-    _lastMode = mode;
+    _mode = mode;
     VkExtent2D const &v = NativeRenderer::Instance ().GetViewportResolution ();
 
     GXVec4 a (
@@ -779,19 +829,6 @@ void Selection::ProcessToggle ( std::vector<Actor*> const &selected ) noexcept
     s->Select ();
     _lastItems.insert ( s );
     NotifySelectionChanged ();
-}
-
-void Selection::NotifySelectionChanged () noexcept
-{
-    MessageQueue::Instance ().EnqueueBack (
-        Message ( eMessageType::InvokeUI,
-            [] () noexcept -> void* {
-                AV_TRACE ( "Selection changed" )
-                Workspace::Instance ().OnSelectionChanged ();
-                return nullptr;
-            }
-        )
-    );
 }
 
 } // namespace editor

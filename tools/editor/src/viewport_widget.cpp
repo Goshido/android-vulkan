@@ -568,7 +568,7 @@ void ViewportWidget::UpdateSelectionMode () noexcept
         Selection::eMode::Add
     };
 
-    *_selectionMode = cases[
+    _selectionMode = cases[
         ( static_cast<uint8_t> ( _selectionDrag ) << 2U ) |
         ( _state._ctrl << 1U ) |
         _state._shift
@@ -700,23 +700,22 @@ void ViewportWidget::OnSelectionKeyDown () noexcept
 {
     if ( _state._rmb | _state._esc ) [[likely]]
     {
-        // Restore previous
-        StopSelection ();
+        StopSelection ( true );
         return;
     }
 
-    if ( !_selectionMode )
+    if ( _selectionMode == Selection::eMode::Standby )
         return;
 
     // [2026/07/21] Windows 11 Pro 25H2 26200.8894: OS triggers this handler many times when
     // any keyboard key is pressed. The behaviour is similar to autorepeat using long press during typing.
     // It's needed to filter such repeat events.
-    Selection::eMode const old = *_selectionMode;
+    Selection::eMode const old = _selectionMode;
     UpdateSelectionMode ();
 
-    if ( *_selectionMode != old )
+    if ( _selectionMode != old )
     {
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, _selectionMode );
     }
 }
 
@@ -724,26 +723,26 @@ void ViewportWidget::OnSelectionKeyUp () noexcept
 {
     if ( !_state._lmb ) [[likely]]
     {
-        StopSelection ();
+        StopSelection ( false );
         return;
     }
 
-    if ( _selectionMode )
+    if ( _selectionMode != Selection::eMode::Standby )
     {
         UpdateSelectionMode ();
-        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
+        std::ignore = Workspace::Instance ().GetSelection ().Update ( _mouseNow, _selectionMode );
     }
 }
 
 void ViewportWidget::OnSelectionMouseMove () noexcept
 {
-    if ( !_selectionMode )
+    if ( _selectionMode == Selection::eMode::Standby )
         return;
 
     // [2026/07/21] Selection rectangle frame pacing degrades because keyboard input accelerates OS mouse-move
     // events. To prevent CPU spin-locking, the OS message pump utilizes minimal sleep intervals. The combination
     // of these two factors causes actual mouse coordinates to arrive at irregular intervals.
-    auto const rect = Workspace::Instance ().GetSelection ().Update ( _mouseNow, *_selectionMode );
+    auto const rect = Workspace::Instance ().GetSelection ().Update ( _mouseNow, _selectionMode );
 
     UpdateSelection ( rect->_left, rect->_top, rect->GetWidth (), rect->GetHeight () );
     _selectionDrag = true;
@@ -752,8 +751,8 @@ void ViewportWidget::OnSelectionMouseMove () noexcept
 void ViewportWidget::OnSelectionStateEnter () noexcept
 {
     constexpr Selection::eMode const cases[] = { Selection::eMode::New, Selection::eMode::Toggle };
-    _selectionMode = std::optional<Selection::eMode> ( cases[ _state._ctrl | _state._shift ] );
-    Workspace::Instance ().GetSelection ().Begin ( _mouseNow, *_selectionMode );
+    _selectionMode = cases[ _state._ctrl | _state._shift ];
+    Workspace::Instance ().GetSelection ().Begin ( _mouseNow, _selectionMode );
 
     _selectionBody.Show ();
     UpdateSelection ( _mouseNow.x, _mouseNow.y, 0, 0 );
@@ -761,13 +760,12 @@ void ViewportWidget::OnSelectionStateEnter () noexcept
     SetFocus ();
 }
 
-void ViewportWidget::StopSelection () noexcept
+void ViewportWidget::StopSelection ( bool cancel ) noexcept
 {
-    if ( _selectionMode )
+    if ( std::exchange ( _selectionMode, Selection::eMode::Standby ) != Selection::eMode::Standby )
     {
         UpdateSelectionMode ();
-        Workspace::Instance ().GetSelection ().End ( _mouseNow, *_selectionMode );
-        _selectionMode = std::nullopt;
+        Workspace::Instance ().GetSelection ().End ( cancel );
     }
 
     _stateHandlers =

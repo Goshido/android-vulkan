@@ -38,6 +38,14 @@ class RotateTool final : public Tool
             float                                   _distance = std::numeric_limits<float>::max ();
         };
 
+        struct Item final
+        {
+            GXQuat                                  _actorRotation {};
+            GXQuat                                  _gizmoRotation {};
+            GXVec3                                  _actorLocation {};
+            GXVec3                                  _actorOffset {};
+        };
+
     private:
         constexpr static float TORUS_THICKNESS = 1.6F;
         constexpr static float RING_SIZE = 9.5F;
@@ -125,6 +133,8 @@ class RotateTool final : public Tool
             { &_z, _z.GetScale () },
             { &_ring, _ring.GetScale () }
         };
+
+        std::vector<Item>                           _items {};
 
         GXVec3                                      _rotateAxisVector {};
         float                                       _initialScalarDistance;
@@ -215,6 +225,8 @@ class RotateTool final : public Tool
 
         [[nodiscard]] bool LockAxis () noexcept;
         [[nodiscard]] bool LockBall () noexcept;
+
+        void UpdateChildren () noexcept;
 
         [[nodiscard]] static TangentLine ResolveTangentLine ( GXVec3 const &ringPosition,
             GXVec3 const &ringDirection,

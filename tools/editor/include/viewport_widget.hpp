@@ -97,7 +97,7 @@ class ViewportWidget final : public Widget
         // FUCK
         GXVec2                              _eulerAngles { 0.104000151F, -1.07599998F };
 
-        std::optional<Selection::eMode>     _selectionMode = std::nullopt;
+        Selection::eMode                    _selectionMode = Selection::eMode::Standby;
         bool                                _selectionDrag = false;
 
         State                               _state {};
@@ -164,7 +164,7 @@ class ViewportWidget final : public Widget
         void OnSelectionKeyUp () noexcept;
         void OnSelectionMouseMove () noexcept;
         void OnSelectionStateEnter () noexcept;
-        void StopSelection () noexcept;
+        void StopSelection ( bool cancel ) noexcept;
 
         void OnToolKeyDown () noexcept;
         void OnToolKeyUp () noexcept;

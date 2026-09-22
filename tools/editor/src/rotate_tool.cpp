@@ -1,14 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <rotate_tool.hpp>
-
-// FUCK - remove
-#include <actor.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
-
-// FUCK
-extern Actor* fuck_actor;
 
 namespace {
 
@@ -56,7 +51,28 @@ void RotateTool::Deactivate () noexcept
 
 void RotateTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
 {
+    size_t const count = items.size ();
+
+    _items.clear ();
+    _items.reserve ( count );
+
     GXVec3 const c = GetCenter ( items );
+    GXQuat toGizmo {};
+    toGizmo.Inverse ( rotation );
+
+    for ( Actor const *actor : items )
+    {
+        Item item
+        {
+            ._actorRotation = actor->GetRotation (),
+            ._actorLocation = actor->GetLocation ()
+        };
+
+        item._actorOffset.Subtract ( item._actorLocation, c );
+        item._gizmoRotation.Multiply ( toGizmo, item._actorRotation );
+
+        _items.push_back ( std::move ( item ) );
+    }
 
     _location = c;
     _rotation = rotation;
@@ -250,11 +266,7 @@ void RotateTool::HandleRingRotate ( VkOffset2D const &mouse ) noexcept
     _tangentDirectionA.SetLocationAndRotation ( beta, _tangentRenderRotation );
     _tangentDirectionA.OnParentUpdated ( _location, GXQuat::IDENTITY );
 
-    _x.OnParentUpdated ( _location, _rotation );
-    _y.OnParentUpdated ( _location, _rotation );
-    _z.OnParentUpdated ( _location, _rotation );
-
-    fuck_actor->SetRotation ( _rotation );
+    UpdateChildren ();
 }
 
 void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &cameraBasis ) noexcept
@@ -277,13 +289,10 @@ void RotateTool::HandleBallRotate ( VkOffset2D const &mouse, GXMat3 const &camer
     alpha.Multiply ( zeta, _rotation );
     _rotation = alpha;
 
-    _x.OnParentUpdated ( _location, _rotation );
-    _y.OnParentUpdated ( _location, _rotation );
-    _z.OnParentUpdated ( _location, _rotation );
     _body.OnParentUpdated ( _location, _rotation );
-
     _lastMouse = mouse;
-    fuck_actor->SetRotation ( _rotation );
+
+    UpdateChildren ();
 }
 
 void RotateTool::CheckBody ( Closest &closest,
@@ -501,6 +510,27 @@ bool RotateTool::LockBall () noexcept
     _tangentDirectionA.Hide ();
     _tangentDirectionB.Hide ();
     return true;
+}
+
+void RotateTool::UpdateChildren () noexcept
+{
+    _x.OnParentUpdated ( _location, _rotation );
+    _y.OnParentUpdated ( _location, _rotation );
+    _z.OnParentUpdated ( _location, _rotation );
+
+    auto items = _items.cbegin ();
+    GXVec3 alpha {};
+    GXVec3 beta {};
+    GXQuat zeta {};
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    {
+        Item const &item = *items++;
+        zeta.Multiply ( _rotation, item._gizmoRotation );
+        zeta.TransformFast ( alpha, item._actorOffset );
+        beta.Sum ( alpha, _location );
+        actor->SetLocal ( zeta, beta );
+    }
 }
 
 RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosition,

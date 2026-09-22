@@ -21,6 +21,7 @@ class Selection final
             Add,
             New,
             Remove,
+            Standby,
             Toggle
         };
 
@@ -81,7 +82,7 @@ class Selection final
         std::optional<Rect>                         _area = std::nullopt;
 
         GXVec4                                      _areaConv {};
-        eMode                                       _lastMode = eMode::New;
+        eMode                                       _mode = eMode::Standby;
 
         VkExtent2D                                  _idImageResolution
         {
@@ -309,11 +310,16 @@ class Selection final
 
         void Begin ( VkOffset2D const &mouse, eMode mode ) noexcept;
         [[nodiscard]] std::optional<Rect> Update ( VkOffset2D const &mouse, eMode mode ) noexcept;
-        void End ( VkOffset2D const &mouse, eMode mode ) noexcept;
+        void End ( bool cancel ) noexcept;
 
         [[nodiscard]] bool IsSelectionRequested () const noexcept;
         [[nodiscard]] bool HasSelection () const noexcept;
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
+
+        static void NotifySelectionChanged () noexcept;
+
+    private:
+        void Cancel () noexcept;
         void CommitSelect () noexcept;
         void CommitArea ( Rect &&canvasArea, eMode mode ) noexcept;
 
@@ -321,8 +327,6 @@ class Selection final
         void ProcessNew ( Items &&selected ) noexcept;
         void ProcessRemove ( Items &&selected ) noexcept;
         void ProcessToggle ( std::vector<Actor*> const &selected ) noexcept;
-
-        static void NotifySelectionChanged () noexcept;
 };
 
 } // namespace editor

@@ -2054,6 +2054,7 @@ void Workspace::InitWidgets () noexcept
     );
 
     _viewport = new ViewportWidget ();
+    _viewport->SetLocal ( 0.104000151F, -1.07599998F, GXVec3 ( 6.62516165F, 2.08657217F, -2.31031871F ) );
 
     messageQueue.EnqueueBack (
         Message ( eMessageType::UIAppendWidget,

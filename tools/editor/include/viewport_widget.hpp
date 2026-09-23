@@ -77,6 +77,7 @@ class ViewportWidget final : public Widget
 
         Hotkey                              _toggleCoordinates {};
 
+        // FUCK - load this from editor save, last used tool.
         Tool*                               _activeTool = &_rotateTool;
 
         GXMat4                              _local = GXMat4::IDENTITY;
@@ -86,16 +87,15 @@ class ViewportWidget final : public Widget
 
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
-        // FUCK
-        GXQuat                              _orientation { 0.857574522F, 0.0446341783F, -0.511726856F, 0.0266338475F };
-        GXVec3                              _location { 6.62516165F, 2.08657217F, -2.31031871F };
+
+        GXQuat                              _rotation = GXQuat::IDENTITY;
+        GXVec3                              _location = GXVec3::ZERO;
         float                               _invHeight = 1.0F;
 
         VkOffset2D                          _mouseNow {};
         VkOffset2D                          _mouseCommit {};
         size_t                              _eventID = 0U;
-        // FUCK
-        GXVec2                              _eulerAngles { 0.104000151F, -1.07599998F };
+        GXVec2                              _eulerAngles = GXVec2::ZERO;
 
         Selection::eMode                    _selectionMode = Selection::eMode::Standby;
         bool                                _selectionDrag = false;
@@ -123,6 +123,8 @@ class ViewportWidget final : public Widget
         void Update ( float deltaTime, float dpi ) noexcept;
 
         [[nodiscard]] GXMat4 const &GetLocal () const noexcept;
+        void SetLocal ( float yaw, float pitch, GXVec3 const &location ) noexcept;
+
         [[nodiscard]] uint64_t GetToView () const noexcept;
         [[nodiscard]] GXMat4 const &GetViewProjection () const noexcept;
 
@@ -149,6 +151,7 @@ class ViewportWidget final : public Widget
         [[nodiscard]] GXVec3 ComputeRayDirection ( GXMat3 const &basis ) const noexcept;
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
+        void UpdateRotation () noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
         void UpdateToolCoordinates ( Selection::Items &items ) noexcept;
@@ -159,6 +162,7 @@ class ViewportWidget final : public Widget
 
         void OnIdleKeyDown () noexcept;
         void OnIdleMouseMove () noexcept;
+        void OnIdleStateEnter () noexcept;
 
         void OnSelectionKeyDown () noexcept;
         void OnSelectionKeyUp () noexcept;

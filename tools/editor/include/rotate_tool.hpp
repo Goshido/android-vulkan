@@ -149,9 +149,7 @@ class RotateTool final : public Tool
         GXQuat                                      _initialRotation {};
 
         GXQuat                                      _rotation = GXQuat::IDENTITY;
-
-        // FUCK
-        GXVec3                                      _location { -1.2F, -1.0F, 3.0F };
+        GXVec3                                      _location = GXVec3::ZERO;
 
         GXVec3                                      _tangentDirection {};
         GXVec3                                      _tangentRenderPosition {};

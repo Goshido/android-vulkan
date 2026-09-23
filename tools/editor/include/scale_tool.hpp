@@ -14,6 +14,14 @@ namespace editor {
 class ScaleTool final : public CrossLikeTool
 {
     private:
+        struct Item final
+        {
+            GXVec3                  _location {};
+            GXVec3                  _offset {};
+            GXVec3                  _scale {};
+        };
+
+    private:
         constexpr static float      ORIGIN_RADIUS = 0.8F;
 
         SDFBox                      _origin
@@ -216,12 +224,11 @@ class ScaleTool final : public CrossLikeTool
             -4.0F
         };
 
+        std::vector<Item>           _items {};
         GizmoSphereCollider         _originCollider { ORIGIN_RADIUS };
 
         GXVec3                      _controlLocation {};
         bool                        _scaleAll = false;
-
-        GXVec3                      _target = GXVec3::ONE;
 
         GXVec3                      _globalAxisA {};
         GXVec3                      _globalAxisB {};
@@ -273,6 +280,7 @@ class ScaleTool final : public CrossLikeTool
         void HandleScaleAll ( int32_t mouseY ) noexcept;
 
         void ResetVisuals () noexcept;
+        void UpdateChildren ( GXVec3 const &scale ) noexcept;
 
         [[nodiscard]] bool LockPlane () noexcept;
         [[nodiscard]] bool LockAxis () noexcept;

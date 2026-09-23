@@ -13,6 +13,13 @@ namespace editor {
 class MoveTool final : public CrossLikeTool
 {
     private:
+        struct Item final
+        {
+            GXVec3                  _location {};
+            GXVec3                  _offset {};
+        };
+
+    private:
         SDFSphere                   _origin { GXVec3 ( 0.0F, 0.0F, 0.0F ), 1.0e-1F, eSDFPalette::White };
 
         SDFLineSegment              _xLine
@@ -180,8 +187,9 @@ class MoveTool final : public CrossLikeTool
             -4.0F
         };
 
-        std::vector<GXVec3>         _itemBackup {};
+        std::vector<Item>           _items {};
         GXVec3                      _initialNegativePlaneOffset {};
+        GXVec3                      _initialState {};
 
     public:
         explicit MoveTool () noexcept;

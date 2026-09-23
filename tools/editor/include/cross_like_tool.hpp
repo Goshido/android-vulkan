@@ -57,20 +57,16 @@ class CrossLikeTool : public Tool
         SDF*                            _control = nullptr;
         SDF*                            _cap = nullptr;
 
-        std::vector<GXVec3>             _itemOffsets {};
-
         GXQuat                          _rotation = GXQuat::IDENTITY;
         float                           _initialDistanceFactor = 0.0F;
 
-        // FUCK
-        GXVec3                          _location { -1.2F, -1.0F, 3.0F };
-        eAxis                           _workAxis = eAxis::None;
+        GXVec3                          _location = GXVec3::ZERO;
 
-        GXVec3                          _initialState {};
+        eAxis                           _workAxis = eAxis::None;
         eAxis                           _workPlane = eAxis::None;
+        bool                            _lastLMBPressed = false;
 
         GXVec3                          _workDirection {};
-        bool                            _lastLMBPressed = false;
 
     public:
         CrossLikeTool ( CrossLikeTool const & ) = delete;

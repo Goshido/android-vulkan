@@ -298,6 +298,15 @@ GXMat4 const &ViewportWidget::GetLocal () const noexcept
     return _local;
 }
 
+void ViewportWidget::SetLocal ( float yaw, float pitch, GXVec3 const &location ) noexcept
+{
+    _eulerAngles = GXVec2 ( yaw, pitch );
+    _location = location;
+
+    UpdateRotation ();
+    UpdateViewProjection ();
+}
+
 uint64_t ViewportWidget::GetToView () const noexcept
 {
     return _toView;
@@ -312,7 +321,7 @@ GXVec3 ViewportWidget::GetVI () const noexcept
 {
     float const t = std::tan ( 0.5F * FOV_Y );
     GXVec3 forward {};
-    _orientation.GetForward ( forward );
+    _rotation.GetForward ( forward );
 
     GXVec3 result {};
     result.Multiply ( forward, ( t + t ) * _invHeight );
@@ -330,6 +339,7 @@ void ViewportWidget::OnSelectionChanged ( Selection::Items &items ) noexcept
     }
 
     UpdateToolCoordinates ( items );
+    _activeTool->Activate ();
     _toolVisible = true;
 }
 
@@ -527,6 +537,17 @@ void ViewportWidget::UpdateMouseState ( MouseButtonEvent const &event, uint8_t m
     };
 }
 
+void ViewportWidget::UpdateRotation () noexcept
+{
+    GXQuat pitchFactor {};
+    pitchFactor.FromAxisAngle ( GXVec3::RIGHT, _eulerAngles._data[ 0U ] );
+
+    GXQuat yawFactor {};
+    yawFactor.FromAxisAngle ( GXVec3::UP, _eulerAngles._data[ 1U ] );
+
+    _rotation.Multiply ( yawFactor, pitchFactor );
+}
+
 void ViewportWidget::UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept
 {
     float const scale = pbr::CSSUnitToDevicePixel::GetInstance ()._devicePXtoCSSPX;
@@ -588,13 +609,11 @@ void ViewportWidget::UpdateToolCoordinates ( Selection::Items &items ) noexcept
             )
         ]
     );
-
-    _activeTool->Activate ();
 }
 
 void ViewportWidget::UpdateViewProjection () noexcept
 {
-    _local.FromFast ( _orientation, _location );
+    _local.FromFast ( _rotation, _location );
 
     GXMat4 view {};
     view.Inverse ( _local );
@@ -619,7 +638,7 @@ void ViewportWidget::OnFreeFlyKeyUp () noexcept
         ._keyDown = &ViewportWidget::OnIdleKeyDown,
         ._keyUp = &ViewportWidget::OnNothing,
         ._mouseMove = &ViewportWidget::OnIdleMouseMove,
-        ._stateEnter = &ViewportWidget::OnNothing
+        ._stateEnter = &ViewportWidget::OnIdleStateEnter
     };
 }
 
@@ -638,13 +657,13 @@ void ViewportWidget::OnIdleKeyDown () noexcept
             ._keyDown = &ViewportWidget::OnIdleKeyDown,
             ._keyUp = &ViewportWidget::OnNothing,
             ._mouseMove = &ViewportWidget::OnIdleMouseMove,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnIdleStateEnter
         },
         {
             ._keyDown = &ViewportWidget::OnIdleKeyDown,
             ._keyUp = &ViewportWidget::OnNothing,
             ._mouseMove = &ViewportWidget::OnIdleMouseMove,
-            ._stateEnter = &ViewportWidget::OnNothing
+            ._stateEnter = &ViewportWidget::OnIdleStateEnter
         },
         {
             ._keyDown = &ViewportWidget::OnSelectionKeyDown,
@@ -693,6 +712,14 @@ void ViewportWidget::OnIdleMouseMove () noexcept
     if ( _toolVisible )
     {
         ( this->*_toolMouseMove ) ();
+    }
+}
+
+void ViewportWidget::OnIdleStateEnter () noexcept
+{
+    if ( _toolVisible ) [[likely]]
+    {
+        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
     }
 }
 
@@ -773,7 +800,7 @@ void ViewportWidget::StopSelection ( bool cancel ) noexcept
         ._keyDown = &ViewportWidget::OnIdleKeyDown,
         ._keyUp = &ViewportWidget::OnNothing,
         ._mouseMove = &ViewportWidget::OnIdleMouseMove,
-        ._stateEnter = &ViewportWidget::OnNothing
+        ._stateEnter = &ViewportWidget::OnIdleStateEnter
     };
 
     ReleaseMouse ();
@@ -808,6 +835,7 @@ void ViewportWidget::OnToolStateEnter () noexcept
 {
     CaptureMouse ();
     SetFocus ();
+    UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
 }
 
 void ViewportWidget::StopTool () noexcept
@@ -820,21 +848,21 @@ void ViewportWidget::StopTool () noexcept
         ._keyDown = &ViewportWidget::OnIdleKeyDown,
         ._keyUp = &ViewportWidget::OnNothing,
         ._mouseMove = &ViewportWidget::OnIdleMouseMove,
-        ._stateEnter = &ViewportWidget::OnNothing
+        ._stateEnter = &ViewportWidget::OnIdleStateEnter
     };
 
     Selection::Items &items = Workspace::Instance ().GetSelection ().GetSelection ();
 
     if ( ( _activeTool == &_rotateTool ) & ( _coordinates == eCoordinates::Global ) & ( items.size () == 1UZ ) )
-    {
         _rotateTool.Begin ( items, GXQuat::IDENTITY );
-    }
+
+    ( this->*_stateHandlers._stateEnter ) ();
 }
 
 void ViewportWidget::OnMoveToolMouseMove () noexcept
 {
     GXMat3 basis {};
-    basis.FromFast ( _orientation );
+    basis.FromFast ( _rotation );
 
     _state._toolHit = static_cast<uint8_t> (
         _moveTool.Update ( ComputeRayDirection ( basis ), _location, GetVI (), _state._lmb == 1U )
@@ -844,7 +872,7 @@ void ViewportWidget::OnMoveToolMouseMove () noexcept
 void ViewportWidget::OnRotateToolMouseMove () noexcept
 {
     GXMat3 basis {};
-    basis.FromFast ( _orientation );
+    basis.FromFast ( _rotation );
 
     _state._toolHit = static_cast<uint8_t> (
         _rotateTool.Update ( ComputeRayDirection ( basis ), _location, basis, GetVI (), _mouseNow, _state._lmb == 1U )
@@ -854,7 +882,7 @@ void ViewportWidget::OnRotateToolMouseMove () noexcept
 void ViewportWidget::OnScaleToolMouseMove () noexcept
 {
     GXMat3 basis {};
-    basis.FromFast ( _orientation );
+    basis.FromFast ( _rotation );
 
     _state._toolHit = static_cast<uint8_t> (
         _scaleTool.Update ( ComputeRayDirection ( basis ),
@@ -897,14 +925,7 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
         yaw -= GX_MATH_DOUBLE_PI;
 
     _eulerAngles._data[ 1U ] = yaw * mirroring;
-
-    GXQuat pitchFactor {};
-    pitchFactor.FromAxisAngle ( GXVec3::RIGHT, _eulerAngles._data[ 0U ] );
-
-    GXQuat yawFactor {};
-    yawFactor.FromAxisAngle ( GXVec3::UP, _eulerAngles._data[ 1U ] );
-
-    _orientation.Multiply ( yawFactor, pitchFactor );
+    UpdateRotation ();
 
     if ( !( _state._right | _state._left | _state._forward | _state._backward ) )
     {
@@ -932,7 +953,7 @@ void ViewportWidget::DoFreeFly ( float deltaTime, float dpi ) noexcept
     );
 
     GXVec3 displacementWorld {};
-    _orientation.TransformFast ( displacementWorld, displacementLocal );
+    _rotation.TransformFast ( displacementWorld, displacementLocal );
     _location.Sum ( _location, displacementWorld );
     UpdateViewProjection ();
 }
@@ -950,6 +971,7 @@ void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
     if ( _toolVisible )
     {
         UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
+        _activeTool->Activate ();
     }
 }
 

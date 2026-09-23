@@ -183,6 +183,13 @@ void Actor::SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 co
     NotifyTransformChanged ();
 }
 
+void Actor::SetLocal ( GXVec3 const &location, GXVec3 const &scale ) noexcept
+{
+    _location = location;
+    _scale = scale;
+    NotifyTransformChanged ();
+}
+
 void Actor::NotifyTransformChanged () noexcept
 {
     for ( auto &component : _components )

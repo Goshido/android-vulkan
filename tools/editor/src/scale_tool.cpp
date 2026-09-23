@@ -3,15 +3,10 @@
 #include <gizmo_cylinder_collider.hpp>
 #include <scale_tool.hpp>
 #include <sdf_size.hpp>
-
-// FUCK - remove
-#include <actor.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
-
-// FUCK
-extern Actor* fuck_actor;
 
 namespace {
 
@@ -103,8 +98,25 @@ void ScaleTool::Deactivate () noexcept
 
 void ScaleTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
 {
-    //Selection &selection = Workspace::Instance ().GetSelection ();
+    size_t const count = items.size ();
+
+    _items.clear ();
+    _items.reserve ( count );
+
     GXVec3 const c = GetCenter ( items );
+    GXVec3 alpha {};
+
+    for ( Actor const *actor : items )
+    {
+        Item item
+        {
+            ._location = actor->GetLocation (),
+            ._scale = actor->GetScale ()
+        };
+
+        item._offset.Subtract ( item._location, c );
+        _items.push_back ( std::move ( item ) );
+    }
 
     _location = c;
     _rotation = rotation;
@@ -408,12 +420,10 @@ void ScaleTool::HandleAxisScale ( VkOffset2D const &mouse ) noexcept
     // See <repo>/docs/gizmo-rendering.md#inter-scale-axis
     GXVec2 alpha {};
     alpha.Subtract ( GXVec2 ( static_cast<float> ( mouse.x ), static_cast<float> ( mouse.y ) ), _projectionOrigin );
-    _target = _initialState;
 
-    _target._data[ static_cast<size_t> ( _workAxis ) ] *=
-        _initialDistanceFactor * alpha.DotProduct ( _projectionAxisA );
-
-    fuck_actor->SetScale ( _target );
+    GXVec3 target = GXVec3::ONE;
+    target._data[ static_cast<size_t> ( _workAxis ) ] *= _initialDistanceFactor * alpha.DotProduct ( _projectionAxisA );
+    UpdateChildren ( target );
 }
 
 void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDirection ) noexcept
@@ -426,19 +436,23 @@ void ScaleTool::HandlePlaneScale ( GXVec3 const &rayOrigin, GXVec3 const &rayDir
 
     GXVec3 d {};
     d.Subtract ( _controlLocation, *point );
-    _target.Sum ( _initialState, d.DotProduct ( _globalAxisA ), _localAxisA );
-    _target.Sum ( _target, d.DotProduct ( _globalAxisB ), _localAxisB );
-    fuck_actor->SetScale ( _target );
+
+    GXVec3 target {};
+    target.Sum ( GXVec3::ONE, d.DotProduct ( _globalAxisA ), _localAxisA );
+    target.Sum ( target, d.DotProduct ( _globalAxisB ), _localAxisB );
+    UpdateChildren ( target );
 }
 
 void ScaleTool::HandleScaleAll ( int32_t mouseY ) noexcept
 {
     // See <repo>/docs/gizmo-rendering.md#inter-uniform-scale
-    _target.Multiply ( _initialState,
+    GXVec3 target {};
+
+    target.Multiply ( GXVec3::ONE,
         std::exp ( UNIFORM_SCALE_FACTOR * ( _controlLocation._data[ 1UZ ] - static_cast<float> ( mouseY ) ) )
     );
 
-    fuck_actor->SetScale ( _target );
+    UpdateChildren ( target );
 }
 
 void ScaleTool::ResetVisuals () noexcept
@@ -493,6 +507,22 @@ void ScaleTool::ResetVisuals () noexcept
     _scaleLine.Hide ();
     _scaleDirectionA.Hide ();
     _scaleDirectionB.Hide ();
+}
+
+void ScaleTool::UpdateChildren ( GXVec3 const &scale ) noexcept
+{
+    auto items = _items.cbegin ();
+    GXVec3 alpha {};
+    GXVec3 beta {};
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    {
+        Item const &item = *items++;
+        alpha.Multiply ( item._offset, scale );
+        alpha.Sum ( alpha, _location );
+        beta.Multiply ( item._scale, scale );
+        actor->SetLocal ( alpha, beta );
+    }
 }
 
 bool ScaleTool::LockPlane () noexcept
@@ -700,7 +730,6 @@ void ScaleTool::AxisCheck ( Closest &closest,
     _workPlane = eAxis::None;
     _scaleAll = false;
     _workAxis = axis;
-    _initialState = _target;
 }
 
 void ScaleTool::PlaneCheck ( Closest &closest,
@@ -781,7 +810,6 @@ void ScaleTool::PlaneCheck ( Closest &closest,
     _globalAxisB = cases[ bTestIdx ];
 
     _workPlane = planeAxis;
-    _initialState = _target;
 }
 
 void ScaleTool::AllAxesCheck ( Closest &closest,
@@ -803,7 +831,6 @@ void ScaleTool::AllAxesCheck ( Closest &closest,
     _workAxis = eAxis::None;
     _workPlane = eAxis::None;
     _scaleAll = true;
-    _initialState = _target;
     _controlLocation._data[ 1U ] = static_cast<float> ( mouseY );
 }
 

@@ -66,6 +66,7 @@ class Actor final
 
         void SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept;
         void SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept;
+        void SetLocal ( GXVec3 const &location, GXVec3 const &scale ) noexcept;
 
     private:
         void NotifyTransformChanged () noexcept;

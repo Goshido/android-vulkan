@@ -527,7 +527,7 @@ void RotateTool::UpdateChildren () noexcept
     {
         Item const &item = *items++;
         zeta.Multiply ( _rotation, item._gizmoRotation );
-        zeta.TransformFast ( alpha, item._actorOffset );
+        _rotation.TransformFast ( alpha, item._actorOffset );
         beta.Sum ( alpha, _location );
         actor->SetLocal ( zeta, beta );
     }

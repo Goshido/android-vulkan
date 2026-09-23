@@ -92,22 +92,21 @@ void MoveTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcep
 {
     size_t const count = items.size ();
 
-    _itemOffsets.clear ();
-    _itemOffsets.reserve ( count );
-
-    _itemBackup.clear ();
-    _itemBackup.reserve ( count );
+    _items.clear ();
+    _items.reserve ( count );
 
     GXVec3 const c = GetCenter ( items );
     GXVec3 alpha {};
 
     for ( Actor const *actor : items )
     {
-        GXVec3 const &w = actor->GetLocation ();
-        _itemBackup.push_back ( w );
+        Item item
+        {
+            ._location = actor->GetLocation ()
+        };
 
-        alpha.Subtract ( w, c );
-        _itemOffsets.push_back ( alpha );
+        item._offset.Subtract ( item._location, c );
+        _items.push_back ( std::move ( item ) );
     }
 
     _location = c;
@@ -411,11 +410,11 @@ void MoveTool::ResetVisuals () noexcept
 void MoveTool::UpdateChildren () noexcept
 {
     GXVec3 alpha {};
-    auto offsets = _itemOffsets.cbegin ();
+    auto items = _items.cbegin ();
 
     for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
     {
-        alpha.Sum ( _location, *offsets++ );
+        alpha.Sum ( _location, ( items++ )->_offset );
         actor->SetLocation ( alpha );
     }
 

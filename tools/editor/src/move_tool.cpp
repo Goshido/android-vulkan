@@ -3,6 +3,7 @@
 #include <gizmo_cylinder_collider.hpp>
 #include <move_tool.hpp>
 #include <sdf_size.hpp>
+#include <trace.hpp>
 #include <workspace.hpp>
 
 
@@ -22,6 +23,67 @@ constexpr float     CONE_ACTIVE_LENGTH = 1.55F;
 constexpr float     CONE_STANDBY_LENGTH = 1.5F;
 constexpr float     CONE_ACTIVE_SIZE = 0.5F;
 constexpr float     CONE_STANDBY_SIZE = 0.45F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+class MoveActorAction final : public Action
+{
+    public:
+        struct Item final
+        {
+            Actor*      _actor = nullptr;
+            GXVec3      _before {};
+            GXVec3      _after {};
+        };
+
+        using Items = std::vector<Item>;
+
+    private:
+        Items           _items {};
+
+    public:
+        MoveActorAction () = delete;
+
+        MoveActorAction ( MoveActorAction const & ) = delete;
+        MoveActorAction &operator = ( MoveActorAction const & ) = delete;
+
+        MoveActorAction ( MoveActorAction && ) = default;
+        MoveActorAction &operator = ( MoveActorAction && ) = default;
+
+        explicit MoveActorAction ( Items &&items ) noexcept;
+
+        ~MoveActorAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+MoveActorAction::MoveActorAction ( Items &&items ) noexcept:
+    _items ( std::move ( items ) )
+{
+    // NOTHING
+}
+
+void MoveActorAction::Redo () noexcept
+{
+    AV_TRACE ( "Redo move" )
+
+    for ( Item &item : _items )
+        item._actor->SetLocation ( item._after );
+
+    Workspace::Instance ().OnContentUpdated ();
+}
+
+void MoveActorAction::Undo () noexcept
+{
+    AV_TRACE ( "Undo move" )
+
+    for ( Item &item : _items )
+        item._actor->SetLocation ( item._before );
+
+    Workspace::Instance ().OnContentUpdated ();
+}
 
 } // end of anonymous namespace
 
@@ -50,6 +112,7 @@ MoveTool::MoveTool () noexcept
 
 void MoveTool::Activate () noexcept
 {
+    AV_TRACE ( "Move tool activate" )
     _origin.Show ( _location, _rotation );
     _xLine.Show ( _location, _rotation );
     _xPlane.Show ( _location, _rotation );
@@ -70,6 +133,7 @@ void MoveTool::Activate () noexcept
 
 void MoveTool::Deactivate () noexcept
 {
+    AV_TRACE ( "Move tool deactivate" )
     _origin.Hide ();
     _xLine.Hide ();
     _xPlane.Hide ();
@@ -88,17 +152,18 @@ void MoveTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void MoveTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
+void MoveTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
 {
-    size_t const count = items.size ();
+    AV_TRACE ( "Move tool begin" )
+    size_t const count = actors.size ();
 
     _items.clear ();
     _items.reserve ( count );
 
-    GXVec3 const c = GetCenter ( items );
+    GXVec3 const c = GetCenter ( actors );
     GXVec3 alpha {};
 
-    for ( Actor const *actor : items )
+    for ( Actor const *actor : actors )
     {
         Item item
         {
@@ -132,12 +197,42 @@ void MoveTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcep
 
 void MoveTool::End () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Move tool end" )
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    MoveActorAction::Items moveItems {};
+    moveItems.reserve ( actors.size () );
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : actors )
+    {
+        Item const &backup = *items++;
+
+        moveItems.push_back (
+            MoveActorAction::Item
+            {
+                ._actor = actor,
+                ._before = backup._location,
+                ._after = actor->GetLocation ()
+            }
+        );
+    }
+
+    History &history = History::Instance ();
+    history.Begin ();
+    history.Append ( std::make_unique<MoveActorAction> ( std::move ( moveItems ) ) );
+    history.End ();
 }
 
 void MoveTool::Cancel () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Move tool cancel" )
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    {
+        Item const &backup = *items++;
+        actor->SetLocation ( backup._location );
+    }
 }
 
 bool MoveTool::Update ( GXVec3 const &rayDirection,
@@ -146,6 +241,7 @@ bool MoveTool::Update ( GXVec3 const &rayDirection,
     bool leftMouseButtonPressed
 ) noexcept
 {
+    AV_TRACE ( "Move tool update" )
     bool const prevMoving = _workAxis != eAxis::None || _workPlane != eAxis::None;
     bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
     bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
@@ -412,7 +508,7 @@ void MoveTool::UpdateChildren () noexcept
     GXVec3 alpha {};
     auto items = _items.cbegin ();
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
     {
         alpha.Sum ( _location, ( items++ )->_offset );
         actor->SetLocation ( alpha );

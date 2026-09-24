@@ -205,7 +205,7 @@ class MoveTool final : public CrossLikeTool
         void Activate () noexcept override;
         void Deactivate () noexcept override;
 
-        void Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept override;
+        void Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
 

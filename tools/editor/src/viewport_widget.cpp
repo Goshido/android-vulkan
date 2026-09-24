@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <theme.hpp>
+#include <trace.hpp>
 #include <viewport_widget.hpp>
 #include <workspace.hpp>
 
@@ -243,17 +244,6 @@ void ViewportWidget::Init () noexcept
         }
     );
 
-    _useSelectTool = Hotkey ( eKey::KeyQ,
-        false,
-        false,
-        false,
-
-        [ this ] () noexcept {
-            SwitchTool ( _selectTool );
-            _toolMouseMove = &ViewportWidget::OnNothing;
-        }
-    );
-
     _useScaleTool = Hotkey ( eKey::KeyR,
         false,
         false,
@@ -272,14 +262,13 @@ void ViewportWidget::Init () noexcept
 
         [ this ] () noexcept {
             _coordinates = static_cast<eCoordinates> ( UINT8_C ( 1 ) - static_cast<uint8_t> ( _coordinates ) );
-            OnSelectionChanged ( Workspace::Instance ().GetSelection ().GetSelection () );
+            OnSelectionChanged ( Workspace::Instance ().GetSelection ().GetActors () );
         }
     );
 }
 
 void ViewportWidget::Destroy () noexcept
 {
-    _useSelectTool = {};
     _useMoveTool = {};
     _useRotateTool = {};
     _useScaleTool = {};
@@ -328,9 +317,11 @@ GXVec3 ViewportWidget::GetVI () const noexcept
     return result;
 }
 
-void ViewportWidget::OnSelectionChanged ( Selection::Items &items ) noexcept
+void ViewportWidget::OnSelectionChanged ( Selection::Actors &actors ) noexcept
 {
-    if ( items.empty () )
+    AV_TRACE ( "Viewport: selection change" )
+
+    if ( actors.empty () )
     {
         _activeTool->Deactivate ();
         _toolVisible = false;
@@ -338,37 +329,42 @@ void ViewportWidget::OnSelectionChanged ( Selection::Items &items ) noexcept
         return;
     }
 
-    UpdateToolCoordinates ( items );
+    UpdateToolCoordinates ( actors );
     _activeTool->Activate ();
     _toolVisible = true;
 }
 
 void ViewportWidget::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 {
+    AV_TRACE ( "Viewport: key down" )
     UpdateKeyboardState ( key, modifier, 1U );
     ( this->*_stateHandlers._keyDown ) ();
 }
 
 void ViewportWidget::OnKeyboardKeyUp ( eKey key, KeyModifier modifier ) noexcept
 {
+    AV_TRACE ( "Viewport: key up" )
     UpdateKeyboardState ( key, modifier, 0U );
     ( this->*_stateHandlers._keyUp ) ();
 }
 
 void ViewportWidget::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
+    AV_TRACE ( "Viewport: mouse key down" )
     UpdateMouseState ( event, 1U );
     ( this->*_stateHandlers._keyDown ) ();
 }
 
 void ViewportWidget::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
+    AV_TRACE ( "Viewport: mouse key up" )
     UpdateMouseState ( event, 0U );
     ( this->*_stateHandlers._keyUp ) ();
 }
 
 void ViewportWidget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
+    AV_TRACE ( "Viewport: mouse move" )
     Widget::OnMouseMove ( event );
     ChangeCursor ( eCursor::Arrow );
 
@@ -385,6 +381,7 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     pbr::FontStorage &fontStorage
 ) noexcept
 {
+    AV_TRACE ( "Viewport: apply layout" )
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
     GXVec2 const size ( static_cast<float> ( viewport.width ), static_cast<float> ( viewport.height ) );
 
@@ -422,12 +419,15 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
 
 void ViewportWidget::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
+    AV_TRACE ( "Viewport: submit UI" )
     _div.Submit ( info );
     _rect.From ( _div.GetAbsoluteRect () );
 }
 
 bool ViewportWidget::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept
 {
+    AV_TRACE ( "Viewport: update UI cache" )
+
     pbr::UIElement::UpdateInfo info
     {
         ._fontStorage = &fontStorage,
@@ -596,15 +596,15 @@ void ViewportWidget::UpdateSelectionMode () noexcept
     ];
 }
 
-void ViewportWidget::UpdateToolCoordinates ( Selection::Items &items ) noexcept
+void ViewportWidget::UpdateToolCoordinates ( Selection::Actors &actors ) noexcept
 {
-    GXQuat const rCases[] = { GXQuat::IDENTITY, ( *items.cbegin () )->GetRotation () };
+    GXQuat const rCases[] = { GXQuat::IDENTITY, ( *actors.cbegin () )->GetRotation () };
     eCoordinates const cCases[] = { _coordinates, eCoordinates::Local };
 
-    _activeTool->Begin ( items,
+    _activeTool->Begin ( actors,
         rCases[
             static_cast<uint32_t> (
-                ( items.size () == 1UZ ) &
+                ( actors.size () == 1UZ ) &
                 ( cCases[ static_cast<uint32_t> ( _activeTool == &_scaleTool ) ] == eCoordinates::Local )
             )
         ]
@@ -719,7 +719,7 @@ void ViewportWidget::OnIdleStateEnter () noexcept
 {
     if ( _toolVisible ) [[likely]]
     {
-        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
+        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
     }
 }
 
@@ -822,6 +822,7 @@ void ViewportWidget::OnToolKeyUp () noexcept
 {
     if ( !_state._lmb ) [[likely]]
     {
+        _activeTool->End ();
         StopTool ();
     }
 }
@@ -835,7 +836,7 @@ void ViewportWidget::OnToolStateEnter () noexcept
 {
     CaptureMouse ();
     SetFocus ();
-    UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
+    UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
 }
 
 void ViewportWidget::StopTool () noexcept
@@ -851,10 +852,11 @@ void ViewportWidget::StopTool () noexcept
         ._stateEnter = &ViewportWidget::OnIdleStateEnter
     };
 
-    Selection::Items &items = Workspace::Instance ().GetSelection ().GetSelection ();
+    _state._lmb = UINT8_C ( 0 );
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
 
-    if ( ( _activeTool == &_rotateTool ) & ( _coordinates == eCoordinates::Global ) & ( items.size () == 1UZ ) )
-        _rotateTool.Begin ( items, GXQuat::IDENTITY );
+    if ( ( _activeTool == &_rotateTool ) & ( _coordinates == eCoordinates::Global ) & ( actors.size () == 1UZ ) )
+        _rotateTool.Begin ( actors, GXQuat::IDENTITY );
 
     ( this->*_stateHandlers._stateEnter ) ();
 }
@@ -970,7 +972,7 @@ void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
 
     if ( _toolVisible )
     {
-        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetSelection () );
+        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
         _activeTool->Activate ();
     }
 }

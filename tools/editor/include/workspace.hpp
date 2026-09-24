@@ -694,6 +694,7 @@ class Workspace final
 
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
         void OnSelectionChanged () noexcept;
+        void OnContentUpdated () noexcept;
 
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] Selection &GetSelection () noexcept;

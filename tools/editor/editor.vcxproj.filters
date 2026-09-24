@@ -402,9 +402,6 @@
     <ClCompile Include="src\scale_tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\select_tool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gbuffer_program.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
@@ -975,9 +972,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\scale_tool.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\select_tool.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_program.hpp">

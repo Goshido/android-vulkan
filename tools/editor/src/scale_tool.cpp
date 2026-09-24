@@ -3,6 +3,7 @@
 #include <gizmo_cylinder_collider.hpp>
 #include <scale_tool.hpp>
 #include <sdf_size.hpp>
+#include <trace.hpp>
 #include <workspace.hpp>
 
 
@@ -30,6 +31,78 @@ constexpr float             SCALE_LINE_OFFSET_Y = -3.5F;
 
 constexpr eSDFPalette       ORIGIN_COLOR = eSDFPalette::White;
 
+//----------------------------------------------------------------------------------------------------------------------
+
+class ScaleActorAction final : public Action
+{
+    public:
+        struct State final
+        {
+            GXVec3      _location {};
+            GXVec3      _scale {};
+        };
+
+        struct Item final
+        {
+            Actor*      _actor = nullptr;
+            State       _before {};
+            State       _after {};
+        };
+
+        using Items = std::vector<Item>;
+
+    private:
+        Items           _items {};
+
+    public:
+        ScaleActorAction () = delete;
+
+        ScaleActorAction ( ScaleActorAction const & ) = delete;
+        ScaleActorAction &operator = ( ScaleActorAction const & ) = delete;
+
+        ScaleActorAction ( ScaleActorAction && ) = default;
+        ScaleActorAction &operator = ( ScaleActorAction && ) = default;
+
+        explicit ScaleActorAction ( Items &&items ) noexcept;
+
+        ~ScaleActorAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+ScaleActorAction::ScaleActorAction ( Items &&items ) noexcept:
+    _items ( std::move ( items ) )
+{
+    // NOTHING
+}
+
+void ScaleActorAction::Redo () noexcept
+{
+    AV_TRACE ( "Redo scale" )
+
+    for ( Item &item : _items )
+    {
+        State const &state = item._after;
+        item._actor->SetLocal ( state._location, state._scale );
+    }
+
+    Workspace::Instance ().OnContentUpdated ();
+}
+
+void ScaleActorAction::Undo () noexcept
+{
+    AV_TRACE ( "Undo scale" )
+
+    for ( Item &item : _items )
+    {
+        State const &state = item._before;
+        item._actor->SetLocal ( state._location, state._scale );
+    }
+
+    Workspace::Instance ().OnContentUpdated ();
+}
 
 } // end of anonymous namespace
 
@@ -58,6 +131,7 @@ ScaleTool::ScaleTool () noexcept
 
 void ScaleTool::Activate () noexcept
 {
+    AV_TRACE ( "Scale tool activate" )
     _origin.Show ( _location, _rotation );
     _xLine.Show ( _location, _rotation );
     _xPlane.Show ( _location, _rotation );
@@ -78,6 +152,7 @@ void ScaleTool::Activate () noexcept
 
 void ScaleTool::Deactivate () noexcept
 {
+    AV_TRACE ( "Scale tool deactivate" )
     _origin.Hide ();
     _xLine.Hide ();
     _xPlane.Hide ();
@@ -96,17 +171,18 @@ void ScaleTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void ScaleTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
+void ScaleTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
 {
-    size_t const count = items.size ();
+    AV_TRACE ( "Scale tool begin" )
+    size_t const count = actors.size ();
 
     _items.clear ();
     _items.reserve ( count );
 
-    GXVec3 const c = GetCenter ( items );
+    GXVec3 const c = GetCenter ( actors );
     GXVec3 alpha {};
 
-    for ( Actor const *actor : items )
+    for ( Actor const *actor : actors )
     {
         Item item
         {
@@ -141,12 +217,52 @@ void ScaleTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexce
 
 void ScaleTool::End () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Scale tool end" )
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    ScaleActorAction::Items scaleItems {};
+    scaleItems.reserve ( actors.size () );
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : actors )
+    {
+        Item const &backup = *items++;
+
+        scaleItems.push_back (
+            ScaleActorAction::Item
+            {
+                ._actor = actor,
+
+                ._before
+                {
+                    ._location = backup._location,
+                    ._scale = backup._scale
+                },
+
+                ._after
+                {
+                    ._location = actor->GetLocation (),
+                    ._scale = actor->GetScale ()
+                }
+            }
+        );
+    }
+
+    History &history = History::Instance ();
+    history.Begin ();
+    history.Append ( std::make_unique<ScaleActorAction> ( std::move ( scaleItems ) ) );
+    history.End ();
 }
 
 void ScaleTool::Cancel () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Scale tool cancel" )
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    {
+        Item const &backup = *items++;
+        actor->SetLocal ( backup._location, backup._scale );
+    }
 }
 
 bool ScaleTool::Update ( GXVec3 const &rayDirection,
@@ -159,6 +275,7 @@ bool ScaleTool::Update ( GXVec3 const &rayDirection,
     bool leftMouseButtonPressed
 ) noexcept
 {
+    AV_TRACE ( "Scale tool update" )
     bool const prevMoving = ( _workAxis != eAxis::None ) | ( _workPlane != eAxis::None ) | _scaleAll;
     bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
     bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
@@ -515,7 +632,7 @@ void ScaleTool::UpdateChildren ( GXVec3 const &scale ) noexcept
     GXVec3 alpha {};
     GXVec3 beta {};
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
     {
         Item const &item = *items++;
         alpha.Multiply ( item._offset, scale );

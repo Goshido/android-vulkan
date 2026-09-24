@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <rotate_tool.hpp>
+#include <trace.hpp>
 #include <workspace.hpp>
 
 
@@ -24,12 +25,86 @@ constexpr float TANGENT_OFFSET_X = -3.5F;
 constexpr float RING_SENSITIVITY = 1.5e-2F;
 constexpr float BALL_SENSITIVITY = 1.74532925e-2F;
 
+//----------------------------------------------------------------------------------------------------------------------
+
+class RotateActorAction final : public Action
+{
+    public:
+        struct State final
+        {
+            GXQuat      _rotation {};
+            GXVec3      _location {};
+        };
+
+        struct Item final
+        {
+            Actor*      _actor = nullptr;
+            State       _before {};
+            State       _after {};
+        };
+
+        using Items = std::vector<Item>;
+
+    private:
+        Items           _items {};
+
+    public:
+        RotateActorAction () = delete;
+
+        RotateActorAction ( RotateActorAction const & ) = delete;
+        RotateActorAction &operator = ( RotateActorAction const & ) = delete;
+
+        RotateActorAction ( RotateActorAction && ) = default;
+        RotateActorAction &operator = ( RotateActorAction && ) = default;
+
+        explicit RotateActorAction ( Items &&items ) noexcept;
+
+        ~RotateActorAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+RotateActorAction::RotateActorAction ( Items &&items ) noexcept:
+    _items ( std::move ( items ) )
+{
+    // NOTHING
+}
+
+void RotateActorAction::Redo () noexcept
+{
+    AV_TRACE ( "Redo rotate" )
+
+    for ( Item &item : _items )
+    {
+        State const &state = item._after;
+        item._actor->SetLocal ( state._rotation, state._location );
+    }
+
+    Workspace::Instance ().OnContentUpdated ();
+}
+
+void RotateActorAction::Undo () noexcept
+{
+    AV_TRACE ( "Undo rotate" )
+
+    for ( Item &item : _items )
+    {
+        State const &state = item._before;
+        item._actor->SetLocal ( state._rotation, state._location );
+    }
+
+    Workspace::Instance ().OnContentUpdated ();
+}
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
 void RotateTool::Activate () noexcept
 {
+    AV_TRACE ( "Rotate tool activate" )
     _x.Show ( _location, _rotation );
     _y.Show ( _location, _rotation );
     _z.Show ( _location, _rotation );
@@ -39,6 +114,7 @@ void RotateTool::Activate () noexcept
 
 void RotateTool::Deactivate () noexcept
 {
+    AV_TRACE ( "Rotate tool deactivate" )
     _x.Hide ();
     _y.Hide ();
     _z.Hide ();
@@ -49,8 +125,9 @@ void RotateTool::Deactivate () noexcept
     _tangentDirectionB.Hide ();
 }
 
-void RotateTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept
+void RotateTool::Begin ( Selection::Actors &items, GXQuat const &rotation ) noexcept
 {
+    AV_TRACE ( "Rotate tool begin" )
     size_t const count = items.size ();
 
     _items.clear ();
@@ -85,12 +162,52 @@ void RotateTool::Begin ( Selection::Items &items, GXQuat const &rotation ) noexc
 
 void RotateTool::End () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Rotate tool end" )
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    RotateActorAction::Items rotateItems {};
+    rotateItems.reserve ( actors.size () );
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : actors )
+    {
+        Item const &backup = *items++;
+
+        rotateItems.push_back (
+            RotateActorAction::Item
+            {
+                ._actor = actor,
+
+                ._before
+                {
+                    ._rotation = backup._actorRotation,
+                    ._location = backup._actorLocation
+                },
+
+                ._after
+                {
+                    ._rotation = actor->GetRotation (),
+                    ._location = actor->GetLocation ()
+                }
+            }
+        );
+    }
+
+    History &history = History::Instance ();
+    history.Begin ();
+    history.Append ( std::make_unique<RotateActorAction> ( std::move ( rotateItems ) ) );
+    history.End ();
 }
 
 void RotateTool::Cancel () noexcept
 {
-    // FUCK
+    AV_TRACE ( "Rotate tool cancel" )
+    auto items = _items.cbegin ();
+
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    {
+        Item const &backup = *items++;
+        actor->SetLocal ( backup._actorRotation, backup._actorLocation );
+    }
 }
 
 bool RotateTool::Update ( GXVec3 const &rayDirection,
@@ -101,6 +218,7 @@ bool RotateTool::Update ( GXVec3 const &rayDirection,
     bool leftMouseButtonPressed
 ) noexcept
 {
+    AV_TRACE ( "Rotate tool update" )
     bool const prevRotation = ( _rotateAxis != eAxis::None ) | _rotateBall;
     bool const lmbPressed = leftMouseButtonPressed & !_lastLMBPressed;
     bool const lmbReleased = !leftMouseButtonPressed & std::exchange ( _lastLMBPressed, leftMouseButtonPressed );
@@ -523,7 +641,7 @@ void RotateTool::UpdateChildren () noexcept
     GXVec3 beta {};
     GXQuat zeta {};
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetSelection () )
+    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
     {
         Item const &item = *items++;
         zeta.Multiply ( _rotation, item._gizmoRotation );

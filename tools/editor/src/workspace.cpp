@@ -80,6 +80,8 @@ void CreateActorAction::Undo () noexcept
     _actors->erase ( findResult );
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
 AV_DX_ALIGNMENT_BEGIN
 
 struct Frame final
@@ -659,6 +661,7 @@ std::optional<uint32_t> Workspace::GetOutlineBlurX () noexcept
 
 void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept
 {
+    AV_TRACE ( "G-buffer resolution change" )
     _ready = false;
     _selection.OnGBufferResolutionChanged ( idImage, idResourceIdx );
 
@@ -896,7 +899,13 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 void Workspace::OnSelectionChanged () noexcept
 {
     AV_TRACE ( "Selection changed" )
-    _viewport->OnSelectionChanged ( _selection.GetSelection () );
+    _viewport->OnSelectionChanged ( _selection.GetActors () );
+}
+
+void Workspace::OnContentUpdated () noexcept
+{
+    AV_TRACE ( "Content updated" )
+    _viewport->OnSelectionChanged ( _selection.GetActors () );
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept

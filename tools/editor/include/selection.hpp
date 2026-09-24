@@ -25,7 +25,7 @@ class Selection final
             Toggle
         };
 
-        using Items = std::unordered_set<Actor*>;
+        using Actors = std::unordered_set<Actor*>;
 
     private:
         class Buffer final
@@ -76,8 +76,8 @@ class Selection final
         Buffer*                                     _ready = nullptr;
 
         std::vector<Actor*>                         _lastSelection {};
-        Items                                       _items {};
-        Items                                       _lastItems {};
+        Actors                                      _actors {};
+        Actors                                      _lastActors {};
         VkOffset2D                                  _begin {};
         std::optional<Rect>                         _area = std::nullopt;
 
@@ -303,7 +303,7 @@ class Selection final
         [[nodiscard]] uint32_t GetIDImageResourceIndex () const noexcept;
 
         // FUCK - could be race condition
-        [[nodiscard]] Items &GetSelection () noexcept;
+        [[nodiscard]] Actors &GetActors () noexcept;
 
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
@@ -323,9 +323,9 @@ class Selection final
         void CommitSelect () noexcept;
         void CommitArea ( Rect &&canvasArea, eMode mode ) noexcept;
 
-        void ProcessAdd ( Items &&selected ) noexcept;
-        void ProcessNew ( Items &&selected ) noexcept;
-        void ProcessRemove ( Items &&selected ) noexcept;
+        void ProcessAdd ( Actors &&selected ) noexcept;
+        void ProcessNew ( Actors &&selected ) noexcept;
+        void ProcessRemove ( Actors &&selected ) noexcept;
         void ProcessToggle ( std::vector<Actor*> const &selected ) noexcept;
 };
 

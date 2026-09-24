@@ -16,9 +16,9 @@ namespace {
 class SelectAction final : public Action
 {
     private:
-        Selection::Items*       _target = nullptr;
-        Selection::Items        _old {};
-        Selection::Items        _new {};
+        Selection::Actors*      _target = nullptr;
+        Selection::Actors       _before {};
+        Selection::Actors       _after {};
 
     public:
         SelectAction () = delete;
@@ -29,7 +29,7 @@ class SelectAction final : public Action
         SelectAction ( SelectAction && ) = default;
         SelectAction &operator = ( SelectAction && ) = default;
 
-        explicit SelectAction ( Selection::Items &target, Selection::Items &&now ) noexcept;
+        explicit SelectAction ( Selection::Actors &target, Selection::Actors &&now ) noexcept;
 
         ~SelectAction () override = default;
 
@@ -37,13 +37,13 @@ class SelectAction final : public Action
         void Redo () noexcept override;
         void Undo () noexcept override;
 
-        void Update ( Selection::Items const &goal ) noexcept;
+        void Update ( Selection::Actors const &goal ) noexcept;
 };
 
-SelectAction::SelectAction ( Selection::Items &target, Selection::Items &&now ) noexcept:
+SelectAction::SelectAction ( Selection::Actors &target, Selection::Actors &&now ) noexcept:
     _target ( &target ),
-    _old ( target ),
-    _new ( std::move ( now ) )
+    _before ( target ),
+    _after ( std::move ( now ) )
 {
     // NOTHING
 }
@@ -51,18 +51,18 @@ SelectAction::SelectAction ( Selection::Items &target, Selection::Items &&now ) 
 void SelectAction::Redo () noexcept
 {
     AV_TRACE ( "Redo: selection" )
-    Update ( _new );
+    Update ( _after );
 }
 
 void SelectAction::Undo () noexcept
 {
     AV_TRACE ( "Undo: selection" )
-    Update ( _old );
+    Update ( _before );
 }
 
-void SelectAction::Update ( Selection::Items const &goal ) noexcept
+void SelectAction::Update ( Selection::Actors const &goal ) noexcept
 {
-    Selection::Items t ( *_target );
+    Selection::Actors t ( *_target );
 
     for ( Actor* actor : t )
     {
@@ -274,9 +274,9 @@ uint32_t Selection::GetIDImageResourceIndex () const noexcept
     return _collectPushConstants._idImage;
 }
 
-Selection::Items &Selection::GetSelection () noexcept
+Selection::Actors &Selection::GetActors () noexcept
 {
-    return _mode == eMode::Standby ? _items : _lastItems;
+    return _mode == eMode::Standby ? _actors : _lastActors;
 }
 
 void Selection::PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept
@@ -460,7 +460,7 @@ void Selection::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
 void Selection::Begin ( VkOffset2D const &mouse, eMode mode ) noexcept
 {
     _begin = mouse;
-    _lastItems = _items;
+    _lastActors = _actors;
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeRenderSession,
@@ -503,7 +503,7 @@ void Selection::End ( bool cancel ) noexcept
                 _mode = eMode::Standby;
                 History &history = History::Instance ();
                 history.Begin ();
-                history.Append ( std::make_unique<SelectAction> ( _items, std::move ( _lastItems ) ) );
+                history.Append ( std::make_unique<SelectAction> ( _actors, std::move ( _lastActors ) ) );
                 history.End ();
 
                 return nullptr;
@@ -519,7 +519,7 @@ bool Selection::IsSelectionRequested () const noexcept
 
 bool Selection::HasSelection () const noexcept
 {
-    return !_items.empty ();
+    return !_actors.empty ();
 }
 
 void Selection::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -591,18 +591,18 @@ void Selection::Cancel () noexcept
     _mode = eMode::Standby;
     bool hasChanges = false;
 
-    for ( Actor* actor : _lastItems )
+    for ( Actor* actor : _lastActors )
     {
-        if ( !_items.contains ( actor ) )
+        if ( !_actors.contains ( actor ) )
         {
             actor->Deselect ();
             hasChanges = true;
         }
     }
 
-    for ( Actor* actor : _items )
+    for ( Actor* actor : _actors )
     {
-        if ( !_lastItems.contains ( actor ) )
+        if ( !_lastActors.contains ( actor ) )
         {
             actor->Select ();
             hasChanges = true;
@@ -625,15 +625,15 @@ void Selection::CommitSelect () noexcept
                 switch ( mode )
                 {
                     case eMode::Add:
-                        ProcessAdd ( Items ( s.cbegin (), s.cend () ) );
+                        ProcessAdd ( Actors ( s.cbegin (), s.cend () ) );
                     break;
 
                     case eMode::New:
-                        ProcessNew ( std::move ( Items ( s.cbegin (), s.cend () ) ) );
+                        ProcessNew ( std::move ( Actors ( s.cbegin (), s.cend () ) ) );
                     break;
 
                     case eMode::Remove:
-                        ProcessRemove ( std::move ( Items ( s.cbegin (), s.cend () ) ) );
+                        ProcessRemove ( std::move ( Actors ( s.cbegin (), s.cend () ) ) );
                     break;
 
                     case eMode::Toggle:
@@ -694,41 +694,41 @@ void Selection::CommitArea ( Rect &&canvasArea, eMode mode ) noexcept
     _area = std::optional<Rect> ( std::move ( area ) );
 }
 
-void Selection::ProcessAdd ( Items &&selected ) noexcept
+void Selection::ProcessAdd ( Actors &&selected ) noexcept
 {
     AV_TRACE ( "Add" )
-    Items d ( _lastItems );
+    Actors d ( _lastActors );
     bool hasChanges = false;
 
     for ( Actor* actor : selected )
     {
-        if ( _lastItems.contains ( actor ) )
+        if ( _lastActors.contains ( actor ) )
         {
             d.erase ( actor );
             continue;
         }
 
         actor->Select ();
-        _lastItems.insert ( actor );
+        _lastActors.insert ( actor );
         hasChanges = true;
     }
 
     for ( Actor* actor : d )
     {
-        if ( !_items.contains ( actor ) )
+        if ( !_actors.contains ( actor ) )
         {
             actor->Deselect ();
-            _lastItems.erase ( actor );
+            _lastActors.erase ( actor );
             hasChanges = true;
         }
     }
 
-    for ( Actor* actor : _items )
+    for ( Actor* actor : _actors )
     {
-        if ( !_lastItems.contains ( actor ) )
+        if ( !_lastActors.contains ( actor ) )
         {
             actor->Select ();
-            _lastItems.insert ( actor );
+            _lastActors.insert ( actor );
             hasChanges = true;
         }
     }
@@ -739,13 +739,13 @@ void Selection::ProcessAdd ( Items &&selected ) noexcept
     }
 }
 
-void Selection::ProcessNew ( Items &&selected ) noexcept
+void Selection::ProcessNew ( Actors &&selected ) noexcept
 {
     AV_TRACE ( "New" )
-    Items s ( selected );
+    Actors s ( selected );
     bool hasChanges = false;
 
-    for ( Actor* actor : _lastItems )
+    for ( Actor* actor : _lastActors )
     {
         if ( s.contains ( actor ) )
         {
@@ -760,7 +760,7 @@ void Selection::ProcessNew ( Items &&selected ) noexcept
     for ( Actor* actor : s )
         actor->Select ();
 
-    _lastItems = std::move ( selected );
+    _lastActors = std::move ( selected );
 
     if ( hasChanges | !s.empty () )
     {
@@ -768,18 +768,18 @@ void Selection::ProcessNew ( Items &&selected ) noexcept
     }
 }
 
-void Selection::ProcessRemove ( Items &&selected ) noexcept
+void Selection::ProcessRemove ( Actors &&selected ) noexcept
 {
     AV_TRACE ( "Remove" )
-    Items s ( _items );
+    Actors s ( _actors );
     bool hasChanges = false;
 
     for ( Actor* actor : selected )
         s.erase ( actor );
 
-    Items left {};
+    Actors left {};
 
-    for ( Actor* actor : _lastItems )
+    for ( Actor* actor : _lastActors )
     {
         if ( s.contains ( actor ) )
         {
@@ -801,7 +801,7 @@ void Selection::ProcessRemove ( Items &&selected ) noexcept
         }
     }
 
-    _lastItems = std::move ( left );
+    _lastActors = std::move ( left );
 
     if ( hasChanges )
     {
@@ -818,16 +818,16 @@ void Selection::ProcessToggle ( std::vector<Actor*> const &selected ) noexcept
 
     Actor* s = selected.front ();
 
-    if ( _lastItems.contains ( s ) )
+    if ( _lastActors.contains ( s ) )
     {
         s->Deselect ();
-        _lastItems.erase ( s );
+        _lastActors.erase ( s );
         NotifySelectionChanged ();
         return;
     }
 
     s->Select ();
-    _lastItems.insert ( s );
+    _lastActors.insert ( s );
     NotifySelectionChanged ();
 }
 

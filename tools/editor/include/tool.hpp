@@ -19,7 +19,7 @@ class Tool
         virtual void Activate () noexcept = 0;
         virtual void Deactivate () noexcept = 0;
 
-        virtual void Begin ( Selection::Items &items, GXQuat const &rotation ) noexcept = 0;
+        virtual void Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept = 0;
         virtual void End () noexcept = 0;
         virtual void Cancel () noexcept = 0;
 
@@ -27,7 +27,7 @@ class Tool
         explicit Tool () = default;
         virtual ~Tool () = default;
 
-        [[nodiscard]] static GXVec3 GetCenter ( Selection::Items const &items ) noexcept;
+        [[nodiscard]] static GXVec3 GetCenter ( Selection::Actors const &actors ) noexcept;
 };
 
 } // namespace editor

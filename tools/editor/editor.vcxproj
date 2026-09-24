@@ -1184,7 +1184,6 @@
     <ClCompile Include="src\sdf_ring_billboard.cpp" />
     <ClCompile Include="src\sdf_sphere.cpp" />
     <ClCompile Include="src\selection.cpp" />
-    <ClCompile Include="src\select_tool.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
     <ClCompile Include="src\texture2D_storage.cpp" />
     <ClCompile Include="src\io.cpp" />
@@ -1400,7 +1399,6 @@
     <ClInclude Include="include\sdf_sphere.hpp" />
     <ClInclude Include="include\sdf_vertex.hpp" />
     <ClInclude Include="include\selection.hpp" />
-    <ClInclude Include="include\select_tool.hpp" />
     <ClInclude Include="include\shading.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />

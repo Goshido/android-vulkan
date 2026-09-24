@@ -7,7 +7,6 @@
 #include "move_tool.hpp"
 #include "rotate_tool.hpp"
 #include "scale_tool.hpp"
-#include "select_tool.hpp"
 #include "selection.hpp"
 #include "widget.hpp"
 
@@ -72,9 +71,6 @@ class ViewportWidget final : public Widget
         ScaleTool                           _scaleTool {};
         Hotkey                              _useScaleTool {};
 
-        SelectTool                          _selectTool {};
-        Hotkey                              _useSelectTool {};
-
         Hotkey                              _toggleCoordinates {};
 
         // FUCK - load this from editor save, last used tool.
@@ -131,7 +127,7 @@ class ViewportWidget final : public Widget
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
         [[nodiscard]] GXVec3 GetVI () const noexcept;
 
-        void OnSelectionChanged ( Selection::Items &items ) noexcept;
+        void OnSelectionChanged ( Selection::Actors &actors ) noexcept;
 
     private:
         void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept override;
@@ -154,7 +150,7 @@ class ViewportWidget final : public Widget
         void UpdateRotation () noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
-        void UpdateToolCoordinates ( Selection::Items &items ) noexcept;
+        void UpdateToolCoordinates ( Selection::Actors &actors ) noexcept;
         void UpdateViewProjection () noexcept;
 
         void OnFreeFlyKeyUp () noexcept;

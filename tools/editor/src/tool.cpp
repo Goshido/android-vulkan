@@ -4,11 +4,11 @@
 
 namespace editor {
 
-GXVec3 Tool::GetCenter ( Selection::Items const &items ) noexcept
+GXVec3 Tool::GetCenter ( Selection::Actors const &actors ) noexcept
 {
     GXAABB bounds{};
 
-    for ( Actor const* actor : items )
+    for ( Actor const* actor : actors )
         bounds.AddVertex ( actor->GetLocation () );
 
     GXVec3 result;

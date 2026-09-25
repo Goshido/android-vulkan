@@ -17,9 +17,22 @@ constexpr float Z_FAR = 1.0e+3F;
 constexpr float FOV_Y = GXDegToRad ( 60.0F );
 constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
+constexpr std::string_view CONFIG_KEY_TOOL_COORDINATES = "tool coordinates";
+constexpr std::string_view CONFIG_KEY_ACTIVE_TOOL = "active tool";
+
+enum class eTool : uint8_t
+{
+    Move = UINT8_C ( 0 ),
+    Rotate = UINT8_C ( 1 ),
+    Scale = UINT8_C ( 2 )
+};
+
+constexpr eTool DEFAULT_TOOL = eTool::Move;
+constexpr ViewportWidget::eCoordinates DEFAULT_COORDINATES = ViewportWidget::eCoordinates::Local;
+
 } // namespace
 
-ViewportWidget::ViewportWidget () noexcept:
+ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
     _div (
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -209,8 +222,36 @@ ViewportWidget::ViewportWidget () noexcept:
         },
 
         "Selection (left)"
+    ),
+
+    _coordinates (
+        static_cast<eCoordinates> (
+            save.Read ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( DEFAULT_COORDINATES ) )
+        )
     )
 {
+    switch ( static_cast<eTool> ( save.Read ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( DEFAULT_TOOL ) ) ) )
+    {
+        case eTool::Move:
+            _activeTool = &_moveTool;
+            _toolMouseMove = &ViewportWidget::OnMoveToolMouseMove;
+        break;
+
+        case eTool::Rotate:
+            _activeTool = &_rotateTool;
+            _toolMouseMove = &ViewportWidget::OnRotateToolMouseMove;
+        break;
+
+        case eTool::Scale:
+            _activeTool = &_scaleTool;
+            _toolMouseMove = &ViewportWidget::OnScaleToolMouseMove;
+        break;
+
+        default:
+            // IMPOSSIBLE
+        break;
+    }
+
     _selectionBody.AppendChildElement ( _selectionTop );
     _selectionBody.AppendChildElement ( _selectionRight );
     _selectionBody.AppendChildElement ( _selectionBottom );
@@ -267,11 +308,27 @@ void ViewportWidget::Init () noexcept
     );
 }
 
-void ViewportWidget::Destroy () noexcept
+void ViewportWidget::Destroy ( SaveState::Container &save ) noexcept
 {
     _useMoveTool = {};
     _useRotateTool = {};
     _useScaleTool = {};
+
+    save.Write ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( _coordinates ) );
+
+    if ( _activeTool == &_moveTool )
+    {
+        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Move ) );
+        return;
+    }
+
+    if ( _activeTool == &_rotateTool )
+    {
+        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Rotate ) );
+        return;
+    }
+
+    save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Scale ) );
 }
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept

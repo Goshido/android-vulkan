@@ -168,20 +168,12 @@ void Editor::DestroyModules () noexcept
     if ( !_mainWindow.Destroy () ) [[unlikely]]
         android_vulkan::LogError ( "Editor: Can't destroy main window" );
 
-    SaveState config {};
-    SaveState::Container &root = config.GetContainer ();
-    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    root.Write ( CONFIG_KEY_GPU, renderer.GetDeviceName () );
-    root.Write ( CONFIG_KEY_UI_ZOOM, _uiZoom );
-    root.Write ( CONFIG_KEY_VSYNC, renderer.GetVSync () );
-
-    if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
-        android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
-
     _timerManager.Destroy ();
     _renderSession.Destroy ();
     _uiManager.Destroy ();
     _io.Destroy ();
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     renderer.OnDestroySwapchain ( false );
     renderer.OnDestroyDevice ();
 }
@@ -218,7 +210,19 @@ void Editor::ShutdownWorkspace ( std::optional<Message::SerialNumber> &lastRefun
         GX_ENABLE_WARNING ( 4061 )
     }
 
-    _workspace.Destroy ();
+    SaveState config {};
+    SaveState::Container &root = config.GetContainer ();
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    root.Write ( CONFIG_KEY_GPU, renderer.GetDeviceName () );
+    root.Write ( CONFIG_KEY_UI_ZOOM, _uiZoom );
+    root.Write ( CONFIG_KEY_VSYNC, renderer.GetVSync () );
+
+    _workspace.Destroy ( root );
+
+    if ( !config.Save ( CONFIG_PATH ) ) [[unlikely]]
+    {
+        android_vulkan::LogError ( "Editor: Can't save config %s", CONFIG_PATH.data () );
+    }
 }
 
 void Editor::ShutdownAllExceptIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept
@@ -439,7 +443,8 @@ void Editor::OnModuleStarted () noexcept
 
     if ( _runningModules == 4U ) [[unlikely]]
     {
-        _workspace.Init ();
+        _workspace.Init ( _save->GetContainer () );
+        _save.reset ();
     }
 }
 
@@ -594,15 +599,16 @@ bool Editor::IsProvideVulkanInitLogs () const noexcept
 Editor::Config Editor::LoadConfig () noexcept
 {
     AV_TRACE ( "Editor: load config" )
-    SaveState config {};
+    _save = std::make_unique<SaveState> ();
 
-    if ( !config.Load ( CONFIG_PATH, true ) ) [[unlikely]]
+    if ( !_save->Load ( CONFIG_PATH, true ) ) [[unlikely]]
     {
         android_vulkan::LogWarning ( "Editor: Can't load config %s", CONFIG_PATH.data () );
+        _save.reset ();
         return {};
     }
 
-    SaveState::Container const &root = config.GetContainer ();
+    SaveState::Container const &root = _save->GetContainer ();
     Config result {};
 
     if ( std::string_view const gpu = GetUserGPU (); !gpu.empty () ) [[unlikely]]

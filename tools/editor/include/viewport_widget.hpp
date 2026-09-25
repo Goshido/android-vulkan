@@ -15,13 +15,14 @@ namespace editor {
 
 class ViewportWidget final : public Widget
 {
-    private:
+    public:
         enum class eCoordinates : uint8_t
         {
             Global = UINT8_C ( 0 ),
             Local = UINT8_C ( 1 )
         };
 
+    private:
         struct State final
         {
             uint8_t                         _forward: 1 = 0U;
@@ -50,9 +51,7 @@ class ViewportWidget final : public Widget
 
     private:
         StateHandlers                       _stateHandlers {};
-
-        // FUCK - load this from editor save, last used tool.
-        Handler                             _toolMouseMove = &ViewportWidget::OnRotateToolMouseMove;
+        Handler                             _toolMouseMove = &ViewportWidget::OnMoveToolMouseMove;
 
         DIVUIElement                        _div;
 
@@ -73,8 +72,7 @@ class ViewportWidget final : public Widget
 
         Hotkey                              _toggleCoordinates {};
 
-        // FUCK - load this from editor save, last used tool.
-        Tool*                               _activeTool = &_rotateTool;
+        Tool*                               _activeTool = &_moveTool;
 
         GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;
@@ -99,11 +97,10 @@ class ViewportWidget final : public Widget
         State                               _state {};
         bool                                _toolVisible = false;
 
-        // FUCK - load this from editor save, last used coordinates.
         eCoordinates                        _coordinates = eCoordinates::Local;
 
     public:
-        explicit ViewportWidget () noexcept;
+        ViewportWidget () = delete;
 
         ViewportWidget ( ViewportWidget const & ) = delete;
         ViewportWidget &operator = ( ViewportWidget const & ) = delete;
@@ -111,10 +108,12 @@ class ViewportWidget final : public Widget
         ViewportWidget ( ViewportWidget && ) = delete;
         ViewportWidget &operator = ( ViewportWidget && ) = delete;
 
+        explicit ViewportWidget ( SaveState::Container const &save ) noexcept;
+
         ~ViewportWidget () = default;
 
         void Init () noexcept;
-        void Destroy () noexcept;
+        void Destroy ( SaveState::Container &save ) noexcept;
 
         void Update ( float deltaTime, float dpi ) noexcept;
 

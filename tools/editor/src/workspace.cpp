@@ -20,9 +20,6 @@
 
 namespace editor {
 
-// FUCK
-Actor* fuck_actor = nullptr;
-
 namespace {
 
 constexpr size_t PER_MESH_ELEMENTS = 1'000'000UZ;
@@ -147,11 +144,11 @@ Workspace::Workspace () noexcept
     _instance = this;
 }
 
-void Workspace::Init () noexcept
+void Workspace::Init ( SaveState::Container const &save ) noexcept
 {
     AV_TRACE ( "Workspace init" )
 
-    InitWidgets ();
+    InitWidgets ( save );
     InitGraphicsResources ();
     InitHotkeys ();
 
@@ -161,11 +158,11 @@ void Workspace::Init () noexcept
     FUCK ();
 }
 
-void Workspace::Destroy () noexcept
+void Workspace::Destroy ( SaveState::Container &save ) noexcept
 {
     AV_TRACE ( "Workspace destroy" )
 
-    _viewport->Destroy ();
+    _viewport->Destroy ( save );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
@@ -1207,7 +1204,6 @@ void Workspace::FUCK () noexcept
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "Full" );
     Actor &a0 = *actor;
-    fuck_actor = &a0;
 
     ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
         "../editor-assets/textures/sonic-material-1-diffuse.png"
@@ -2045,7 +2041,7 @@ void Workspace::InitHotkeys () noexcept
     );
 }
 
-void Workspace::InitWidgets () noexcept
+void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
 
@@ -2062,7 +2058,7 @@ void Workspace::InitWidgets () noexcept
         )
     );
 
-    _viewport = new ViewportWidget ();
+    _viewport = new ViewportWidget ( save );
     _viewport->SetLocal ( 0.104000151F, -1.07599998F, GXVec3 ( 6.62516165F, 2.08657217F, -2.31031871F ) );
 
     messageQueue.EnqueueBack (

@@ -51,6 +51,8 @@ class Editor final
         bool                                    _frameComplete = true;
         bool                                    _stopRendering = false;
 
+        std::unique_ptr<SaveState>              _save {};
+
     public:
         Editor () = delete;
 

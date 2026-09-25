@@ -675,8 +675,8 @@ class Workspace final
 
         ~Workspace () = default;
 
-        void Init () noexcept;
-        void Destroy () noexcept;
+        void Init ( SaveState::Container const &save ) noexcept;
+        void Destroy ( SaveState::Container &save ) noexcept;
 
         void Load ( std::string_view scene ) noexcept;
         void Close () noexcept;
@@ -735,7 +735,7 @@ class Workspace final
 
         void InitGraphicsResources () noexcept;
         void InitHotkeys () noexcept;
-        void InitWidgets () noexcept;
+        void InitWidgets ( SaveState::Container const &save ) noexcept;
 
         [[nodiscard]] GBufferMeshNode RegisterMesh ( MeshGeometryRef &mesh,
             GBufferMeshQueue &meshQueue,

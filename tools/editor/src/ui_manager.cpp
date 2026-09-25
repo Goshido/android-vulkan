@@ -242,8 +242,6 @@ void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&messag
 
     KeyboardKeyEvent const event ( message );
 
-    // FUCK - figure out how to process hotkeys
-
     if ( _typingCapture )
     {
         _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );

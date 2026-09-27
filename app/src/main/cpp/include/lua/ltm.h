@@ -49,7 +49,7 @@ typedef enum {
 ** Mask with 1 in all fast-access methods. A 1 in any of these bits
 ** in the flag of a (meta)table means the metatable does not have the
 ** corresponding metamethod field. (Bit 6 of the flag indicates that
-** the table is using the dummy node; bit 7 is used for 'isrealasize'.)
+** the table is using the dummy node.)
 */
 #define maskflags	cast_byte(~(~0u << (TM_EQ + 1)))
 
@@ -98,8 +98,8 @@ LUAI_FUNC int luaT_callorderiTM (lua_State *L, const TValue *p1, int v2,
 LUAI_FUNC void luaT_adjustvarargs (lua_State *L, struct CallInfo *ci,
                                                  const Proto *p);
 LUAI_FUNC void luaT_getvararg (CallInfo *ci, StkId ra, TValue *rc);
-LUAI_FUNC void luaT_getvarargs (lua_State *L, struct CallInfo *ci,
-                                              StkId where, int wanted);
+LUAI_FUNC void luaT_getvarargs (lua_State *L, struct CallInfo *ci, StkId where,
+                                              int wanted, int vatab);
 
 
 #endif

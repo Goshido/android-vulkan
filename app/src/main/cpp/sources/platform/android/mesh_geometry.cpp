@@ -26,6 +26,39 @@ constexpr VkMemoryPropertyFlags MEMORY_PROPERTIES = AV_VK_FLAG ( VK_MEMORY_PROPE
 
 //----------------------------------------------------------------------------------------------------------------------
 
+MeshGeometry::MeshGeometry ( MeshGeometry &&other ) noexcept:
+    MeshGeometryBase ( std::move ( other ) ),
+
+    _meshBufferInfo (
+        {
+            ._buffer = std::exchange ( other._meshBufferInfo._buffer, VK_NULL_HANDLE ),
+            ._vertexDataOffsets = std::move ( other._meshBufferInfo._vertexDataOffsets ),
+            ._vertexDataRanges = std::move ( other._meshBufferInfo._vertexDataRanges ),
+            ._indexType = std::exchange ( other._meshBufferInfo._indexType, VK_INDEX_TYPE_NONE_KHR )
+        }
+    )
+{
+    // NOTHING
+}
+
+MeshGeometry &MeshGeometry::operator = ( MeshGeometry &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    MeshGeometryBase::operator = ( std::move ( other ) );
+
+    _meshBufferInfo =
+    {
+        ._buffer = std::exchange ( other._meshBufferInfo._buffer, VK_NULL_HANDLE ),
+        ._vertexDataOffsets = std::move ( other._meshBufferInfo._vertexDataOffsets ),
+        ._vertexDataRanges = std::move ( other._meshBufferInfo._vertexDataRanges ),
+        ._indexType = std::exchange ( other._meshBufferInfo._indexType, VK_INDEX_TYPE_NONE_KHR )
+    };
+
+    return *this;
+}
+
 void MeshGeometry::FreeResources ( Renderer &renderer ) noexcept
 {
     _vertexCount = 0U;

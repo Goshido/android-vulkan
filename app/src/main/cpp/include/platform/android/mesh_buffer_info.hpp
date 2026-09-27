@@ -6,6 +6,7 @@
 
 GX_DISABLE_COMMON_WARNINGS
 
+#include <array>
 #include <vulkan/vulkan.h>
 
 GX_RESTORE_WARNING_STATE
@@ -19,10 +20,10 @@ namespace android_vulkan {
 // - two streams: vertex positions, rest data
 struct MeshBufferInfo final
 {
-    VkBuffer        _buffer = VK_NULL_HANDLE;
-    VkDeviceSize    _vertexDataOffsets[ 2U ]{};
-    VkDeviceSize    _vertexDataRanges[ 2U ]{};
-    VkIndexType     _indexType = VK_INDEX_TYPE_NONE_KHR;
+    VkBuffer                        _buffer = VK_NULL_HANDLE;
+    std::array<VkDeviceSize, 2U>    _vertexDataOffsets{};
+    std::array<VkDeviceSize, 2U>    _vertexDataRanges{};
+    VkIndexType                     _indexType = VK_INDEX_TYPE_NONE_KHR;
 };
 
 } // namespace android_vulkan

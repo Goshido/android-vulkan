@@ -1,12 +1,14 @@
 #include <precompiled_headers.hpp>
-#include <append_ui_child_element_event.hpp>
 #include <av_assert.hpp>
-#include <hello_triangle_vertex.hpp>
+#include <program_info.hpp>
 #include <logger.hpp>
-#include <prepend_ui_child_element_event.hpp>
+#include <message_queue.hpp>
+#include <native_renderer.hpp>
 #include <render_session.hpp>
-#include <set_text_event.hpp>
+#include <resource_heap.hpp>
+#include <stream_buffer_info.hpp>
 #include <trace.hpp>
+#include <ui_manager.hpp>
 #include <vulkan_utils.hpp>
 
 
@@ -15,281 +17,35 @@ namespace editor {
 namespace {
 
 constexpr float DEFAULT_BRIGHTNESS_BALANCE = 0.0F;
-constexpr VkFormat RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
 
-//----------------------------------------------------------------------------------------------------------------------
+constexpr VkFormat ALBEDO_RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
+constexpr size_t ALBEDO_ATTACHMENT_INDEX = 0U;
+constexpr size_t ALBEDO_BARRIER_INDEX = 0U;
 
-class HelloTriangleJob final
-{
-    public:
-        std::unique_ptr<android_vulkan::MeshGeometry>       _geometry {};
+constexpr VkFormat HDR_RENDER_TARGET_FORMAT = VK_FORMAT_R16G16B16A16_SFLOAT;
+constexpr size_t HDR_ATTACHMENT_INDEX = 1U;
+constexpr size_t HDR_BARRIER_INDEX = 1U;
 
-        std::unique_ptr<HelloTriangleProgram>               _program {};
+constexpr VkFormat NORMAL_RENDER_TARGET_FORMAT = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+constexpr size_t NORMAL_ATTACHMENT_INDEX = 2U;
+constexpr size_t NORMAL_BARRIER_INDEX = 2U;
 
-    private:
-        VkCommandPool                                       _commandPool = VK_NULL_HANDLE;
-        VkFence                                             _complete = VK_NULL_HANDLE;
-        android_vulkan::Renderer                            &_renderer;
+constexpr VkFormat PARAM_RENDER_TARGET_FORMAT = VK_FORMAT_R8G8B8A8_UNORM;
+constexpr size_t PARAM_ATTACHMENT_INDEX = 3U;
+constexpr size_t PARAM_BARRIER_INDEX = 3U;
 
-    public:
-        HelloTriangleJob () = delete;
+constexpr VkFormat ID_RENDER_TARGET_FORMAT = VK_FORMAT_R32G32_UINT;
+constexpr size_t ID_ATTACHMENT_INDEX = 4U;
+constexpr size_t ID_BARRIER_INDEX = 5U;
 
-        HelloTriangleJob ( HelloTriangleJob const & ) = delete;
-        HelloTriangleJob &operator = ( HelloTriangleJob const & ) = delete;
-
-        HelloTriangleJob ( HelloTriangleJob && ) = delete;
-        HelloTriangleJob &operator = ( HelloTriangleJob && ) = delete;
-
-        explicit HelloTriangleJob ( MessageQueue &messageQueue,
-            android_vulkan::Renderer &renderer,
-            std::mutex &submitMutex
-        ) noexcept;
-
-        ~HelloTriangleJob ();
-
-    private:
-        void CreateMesh ( std::mutex &submitMutex ) noexcept;
-        void CreateProgram () noexcept;
-};
-
-HelloTriangleJob::HelloTriangleJob ( MessageQueue &messageQueue,
-    android_vulkan::Renderer &renderer,
-    std::mutex &submitMutex
-) noexcept:
-    _renderer ( renderer )
-{
-    std::thread (
-        [ this, &messageQueue, &submitMutex ] () noexcept
-        {
-            AV_THREAD_NAME ( "Hello triangle job" )
-            CreateProgram ();
-            CreateMesh ( submitMutex );
-
-            messageQueue.EnqueueBack (
-                {
-                    ._type = eMessageType::HelloTriangleReady,
-                    ._params = this,
-                    ._serialNumber = 0U
-                }
-            );
-        }
-    ).detach ();
-}
-
-HelloTriangleJob::~HelloTriangleJob ()
-{
-    VkDevice device = _renderer.GetDevice ();
-
-    if ( _commandPool != VK_NULL_HANDLE ) [[likely]]
-        vkDestroyCommandPool ( device, _commandPool, nullptr );
-
-    if ( _complete != VK_NULL_HANDLE ) [[likely]]
-    {
-        vkDestroyFence ( device, _complete, nullptr );
-    }
-}
-
-void HelloTriangleJob::CreateMesh ( std::mutex &submitMutex ) noexcept
-{
-    AV_TRACE ( "Mesh" )
-
-    VkCommandPoolCreateInfo const poolInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = _renderer.GetQueueFamilyIndex ()
-    };
-
-    VkDevice device = _renderer.GetDevice ();
-
-    bool result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateCommandPool ( device, &poolInfo, nullptr, &_commandPool ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't create lead command pool"
-    );
-
-    if ( !result ) [[unlikely]]
-        return;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _commandPool, VK_OBJECT_TYPE_COMMAND_POOL, "Hello triangle" )
-
-    VkCommandBufferAllocateInfo bufferAllocateInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .pNext = nullptr,
-        .commandPool = _commandPool,
-        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-        .commandBufferCount = 1U
-    };
-
-    VkCommandBuffer commandBuffer;
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkAllocateCommandBuffers ( device, &bufferAllocateInfo, &commandBuffer ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't allocate command buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Hello triangle" )
-
-    constexpr VkCommandBufferBeginInfo beginInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .pNext = nullptr,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        .pInheritanceInfo = nullptr
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkBeginCommandBuffer ( commandBuffer, &beginInfo ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't begin command buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-        return;
-
-    {
-        AV_VULKAN_GROUP ( commandBuffer, "Hello triangle" )
-
-        constexpr HelloTriangleVertex const data[] =
-        {
-            {
-                ._vertex = GXVec2 ( -0.75F, 0.75F ),
-                ._color = GXVec3 ( 0.0F, 0.0F, 1.0F )
-            },
-
-            {
-                ._vertex = GXVec2 ( 0.0F, -0.75F ),
-                ._color = GXVec3 ( 1.0F, 0.0F, 0.0F )
-            },
-
-            {
-                ._vertex = GXVec2 ( 0.75F, 0.75F ),
-                ._color = GXVec3 ( 0.0F, 1.0F, 0.0F )
-            }
-        };
-
-        _geometry = std::make_unique<android_vulkan::MeshGeometry> ();
-
-        result = _geometry->LoadMesh ( _renderer,
-            commandBuffer,
-            true,
-            VK_NULL_HANDLE,
-            { reinterpret_cast<uint8_t const*> ( data ), sizeof ( data ) },
-            static_cast<uint32_t> ( std::size ( data ) )
-        );
-
-        if ( !result ) [[unlikely]]
-        {
-            _geometry->FreeResources ( _renderer );
-            _geometry.reset ();
-            return;
-        }
-    }
-
-    result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't end command buffer"
-    );
-
-    if ( !result ) [[unlikely]]
-    {
-        _geometry->FreeResources ( _renderer );
-        _geometry.reset ();
-        return;
-    }
-
-    constexpr VkFenceCreateInfo fenceInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U
-    };
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkCreateFence ( device, &fenceInfo, nullptr, &_complete ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't create fence"
-    );
-
-    if ( !result ) [[unlikely]]
-        return;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _complete, VK_OBJECT_TYPE_FENCE, "Hello triangle" )
-
-    VkSubmitInfo const submitInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-        .pNext = nullptr,
-        .waitSemaphoreCount = 0U,
-        .pWaitSemaphores = nullptr,
-        .pWaitDstStageMask = nullptr,
-        .commandBufferCount = 1U,
-        .pCommandBuffers = &commandBuffer,
-        .signalSemaphoreCount = 0U,
-        .pSignalSemaphores = nullptr
-    };
-
-    {
-        std::lock_guard const lock ( submitMutex );
-
-        result = android_vulkan::Renderer::CheckVkResult (
-            vkQueueSubmit ( _renderer.GetQueue (), 1U, &submitInfo, _complete ),
-            "editor::HelloTriangleJob::CreateMesh",
-            "Can't submit command"
-        );
-    }
-
-    if ( !result ) [[unlikely]]
-    {
-        _geometry->FreeResources ( _renderer );
-        _geometry.reset ();
-        return;
-    }
-
-    result = android_vulkan::Renderer::CheckVkResult (
-        vkWaitForFences ( device, 1U, &_complete, VK_TRUE, std::numeric_limits<uint64_t>::max () ),
-        "editor::HelloTriangleJob::CreateMesh",
-        "Can't wait fence"
-    );
-
-    if ( result ) [[likely]]
-    {
-        _geometry->FreeTransferResources ( _renderer );
-        return;
-    }
-
-    _geometry->FreeResources ( _renderer );
-    _geometry.reset ();
-}
-
-void HelloTriangleJob::CreateProgram () noexcept
-{
-    AV_TRACE ( "Program" )
-
-    _program = std::make_unique<HelloTriangleProgram> ();
-
-    if ( _program->Init ( _renderer.GetDevice (), RENDER_TARGET_FORMAT ) ) [[likely]]
-        return;
-
-    _program->Destroy ( _renderer.GetDevice () );
-    _program.reset ();
-}
+constexpr size_t DEPTH_BARRIER_INDEX = 4U;
 
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-RenderSession::RenderSession ( MessageQueue &messageQueue,
-    android_vulkan::Renderer &renderer,
-    UIManager &uiManager
-) noexcept:
-    _messageQueue ( messageQueue ),
-    _renderer ( renderer ),
+RenderSession::RenderSession ( UIManager &uiManager, Workspace &workspace ) noexcept:
+    _workspace ( workspace ),
     _uiManager ( uiManager )
 {
    // NOTHING
@@ -318,11 +74,6 @@ void RenderSession::Destroy () noexcept
     }
 }
 
-pbr::FontStorage& RenderSession::GetFontStorage () noexcept
-{
-    return _uiPass.GetFontStorage ();
-}
-
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
 {
     constexpr VkFenceCreateInfo fenceInfo
@@ -344,7 +95,7 @@ bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
-        .queueFamilyIndex = _renderer.GetQueueFamilyIndex ()
+        .queueFamilyIndex = NativeRenderer::Instance ().GetQueueFamilyIndex ()
     };
 
     VkCommandBufferAllocateInfo bufferAllocateInfo
@@ -443,13 +194,13 @@ void RenderSession::FreeCommandBuffers ( VkDevice device ) noexcept
     }
 }
 
-bool RenderSession::CreateRenderTarget () noexcept
+bool RenderSession::CreateRenderTargets () noexcept
 {
     VkExtent2D &resolution = _renderingInfo.renderArea.extent;
-    pbr::ExposureSpecialization const specData ( _renderer.GetSurfaceSize () );
+    pbr::ExposureSpecialization const specData ( NativeRenderer::Instance ().GetSurfaceSize () );
     resolution = specData._mip0Resolution;
 
-    if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
+    if ( !CreateRenderTargetImages ( resolution ) ) [[unlikely]]
         return false;
 
     _viewport =
@@ -465,32 +216,134 @@ bool RenderSession::CreateRenderTarget () noexcept
     return true;
 }
 
-bool RenderSession::CreateRenderTargetImage ( VkExtent2D const &resolution ) noexcept
+bool RenderSession::CreateRenderTargetImages ( VkExtent2D const &resolution ) noexcept
 {
-    bool const result = _renderTarget.CreateRenderTarget ( resolution,
-        RENDER_TARGET_FORMAT,
-        AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
-        _renderer
-    );
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    constexpr VkImageUsageFlags colorUsage = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT );
+
+    bool const result =
+        _hdrRenderTarget.CreateRenderTarget ( resolution,
+            HDR_RENDER_TARGET_FORMAT,
+            colorUsage,
+            renderer
+        ) &&
+
+        _albedoRenderTarget.CreateRenderTarget ( resolution,
+            ALBEDO_RENDER_TARGET_FORMAT,
+            colorUsage,
+            renderer
+        ) &&
+
+        _normalRenderTarget.CreateRenderTarget ( resolution,
+            NORMAL_RENDER_TARGET_FORMAT,
+            colorUsage,
+            renderer
+        ) &&
+
+        _paramRenderTarget.CreateRenderTarget ( resolution,
+            PARAM_RENDER_TARGET_FORMAT,
+            colorUsage,
+            renderer
+        ) &&
+
+        _idRenderTarget.CreateRenderTarget ( resolution,
+            ID_RENDER_TARGET_FORMAT,
+            AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT ),
+            renderer
+        ) &&
+
+        _depthRenderTarget.CreateRenderTarget ( resolution,
+            renderer.GetDefaultDepthFormat (),
+            AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) | AV_VK_FLAG ( VK_IMAGE_USAGE_SAMPLED_BIT ),
+            renderer
+        );
 
     if ( !result ) [[unlikely]]
         return false;
 
-    VkDevice device = _renderer.GetDevice ();
-    _barrier.image = _renderTarget.GetImage ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, _barrier.image, VK_OBJECT_TYPE_IMAGE, "Render target" )
+    auto const setup = [
+        device = renderer.GetDevice (),
+        &resourceHeap = ResourceHeap::Instance ()
+    ] ( android_vulkan::Texture2D &renderTarget,
+        VkRenderingAttachmentInfo &attachment,
+        VkImageMemoryBarrier2 &barrierStart,
+        VkImageMemoryBarrier2 &barrierFinish,
+        std::optional<uint32_t> &renderTargetIndex,
+        bool storageImage,
+        [[maybe_unused]] char const* name
+    ) noexcept -> bool {
+        VkImage image = renderTarget.GetImage ();
+        barrierStart.image = image;
+        barrierFinish.image = image;
+        AV_SET_VULKAN_OBJECT_NAME ( device, image, VK_OBJECT_TYPE_IMAGE, "%s", name )
 
-    _colorAttachment.imageView = _renderTarget.GetImageView ();
-    AV_SET_VULKAN_OBJECT_NAME ( device, _colorAttachment.imageView, VK_OBJECT_TYPE_IMAGE_VIEW, "Render target" )
+        VkImageView view = renderTarget.GetImageView ();
+        attachment.imageView = view;
+        AV_SET_VULKAN_OBJECT_NAME ( device, view, VK_OBJECT_TYPE_IMAGE_VIEW, "%s", name )
 
-    if ( auto const idx = _resourceHeap.RegisterNonUISampledImage ( device, _colorAttachment.imageView ); idx )
-    {
-        [[likely]]
-        _renderTargetIdx = *idx;
-        return true;
-    }
+        renderTargetIndex = storageImage ?
+            resourceHeap.RegisterStorageImage ( device, view ) :
+            resourceHeap.RegisterNonUISampledImage ( device, view );
 
-    return false;
+        return static_cast<bool> ( renderTargetIndex );
+    };
+
+    return
+        setup ( _albedoRenderTarget,
+            _colorAttachments[ ALBEDO_ATTACHMENT_INDEX ],
+            _barrierStart[ ALBEDO_BARRIER_INDEX ],
+            _barrierFinish[ ALBEDO_BARRIER_INDEX ],
+            _albedoRenderTargetIdx,
+            false,
+            "Albedo"
+        ) &&
+
+        setup ( _hdrRenderTarget,
+            _colorAttachments[ HDR_ATTACHMENT_INDEX ],
+            _barrierStart[ HDR_BARRIER_INDEX ],
+            _barrierFinish[ HDR_BARRIER_INDEX ],
+            _hdrRenderTargetIdx,
+            false,
+            "HDR"
+        ) &&
+
+        setup ( _normalRenderTarget,
+            _colorAttachments[ NORMAL_ATTACHMENT_INDEX ],
+            _barrierStart[ NORMAL_BARRIER_INDEX ],
+            _barrierFinish[ NORMAL_BARRIER_INDEX ],
+            _normalRenderTargetIdx,
+            false,
+            "Normal"
+        ) &&
+
+        setup ( _paramRenderTarget,
+            _colorAttachments[ PARAM_ATTACHMENT_INDEX ],
+            _barrierStart[ PARAM_BARRIER_INDEX ],
+            _barrierFinish[ PARAM_BARRIER_INDEX ],
+            _paramRenderTargetIdx,
+            false,
+            "Param"
+        ) &&
+
+        setup ( _idRenderTarget,
+            _colorAttachments[ ID_ATTACHMENT_INDEX ],
+            _barrierStart[ ID_BARRIER_INDEX ],
+            _barrierFinish[ ID_BARRIER_INDEX ],
+            _idRenderTargetIdx,
+            true,
+            "ID"
+        ) &&
+
+        setup ( _depthRenderTarget,
+            _depthAttachment,
+            _barrierStart[ DEPTH_BARRIER_INDEX ],
+            _barrierFinish[ DEPTH_BARRIER_INDEX ],
+            _depthRenderTargetIdx,
+            false,
+            "Depth"
+        );
 }
 
 void RenderSession::EventLoop () noexcept
@@ -498,18 +351,9 @@ void RenderSession::EventLoop () noexcept
     if ( !InitModules () ) [[unlikely]]
         _broken = true;
 
-    MessageQueue &messageQueue = _messageQueue;
-
-    if ( _broken )
-    {
-        messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::CloseEditor,
-                ._params = nullptr,
-                ._serialNumber = 0U
-            }
-        );
-    }
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    constexpr eMessageType const cases[] = { eMessageType::ModuleStarted, eMessageType::CloseEditor };
+    messageQueue.EnqueueBack ( Message ( cases[ static_cast<size_t> ( _broken ) ] ) );
 
     std::optional<Message::SerialNumber> lastRefund {};
 
@@ -522,52 +366,96 @@ void RenderSession::EventLoop () noexcept
 
         switch ( message._type )
         {
-            case eMessageType::HelloTriangleReady:
-                OnHelloTriangleReady ( message._params );
+            case eMessageType::DestroyGPUBuffer:
+                OnDestroyGPUBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyMesh:
+                OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyProgram:
+                OnDestroyProgram ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyStreamBuffer:
+                OnDestroyStreamBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyTexture2D:
+                OnDestroyTexture2D ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::InvokeRenderSession:
+                OnInvokeRenderSession ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewGPUBuffer:
+                OnNewGPUBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewProgram:
+                OnNewProgram ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewStreamBuffer:
+                OnNewStreamBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::NewTexture2D:
+                OnNewTexture2D ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::RenderFrame:
-                OnRenderFrame ();
+                OnRenderFrame ( messageQueue );
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::SwapchainCreated:
-                OnSwapchainCreated ();
+                OnSwapchainCreated ( messageQueue );
             break;
 
             case eMessageType::UIAppendChildElement:
-                OnUIAppendChildElement ( std::move ( message ) );
+                OnUIAppendChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIDeleteElement:
-                OnUIDeleteElement ( std::move ( message ) );
+                OnUIDeleteElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIElementCreated:
-                OnUIElementCreated ();
+                OnUIElementCreated ( messageQueue );
             break;
 
             case eMessageType::UIShowElement:
-                OnUIShowElement ( std::move ( message ) );
+                OnUIShowElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIPrependChildElement:
-                OnUIPrependChildElement ( std::move ( message ) );
+                OnUIPrependChildElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIHideElement:
-                OnUIHideElement ( std::move ( message ) );
+                OnUIHideElement ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UISetText:
-                OnUISetText ( std::move ( message ) );
+                OnUISetText ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIUpdateElement:
-                OnUIUpdateElement ( std::move ( message ) );
+                OnUIUpdateElement ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UploadMesh:
+                OnUploadMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UploadTexture2D:
+                OnUploadTexture2D ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -583,12 +471,10 @@ void RenderSession::EventLoop () noexcept
 bool RenderSession::InitModules () noexcept
 {
     AV_TRACE ( "Init modules" )
-    android_vulkan::Renderer &renderer = _renderer;
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     VkDevice device = renderer.GetDevice ();
 
-    new HelloTriangleJob ( _messageQueue, renderer, _submitMutex );
-
-    if ( !AllocateCommandBuffers ( device ) || !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !AllocateCommandBuffers ( device ) ) [[unlikely]]
         return false;
 
     VkCommandPool pool = _commandInfo[ 0U ]._pool;
@@ -628,12 +514,11 @@ bool RenderSession::InitModules () noexcept
         return false;
 
     AV_SET_VULKAN_OBJECT_NAME ( device, commandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "Engine init" )
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
     {
         std::lock_guard const lock ( _submitMutex );
-
-        result = _resourceHeap.Init ( renderer, commandBuffer ) &&
-            _exposurePass.Init ( renderer, _resourceHeap, pool );
+        result = resourceHeap.Init ( renderer, commandBuffer ) && _exposurePass.Init ( renderer, resourceHeap, pool );
 
         if ( !result ) [[unlikely]]
         {
@@ -680,20 +565,16 @@ bool RenderSession::InitModules () noexcept
         }
     }
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::FontStorageReady,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer, resourceHeap ) || !CreateRenderTargets () ) [[unlikely]]
+        return false;
 
-    result = CreateRenderTarget () &&
-        _exposurePass.SetTarget ( renderer, _resourceHeap, _renderTarget, _renderTargetIdx ) &&
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
+
+    result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, *_hdrRenderTargetIdx ) &&
         _toneMapper.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
         _uiPass.OnSwapchainCreated ( renderer ) &&
         _uiPass.SetBrightness ( renderer, DEFAULT_BRIGHTNESS_BALANCE ) &&
-        _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () ) &&
+        _toneMapper.SetTarget ( renderer, *_hdrRenderTargetIdx, _exposurePass.GetExposure () ) &&
 
         android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( queue ),
             "editor::RenderSession::InitModules",
@@ -709,19 +590,529 @@ bool RenderSession::InitModules () noexcept
     return true;
 }
 
-void RenderSession::OnHelloTriangleReady ( void* params ) noexcept
+void RenderSession::FreeMeshTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept
 {
-    _messageQueue.DequeueEnd ();
-    auto* job = static_cast<HelloTriangleJob*> ( params );
-    _helloTriangleProgram = std::move ( job->_program );
-    _helloTriangleGeometry = std::move ( job->_geometry );
-    delete job;
+    auto &queue = _meshStorage._freeTransferQueue[ fif ];
+
+    if ( queue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Free mesh transfer resources" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &mesh : queue )
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::InvokeIO,
+                [ &renderer, mesh = mesh ] () noexcept -> void* {
+                    android_vulkan::MeshGeometry &m = *mesh;
+                    AV_TRACE ( "Free transfer resource (%s)", m.GetName ().c_str () );
+                    m.FreeTransferResources ( renderer );
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    queue.clear ();
 }
 
-void RenderSession::OnRenderFrame () noexcept
+void RenderSession::FreeTexture2DTransferQueue ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &queue = _texture2DStorage._freeTransferQueue[ fif ];
+
+    if ( queue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Free texture 2D transfer resources" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &texture2D : queue )
+    {
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::InvokeIO,
+                [ &renderer, texture2D = texture2D ] () noexcept -> void* {
+                    android_vulkan::Texture2D &t = texture2D->_resource;
+                    AV_TRACE ( "Free texture 2D resource (%s)", t.GetName ().c_str () );
+                    t.FreeTransferResources ( renderer );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    queue.clear ();
+}
+
+void RenderSession::DestroyGPUBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _gpuBufferStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _gpuBufferStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _gpuBufferStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy GPU buffers" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &heap = ResourceHeap::Instance ();
+
+    for ( auto &buffer : destroyQueue )
+    {
+        AV_TRACE ( "Destroy GPU buffer" );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, &heap, buffer = std::move ( buffer ) ] () mutable noexcept -> void* {
+                    AV_TRACE ( "Destroy GPU buffer" );
+
+                    if ( buffer.IsConnectedToResourceHeap () )
+                        buffer.Destroy ( renderer, heap );
+                    else
+                        buffer.Destroy ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "GPU buffer destroy complete" );
+                                --_gpuBufferStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyPrograms ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _programStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _programStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _programStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy programs" )
+    VkDevice device = NativeRenderer::Instance ().GetDevice ();
+
+    for ( auto &program : destroyQueue )
+    {
+        AV_TRACE ( "Destroy program" );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, device, program = std::move ( program ) ] () noexcept -> void* {
+                    AV_TRACE ( "Destroy program" );
+                    program->Destroy ( device );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Program destroy complete" );
+                                --_programStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyMeshes ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _meshStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _meshStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _meshStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy meshes" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &mesh : destroyQueue )
+    {
+        AV_TRACE ( "Destroy mesh (%s)", mesh->GetName ().c_str () );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, mesh = std::move ( mesh ) ] () noexcept -> void* {
+                    android_vulkan::MeshGeometry &m = *mesh;
+                    AV_TRACE ( "Destroy mesh (%s)", m.GetName ().c_str () );
+                    m.FreeResources ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Mesh destroy complete" );
+                                --_meshStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyStreamBuffers ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _streamBufferStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _streamBufferStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _streamBufferStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy stream buffers" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+
+    for ( auto &buffer : destroyQueue )
+    {
+        AV_TRACE ( "Destroy stream buffer" );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [ this, &messageQueue, &renderer, buffer = std::move ( buffer ) ] () noexcept -> void* {
+                    pbr::StreamBuffer &b = *buffer;
+                    AV_TRACE ( "Destroy stream buffer" );
+                    b.Destroy ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Stream buffer destroy complete" );
+                                --_streamBufferStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::DestroyTexture2DInstances ( MessageQueue &messageQueue, size_t fif ) noexcept
+{
+    auto &toDestroy = _texture2DStorage._toDestroy;
+
+    // Destroy on next frame.
+    auto &scheduleToDestroy = _texture2DStorage._destroyQueue[ ( fif + 1U ) % pbr::FIF_COUNT ];
+
+    for ( auto &item : toDestroy )
+        scheduleToDestroy.push_back ( std::move ( item ) );
+
+    toDestroy.clear ();
+    auto &destroyQueue = _texture2DStorage._destroyQueue[ fif ];
+
+    if ( destroyQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Destroy textures" )
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+
+    for ( auto &texture2D : destroyQueue )
+    {
+        AV_TRACE ( "Destroy 2D textures (%s)", texture2D->_resource.GetName ().c_str () );
+
+        // Calling method by pointer C++ syntax
+        ( messageQueue.*_enqueueHandle ) (
+            Message ( eMessageType::InvokeIO,
+                [
+                    this,
+                    &messageQueue,
+                    &renderer,
+                    texture2D = std::move ( texture2D ),
+                    &resourceHeap
+                ] () noexcept -> void* {
+                    android_vulkan::Texture2D &t = texture2D->_resource;
+                    AV_TRACE ( "Destroy 2D texture (%s)", t.GetName ().c_str () );
+
+                    if ( texture2D->_sampledIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_sampledIndex );
+
+                    if ( texture2D->_storageIndex ) [[likely]]
+                        resourceHeap.UnregisterResource ( *texture2D->_storageIndex );
+
+                    t.FreeResources ( renderer );
+
+                    // Calling method by pointer C++ syntax
+                    ( messageQueue.*_enqueueHandle ) (
+                        Message ( eMessageType::InvokeRenderSession,
+                            [ this ] () noexcept -> void* {
+                                AV_TRACE ( "Mesh destroy complete" );
+                                --_texture2DStorage._count;
+                                return nullptr;
+                            }
+                        )
+                    );
+
+                    return nullptr;
+                }
+            )
+        );
+    }
+
+    destroyQueue.clear ();
+}
+
+void RenderSession::UploadMeshes ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
+{
+    auto &uploadQueue = _meshStorage._uploadQueue;
+
+    if ( uploadQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Upload meshes" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload meshes" )
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    auto &transferQueue = _meshStorage._freeTransferQueue[ fif ];
+
+    for ( auto &info : uploadQueue )
+    {
+        MeshGeometryRef &mRef = info._mesh;
+        android_vulkan::MeshGeometry &m = *mRef;
+
+        AV_TRACE ( "Upload '%s'", m.GetName ().c_str () );
+        AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", m.GetName ().c_str () );
+
+        if ( !m.UploadToGPU ( renderer, commandBuffer, VK_NULL_HANDLE, std::move ( info._info ) ) ) [[unlikely]]
+        {
+            info._result ( std::nullopt );
+            continue;
+        }
+
+        transferQueue.push_back ( mRef );
+        ++_meshStorage._count;
+        info._result ( std::optional<MeshGeometryRef> { std::move ( mRef ) } );
+    }
+
+    uploadQueue.clear ();
+}
+
+void RenderSession::UploadTexture2DInstances ( VkCommandBuffer commandBuffer, size_t fif ) noexcept
+{
+    auto &uploadQueue = _texture2DStorage._uploadQueue;
+
+    if ( uploadQueue.empty () ) [[likely]]
+        return;
+
+    AV_TRACE ( "Upload texture 2D instances" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload texture 2D instances" )
+
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    auto &transferQueue = _texture2DStorage._freeTransferQueue[ fif ];
+
+    for ( auto &info : uploadQueue )
+    {
+        Texture2DRef &tRef = info._texture;
+        android_vulkan::Texture2D &t = tRef->_resource;
+
+        AV_TRACE ( "Upload '%s'", t.GetName ().c_str () );
+        AV_VULKAN_GROUP ( commandBuffer, "Upload '%s'", t.GetName ().c_str () );
+
+        bool const result = t.UploadToGPU ( renderer,
+            commandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            true,
+            VK_NULL_HANDLE
+        );
+
+        if ( !result ) [[unlikely]]
+        {
+            info._result ( std::nullopt );
+            continue;
+        }
+
+        transferQueue.push_back ( tRef );
+        ++_texture2DStorage._count;
+        info._result ( std::optional<Texture2DRef> { std::move ( tRef ) } );
+    }
+
+    uploadQueue.clear ();
+}
+
+void RenderSession::RenderScene ( VkCommandBuffer commandBuffer ) noexcept
+{
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( DEPTH_BARRIER_INDEX + 1U );
+    _depInfo.pImageMemoryBarriers = _barrierStart;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) - 1U );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+    _workspace.FillGBuffer ( commandBuffer );
+    vkCmdEndRendering ( commandBuffer );
+
+    _depInfo.pImageMemoryBarriers = _barrierFinish;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+}
+
+void RenderSession::RenderSceneWithID ( VkCommandBuffer commandBuffer ) noexcept
+{
+    _depInfo.imageMemoryBarrierCount = static_cast<uint32_t> ( std::size ( _barrierStart ) );
+    _depInfo.pImageMemoryBarriers = _barrierStart;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _renderingInfo.colorAttachmentCount = static_cast<uint32_t> ( std::size ( _colorAttachments ) );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
+    _workspace.FillGBuffer ( commandBuffer );
+    vkCmdEndRendering ( commandBuffer );
+
+    _depInfo.pImageMemoryBarriers = _barrierFinish;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _workspace.ComputeSelect ( commandBuffer );
+}
+
+void RenderSession::OnDestroyGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy GPU buffer" )
+    messageQueue.DequeueEnd ();
+    _gpuBufferStorage._toDestroy.push_back ( std::move ( *static_cast<pbr::GPUBuffer*> ( message._action () ) ) );
+}
+
+void RenderSession::OnDestroyMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy mesh" )
+    messageQueue.DequeueEnd ();
+    _meshStorage._toDestroy.push_back ( std::move ( *static_cast<MeshGeometryRef*> ( message._action () ) ) );
+}
+
+void RenderSession::OnDestroyProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy program" )
+    messageQueue.DequeueEnd ();
+
+    _programStorage._toDestroy.push_back (
+        std::move ( *static_cast<ProgramRef*> ( message._action () ) )
+    );
+}
+
+void RenderSession::OnDestroyStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy stream buffer" )
+    messageQueue.DequeueEnd ();
+    _streamBufferStorage._toDestroy.push_back ( std::move ( *static_cast<StreamBufferRef*> ( message._action () ) ) );
+}
+
+void RenderSession::OnDestroyTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Destroy mesh" )
+    messageQueue.DequeueEnd ();
+    _texture2DStorage._toDestroy.push_back ( std::move ( *static_cast<Texture2DRef*> ( message._action () ) ) );
+}
+
+void RenderSession::OnInvokeRenderSession ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Invoke" )
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
+}
+
+void RenderSession::OnNewGPUBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New GPU buffer" )
+    messageQueue.DequeueEnd ();
+    _gpuBufferStorage._count += static_cast<uint32_t> ( std::bit_cast<size_t> ( message._action () ) );
+}
+
+void RenderSession::OnNewProgram ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New program" )
+    messageQueue.DequeueEnd ();
+    ++_programStorage._count;
+    auto &info = *static_cast<ProgramInfo*> ( message._action () );
+    info._notify ( std::move ( info._program ) );
+}
+
+void RenderSession::OnNewStreamBuffer ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New stream buffer" )
+    messageQueue.DequeueEnd ();
+    ++_streamBufferStorage._count;
+    auto &info = *static_cast<StreamBufferInfo*> ( message._action () );
+    info._notify ( std::move ( info._buffer ) );
+}
+
+void RenderSession::OnNewTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "New texture 2D" )
+    messageQueue.DequeueEnd ();
+    _texture2DStorage._count += std::bit_cast<size_t> ( message._action () );
+}
+
+void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Render frame" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( _broken ) [[unlikely]]
         return;
@@ -731,14 +1122,12 @@ void RenderSession::OnRenderFrame () noexcept
     float const deltaTime = seconds.count ();
     _timestamp = now;
 
-    size_t const commandBufferIndex = _writingCommandInfo;
+    size_t const fif = _writingCommandInfo;
     CommandInfo &commandInfo = _commandInfo[ _writingCommandInfo ];
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
-    android_vulkan::Renderer &renderer = _renderer;
-    pbr::ResourceHeap &resourceHeap = _resourceHeap;
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
     _uiManager.ComputeLayout ( renderer, _uiPass );
-
     VkDevice device = renderer.GetDevice ();
 
     if ( !PrepareCommandBuffer ( device, commandInfo ) ) [[unlikely]]
@@ -751,9 +1140,18 @@ void RenderSession::OnRenderFrame () noexcept
 
     if ( vulkanResult == VK_ERROR_OUT_OF_DATE_KHR ) [[unlikely]]
     {
-        NotifyRecreateSwapchain ();
+        NotifyRecreateSwapchain ( messageQueue );
         return;
     }
+
+    FreeMeshTransferQueue ( messageQueue, fif );
+    FreeTexture2DTransferQueue ( messageQueue, fif );
+
+    DestroyGPUBuffers ( messageQueue, fif );
+    DestroyPrograms ( messageQueue, fif );
+    DestroyMeshes ( messageQueue, fif );
+    DestroyStreamBuffers ( messageQueue, fif );
+    DestroyTexture2DInstances ( messageQueue, fif );
 
     if ( ( vulkanResult != VK_SUCCESS ) & ( vulkanResult != VK_SUBOPTIMAL_KHR ) ) [[unlikely]]
     {
@@ -788,94 +1186,53 @@ void RenderSession::OnRenderFrame () noexcept
         return;
     }
 
+    UploadMeshes ( commandBuffer, fif );
+    UploadTexture2DInstances ( commandBuffer, fif );
+
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
+    resourceHeap.Bind ( commandBuffer );
+
+    if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        return;
+    }
+
+    _uiManager.Submit ( renderer, _uiPass );
+    _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
+    _workspace.UploadGPUData ( commandBuffer, deltaTime );
+
     resourceHeap.UploadGPUData ( commandBuffer );
 
-    {
-        AV_VULKAN_GROUP ( commandBuffer, "Upload" )
+    _workspace.PrepareGizmo ( commandBuffer );
+    _workspace.PrepareIDBuffer ( commandBuffer );
+    _workspace.DrawOutline ( commandBuffer );
 
-        if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
-        {
-            AV_ASSERT ( false )
-            return;
-        }
+    if ( _workspace.GetSelection ().IsSelectionRequested () )
+        RenderSceneWithID ( commandBuffer );
+    else
+        RenderScene ( commandBuffer );
 
-        _uiManager.Submit ( renderer, _uiPass );
-        _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
-    }
-
-    {
-        AV_VULKAN_GROUP ( commandBuffer, "Scene" )
-
-        _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        _barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-        vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_DEPENDENCY_BY_REGION_BIT,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            1U,
-            &_barrier
-        );
-
-        vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
-        vkCmdSetViewport ( commandBuffer, 0U, 1U, &_viewport );
-        vkCmdSetScissor ( commandBuffer, 0U, 1U, &_renderingInfo.renderArea );
-
-        if ( static_cast<bool> ( _helloTriangleGeometry ) ) [[likely]]
-        {
-            _helloTriangleProgram->Bind ( commandBuffer );
-
-            HelloTriangleProgram::PushConstants const geometry
-            {
-                ._bda = _helloTriangleGeometry->GetMeshBufferInfo ()._bdaStream0
-            };
-
-            vkCmdPushConstants ( commandBuffer,
-                _helloTriangleProgram->GetPipelineLayout (),
-                VK_SHADER_STAGE_VERTEX_BIT,
-                0U,
-                sizeof ( HelloTriangleProgram::PushConstants ),
-                &geometry
-            );
-
-            vkCmdDraw ( commandBuffer, _helloTriangleGeometry->GetVertexCount (), 1U, 0U, 0U );
-        }
-
-        vkCmdEndRendering ( commandBuffer );
-
-        _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        _barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        _barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        constexpr VkPipelineStageFlags dstStages = AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT ) |
-            AV_VK_FLAG ( VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
-
-        vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            dstStages,
-            VK_DEPENDENCY_BY_REGION_BIT,
-            0U,
-            nullptr,
-            0U,
-            nullptr,
-            1U,
-            &_barrier
-        );
-    }
-
-    _exposurePass.Execute ( commandBuffer, deltaTime, resourceHeap );
+    _exposurePass.Execute ( commandBuffer, deltaTime );
 
     {
         AV_VULKAN_GROUP ( commandBuffer, "Present" )
         _presentRenderPass.Begin ( renderer, commandBuffer );
-        _toneMapper.Execute ( commandBuffer, resourceHeap );
 
-        if ( !_uiPass.Execute ( commandBuffer, commandBufferIndex ) ) [[unlikely]]
+        if ( !_workspace.HasGizmo () )
+        {
+            _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
+        }
+        else
+        {
+            _toneMapper.Execute ( commandBuffer, _workspace.GetOutlineBlurX () );
+            pbr::SwapchainInfo const info = _presentRenderPass.GetSwapchainInfo ( renderer );
+            _presentRenderPass.Pause ( commandBuffer );
+            _workspace.DrawGizmo ( commandBuffer, info );
+            _presentRenderPass.Continue ( commandBuffer, info._image, info._view );
+        }
+
+        if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]
         {
             AV_ASSERT ( false )
             return;
@@ -905,9 +1262,8 @@ void RenderSession::OnRenderFrame () noexcept
 
         case VK_SUBOPTIMAL_KHR:
             [[fallthrough]];
-
         case VK_ERROR_OUT_OF_DATE_KHR:
-            NotifyRecreateSwapchain ();
+            NotifyRecreateSwapchain ( messageQueue );
         return;
 
         default:
@@ -922,69 +1278,20 @@ void RenderSession::OnRenderFrame () noexcept
 
     GX_ENABLE_WARNING ( 4061 )
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::FrameComplete,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
 }
 
-void RenderSession::OnShutdown ( Message &&refund ) noexcept
+void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
 
     // All existing events should be processed first.
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
 
-    std::optional<Message::SerialNumber> lastRefund {};
+    _enqueueHandle = &MessageQueue::EnqueueFront;
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
 
-    while ( _uiElements )
-    {
-        AV_TRACE ( "Event loop" )
-        Message message = _messageQueue.DequeueBegin ( lastRefund );
-
-        GX_DISABLE_WARNING ( 4061 )
-
-        switch ( message._type )
-        {
-            case eMessageType::RunEventLoop:
-            case eMessageType::Shutdown:
-                // All existing events should be processed first.
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
-            break;
-
-            case eMessageType::UIAppendChildElement:
-                OnUIAppendChildElement ( std::move ( message ) );
-            break;
-
-            case eMessageType::UIDeleteElement:
-                OnUIDeleteElement ( std::move ( message ) );
-            break;
-
-            case eMessageType::UIElementCreated:
-                OnUIElementCreated ();
-            break;
-
-            case eMessageType::UIPrependChildElement:
-                OnUIPrependChildElement ( std::move ( message ) );
-            break;
-
-            case eMessageType::UISetText:
-                OnUISetText ( std::move ( message ) );
-            break;
-
-            default:
-                lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
-            break;
-        }
-
-        GX_ENABLE_WARNING ( 4061 )
-    }
-
-    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( _renderer.GetQueue () ),
+    bool const result = android_vulkan::Renderer::CheckVkResult ( vkQueueWaitIdle ( renderer.GetQueue () ),
         "editor::RenderSession::OnShutdown",
         "Can't wait queue idle"
     );
@@ -992,51 +1299,148 @@ void RenderSession::OnShutdown ( Message &&refund ) noexcept
     if ( !result ) [[unlikely]]
         android_vulkan::LogError ( "Render session error. Can't stop." );
 
-    android_vulkan::Renderer &renderer = _renderer;
+    std::optional<Message::SerialNumber> lastRefund {};
+
+    for ( ; ; )
+    {
+        bool const exit = _uiElements |
+            _programStorage._count |
+            _meshStorage._count |
+            _streamBufferStorage._count |
+            _texture2DStorage._count;
+
+        if ( !exit ) [[unlikely]]
+            break;
+
+        AV_TRACE ( "Event loop" )
+        Message message = messageQueue.DequeueBegin ( lastRefund );
+
+        GX_DISABLE_WARNING ( 4061 )
+
+        switch ( message._type )
+        {
+            case eMessageType::RunEventLoop:
+                [[fallthrough]];
+            case eMessageType::Shutdown:
+                // All existing events should be processed first.
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Back );
+                DestroyGPUBuffers ( messageQueue, _writingCommandInfo );
+                DestroyPrograms ( messageQueue, _writingCommandInfo );
+                DestroyMeshes ( messageQueue, _writingCommandInfo );
+                DestroyStreamBuffers ( messageQueue, _writingCommandInfo );
+
+                DestroyTexture2DInstances ( messageQueue,
+                    std::exchange ( _writingCommandInfo, ( _writingCommandInfo + 1U ) % pbr::FIF_COUNT )
+                );
+            break;
+
+            case eMessageType::DestroyGPUBuffer:
+                OnDestroyGPUBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyMesh:
+                OnDestroyMesh ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyProgram:
+                OnDestroyProgram ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyStreamBuffer:
+                OnDestroyStreamBuffer ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::DestroyTexture2D:
+                OnDestroyTexture2D ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::InvokeRenderSession:
+                OnInvokeRenderSession ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UIAppendChildElement:
+                OnUIAppendChildElement ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UIDeleteElement:
+                OnUIDeleteElement ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UIElementCreated:
+                OnUIElementCreated ( messageQueue );
+            break;
+
+            case eMessageType::UIPrependChildElement:
+                OnUIPrependChildElement ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UISetText:
+                OnUISetText ( messageQueue, std::move ( message ) );
+            break;
+
+            default:
+                lastRefund = message._serialNumber;
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+            break;
+        }
+
+        GX_ENABLE_WARNING ( 4061 )
+    }
+
     VkDevice device = renderer.GetDevice ();
     FreeCommandBuffers ( device );
 
-    if ( _helloTriangleProgram ) [[likely]]
-    {
-        _helloTriangleProgram->Destroy ( device );
-        _helloTriangleProgram.reset ();
-    }
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
-    if ( _helloTriangleGeometry ) [[likely]]
-    {
-        _helloTriangleGeometry->FreeResources ( renderer );
-        _helloTriangleGeometry.reset ();
-    }
+    if ( _albedoRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _albedoRenderTargetIdx, std::nullopt ) );
 
-    if ( _renderTargetIdx ) [[likely]]
-        _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
+    if ( _hdrRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _hdrRenderTargetIdx, std::nullopt ) );
 
-    _renderTarget.FreeResources ( renderer );
+    if ( _normalRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _normalRenderTargetIdx, std::nullopt ) );
+
+    if ( _paramRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _paramRenderTargetIdx, std::nullopt ) );
+
+    if ( _idRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _idRenderTargetIdx, std::nullopt ) );
+
+    if ( _depthRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _depthRenderTargetIdx, std::nullopt ) );
+
+    _albedoRenderTarget.FreeResources ( renderer );
+    _hdrRenderTarget.FreeResources ( renderer );
+    _normalRenderTarget.FreeResources ( renderer );
+    _paramRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
+    _depthRenderTarget.FreeResources ( renderer );
 
     _uiPass.OnSwapchainDestroyed ();
     _uiPass.OnDestroyDevice ( renderer );
 
-    _presentRenderPass.OnDestroyDevice ( device );
-    _exposurePass.Destroy ( renderer, _resourceHeap );
+    _presentRenderPass.OnDestroyDevice ( device, resourceHeap );
+    _exposurePass.Destroy ( renderer, resourceHeap );
     _toneMapper.Destroy ( device );
-    _resourceHeap.Destroy ( renderer );
+    resourceHeap.Destroy ( renderer );
 
-    _messageQueue.EnqueueFront (
-        Message
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _programStorage = {};
+    _meshStorage = {};
+    _streamBufferStorage = {};
+    _texture2DStorage = {};
+
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
-void RenderSession::OnSwapchainCreated () noexcept
+void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
 {
-    _messageQueue.DequeueEnd ();
-    android_vulkan::Renderer &renderer = _renderer;
+    AV_TRACE ( "Swapchain created" )
+    messageQueue.DequeueEnd ();
+    android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
+    pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
 
-    if ( !_presentRenderPass.OnSwapchainCreated ( renderer ) ) [[unlikely]]
+    if ( !_presentRenderPass.OnSwapchainCreated ( renderer, resourceHeap ) ) [[unlikely]]
     {
          AV_ASSERT ( false )
         return;
@@ -1056,21 +1460,42 @@ void RenderSession::OnSwapchainCreated () noexcept
         .maxDepth = 1.0F
     };
 
-    if ( _renderTargetIdx ) [[likely]]
-        _resourceHeap.UnregisterResource ( std::exchange ( _renderTargetIdx, 0U ) );
+    if ( _albedoRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _albedoRenderTargetIdx, std::nullopt ) );
 
-    _renderTarget.FreeResources ( renderer );
+    if ( _hdrRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _hdrRenderTargetIdx, std::nullopt ) );
 
-    if ( !CreateRenderTargetImage ( resolution ) ) [[unlikely]]
+    if ( _normalRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _normalRenderTargetIdx, std::nullopt ) );
+
+    if ( _paramRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _paramRenderTargetIdx, std::nullopt ) );
+
+    if ( _idRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _idRenderTargetIdx, std::nullopt ) );
+
+    if ( _depthRenderTargetIdx ) [[likely]]
+        resourceHeap.UnregisterResource ( *std::exchange ( _depthRenderTargetIdx, std::nullopt ) );
+
+    _albedoRenderTarget.FreeResources ( renderer );
+    _hdrRenderTarget.FreeResources ( renderer );
+    _normalRenderTarget.FreeResources ( renderer );
+    _paramRenderTarget.FreeResources ( renderer );
+    _idRenderTarget.FreeResources ( renderer );
+    _depthRenderTarget.FreeResources ( renderer );
+
+    if ( !CreateRenderTargetImages ( resolution ) ) [[unlikely]]
     {
         AV_ASSERT ( false )
         return;
     }
 
     _uiPass.OnSwapchainDestroyed ();
+    _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
 
     bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
-        _toneMapper.SetTarget ( renderer, _renderTargetIdx, _exposurePass.GetExposure () );
+        _toneMapper.SetTarget ( renderer, *_hdrRenderTargetIdx, _exposurePass.GetExposure () );
 
     if ( result ) [[likely]]
         return;
@@ -1079,94 +1504,84 @@ void RenderSession::OnSwapchainCreated () noexcept
     AV_ASSERT ( false )
 }
 
-void RenderSession::OnUIAppendChildElement ( Message &&message ) noexcept
+void RenderSession::OnUIAppendChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI append child element" )
-    _messageQueue.DequeueEnd ();
-
-
-    auto* event = static_cast<AppendUIChildElementEvent*> ( message._params );
-    event->Action ();
-    delete event;
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::OnUIDeleteElement ( Message &&message ) noexcept
+void RenderSession::OnUIDeleteElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI delete element" )
-    _messageQueue.DequeueEnd ();
-
-    delete static_cast<pbr::UIElement*> ( message._params );
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
     --_uiElements;
 }
 
-void RenderSession::OnUIElementCreated () noexcept
+void RenderSession::OnUIElementCreated ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "UI element created" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
     ++_uiElements;
 }
 
-void RenderSession::OnUIHideElement ( Message &&message ) noexcept
+void RenderSession::OnUIHideElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI hide element" )
-    _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::UIElement*> ( message._params )->Hide ();
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::OnUIShowElement ( Message &&message ) noexcept
+void RenderSession::OnUIShowElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI show element" )
-    _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::UIElement*> ( message._params )->Show ();
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::OnUIPrependChildElement ( Message &&message ) noexcept
+void RenderSession::OnUIPrependChildElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI prepend child element" )
-    _messageQueue.DequeueEnd ();
-
-    auto* event = static_cast<PrependUIChildElementEvent*> ( message._params );
-    event->Action ();
-    delete event;
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::OnUISetText ( Message &&message ) noexcept
+void RenderSession::OnUISetText ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI set text" )
-    _messageQueue.DequeueEnd ();
-
-    auto &event = *static_cast<SetTextEvent*> ( message._params );
-    event.Execute ();
-    SetTextEvent::Destroy ( event );
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::OnUIUpdateElement ( Message &&message ) noexcept
+void RenderSession::OnUIUpdateElement ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "UI update element" )
-    _messageQueue.DequeueEnd ();
-
-    static_cast<pbr::DIVUIElement*> ( message._params )->Update ();
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
 }
 
-void RenderSession::NotifyRecreateSwapchain () const noexcept
+void RenderSession::OnUploadMesh ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::RecreateSwapchain,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    AV_TRACE ( "Upload mesh" )
+    messageQueue.DequeueEnd ();
+    _meshStorage._uploadQueue.push_back ( std::move ( *static_cast<MeshUploadInfo*> ( message._action () ) ) );
+}
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::FrameComplete,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
+void RenderSession::OnUploadTexture2D ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Upload texture 2D" )
+    messageQueue.DequeueEnd ();
+
+    _texture2DStorage._uploadQueue.push_back (
+        std::move ( *static_cast<Texture2DUploadInfo*> ( message._action () ) )
     );
+}
+
+void RenderSession::NotifyRecreateSwapchain ( MessageQueue &messageQueue ) const noexcept
+{
+    messageQueue.EnqueueBack ( Message ( eMessageType::RecreateSwapchain ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::FrameComplete ) );
 }
 
 bool RenderSession::PrepareCommandBuffer ( VkDevice device, CommandInfo &info ) noexcept

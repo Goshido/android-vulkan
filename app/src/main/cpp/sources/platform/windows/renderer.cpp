@@ -21,79 +21,6 @@ constexpr Renderer::VulkanVersion VERSION
     ._patch = 0U,
 };
 
-constexpr char const INDENT_2[] = "        ";
-
-//----------------------------------------------------------------------------------------------------------------------
-
-[[nodiscard]] bool CheckExtensionDescriptorBuffer ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
-) noexcept
-{
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME ) ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceDescriptorBufferFeaturesEXT hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
-        .pNext = nullptr,
-        .descriptorBuffer = VK_FALSE,
-        .descriptorBufferCaptureReplay = VK_FALSE,
-        .descriptorBufferImageLayoutIgnored = VK_FALSE,
-        .descriptorBufferPushDescriptors = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
-
-    if ( hardwareSupport.descriptorBuffer ) [[likely]]
-    {
-        LogInfo ( "%sOK: descriptorBuffer", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: descriptorBuffer", INDENT_2 );
-    return false;
-}
-
-[[nodiscard]] bool CheckExtensionMutableDescriptorType ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
-) noexcept
-{
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME ) ) [[unlikely]]
-        return false;
-
-    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT hardwareSupport
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
-        .pNext = nullptr,
-        .mutableDescriptorType = VK_FALSE
-    };
-
-    VkPhysicalDeviceFeatures2 probe
-    {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &hardwareSupport,
-        .features {}
-    };
-
-    vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
-
-    if ( hardwareSupport.mutableDescriptorType ) [[likely]]
-    {
-        LogInfo ( "%sOK: mutableDescriptorType", INDENT_2 );
-        return true;
-    }
-
-    LogError ( "%sFAIL: mutableDescriptorType", INDENT_2 );
-    return false;
-}
-
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -247,16 +174,321 @@ bool Renderer::SelectTargetHardware ( std::string_view const &userGPU ) noexcept
     return false;
 }
 
+#ifdef AV_ENABLE_VVL
+
+void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateInfo,
+    VkLayerSettingsCreateInfoEXT &vvlSettings,
+    VkValidationFeaturesEXT &validationInfo,
+    VkDebugUtilsMessengerCreateInfoEXT const &debugCallback
+) noexcept
+{
+    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
+    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
+    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
+    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr static VkBool32 enable = VK_TRUE;
+    constexpr static VkBool32 disable = VK_FALSE;
+
+    // [2026/06/25] Spencer Fricke - LunarG told that GPU-AV and GPU Dump should be never used togather:
+    // "I think it is honestly I never tested with both GPU-AV and GPU Dump, the original idea is GPU Dump is the
+    // light weight version of GPU AV that might give false positives (if you are doing crazy stuff)
+    // but catch the "normal 90%" of stuff"
+
+    // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
+    constexpr static VkLayerSettingEXT const vvlChecks[] =
+    {
+
+#ifdef AV_ENABLE_GPU_DUMP
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_descriptors",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_copy_memory_indirect",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_generated_commands",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_to_stdout",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpu_dump_device_copy",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_enable",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+
+#else
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_enable",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+
+#endif // AV_ENABLE_GPU_DUMP
+
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_safe_mode",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shader_instrumentation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_descriptor_checks",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffer_address_oob",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_validate_trace_ray",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_mesh_shading",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_post_process_descriptor_indexing",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_vertex_attribute_fetch_oob",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shader_sanitizer",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_shared_memory_data_race",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_max_indices_count",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_select_instrumented_shaders",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffers_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_draws_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_dispatches_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_indirect_trace_rays_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_buffer_copies",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_copy_memory_indirect",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_index_buffers",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_acceleration_structures_builds",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_ray_tracing_buffers_consistency",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &disable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_full_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_record_time_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_shader_accesses_heuristic",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_load_op_after_store_op_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_message_extra_properties",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        }
+    };
+
+    vvlSettings =
+    {
+        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
+        .pNext = &debugCallback,
+        .settingCount = static_cast<uint32_t> ( std::size( vvlChecks ) ),
+        .pSettings = vvlChecks
+    };
+
+    constexpr static VkValidationFeatureEnableEXT const features[] =
+    {
+
+#ifndef AV_ENABLE_GPU_DUMP
+
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+
+#endif // AV_ENABLE_GPU_DUMP
+
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    validationInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = &vvlSettings,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pEnabledValidationFeatures = features,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
+    instanceCreateInfo.pNext = &validationInfo;
+    instanceCreateInfo.enabledLayerCount = 1U;
+    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+}
+
+#endif // AV_ENABLE_VVL
+
 std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 {
     constexpr static char const* const extensions[] =
     {
 
-#if defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_RENDERDOC )
+#if defined ( AV_ENABLE_NSIGHT ) || defined ( AV_ENABLE_AFTERMATH ) || defined ( AV_ENABLE_RENDERDOC )
 
         VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
 
-#endif // AV_ENABLE_NSIGHT || AV_ENABLE_RENDERDOC
+#endif // AV_ENABLE_NSIGHT || AV_ENABLE_AFTERMATH || AV_ENABLE_RENDERDOC
 
         VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
         VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME,
@@ -286,8 +518,6 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 
 bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-    LogInfo ( ">>> Checking required device features..." );
-
     VkPhysicalDeviceVulkan11Features features11
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
@@ -407,10 +637,27 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
         .pushDescriptor = VK_FALSE
     };
 
+    VkPhysicalDeviceDescriptorBufferFeaturesEXT descriptorBufferCaps
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT,
+        .pNext = &features14,
+        .descriptorBuffer = VK_FALSE,
+        .descriptorBufferCaptureReplay = VK_FALSE,
+        .descriptorBufferImageLayoutIgnored = VK_FALSE,
+        .descriptorBufferPushDescriptors = VK_FALSE
+    };
+
+    VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT mutableTypeCaps
+    {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT,
+        .pNext = &descriptorBufferCaps,
+        .mutableDescriptorType = VK_FALSE
+    };
+
     VkPhysicalDeviceFeatures2 probe
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-        .pNext = &features14,
+        .pNext = &mutableTypeCaps,
         .features {}
     };
 
@@ -420,56 +667,112 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
+    if ( _initLogs )
+        LogInfo ( ">>> Checking required device features..." );
+
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionDescriptorBuffer ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionMutableDescriptorType ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
+    return AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_EXT_MUTABLE_DESCRIPTOR_TYPE_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, _initLogs ) ) &
 
 #ifdef AV_ENABLE_NSIGHT
 
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME ) ) &
+        AV_BITWISE (
+            CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, _initLogs )
+        ) &
 
 #endif // AV_ENABLE_NSIGHT
 
-        AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy" ) ) &
-        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) ) &
-        AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64" ) ) &
+        AV_BITWISE ( CheckFeature ( features.fragmentStoresAndAtomics, "fragmentStoresAndAtomics", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.samplerAnisotropy, "samplerAnisotropy", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderInt64, "shaderInt64", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
-            "shaderSampledImageArrayDynamicIndexing" ) ) &
+        AV_BITWISE ( CheckFeature ( features.shaderStorageImageWriteWithoutFormat,
+            "shaderStorageImageWriteWithoutFormat",
+            _initLogs )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderStorageBufferArrayDynamicIndexing,
-            "shaderStorageBufferArrayDynamicIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderSampledImageArrayDynamicIndexing,
+                "shaderSampledImageArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.shaderStorageImageArrayDynamicIndexing,
-            "shaderStorageImageArrayDynamicIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderStorageBufferArrayDynamicIndexing,
+                "shaderStorageBufferArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features.shaderStorageImageArrayDynamicIndexing,
+                "shaderStorageImageArrayDynamicIndexing",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) ) &
+        AV_BITWISE ( CheckFeature ( features.textureCompressionBC, "textureCompressionBC", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.descriptorBindingPartiallyBound, "descriptorBindingPartiallyBound" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.descriptorIndexing, "descriptorIndexing" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.runtimeDescriptorArray, "runtimeDescriptorArray" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.separateDepthStencilLayouts, "separateDepthStencilLayouts" ) ) &
-        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16" ) ) &
+        // 2026/09/10 It's needed because DXC bug:
+        // https://github.com/microsoft/DirectXShaderCompiler/issues/8895
+        AV_BITWISE ( CheckFeature ( features11.storagePushConstant16, "storagePushConstant16", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderSampledImageArrayNonUniformIndexing,
-            "shaderSampledImageArrayNonUniformIndexing" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.bufferDeviceAddress, "bufferDeviceAddress", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderStorageBufferArrayNonUniformIndexing,
-            "shaderStorageBufferArrayNonUniformIndexing" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.descriptorBindingPartiallyBound,
+                "descriptorBindingPartiallyBound",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
-            "shaderStorageImageArrayNonUniformIndexing" ) ) &
+        AV_BITWISE ( CheckFeature ( features12.descriptorIndexing, "descriptorIndexing", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.runtimeDescriptorArray, "runtimeDescriptorArray", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.scalarBlockLayout, "scalarBlockLayout", _initLogs ) ) &
 
-        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering" ) ) &
-        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2" ) ) &
+        AV_BITWISE (
+            CheckFeature ( features12.separateDepthStencilLayouts,
+                "separateDepthStencilLayouts",
+                _initLogs
+            )
+        ) &
 
-        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5" ) );
+        AV_BITWISE ( CheckFeature ( features12.shaderBufferInt64Atomics, "shaderBufferInt64Atomics", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features12.shaderFloat16, "shaderFloat16", _initLogs ) ) &
+
+        AV_BITWISE (
+            CheckFeature ( features12.shaderSampledImageArrayNonUniformIndexing,
+                "shaderSampledImageArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE (
+            CheckFeature ( features12.shaderStorageBufferArrayNonUniformIndexing,
+                "shaderStorageBufferArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE (
+            CheckFeature ( features12.shaderStorageImageArrayNonUniformIndexing,
+                "shaderStorageImageArrayNonUniformIndexing",
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "dynamicRendering", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features13.dynamicRendering, "synchronization2", _initLogs ) ) &
+
+        AV_BITWISE ( CheckFeature ( features14.maintenance5, "maintenance5", _initLogs ) ) &
+
+        AV_BITWISE ( CheckFeature ( descriptorBufferCaps.descriptorBuffer, "descriptor buffer", _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( mutableTypeCaps.mutableDescriptorType, "mutable descriptor type", _initLogs ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept
@@ -554,6 +857,7 @@ std::span<std::pair<VkFormat, char const* const> const> Renderer::GetRequiredFor
         { VK_FORMAT_D32_SFLOAT, "VK_FORMAT_D32_SFLOAT" },
         { VK_FORMAT_R16_SFLOAT, "VK_FORMAT_R16_SFLOAT" },
         { VK_FORMAT_R16G16B16A16_SFLOAT, "VK_FORMAT_R16G16B16A16_SFLOAT" },
+        { VK_FORMAT_R32G32_UINT, "VK_FORMAT_R32G32_UINT" },
         { VK_FORMAT_R8_SRGB, "VK_FORMAT_R8_SRGB" },
         { VK_FORMAT_R8_UNORM, "VK_FORMAT_R8_UNORM" },
         { VK_FORMAT_R8G8B8A8_SRGB, "VK_FORMAT_R8G8B8A8_SRGB" },
@@ -590,7 +894,11 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .pNext = const_cast<VkPhysicalDeviceDescriptorBufferFeaturesEXT*> ( &descriptorBufferFeatures ),
         .storageBuffer16BitAccess = VK_FALSE,
         .uniformAndStorageBuffer16BitAccess = VK_FALSE,
-        .storagePushConstant16 = VK_FALSE,
+
+        // 2026/09/10 It's needed because DXC issue:
+        // https://github.com/microsoft/DirectXShaderCompiler/issues/8895
+        .storagePushConstant16 = VK_TRUE,
+
         .storageInputOutput16 = VK_FALSE,
         .multiview = VK_TRUE,
         .multiviewGeometryShader = VK_FALSE,
@@ -611,7 +919,7 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
         .storageBuffer8BitAccess = VK_FALSE,
         .uniformAndStorageBuffer8BitAccess = VK_FALSE,
         .storagePushConstant8 = VK_FALSE,
-        .shaderBufferInt64Atomics = VK_FALSE,
+        .shaderBufferInt64Atomics = VK_TRUE,
         .shaderSharedInt64Atomics = VK_FALSE,
         .shaderFloat16 = VK_TRUE,
         .shaderInt8 = VK_FALSE,
@@ -739,13 +1047,16 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
             .occlusionQueryPrecise = VK_FALSE,
             .pipelineStatisticsQuery = VK_FALSE,
             .vertexPipelineStoresAndAtomics = VK_FALSE,
-            .fragmentStoresAndAtomics = VK_FALSE,
+            .fragmentStoresAndAtomics = VK_TRUE,
             .shaderTessellationAndGeometryPointSize = VK_FALSE,
             .shaderImageGatherExtended = VK_FALSE,
             .shaderStorageImageExtendedFormats = VK_FALSE,
             .shaderStorageImageMultisample = VK_FALSE,
             .shaderStorageImageReadWithoutFormat = VK_FALSE,
-            .shaderStorageImageWriteWithoutFormat = VK_FALSE,
+
+            // It's needed for HLSL resource descriptor heap patterns with RWTexture access.
+            .shaderStorageImageWriteWithoutFormat = VK_TRUE,
+
             .shaderUniformBufferArrayDynamicIndexing = VK_FALSE,
             .shaderSampledImageArrayDynamicIndexing = VK_TRUE,
             .shaderStorageBufferArrayDynamicIndexing = VK_TRUE,
@@ -775,6 +1086,14 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
 Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
 {
     return VERSION;
+}
+
+VkImageUsageFlags Renderer::GetSwapchainUsage () noexcept
+{
+    constexpr VkImageUsageFlags usage = AV_VK_FLAG ( VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ) |
+        AV_VK_FLAG ( VK_IMAGE_USAGE_STORAGE_BIT );
+
+    return usage;
 }
 
 } // namespace android_vulkan

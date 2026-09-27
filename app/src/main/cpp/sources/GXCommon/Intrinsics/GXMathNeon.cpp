@@ -1,4 +1,4 @@
-// version 1.16
+// version 1.18
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -212,6 +212,16 @@ namespace {
     vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXFloat scale ) noexcept
+{
+    vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( a._data ), scale ) );
+}
+
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept
+{
+    vst1q_f32 ( _data, vmulq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
+}
+
 [[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const noexcept
 {
     return vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data ), vld1q_f32 ( other._data ) ) );
@@ -301,7 +311,8 @@ namespace {
     constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
 
     float32_t tmp[ 4U ];
-    vst1q_f32 ( tmp, vmulq_n_f32 ( vld1q_f32 ( _data ), convertFactor ) );
+    // [2026/03/22] Math round works much closer to original color picker than simple floor.
+    vst1q_f32 ( tmp, vfmaq_n_f32 ( vdupq_n_f32 ( 0.5F ), vld1q_f32 ( _data ), convertFactor ) );
 
     return
     {

@@ -8,7 +8,7 @@
 
 ## <a id="brief">Brief</a>
 
-The project supports integration with [_RenderDoc v1.41_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
+The project supports integration with [_RenderDoc v1.46_](https://renderdoc.org/). But there is a catch. This tool implies additional limitations to hardware features:
 
 - `VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`
 - `VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT`
@@ -63,40 +63,9 @@ Output file is 0 bytes
 
 This error occurred whenever attempting to edit a shader in _RenderDoc_. This is because _RenderDoc_ uses `QStandardPaths::findExecutable` to locate all tools during initialization. At that time, _VulkanSDK 1.4.328.1_ was installed. The SDK's `dxc.exe` didn't yet know about the `6_10` shader model.
 
-The solution is to change the `PATH` environment variable. You need to specify the directory where `dxc.exe` is located.
+The solution is to explicitly set custom `dxc` location using _Settings → Shader Viewer → dxc(SPIR-V)_.
 
-Here's a step-by-step guide on how to do this with minimal system intervention:
-
-1. Create _PowerShell_ script with following code:
-
-```powershell
-# Forcing RenderDoc to use custom dxc.exe
-$env:Path = "$env:ANDROID_VULKAN_DXC_ROOT;$env:Path"
-
-Push-Location <path to RenderDoc's directory>
-
-# For example:
-# Push-Location "D:\Programs\RenderDoc"
-
-.\qrenderdoc.exe
-```
-
-Note that `ANDROID_VULKAN_DXC_ROOT` is used. Here is the full description of that variable: [link](shader-compilation.md#automation)
-
-2. Create _Windows_ shortcut with the following `Type the location of the item`:
-
-```txt
-<absolute path to pwsh.exe> <absolute path to script above>
-
-For example:
-D:\Programs\PowerShell\7\pwsh.exe D:\Development\tools\start-good-renderdoc.ps1
-```
-
-3. Use that shortcut to run _RenderDoc_ with latest _DXC_ build.
-
-<img src="./images/renderdoc-custom-dxc.png"/>
-
-4. That's it!
+That's it!
 
 [↬ table of content ⇧](#table-of-content)
 

@@ -150,8 +150,8 @@ bool SkinPool::Init ( VkDevice device ) noexcept
     {
         .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
         .pNext = nullptr,
-        .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-        .dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+        .srcAccessMask = AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ),
+        .dstAccessMask = AV_VK_FLAG ( VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT ) | AV_VK_FLAG ( VK_ACCESS_SHADER_WRITE_BIT ),
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .buffer = VK_NULL_HANDLE,
@@ -278,9 +278,12 @@ void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
 
     VkBufferMemoryBarrier const* barriers = _barriers.data ();
 
+    constexpr VkPipelineStageFlags stages = AV_VK_FLAG ( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT ) |
+        AV_VK_FLAG ( VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT );
+
     vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+        stages,
+        stages,
         0U,
         0U,
         nullptr,
@@ -293,8 +296,8 @@ void SkinPool::SubmitPipelineBarriers ( VkCommandBuffer commandBuffer ) noexcept
     if ( more > 0U ) [[unlikely]]
     {
         vkCmdPipelineBarrier ( commandBuffer,
-            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-            VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+            stages,
+            stages,
             0U,
             0U,
             nullptr,

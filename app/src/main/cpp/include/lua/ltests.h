@@ -14,6 +14,7 @@
 /* test Lua with compatibility code */
 #define LUA_COMPAT_MATHLIB
 #undef LUA_COMPAT_GLOBAL
+#define LUA_COMPAT_GLOBAL	0
 
 
 #define LUA_DEBUG
@@ -142,12 +143,7 @@ LUA_API void *debug_realloc (void *ud, void *block,
 #define STRCACHE_N	23
 #define STRCACHE_M	5
 
-
-/*
-** This one is not compatible with tests for opcode optimizations,
-** as it blocks some optimizations
-#define MAXINDEXRK	0
-*/
+#define MAXINDEXRK	1
 
 
 /*

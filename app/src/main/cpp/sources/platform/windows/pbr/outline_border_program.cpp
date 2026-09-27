@@ -1,0 +1,103 @@
+#include <precompiled_headers.hpp>
+#include <file.hpp>
+#include <platform/windows/pbr/outline_border.inc>
+#include <platform/windows/pbr/outline_border_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
+
+
+namespace pbr {
+
+namespace {
+
+constexpr char const* SHADER = "shaders/windows/outline_border.cs.spv";
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+OutlineBorderProgram::OutlineBorderProgram () noexcept:
+    ComputeProgram ( sizeof ( OutlineBorderProgram::PushConstants ) )
+{
+    // NOTHING
+}
+
+bool OutlineBorderProgram::Init ( VkDevice device, SpecializationData /*specializationData*/ ) noexcept
+{
+    VkShaderModuleCreateInfo moduleInfo {};
+    std::vector<uint8_t> cs{};
+
+    VkComputePipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stage = InitShaderInfo ( cs, moduleInfo, nullptr, nullptr ),
+        .layout = UniversalPipelineLayout::GetPipelineLayout (),
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreateComputePipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
+        "pbr::OutlineBorderProgram::Init",
+        "Can't create pipeline"
+    );
+
+    if ( !result ) [[unlikely]]
+        return false;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipeline, VK_OBJECT_TYPE_PIPELINE, "Outline border" )
+    return true;
+}
+
+void OutlineBorderProgram::Destroy ( VkDevice device ) noexcept
+{
+    ComputeProgram::Destroy ( device );
+}
+
+VkExtent3D OutlineBorderProgram::DispatchParams ( VkExtent2D const &resolution ) noexcept
+{
+    return
+    {
+        .width = ( resolution.width + THREADS_X ) / THREADS_X,
+        .height = ( resolution.height + THREADS_Y ) / THREADS_Y,
+        .depth = 1U
+    };
+}
+
+VkPipelineShaderStageCreateInfo OutlineBorderProgram::InitShaderInfo ( std::vector<uint8_t> &cs,
+    VkShaderModuleCreateInfo &moduleInfo,
+    SpecializationData /*specializationData*/,
+    VkSpecializationInfo* /*specializationInfo*/
+) noexcept
+{
+    android_vulkan::File csFile ( SHADER );
+
+    if ( !csFile.LoadContent () ) [[unlikely]]
+        return {};
+
+    cs = std::move ( csFile.GetContent () );
+
+    moduleInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .codeSize = cs.size (),
+        .pCode = reinterpret_cast<uint32_t const*> ( cs.data () )
+    };
+
+    return
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = &moduleInfo,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = VK_NULL_HANDLE,
+        .pName = COMPUTE_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
+}
+
+} // namespace pbr

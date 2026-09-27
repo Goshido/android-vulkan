@@ -4,8 +4,19 @@
 
 namespace pbr {
 
-ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    ComputeProgramBase ( name, pushConstantSize )
+void ComputeProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept
+{
+    vkCmdPushConstants ( commandBuffer,
+        _pipelineLayout,
+        VK_SHADER_STAGE_COMPUTE_BIT,
+        0U,
+        _pushConstantSize,
+        constants
+    );
+}
+
+ComputeProgram::ComputeProgram ( size_t pushConstantSize ) noexcept:
+    ComputeProgramBase ( pushConstantSize )
 {
     // NOTHING
 }
@@ -13,6 +24,10 @@ ComputeProgram::ComputeProgram ( std::string_view name, size_t pushConstantSize 
 void ComputeProgram::Destroy ( VkDevice device ) noexcept
 {
     ComputeProgramBase::Destroy ( device );
+
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyPipelineLayout ( device, std::exchange ( _pipelineLayout, VK_NULL_HANDLE ), nullptr );
+
     DestroyShaderModule ( device );
 }
 

@@ -39,7 +39,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{540b70e1-6e86-4394-a22e-501bf6548048}</ProjectGuid>
     <RootNamespace>editor</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.28000.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -251,7 +251,7 @@
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;_CRT_SECURE_NO_WARNINGS;AV_ENABLE_AFTERMATH;AV_FREETYPE;AV_NATIVE_MODE_LANDSCAPE;VK_NO_PROTOTYPES;VK_USE_PLATFORM_WIN32_KHR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -721,6 +721,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\sampler.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\sampler.obj</ObjectFileName>
@@ -832,6 +842,37 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\font_storage.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\font_storage.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gbuffer_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\gbuffer_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_compose_program.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_prepass_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\gizmo_prepass_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gpu_buffer.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\gpu_buffer.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\graphics_program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
@@ -841,6 +882,76 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\graphics_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\id_collect_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\id_collect_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\id_compress_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\id_compress_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\opaque_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_with_id_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\opaque_with_id_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_blur_x_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\outline_blur_x_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_border_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\outline_border_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_mask_program.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\outline_mask_program.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\present_pass.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\present_pass.obj</ObjectFileName>
@@ -862,15 +973,15 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\resource_heap_descriptor_set_layout.obj</ObjectFileName>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\stream_buffer.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\stream_buffer.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\text_ui_element.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\text_ui_element.obj</ObjectFileName>
@@ -921,6 +1032,16 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\ui_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\ui_program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\ui_program.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\universal_pipeline_layout.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\platform\windows\pbr\universal_pipeline_layout.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\renderer.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\platform\windows\renderer.obj</ObjectFileName>
@@ -1030,35 +1151,80 @@
     </ClCompile>
     <ClCompile Include="src\action.cpp" />
     <ClCompile Include="src\actor.cpp" />
-    <ClCompile Include="src\append_ui_child_element_event.cpp" />
     <ClCompile Include="src\camera_component.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\crash_dump.cpp" />
+    <ClCompile Include="src\cross_like_tool.cpp" />
+    <ClCompile Include="src\gizmo_box_collider.cpp" />
+    <ClCompile Include="src\gizmo_cylinder_collider.cpp" />
     <ClCompile Include="src\div_ui_element.cpp" />
     <ClCompile Include="src\editor.cpp" />
-    <ClCompile Include="src\hello_triangle_program.cpp" />
+    <ClCompile Include="src\font_storage.cpp" />
+    <ClCompile Include="src\gizmo_node.cpp" />
+    <ClCompile Include="src\gizmo_ring_collider.cpp" />
+    <ClCompile Include="src\gizmo_sphere_collider.cpp" />
     <ClCompile Include="src\history.cpp" />
+    <ClCompile Include="src\hotkey.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\move_tool.cpp" />
+    <ClCompile Include="src\outline_mesh_node.cpp" />
+    <ClCompile Include="src\program_info.cpp" />
+    <ClCompile Include="src\resource_heap.cpp" />
+    <ClCompile Include="src\ring_math.cpp" />
+    <ClCompile Include="src\rotate_tool.cpp" />
+    <ClCompile Include="src\scale_tool.cpp" />
+    <ClCompile Include="src\sdf.cpp" />
+    <ClCompile Include="src\sdf_box.cpp" />
+    <ClCompile Include="src\sdf_box_with_flip.cpp" />
+    <ClCompile Include="src\sdf_cone.cpp" />
+    <ClCompile Include="src\sdf_line_segment.cpp" />
+    <ClCompile Include="src\sdf_line_segment_with_flip.cpp" />
+    <ClCompile Include="src\sdf_ring.cpp" />
+    <ClCompile Include="src\sdf_ring_base.cpp" />
+    <ClCompile Include="src\sdf_ring_billboard.cpp" />
+    <ClCompile Include="src\sdf_sphere.cpp" />
+    <ClCompile Include="src\selection.cpp" />
+    <ClCompile Include="src\stream_buffer_info.cpp" />
+    <ClCompile Include="src\texture2D_storage.cpp" />
+    <ClCompile Include="src\io.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />
     <ClCompile Include="src\keys.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\main_window.cpp" />
+    <ClCompile Include="src\mesh_storage.cpp" />
+    <ClCompile Include="src\mesh_upload_info.cpp" />
     <ClCompile Include="src\message_queue.cpp" />
+    <ClCompile Include="src\gbuffer_mesh_node.cpp" />
     <ClCompile Include="src\os_utils.cpp" />
     <ClCompile Include="src\point_light_component.cpp" />
-    <ClCompile Include="src\prepend_ui_child_element_event.cpp" />
+    <ClCompile Include="src\point_light_node.cpp" />
     <ClCompile Include="src\rect.cpp" />
     <ClCompile Include="src\reflection_component.cpp" />
+    <ClCompile Include="src\reflection_probe_global_node.cpp" />
+    <ClCompile Include="src\reflection_probe_local_node.cpp" />
+    <ClCompile Include="src\native_renderer.cpp" />
     <ClCompile Include="src\render_session.cpp" />
     <ClCompile Include="src\rigid_body_component.cpp" />
     <ClCompile Include="src\save_state.cpp" />
     <ClCompile Include="src\script_component.cpp" />
-    <ClCompile Include="src\set_text_event.cpp" />
     <ClCompile Include="src\skeletal_mesh_component.cpp" />
     <ClCompile Include="src\sound_emitter_component.cpp" />
     <ClCompile Include="src\static_mesh_component.cpp" />
+    <ClCompile Include="src\texture2D_upload_info.cpp" />
     <ClCompile Include="src\text_ui_element.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\timer_manager.cpp" />
+    <ClCompile Include="src\tool.cpp" />
+    <ClCompile Include="src\tools\hlsl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="src\transform_component.cpp" />
     <ClCompile Include="src\ui_check_box.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
@@ -1070,7 +1236,10 @@
     <ClCompile Include="src\ui_manager.cpp" />
     <ClCompile Include="src\ui_props.cpp" />
     <ClCompile Include="src\ui_slider.cpp" />
+    <ClCompile Include="src\viewport_widget.cpp" />
     <ClCompile Include="src\widget.cpp" />
+    <ClCompile Include="src\workspace.cpp" />
+    <ClCompile Include="src\workspace_node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\animation.hpp" />
@@ -1093,6 +1262,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\primitive_types.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skeleton.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\android_vulkan_sdk\skin.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\file.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp" />
@@ -1116,6 +1286,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp" />
@@ -1128,20 +1299,40 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\exposure_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\exposure_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\font_storage.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_prepass_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gpu_buffer.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\graphics_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_collect_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\image_ui_element.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">
+      </ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_with_id_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_blur_x_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border_program.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_mask_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\present_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\stream_buffer.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\swapchain_info.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\text_ui_element.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_program.hpp" />
@@ -1149,8 +1340,10 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_pass.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_program.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\ui_vertex_info.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\universal_pipeline_layout.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\renderer.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\scope_quard.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture2D.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\texture_cube.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\trace.hpp" />
@@ -1162,42 +1355,103 @@
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp" />
     <ClInclude Include="include\action.hpp" />
     <ClInclude Include="include\actor.hpp" />
-    <ClInclude Include="include\append_ui_child_element_event.hpp" />
     <ClInclude Include="include\camera_component.hpp" />
+    <ClInclude Include="include\color_data.hpp" />
     <ClInclude Include="include\component.hpp" />
     <ClInclude Include="include\crash_dump.hpp" />
+    <ClInclude Include="include\cross_like_tool.hpp" />
     <ClInclude Include="include\cursor.hpp" />
+    <ClInclude Include="include\gizmo_box_collider.hpp" />
+    <ClInclude Include="include\gizmo_cylinder_collider.hpp" />
     <ClInclude Include="include\div_ui_element.hpp" />
     <ClInclude Include="include\editor.hpp" />
+    <ClInclude Include="include\font_storage.hpp" />
+    <ClInclude Include="include\gizmo_info.hpp" />
+    <ClInclude Include="include\gizmo_node.hpp" />
+    <ClInclude Include="include\gizmo_ring_collider.hpp" />
+    <ClInclude Include="include\gizmo_sphere_collider.hpp" />
     <ClInclude Include="include\glyphs.hpp" />
-    <ClInclude Include="include\hello_triangle_program.hpp" />
-    <ClInclude Include="include\hello_triangle_vertex.hpp" />
     <ClInclude Include="include\history.hpp" />
+    <ClInclude Include="include\hotkey.hpp" />
+    <ClInclude Include="include\model.hpp" />
+    <ClInclude Include="include\move_tool.hpp" />
+    <ClInclude Include="include\outline_mesh_info.hpp" />
+    <ClInclude Include="include\outline_mesh_node.hpp" />
+    <ClInclude Include="include\program_info.hpp" />
+    <ClInclude Include="include\program_ref.hpp" />
+    <ClInclude Include="include\resource_heap.hpp" />
+    <ClInclude Include="include\ring_math.hpp" />
+    <ClInclude Include="include\rotate_tool.hpp" />
+    <ClInclude Include="include\scale_tool.hpp" />
+    <ClInclude Include="include\sdf.hpp" />
+    <ClInclude Include="include\sdf_box.hpp" />
+    <ClInclude Include="include\sdf_box_with_flip.hpp" />
+    <ClInclude Include="include\sdf_cone.hpp" />
+    <ClInclude Include="include\sdf_line_segment.hpp" />
+    <ClInclude Include="include\sdf_line_segment_with_flip.hpp" />
+    <ClInclude Include="include\sdf_palette.hpp" />
+    <ClInclude Include="include\sdf_pixel.hpp" />
+    <ClInclude Include="include\sdf_ring.hpp" />
+    <ClInclude Include="include\sdf_ring_base.hpp" />
+    <ClInclude Include="include\sdf_ring_billboard.hpp" />
+    <ClInclude Include="include\sdf_shape.hpp" />
+    <ClInclude Include="include\sdf_size.hpp" />
+    <ClInclude Include="include\sdf_sphere.hpp" />
+    <ClInclude Include="include\sdf_vertex.hpp" />
+    <ClInclude Include="include\selection.hpp" />
+    <ClInclude Include="include\shading.hpp" />
+    <ClInclude Include="include\texture2D_storage.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
+    <ClInclude Include="include\io.hpp" />
     <ClInclude Include="include\keyboard_key_event.hpp" />
     <ClInclude Include="include\keys.hpp" />
     <ClInclude Include="include\main_window.hpp" />
+    <ClInclude Include="include\mesh_geometry_ref.hpp" />
+    <ClInclude Include="include\gbuffer_mesh_info.hpp" />
+    <ClInclude Include="include\mesh_storage.hpp" />
+    <ClInclude Include="include\mesh_upload_info.hpp" />
     <ClInclude Include="include\message.hpp" />
     <ClInclude Include="include\message_queue.hpp" />
     <ClInclude Include="include\mouse_button_event.hpp" />
     <ClInclude Include="include\mouse_move_event.hpp" />
+    <ClInclude Include="include\gbuffer_mesh_node.hpp" />
     <ClInclude Include="include\os_utils.hpp" />
+    <ClInclude Include="include\pbr_material.hpp" />
     <ClInclude Include="include\point_light_component.hpp" />
-    <ClInclude Include="include\prepend_ui_child_element_event.hpp" />
+    <ClInclude Include="include\point_light_info.hpp" />
+    <ClInclude Include="include\point_light_node.hpp" />
     <ClInclude Include="include\rect.hpp" />
     <ClInclude Include="include\reflection_component.hpp" />
+    <ClInclude Include="include\reflection_probe_global_info.hpp" />
+    <ClInclude Include="include\reflection_probe_global_node.hpp" />
+    <ClInclude Include="include\reflection_probe_local_info.hpp" />
+    <ClInclude Include="include\reflection_probe_local_node.hpp" />
+    <ClInclude Include="include\native_renderer.hpp" />
     <ClInclude Include="include\render_session.hpp" />
     <ClInclude Include="include\rigid_body_component.hpp" />
     <ClInclude Include="include\save_state.hpp" />
     <ClInclude Include="include\script_component.hpp" />
-    <ClInclude Include="include\set_text_event.hpp" />
     <ClInclude Include="include\skeletal_mesh_component.hpp" />
     <ClInclude Include="include\sound_emitter_component.hpp" />
     <ClInclude Include="include\static_mesh_component.hpp" />
+    <ClInclude Include="include\texture2D_ref.hpp" />
+    <ClInclude Include="include\texture2D_upload_info.hpp" />
     <ClInclude Include="include\text_ui_element.hpp" />
     <ClInclude Include="include\theme.hpp" />
     <ClInclude Include="include\timer.hpp" />
     <ClInclude Include="include\timer_manager.hpp" />
+    <ClInclude Include="include\tool.hpp" />
+    <ClInclude Include="include\tools\hlsl.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="include\transform.hpp" />
     <ClInclude Include="include\transform_component.hpp" />
     <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
@@ -1209,7 +1463,10 @@
     <ClInclude Include="include\ui_manager.hpp" />
     <ClInclude Include="include\ui_props.hpp" />
     <ClInclude Include="include\ui_slider.hpp" />
+    <ClInclude Include="include\viewport_widget.hpp" />
     <ClInclude Include="include\widget.hpp" />
+    <ClInclude Include="include\workspace.hpp" />
+    <ClInclude Include="include\workspace_node.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\main.rc" />
@@ -1256,6 +1513,86 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_shapes.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_tile_config.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_mask_binds.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\push_constant_range.inc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </None>
@@ -1330,16 +1667,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="include\blit_program.inc">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
-    </None>
-    <None Include="include\hello_triangle_program.inc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">true</ExcludedFromBuild>

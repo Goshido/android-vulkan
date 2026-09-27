@@ -5,6 +5,13 @@
 
 namespace editor {
 
+MessageQueue* MessageQueue::_instance = nullptr;
+
+MessageQueue::MessageQueue () noexcept
+{
+    _instance = this;
+}
+
 void MessageQueue::EnqueueFront ( Message &&message ) noexcept
 {
     AV_TRACE ( "Enqueue message" )
@@ -33,16 +40,7 @@ void MessageQueue::EnqueueBack ( Message &&message ) noexcept
     Message &back = _queue.back ();
     Message::SerialNumber const serialNumber = back._serialNumber;
     back = std::move ( message );
-
-    _queue.push_back (
-        Message
-        {
-            ._type = eMessageType::RunEventLoop,
-            ._params = nullptr,
-            ._serialNumber = serialNumber
-        }
-    );
-
+    _queue.push_back ( Message ( eMessageType::RunEventLoop, nullptr, serialNumber ) );
     _isQueueChanged.notify_all ();
 }
 
@@ -88,6 +86,11 @@ void MessageQueue::DequeueEnd ( Message &&refund, eRefundLocation location ) noe
     }
 
     _mutex.unlock ();
+}
+
+MessageQueue &MessageQueue::Instance () noexcept
+{
+    return *_instance;
 }
 
 } // namespace editor

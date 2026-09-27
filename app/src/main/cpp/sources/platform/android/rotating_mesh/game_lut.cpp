@@ -337,21 +337,30 @@ bool GameLUT::CreateSpecularLUTTexture ( android_vulkan::Renderer &renderer, VkC
     for ( size_t i = 0U; i < SPECULAR_GENERATOR_THREADS; ++i )
         jobPool[ i ].join ();
 
-    return _specularLUTTexture.UploadData ( renderer,
-        lutData.data (),
-        lutData.size (),
+    return
+        _specularLUTTexture.UploadToStagingBuffer ( renderer,
+            lutData.data (),
+            lutData.size (),
 
-        VkExtent2D {
-            .width = static_cast<uint32_t> ( SPECULAR_ANGLE_SAMPLES ),
-            .height = static_cast<uint32_t> ( SPECULAR_EXPONENT_SAMPLES )
-        },
+            VkExtent2D
+            {
+                .width = static_cast<uint32_t> ( SPECULAR_ANGLE_SAMPLES ),
+                .height = static_cast<uint32_t> ( SPECULAR_EXPONENT_SAMPLES )
+            },
 
-        VK_FORMAT_R16_SFLOAT,
-        false,
-        commandBuffer,
-        false,
-        VK_NULL_HANDLE
-    );
+            VK_FORMAT_R16_SFLOAT,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
+            false
+        ) &&
+
+        _specularLUTTexture.UploadToGPU ( renderer,
+            commandBuffer,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 }
 
 void GameLUT::DestroySpecularLUTTexture ( android_vulkan::Renderer &renderer ) noexcept

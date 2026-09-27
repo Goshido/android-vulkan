@@ -2,7 +2,6 @@
 #define EDITOR_UI_LABEL_HPP
 
 
-#include "message_queue.hpp"
 #include "div_ui_element.hpp"
 #include "text_ui_element.hpp"
 
@@ -14,7 +13,6 @@ class UILabel final
     private:
         DIVUIElement        _div;
         TextUIElement       _text;
-        MessageQueue        &_messageQueue;
 
     public:
         UILabel () = delete;
@@ -25,11 +23,7 @@ class UILabel final
         UILabel ( UILabel && ) = delete;
         UILabel &operator = ( UILabel && ) = delete;
 
-        explicit UILabel ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
-            std::string_view text,
-            std::string &&name
-        ) noexcept;
+        explicit UILabel ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept;
 
         ~UILabel () = default;
 

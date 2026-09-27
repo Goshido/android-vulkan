@@ -3,7 +3,6 @@
 
 
 #include "cursor.hpp"
-#include "message_queue.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
 #include <platform/windows/pbr/font_storage.hpp>
@@ -24,15 +23,12 @@ class Widget
         };
 
     protected:
-        MessageQueue    &_messageQueue;
         Rect            _rect {};
 
     private:
         size_t          _hoverEventID = 0U;
 
     public:
-        Widget () = delete;
-
         Widget ( Widget const & ) = delete;
         Widget &operator = ( Widget const & ) = delete;
 
@@ -69,13 +65,14 @@ class Widget
         [[nodiscard]] bool IsOverlapped ( int32_t x, int32_t y ) const noexcept;
 
     protected:
-        explicit Widget ( MessageQueue &messageQueue ) noexcept;
+        explicit Widget () = default;
 
         void CaptureMouse () noexcept;
         void ReleaseMouse () noexcept;
 
         void ChangeCursor ( eCursor cursor ) noexcept;
 
+        // Keyboard capture
         void KillFocus () noexcept;
         void SetFocus () noexcept;
 };

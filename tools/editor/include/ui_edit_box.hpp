@@ -6,19 +6,13 @@
 #include "timer.hpp"
 #include "widget.hpp"
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <functional>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace editor {
 
 class UIEditBox final : public Widget
 {
     public:
-        using Callback = std::function<void ( std::string const &value )>;
+        using Callback = std::move_only_function<void ( std::string const &value )>;
 
     private:
         using MouseButtonHandler = void ( UIEditBox::* ) ( MouseButtonEvent const &event ) noexcept;
@@ -38,7 +32,6 @@ class UIEditBox final : public Widget
         std::u32string                      _content {};
 
         pbr::FontStorage::StringMetrics     _metrics {};
-        pbr::FontStorage                    &_fontStorage;
 
         DIVUIElement                        _lineDIV;
         DIVUIElement                        _columnDIV;
@@ -79,9 +72,7 @@ class UIEditBox final : public Widget
         UIEditBox ( UIEditBox && ) = delete;
         UIEditBox &operator = ( UIEditBox && ) = delete;
 
-        explicit UIEditBox ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
-            pbr::FontStorage &fontStorage,
+        explicit UIEditBox ( DIVUIElement &parent,
             std::string_view caption,
             std::string_view value,
             std::string &&name

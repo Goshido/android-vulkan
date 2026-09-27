@@ -7,15 +7,11 @@
 
 namespace editor {
 
-UICheckBox::UICheckBox ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
+UICheckBox::UICheckBox ( DIVUIElement &parent,
     std::string_view caption,
     std::string &&name
 ) noexcept:
-    Widget ( messageQueue ),
-
-    _lineDIV ( messageQueue,
-        parent,
+    _lineDIV ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -47,8 +43,7 @@ UICheckBox::UICheckBox ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( messageQueue,
-        _lineDIV,
+    _columnDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -80,8 +75,7 @@ UICheckBox::UICheckBox ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( messageQueue,
-        _columnDIV,
+    _captionDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -113,10 +107,9 @@ UICheckBox::UICheckBox ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
+    _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( messageQueue,
-        _columnDIV,
+    _valueDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -148,7 +141,7 @@ UICheckBox::UICheckBox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _valueIcon ( messageQueue, _valueDIV, glyph::CHECKBOX_CHECK, name + " (icon)" )
+    _valueIcon ( _valueDIV, glyph::CHECKBOX_CHECK, name + " (icon)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );

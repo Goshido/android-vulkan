@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/font_storage.hpp>
+#include <trace.hpp>
 
 
 namespace pbr {
@@ -198,6 +199,9 @@ bool FontStorage::UploadGPUData ( android_vulkan::Renderer &renderer, VkCommandB
 {
     if ( _activeStagingBuffer.empty () ) [[likely]]
         return true;
+
+    AV_TRACE ( "Upload GPU font data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload GPU font data" )
 
     auto const wasPages = static_cast<uint16_t> ( _atlas._pages.size () );
     auto const emptyAtlasCorrection = static_cast<uint16_t> ( wasPages == 0U );

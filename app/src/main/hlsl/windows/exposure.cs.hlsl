@@ -1,5 +1,4 @@
 #include "exposure.hlsl"
-#include "platform/windows/pbr/resource_heap.inc"
 
 
 struct PushConstants
@@ -19,33 +18,22 @@ struct PushConstants
 [[vk::push_constant]]
 PushConstants       g_exposureInfo;
 
-// [2025/09/11] DXC has issue with 'globallycoherent' and 'ResourceDescriptorHeap'.
-// So the workaround is used.
-// See https://github.com/microsoft/DirectXShaderCompiler/issues/7740
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-Texture2D<float32_t4>                               g_images[]:             register ( t0 );
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-[[vk::image_format ( "r16f" )]]
-globallycoherent RWTexture2D<float32_t>             g_coherentImages[]:     register ( u0 );
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-RWStructuredBuffer<float32_t>                       g_buffers[]:            register ( u0 );
-
-[[vk::binding ( BIND_RESOURCES, SET_RESOURCE_HEAP )]]
-globallycoherent RWStructuredBuffer<uint32_t>       g_coherentBuffers[]:    register ( u0 );
-
 //----------------------------------------------------------------------------------------------------------------------
 
 [numthreads ( THREAD_X, THREAD_Y, THREAD_Z )]
 void CS ( in uint32_t threadID: SV_GroupIndex, in uint32_t3 workGroupID: SV_GroupID )
 {
-    Execute ( g_images[ g_exposureInfo._hdrImage ],
-        g_coherentImages[ g_exposureInfo._syncMip5 ],
-        g_buffers[ g_exposureInfo._exposure ],
-        g_coherentBuffers[ g_exposureInfo._globalAtomic ],
-        g_buffers[ g_exposureInfo._temporalLuma ],
+    Texture2D<float32_t4> hdrImage = ResourceDescriptorHeap[ g_exposureInfo._hdrImage ];
+    RWStructuredBuffer<float32_t> exposure = ResourceDescriptorHeap[ g_exposureInfo._exposure ];
+    RWStructuredBuffer<float32_t> temporalLuma = ResourceDescriptorHeap[ g_exposureInfo._temporalLuma ];
+    globallycoherent RWStructuredBuffer<uint32_t> globalAtomic = ResourceDescriptorHeap[ g_exposureInfo._globalAtomic ];
+    globallycoherent RWTexture2D<float32_t> syncMip5 = ResourceDescriptorHeap[ g_exposureInfo._syncMip5 ];
+
+    Execute ( hdrImage,
+        syncMip5,
+        exposure,
+        globalAtomic,
+        temporalLuma,
         g_exposureInfo._exposureCompensation,
         g_exposureInfo._eyeAdaptation,
         g_exposureInfo._maxLuma,

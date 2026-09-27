@@ -14,7 +14,7 @@
 
 ## <a id="compile-tool">Compile tool</a>
 
-Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against **_DXC v1.8.2505.10178_**.
+Current project is using [_DXC_ compiler](https://github.com/microsoft/DirectXShaderCompiler) to produce _SPIR-V_ binary representations. The manual is valid against version noted in [here](./../README.md#requirements) and [here](./editor.md#requirements).
 
 The _android-vulkan_ project is using _HLSL_ shader language as high level programming language. All shader sources are located in the following directory:
 
@@ -53,23 +53,30 @@ The _android-vulkan_ project is using _HLSL_ shader language as high level progr
 ## <a id="compile-vs">Compile and deploy vertex shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T vs_6_10                                                  ^
-    -E VS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.vs.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T vs_6_11
+    -E VS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.vs.spv
     <file name>.vs
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -77,23 +84,30 @@ dxc.exe                                                         ^
 ## <a id="compile-fs">Compile and deploy fragment shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T ps_6_10                                                  ^
-    -E PS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.ps.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T ps_6_11
+    -E PS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.ps.spv
     <file name>.ps
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -101,23 +115,30 @@ dxc.exe                                                         ^
 ## <a id="compile-cs">Compile and deploy compute shader module</a>
 
 ```txt
-dxc.exe                                                         ^
-    -HV 2021                                                    ^
-    -spirv                                                      ^
-    -fvk-use-dx-layout                                          ^
-    -fspv-reduce-load-size                                      ^
-    -fspv-target-env=vulkan1.1spirv1.4                          ^
-    -ffinite-math-only                                          ^
-    -enable-16bit-types                                         ^
-    -WX                                                         ^
-    -O3                                                         ^
-    -T cs_6_10                                                  ^
-    -E CS                                                       ^
-    -I <android-vulkan directory>\app\src\main\hlsl             ^
-    -I <android-vulkan directory>\tools\editor\include          ^
-    -I <android-vulkan directory>\app\src\main\cpp\include      ^
-    -Fo <core or editor shader directory>\<file name>.cs.spv    ^
+dxc.exe
+    -HV 2021
+    -spirv
+    -fvk-use-dx-layout
+    -fspv-reduce-load-size
+    -fspv-target-env=vulkan1.1spirv1.4
+    -ffinite-math-only
+    -enable-16bit-types
+    -WX
+    -O3
+    -T cs_6_11
+    -E CS
+    -I <android-vulkan directory>\app\src\main\hlsl
+    -I <android-vulkan directory>\tools\editor\include
+    -I <android-vulkan directory>\app\src\main\cpp\include
+    -Fo <core or editor shader directory>\<file name>.cs.spv
     <file name>.cs
+```
+
+For Windows build it's needed to add the following parameters
+
+```txt
+-fvk-bind-resource-heap 0 0
+-fvk-bind-sampler-heap 1 0
 ```
 
 [↬ table of content ⇧](#table-of-content)
@@ -174,7 +195,9 @@ Problem with `mad` intrinsic | [#5608](https://github.com/microsoft/DirectXShade
 [SPIR-V] Non semantic shader information issue (-fspv-debug=vulkan-with-source) | [#6939](https://github.com/microsoft/DirectXShaderCompiler/issues/6939) | ✔️ Fixed
 [SPIR-V] Compute shader output into float16_t RWTexture2D | [#7595](https://github.com/microsoft/DirectXShaderCompiler/issues/7595) | 🛡️ Not an issue
 [SPIR-V] Incorrect ignoring `globallycoherent` with buffer device address approach | [#7661](https://github.com/microsoft/DirectXShaderCompiler/issues/7661) | ⚠️ Submitted
-[SPIR-V] Incorrect ignoring `globallycoherent` with `ResourceDescriptorHeap` approach | [#7740](https://github.com/microsoft/DirectXShaderCompiler/issues/7740) | ⚠️ Submitted
-_Visual Studio 2026_ support | [#7918](https://github.com/microsoft/DirectXShaderCompiler/issues/7918) | ⚠️ Submitted
+[SPIR-V] Incorrect ignoring `globallycoherent` with `ResourceDescriptorHeap` approach | [#7740](https://github.com/microsoft/DirectXShaderCompiler/issues/7740) | ✔️ Fixed
+_Visual Studio 2026_ support | [#7918](https://github.com/microsoft/DirectXShaderCompiler/issues/7918) | ✔️ Fixed
+Shader with source info broken | [#8543](https://github.com/microsoft/DirectXShaderCompiler/issues/8543) | ⚠️ Submitted
+[SPIR-V] Requesting useless `OpCapability StoragePushConstant16` when using `vk::BufferPointer` | [#8895](https://github.com/microsoft/DirectXShaderCompiler/issues/8895) | ⚠️ Submitted
 
 [↬ table of content ⇧](#table-of-content)

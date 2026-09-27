@@ -1,12 +1,11 @@
 # Preprocessor macros
 
-## Description
-
-_android-vulkan_ project is using the following preprocessor macros for compilation:
+## <a id="table-of-content">Table of content</a>
 
 * [`AV_ENABLE_TRACE`](#macro-av-enable-trace)
 * [`AV_NATIVE_MODE_PORTRAIT` or `AV_NATIVE_MODE_LANDSCAPE`](#macro-av-native-mode)
 * [`AV_DEBUG`](#macro-av-debug)
+* [`AV_ENABLE_GPU_DUMP`](#macro-av-enable-gpu-dump)
 * [`AV_ENABLE_NSIGHT`](#macro-av-enable-nsight)
 * [`AV_ENABLE_RENDERDOC`](#macro-av-enable-renderdoc)
 * [`AV_ENABLE_VVL`](#macro-av-enable-vvl)
@@ -25,6 +24,8 @@ target_compile_definitions ( android-vulkan
 ## <a id="macro-av-enable-trace">`AV_ENABLE_TRACE`</a>
 
 This macro is responsible for _CPU_ tracing activation. _Android Studio_ has internal tool for trace collection and analysis. It is described [here](https://developer.android.com/studio/profile/record-traces).
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="macro-av-native-mode">`AV_NATIVE_MODE_PORTRAIT` or `AV_NATIVE_MODE_LANDSCAPE`</a>
 
@@ -74,6 +75,8 @@ For more information please refer to the following guidelines:
 * [_Vulkan_ Mobile Best Practice - Appropriate Use of Surface Rotation](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/appropriate-use-of-surface-rotation)
 * [Appropriate use of surface rotation](https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/surface_rotation)
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="macro-av-debug">`AV_DEBUG`</a>
 
 This macro enables custom mechanism for reporting leaked:
@@ -86,9 +89,19 @@ This macro also reports about:
 
 Also the macro is used for additional debug output in the [_Logcat™_](logcat.md).
 
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="macro-av-enable-gpu-dump">`AV_ENABLE_GPU_DUMP`</a>
+
+This macro makes switch between _GPU assisted_ validation and _GPU dump_ validation for [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). Note that macro must be used together with [`AV_ENABLE_VVL`](#macro-av-enable-vvl) macro.
+
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="macro-av-enable-nsight">`AV_ENABLE_NSIGHT`</a>
 
 This macro enables integration with [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics). Note that macro is not compatible with [`AV_ENABLE_VVL`](#macro-av-enable-vvl) and [`AV_ENABLE_RENDERDOC`](#macro-av-enable-renderdoc) macro.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="macro-av-enable-renderdoc">`AV_ENABLE_RENDERDOC`</a>
 
@@ -96,11 +109,15 @@ This macro enables integration with [_RenderDoc_](https://renderdoc.org/). Note 
 
 **Note:** it's expected that application could work only from [_RenderDoc_](https://renderdoc.org/). Running application outside [_RenderDoc_](https://renderdoc.org/) could produce crash. For more information look [_RenderDoc_ integration](./renderdoc-integration.md).
 
+[↬ table of content ⇧](#table-of-content)
+
 ## <a id="macro-av-enable-vvl">`AV_ENABLE_VVL`</a>
 
 This macro enables [_Khronos_ validation layer](https://developer.android.com/ndk/guides/graphics/validation-layer#apk-containing-layers). This introduces additional overhead in terms of execution. Macro is useful in the develop time. Also validation layer can be disabled if current layer implementation contains unavoidable bugs and interferes with some features of the framework.
 
 Note that macro is not compatible with [`AV_ENABLE_RENDERDOC`](#macro-av-enable-vvl) and [`AV_ENABLE_NSIGHT`](#macro-av-enable-nsight) macro.
+
+[↬ table of content ⇧](#table-of-content)
 
 ## <a id="macro-av-strict-mode">`AV_STRICT_MODE`</a>
 
@@ -111,3 +128,5 @@ This macro is responsible for invocation of the `assert` instruction in the foll
 * It's detected some memory leak of the sound emitter objects
 
 It's useful because debugger will make "auto breakpoint" during the execution and could allow the developer to inspect callstack, variables, memory and so on.
+
+[↬ table of content ⇧](#table-of-content)

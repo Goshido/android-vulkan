@@ -2,6 +2,7 @@
 #define EDITOR_TIMER_MANAGER_HPP
 
 
+#include "message_queue.hpp"
 #include "timer.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -16,20 +17,17 @@ namespace editor {
 class TimerManager final
 {
     private:
-        MessageQueue                            &_messageQueue;
         std::thread                             _thread {};
         std::unordered_set<Timer::State*>       _timers {};
 
     public:
-        TimerManager () = delete;
+        explicit TimerManager () = default;
 
         TimerManager ( TimerManager const & ) = delete;
         TimerManager &operator = ( TimerManager const & ) = delete;
 
         TimerManager ( TimerManager && ) = delete;
         TimerManager &operator = ( TimerManager && ) = delete;
-
-        explicit TimerManager ( MessageQueue &messageQueue ) noexcept;
 
         ~TimerManager () = default;
 
@@ -39,9 +37,9 @@ class TimerManager final
     private:
         void EventLoop () noexcept;
 
-        void OnStartTimer ( Message &&message ) noexcept;
-        void OnStopTimer ( Message &&message ) noexcept;
-        void OnShutdown ( Message &&refund ) noexcept;
+        void OnStartTimer ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnStopTimer ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
 };
 
 } // namespace editor

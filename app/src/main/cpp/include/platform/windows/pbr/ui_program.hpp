@@ -5,7 +5,6 @@
 #include "graphics_program.hpp"
 #include <GXCommon/GXMath.hpp>
 #include <pbr/brightness_info.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -18,8 +17,8 @@ class UIProgram final : public GraphicsProgram
 
         struct PushConstants final
         {
-            VkDeviceAddress                 _bdaStream0;
-            VkDeviceAddress                 _bdaStream1;
+            VkDeviceAddress                 _uiVertices0;
+            VkDeviceAddress                 _uiVertices1;
             GXVec2                          _rotateScaleRow0;
             GXVec2                          _rotateScaleRow1;
             GXVec2                          _offset;
@@ -27,9 +26,6 @@ class UIProgram final : public GraphicsProgram
         };
 
         AV_DX_ALIGNMENT_END
-
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit UIProgram () noexcept;
@@ -68,8 +64,6 @@ class UIProgram final : public GraphicsProgram
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
-
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const noexcept override;
@@ -93,8 +87,7 @@ class UIProgram final : public GraphicsProgram
             VkPipelineRenderingCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            std::vector<uint8_t> &vs,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,
             std::vector<uint8_t> &fs,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

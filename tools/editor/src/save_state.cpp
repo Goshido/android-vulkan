@@ -12,6 +12,8 @@ namespace editor {
 namespace {
 
 constexpr size_t MATRIX_ITEMS = 16U;
+constexpr size_t VEC3_ITEMS = 3U;
+constexpr size_t QUATERNION_ITEMS = 4U;
 
 #pragma pack ( push, 1 )
 
@@ -553,6 +555,42 @@ void SaveState::Container::Write ( std::string_view key, GXMat4 const &value ) n
     }
 }
 
+void SaveState::Container::Write ( std::string_view key, GXVec3 const &value ) noexcept
+{
+    if ( _type != eType::Container ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
+        return;
+    }
+
+    Container &matrix = WriteArray ( key );
+    float const* src = value._data;
+
+    for ( size_t i = 0U; i < VEC3_ITEMS; ++i )
+    {
+        matrix.Write ( src[ i ] );
+    }
+}
+
+void SaveState::Container::Write ( std::string_view key, GXQuat const &value ) noexcept
+{
+    if ( _type != eType::Container ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        android_vulkan::LogWarning ( "SaveState: Expected container. Skipping operation..." );
+        return;
+    }
+
+    Container &matrix = WriteArray ( key );
+    float const* src = value._data;
+
+    for ( size_t i = 0U; i < QUATERNION_ITEMS; ++i )
+    {
+        matrix.Write ( src[ i ] );
+    }
+}
+
 SaveState::Container const &SaveState::Container::ReadArray ( std::string_view key ) const noexcept
 {
     if ( _type != eType::Container ) [[unlikely]]
@@ -917,6 +955,52 @@ GXMat4 SaveState::Container::Read ( std::string_view key, GXMat4 const &defaultV
     return result;
 }
 
+GXVec3 SaveState::Container::Read ( std::string_view key, GXVec3 const &defaultValue ) const noexcept
+{
+    if ( _type != eType::Array ) [[unlikely]]
+        return defaultValue;
+
+    GXVec3 result {};
+    float* dst = result._data;
+
+    Container const &vec3 = ReadArray ( key );
+    size_t const items = vec3.GetArraySize ();
+
+    if ( items != VEC3_ITEMS )
+    {
+        AV_ASSERT ( false )
+        return defaultValue;
+    }
+
+    for ( size_t i = 0U; i < VEC3_ITEMS; ++i )
+        dst[ i ] = vec3.Read ( 0.0F );
+
+    return result;
+}
+
+GXQuat SaveState::Container::Read ( std::string_view key, GXQuat const &defaultValue ) const noexcept
+{
+    if ( _type != eType::Array ) [[unlikely]]
+        return defaultValue;
+
+    GXQuat result {};
+    float* dst = result._data;
+
+    Container const &quatertnion = ReadArray ( key );
+    size_t const items = quatertnion.GetArraySize ();
+
+    if ( items != QUATERNION_ITEMS )
+    {
+        AV_ASSERT ( false )
+        return defaultValue;
+    }
+
+    for ( size_t i = 0U; i < QUATERNION_ITEMS; ++i )
+        dst[ i ] = quatertnion.Read ( 0.0F );
+
+    return result;
+}
+
 SaveState::Container::Container ( eType type ) noexcept:
     _type ( type )
 {
@@ -1155,10 +1239,8 @@ void SaveState::EncodeArray ( Binary &aData, Binary &bData, Container const &con
 
             case Container::eType::Array:
                 [[fallthrough]];
-
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;
@@ -1257,7 +1339,6 @@ void SaveState::EncodeContainer ( Binary &aData, Binary &bData, Container const 
 
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;
@@ -1575,10 +1656,8 @@ void SaveState::DecodeArray ( Container &root, uint8_t const* &aData, uint8_t co
 
         case Container::eType::Array:
             [[fallthrough]];
-
         case Container::eType::Null:
             [[fallthrough]];
-
         default:
             AV_ASSERT ( false )
         break;
@@ -1655,7 +1734,6 @@ void SaveState::DecodeContainer ( Container &root, uint8_t const* &aData, uint8_
 
             case Container::eType::Null:
                 [[fallthrough]];
-
             default:
                 AV_ASSERT ( false )
             break;

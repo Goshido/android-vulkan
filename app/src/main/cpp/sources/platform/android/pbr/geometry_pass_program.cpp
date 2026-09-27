@@ -8,7 +8,7 @@ namespace pbr {
 
 namespace {
 
-constexpr char const* VERTEX_SHADER = "shaders/common_opaque.vs.spv";
+constexpr char const* VERTEX_SHADER = "shaders/android/common_opaque.vs.spv";
 
 constexpr size_t COLOR_RENDER_TARGET_COUNT = 4U;
 constexpr size_t STAGE_COUNT = 2U;
@@ -30,17 +30,11 @@ GeometryPassProgram::ColorData::ColorData ( GXColorUNORM color0,
     float emissionIntensity
 ) noexcept
 {
-    _emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color0 ) << 8U );
+    _emiRcol0rgb = static_cast<uint32_t> ( emission._data[ 0U ] ) | ( std::bit_cast<uint32_t> ( color0 ) << 8U );
+    _emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) | ( std::bit_cast<uint32_t> ( color1 ) << 8U );
+    _emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) | ( std::bit_cast<uint32_t> ( color2 ) << 8U );
 
-    _emiGcol1rgb = static_cast<uint32_t> ( emission._data[ 1U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color1 ) << 8U );
-
-    _emiBcol2rgb = static_cast<uint32_t> ( emission._data[ 2U ] ) |
-        ( *reinterpret_cast<uint32_t const*> ( &color2 ) << 8U );
-
-    // Emission intensity should take range from 0 to 6000.
-    // Emission intensity is packed as 24bit fixed point value.
+    // Emission intensity should take range from 0 to 6000. Emission intensity is packed as 24bit fixed point value.
     constexpr double maxIntensity = 6.0e+3;
     constexpr double convertFactor = static_cast<double> ( 0x00FFFFFFU ) / maxIntensity;
     double const beta = convertFactor * std::clamp ( static_cast<double> ( emissionIntensity ), 0.0, maxIntensity );
@@ -76,45 +70,32 @@ bool GeometryPassProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineVertexInputStateCreateInfo vertexInputInfo;
     VkViewport viewportDescription;
     VkPipelineViewportStateCreateInfo viewportInfo;
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, nullptr, nullptr, stageInfo ) ) [[unlikely]]
-        return false;
+    VkGraphicsPipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( std::size ( stageInfo ) ),
+        .pStages = InitShaderInfo ( renderer, nullptr, nullptr, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, attributeDescriptions, bindingDescription ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = SUBPASS,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        bindingDescription
-    );
 
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = SUBPASS;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
 
     char where[ 512U ];
     std::snprintf ( where, std::size ( where ), "%s::Init", _name.data () );
@@ -151,9 +132,10 @@ void GeometryPassProgram::SetDescriptorSet ( VkCommandBuffer commandBuffer,
     );
 }
 
-GeometryPassProgram::GeometryPassProgram ( std::string_view &&name, std::string_view &&fragmentShader ) noexcept:
-    GraphicsProgram ( std::forward<std::string_view> ( name ) ),
-    _fragmentShaderSource ( fragmentShader )
+GeometryPassProgram::GeometryPassProgram ( std::string_view name, std::string_view &&fragmentShader ) noexcept:
+    GraphicsProgram ( 0U ),
+    _fragmentShaderSource ( fragmentShader ),
+    _name ( name )
 {
     // NOTHING
 }
@@ -313,51 +295,6 @@ VkPipelineInputAssemblyStateCreateInfo const* GeometryPassProgram::InitInputAsse
     return &info;
 }
 
-bool GeometryPassProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
-{
-
-    if ( !_samplerLayout.Init ( device ) || !_textureLayout.Init ( device ) || !_instanceLayout.Init ( device ) )
-    {
-        [[unlikely]]
-        return false;
-    }
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _samplerLayout.GetLayout (),
-        _textureLayout.GetLayout (),
-        _instanceLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    char where[ 512U ];
-    std::snprintf ( where, std::size ( where ), "%s::InitLayout", _name.data () );
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        where,
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
-
-    layout = _pipelineLayout;
-    return true;
-}
-
 VkPipelineMultisampleStateCreateInfo const* GeometryPassProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -402,8 +339,92 @@ VkPipelineRasterizationStateCreateInfo const* GeometryPassProgram::InitRasteriza
     return &info;
 }
 
-bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
+VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
+    VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset =
+            {
+                .x = 0,
+                .y = 0
+            },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout GeometryPassProgram::InitLayout ( VkDevice device ) noexcept
+{
+
+    if ( !_samplerLayout.Init ( device ) || !_textureLayout.Init ( device ) || !_instanceLayout.Init ( device ) )
+    {
+        [[unlikely]]
+        return VK_NULL_HANDLE;
+    }
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _samplerLayout.GetLayout (),
+        _textureLayout.GetLayout (),
+        _instanceLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    char where[ 512U ];
+    std::snprintf ( where, std::size ( where ), "%s::InitLayout", _name.data () );
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        where,
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "%s", _name.data () )
+    return _pipelineLayout;
+}
+
+VkPipelineShaderStageCreateInfo const*  GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData /*specializationData*/,
     VkSpecializationInfo* /*specializationInfo*/,
     VkPipelineShaderStageCreateInfo* sourceInfo
@@ -413,14 +434,14 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &rende
     std::snprintf ( where, std::size ( where ), "Can't create vertex shader (pbr::%s)", _name.data () );
 
     if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, where ) ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
     std::snprintf ( where, std::size ( where ), "Can't create fragment shader (pbr::%s)", _name.data () );
 
     if ( !renderer.CreateShader ( _fragmentShader, std::string ( _fragmentShaderSource ), where ) ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (),
         _fragmentShader,
@@ -451,50 +472,7 @@ bool GeometryPassProgram::InitShaderInfo ( android_vulkan::Renderer const &rende
         .pSpecializationInfo = nullptr
     };
 
-    targetInfo = sourceInfo;
-    return true;
-}
-
-VkPipelineViewportStateCreateInfo const* GeometryPassProgram::InitViewportInfo (
-    VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset =
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
+    return sourceInfo;
 }
 
 VkPipelineVertexInputStateCreateInfo const* GeometryPassProgram::InitVertexInputInfo (

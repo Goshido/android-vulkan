@@ -4,11 +4,15 @@
 
 #include "command_line.hpp"
 #include "history.hpp"
+#include "io.hpp"
 #include "main_window.hpp"
-#include <render_session.hpp>
-#include <renderer.hpp>
+#include "mesh_storage.hpp"
+#include "native_renderer.hpp"
+#include "render_session.hpp"
+#include "texture2D_storage.hpp"
 #include "timer_manager.hpp"
 #include "ui_manager.hpp"
+#include "workspace.hpp"
 
 
 namespace editor {
@@ -29,23 +33,25 @@ class Editor final
 
     private:
         CommandLine                             _commandLine {};
-        bool                                    _frameComplete = true;
         History                                 _history {};
         MainWindow                              _mainWindow {};
         MessageQueue                            _messageQueue {};
-        android_vulkan::Renderer                _renderer {};
-        RenderSession                           _renderSession { _messageQueue, _renderer, _uiManager };
+        NativeRenderer                          _renderer {};
 
-        UIManager                               _uiManager
-        {
-            _messageQueue,
-            _renderSession.GetFontStorage ()
-        };
+        MeshStorage                             _meshStorage {};
+        Texture2DStorage                        _texture2DStorage {};
+        Workspace                               _workspace {};
+        UIManager                               _uiManager {};
+        RenderSession                           _renderSession { _uiManager, _workspace };
+        TimerManager                            _timerManager {};
+        IO                                      _io {};
 
-        TimerManager                            _timerManager { _messageQueue };
-        bool                                    _stopRendering = false;
-        uint16_t                                _runningModules = 0U;
         float                                   _uiZoom = DEFAULT_UI_ZOOM;
+        uint16_t                                _runningModules = 0U;
+        bool                                    _frameComplete = true;
+        bool                                    _stopRendering = false;
+
+        std::unique_ptr<SaveState>              _save {};
 
     public:
         Editor () = delete;
@@ -66,6 +72,10 @@ class Editor final
         [[nodiscard]] bool InitModules () noexcept;
         void DestroyModules () noexcept;
 
+        void ShutdownWorkspace ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+        void ShutdownAllExceptIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+        void ShutdownIO ( std::optional<Message::SerialNumber> &lastRefund ) noexcept;
+
         void EventLoop () noexcept;
 
         void OnCaptureKeyboard () noexcept;
@@ -75,6 +85,7 @@ class Editor final
         void OnChangeCursor ( Message &&message ) noexcept;
         void OnDPIChanged ( Message &&message ) noexcept;
         void OnFrameComplete () noexcept;
+        void OnModuleStarted () noexcept;
         void OnModuleStopped () noexcept;
         void OnReadClipboardRequest () noexcept;
         void OnRecreateSwapchain () noexcept;
@@ -85,6 +96,7 @@ class Editor final
         void ScheduleEventLoop () noexcept;
 
         [[nodiscard]] std::string_view GetUserGPU () const noexcept;
+        [[nodiscard]] bool IsProvideVulkanInitLogs () const noexcept;
         [[nodiscard]] Config LoadConfig () noexcept;
 };
 

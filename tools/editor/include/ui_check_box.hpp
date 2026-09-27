@@ -24,7 +24,7 @@ class UICheckBox final : public Widget
             Multi
         };
 
-        using Callback = std::function<void ( eState state )>;
+        using Callback = std::move_only_function<void ( eState state )>;
 
     private:
         DIVUIElement        _lineDIV;
@@ -50,11 +50,7 @@ class UICheckBox final : public Widget
         UICheckBox ( UICheckBox && ) = delete;
         UICheckBox &operator = ( UICheckBox && ) = delete;
 
-        explicit UICheckBox ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
-            std::string_view caption,
-            std::string &&name
-        ) noexcept;
+        explicit UICheckBox ( DIVUIElement &parent, std::string_view caption, std::string &&name ) noexcept;
 
         ~UICheckBox () override = default;
 

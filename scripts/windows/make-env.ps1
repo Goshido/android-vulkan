@@ -1,4 +1,5 @@
 $embedSources = $args[ 0 ]
+$profileMode = ( $args.Length -lt 2 ) ? $false : $args[ 1 ]
 
 [string] $editorDirectory = "tools\editor"
 [string] $EDITOR_HLSL_DIRECTORY = "$editorDirectory\hlsl"
@@ -14,9 +15,9 @@ $embedSources = $args[ 0 ]
 [string] $WINDOWS_SHADER_DIRECTORY = "$CORE_SHADER_DIRECTORY\windows"
 
 [string] $DXC = "$Env:ANDROID_VULKAN_DXC_ROOT\dxc.exe"
-[string] $HLSL_PROFILE = "6_10"
+[string] $HLSL_PROFILE = "6_11"
 
-$global:FLAGS =
+$global:FLAGS = @(
     "-HV", "2021",
     "-spirv",
     "-fvk-use-dx-layout",
@@ -28,6 +29,7 @@ $global:FLAGS =
     "-I", "$CORE_HLSL_DIRECTORY",
     "-I", "$editorDirectory\include",
     "-I", "$coreDirectory\cpp\include"
+)
 
 function Resolve-Type-HLSL
 {
@@ -59,14 +61,40 @@ function Resolve-Type-HLSL
     }
 }
 
-if ( $embedSources )
+function Test-Windows-Platform
 {
-    $FLAGS +=
-        "-Od",
-        "-Zi",
-        "-fspv-debug=vulkan-with-source"
+    param
+    (
+        [Parameter(Mandatory)]
+        [string] $SPV
+    )
+
+    return $SPV.Contains($WINDOWS_HLSL_DIRECTORY)
+}
+
+if ( !$embedSources )
+{
+    $FLAGS += @(
+        "-O3"
+    )
 
     return
 }
 
-$FLAGS += "-O3"
+$FLAGS += @(
+    "-Zi",
+    "-fspv-debug=vulkan-with-source"
+)
+
+if ( $profileMode )
+{
+    $FLAGS += @(
+        "-O3"
+    )
+
+    return;
+}
+
+$FLAGS += @(
+    "-Od"
+)

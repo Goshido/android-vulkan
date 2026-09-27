@@ -341,6 +341,13 @@ std::unordered_set<uint32_t> g_validationFilter =
     // It happens at UI composition render pass which can not be multipass by design.
     0x00000000U,
 
+    // vkCmdDispatch(): Pipeline uses a push constant range with offset 0 and size 128, but 92 bytes were never
+    // set with vkCmdPushConstants.
+    // [2026/06/23] This message comes from best practices validation.
+    // Maitenance4 implicitly relaxes this requirement because using Vulkan 1.4. I need this for universal
+    // pipeline layout used on Windows to make simple and efficient descriptor system.
+    0x1248C6A4U,
+
     // Attempting to enable extension VK_EXT_debug_utils, but this extension is intended to support use by
     // applications when debugging and it is strongly recommended that it be otherwise avoided.
     // [2024/02/19] Yeah. I'm pretty aware about that. Thank you.
@@ -348,7 +355,18 @@ std::unordered_set<uint32_t> g_validationFilter =
 
     // Using debug builds of the validation layers *will* adversely affect performance.
     // [2025/01/30] Yeah. I'm pretty aware about that. Thank you.
-    0x6CDE89AEU
+    0x6CDE89AEU,
+
+    // Both GPU Assisted Validation and Normal Core Check Validation are enabled, this is not recommend as it
+    // will be very slow. Once all errors in Core Check are solved, please disable,
+    // then only use GPU-AV for best performance.
+    // [2026/06/23] Yeah. I'm pretty aware about that. Thank you.
+    0x7F1922D7U,
+
+    // vkGetPhysicalDeviceProperties2(): Internal Warning: Setting
+    // VkPhysicalDeviceDescriptorBufferPropertiesEXT::maxResourceDescriptorBufferBindings to 31
+    // [2026/06/23] GPU-AV stuff magic is going on.
+    0x86FE6721U
 };
 
 constexpr std::pair<uint32_t, char const*> const g_vkDebugUtilsMessageSeverityFlagBitsEXTMapper[] =
@@ -909,7 +927,10 @@ bool Renderer::GetVSync () const noexcept
     return _vSync;
 }
 
-Renderer::eSwapchainResult Renderer::OnCreateSwapchain ( bool preserveSurface, WindowHandle nativeWindow, bool vSync ) noexcept
+Renderer::eSwapchainResult Renderer::OnCreateSwapchain ( bool preserveSurface,
+    WindowHandle nativeWindow,
+    bool vSync
+) noexcept
 {
     AV_TRACE ( "Creating swapchain" )
     constexpr eSwapchainResult const cases[] = { eSwapchainResult::Fail, eSwapchainResult::Success };
@@ -958,12 +979,13 @@ void Renderer::OnDestroySwapchain ( bool preserveSurface ) noexcept
     _oldSwapchain = VK_NULL_HANDLE;
 }
 
-bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
+bool Renderer::OnCreateDevice ( std::string_view const &userGPU, bool initLogs ) noexcept
 {
     AV_TRACE ( "Creating Vulkan device" )
+    _initLogs = initLogs;
 
     bool result = _vulkanLoader.AcquireBootstrapFunctions () &&
-        PrintInstanceLayerInfo () &&
+        ( !initLogs || PrintInstanceLayerInfo () ) &&
         DeployInstance ()
 
 #ifdef AV_ENABLE_VVL
@@ -989,7 +1011,8 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
         return false;
     }
 
-    LogInfo ( "Renderer::OnInit - Vulkan physical devices detected: %u.", physicalDeviceCount );
+    if ( initLogs )
+        LogInfo ( "Renderer::OnCreateDevice - Vulkan physical devices detected: %u.", physicalDeviceCount );
 
     std::vector<VkPhysicalDevice> physicalDevices ( static_cast<size_t> ( physicalDeviceCount ) );
     VkPhysicalDevice* deviceList = physicalDevices.data ();
@@ -1007,7 +1030,7 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
 
     for ( uint32_t i = 0U; i < physicalDeviceCount; ++i )
     {
-        if ( !PrintPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[unlikely]]
+        if ( !CollectPhysicalDeviceInfo ( i, deviceList[ i ] ) ) [[unlikely]]
         {
             AV_ASSERT ( false )
             return false;
@@ -1024,7 +1047,8 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
         return false;
     }
 
-    LogInfo ( "Renderer::OnInit - Vulkan physical devices groups detected: %u.", physicalDeviceGroupCount );
+    if ( initLogs )
+        LogInfo ( "Renderer::OnCreateDevice - Vulkan physical devices groups detected: %u.", physicalDeviceGroupCount );
 
     _physicalDeviceGroups.resize ( static_cast<size_t> ( physicalDeviceGroupCount ) );
     VkPhysicalDeviceGroupProperties* groupProps = _physicalDeviceGroups.data ();
@@ -1043,8 +1067,13 @@ bool Renderer::OnCreateDevice ( std::string_view const &userGPU ) noexcept
         return false;
     }
 
-    for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
-        PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
+    if ( initLogs )
+    {
+        for ( uint32_t i = 0U; i < physicalDeviceGroupCount; ++i )
+        {
+            PrintPhysicalDeviceGroupInfo ( i, groupProps[ i ] );
+        }
+    }
 
     return DeployDevice ( userGPU );
 }
@@ -1121,19 +1150,25 @@ void Renderer::UnmapMemory ( VkDeviceMemory memory ) noexcept
 }
 
 bool Renderer::CheckExtensionCommon ( std::set<std::string> const &allExtensions,
-    char const* extension
+    char const* extension,
+    bool initLogs
 ) noexcept
 {
+    bool const present = allExtensions.contains ( extension );
+
+    if ( !initLogs )
+        return present;
+
     LogInfo ( "%sChecking %s...", INDENT_1, extension );
 
-    if ( allExtensions.count ( extension ) < 1U ) [[unlikely]]
+    if ( present ) [[unlikely]]
     {
-        LogError ( "%sFAIL: unsupported", INDENT_2 );
-        return false;
+        LogInfo ( "%sOK: presented", INDENT_2 );
+        return true;
     }
 
-    LogInfo ( "%sOK: presented", INDENT_2 );
-    return true;
+    LogError ( "%sFAIL: unsupported", INDENT_2 );
+    return false;
 }
 
 bool Renderer::CheckVkResult ( VkResult result, char const* from, char const* message ) noexcept
@@ -1189,7 +1224,9 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
     void* /*pUserData*/
 )
 {
-    if ( g_validationFilter.count ( static_cast<uint32_t> ( pCallbackData->messageIdNumber ) ) > 0U )
+    auto const id = static_cast<uint32_t> ( pCallbackData->messageIdNumber );
+
+    if ( g_validationFilter.contains ( id ) )
         return VK_FALSE;
 
     constexpr auto encodeObjects = [] ( std::string &dst,
@@ -1230,18 +1267,6 @@ VkBool32 VKAPI_PTR Renderer::OnVulkanDebugUtils ( VkDebugUtilsMessageSeverityFla
         return dst.c_str ();
     };
 
-    constexpr char const format[] =
-        R"(Renderer::OnVulkanDebugReport:
-severity: %s
-type: %s
-message ID name: %s
-message ID: 0x%08X
-queues: %s
-command buffers: %s
-objects: %s
-message: %s
-)";
-
     std::string queues {};
     std::string commandBuffers {};
     std::string objects {};
@@ -1256,11 +1281,21 @@ message: %s
 
     constexpr size_t removeFirstSpace = 1U;
 
-    LogError ( format,
+    LogError (
+R"(Renderer::OnVulkanDebugReport:
+severity: %s
+type: %s
+message ID name: %s
+message ID: 0x%08X
+queues: %s
+command buffers: %s
+objects: %s
+message: %s
+)",
         severity.c_str () + removeFirstSpace,
         type.c_str () + removeFirstSpace,
         prettyMessage ( pCallbackData->pMessageIdName ),
-        pCallbackData->messageIdNumber,
+        id,
         encodeLabel ( queues, pCallbackData->queueLabelCount, pCallbackData->pQueueLabels ),
         encodeLabel ( commandBuffers, pCallbackData->cmdBufLabelCount, pCallbackData->pCmdBufLabels ),
         encodeObjects ( objects, pCallbackData->objectCount, pCallbackData->pObjects ),
@@ -1280,7 +1315,9 @@ message: %s
 
 bool Renderer::CheckRequiredFormats () noexcept
 {
-    LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
+    if ( _initLogs )
+        LogInfo ( "Renderer::CheckRequiredFormats - Checking required formats..." );
+
     std::vector<char const*> unsupportedFormats {};
 
     for ( auto const &[format, name] : GetRequiredFormats () )
@@ -1293,6 +1330,9 @@ bool Renderer::CheckRequiredFormats () noexcept
             unsupportedFormats.push_back ( name );
             continue;
         }
+
+        if ( !_initLogs )
+            continue;
 
         LogInfo ( "%sOK: %s", INDENT_1, name );
 
@@ -1315,8 +1355,13 @@ bool Renderer::CheckRequiredFormats () noexcept
     if ( unsupportedFormats.empty () ) [[likely]]
         return true;
 
-    for ( char const* format : unsupportedFormats )
-        LogError ( "%sFAIL: %s", INDENT_1, format );
+    if ( _initLogs )
+    {
+        for ( char const* format : unsupportedFormats )
+        {
+            LogError ( "%sFAIL: %s", INDENT_1, format );
+        }
+    }
 
     return false;
 }
@@ -1523,50 +1568,9 @@ bool Renderer::DeployInstance () noexcept
 
 #ifdef AV_ENABLE_VVL
 
-    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
-    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
-    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
-    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
-    constexpr static VkBool32 activate = VK_TRUE;
-
-    constexpr static VkLayerSettingEXT vvlSync
-    {
-        .pLayerName = vvlLayerName,
-        .pSettingName = "syncval_shader_accesses_heuristic",
-        .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-        .valueCount = 1U,
-        .pValues = &activate
-    };
-
-    constexpr static VkLayerSettingsCreateInfoEXT vvlSettings
-    {
-        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
-        .pNext = &g_debugUtilsMessengerCreateInfo,
-        .settingCount = 1U,
-        .pSettings = &vvlSync
-    };
-
-    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
-    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
-    constexpr static VkValidationFeatureEnableEXT const validationFeatures[] =
-    {
-        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
-        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
-    };
-
-    constexpr VkValidationFeaturesEXT validationInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
-        .pNext = &vvlSettings,
-        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( validationFeatures ) ),
-        .pEnabledValidationFeatures = validationFeatures,
-        .disabledValidationFeatureCount = 0U,
-        .pDisabledValidationFeatures = nullptr
-    };
-
-    instanceCreateInfo.pNext = &validationInfo;
-    instanceCreateInfo.enabledLayerCount = 1U;
-    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+    VkLayerSettingsCreateInfoEXT vvlSettings;
+    VkValidationFeaturesEXT validationInfo;
+    DeployValidationFeatures ( instanceCreateInfo, vvlSettings, validationInfo, g_debugUtilsMessengerCreateInfo );
 
 #else
 
@@ -1620,7 +1624,9 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
     if ( !result ) [[unlikely]]
         return false;
 
-    PrintVkSurfaceCapabilities ( caps );
+    if ( _initLogs )
+        PrintVkSurfaceCapabilities ( caps );
+
     _surfaceSize = caps.currentExtent;
     _surfaceTransform = caps.currentTransform;
 
@@ -1664,8 +1670,6 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
         return false;
     }
 
-    LogInfo ( "Renderer::DeploySurface - Vulkan surface formats detected: %u.", formatCount );
-
     _surfaceFormats.resize ( static_cast<size_t> ( formatCount ) );
     VkSurfaceFormatKHR* formatList = _surfaceFormats.data ();
 
@@ -1677,6 +1681,11 @@ bool Renderer::DeploySurface ( WindowHandle nativeWindow ) noexcept
 
     if ( !result ) [[unlikely]]
         return false;
+
+    if ( !_initLogs )
+        return true;
+
+    LogInfo ( "Renderer::DeploySurface - Vulkan surface formats detected: %u.", formatCount );
 
     for ( uint32_t i = 0U; i < formatCount; ++i )
         PrintVkSurfaceFormatKHRProp ( i, formatList[ i ] );
@@ -1721,7 +1730,7 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         .imageColorSpace = colorSpace,
         .imageExtent = _surfaceSize,
         .imageArrayLayers = 1U,
-        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .imageUsage = GetSwapchainUsage (),
         .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .queueFamilyIndexCount = 0U,
         .pQueueFamilyIndices = nullptr,
@@ -1777,7 +1786,8 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
         return false;
     }
 
-    LogInfo ( "Renderer::DeploySwapchain - Swapchain images detected: %u.", imageCount );
+    if ( _initLogs )
+        LogInfo ( "Renderer::DeploySwapchain - Swapchain images detected: %u.", imageCount );
 
     _swapchainImages.resize ( static_cast<size_t> ( imageCount ) );
 
@@ -1841,18 +1851,16 @@ bool Renderer::DeploySwapchain ( bool vSync ) noexcept
     return true;
 }
 
-bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept
+bool Renderer::CollectPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevice ) noexcept
 {
     uint32_t extensionCount = 0U;
     vkEnumerateDeviceExtensionProperties ( physicalDevice, nullptr, &extensionCount, nullptr );
 
     if ( !extensionCount ) [[unlikely]]
     {
-        LogError ( "Renderer::PrintPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
+        LogError ( "Renderer::CollectPhysicalDeviceExtensionInfo - There is no any physical device extensions." );
         return false;
     }
-
-    LogInfo ( ">>> Physical device extensions detected: %u.", extensionCount);
 
     std::vector<VkExtensionProperties> extensions ( static_cast<size_t> ( extensionCount ) );
     VkExtensionProperties* extensionList = extensions.data ();
@@ -1864,7 +1872,7 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
             extensionList
         ),
 
-        "Renderer::PrintPhysicalDeviceExtensionInfo",
+        "Renderer::CollectPhysicalDeviceExtensionInfo",
         "Can't get physical device extensions"
     );
 
@@ -1874,6 +1882,19 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     VulkanPhysicalDeviceInfo &capabilities = _physicalDeviceInfo[ physicalDevice ];
     std::vector<std::string> &targetExtensions = capabilities._extensions;
     targetExtensions.reserve ( static_cast<size_t> ( extensionCount ) );
+
+    if ( !_initLogs )
+    {
+        for ( uint32_t i = 0U; i < extensionCount; ++i )
+        {
+            VkExtensionProperties const &prop = extensionList[ i ];
+            targetExtensions.emplace_back ( prop.extensionName );
+        }
+
+        return true;
+    }
+
+    LogInfo ( ">>> Physical device extensions detected: %u.", extensionCount);
 
     for ( uint32_t i = 0U; i < extensionCount; ++i )
     {
@@ -1885,12 +1906,15 @@ bool Renderer::PrintPhysicalDeviceExtensionInfo ( VkPhysicalDevice physicalDevic
     return true;
 }
 
-void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
+void Renderer::CollectPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice ) noexcept
 {
-    LogInfo ( ">>> Features:" );
-
     auto &features = _physicalDeviceInfo[ physicalDevice ];
     vkGetPhysicalDeviceFeatures ( physicalDevice, &features._features );
+
+    if ( !_initLogs )
+        return;
+
+    LogInfo ( ">>> Features:" );
 
     // Note std::set will sort strings too.
     std::set<std::string_view> supportedFeatures;
@@ -1924,38 +1948,39 @@ void Renderer::PrintPhysicalDeviceFeatureInfo ( VkPhysicalDevice physicalDevice 
     }
 }
 
-bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept
+bool Renderer::CollectPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice physicalDevice ) noexcept
 {
-    LogInfo ( "Renderer::PrintPhysicalDeviceInfo - Vulkan physical device #%u", deviceIndex );
-
     VkPhysicalDeviceProperties props;
     vkGetPhysicalDeviceProperties ( physicalDevice, &props );
 
-    PrintVkHandler ( INDENT_1, "Device handler", physicalDevice );
+    if ( _initLogs )
+    {
+        LogInfo ( "Renderer::CollectPhysicalDeviceInfo - Vulkan physical device #%u", deviceIndex );
+        PrintVkHandler ( INDENT_1, "Device handler", physicalDevice );
+        PrintPhysicalDeviceCommonProps ( props );
+        PrintPhysicalDeviceLimits ( props.limits );
+        PrintPhysicalDeviceSparse ( props.sparseProperties );
+    }
 
-    PrintPhysicalDeviceCommonProps ( props );
-    PrintPhysicalDeviceLimits ( props.limits );
-    PrintPhysicalDeviceSparse ( props.sparseProperties );
-    PrintPhysicalDeviceFeatureInfo ( physicalDevice );
+    CollectPhysicalDeviceFeatureInfo ( physicalDevice );
 
-    if ( !PrintPhysicalDeviceExtensionInfo ( physicalDevice ) ) [[unlikely]]
+    bool const result = CollectPhysicalDeviceExtensionInfo ( physicalDevice ) &&
+        ( !_initLogs || PrintPhysicalDeviceLayerInfo ( physicalDevice ) );
+
+    if ( !result ) [[unlikely]]
         return false;
 
-    if ( !PrintPhysicalDeviceLayerInfo ( physicalDevice ) ) [[unlikely]]
-        return false;
-
-    PrintPhysicalDeviceMemoryProperties ( physicalDevice );
+    if ( _initLogs )
+        PrintPhysicalDeviceMemoryProperties ( physicalDevice );
 
     uint32_t queueFamilyCount = 0U;
     vkGetPhysicalDeviceQueueFamilyProperties ( physicalDevice, &queueFamilyCount, nullptr );
 
     if ( !queueFamilyCount ) [[unlikely]]
     {
-        LogError ( "Renderer::PrintPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
+        LogError ( "Renderer::CollectPhysicalDeviceInfo - There is no any Vulkan physical device queue families." );
         return false;
     }
-
-    LogInfo ( ">>> Vulkan physical device queue families detected: %u.", queueFamilyCount );
 
     std::vector<VkQueueFamilyProperties> queueFamilyProps ( static_cast<size_t> ( queueFamilyCount ) );
     VkQueueFamilyProperties* queueFamilyPropList = queueFamilyProps.data ();
@@ -1967,6 +1992,19 @@ bool Renderer::PrintPhysicalDeviceInfo ( uint32_t deviceIndex, VkPhysicalDevice 
 
     auto &queueFamilies = info._queueFamilyInfo;
     queueFamilies.reserve ( static_cast<size_t> ( queueFamilyCount ) );
+
+    if ( !_initLogs )
+    {
+        for ( uint32_t i = 0U; i < queueFamilyCount; ++i )
+        {
+            VkQueueFamilyProperties const &familyProps = queueFamilyPropList[ i ];
+            queueFamilies.emplace_back ( familyProps.queueFlags, familyProps.queueCount );
+        }
+
+        return true;
+    }
+
+    LogInfo ( ">>> Vulkan physical device queue families detected: %u.", queueFamilyCount );
 
     for ( uint32_t i = 0U; i < queueFamilyCount; ++i )
     {
@@ -2009,9 +2047,12 @@ bool Renderer::SelectTargetCompositeAlpha ( VkCompositeAlphaFlagBitsKHR &targetC
         targetCompositeAlpha = static_cast<VkCompositeAlphaFlagBitsKHR> ( probe );
     }
 
-    LogInfo ( "Renderer::SelectTargetCompositeAlpha - Composite alpha selected: %s.",
-        ResolveVkCompositeAlpha ( targetCompositeAlpha )
-    );
+    if ( _initLogs )
+    {
+        LogInfo ( "Renderer::SelectTargetCompositeAlpha - Composite alpha selected: %s.",
+            ResolveVkCompositeAlpha ( targetCompositeAlpha )
+        );
+    }
 
     return targetCompositeAlpha != VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR;
 }
@@ -2038,13 +2079,24 @@ bool Renderer::SelectTargetPresentMode ( VkPresentModeKHR &targetPresentMode, bo
     if ( !result ) [[unlikely]]
         return false;
 
-    LogInfo ( "Renderer::SelectTargetPresentMode - Present modes detected: %u.", modeCount );
-
     std::vector<VkPresentModeKHR> modes ( static_cast<size_t> ( modeCount ) );
     VkPresentModeKHR* modeList = modes.data ();
     vkGetPhysicalDeviceSurfacePresentModesKHR ( _physicalDevice, _surface, &modeCount, modeList );
-
     targetPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+    if ( !_initLogs )
+    {
+        for ( uint32_t i = 0U; i < modeCount; ++i )
+        {
+            VkPresentModeKHR const m = modeList[ i ];
+            VkPresentModeKHR const cases[] = { targetPresentMode, m };
+            targetPresentMode = cases[ static_cast<size_t> ( m == desirableMode ) ];
+        }
+
+        return true;
+    }
+
+    LogInfo ( "Renderer::SelectTargetPresentMode - Present modes detected: %u.", modeCount );
 
     for ( uint32_t i = 0U; i < modeCount; ++i )
     {
@@ -2137,6 +2189,9 @@ bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) n
         return false;
     }
 
+    if ( !_initLogs )
+        return true;
+
     constexpr char const format[] = R"__(Renderer::SelectTargetSurfaceFormat - Surface format selected:
 %sColor format: %s
 %sColor space: %s
@@ -2158,11 +2213,16 @@ bool Renderer::SelectTargetSurfaceFormat ( VkColorSpaceKHR &targetColorSpace ) n
     return true;
 }
 
-bool Renderer::CheckFeature ( VkBool32 feature, char const* name ) noexcept
+bool Renderer::CheckFeature ( VkBool32 feature, char const* name, bool initLogs ) noexcept
 {
+    bool const present = feature == VK_TRUE;
+
+    if ( !initLogs )
+        return present;
+
     LogInfo ( "%sChecking %s...", INDENT_1, name );
 
-    if ( feature ) [[likely]]
+    if ( present ) [[likely]]
     {
         LogInfo ( "%sOK: presented", INDENT_2 );
         return true;
@@ -2208,7 +2268,7 @@ void Renderer::PrintFloatProp ( char const* indent, char const* name, float valu
     LogInfo ( "%s%s: %g", indent, name, value );
 }
 
-void Renderer::PrintFloatVec2Prop ( char const* indent, char const* name, float const value[] ) noexcept
+void Renderer::PrintFloatVec2Prop ( char const* indent, char const* name, float const *value ) noexcept
 {
     LogInfo ( "%s%s: %g, %g", indent, name, value[ 0U ], value[ 1U ] );
 }
@@ -2592,12 +2652,12 @@ void Renderer::PrintUINT32Prop ( char const* indent, char const* name, uint32_t 
     LogInfo ( "%s%s: %u", indent, name, value );
 }
 
-void Renderer::PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept
+void Renderer::PrintUINT32Vec2Prop ( char const* indent, char const* name, uint32_t const *value ) noexcept
 {
     LogInfo ( "%s%s: %u, %u", indent, name, value[ 0U ], value[ 1U ] );
 }
 
-void Renderer::PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const value[] ) noexcept
+void Renderer::PrintUINT32Vec3Prop ( char const* indent, char const* name, uint32_t const *value ) noexcept
 {
     LogInfo ( "%s%s: %u, %u, %u", indent, name, value[ 0U ], value[ 1U ], value[ 2U ] );
 }
@@ -2772,8 +2832,7 @@ char const* Renderer::ResolveVkResult ( VkResult result ) noexcept
     if ( findResult != g_vkResultMap.cend () )
         return findResult->second;
 
-    constexpr static char const* unknownResult = "UNKNOWN";
-    return unknownResult;
+    return "UNKNOWN";
 }
 
 char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR transform ) noexcept
@@ -2783,8 +2842,7 @@ char const* Renderer::ResolveVkSurfaceTransform ( VkSurfaceTransformFlagsKHR tra
     if ( findResult != g_vkSurfaceTransformMap.cend () )
         return findResult->second;
 
-    constexpr static char const* unknownResult = "UNKNOWN";
-    return unknownResult;
+    return "UNKNOWN";
 }
 
 std::string Renderer::StringifyVkFlags ( VkFlags flags,

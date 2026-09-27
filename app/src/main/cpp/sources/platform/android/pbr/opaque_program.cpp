@@ -5,7 +5,7 @@
 namespace pbr {
 
 OpaqueProgram::OpaqueProgram () noexcept:
-    GeometryPassProgram ( "Opaque", "shaders/opaque.ps.spv" )
+    GeometryPassProgram ( "Opaque", "shaders/android/opaque.ps.spv" )
 {
     // NOTHING
 }

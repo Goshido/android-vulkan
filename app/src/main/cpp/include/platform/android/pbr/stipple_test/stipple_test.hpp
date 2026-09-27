@@ -2,7 +2,7 @@
 #define PBR_STIPPLE_TEST_HPP
 
 
-#include <game.hpp>
+#include <platform/android/game.hpp>
 #include <platform/android/pbr/camera.hpp>
 #include <platform/android/pbr/point_light_component.hpp>
 #include <platform/android/pbr/render_session.hpp>

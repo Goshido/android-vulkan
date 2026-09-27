@@ -5,7 +5,6 @@
 #include <pbr/sampler.hpp>
 #include <renderer.hpp>
 #include "resource_heap.inc"
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 GX_DISABLE_COMMON_WARNINGS
@@ -141,7 +140,6 @@ class ResourceHeap final
         Sampler                                         _shadowSampler {};
 
         Buffer                                          _descriptorBuffer {};
-        ResourceHeapDescriptorSetLayout                 _layout {};
 
         Slots                                           _nonUISlots {};
         Slots                                           _uiSlots {};
@@ -151,6 +149,7 @@ class ResourceHeap final
         size_t                                          _storageImageSize = 0U;
 
         Write                                           _write {};
+        std::mutex                                      _mutex {};
 
         VkDescriptorBufferBindingInfoEXT                _bindingInfo
         {
@@ -176,8 +175,7 @@ class ResourceHeap final
 
         [[nodiscard]] bool Init ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept;
         void Destroy ( android_vulkan::Renderer& renderer ) noexcept;
-
-        void Bind ( VkCommandBuffer commandBuffer, VkPipelineBindPoint bindPoint, VkPipelineLayout layout ) noexcept;
+        void Bind ( VkCommandBuffer commandBuffer ) noexcept;
 
         [[nodiscard]] std::optional<uint32_t> RegisterBuffer ( VkDevice device,
             VkBuffer buffer,

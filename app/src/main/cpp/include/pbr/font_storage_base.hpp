@@ -216,7 +216,7 @@ class FontStorageBase
             int32_t ascend,
             char32_t character
         ) noexcept;
- 
+
         [[nodiscard]] MakeFontResult MakeFontInternal ( std::string_view font, uint32_t size ) noexcept;
 
         [[nodiscard]] static bool CheckFTResult ( FT_Error result, char const* from, char const* message ) noexcept;

@@ -70,6 +70,12 @@
     <Filter Include="Templates\pbr">
       <UniqueIdentifier>{e1adb553-27e9-4884-ae51-95a8b17459e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\tools">
+      <UniqueIdentifier>{465c9780-db49-45a7-b182-0ff722691e7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\tools">
+      <UniqueIdentifier>{f9645f17-5bd6-4685-9085-90a33a596b4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -201,15 +207,6 @@
     <ClCompile Include="src\ui_element.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\set_text_event.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\prepend_ui_child_element_event.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\append_ui_child_element_event.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -279,9 +276,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\resource_heap_descriptor_set_layout.cpp">
-      <Filter>Source Files\core\platform\windows\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\brightness_info.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -315,9 +309,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\tone_mapper_pass.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="src\hello_triangle_program.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\mesh_geometry_base.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
@@ -335,6 +326,177 @@
     </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\memory_allocator.cpp">
       <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\workspace.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gbuffer_mesh_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\point_light_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\workspace_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\reflection_probe_global_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\reflection_probe_local_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tools\hlsl.cpp">
+      <Filter>Source Files\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="src\io.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh_storage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\native_renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh_upload_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture2D_storage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture2D_upload_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource_heap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\viewport_widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\font_storage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\stream_buffer.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_buffer_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\message.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hotkey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\move_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rotate_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scale_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gbuffer_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\opaque_with_id_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\id_collect_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\program.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program_info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\universal_pipeline_layout.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\id_compress_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\selection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_mask_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_border_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\outline_blur_x_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outline_mesh_node.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_prepass_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_line_segment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_cone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_sphere.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_line_segment_with_flip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_box_with_flip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gpu_buffer.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\pbr\gizmo_compose_program.cpp">
+      <Filter>Source Files\core\platform\windows\pbr</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_ring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_ring_billboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf_ring_base.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_cylinder_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_box_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_sphere_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gizmo_ring_collider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ring_math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sdf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cross_like_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tool.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -563,15 +725,6 @@
     <ClInclude Include="include\ui_element.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\set_text_event.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\append_ui_child_element_event.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\prepend_ui_child_element_event.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\timer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -641,9 +794,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap_descriptor_set_layout.hpp">
-      <Filter>Header Files\core\platform\window\pbr</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\brightness_info.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
@@ -689,12 +839,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\tone_mapper_pass.hpp">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="include\hello_triangle_vertex.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hello_triangle_program.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\mesh_geometry_base.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
@@ -721,6 +865,237 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\sampler.hpp">
       <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\workspace.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gbuffer_mesh_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture2D_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh_geometry_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\pbr_material.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\color_data.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gbuffer_mesh_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\point_light_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\point_light_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\workspace_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\reflection_probe_global_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\reflection_probe_global_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\reflection_probe_local_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\reflection_probe_local_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tools\hlsl.hpp">
+      <Filter>Header Files\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\scope_quard.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\io.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh_storage.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\native_renderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh_upload_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\file.hpp">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture2D_storage.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture2D_upload_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource_heap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\viewport_widget.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\font_storage.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\stream_buffer.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\transform.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\shading.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hotkey.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\move_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rotate_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scale_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_with_id_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\opaque_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_collect_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\program.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\program_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\program_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\universal_pipeline_layout.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\selection.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_mask_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_blur_x_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\outline_mesh_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\outline_mesh_node.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_prepass_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\model.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_pixel.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_shape.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_vertex.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_box.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_line_segment.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_cone.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_sphere.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_line_segment_with_flip.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_box_with_flip.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_size.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gpu_buffer.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose_program.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\platform\windows\pbr\swapchain_info.hpp">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_ring.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_ring_billboard.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_palette.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf_ring_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_cylinder_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_box_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_sphere_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gizmo_ring_collider.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ring_math.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\sdf.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\cross_like_tool.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -773,8 +1148,29 @@
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\resource_heap.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
-    <None Include="include\hello_triangle_program.inc">
-      <Filter>Header Files</Filter>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\push_constant_range.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gbuffer_pass_binds.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\id_compress.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_mask_binds.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\outline_border.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_shapes.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_tile_config.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose.inc">
+      <Filter>Header Files\core\platform\window\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

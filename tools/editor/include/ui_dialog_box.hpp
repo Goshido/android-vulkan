@@ -33,7 +33,7 @@ class UIDialogBox : public Widget
 
                 ~Gizmo () = default;
 
-                [[nodiscard]] bool OnMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept;
+                [[nodiscard]] bool OnMouseMove ( MouseMoveEvent const &event ) noexcept;
         };
 
     protected:
@@ -87,7 +87,7 @@ class UIDialogBox : public Widget
         void SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept;
 
     protected:
-        explicit UIDialogBox ( MessageQueue &messageQueue, std::string &&name ) noexcept;
+        explicit UIDialogBox ( std::string &&name ) noexcept;
         ~UIDialogBox () override = default;
 
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;

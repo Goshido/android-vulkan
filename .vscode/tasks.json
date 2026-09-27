@@ -64,8 +64,33 @@
             "args": [
                 {
                     "quoting": "escape",
-                    "value": "-ShaderSource"
+                    "value": "-EmbedShaderSource"
                 }
+            ]
+        },
+        {
+            "label": "Compile SPIR-V [profile]",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/scripts/windows/make-all.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "escape",
+                    "value": "-EmbedShaderSource"
+                },
+                {
+                    "quoting": "escape",
+                    "value": "-ProfileMode"
+                },
             ]
         },
         {
@@ -80,6 +105,27 @@
             "command": {
                 "quoting": "weak",
                 "value" : "${workspaceFolder}/scripts/windows/validate.ps1"
+            },
+
+            "args": [
+                {
+                    "quoting": "strong",
+                    "value": "${file}"
+                }
+            ]
+        },
+        {
+            "label": "Preprocess Shader",
+            "type": "shell",
+            "group": "build",
+
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+
+            "command": {
+                "quoting": "weak",
+                "value" : "${workspaceFolder}/scripts/windows/preprocess.ps1"
             },
 
             "args": [

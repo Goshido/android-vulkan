@@ -26,6 +26,18 @@ CameraComponent::CameraComponent ( SaveState::Container const &info ) noexcept:
     // FUCK
 }
 
+void CameraComponent::Register ( Actor &actor ) noexcept
+{
+    Component::Register ( actor );
+    // FUCK
+}
+
+void CameraComponent::Unregister () noexcept
+{
+    // FUCK
+    Component::Unregister ();
+}
+
 void CameraComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );

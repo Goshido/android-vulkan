@@ -18,11 +18,13 @@ class Actor final
     private:
         constexpr static std::string_view       DEFAULT_NAME = "actor";
 
-        using Components = std::deque<Component::Ref>;
+        using Components = std::deque<ComponentRef>;
 
     private:
         Components                              _components {};
-        GXMat4                                  _local = GXMat4::IDENTITY;
+        GXQuat                                  _rotation = GXQuat::IDENTITY;
+        GXVec3                                  _scale = GXVec3::ONE;
+        GXVec3                                  _location = GXVec3::ZERO;
         std::string                             _name = std::string ( DEFAULT_NAME );
 
     public:
@@ -36,12 +38,41 @@ class Actor final
 
         explicit Actor ( SaveState::Container const &info ) noexcept;
 
-        ~Actor () = default;
+        ~Actor () noexcept;
 
-        void Append ( std::unique_ptr<Component> &&component ) noexcept;
-        void Insert ( size_t before, std::unique_ptr<Component> &&component ) noexcept;
+        void SetName ( std::string_view name ) noexcept;
+
+        void Append ( ComponentRef &&component ) noexcept;
+        void Insert ( size_t before, ComponentRef &&component ) noexcept;
+
+        void Select () noexcept;
+        void Deselect () noexcept;
+
+        // Method returns just removed component.
+        [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
+
         void Save ( SaveState::Container &root ) const noexcept;
+
+        [[nodiscard]] GXQuat const &GetRotation () const noexcept;
+        void SetRotation ( GXQuat const &rotation ) noexcept;
+        void SetRotation ( GXMat3 const &rotation ) noexcept;
+        void SetRotation ( GXMat4 const &rotation ) noexcept;
+
+        [[nodiscard]] GXVec3 const &GetLocation () const noexcept;
+        void SetLocation ( GXVec3 const &location ) noexcept;
+
+        [[nodiscard]] GXVec3 const &GetScale () const noexcept;
+        void SetScale ( GXVec3 const &scale ) noexcept;
+
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept;
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept;
+        void SetLocal ( GXVec3 const &location, GXVec3 const &scale ) noexcept;
+
+    private:
+        void NotifyTransformChanged () noexcept;
 };
+
+using ActorRef = std::unique_ptr<Actor>;
 
 } // namespace editor
 

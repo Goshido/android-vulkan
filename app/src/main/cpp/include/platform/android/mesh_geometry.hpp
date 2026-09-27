@@ -19,8 +19,8 @@ class MeshGeometry final : public MeshGeometryBase
         MeshGeometry ( MeshGeometry const & ) = delete;
         MeshGeometry &operator = ( MeshGeometry const & ) = delete;
 
-        MeshGeometry ( MeshGeometry && ) = delete;
-        MeshGeometry &operator = ( MeshGeometry && ) = delete;
+        MeshGeometry ( MeshGeometry && ) noexcept;
+        MeshGeometry &operator = ( MeshGeometry && ) noexcept;
 
         ~MeshGeometry () override = default;
 

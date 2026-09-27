@@ -25,10 +25,13 @@ constexpr char const INDENT_2[] = "        ";
 //----------------------------------------------------------------------------------------------------------------------
 
 [[nodiscard]] bool CheckExtensionScalarBlockLayout ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME, initLogs );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceScalarBlockLayoutFeaturesEXT hardwareSupport
@@ -46,8 +49,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.scalarBlockLayout == VK_TRUE;
 
-    if ( hardwareSupport.scalarBlockLayout ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: scalarBlockLayout", INDENT_2 );
         return true;
@@ -58,10 +65,13 @@ constexpr char const INDENT_2[] = "        ";
 }
 
 [[nodiscard]] bool CheckExtensionShaderFloat16Int8 ( VkPhysicalDevice physicalDevice,
-    std::set<std::string> const &allExtensions
+    std::set<std::string> const &allExtensions,
+    bool initLogs
 ) noexcept
 {
-    if ( !Renderer::CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME ) ) [[unlikely]]
+    bool status = Renderer::CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT16_INT8_EXTENSION_NAME, initLogs );
+
+    if ( !status ) [[unlikely]]
         return false;
 
     VkPhysicalDeviceFloat16Int8FeaturesKHR hardwareSupport
@@ -80,8 +90,12 @@ constexpr char const INDENT_2[] = "        ";
     };
 
     vkGetPhysicalDeviceFeatures2 ( physicalDevice, &probe );
+    status = hardwareSupport.shaderFloat16 == VK_TRUE;
 
-    if ( hardwareSupport.shaderFloat16 ) [[likely]]
+    if ( !initLogs )
+        return status;
+
+    if ( status ) [[likely]]
     {
         LogInfo ( "%sOK: shaderFloat16", INDENT_2 );
         return true;
@@ -177,6 +191,93 @@ bool Renderer::SelectTargetHardware ( std::string_view const &/*userGPU*/ ) noex
     return false;
 }
 
+#ifdef AV_ENABLE_VVL
+
+void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateInfo,
+    VkLayerSettingsCreateInfoEXT &vvlSettings,
+    VkValidationFeaturesEXT &validationInfo,
+    VkDebugUtilsMessengerCreateInfoEXT const &debugCallback
+) noexcept
+{
+    // [2024/08/28] Starting from VVL v1.3.290 3ffe98fe2781166df58903c18a71af7b717365aa
+    // it's needed to additionaly activate 'syncval_shader_accesses_heuristic' to use sync validation.
+    // See https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/8467
+    constexpr static char const* const vvlLayerName = "VK_LAYER_KHRONOS_validation";
+    constexpr static VkBool32 enable = VK_TRUE;
+
+    // [2026/06/23] From <VVL repo>/layers/layer_options.cpp
+    constexpr static VkLayerSettingEXT const vvlChecks[] =
+    {
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_full_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_record_time_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_shader_accesses_heuristic",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_load_op_after_store_op_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_message_extra_properties",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        }
+    };
+
+    vvlSettings =
+    {
+        .sType = VK_STRUCTURE_TYPE_LAYER_SETTINGS_CREATE_INFO_EXT,
+        .pNext = &debugCallback,
+        .settingCount = static_cast<uint32_t> ( std::size( vvlChecks ) ),
+        .pSettings = vvlChecks
+    };
+
+    // [2022/07/26] GPU assisted validation is impossible on MALI G76 (driver 26) due to lack of required
+    // feature - VkPhysicalDeviceFeatures::vertexPipelineStoresAndAtomics.
+    constexpr static VkValidationFeatureEnableEXT const features[] =
+    {
+        VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    };
+
+    validationInfo =
+    {
+        .sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+        .pNext = &vvlSettings,
+        .enabledValidationFeatureCount = static_cast<uint32_t> ( std::size ( features ) ),
+        .pEnabledValidationFeatures = features,
+        .disabledValidationFeatureCount = 0U,
+        .pDisabledValidationFeatures = nullptr
+    };
+
+    instanceCreateInfo.pNext = &validationInfo;
+    instanceCreateInfo.enabledLayerCount = 1U;
+    instanceCreateInfo.ppEnabledLayerNames = &vvlLayerName;
+}
+
+#endif // AV_ENABLE_VVL
+
 std::span<char const* const> Renderer::GetDeviceExtensions () noexcept
 {
     constexpr static char const* extensions[] =
@@ -214,8 +315,6 @@ std::span<char const* const> Renderer::GetInstanceExtensions () noexcept
 
 bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExtensions ) noexcept
 {
-    LogInfo ( ">>> Checking required device features..." );
-
     VkPhysicalDeviceVulkan11Features features11
     {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
@@ -247,19 +346,29 @@ bool Renderer::CheckRequiredFeatures ( std::vector<std::string> const &deviceExt
     std::set<std::string> allExtensions;
     allExtensions.insert ( deviceExtensions.cbegin (), deviceExtensions.cend () );
 
+    if ( _initLogs )
+        LogInfo ( ">>> Checking required device features..." );
+
     // Note bitwise '&' is intentional. All checks must be done to view whole picture.
 
-    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SPIRV_1_4_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME ) ) &
-        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32" ) );
-        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16" ) );
-        AV_BITWISE ( CheckFeature ( features.textureCompressionASTC_LDR, "textureCompressionASTC_LDR" ) );
-        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview" ) );
+    return AV_BITWISE ( CheckExtensionScalarBlockLayout ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionShaderFloat16Int8 ( _physicalDevice, allExtensions, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME, _initLogs ) ) &
+
+        AV_BITWISE (
+            CheckExtensionCommon ( allExtensions,
+                VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
+                _initLogs
+            )
+        ) &
+
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SPIRV_1_4_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckExtensionCommon ( allExtensions, VK_KHR_SWAPCHAIN_EXTENSION_NAME, _initLogs ) ) &
+        AV_BITWISE ( CheckFeature ( features.fullDrawIndexUint32, "fullDrawIndexUint32", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features.shaderInt16, "shaderInt16", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features.textureCompressionASTC_LDR, "textureCompressionASTC_LDR", _initLogs ) );
+        AV_BITWISE ( CheckFeature ( features11.multiview, "multiview", _initLogs ) );
 }
 
 void Renderer::GetPlatformFeatureProperties () noexcept
@@ -401,6 +510,11 @@ VkPhysicalDeviceFeatures2 Renderer::GetRequiredPhysicalDeviceFeatures () noexcep
 Renderer::VulkanVersion Renderer::GetRequiredVulkanVersion () noexcept
 {
     return VERSION;
+}
+
+VkImageUsageFlags Renderer::GetSwapchainUsage () noexcept
+{
+    return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 }
 
 } // namespace android_vulkan

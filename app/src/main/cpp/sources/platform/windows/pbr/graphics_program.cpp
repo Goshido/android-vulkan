@@ -1,29 +1,31 @@
 #include <precompiled_headers.hpp>
 #include <platform/windows/pbr/graphics_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <vulkan_api.hpp>
-#include <vulkan_utils.hpp>
 
 
 namespace pbr {
 
-GraphicsProgram::GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept:
-    GraphicsProgramBase ( name ),
-    _pushConstantSize ( static_cast<uint32_t> ( pushConstantSize ) )
+void GraphicsProgram::Destroy ( VkDevice device ) noexcept
+{
+    GraphicsProgramBase::Destroy ( device );
+}
+
+GraphicsProgram::GraphicsProgram ( size_t pushConstantSize ) noexcept:
+    GraphicsProgramBase ( pushConstantSize )
 {
     // NOTHING
 }
 
-VkPipelineLayout GraphicsProgram::GetPipelineLayout () const noexcept
-{
-    return _pipelineLayout;
-}
-
 void GraphicsProgram::SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept
 {
-    constexpr VkPipelineStageFlags stages =
-        AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT );
-
-    vkCmdPushConstants ( commandBuffer, _pipelineLayout, stages, 0U, _pushConstantSize, constants );
+    vkCmdPushConstants ( commandBuffer,
+        UniversalPipelineLayout::GetPipelineLayout (),
+        UniversalPipelineLayout::GetStages (),
+        0U,
+        _pushConstantSize,
+        constants
+    );
 }
 
 VkPipelineVertexInputStateCreateInfo const* GraphicsProgram::InitVertexInputInfo () noexcept

@@ -15,9 +15,6 @@ namespace pbr {
 
 class GraphicsProgram : public GraphicsProgramBase
 {
-    private:
-        uint32_t    _pushConstantSize = 0U;
-
     public:
         GraphicsProgram () = delete;
 
@@ -27,12 +24,14 @@ class GraphicsProgram : public GraphicsProgramBase
         GraphicsProgram ( GraphicsProgram && ) = delete;
         GraphicsProgram &operator = ( GraphicsProgram && ) = delete;
 
-        [[nodiscard]] VkPipelineLayout GetPipelineLayout () const noexcept;
         void SetPushConstants ( VkCommandBuffer commandBuffer, void const* constants ) const noexcept;
 
-    protected:
-        explicit GraphicsProgram ( std::string_view name, size_t pushConstantSize ) noexcept;
         ~GraphicsProgram () override = default;
+
+        void Destroy ( VkDevice device ) noexcept override;
+
+    protected:
+        explicit GraphicsProgram ( size_t pushConstantSize ) noexcept;
 
         // 'nativeXXX' are needed when format is OS/platform specific and could be known in runtime only.
         // For example swapchain related pipelines or pipelines with depth/stencil features.
@@ -44,8 +43,7 @@ class GraphicsProgram : public GraphicsProgramBase
             VkPipelineRenderingCreateInfo &info
         ) const noexcept = 0;
 
-        [[nodiscard]] virtual bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            std::vector<uint8_t> &vs,
+        [[nodiscard]] virtual VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,
             std::vector<uint8_t> &fs,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

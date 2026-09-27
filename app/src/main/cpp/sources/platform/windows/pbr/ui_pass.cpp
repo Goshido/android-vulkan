@@ -157,14 +157,21 @@ std::optional<UIPass::Image> ImageStorage::GetImage ( std::string_view asset, bo
     Asset ast {};
 
     // Note UNORM is correct mode because of pixel shader, alpha blending and swapchain UNORM format.
-    bool const result = ast._texture.UploadData ( *_renderer,
-        asset,
-        android_vulkan::eColorSpace::Unorm,
-        useMips,
-        _commandBuffers[ _commandBufferIndex ],
-        false,
-        _fences[ _commandBufferIndex ]
-    );
+    bool const result =
+        ast._texture.UploadToStagingBuffer ( *_renderer,
+            asset,
+            android_vulkan::eColorSpace::Unorm,
+            useMips
+        ) &&
+
+        ast._texture.UploadToGPU ( *_renderer,
+            _commandBuffers[ _commandBufferIndex ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            _fences[ _commandBufferIndex ]
+        );
 
     if ( !result ) [[unlikely]]
         return std::nullopt;
@@ -547,25 +554,15 @@ void UIPass::BufferStream::UpdateGeometry ( VkCommandBuffer commandBuffer, size_
         copy
     );
 
-    VkBufferMemoryBarrier &b0 = _barriers[ 0U ];
+    VkBufferMemoryBarrier2 &b0 = _barriers[ 0U ];
     b0.offset = offset0;
     b0.size = copy[ 0U ].size;
 
-    VkBufferMemoryBarrier &b1 = _barriers[ 1U ];
+    VkBufferMemoryBarrier2 &b1 = _barriers[ 1U ];
     b1.offset = offset1;
     b1.size = copy[ 1U ].size;
 
-    vkCmdPipelineBarrier ( commandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT,
-        VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-        0U,
-        0U,
-        nullptr,
-        std::size ( _barriers ),
-        _barriers,
-        0U,
-        nullptr
-    );
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -612,8 +609,7 @@ void UIPass::InUseImageTracker::MarkInUse ( uint16_t image, size_t commandBuffer
 //----------------------------------------------------------------------------------------------------------------------
 
 UIPass::UIPass ( ResourceHeap &resourceHeap ) noexcept:
-    _fontStorage ( resourceHeap ),
-    _resourceHeap ( resourceHeap )
+    _fontStorage ( resourceHeap )
 {
     ImageStorage::SetResourceHeap ( resourceHeap );
 }
@@ -633,12 +629,11 @@ bool UIPass::Execute ( VkCommandBuffer commandBuffer, size_t commandBufferIndex 
     }
 
     _program.Bind ( commandBuffer );
-    _resourceHeap.Bind ( commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _program.GetPipelineLayout () );
 
-    _pushConstants._bdaStream0 = _uiVertices.GetStream0Address () +
+    _pushConstants._uiVertices0 = _uiVertices.GetStream0Address () +
         static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream0 ) );
 
-    _pushConstants._bdaStream1 = _uiVertices.GetStream1Address () +
+    _pushConstants._uiVertices1 = _uiVertices.GetStream1Address () +
         static_cast<VkDeviceAddress> ( _readVertexIndex * sizeof ( UIVertexStream1 ) );
 
     _program.SetPushConstants ( commandBuffer, &_pushConstants );
@@ -797,20 +792,15 @@ void UIPass::SubmitText ( size_t /*usedVertices*/ ) noexcept
 
 bool UIPass::UploadGPUFontData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "Upload GPU font data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload GPU font data" )
     return _fontStorage.UploadGPUData ( renderer, commandBuffer );
 }
 
 void UIPass::UploadGPUGeometryData ( android_vulkan::Renderer &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "Upload UI geometry data" )
-    AV_VULKAN_GROUP ( commandBuffer, "Upload UI geometry data" )
-
     if ( _isTransformChanged ) [[unlikely]]
         UpdateTransform ( renderer );
 
-    if ( _hasChanges )
+    if ( _hasChanges ) [[unlikely]]
     {
         UpdateGeometry ( commandBuffer );
     }
@@ -1043,12 +1033,15 @@ std::optional<UIPass::Image> UIPass::RequestImage ( std::string const &asset ) n
 
 void UIPass::UpdateGeometry ( VkCommandBuffer commandBuffer ) noexcept
 {
+    AV_TRACE ( "Upload UI geometry data" )
+    AV_VULKAN_GROUP ( commandBuffer, "Upload UI geometry data" )
     _uiVertices.UpdateGeometry ( commandBuffer, _readVertexIndex, _writeVertexIndex );
     _hasChanges = false;
 }
 
 void UIPass::UpdateTransform ( android_vulkan::Renderer &renderer ) noexcept
 {
+    AV_TRACE ( "Upload UI transform" )
     float const scaleX = 2.0F / _bottomRight._data[ 0U ];
     float const scaleY = 2.0F / _bottomRight._data[ 1U ];
     GXMat4 const &orientation = renderer.GetPresentationEngineTransform ();

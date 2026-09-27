@@ -4,8 +4,8 @@
 
 namespace pbr {
 
-LightLightupBaseProgram::LightLightupBaseProgram ( std::string &&name ) noexcept:
-    GraphicsProgram ( std::move ( name ) )
+LightLightupBaseProgram::LightLightupBaseProgram () noexcept:
+    GraphicsProgram ( 0U )
 {
     // NOTHING
 }

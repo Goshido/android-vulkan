@@ -32,21 +32,31 @@ GX_RESTORE_WARNING_STATE
 
 #include <vulkan/vulkan_core.h>
 
+#define AV_VULKAN_GEN(x, y) x##____##y
+#define AV_VULKAN_GEN2(x, y) AV_VULKAN_GEN ( x, y )
+
+#define AV_SET_VULKAN_OBJECT_NAME_IMPL(buf, device, handle, type, ...)                                                 \
+{                                                                                                                      \
+    char buf[ 256U ];                                                                                                  \
+    std::snprintf ( buf, std::size ( buf ), __VA_ARGS__ );                                                             \
+    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, buf );                  \
+}
 
 #define AV_SET_VULKAN_OBJECT_NAME(device, handle, type, ...)                                                           \
-{                                                                                                                      \
-    char _FuCk_NaMe_[ 256U ];                                                                                          \
-    std::snprintf ( _FuCk_NaMe_, std::size ( _FuCk_NaMe_ ), __VA_ARGS__ );                                             \
-    android_vulkan::SetVulkanObjectName ( device, reinterpret_cast<uint64_t> ( handle ), type, _FuCk_NaMe_ );          \
-}
+    AV_SET_VULKAN_OBJECT_NAME_IMPL ( AV_VULKAN_GEN2 ( buf, __LINE__ ), device, handle, type, __VA_ARGS__ )
+
+#define AV_VULKAN_GROUP_IMPL(buf, group, commandBuffer, ...)                                                           \
+    android_vulkan::VulkanGroup group ( commandBuffer );                                                               \
+    char buf[ 256U ];                                                                                                  \
+    std::snprintf ( buf, std::size ( buf ), __VA_ARGS__ );                                                             \
+    group.IssueGroup ( buf );
 
 #define AV_VULKAN_GROUP(commandBuffer, ...)                                                                            \
-android_vulkan::VulkanGroup _FuCk_VuLkAn_GrOuP_ ( commandBuffer );                                                     \
-{                                                                                                                      \
-    char _FuCk_NaMe_[ 256U ];                                                                                          \
-    std::snprintf ( _FuCk_NaMe_, std::size ( _FuCk_NaMe_ ), __VA_ARGS__ );                                             \
-    _FuCk_VuLkAn_GrOuP_.IssueGroup ( _FuCk_NaMe_ );                                                                    \
-}
+    AV_VULKAN_GROUP_IMPL ( AV_VULKAN_GEN2 ( buf, __LINE__ ),                                                           \
+        AV_VULKAN_GEN2 ( group, __LINE__ ),                                                                            \
+        commandBuffer,                                                                                                 \
+        __VA_ARGS__                                                                                                    \
+    )
 
 namespace android_vulkan {
 

@@ -3,7 +3,7 @@
 
 
 #include "scene.hpp"
-#include <game.hpp>
+#include <platform/android/game.hpp>
 
 
 namespace pbr {

@@ -1,19 +1,13 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <ui_element.hpp>
 
 
 namespace editor {
 
-UIElement::UIElement ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
+UIElement::UIElement () noexcept
 {
-    messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIElementCreated,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::UIElementCreated ) );
 }
 
 } // namespace editor

@@ -348,17 +348,14 @@ void MainWindow::ReadClipboard () const noexcept
         return;
 
     HGLOBAL data = GetClipboardData ( CF_UNICODETEXT );
+    std::u32string value ( pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::ReadClipboardResponse,
-
-            ._params = new std::u32string (
-                pbr::UTF16Parser::ToU32String ( static_cast<char16_t const*> ( GlobalLock ( data ) ) )
-            ),
-
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::ReadClipboardResponse,
+            [ value = std::move ( value ) ] () mutable noexcept {
+                return &value;
+            }
+        )
     );
 
     GlobalUnlock ( data );
@@ -416,25 +413,18 @@ void MainWindow::OnChar ( WPARAM wParam ) noexcept
     _highSurrogate = std::nullopt;
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::Typing,
-            ._params = std::bit_cast<void*> ( codepoint ),
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::Typing,
+            [ value = std::bit_cast<void*> ( codepoint ) ] () noexcept {
+                return value;
+            }
+        )
     );
 }
 
 void MainWindow::OnClose () noexcept
 {
     AV_TRACE ( "Main window: close" )
-
-    _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::CloseEditor,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    _messageQueue->EnqueueBack ( Message ( eMessageType::CloseEditor ) );
 }
 
 void MainWindow::OnCreate ( HWND hwnd ) noexcept
@@ -458,33 +448,34 @@ void MainWindow::OnDoubleClick ( LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: double click" )
 
+    MouseButtonEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._key = eKey::LeftMouseButton,
+        ._modifier = MakeKeyModifier ()
+    };
+
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::DoubleClick,
-
-            ._params = new MouseButtonEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = eKey::LeftMouseButton,
-                ._modifier = MakeKeyModifier ()
-            },
-
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::DoubleClick,
+            [ event = std::move ( event ) ] () mutable noexcept {
+                return &event;
+            }
+        )
     );
 }
 
 void MainWindow::OnDPIChanged ( WPARAM wParam, LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: DPI changed" )
+    auto* value = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::DPIChanged,
-            ._params = reinterpret_cast<void*> ( static_cast<uintptr_t> ( LOWORD ( wParam ) ) ),
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::DPIChanged,
+            [ value ] () noexcept {
+                return value;
+            }
+        )
     );
 
     RECT const &rect = *reinterpret_cast<RECT const*> ( lParam );
@@ -518,20 +509,20 @@ void MainWindow::OnMouseButton ( LPARAM lParam, eKey key, eMessageType messageTy
 {
     AV_TRACE ( "Main window: mouse button" )
 
+    MouseButtonEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._key = key,
+        ._modifier = MakeKeyModifier ()
+    };
+
     _messageQueue->EnqueueBack (
-        {
-            ._type = messageType,
-
-            ._params = new MouseButtonEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._key = key,
-                ._modifier = MakeKeyModifier ()
-            },
-
-            ._serialNumber = 0U
-        }
+        Message ( messageType,
+            [ event = std::move ( event ) ] () mutable noexcept {
+                return &event;
+            }
+        )
     );
 }
 
@@ -539,32 +530,33 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: mouse move" )
 
+    MouseMoveEvent event
+    {
+        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+        ._eventID = ++_mouseMoveEventID
+    };
+
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::MouseMoved,
-
-            ._params = new MouseMoveEvent
-            {
-                ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-                ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-                ._eventID = ++_mouseMoveEventID
-            },
-
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::MouseMoved,
+            [ event = std::move ( event) ] () mutable noexcept {
+                return &event;
+            }
+        )
     );
 }
 
 void MainWindow::OnSize ( WPARAM wParam ) noexcept
 {
     AV_TRACE ( "Main window: size" )
+    auto* value = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) );
 
     _messageQueue->EnqueueBack (
-        {
-            ._type = eMessageType::WindowVisibilityChanged,
-            ._params = std::bit_cast<void*> ( static_cast<uintptr_t> ( wParam == SIZE_MINIMIZED ) ),
-            ._serialNumber = 0U
-        }
+        Message ( eMessageType::WindowVisibilityChanged,
+            [ value ] () noexcept {
+                return value;
+            }
+        )
     );
 }
 
@@ -647,7 +639,6 @@ void MainWindow::Save () noexcept
 
         case SW_SHOWNORMAL:
             [[fallthrough]];
-
         default:
             state = eWindowState::Normal;
         break;
@@ -768,7 +759,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSCHAR:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnChar ( wParam );
         break;
@@ -797,7 +788,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSKEYDOWN:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyDown );
         break;
@@ -807,7 +798,7 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_SYSKEYUP:
-            // Pass control to DefWindowProcW because it's requred by WinAPI rules.
+            // Pass control to DefWindowProcW because it's required by WinAPI rules.
             // https://learn.microsoft.com/en-us/windows/win32/learnwin32/keyboard-input
             mainWindow.OnKeyboardKey ( wParam, eMessageType::KeyboardKeyUp );
         break;
@@ -834,6 +825,8 @@ LRESULT CALLBACK MainWindow::WindowHandler ( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
 
         case WM_MOUSEMOVE:
+            // [2026/07/21] Windows 11 Pro 25H2 26200.8894: The OS triggers this handler more frequently while
+            // keyboard keys are held down (127 events/sec vs. 71 events/sec idle).
             mainWindow.OnMouseMove ( lParam );
         break;
 

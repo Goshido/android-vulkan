@@ -7,6 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 GX_RESTORE_WARNING_STATE
@@ -17,8 +18,8 @@ namespace android_vulkan {
 class File final
 {
     private:
-        std::string             _filePath;
-        std::vector<uint8_t>    _content;
+        std::string             _filePath {};
+        std::vector<uint8_t>    _content {};
 
     public:
         File () = default;
@@ -30,7 +31,7 @@ class File final
         File &operator = ( File &&other ) = delete;
 
         explicit File ( std::string &&filePath ) noexcept;
-        explicit File ( std::string_view const &filePath ) noexcept;
+        explicit File ( std::string_view filePath ) noexcept;
         explicit File ( char const* filePath ) noexcept;
 
         ~File () = default;
@@ -44,6 +45,9 @@ class File final
         [[nodiscard]] bool IsContentLoaded () const noexcept;
         [[nodiscard]] bool IsExist () const noexcept;
         [[nodiscard]] bool LoadContent () noexcept;
+
+        [[nodiscard]] static std::string ResolvePath ( std::string &&path ) noexcept;
+        [[nodiscard]] static std::string ResolvePath ( std::string_view path ) noexcept;
 };
 
 } // namespace android_vulkan

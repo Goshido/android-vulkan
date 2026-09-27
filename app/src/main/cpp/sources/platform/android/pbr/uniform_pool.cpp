@@ -211,7 +211,7 @@ bool UniformPool::Init ( android_vulkan::Renderer &renderer,
         uniformWriteSet.pBufferInfo = &bufferInfo;
     }
 
-    // Now all what is needed to do is to init "_bufferInfo::buffer". Then to invoke vkUpdateDescriptorSets.
+    // Now all what is needed to do is to upload data into buffer. Then to invoke vkUpdateDescriptorSets.
     _baseIndex = 0U;
     return true;
 }

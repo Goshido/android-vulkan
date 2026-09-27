@@ -2,6 +2,8 @@
 #include <file.hpp>
 #include <pbr/brightness_factor.inc>
 #include <platform/windows/pbr/tone_mapper_program.hpp>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
+#include <renderer.hpp>
 
 
 namespace pbr {
@@ -21,7 +23,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    GraphicsProgram ( "pbr::ToneMapperProgram", sizeof ( PushConstants ) )
+    GraphicsProgram ( sizeof ( PushConstants ) )
 {
     // NOTHING
 }
@@ -29,7 +31,6 @@ ToneMapperProgram::ToneMapperProgram () noexcept:
 void ToneMapperProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgram::Destroy ( device );
-    _layout.Destroy ( device );
 }
 
 bool ToneMapperProgram::Init ( VkDevice device,
@@ -55,57 +56,44 @@ bool ToneMapperProgram::Init ( VkDevice device,
     std::vector<uint8_t> vs {};
     std::vector<uint8_t> fs {};
 
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    VkGraphicsPipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 
-    pipelineInfo.pNext = InitRenderingInfo ( swapchainFormat,
-        VK_FORMAT_UNDEFINED,
-        VK_FORMAT_UNDEFINED,
-        VK_FORMAT_UNDEFINED,
-        &swapchainFormat,
-        renderingInfo
-    );
+        .pNext = InitRenderingInfo ( swapchainFormat,
+            VK_FORMAT_UNDEFINED,
+            VK_FORMAT_UNDEFINED,
+            VK_FORMAT_UNDEFINED,
+            &swapchainFormat,
+            renderingInfo
+        ),
 
-    pipelineInfo.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
+        .flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT,
+        .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( vs, fs, &brightnessInfo, &specInfo, moduleInfo, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo (),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
 
-    bool result = InitShaderInfo ( pipelineInfo.pStages,
-        vs,
-        fs,
-        &brightnessInfo,
-        &specInfo,
-        moduleInfo,
-        stageInfo
-    );
+        .pViewportState = InitViewportInfo ( viewportInfo,
+            &scissorDescription,
+            &viewportDescription,
+            &viewport
+        ),
 
-    if ( !result ) [[unlikely]]
-        return false;
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = UniversalPipelineLayout::GetPipelineLayout (),
+        .renderPass = VK_NULL_HANDLE,
+        .subpass = 0U,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ();
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = VK_NULL_HANDLE;
-    pipelineInfo.subpass = 0U;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
-
-    result = android_vulkan::Renderer::CheckVkResult (
+    bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
         "pbr::ToneMapperProgram::Init",
         "Can't create pipeline"
@@ -222,43 +210,6 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
     return &info;
 }
 
-bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
-{
-    if ( !_layout.Init ( device ) ) [[unlikely]]
-        return false;
-
-    constexpr VkPushConstantRange pushConstantRange
-    {
-        .stageFlags = AV_VK_FLAG ( VK_SHADER_STAGE_VERTEX_BIT ) | AV_VK_FLAG ( VK_SHADER_STAGE_FRAGMENT_BIT ),
-        .offset = 0U,
-        .size = static_cast<uint32_t> ( sizeof ( PushConstants ) )
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = 1U,
-        .pSetLayouts = &_layout.GetLayout (),
-        .pushConstantRangeCount = 1U,
-        .pPushConstantRanges = &pushConstantRange
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::ToneMapperProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
-    layout = _pipelineLayout;
-    return true;
-}
-
 VkPipelineMultisampleStateCreateInfo const* ToneMapperProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -366,8 +317,7 @@ VkPipelineRenderingCreateInfo const* ToneMapperProgram::InitRenderingInfo ( VkFo
     return &info;
 }
 
-bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-    std::vector<uint8_t> &vs,
+VkPipelineShaderStageCreateInfo const* ToneMapperProgram::InitShaderInfo ( std::vector<uint8_t> &vs,
     std::vector<uint8_t> &fs,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
@@ -381,7 +331,7 @@ bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* 
     android_vulkan::File fsFile ( cases[ static_cast<size_t> ( info._isDefaultBrightness ) ] );
 
     if ( !vsFile.LoadContent () || !fsFile.LoadContent () ) [[unlikely]]
-        return false;
+        return nullptr;
 
     vs = std::move ( vsFile.GetContent () );
     fs = std::move ( fsFile.GetContent () );
@@ -441,8 +391,7 @@ bool ToneMapperProgram::InitShaderInfo ( VkPipelineShaderStageCreateInfo const* 
         .pSpecializationInfo = specializationInfo
     };
 
-    targetInfo = sourceInfo;
-    return true;
+    return sourceInfo;
 }
 
 } // namespace pbr

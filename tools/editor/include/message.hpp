@@ -7,6 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <cstdint>
+#include <functional>
 
 GX_RESTORE_WARNING_STATE
 
@@ -19,19 +20,30 @@ enum class eMessageType : uint32_t
     CaptureMouse,
     ChangeCursor,
     CloseEditor,
+    DestroyGPUBuffer,
+    DestroyMesh,
+    DestroyProgram,
+    DestroyStreamBuffer,
+    DestroyTexture2D,
     DoubleClick,
     DPIChanged,
-    FontStorageReady,
     FrameComplete,
-    HelloTriangleReady,
+    InvokeIO,
+    InvokeRenderSession,
+    InvokeUI,
     KeyboardKeyDown,
     KeyboardKeyUp,
     KillFocus,
+    ModuleStarted,
     ModuleStopped,
     MouseButtonDown,
     MouseButtonUp,
     MouseHover,
     MouseMoved,
+    NewGPUBuffer,
+    NewProgram,
+    NewStreamBuffer,
+    NewTexture2D,
     ReadClipboardRequest,
     ReadClipboardResponse,
     RecreateSwapchain,
@@ -43,20 +55,24 @@ enum class eMessageType : uint32_t
     Shutdown,
     StartTimer,
     StartWidgetCaptureMouse,
+    StopIO,
     StopTimer,
     StopWidgetCaptureMouse,
     SwapchainCreated,
     Typing,
-    UIAddWidget,
     UIAppendChildElement,
+    UIAppendWidget,
     UIDeleteElement,
     UIElementCreated,
     UIHideElement,
     UIPrependChildElement,
+    UIPrependWidget,
     UIRemoveWidget,
     UISetText,
     UIShowElement,
     UIUpdateElement,
+    UploadMesh,
+    UploadTexture2D,
     VulkanInitReport,
     WindowVisibilityChanged,
     WriteClipboard,
@@ -65,11 +81,29 @@ enum class eMessageType : uint32_t
 
 struct Message final
 {
-    using SerialNumber = uint32_t;
+    public:
+        using SerialNumber = uint32_t;
+        using Action = std::move_only_function<void* ()>;
 
-    eMessageType    _type;
-    void*           _params;
-    SerialNumber    _serialNumber = 0U;
+    public:
+        eMessageType    _type;
+        Action          _action;
+        SerialNumber    _serialNumber = 0U;
+
+    public:
+        Message () = default;
+
+        Message ( Message const & ) = delete;
+        Message &operator = ( Message const & ) = delete;
+
+        Message ( Message && ) = default;
+        Message &operator = ( Message && ) = default;
+
+        explicit Message ( eMessageType type ) noexcept;
+        explicit Message ( eMessageType type, Action&& action ) noexcept;
+        explicit Message ( eMessageType type, Action&& action, SerialNumber serialNumber ) noexcept;
+
+        ~Message () = default;
 };
 
 } // namespace editor

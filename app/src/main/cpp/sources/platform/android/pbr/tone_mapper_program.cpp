@@ -19,7 +19,7 @@ constexpr size_t STAGE_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 ToneMapperProgram::ToneMapperProgram () noexcept:
-    GraphicsProgram ( "pbr::ToneMapperProgram" )
+    GraphicsProgram ( 0U )
 {
     // NOTHING
 }
@@ -51,41 +51,32 @@ bool ToneMapperProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
     VkViewport viewportDescription {};
     VkPipelineViewportStateCreateInfo viewportInfo {};
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
-        return false;
+    VkGraphicsPipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( renderer, &brightnessInfo, &specInfo, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = subpass,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo, nullptr, nullptr );
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
 
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
@@ -218,42 +209,6 @@ VkPipelineInputAssemblyStateCreateInfo const* ToneMapperProgram::InitInputAssemb
     return &info;
 }
 
-bool ToneMapperProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
-{
-    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) ) [[unlikely]]
-        return false;
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _fullScreenTriangleLayout.GetLayout (),
-        _toneMapperLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::ToneMapperProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
-    layout = _pipelineLayout;
-    return true;
-}
-
 VkPipelineMultisampleStateCreateInfo const* ToneMapperProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -298,8 +253,83 @@ VkPipelineRasterizationStateCreateInfo const* ToneMapperProgram::InitRasterizati
     return &info;
 }
 
-bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
+VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
+    VkRect2D* scissorInfo,
+    VkViewport* viewportInfo,
+    VkExtent2D const* viewport
+) const noexcept
+{
+    *viewportInfo =
+    {
+        .x = 0.0F,
+        .y = 0.0F,
+        .width = static_cast<float> ( viewport->width ),
+        .height = static_cast<float> ( viewport->height ),
+        .minDepth = 0.0F,
+        .maxDepth = 1.0F
+    };
+
+    *scissorInfo =
+    {
+        .offset
+        {
+            .x = 0,
+            .y = 0
+        },
+
+        .extent = *viewport
+    };
+
+    info =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .viewportCount = 1U,
+        .pViewports = viewportInfo,
+        .scissorCount = 1U,
+        .pScissors = scissorInfo
+    };
+
+    return &info;
+}
+
+VkPipelineLayout ToneMapperProgram::InitLayout ( VkDevice device ) noexcept
+{
+    if ( !_fullScreenTriangleLayout.Init ( device ) || !_toneMapperLayout.Init ( device ) ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _fullScreenTriangleLayout.GetLayout (),
+        _toneMapperLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::ToneMapperProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Tone mapper" )
+    return _pipelineLayout;
+}
+
+VkPipelineShaderStageCreateInfo const* ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
     SpecializationData specializationData,
     VkSpecializationInfo* specializationInfo,
     VkPipelineShaderStageCreateInfo* sourceInfo
@@ -311,7 +341,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &rendere
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
 
@@ -325,7 +355,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &rendere
     );
 
     if ( !result ) [[unlikely]]
-        return false;
+        return nullptr;
 
     AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
 
@@ -366,49 +396,7 @@ bool ToneMapperProgram::InitShaderInfo ( android_vulkan::Renderer const &rendere
         .pSpecializationInfo = specializationInfo
     };
 
-    targetInfo = sourceInfo;
-    return true;
-}
-
-VkPipelineViewportStateCreateInfo const* ToneMapperProgram::InitViewportInfo ( VkPipelineViewportStateCreateInfo &info,
-    VkRect2D* scissorInfo,
-    VkViewport* viewportInfo,
-    VkExtent2D const* viewport
-) const noexcept
-{
-    *viewportInfo =
-    {
-        .x = 0.0F,
-        .y = 0.0F,
-        .width = static_cast<float> ( viewport->width ),
-        .height = static_cast<float> ( viewport->height ),
-        .minDepth = 0.0F,
-        .maxDepth = 1.0F
-    };
-
-    *scissorInfo =
-    {
-        .offset
-        {
-            .x = 0,
-            .y = 0
-        },
-
-        .extent = *viewport
-    };
-
-    info =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .viewportCount = 1U,
-        .pViewports = viewportInfo,
-        .scissorCount = 1U,
-        .pScissors = scissorInfo
-    };
-
-    return &info;
+    return sourceInfo;
 }
 
 VkPipelineVertexInputStateCreateInfo const* ToneMapperProgram::InitVertexInputInfo (

@@ -9,7 +9,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <list>
 #include <mutex>
 #include <unordered_map>
-#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_core.h>
 
 GX_RESTORE_WARNING_STATE
 

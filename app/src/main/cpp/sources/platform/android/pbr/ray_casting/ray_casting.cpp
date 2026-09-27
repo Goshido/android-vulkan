@@ -468,22 +468,29 @@ bool RayCasting::CreateTexture ( android_vulkan::Renderer &renderer,
     uint8_t const color[ 4U ] = { red, green, blue, 255U };
     texture = std::make_shared<android_vulkan::Texture2D> ();
 
-    bool const result = texture->UploadData ( renderer,
-        color,
-        sizeof ( color ),
+    bool const result =
+        texture->UploadToStagingBuffer ( renderer,
+            color,
+            sizeof ( color ),
 
-        VkExtent2D
-        {
-            .width = 1U,
-            .height = 1U
-        },
+            VkExtent2D
+            {
+                .width = 1U,
+                .height = 1U
+            },
 
-        VK_FORMAT_R8G8B8A8_SRGB,
-        false,
-        *commandBuffers,
-        false,
-        VK_NULL_HANDLE
-    );
+            VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
+            false
+        ) &&
+
+        texture->UploadToGPU ( renderer, *commandBuffers,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;

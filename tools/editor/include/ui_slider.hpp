@@ -17,7 +17,7 @@ namespace editor {
 class UISlider final : public Widget
 {
     public:
-        using Callback = std::function<void ( double )>;
+        using Callback = std::move_only_function<void ( double )>;
 
     private:
         using MouseButtonHandler = void ( UISlider::* ) ( MouseButtonEvent const &event ) noexcept;
@@ -58,8 +58,7 @@ class UISlider final : public Widget
         UISlider ( UISlider && ) = delete;
         UISlider &operator = ( UISlider && ) = delete;
 
-        explicit UISlider ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
+        explicit UISlider ( DIVUIElement &parent,
             std::string_view caption,
             double minValue,
             double maxValue,

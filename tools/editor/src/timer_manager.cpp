@@ -13,12 +13,6 @@ constexpr std::chrono::milliseconds IDLE ( 1U );
 
 //----------------------------------------------------------------------------------------------------------------------
 
-TimerManager::TimerManager ( MessageQueue& messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
-
 void TimerManager::Init () noexcept
 {
      AV_TRACE ( "Timer manager: init" )
@@ -46,32 +40,34 @@ void TimerManager::Destroy () noexcept
 
 void TimerManager::EventLoop () noexcept
 {
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.EnqueueBack ( Message ( eMessageType::ModuleStarted ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
     {
         AV_TRACE ( "Event loop" )
-        Message message = _messageQueue.DequeueBegin ( lastRefund );
+        Message message = messageQueue.DequeueBegin ( lastRefund );
 
         GX_DISABLE_WARNING ( 4061 )
 
         switch ( message._type )
         {
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::StartTimer:
-                OnStartTimer ( std::move ( message ) );
+                OnStartTimer ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::StopTimer:
-                OnStopTimer ( std::move ( message ) );
+                OnStopTimer ( messageQueue, std::move ( message ) );
             break;
 
             default:
                 lastRefund = message._serialNumber;
-                _messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
+                messageQueue.DequeueEnd ( std::move ( message ), MessageQueue::eRefundLocation::Front );
             break;
         }
 
@@ -95,35 +91,28 @@ void TimerManager::EventLoop () noexcept
     }
 }
 
-void TimerManager::OnStartTimer ( Message &&message ) noexcept
+void TimerManager::OnStartTimer ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Start timer" )
-    _messageQueue.DequeueEnd ();
-    _timers.insert ( static_cast<Timer::State*> ( message._params ) );
+    messageQueue.DequeueEnd ();
+    _timers.insert ( static_cast<Timer::State*> ( message._action () ) );
 }
 
-void TimerManager::OnStopTimer ( Message &&message ) noexcept
+void TimerManager::OnStopTimer ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Stop timer" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto* timer = static_cast<Timer::State*> ( message._params );
+    auto* timer = static_cast<Timer::State*> ( message._action () );
     _timers.erase ( timer );
     delete timer;
 }
 
-void TimerManager::OnShutdown ( Message &&refund ) noexcept
+void TimerManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
-
-    _messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Back );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
 } // namespace editor

@@ -1,4 +1,4 @@
-// version 1.95
+// version 1.108
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -29,8 +29,11 @@ GX_RESTORE_WARNING_STATE
 // By convention it is row-vertex.
 struct [[maybe_unused]] GXVec2 final
 {
+    // [0.0F, 0.0F]
+    [[maybe_unused]] static GXVec2 const    ZERO;
+
     // Stores vector components in x, y order.
-    GXFloat     _data[ 2U ];
+    GXFloat                                 _data[ 2U ];
 
     [[maybe_unused]] GXVec2 () = default;
 
@@ -99,8 +102,23 @@ enum class eGXLineRelationship : GXUByte
 // By convention it is row-vector.
 struct [[maybe_unused]] GXVec3 final
 {
+    // [1.0F, 1.0F, 1.0F]
+    [[maybe_unused]] static GXVec3 const    ONE;
+
+    // [0.0F, 0.0F, 0.0F]
+    [[maybe_unused]] static GXVec3 const    ZERO;
+
+    // [1.0F, 0.0F, 0.0F]
+    [[maybe_unused]] static GXVec3 const    RIGHT;
+
+    // [0.0F, 1.0F, 0.0F]
+    [[maybe_unused]] static GXVec3 const    UP;
+
+    // [0.0F, 0.0F, 1.0F]
+    [[maybe_unused]] static GXVec3 const    FORWARD;
+
     // Stores vector components in x, y, z order.
-    GXFloat     _data[ 3U ];
+    GXFloat                                 _data[ 3U ];
 
     [[maybe_unused]] GXVec3 () = default;
 
@@ -156,10 +174,6 @@ struct [[maybe_unused]] GXVec3 final
     [[maybe_unused]] GXVoid Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept;
 
     [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other ) noexcept;
-
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteX () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteY () noexcept;
-    [[maybe_unused, nodiscard]] static GXVec3 const &GetAbsoluteZ () noexcept;
 
     // baseX - correct direction, adjustedY - desirable, adjustedZ - calculated.
     [[maybe_unused]] static GXVoid GXCALL MakeOrthonormalBasis ( GXVec3 &baseX,
@@ -260,6 +274,8 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept;
     [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b ) noexcept;
     [[maybe_unused]] GXVoid Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXFloat scale ) noexcept;
+    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept;
 
     [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const noexcept;
 
@@ -425,6 +441,9 @@ struct [[maybe_unused]] GXColorRGB final
     // It is assumed that current color space is sRGB.
     [[maybe_unused, nodiscard]] GXColorRGB ToLinearSpace () const noexcept;
 
+    // It is assumed that current color space is linear space.
+    [[maybe_unused, nodiscard]] GXColorRGB ToSRGB () const noexcept;
+
     [[maybe_unused, nodiscard]] GXColorUNORM ToColorUNORM () const noexcept;
 
     [[maybe_unused]] GXVoid ConvertToUByte ( GXUByte &red,
@@ -534,8 +553,10 @@ struct GXMat4;
 // By convention stores only orientation without any scale.
 struct [[maybe_unused]] GXQuat final
 {
+    [[maybe_unused]] static GXQuat const        IDENTITY;
+
     // Stores quaternion components in r, a, b, c order.
-    GXFloat     _data[ 4U ];
+    GXFloat                                     _data[ 4U ];
 
     [[maybe_unused]] GXQuat () = default;
 
@@ -568,14 +589,21 @@ struct [[maybe_unused]] GXQuat final
     // bits 10-19: b component
     // bits 20-29: c component
     // bits 30-31: bitangent reflection scalar
-    [[maybe_unused, nodiscard]] GXUInt Compress32 ( bool reflectBitangent ) const noexcept;
+    [[maybe_unused, nodiscard]] GXUInt ToTBN32 ( bool reflectBitangent ) const noexcept;
+
+    // "Real" component could be restored using unit quaternion property. It's guarantee to be positive real component
+    // eliminating quaternion duality flaw.
+    // bits 0-20: a component
+    // bits 21-41: b component
+    // bits 42-63: c component
+    [[maybe_unused, nodiscard]] GXUBigInt ToTBN64 () const noexcept;
 
     // Packing TBN basis into R16G16B16A16_UNORM format.
     // bits 0-15: r component
     // bits 16-31: a component
     // bits 32-47: b component
     // bits 48-63: c component
-    [[maybe_unused, nodiscard]] GXUBigInt Compress64 () const noexcept;
+    [[maybe_unused, nodiscard]] GXUBigInt ToQuat64 () const noexcept;
 
     [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept;
 
@@ -607,6 +635,9 @@ struct [[maybe_unused]] GXQuat final
     // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
     [[maybe_unused]] GXVoid From ( GXMat4 const &rotationMatrix ) noexcept;
 
+    // Result is valid if forward is unit vector.
+    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
+
     // Result is valid if pureRotationMatrix is not scaled rotation matrix.
     [[maybe_unused]] GXVoid FromFast ( GXMat3 const &pureRotationMatrix ) noexcept;
 
@@ -625,6 +656,18 @@ struct [[maybe_unused]] GXQuat final
 
     [[maybe_unused]] GXVoid GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept;
     [[maybe_unused]] GXVoid Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+
+    // X axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetRight ( GXVec3 &out ) const noexcept;
+
+    // Y axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetUp ( GXVec3 &out ) const noexcept;
+
+    // Z axis of corresponding 3x3 matrix.
+    // Result is valid if quaternion is normalized.
+    [[maybe_unused]] GXVoid GetForward ( GXVec3 &out ) const noexcept;
 
     // Result is valid if quaternion is normalized.
     [[maybe_unused]] GXVoid TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept;
@@ -654,6 +697,9 @@ struct [[maybe_unused]] GXMat3 final
     // Constructs orthonormal basis. Result is valid if zDirection is unit vector.
     [[maybe_unused]] GXVoid From ( GXVec3 const &zDirection ) noexcept;
 
+    // Constructs orthonormal basis. Result is valid if forward is unit vector.
+    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
+
     // Result is valid if quaternion is normalized.
     [[maybe_unused]] GXVoid FromFast ( GXQuat const &quaternion ) noexcept;
 
@@ -665,6 +711,15 @@ struct [[maybe_unused]] GXMat3 final
 
     [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z ) noexcept;
     [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Up () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Up () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Forward () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Forward () noexcept;
 
     [[maybe_unused]] GXVoid Identity () noexcept;
     [[maybe_unused]] GXVoid Zeros () noexcept;
@@ -765,6 +820,18 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXVoid SetW ( GXVec3 const &w ) noexcept;
     [[maybe_unused]] GXVoid GetW ( GXVec3 &w ) const noexcept;
 
+    [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Up () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Up () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Forward () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Forward () noexcept;
+
+    [[maybe_unused, nodiscard]] GXVec3 const &Location () const noexcept;
+    [[maybe_unused, nodiscard]] GXVec3 &Location () noexcept;
+
     [[maybe_unused]] GXVoid Identity () noexcept;
 
     [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians,
@@ -831,7 +898,7 @@ struct [[maybe_unused]] GXAABB final
     GXVec3      _min;
     GXVec3      _max;
 
-    [[maybe_unused]] constexpr GXAABB ():
+    [[maybe_unused]] constexpr GXAABB () noexcept:
         _vertices ( 0U ),
         _min ( FLT_MAX, FLT_MAX, FLT_MAX ),
         _max ( -FLT_MAX, -FLT_MAX, -FLT_MAX )
@@ -940,8 +1007,17 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 //---------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept;
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept;
+[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
+{
+    constexpr GXFloat toRadians = 1.74532925e-2F;
+    return degrees * toRadians;
+}
+
+[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
+{
+    constexpr GXFloat toDegrees = 5.72957795e+1F;
+    return radians * toDegrees;
+}
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept;
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomNormalize () noexcept;

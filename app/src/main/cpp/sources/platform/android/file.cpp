@@ -5,51 +5,24 @@
 
 namespace android_vulkan {
 
-namespace {
-
-// Android NDK 25.2.9519653 and Android 11 do not allow to have '../' in the asset path.
-// Such path could not be resolved in runtime and AAssetManager_open returns nullptr.
-[[nodiscard]] std::string NormalizeAssetPath ( std::string &&asset ) noexcept
-{
-    constexpr char hackRoot = '/';
-    constexpr size_t hackRootSize = 1U;
-    std::string p = std::filesystem::weakly_canonical ( std::filesystem::path ( hackRoot + asset ) ).string ();
-
-    if ( p.empty () )
-        return asset;
-
-    // Removing hacky root directory without reallocation.
-    char* str = p.data ();
-    size_t const newSize = p.size () - hackRootSize;
-
-    std::memmove ( str, str + hackRootSize, newSize );
-    p.resize ( newSize );
-
-    return p;
-}
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
 extern AAssetManager* g_AssetManager;
 
 //----------------------------------------------------------------------------------------------------------------------
 
 File::File ( std::string &&filePath ) noexcept:
-    _filePath ( NormalizeAssetPath ( std::move ( filePath ) ) )
+    _filePath ( ResolvePath ( std::move ( filePath ) ) )
 {
     // NOTHING
 }
 
-File::File ( std::string_view const &filePath ) noexcept:
-    _filePath ( NormalizeAssetPath ( std::string ( filePath ) ) )
+File::File ( std::string_view filePath ) noexcept:
+    _filePath ( ResolvePath ( filePath ) )
 {
     // NOTHING
 }
 
 File::File ( char const* filePath ) noexcept:
-    _filePath ( NormalizeAssetPath ( filePath ) )
+    _filePath ( ResolvePath ( std::string_view ( filePath ) ) )
 {
     // NOTHING
 }
@@ -125,6 +98,33 @@ bool File::LoadContent () noexcept
 
     LogError ( "File::LoadContent - Can't load whole file content %s.", _filePath.c_str () );
     return false;
+}
+
+std::string File::ResolvePath ( std::string &&path ) noexcept
+{
+    // Android NDK 25.2.9519653 and Android 11 do not allow to have '../' in the asset path.
+    // Such path could not be resolved in runtime and AAssetManager_open returns nullptr.
+
+    constexpr char hackRoot = '/';
+    constexpr size_t hackRootSize = 1U;
+    std::string p = std::filesystem::weakly_canonical ( std::filesystem::path ( hackRoot + path ) ).string ();
+
+    if ( p.empty () )
+        return path;
+
+    // Removing hacky root directory without reallocation.
+    char* str = p.data ();
+    size_t const newSize = p.size () - hackRootSize;
+
+    std::memmove ( str, str + hackRootSize, newSize );
+    p.resize ( newSize );
+
+    return p;
+}
+
+std::string File::ResolvePath ( std::string_view path ) noexcept
+{
+    return ResolvePath ( std::string ( path ) );
 }
 
 } // namespace android_vulkan

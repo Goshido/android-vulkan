@@ -1,8 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
+#include <font_storage.hpp>
+#include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
-#include <set_text_event.hpp>
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
 
@@ -22,19 +23,14 @@ constexpr char32_t CTRL_X = 0x18;
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIEditBox::UIEditBox ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
-    pbr::FontStorage &fontStorage,
+UIEditBox::UIEditBox ( DIVUIElement &parent,
     std::string_view caption,
     std::string_view value,
     std::string &&name
 ) noexcept:
-    Widget ( messageQueue ),
     _committed ( value ),
-    _fontStorage ( fontStorage ),
 
-    _lineDIV ( messageQueue,
-        parent,
+    _lineDIV ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -66,8 +62,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( messageQueue,
-        _lineDIV,
+    _columnDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -99,8 +94,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( messageQueue,
-        _columnDIV,
+    _captionDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -132,10 +126,9 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
+    _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( messageQueue,
-        _columnDIV,
+    _valueDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -167,8 +160,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _cursorDIV ( messageQueue,
-        _valueDIV,
+    _cursorDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::MAIN_COLOR,
@@ -200,8 +192,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (cursor)"
     ),
 
-    _selectionDIV ( messageQueue,
-        _valueDIV,
+    _selectionDIV ( _valueDIV,
 
         {
             ._backgroundColor = pbr::ColorValue ( 255U, 255U, 255U, 26U ),
@@ -233,8 +224,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (selection)"
     ),
 
-    _textDIV ( messageQueue,
-        _valueDIV,
+    _textDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -266,7 +256,7 @@ UIEditBox::UIEditBox ( MessageQueue &messageQueue,
         name + " (text)"
     ),
 
-    _text ( messageQueue, _textDIV, value, name + " (text)" )
+    _text ( _textDIV, value, name + " (text)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
     _columnDIV.AppendChildElement ( _captionDIV );
@@ -466,27 +456,29 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
     {
         Commit ();
 
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::MouseMoved,
+        MouseMoveEvent moveEvent
+        {
+            ._x = event._x,
+            ._y = event._y,
+            ._eventID = _eventID - 1U
+        };
 
-                ._params = new MouseMoveEvent
-                {
-                    ._x = event._x,
-                    ._y = event._y,
-                    ._eventID = _eventID - 1U
-                },
+        MessageQueue &messageQueue = MessageQueue::Instance ();
 
-                ._serialNumber = 0U
-            }
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::MouseMoved,
+                [ moveEvent = std::move ( moveEvent ) ] () mutable noexcept {
+                    return &moveEvent;
+                }
+            )
         );
 
-        _messageQueue.EnqueueBack (
-            {
-                ._type = eMessageType::MouseButtonDown,
-                ._params = new MouseButtonEvent ( event ),
-                ._serialNumber = 0U
-            }
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::MouseButtonDown,
+                [ buttonEvent = std::move ( MouseButtonEvent ( event ) ) ] () mutable noexcept {
+                    return &buttonEvent;
+                }
+            )
         );
 
         return;
@@ -635,13 +627,14 @@ void UIEditBox::Copy () noexcept
     auto const [from, to] = GetSelection ();
     auto const begin = _content.cbegin ();
     using Offset = decltype ( begin )::difference_type;
+    std::u32string value ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) );
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::WriteClipboard,
-            ._params = new std::u32string ( begin + static_cast<Offset> ( from ), begin + static_cast<Offset> ( to ) ),
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::WriteClipboard,
+            [ value = std::move ( value ) ] () mutable noexcept {
+                return &value;
+            }
+        )
     );
 }
 
@@ -691,13 +684,7 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
 
 void UIEditBox::Paste () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ReadClipboardRequest,
-            ._params = this,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::ReadClipboardRequest ) );
 }
 
 int32_t UIEditBox::FindClosestSymbol ( int32_t x ) const noexcept
@@ -889,8 +876,7 @@ bool UIEditBox::RemoveSelectedContent () noexcept
 
 void UIEditBox::ResetBlinkTimer () noexcept
 {
-    _blink = std::make_unique<Timer> ( _messageQueue,
-        Timer::eType::Repeat,
+    _blink = std::make_unique<Timer> ( Timer::eType::Repeat,
         BLINK_PERIOD,
 
         [ this ] ( Timer::ElapsedTime &&/*elapsedTime*/ ) noexcept {
@@ -980,7 +966,7 @@ void UIEditBox::UpdateMetrics () noexcept
 {
     pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
 
-    _fontStorage.GetStringMetrics ( _metrics,
+    FontStorage::Instance ().GetStringMetrics (_metrics,
         css._fontFile,
         static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
         _content

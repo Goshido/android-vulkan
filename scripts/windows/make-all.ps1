@@ -1,20 +1,19 @@
 param
 (
     [Switch]
-    $shaderSource
+    $embedShaderSource,
+
+    [Switch]
+    $profileMode
 )
 
 Clear-Host
-. scripts\windows\make-env.ps1 $shaderSource
+. scripts\windows\make-env.ps1 $embedShaderSource $profileMode
 
 # vertex shaders
 scripts\windows\make-spv.ps1                                                                                           `
-    "$EDITOR_HLSL_DIRECTORY\hello_triangle.vs.hlsl"                                                                    `
-    "$EDITOR_SHADER_DIRECTORY\hello_triangle.vs.spv"
-
-scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                       `
-    "$CORE_SHADER_DIRECTORY\common_opaque.vs.spv"
+    "$ANDROID_HLSL_DIRECTORY\common_opaque.vs.hlsl"                                                                    `
+    "$ANDROID_SHADER_DIRECTORY\common_opaque.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy.vs.hlsl"                                                                               `
@@ -29,12 +28,28 @@ scripts\windows\make-spv.ps1                                                    
     "$WINDOWS_SHADER_DIRECTORY\full_screen_triangle.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh.vs.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gbuffer_mesh_with_id.vs.hlsl"                                                             `
+    "$WINDOWS_SHADER_DIRECTORY\gbuffer_mesh_with_id.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.vs.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_prepass.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\light_volume.vs.hlsl"                                                                        `
     "$CORE_SHADER_DIRECTORY\light_volume.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\mandelbrot.vs.hlsl"                                                                          `
     "$CORE_SHADER_DIRECTORY\mandelbrot.vs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_mask.vs.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\outline_mask.vs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light_shadowmap_generator.vs.hlsl"                                                     `
@@ -58,10 +73,6 @@ scripts\windows\make-spv.ps1                                                    
 
 # pixel shaders
 scripts\windows\make-spv.ps1                                                                                           `
-    "$EDITOR_HLSL_DIRECTORY\hello_triangle.ps.hlsl"                                                                    `
-    "$EDITOR_SHADER_DIRECTORY\hello_triangle.ps.spv"
-
-scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\blinn_phong_analytic.ps.hlsl"                                                                `
     "$CORE_SHADER_DIRECTORY\blinn_phong_analytic.ps.spv"
 
@@ -70,12 +81,16 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\blinn_phong_lut.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\dummy_gbuffer.ps.hlsl"                                                                       `
-    "$CORE_SHADER_DIRECTORY\dummy_gbuffer.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\dummy_gbuffer.ps.hlsl"                                                                    `
+    "$ANDROID_SHADER_DIRECTORY\dummy_gbuffer.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\dummy_light.ps.hlsl"                                                                         `
     "$CORE_SHADER_DIRECTORY\dummy_light.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_prepass.ps.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_prepass.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\mandelbrot_analytic_color.ps.hlsl"                                                           `
@@ -90,8 +105,20 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\null.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                              `
-    "$CORE_SHADER_DIRECTORY\opaque.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                           `
+    "$ANDROID_SHADER_DIRECTORY\opaque.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\opaque.ps.hlsl"                                                                           `
+    "$WINDOWS_SHADER_DIRECTORY\opaque.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\opaque_with_id.ps.hlsl"                                                                   `
+    "$WINDOWS_SHADER_DIRECTORY\opaque_with_id.ps.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_mask.ps.hlsl"                                                                     `
+    "$WINDOWS_SHADER_DIRECTORY\outline_mask.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\point_light.ps.hlsl"                                                                         `
@@ -106,8 +133,8 @@ scripts\windows\make-spv.ps1                                                    
     "$CORE_SHADER_DIRECTORY\reflection_local.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
-    "$CORE_HLSL_DIRECTORY\stipple.ps.hlsl"                                                                             `
-    "$CORE_SHADER_DIRECTORY\stipple.ps.spv"
+    "$ANDROID_HLSL_DIRECTORY\stipple.ps.hlsl"                                                                          `
+    "$ANDROID_SHADER_DIRECTORY\stipple.ps.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$ANDROID_HLSL_DIRECTORY\tone_mapper_custom_brightness.ps.hlsl"                                                    `
@@ -149,6 +176,26 @@ scripts\windows\make-spv.ps1                                                    
 scripts\windows\make-spv.ps1                                                                                           `
     "$WINDOWS_HLSL_DIRECTORY\exposure.cs.hlsl"                                                                         `
     "$WINDOWS_SHADER_DIRECTORY\exposure.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\gizmo_compose.cs.hlsl"                                                                    `
+    "$WINDOWS_SHADER_DIRECTORY\gizmo_compose.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\id_collect.cs.hlsl"                                                                       `
+    "$WINDOWS_SHADER_DIRECTORY\id_collect.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\id_compress.cs.hlsl"                                                                      `
+    "$WINDOWS_SHADER_DIRECTORY\id_compress.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_blur_x.cs.hlsl"                                                                   `
+    "$WINDOWS_SHADER_DIRECTORY\outline_blur_x.cs.spv"
+
+scripts\windows\make-spv.ps1                                                                                           `
+    "$WINDOWS_HLSL_DIRECTORY\outline_border.cs.hlsl"                                                                   `
+    "$WINDOWS_SHADER_DIRECTORY\outline_border.cs.spv"
 
 scripts\windows\make-spv.ps1                                                                                           `
     "$CORE_HLSL_DIRECTORY\skin.cs.hlsl"                                                                                `

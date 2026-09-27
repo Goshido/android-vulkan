@@ -118,16 +118,24 @@ bool DefaultTextureManager::Init ( android_vulkan::Renderer &renderer, VkCommand
             .height = 1U
         };
 
-        bool const result = texture->UploadData ( renderer,
-            data,
-            size,
-            resolution,
-            format,
-            false,
-            commandBuffer,
-            false,
-            VK_NULL_HANDLE
-        );
+        bool const result =
+            texture->UploadToStagingBuffer ( renderer,
+                data,
+                size,
+                resolution,
+                format,
+                VK_IMAGE_USAGE_SAMPLED_BIT,
+                false
+            ) &&
+
+            texture->UploadToGPU ( renderer,
+                commandBuffer,
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                false,
+                VK_NULL_HANDLE
+            );
 
         if ( result ) [[likely]]
             return true;

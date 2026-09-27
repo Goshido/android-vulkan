@@ -3,7 +3,6 @@
 
 
 #include "action.hpp"
-#include <memory>
 
 
 namespace editor {
@@ -42,8 +41,10 @@ class History final
         Pointer                                         _redo = _transactions.end ();
         Pointer                                         _undo = _redo;
 
+        static History*                                 _instance;
+
     public:
-        explicit History () = default;
+        explicit History () noexcept;
 
         History ( History const & ) = delete;
         History &operator = ( History const & ) = delete;
@@ -61,6 +62,8 @@ class History final
 
         void Redo () noexcept;
         void Undo () noexcept;
+
+        [[nodiscard]] static History &Instance () noexcept;
 };
 
 } // namespace editor

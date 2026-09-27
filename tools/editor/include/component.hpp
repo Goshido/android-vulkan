@@ -2,35 +2,42 @@
 #define EDITOR_COMPONENT_HPP
 
 
-#include <GXCommon/GXMath.hpp>
 #include "save_state.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 
 
 namespace editor {
 
+class Actor;
+
+class Component;
+using ComponentRef = std::unique_ptr<Component>;
+
 class Component
 {
-    public:
-        using Ref = std::unique_ptr<Component>;
-
     protected:
         constexpr static std::string_view TYPE_KEY = "type";
 
     private:
-        using Spawner = Ref ( * ) ( SaveState::Container const &info ) noexcept;
+        using Spawner = ComponentRef ( * ) ( SaveState::Container const &info ) noexcept;
         using Spawners = std::unordered_map<std::string_view, Spawner>;
 
     protected:
+        Actor*              _actor = nullptr;
+
+        GXQuat              _rotation = GXQuat::IDENTITY;
+        GXVec3              _scale = GXVec3::ONE;
+        GXVec3              _location = GXVec3::ZERO;
+
         uint32_t            _version;
-        GXMat4              _local = GXMat4::IDENTITY;
-        GXMat4              _parent = GXMat4::IDENTITY;
 
     private:
         std::string         _name {};
@@ -50,10 +57,23 @@ class Component
 
         virtual ~Component () = default;
 
+        // Method must be called in derived class
+        virtual void Register ( Actor &actor ) noexcept;
+
+        // Method must be called in derived class
+        virtual void Unregister () noexcept;
+
+        virtual void Select () noexcept;
+        virtual void Deselect () noexcept;
+
+        virtual void ActorTransformChanged () noexcept;
         virtual void Save ( SaveState::Container &root ) const noexcept;
 
+        void SetName ( std::string_view name ) noexcept;
+
         static void InitSpawners () noexcept;
-        [[nodiscard]] static std::optional<Ref> Spawn ( SaveState::Container const &info ) noexcept;
+
+        [[nodiscard]] static std::optional<ComponentRef> Spawn ( SaveState::Container const &info ) noexcept;
 
     private:
         template<typename T>
@@ -63,7 +83,7 @@ class Component
                 std::pair (
                     T::TYPE,
 
-                    [] ( SaveState::Container const &info ) noexcept -> Ref {
+                    [] ( SaveState::Container const &info ) noexcept -> ComponentRef {
                         return std::make_unique<T> ( info );
                     }
                 )

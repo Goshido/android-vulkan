@@ -208,7 +208,8 @@ typedef union {
 #define ttisstrictnil(o)	checktag((o), LUA_VNIL)
 
 
-#define setnilvalue(obj) settt_(obj, LUA_VNIL)
+#define setnilvalue(obj)	settt_(obj, LUA_VNIL)
+#define setnilvalue2s(stk)	setnilvalue(s2v(stk))
 
 
 #define isabstkey(v)		checktag((v), LUA_VABSTKEY)
@@ -583,11 +584,18 @@ typedef struct AbsLineInfo {
 /*
 ** Flags in Prototypes
 */
-#define PF_ISVARARG	1  /* function is vararg */
-#define PF_VAVAR	2  /* function has vararg parameter */
-#define PF_VATAB	4  /* function has vararg table */
-#define PF_FIXED	8  /* prototype has parts in fixed memory */
+#define PF_VAHID	1  /* function has hidden vararg arguments */
+#define PF_VATAB	2  /* function has vararg table */
+#define PF_FIXED	4  /* prototype has parts in fixed memory */
 
+/* a vararg function either has hidden args. or a vararg table */
+#define isvararg(p)	((p)->flag & (PF_VAHID | PF_VATAB))
+
+/*
+** mark that a function needs a vararg table. (The flag PF_VAHID will
+** be cleared later.)
+*/
+#define needvatab(p)	((p)->flag |= PF_VATAB)
 
 /*
 ** Function Prototypes
@@ -819,7 +827,7 @@ typedef struct Table {
 
 
 #define twoto(x)	(1u<<(x))
-#define sizenode(t)	(twoto((t)->lsizenode))
+#define sizenode(t)	cast_uint(twoto((t)->lsizenode))
 
 
 /* size of buffer for 'luaO_utf8esc' function */

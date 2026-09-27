@@ -1,4 +1,4 @@
-// version 1.15
+// version 1.17
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -143,6 +143,22 @@
     _data[ 3U ] = a._data[ 3U ] - b._data[ 3U ];
 }
 
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXFloat scale ) noexcept
+{
+    _data[ 0U ] = a._data[ 0U ] * scale;
+    _data[ 1U ] = a._data[ 1U ] * scale;
+    _data[ 2U ] = a._data[ 2U ] * scale;
+    _data[ 3U ] = a._data[ 3U ] * scale;
+}
+
+[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept
+{
+    _data[ 0U ] = a._data[ 0U ] * b._data[ 0U ];
+    _data[ 1U ] = a._data[ 1U ] * b._data[ 1U ];
+    _data[ 2U ] = a._data[ 2U ] * b._data[ 2U ];
+    _data[ 3U ] = a._data[ 3U ] * b._data[ 3U ];
+}
+
 [[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const noexcept
 {
     return _data[ 0U ] * other._data[ 0U ] +
@@ -227,12 +243,13 @@
 {
     constexpr auto convertFactor = static_cast<float> ( std::numeric_limits<uint8_t>::max () );
 
+    // [2026/03/22] Math round works much closer to original color picker than simple floor.
     return
     {
-        static_cast<GXUByte> ( _data[ 0U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 1U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 2U ] * convertFactor ),
-        static_cast<GXUByte> ( _data[ 3U ] * convertFactor )
+        static_cast<GXUByte> ( _data[ 0U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 1U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 2U ] * convertFactor + 0.5F ),
+        static_cast<GXUByte> ( _data[ 3U ] * convertFactor + 0.5F )
     };
 }
 

@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <platform/windows/pbr/present_pass.hpp>
 #include <trace.hpp>
 #include <vulkan_utils.hpp>
@@ -19,18 +20,40 @@ VkResult PresentPass::AcquirePresentTarget ( android_vulkan::Renderer &renderer,
     );
 }
 
-void PresentPass::OnDestroyDevice ( VkDevice device ) noexcept
+void PresentPass::OnDestroyDevice ( VkDevice device, ResourceHeap &resourceHeap ) noexcept
 {
+    FreeHeapResources ( resourceHeap );
+
     for ( auto renderEnd : _renderEnd )
         vkDestroySemaphore ( device, renderEnd, nullptr );
 
     _renderEnd.clear ();
     _renderEnd.shrink_to_fit ();
+
+    _heapIndex.clear ();
+    _heapIndex.shrink_to_fit ();
 }
 
-bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
+bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer, ResourceHeap &resourceHeap ) noexcept
 {
+    FreeHeapResources ( resourceHeap );
     size_t const imageCount = renderer.GetPresentImageCount ();
+    _heapIndex.resize ( imageCount );
+    VkDevice device = renderer.GetDevice ();
+
+    for ( size_t i = 0U; i < imageCount; ++i )
+    {
+        if ( auto idx = resourceHeap.RegisterStorageImage ( device, renderer.GetPresentImageView ( i ) ); idx )
+        {
+            [[likely]]
+            _heapIndex[ i ] = std::move ( idx );
+            continue;
+        }
+
+        AV_ASSERT ( false )
+        return false;
+    }
+
     size_t const semaphoreCount = _renderEnd.size ();
     _renderingInfo.renderArea.extent = renderer.GetSurfaceSize ();
 
@@ -44,7 +67,6 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
         .flags = 0U
     };
 
-    VkDevice device = renderer.GetDevice ();
     _renderEnd.resize ( imageCount );
     VkSemaphore* s = _renderEnd.data () + semaphoreCount;
 
@@ -67,28 +89,42 @@ bool PresentPass::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
     return true;
 }
 
+SwapchainInfo PresentPass::GetSwapchainInfo ( android_vulkan::Renderer const &renderer ) const noexcept
+{
+    auto const idx = static_cast<size_t> ( _swapchainImageIndex );
+
+    return
+    {
+        ._image = renderer.GetPresentImage ( static_cast<size_t> ( idx ) ),
+        ._view = renderer.GetPresentImageView ( static_cast<size_t> ( idx ) ),
+        ._idx = *_heapIndex[ idx ]
+    };
+}
+
 void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuffer commandBuffer ) noexcept
 {
-    _barrier.srcAccessMask = VK_ACCESS_NONE;
-    _barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
     auto const idx = static_cast<size_t> ( _swapchainImageIndex );
-    _barrier.image = renderer.GetPresentImage ( idx );
-
-    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &_barrier
-    );
+    _barrierStart.image = renderer.GetPresentImage ( idx );
+    _barrierEnd.image = _barrierStart.image;
+    _depInfo.pImageMemoryBarriers = &_barrierStart;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     _colorAttachment.imageView = renderer.GetPresentImageView ( idx );
+    vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
+}
+
+void PresentPass::Pause ( VkCommandBuffer commandBuffer ) noexcept
+{
+    vkCmdEndRendering ( commandBuffer );
+}
+
+void PresentPass::Continue ( VkCommandBuffer commandBuffer, VkImage swapchainImage, VkImageView swapchainView ) noexcept
+{
+    _barrierContiue.image = swapchainImage;
+    _depInfo.pImageMemoryBarriers = &_barrierContiue;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
+
+    _colorAttachment.imageView = swapchainView;
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }
 
@@ -101,21 +137,8 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
 {
     vkCmdEndRendering ( commandBuffer );
 
-    _barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    _barrier.dstAccessMask = VK_ACCESS_NONE;
-    _barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    _barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    vkCmdPipelineBarrier ( commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-        VK_DEPENDENCY_BY_REGION_BIT,
-        0U,
-        nullptr,
-        0U,
-        nullptr,
-        1U,
-        &_barrier
-    );
+    _depInfo.pImageMemoryBarriers = &_barrierEnd;
+    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
     bool result = android_vulkan::Renderer::CheckVkResult ( vkEndCommandBuffer ( commandBuffer ),
         "pbr::PresentPass::Execute",
@@ -157,6 +180,17 @@ std::optional<VkResult> PresentPass::End ( android_vulkan::Renderer &renderer,
     _presentInfo.pImageIndices = &_swapchainImageIndex;
     _presentInfo.pWaitSemaphores = renderEnd;
     return std::optional<VkResult> { vkQueuePresentKHR ( queue, &_presentInfo ) };
+}
+
+void PresentPass::FreeHeapResources ( ResourceHeap& resourceHeap ) noexcept
+{
+    for ( auto const &idx : _heapIndex )
+    {
+        if ( idx ) [[likely]]
+        {
+            resourceHeap.UnregisterResource ( *idx );
+        }
+    }
 }
 
 } // namespace pbr

@@ -1,5 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <font_storage.hpp>
+#include <hotkey.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
 #include <trace.hpp>
@@ -8,13 +10,6 @@
 
 
 namespace editor {
-
-UIManager::UIManager ( MessageQueue &messageQueue, pbr::FontStorage &fontStorage ) noexcept:
-    _fontStorage ( fontStorage ),
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
 
 void UIManager::Init () noexcept
 {
@@ -44,11 +39,13 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 
     _needRefill = false;
     _neededUIVertices = 0U;
+    pbr::FontStorage &fontStorage = FontStorage::Instance ();
+
     std::shared_lock const lock ( _mutex );
 
     for ( auto &widget : _widgets )
     {
-        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, _fontStorage );
+        Widget::LayoutStatus const status = widget->ApplyLayout ( renderer, fontStorage );
         _needRefill |= status._hasChanges;
         _neededUIVertices += status._neededUIVertices;
     }
@@ -67,9 +64,13 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
     AV_TRACE ( "Submit UI" )
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
+    pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
-    for ( auto &widget : _widgets )
-        _needRefill |= widget->UpdateCache ( _fontStorage, viewport );
+    auto const end = _widgets.rend ();
+    auto begin = _widgets.rbegin ();
+
+    for ( auto it = begin; it != end; ++it )
+        _needRefill |= ( *it )->UpdateCache ( fontStorage, viewport );
 
     if ( !_needRefill )
         return;
@@ -88,15 +89,16 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
         ._uiBufferStreams = *response
     };
 
-    for ( auto &widget : _widgets )
+    for ( auto it = begin; it != end; ++it )
     {
-        widget->Submit ( info );
+        ( *it )->Submit ( info );
     }
 }
 
 void UIManager::EventLoop () noexcept
 {
-    MessageQueue &messageQueue = _messageQueue;
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.EnqueueBack ( Message ( eMessageType::ModuleStarted ) );
     std::optional<Message::SerialNumber> lastRefund {};
 
     for ( ; ; )
@@ -109,71 +111,75 @@ void UIManager::EventLoop () noexcept
         switch ( message._type )
         {
             case eMessageType::DoubleClick:
-                OnDoubleClick ( std::move ( message ) );
+                OnDoubleClick ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::FontStorageReady:
-                OnFontStorageReady ();
+            case eMessageType::InvokeUI:
+                OnInvokeUI ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::KeyboardKeyDown:
-                OnKeyboardKeyDown ( std::move ( message ) );
+                OnKeyboardKeyDown ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::KeyboardKeyUp:
-                OnKeyboardKeyUp ( std::move ( message ) );
+                OnKeyboardKeyUp ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::KillFocus:
-                OnKillFocus ();
+                OnKillFocus ( messageQueue );
             break;
 
             case eMessageType::MouseHover:
-                OnMouseHover ( std::move ( message ) );
+                OnMouseHover ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseButtonDown:
-                OnMouseButtonDown ( std::move ( message ) );
+                OnMouseButtonDown ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseButtonUp:
-                OnMouseButtonUp ( std::move ( message ) );
+                OnMouseButtonUp ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::MouseMoved:
-                OnMouseMoved ( std::move ( message ) );
+                OnMouseMoved ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::ReadClipboardResponse:
-                OnReadClipboardResponse ( std::move ( message ) );
+                OnReadClipboardResponse ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::SetFocus:
-                OnSetFocus ( std::move ( message ) );
+                OnSetFocus ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::Shutdown:
-                OnShutdown ( std::move ( message ) );
+                OnShutdown ( messageQueue, std::move ( message ) );
             return;
 
             case eMessageType::StartWidgetCaptureMouse:
-                OnStartWidgetCaptureMouse ( std::move ( message ) );
+                OnStartWidgetCaptureMouse ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::StopWidgetCaptureMouse:
-                OnStopWidgetCaptureMouse ();
+                OnStopWidgetCaptureMouse ( messageQueue );
             break;
 
             case eMessageType::Typing:
-                OnTyping ( std::move ( message ) );
+                OnTyping ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::UIAddWidget:
-                OnUIAddWidget ( std::move ( message ) );
+            case eMessageType::UIAppendWidget:
+                OnUIAppendWidget ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::UIPrependWidget:
+                OnUIPrependWidget ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::UIRemoveWidget:
-                OnUIRemoveWidget ( std::move ( message ) );
+                OnUIRemoveWidget ( messageQueue, std::move ( message ) );
             break;
 
             default:
@@ -186,29 +192,27 @@ void UIManager::EventLoop () noexcept
     }
 }
 
-void UIManager::OnDoubleClick ( Message &&message ) noexcept
+void UIManager::OnDoubleClick ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Double click" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnDoubleClick ( *event );
-        delete event;
+        _typingCapture->OnDoubleClick ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnDoubleClick ( *event );
-        delete event;
+        _mouseCapture->OnDoubleClick ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -217,79 +221,94 @@ void UIManager::OnDoubleClick ( Message &&message ) noexcept
         {
             if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
             {
-                w.OnDoubleClick ( *event );
+                w.OnDoubleClick ( event );
+                break;
+            }
+        }
+    }
+}
+
+void UIManager::OnInvokeUI ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Invoke" )
+    messageQueue.DequeueEnd ();
+    std::ignore = message._action ();
+}
+
+void UIManager::OnKeyboardKeyDown ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Keyboard key down" )
+    messageQueue.DequeueEnd ();
+
+    KeyboardKeyEvent const event ( message );
+
+    if ( _typingCapture )
+    {
+        _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
+        return;
+    }
+
+    {
+        std::shared_lock const lock ( _mutex );
+
+        for ( auto &widget : _widgets )
+        {
+            if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+            {
+                w.OnKeyboardKeyDown ( event._key, event._modifier );
                 break;
             }
         }
     }
 
-    delete event;
+    Hotkey::Process ( event._key, event._modifier );
 }
 
-void UIManager::OnFontStorageReady () noexcept
-{
-    AV_TRACE ( "FontStorage ready" )
-    _messageQueue.DequeueEnd ();
-
-    auto* dialogBox = new UIProps ( _messageQueue, _fontStorage );
-    dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-    dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-        pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIAddWidget,
-            ._params = dialogBox,
-            ._serialNumber = 0U
-        }
-    );
-}
-
-void UIManager::OnKeyboardKeyDown ( Message &&message ) noexcept
-{
-    AV_TRACE ( "Keyboard key down" )
-    _messageQueue.DequeueEnd ();
-
-    if ( !_typingCapture ) [[unlikely]]
-        return;
-
-    KeyboardKeyEvent const event ( message );
-    _typingCapture->OnKeyboardKeyDown ( event._key, event._modifier );
-}
-
-void UIManager::OnKeyboardKeyUp ( Message &&message ) noexcept
+void UIManager::OnKeyboardKeyUp ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Keyboard key up" )
-    _messageQueue.DequeueEnd ();
-
-    if ( !_typingCapture ) [[unlikely]]
-        return;
+    messageQueue.DequeueEnd ();
 
     KeyboardKeyEvent const event ( message );
-    _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+
+    if ( _typingCapture )
+    {
+        _typingCapture->OnKeyboardKeyUp ( event._key, event._modifier );
+        return;
+    }
+
+    std::shared_lock const lock ( _mutex );
+
+    for ( auto &widget : _widgets )
+    {
+        if ( Widget &w = *widget; w.IsOverlapped ( _lastMouseX, _lastMouseY ) )
+        {
+            w.OnKeyboardKeyUp ( event._key, event._modifier );
+            break;
+        }
+    }
 }
 
-void UIManager::OnKillFocus () noexcept
+void UIManager::OnKillFocus ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Kill focus" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _typingCapture = nullptr;
 }
 
-void UIManager::OnSetFocus ( Message &&message ) noexcept
+void UIManager::OnSetFocus ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Set focus" )
-    _messageQueue.DequeueEnd ();
-    _typingCapture = static_cast<Widget*> ( message._params );
+    messageQueue.DequeueEnd ();
+    _typingCapture = static_cast<Widget*> ( message._action () );
 }
 
-void UIManager::OnMouseHover ( Message &&message ) noexcept
+void UIManager::OnMouseHover ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse hover" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto* widget = static_cast<Widget*> ( message._params );
+    auto* widget = static_cast<Widget*> ( message._action () );
 
     if ( ( _hoverWidget != nullptr ) & ( _hoverWidget != widget ) ) [[likely]]
         _hoverWidget->OnMouseLeave ();
@@ -297,29 +316,27 @@ void UIManager::OnMouseHover ( Message &&message ) noexcept
     _hoverWidget = widget;
 }
 
-void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
+void UIManager::OnMouseButtonDown ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse button down" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnMouseButtonDown ( *event );
-        delete event;
+        _typingCapture->OnMouseButtonDown ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonDown ( *event );
-        delete event;
+        _mouseCapture->OnMouseButtonDown ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -328,38 +345,34 @@ void UIManager::OnMouseButtonDown ( Message &&message ) noexcept
         {
             if ( Widget &w = *widget; w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseButtonDown ( *event );
+                w.OnMouseButtonDown ( event );
                 break;
             }
         }
     }
-
-    delete event;
 }
 
-void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
+void UIManager::OnMouseButtonUp ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse button up" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseButtonEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseButtonEvent const*> ( message._action () );
 
     if ( _typingCapture ) [[unlikely]]
     {
-        _typingCapture->OnMouseButtonUp ( *event );
-        delete event;
+        _typingCapture->OnMouseButtonUp ( event );
         return;
     }
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseButtonUp ( *event );
-        delete event;
+        _mouseCapture->OnMouseButtonUp ( event );
         return;
     }
 
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
+    int32_t const x = event._x;
+    int32_t const y = event._y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -370,31 +383,29 @@ void UIManager::OnMouseButtonUp ( Message &&message ) noexcept
 
             if ( w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseButtonUp ( *event );
+                w.OnMouseButtonUp ( event );
                 break;
             }
         }
     }
-
-    delete event;
 }
 
-void UIManager::OnMouseMoved ( Message &&message ) noexcept
+void UIManager::OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Mouse moved" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
-    auto const* event = static_cast<MouseMoveEvent const*> ( message._params );
+    auto const &event = *static_cast<MouseMoveEvent const*> ( message._action () );
+    int32_t const x = event._x;
+    int32_t const y = event._y;
+    _lastMouseX = x;
+    _lastMouseY = y;
 
     if ( _mouseCapture ) [[unlikely]]
     {
-        _mouseCapture->OnMouseMove ( *event );
-        delete event;
+        _mouseCapture->OnMouseMove ( event );
         return;
     }
-
-    int32_t const x = event->_x;
-    int32_t const y = event->_y;
 
     {
         std::shared_lock const lock ( _mutex );
@@ -405,98 +416,98 @@ void UIManager::OnMouseMoved ( Message &&message ) noexcept
 
             if ( w.IsOverlapped ( x, y ) )
             {
-                w.OnMouseMove ( *event );
-                delete event;
+                w.OnMouseMove ( event );
                 return;
             }
         }
     }
 
-    size_t const eventID = event->_eventID;
-    delete event;
+    size_t const eventID = event._eventID;
 
     if ( eventID - std::exchange ( _eventID, eventID ) <= 1U ) [[likely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-            ._params = std::bit_cast<void*> ( eCursor::Arrow ),
-            ._serialNumber = 0U
-        }
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::ChangeCursor,
+            [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
+                return value;
+            }
+        )
     );
 }
 
-void UIManager::OnReadClipboardResponse ( Message &&message ) noexcept
+void UIManager::OnReadClipboardResponse ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Read clipboard response" )
-    _messageQueue.DequeueEnd ();
-    auto const* text = static_cast<std::u32string const*> ( message._params );
+    messageQueue.DequeueEnd ();
 
     if ( _typingCapture ) [[likely]]
-        _typingCapture->ApplyClipboard ( *text );
-
-    delete text;
+    {
+        _typingCapture->ApplyClipboard ( *static_cast<std::u32string const*> ( message._action () ) );
+    }
 }
 
-void UIManager::OnShutdown ( Message &&refund ) noexcept
+void UIManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
 {
     AV_TRACE ( "Shutdown" )
-    _messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
+    messageQueue.DequeueEnd ( std::move ( refund ), MessageQueue::eRefundLocation::Front );
 
     {
         std::lock_guard const lock ( _mutex );
         _widgets.clear ();
     }
 
-    _messageQueue.EnqueueFront (
-        {
-            ._type = eMessageType::ModuleStopped,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueFront ( Message ( eMessageType::ModuleStopped ) );
 }
 
-void UIManager::OnStartWidgetCaptureMouse ( Message &&message ) noexcept
+void UIManager::OnStartWidgetCaptureMouse ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Start widget capture input" )
-    _messageQueue.DequeueEnd ();
-    _mouseCapture = static_cast<Widget*> ( message._params );
+    messageQueue.DequeueEnd ();
+    _mouseCapture = static_cast<Widget*> ( message._action () );
 }
 
-void UIManager::OnStopWidgetCaptureMouse () noexcept
+void UIManager::OnStopWidgetCaptureMouse ( MessageQueue &messageQueue ) noexcept
 {
     AV_TRACE ( "Stop widget capture input" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
     _mouseCapture = nullptr;
 }
 
-void UIManager::OnTyping ( Message &&message ) noexcept
+void UIManager::OnTyping ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Typing" )
-    _messageQueue.DequeueEnd ();
+    messageQueue.DequeueEnd ();
 
     if ( _typingCapture ) [[likely]]
     {
-        _typingCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._params ) ) );
+        _typingCapture->OnTyping ( static_cast<char32_t> ( std::bit_cast<size_t> ( message._action () ) ) );
     }
 }
 
-void UIManager::OnUIAddWidget ( Message &&message ) noexcept
+void UIManager::OnUIAppendWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    AV_TRACE ( "Add widget" )
-    _messageQueue.DequeueEnd ();
+    AV_TRACE ( "Append widget" )
+    messageQueue.DequeueEnd ();
 
     std::lock_guard const lock ( _mutex );
-    _widgets.emplace_back ( static_cast<Widget*> ( message._params ) );
+    _widgets.emplace_back ( static_cast<Widget*> ( message._action () ) );
 }
 
-void UIManager::OnUIRemoveWidget ( Message &&message ) noexcept
+void UIManager::OnUIPrependWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Prepend widget" )
+    messageQueue.DequeueEnd ();
+
+    std::lock_guard const lock ( _mutex );
+    _widgets.emplace_front ( static_cast<Widget*> ( message._action () ) );
+}
+
+void UIManager::OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
     AV_TRACE ( "Remove widget" )
-    _messageQueue.DequeueEnd ();
-    auto const* widget = static_cast<Widget const*> ( message._params );
+    messageQueue.DequeueEnd ();
+    auto const* widget = static_cast<Widget const*> ( message._action () );
 
     std::lock_guard const lock ( _mutex );
     auto const end = _widgets.cend ();

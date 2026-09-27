@@ -23,7 +23,7 @@ constexpr size_t VERTEX_INPUT_BINDING_COUNT = 2U;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIProgram::UIProgram () noexcept:
-    GraphicsProgram ( "UI" )
+    GraphicsProgram ( 0U )
 {
     // NOTHING
 }
@@ -58,45 +58,30 @@ bool UIProgram::Init ( android_vulkan::Renderer const &renderer,
     VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
     VkViewport viewportDescription {};
     VkPipelineViewportStateCreateInfo viewportInfo {};
-
-    VkGraphicsPipelineCreateInfo pipelineInfo;
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.pNext = nullptr;
-    pipelineInfo.flags = 0U;
-    pipelineInfo.stageCount = static_cast<uint32_t> ( STAGE_COUNT );
-
     VkDevice device = renderer.GetDevice ();
 
-    if ( !InitShaderInfo ( renderer, pipelineInfo.pStages, &brightnessInfo, &specInfo, stageInfo ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.pVertexInputState = InitVertexInputInfo ( vertexInputInfo,
-        attributeDescriptions,
-        bindingDescription
-    );
-
-    pipelineInfo.pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo );
-    pipelineInfo.pTessellationState = nullptr;
-
-    pipelineInfo.pViewportState = InitViewportInfo ( viewportInfo,
-        &scissorDescription,
-        &viewportDescription,
-        &viewport
-    );
-
-    pipelineInfo.pRasterizationState = InitRasterizationInfo ( rasterizationInfo );
-    pipelineInfo.pMultisampleState = InitMultisampleInfo ( multisampleInfo );
-    pipelineInfo.pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo );
-    pipelineInfo.pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo );
-    pipelineInfo.pDynamicState = InitDynamicStateInfo ( nullptr );
-
-    if ( !InitLayout ( device, pipelineInfo.layout ) ) [[unlikely]]
-        return false;
-
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = subpass;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    VkGraphicsPipelineCreateInfo const pipelineInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stageCount = static_cast<uint32_t> ( STAGE_COUNT ),
+        .pStages = InitShaderInfo ( renderer, &brightnessInfo, &specInfo, stageInfo ),
+        .pVertexInputState = InitVertexInputInfo ( vertexInputInfo, attributeDescriptions, bindingDescription ),
+        .pInputAssemblyState = InitInputAssemblyInfo ( assemblyInfo ),
+        .pTessellationState = nullptr,
+        .pViewportState = InitViewportInfo ( viewportInfo, &scissorDescription, &viewportDescription, &viewport ),
+        .pRasterizationState = InitRasterizationInfo ( rasterizationInfo ),
+        .pMultisampleState = InitMultisampleInfo ( multisampleInfo ),
+        .pDepthStencilState = InitDepthStencilInfo ( depthStencilInfo ),
+        .pColorBlendState = InitColorBlendInfo ( blendInfo, attachmentInfo ),
+        .pDynamicState = InitDynamicStateInfo ( nullptr ),
+        .layout = InitLayout ( device ),
+        .renderPass = renderPass,
+        .subpass = subpass,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1
+    };
 
     bool const result = android_vulkan::Renderer::CheckVkResult (
         vkCreateGraphicsPipelines ( device, VK_NULL_HANDLE, 1U, &pipelineInfo, nullptr, &_pipeline ),
@@ -233,46 +218,6 @@ VkPipelineInputAssemblyStateCreateInfo const* UIProgram::InitInputAssemblyInfo (
     return &info;
 }
 
-bool UIProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
-{
-    if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
-    {
-        [[unlikely]]
-        return false;
-    }
-
-    VkDescriptorSetLayout const layouts[] =
-    {
-        _transformLayout.GetLayout (),
-        _commonLayout.GetLayout (),
-        _imageLayout.GetLayout ()
-    };
-
-    VkPipelineLayoutCreateInfo const layoutInfo
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
-        .pSetLayouts = layouts,
-        .pushConstantRangeCount = 0U,
-        .pPushConstantRanges = nullptr
-    };
-
-    bool const result = android_vulkan::Renderer::CheckVkResult (
-        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
-        "pbr::UIProgram::InitLayout",
-        "Can't create pipeline layout"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
-    layout = _pipelineLayout;
-    return true;
-}
-
 VkPipelineMultisampleStateCreateInfo const* UIProgram::InitMultisampleInfo (
     VkPipelineMultisampleStateCreateInfo &info
 ) const noexcept
@@ -317,74 +262,6 @@ VkPipelineRasterizationStateCreateInfo const* UIProgram::InitRasterizationInfo (
     return &info;
 }
 
-bool UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
-    VkPipelineShaderStageCreateInfo const* &targetInfo,
-    SpecializationData specializationData,
-    VkSpecializationInfo* specializationInfo,
-    VkPipelineShaderStageCreateInfo* sourceInfo
-) noexcept
-{
-    bool result = renderer.CreateShader ( _vertexShader,
-        VERTEX_SHADER,
-        "Can't create vertex shader (pbr::UIProgram)"
-    );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
-
-    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
-    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
-    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
-    result = renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" );
-
-    if ( !result ) [[unlikely]]
-        return false;
-
-    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
-
-    sourceInfo[ 0U ] =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .stage = VK_SHADER_STAGE_VERTEX_BIT,
-        .module = _vertexShader,
-        .pName = VERTEX_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = nullptr
-    };
-
-    constexpr static VkSpecializationMapEntry entry
-    {
-        .constantID = CONST_BRIGHTNESS_FACTOR,
-        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
-        .size = sizeof ( BrightnessInfo::_brightnessFactor )
-    };
-
-    *specializationInfo =
-    {
-        .mapEntryCount = 1U,
-        .pMapEntries = &entry,
-        .dataSize = sizeof ( BrightnessInfo ),
-        .pData = specializationData
-    };
-
-    sourceInfo[ 1U ] =
-    {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .pNext = nullptr,
-        .flags = 0U,
-        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .module = _fragmentShader,
-        .pName = FRAGMENT_SHADER_ENTRY_POINT,
-        .pSpecializationInfo = specializationInfo
-    };
-
-    targetInfo = sourceInfo;
-    return true;
-}
-
 VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
     VkPipelineViewportStateCreateInfo &info,
     VkRect2D* scissorInfo,
@@ -425,6 +302,108 @@ VkPipelineViewportStateCreateInfo const* UIProgram::InitViewportInfo (
     };
 
     return &info;
+}
+
+VkPipelineLayout UIProgram::InitLayout ( VkDevice device ) noexcept
+{
+    if ( !_transformLayout.Init ( device ) || !_commonLayout.Init ( device ) || !_imageLayout.Init ( device ) )
+    {
+        [[unlikely]]
+        return VK_NULL_HANDLE;
+    }
+
+    VkDescriptorSetLayout const layouts[] =
+    {
+        _transformLayout.GetLayout (),
+        _commonLayout.GetLayout (),
+        _imageLayout.GetLayout ()
+    };
+
+    VkPipelineLayoutCreateInfo const layoutInfo
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .setLayoutCount = static_cast<uint32_t> ( std::size ( layouts ) ),
+        .pSetLayouts = layouts,
+        .pushConstantRangeCount = 0U,
+        .pPushConstantRanges = nullptr
+    };
+
+    bool const result = android_vulkan::Renderer::CheckVkResult (
+        vkCreatePipelineLayout ( device, &layoutInfo, nullptr, &_pipelineLayout ),
+        "pbr::UIProgram::InitLayout",
+        "Can't create pipeline layout"
+    );
+
+    if ( !result ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    AV_SET_VULKAN_OBJECT_NAME ( device, _pipelineLayout, VK_OBJECT_TYPE_PIPELINE_LAYOUT, "UI" )
+    return _pipelineLayout;
+}
+
+VkPipelineShaderStageCreateInfo const* UIProgram::InitShaderInfo ( android_vulkan::Renderer const &renderer,
+    SpecializationData specializationData,
+    VkSpecializationInfo* specializationInfo,
+    VkPipelineShaderStageCreateInfo* sourceInfo
+) noexcept
+{
+    if ( !renderer.CreateShader ( _vertexShader, VERTEX_SHADER, "Can't create vertex shader (pbr::UIProgram)" ) )
+    {
+        [[unlikely]]
+        return nullptr;
+    }
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _vertexShader, VK_OBJECT_TYPE_SHADER_MODULE, VERTEX_SHADER )
+
+    constexpr char const* const cases[] = { CUSTOM_BRIGHTNESS_FRAGMENT_SHADER, DEFAULT_BRIGHTNESS_FRAGMENT_SHADER };
+    auto const &info = *static_cast<BrightnessInfo const*> ( specializationData );
+    char const* const fs = cases[ static_cast<size_t> ( info._isDefaultBrightness ) ];
+
+    if ( !renderer.CreateShader ( _fragmentShader, fs, "Can't create fragment shader (pbr::UIProgram)" ) ) [[unlikely]]
+        return nullptr;
+
+    AV_SET_VULKAN_OBJECT_NAME ( renderer.GetDevice (), _fragmentShader, VK_OBJECT_TYPE_SHADER_MODULE, "%s", fs )
+
+    sourceInfo[ 0U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = _vertexShader,
+        .pName = VERTEX_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = nullptr
+    };
+
+    constexpr static VkSpecializationMapEntry entry
+    {
+        .constantID = CONST_BRIGHTNESS_FACTOR,
+        .offset = static_cast<uint32_t> ( offsetof ( BrightnessInfo, _brightnessFactor ) ),
+        .size = sizeof ( BrightnessInfo::_brightnessFactor )
+    };
+
+    *specializationInfo =
+    {
+        .mapEntryCount = 1U,
+        .pMapEntries = &entry,
+        .dataSize = sizeof ( BrightnessInfo ),
+        .pData = specializationData
+    };
+
+    sourceInfo[ 1U ] =
+    {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0U,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = _fragmentShader,
+        .pName = FRAGMENT_SHADER_ENTRY_POINT,
+        .pSpecializationInfo = specializationInfo
+    };
+
+    return sourceInfo;
 }
 
 VkPipelineVertexInputStateCreateInfo const* UIProgram::InitVertexInputInfo (

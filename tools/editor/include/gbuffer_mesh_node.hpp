@@ -1,0 +1,77 @@
+#ifndef EDITOR_GBUFFER_MESH_NODE_HPP
+#define EDITOR_GBUFFER_MESH_NODE_HPP
+
+
+#include "gbuffer_mesh_info.hpp"
+#include "pbr_material.hpp"
+#include "workspace_node.hpp"
+
+
+namespace editor {
+
+class Workspace;
+
+class GBufferMeshNode final : public WorkspaceNode
+{
+    friend class Workspace;
+
+    private:
+        GBufferMeshInfo*    _meshInfo = nullptr;
+        PBRMaterial         _material {};
+        ColorData           _colors {};
+        GXQuat              _rotation {};
+        GXVec3              _location {};
+        GXVec3              _scale {};
+        GXAABB              _boundLocal {};
+        uint64_t            _id = std::bit_cast<uint64_t> ( nullptr );
+
+    public:
+        GBufferMeshNode () = default;
+
+        GBufferMeshNode ( GBufferMeshNode const & ) = delete;
+        GBufferMeshNode &operator = ( GBufferMeshNode const & ) = delete;
+
+        GBufferMeshNode ( GBufferMeshNode &&other ) noexcept;
+        GBufferMeshNode &operator = ( GBufferMeshNode &&other ) noexcept;
+
+        explicit GBufferMeshNode ( Workspace &workspace, GBufferMeshInfo &meshInfo ) noexcept;
+
+        ~GBufferMeshNode () noexcept override;
+
+        void Commit ( uint32_t defaultAlbedo,
+            uint32_t defaultEmission,
+            uint32_t defaultMask,
+            uint32_t defaultParam,
+            uint32_t defaultNormal
+        ) noexcept;
+
+        void SetColor ( GXColorUNORM color0,
+            GXColorUNORM color1,
+            GXColorUNORM color2,
+            GXColorUNORM emission,
+            float emissionIntensity
+        ) noexcept;
+
+        void SetRotation ( GXQuat const &rotation ) noexcept;
+        void SetRotation ( GXMat3 const &rotation ) noexcept;
+        void SetRotation ( GXMat4 const &rotation ) noexcept;
+
+        void SetLocation ( GXVec3 const &location ) noexcept;
+        void SetScale ( GXVec3 const &scale ) noexcept;
+
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location ) noexcept;
+        void SetLocal ( GXQuat const &rotation, GXVec3 const &location, GXVec3 const &scale ) noexcept;
+
+        void SetBounds ( GXAABB const &boundLocal ) noexcept;
+        void SetMaterial ( PBRMaterial const &material ) noexcept;
+
+        void SetID ( void const* id ) noexcept;
+
+    private:
+        void Disconnect () noexcept;
+};
+
+} // namespace editor
+
+
+#endif // EDITOR_GBUFFER_MESH_NODE_HPP

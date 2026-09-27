@@ -7,8 +7,7 @@
 
 namespace editor {
 
-UISlider::UISlider ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
+UISlider::UISlider ( DIVUIElement &parent,
     std::string_view caption,
     double minValue,
     double maxValue,
@@ -16,10 +15,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
     double defaultValue,
     std::string &&name
 ) noexcept:
-    Widget ( messageQueue ),
-
-    _lineDIV ( messageQueue,
-        parent,
+    _lineDIV ( parent,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -51,8 +47,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (line)"
     ),
 
-    _columnDIV ( messageQueue,
-        _lineDIV,
+    _columnDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -84,8 +79,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (column)"
     ),
 
-    _captionDIV ( messageQueue,
-        _columnDIV,
+    _captionDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -117,10 +111,9 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (caption)"
     ),
 
-    _captionText ( messageQueue, _captionDIV, caption, name + " (caption)" ),
+    _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( messageQueue,
-        _columnDIV,
+    _valueDIV ( _columnDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -152,8 +145,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (value)"
     ),
 
-    _progressDIV ( messageQueue,
-        _valueDIV,
+    _progressDIV ( _valueDIV,
 
         {
             ._backgroundColor = pbr::ColorValue ( 0U, 0U, 0U, 64U ),
@@ -185,8 +177,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (progress)"
     ),
 
-    _numberDIV ( messageQueue,
-        _valueDIV,
+    _numberDIV ( _valueDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -218,7 +209,7 @@ UISlider::UISlider ( MessageQueue &messageQueue,
         name + " (number)"
     ),
 
-    _number ( messageQueue, _numberDIV, "", name + " (number)" ),
+    _number ( _numberDIV, "", name + " (number)" ),
     _minValue ( minValue ),
     _maxValue ( maxValue ),
     _range ( maxValue - minValue ),

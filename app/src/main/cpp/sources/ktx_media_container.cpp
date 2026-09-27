@@ -42,40 +42,30 @@ std::unordered_map<uint32_t, VkFormat> g_FormatMapper =
 
 //----------------------------------------------------------------------------------------------------------------------
 
-KTXMediaContainer::KTXMediaContainer () noexcept:
-    _file {},
-    _format ( VK_FORMAT_UNDEFINED ),
-    _mipCount ( 0U ),
-    _mips {},
-    _totalSize ( 0U )
-{
-    // NOTHING
-}
-
-VkFormat KTXMediaContainer::GetFormat () const
+VkFormat KTXMediaContainer::GetFormat () const noexcept
 {
     AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _format;
 }
 
-uint8_t KTXMediaContainer::GetMipCount () const
+uint8_t KTXMediaContainer::GetMipCount () const noexcept
 {
     AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _mipCount;
 }
 
-MipInfo const &KTXMediaContainer::GetMip ( uint8_t mip ) const
+MipInfo const &KTXMediaContainer::GetMip ( uint8_t mip ) const noexcept
 {
     AV_ASSERT ( _format != VK_FORMAT_UNDEFINED )
     return _mips[ mip ];
 }
 
-VkDeviceSize KTXMediaContainer::GetTotalSize () const
+VkDeviceSize KTXMediaContainer::GetTotalSize () const noexcept
 {
     return _totalSize;
 }
 
-bool KTXMediaContainer::Init ( char const* fileName )
+bool KTXMediaContainer::Init ( std::string_view fileName ) noexcept
 {
     AV_ASSERT ( !_file )
 
@@ -85,31 +75,28 @@ bool KTXMediaContainer::Init ( char const* fileName )
         return false;
 
     std::vector<uint8_t> const &content = _file->GetContent ();
+    uint8_t const* rawData = content.data ();
     size_t const size = content.size ();
 
-    if ( !CheckSize ( size, fileName ) ) [[unlikely]]
-        return false;
-
-    uint8_t const* rawData = content.data ();
     auto const &header = *reinterpret_cast<KTXHeader const*> ( rawData );
     ReadHander reader = nullptr;
 
-    bool const result = CheckSignature ( header, fileName ) &&
-        ResolveReader ( reader, header._endianness, fileName ) &&
-        CheckField ( header._glType, "_glType", TARGET_GL_TYPE, reader, fileName ) &&
-        CheckField ( header._glTypeSize, "_glTypeSize", TARGET_GL_TYPE_SIZE, reader, fileName ) &&
-        CheckField ( header._glFormat, "_glFormat", TARGET_GL_FORMAT, reader, fileName ) &&
-        CheckField ( header._numberOfFaces, "_numberOfFaces", TARGET_NUMBER_OF_FACES, reader, fileName ) &&
-        CheckField ( header._pixelDepth, "_pixelDepth", TARGET_PIXEL_DEPTH, reader, fileName ) &&
+    bool const result = CheckSize ( size ) &&
+        CheckSignature ( header ) &&
+        ResolveReader ( reader, header._endianness ) &&
+        CheckField ( header._glType, "_glType", TARGET_GL_TYPE, reader ) &&
+        CheckField ( header._glTypeSize, "_glTypeSize", TARGET_GL_TYPE_SIZE, reader ) &&
+        CheckField ( header._glFormat, "_glFormat", TARGET_GL_FORMAT, reader ) &&
+        CheckField ( header._numberOfFaces, "_numberOfFaces", TARGET_NUMBER_OF_FACES, reader ) &&
+        CheckField ( header._pixelDepth, "_pixelDepth", TARGET_PIXEL_DEPTH, reader ) &&
 
         CheckField ( header._numberOfArrayElements,
             "_numberOfArrayElements",
             TARGET_NUMBER_OF_ARRAY_ELEMENTS,
-            reader,
-            fileName
+            reader
         ) &&
 
-        ResolveFormat ( header._glInternalFormat, _format, reader, fileName );
+        ResolveFormat ( header._glInternalFormat, _format, reader );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -118,12 +105,11 @@ bool KTXMediaContainer::Init ( char const* fileName )
     return true;
 }
 
-bool KTXMediaContainer::Init ( std::string const &fileName )
-{
-    return Init ( fileName.c_str () );
-}
-
-void KTXMediaContainer::ExtractMips ( uint8_t const* rawData, size_t size, KTXHeader const &header, ReadHander reader )
+void KTXMediaContainer::ExtractMips ( uint8_t const* rawData,
+    size_t size,
+    KTXHeader const &header,
+    ReadHander reader
+) noexcept
 {
     uint8_t const* view = GetMipmapData ( rawData, header, reader );
     auto const mips = static_cast<size_t const> ( reader ( header._numberOfMipmapLevels ) );
@@ -165,11 +151,7 @@ void KTXMediaContainer::ExtractMips ( uint8_t const* rawData, size_t size, KTXHe
     _mipCount = static_cast<uint8_t> ( mips );
 }
 
-bool KTXMediaContainer::CheckField ( uint32_t field,
-    char const* name,
-    uint32_t expected,
-    ReadHander reader, char const* fileName
-)
+bool KTXMediaContainer::CheckField ( uint32_t field, char const* name, uint32_t expected, ReadHander reader ) noexcept
 {
     uint32_t const native = reader ( field );
 
@@ -183,57 +165,36 @@ R"__(KTXMediaContainer::CheckField - Incompatibility was detected:
     value: 0x%08X
     expected: 0x%08X)__";
 
-    LogError ( format, fileName, name, native, expected );
+    LogError ( format, _file->GetPath ().c_str (), name, native, expected );
     return false;
 }
 
-bool KTXMediaContainer::CheckSignature ( KTXHeader const &header, char const* fileName )
+bool KTXMediaContainer::CheckSignature ( KTXHeader const &header ) noexcept
 {
-    if ( memcmp ( header._identifier, SIGNATURE, sizeof ( header._identifier ) ) == 0 )
+    if ( std::memcmp ( header._identifier, SIGNATURE, sizeof ( header._identifier ) ) == 0 )
         return true;
 
-    LogError ( "KTXMediaContainer::CheckSignature - The file %s isn't a KTX v1 file.", fileName );
+    LogError ( "KTXMediaContainer::CheckSignature - The file %s isn't a KTX v1 file.", _file->GetPath ().c_str () );
     return false;
 }
 
-bool KTXMediaContainer::CheckSize ( size_t size, char const* fileName )
+bool KTXMediaContainer::CheckSize ( size_t size ) noexcept
 {
     if ( size >= sizeof ( KTXHeader ) )
         return true;
 
-    LogError ( "KTXMediaContainer::CheckSize - The file %s is too small [%s byte(s)].", fileName, size );
+    LogError ( "KTXMediaContainer::CheckSize - The file %s is too small [%s byte(s)].",
+        _file->GetPath ().c_str (),
+        size
+    );
+
     return false;
-}
-
-uint8_t const* KTXMediaContainer::GetMipmapData ( uint8_t const* rawData,
-    KTXHeader const &header,
-    ReadHander reader
-)
-{
-    constexpr size_t const rewind =
-        offsetof ( KTXHeader, _bytesOfKeyValueData ) + sizeof ( header._bytesOfKeyValueData );
-
-    return rawData + rewind + static_cast<size_t> ( reader ( header._bytesOfKeyValueData ) );
-}
-
-uint32_t KTXMediaContainer::ReadConvert ( uint32_t value )
-{
-    uint32_t v = ( value & 0x000000FFU ) << 24U;
-    v |= ( value & 0x0000FF00U ) << 8U;
-    v |= ( value & 0x00FF0000U ) >> 8U;
-    return v | ( ( value & 0xFF000000U ) >> 24U );
-}
-
-uint32_t KTXMediaContainer::ReadNative ( uint32_t value )
-{
-    return value;
 }
 
 bool KTXMediaContainer::ResolveFormat ( uint32_t glInternalFormat,
     VkFormat &format,
-    ReadHander reader,
-    char const* fileName
-)
+    ReadHander reader
+) noexcept
 {
     uint32_t const f = reader ( glInternalFormat );
     auto const findResult = g_FormatMapper.find ( f );
@@ -244,29 +205,58 @@ bool KTXMediaContainer::ResolveFormat ( uint32_t glInternalFormat,
         return true;
     }
 
-    LogError ( "KTXMediaContainer::ResolveFormat - Can't map glFormat 0x%08X for file %s.", f, fileName );
+    LogError ( "KTXMediaContainer::ResolveFormat - Can't map glFormat 0x%08X for file %s.",
+        f,
+        _file->GetPath ().c_str ()
+    );
+
     return false;
 }
 
-bool KTXMediaContainer::ResolveReader ( ReadHander &reader, uint32_t endianness, char const* fileName )
+bool KTXMediaContainer::ResolveReader ( ReadHander &reader, uint32_t endianness ) noexcept
 {
-    constexpr char const errorFormat[] =
-        R"__(KTXMediaContainer::ResolveReader - Can't resolve endianness for file %s. "endianness" equals 0x%08X.)__";
-
     switch ( endianness )
     {
         case NATIVE_ENDIANNESS:
             reader = &KTXMediaContainer::ReadNative;
-        return true;
+            return true;
 
         case CONVERT_ENDIANNESS:
             reader = &KTXMediaContainer::ReadConvert;
-        return true;
+            return true;
 
         default:
-            LogError ( errorFormat, fileName, endianness );
-        return false;
+            LogError (
+                R"__(KTXMediaContainer::ResolveReader - Can't resolve endianness for file %s [0x%08X].)__",
+                _file->GetPath ().c_str (),
+                endianness
+            );
+            return false;
     }
+}
+
+uint8_t const* KTXMediaContainer::GetMipmapData ( uint8_t const* rawData,
+    KTXHeader const &header,
+    ReadHander reader
+) noexcept
+{
+    constexpr size_t const rewind =
+        offsetof ( KTXHeader, _bytesOfKeyValueData ) + sizeof ( header._bytesOfKeyValueData );
+
+    return rawData + rewind + static_cast<size_t> ( reader ( header._bytesOfKeyValueData ) );
+}
+
+uint32_t KTXMediaContainer::ReadConvert ( uint32_t value ) noexcept
+{
+    uint32_t v = ( value & 0x000000FFU ) << 24U;
+    v |= ( value & 0x0000FF00U ) << 8U;
+    v |= ( value & 0x00FF0000U ) >> 8U;
+    return v | ( ( value & 0xFF000000U ) >> 24U );
+}
+
+uint32_t KTXMediaContainer::ReadNative ( uint32_t value ) noexcept
+{
+    return value;
 }
 
 } // namespace android_vulkan

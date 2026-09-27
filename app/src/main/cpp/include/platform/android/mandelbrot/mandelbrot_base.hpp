@@ -2,7 +2,7 @@
 #define MANDELBROT_BASE_HPP
 
 
-#include <game.hpp>
+#include <platform/android/game.hpp>
 
 
 namespace mandelbrot {

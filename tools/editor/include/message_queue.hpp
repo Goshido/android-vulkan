@@ -30,8 +30,10 @@ class MessageQueue final
         std::deque<Message>         _queue {};
         Message::SerialNumber       _serialNumber = 0U;
 
+        static MessageQueue*        _instance;
+
     public:
-        explicit MessageQueue () = default;
+        explicit MessageQueue () noexcept;
 
         MessageQueue ( MessageQueue const & ) = delete;
         MessageQueue &operator = ( MessageQueue const & ) = delete;
@@ -47,6 +49,8 @@ class MessageQueue final
         [[nodiscard]] Message DequeueBegin ( std::optional<Message::SerialNumber> waitOnSerialNumber ) noexcept;
         void DequeueEnd () noexcept;
         void DequeueEnd ( Message &&refund, eRefundLocation location ) noexcept;
+
+        [[nodiscard]] static MessageQueue &Instance () noexcept;
 };
 
 } // namespace editor

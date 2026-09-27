@@ -1,4 +1,4 @@
-// version 1.95
+// version 1.108
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -10,9 +10,6 @@ constexpr GXFloat HSVA_FACTOR = 0.016666F;
 constexpr GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
 constexpr GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
 
-constexpr GXFloat DEGREES_TO_RADIANS_FACTOR = 0.0174533F;
-constexpr GXFloat RADIANS_TO_DEGREES_FACTOR = 57.295779F;
-
 constexpr GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
 
 constexpr GXUByte SOLUTION_ALPHA = 0U;
@@ -23,6 +20,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
+
+GXVec2 const GXVec2::ZERO ( 0.0F, 0.0F );
 
 [[maybe_unused]] GXVoid GXVec2::SetX ( GXFloat x ) noexcept
 {
@@ -128,6 +127,12 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+GXVec3 const GXVec3::ONE ( 1.0F, 1.0F, 1.0F );
+GXVec3 const GXVec3::ZERO ( 0.0F, 0.0F, 0.0F );
+GXVec3 const GXVec3::RIGHT ( 1.0F, 0.0F, 0.0F );
+GXVec3 const GXVec3::UP ( 0.0F, 1.0F, 0.0F );
+GXVec3 const GXVec3::FORWARD ( 0.0F, 0.0F, 1.0F );
+
 [[maybe_unused]] GXVoid GXVec3::SetX ( GXFloat x ) noexcept
 {
     _data[ 0U ] = x;
@@ -208,24 +213,6 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     auto const &d = _data;
     auto const &otherData = other._data;
     return ( d[ 0U ] == otherData[ 0U ] ) & ( d[ 1U ] == otherData[ 1U ] ) & ( d[ 2U ] == otherData[ 2U ] );
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteX () noexcept
-{
-    constexpr static GXVec3 absoluteX ( 1.0F, 0.0F, 0.0F );
-    return absoluteX;
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteY () noexcept
-{
-    constexpr static GXVec3 absoluteY ( 0.0F, 1.0F, 0.0F );
-    return absoluteY;
-}
-
-[[maybe_unused]] GXVec3 const &GXVec3::GetAbsoluteZ () noexcept
-{
-    constexpr static GXVec3 absoluteZ ( 0.0F, 0.0F, 1.0F );
-    return absoluteZ;
 }
 
 [[maybe_unused]] GXVoid GXCALL GXVec3::MakeOrthonormalBasis ( GXVec3 &baseX,
@@ -577,6 +564,20 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     return result;
 }
 
+[[maybe_unused]] GXColorRGB GXColorRGB::ToSRGB () const noexcept
+{
+    // See <repo>/docs/srgb.md#linear-to-srgb
+    constexpr auto conv = []( float l ) noexcept -> float
+    {
+        if ( l < 3.1308e-3F )
+            return 12.92F * l;
+
+        return 1.055F * std::pow ( l, 4.1667e-1F ) - 5.5e-2F;
+    };
+
+    return { conv ( _data[ 0U ] ), conv ( _data[ 1U ] ), conv ( _data[ 2U ] ), _data[ 3U ] };
+}
+
 [[maybe_unused]] GXVoid GXColorRGB::ConvertToUByte ( GXUByte &red,
     GXUByte &green,
     GXUByte &blue,
@@ -775,6 +776,8 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+GXQuat const GXQuat::IDENTITY ( 1.0F, 0.0F, 0.0F, 0.0F );
+
 // NOLINTNEXTLINE - constructor does not initialize these fields: _data
 [[maybe_unused]] GXQuat::GXQuat ( GXMat3 const &rotationMatrix ) noexcept
 {
@@ -787,7 +790,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     From ( rotationMatrix );
 }
 
-[[maybe_unused]] GXUInt GXQuat::Compress32 ( bool reflectBitangent ) const noexcept
+[[maybe_unused]] GXUInt GXQuat::ToTBN32 ( bool reflectBitangent ) const noexcept
 {
     GXVec3 imaginary = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
 
@@ -813,7 +816,35 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     return mirror | ( aSnorm << 20U ) | ( bSnorm << 10U ) | cSnorm;
 }
 
-[[maybe_unused]] GXUBigInt GXQuat::Compress64 () const noexcept
+[[maybe_unused]] GXUBigInt GXQuat::ToTBN64 () const noexcept
+{
+    GXVec3 imaginaryABC = *reinterpret_cast<GXVec3 const*> ( _data + 1U );
+
+    // Shader code expects only positive real value for reconstruction.
+    // Using quaternion duality property to satisfy that convention.
+    if ( _data[ 0U ] < 0.0F )
+        imaginaryABC.Reverse ();
+
+    constexpr auto conv = [] ( uint32_t bits ) consteval -> std::pair<float, GXVec2>
+    {
+        uint32_t const halfFixedPoint = 1U << ( bits - 1U );
+        auto const offset = static_cast<float> ( halfFixedPoint );
+        return std::make_pair ( static_cast<float> ( halfFixedPoint - 1U ), GXVec2 ( offset, offset ) );
+    };
+
+    auto const [scale21, offset21] = conv ( 21U );
+    auto const [scale22, offset22] = conv ( 22U );
+
+    auto &imaginaryAB = *reinterpret_cast<GXVec2*> ( imaginaryABC._data );
+    imaginaryAB.Sum ( offset21, scale21, imaginaryAB );
+
+    auto const aSnorm = static_cast<uint64_t> ( imaginaryAB._data[ 0U ] );
+    auto const bSnorm = static_cast<uint64_t> ( imaginaryAB._data[ 1U ] );
+    auto const cSnorm = static_cast<uint64_t> ( imaginaryABC._data[ 2U ] * scale22 + offset22._data[ 0U ] );
+    return ( cSnorm << 42U ) | ( bSnorm << 21U ) | aSnorm;
+}
+
+[[maybe_unused]] GXUBigInt GXQuat::ToQuat64 () const noexcept
 {
     GXVec4 q = *reinterpret_cast<GXVec4 const*> ( this );
 
@@ -919,6 +950,13 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     GXMat4 pureRotationMatrix {};
     pureRotationMatrix.ClearRotation ( rotationMatrix );
     FromFast ( pureRotationMatrix );
+}
+
+[[maybe_unused]] GXVoid GXQuat::From ( GXVec3 const &forward, GXVec3 const &up ) noexcept
+{
+    GXMat3 m {};
+    m.From ( forward, up );
+    FromFast ( m );
 }
 
 [[maybe_unused]] GXVoid GXQuat::FromFast ( GXMat3 const &pureRotationMatrix ) noexcept
@@ -1168,6 +1206,71 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
         ( vData[ 0U ] * ( ac2 - rb2 ) + vData[ 1U ] * ( ra2 + bc2 ) + vData[ 2U ] * ( rr - aa - bb + cc ) );
 }
 
+[[maybe_unused]] GXVoid GXQuat::GetRight ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = rr + aa - bb - cc;
+    d[ 1U ] = rc2 + ab2;
+    d[ 2U ] = ac2 - rb2;
+}
+
+[[maybe_unused]] GXVoid GXQuat::GetUp ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = ab2 - rc2;
+    d[ 1U ] = rr - aa + bb - cc;
+    d[ 2U ] = ra2 + bc2;
+}
+
+[[maybe_unused]] GXVoid GXQuat::GetForward ( GXVec3 &out ) const noexcept
+{
+    auto const &qData = _data;
+
+    GXFloat const rr = qData[ 0U ] * qData[ 0U ];
+    GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
+    GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
+
+    GXFloat const aa = qData[ 1U ] * qData[ 1U ];
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const bb = qData[ 2U ] * qData[ 2U ];
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
+
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
+
+    auto &d = out._data;
+    d[ 0U ] = rb2 + ac2;
+    d[ 1U ] = bc2 - ra2;
+    d[ 2U ] = rr - aa - bb + cc;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // NOLINTNEXTLINE
@@ -1227,10 +1330,10 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::RIGHT ) ) < 0.5F )
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
+        tmp.CrossProduct ( zDirection, GXVec3::RIGHT );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
         yAxis.CrossProduct ( zDirection, xAxis );
@@ -1238,7 +1341,7 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     else
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
+        tmp.CrossProduct ( zDirection, GXVec3::UP );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
         xAxis.CrossProduct ( yAxis, zDirection );
@@ -1249,6 +1352,19 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     SetZ ( zDirection );
 }
 
+[[maybe_unused]] GXVoid GXMat3::From ( GXVec3 const &forward, GXVec3 const &up ) noexcept
+{
+    auto &z = *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
+    auto &x = *reinterpret_cast<GXVec3*> ( _data );
+
+    z = forward;
+    auto &y = *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
+
+    x.CrossProduct ( up, forward );
+    x.Normalize ();
+    y.CrossProduct ( z, x );
+}
+
 [[maybe_unused]] GXVoid GXMat3::FromFast ( GXQuat const &quaternion ) noexcept
 {
     auto const &qData = quaternion._data;
@@ -1256,16 +1372,16 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
     GXFloat const rr = qData[ 0U ] * qData[ 0U ];
     GXFloat const ra2 = qData[ 0U ] * qData[ 1U ] * 2.0F;
     GXFloat const rb2 = qData[ 0U ] * qData[ 2U ] * 2.0F;
-    GXFloat const rc2 = qData[ 0U ] * qData[ 3u ] * 2.0F;
+    GXFloat const rc2 = qData[ 0U ] * qData[ 3U ] * 2.0F;
 
     GXFloat const aa = qData[ 1U ] * qData[ 1U ];
     GXFloat const ab2 = qData[ 1U ] * qData[ 2U ] * 2.0F;
-    GXFloat const ac2 = qData[ 1U ] * qData[ 3u ] * 2.0F;
+    GXFloat const ac2 = qData[ 1U ] * qData[ 3U ] * 2.0F;
 
     GXFloat const bb = qData[ 2U ] * qData[ 2U ];
-    GXFloat const bc2 = qData[ 2U ] * qData[ 3u ] * 2.0F;
+    GXFloat const bc2 = qData[ 2U ] * qData[ 3U ] * 2.0F;
 
-    GXFloat const cc = qData[ 3u ] * qData[ 3u ];
+    GXFloat const cc = qData[ 3U ] * qData[ 3U ];
 
     auto &d = _data;
 
@@ -1310,6 +1426,36 @@ constexpr GXUByte SOLUTION_YOTTA = 3U;
 [[maybe_unused]] GXVoid GXMat3::GetZ ( GXVec3 &z ) const noexcept
 {
     std::memcpy ( &z, _data + 2U, sizeof ( GXVec3 ) );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Right () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Right () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Up () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Up () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat3::Forward () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat3::Forward () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat3::Identity () noexcept
@@ -1627,10 +1773,10 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
     GXVec3 xAxis {};
     GXVec3 yAxis {};
 
-    if ( std::abs ( zDirection.DotProduct ( GXVec3::GetAbsoluteX () ) ) < 0.5F )
+    if ( std::abs ( zDirection.DotProduct ( GXVec3::RIGHT ) ) < 0.5F )
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteX () );
+        tmp.CrossProduct ( zDirection, GXVec3::RIGHT );
         xAxis.CrossProduct ( tmp, zDirection );
         xAxis.Normalize ();
         yAxis.CrossProduct ( zDirection, xAxis );
@@ -1638,7 +1784,7 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
     else
     {
         GXVec3 tmp {};
-        tmp.CrossProduct ( zDirection, GXVec3::GetAbsoluteY () );
+        tmp.CrossProduct ( zDirection, GXVec3::UP );
         yAxis.CrossProduct ( zDirection, tmp );
         yAxis.Normalize ();
         xAxis.CrossProduct ( yAxis, zDirection );
@@ -1708,6 +1854,46 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 [[maybe_unused]] GXVoid GXMat4::GetW ( GXVec3 &w ) const noexcept
 {
     std::memcpy ( &w, _data + 3U, sizeof ( GXVec3 ) );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Right () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Right () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Up () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Up () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 1U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Forward () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Forward () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 2U ] );
+}
+
+[[maybe_unused]] GXVec3 const &GXMat4::Location () const noexcept
+{
+    return *reinterpret_cast<GXVec3 const*> ( _data[ 3U ] );
+}
+
+[[maybe_unused]] GXVec3 &GXMat4::Location () noexcept
+{
+    return *reinterpret_cast<GXVec3*> ( _data[ 3U ] );
 }
 
 [[maybe_unused]] GXVoid GXMat4::Identity () noexcept
@@ -2074,13 +2260,12 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 
     if ( _vertices == 0U )
     {
-        ++_vertices;
-
+        _vertices = 1U;
         _min.Init ( x, y, z );
         return;
     }
 
-    ++_vertices;
+    _vertices += static_cast<GXUByte> ( _vertices < std::numeric_limits<GXUByte>::max () );
 
     if ( minData[ 0U ] > x )
     {
@@ -2114,8 +2299,11 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 
 [[maybe_unused]] GXVoid GXAABB::GetCenter ( GXVec3 &center ) const noexcept
 {
-    center.Sum ( _min, _max );
-    center.Multiply ( center, 0.5F );
+    GXVec3 cases[] = { GXVec3::ZERO, _min };
+    GXVec3 &c = cases[ 0U ];
+    c.Sum ( _min, _max );
+    c.Multiply ( c, 0.5F );
+    center = cases[ static_cast<uint32_t> ( _vertices == 1U ) ];
 }
 
 [[maybe_unused]] GXFloat GXAABB::GetWidth () const noexcept
@@ -2332,16 +2520,6 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-
-[[maybe_unused]] GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
-{
-    return degrees * DEGREES_TO_RADIANS_FACTOR;
-}
-
-[[maybe_unused]] GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
-{
-    return radians * RADIANS_TO_DEGREES_FACTOR;
-}
 
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {

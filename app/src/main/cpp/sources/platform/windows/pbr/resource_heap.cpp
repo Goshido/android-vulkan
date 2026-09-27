@@ -4,6 +4,7 @@
 #include <pbr/fif_count.hpp>
 #include <platform/windows/pbr/resource_heap.hpp>
 #include <platform/windows/pbr/samplers.inc>
+#include <platform/windows/pbr/universal_pipeline_layout.hpp>
 #include <vulkan_api.hpp>
 
 
@@ -262,14 +263,14 @@ bool ResourceHeap::Init ( android_vulkan::Renderer &renderer, VkCommandBuffer co
     constexpr size_t optimal = RESOURCE_CAPACITY + TOTAL_SAMPLERS;
     size_t const cases[] = { perStage - TOTAL_SAMPLERS, RESOURCE_CAPACITY };
     size_t const resourceCapacity = cases[ static_cast<size_t> ( optimal <= perStage ) ];
-    ResourceHeapDescriptorSetLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
+    UniversalPipelineLayout::SetResourceCapacity ( static_cast<uint32_t> ( resourceCapacity ) );
 
     VkDevice device = renderer.GetDevice ();
 
-    if ( !_layout.Init ( device ) ) [[unlikely]]
+    if ( !UniversalPipelineLayout::Init ( device ) ) [[unlikely]]
         return false;
 
-    VkDescriptorSetLayout layout = _layout.GetLayout ();
+    VkDescriptorSetLayout layout = UniversalPipelineLayout::GetDescriptorSetLayout ();
     VkDeviceSize layoutSize = 0U;
     vkGetDescriptorSetLayoutSizeEXT ( device, layout, &layoutSize );
 
@@ -343,19 +344,34 @@ void ResourceHeap::Destroy ( android_vulkan::Renderer &renderer ) noexcept
     _write.Destroy ( renderer );
 
     _descriptorBuffer.Destroy ( renderer );
-    _layout.Destroy ( device );
+    UniversalPipelineLayout::Destroy ( device );
 }
 
-void ResourceHeap::Bind ( VkCommandBuffer commandBuffer,
-    VkPipelineBindPoint bindPoint,
-    VkPipelineLayout layout
-) noexcept
+void ResourceHeap::Bind ( VkCommandBuffer commandBuffer ) noexcept
 {
     vkCmdBindDescriptorBuffersEXT ( commandBuffer, 1U, &_bindingInfo );
 
     constexpr uint32_t index = 0U;
     constexpr VkDeviceSize offset = 0U;
-    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer, bindPoint, layout, 0U, 1U, &index, &offset );
+    VkPipelineLayout layout = UniversalPipelineLayout::GetPipelineLayout ();
+
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        layout,
+        0U,
+        1U,
+        &index,
+        &offset
+    );
+
+    vkCmdSetDescriptorBufferOffsetsEXT ( commandBuffer,
+        VK_PIPELINE_BIND_POINT_COMPUTE,
+        layout,
+        0U,
+        1U,
+        &index,
+        &offset
+    );
 }
 
 std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
@@ -363,6 +379,8 @@ std::optional<uint32_t> ResourceHeap::RegisterBuffer ( VkDevice device,
     VkDeviceSize range
 ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( _nonUISlots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ResourceHeap::RegisterBuffer - Non UI heap is full." );
@@ -437,6 +455,8 @@ std::optional<uint32_t> ResourceHeap::RegisterStorageImage ( VkDevice device, Vk
 
 void ResourceHeap::UnregisterResource ( uint32_t index ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( index < UI_SLOTS )
     {
         _uiSlots.Free ( index );
@@ -661,7 +681,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         .size = copy.size
     };
 
-    VkDependencyInfo const dependency
+    VkDependencyInfo const depInfo
     {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .pNext = nullptr,
@@ -674,7 +694,7 @@ bool ResourceHeap::InitSamplers ( android_vulkan::Renderer &renderer,
         .pImageMemoryBarriers = nullptr
     };
 
-    vkCmdPipelineBarrier2 ( commandBuffer, &dependency );
+    vkCmdPipelineBarrier2 ( commandBuffer, &depInfo );
     return true;
 }
 
@@ -686,6 +706,8 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
     VkImageLayout layout
 ) noexcept
 {
+    std::lock_guard const lock ( _mutex );
+
     if ( slots.IsFull () ) [[unlikely]]
     {
         android_vulkan::LogError ( "pbr::ResourceHeap::RegisterImage - %s is full.", heap );
@@ -702,34 +724,21 @@ std::optional<uint32_t> ResourceHeap::RegisterImage ( Slots &slots,
         .imageLayout = layout,
     };
 
-    VkDescriptorGetInfoEXT const getInfo[]
+    VkDescriptorGetInfoEXT const getInfo
     {
-        {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-            .pNext = nullptr,
-            .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
+        .pNext = nullptr,
+        .type = type,
 
-            .data
-            {
-                .pStorageImage = &image
-            }
-        },
+        .data
         {
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT,
-            .pNext = nullptr,
-            .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-
-            .data
-            {
-                .pSampledImage = &image
-            }
+            .pStorageImage = &image
         }
     };
 
     size_t const cases[] = { _storageImageSize, _sampledImageSize };
     auto const selector = static_cast<size_t> ( type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE );
-
-    vkGetDescriptorEXT ( device, getInfo + selector, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
+    vkGetDescriptorEXT ( device, &getInfo, cases[ selector ], _write.Push ( index, _sampledImageSize ) );
     return std::optional<uint32_t> { index };
 }
 

@@ -1,0 +1,68 @@
+#ifndef PBR_GBUFFER_PROGRAM_HPP
+#define PBR_GBUFFER_PROGRAM_HPP
+
+
+#include "graphics_program.hpp"
+
+
+namespace pbr {
+
+class GBufferProgram : public GraphicsProgram
+{
+    private:
+        std::string_view    _vsSource {};
+        std::string_view    _fsSource {};
+
+    public:
+        GBufferProgram () = delete;
+
+        GBufferProgram ( GBufferProgram const & ) = delete;
+        GBufferProgram &operator = ( GBufferProgram const & ) = delete;
+
+        GBufferProgram ( GBufferProgram && ) = delete;
+        GBufferProgram &operator = ( GBufferProgram && ) = delete;
+
+    protected:
+        explicit GBufferProgram ( std::string_view vs, std::string_view fs, size_t pushConstantSize ) noexcept;
+        ~GBufferProgram () override = default;
+
+        [[nodiscard]] VkPipelineDepthStencilStateCreateInfo const* InitDepthStencilInfo (
+            VkPipelineDepthStencilStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineDynamicStateCreateInfo const* InitDynamicStateInfo (
+            VkPipelineDynamicStateCreateInfo* info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineInputAssemblyStateCreateInfo const* InitInputAssemblyInfo (
+            VkPipelineInputAssemblyStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
+            VkPipelineMultisampleStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineRasterizationStateCreateInfo const* InitRasterizationInfo (
+            VkPipelineRasterizationStateCreateInfo &info
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
+            VkPipelineViewportStateCreateInfo &info,
+            VkRect2D* scissorInfo,
+            VkViewport* viewportInfo,
+            VkExtent2D const* viewport
+        ) const noexcept override;
+
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,
+            std::vector<uint8_t> &fs,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkShaderModuleCreateInfo* moduleInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
+        ) const noexcept override;
+};
+
+} // namespace pbr
+
+
+#endif // PBR_GBUFFER_PROGRAM_HPP

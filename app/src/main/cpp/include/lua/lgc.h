@@ -231,8 +231,9 @@
 #endif
 
 #define luaC_condGC(L,pre,pos) \
-	{ if (G(L)->GCdebt <= 0) { pre; luaC_step(L); pos;}; \
-	  condchangemem(L,pre,pos,0); }
+	{ if (G(L)->GCdebt <= 0)  \
+	  { pre; luaC_step(L); condchangemem(L,{},{},0); pos;} \
+	  else condchangemem(L,pre,pos,0); }
 
 /* more often than not, 'pre'/'pos' are empty */
 #define luaC_checkGC(L)		luaC_condGC(L,(void)0,(void)0)

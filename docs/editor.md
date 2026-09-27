@@ -19,24 +19,24 @@
 ### <a id="requirements">Requirements</a>
 
 * _Windows 11_+
-* _Visual Studio 2026 Community 18.0.0_
+* _Visual Studio 2026 Community 18.10.2_
   - Workloads: Desktop development with C++
   - Individual components
-    - MSBuild
-    - _MSVC Build Tools v14.50 for x64/x86_
-    - Windows Universal CRT SDK
-    - C++ core features
-    - Windows 11 SDK (10.0.26100.6901)
-    - Windows Universal C Runtime
-* [_PowerShell 7.5.4_](https://github.com/PowerShell/PowerShell/releases/tag/v7.5.4)
+    - _MSBuild_
+    - _MSVC Build tools v14.51 for x64/x86_
+    - _Windows Universal CRT SDK_
+    - _C++ core features_
+    - _Windows 11 SDK (10.0.28000.2526)_
+    - _Windows Universal C Runtime_
+* [_PowerShell 7.6.6_](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6)
 * [_RenderDoc v1.41_](https://renderdoc.org/)
-* [_NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) (public-release)_](https://developer.nvidia.com/nsight-graphics)
-* [_PIX 2509.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
-* [_DirectX Shader Compiler 1.8.2505.10178_](https://github.com/microsoft/DirectXShaderCompiler) `b1cf2cad8f19f2ce733bd108e63485b33fbd4774`
-* [_libfreetype 2.14.1_](https://gitlab.freedesktop.org/freetype/freetype) `fc9cc5038e05edceec3d0f605415540ac76163e9`
-* [_stb_image 2.30_](https://github.com/nothings/stb) `f1c79c02822848a9bed4315b12c8c8f3761e1296`
-* [_Vulkan SDK 1.4.328.1_](https://vulkan.lunarg.com/sdk/home)
-* [_Vulkan Validation Layers 1.4.332_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `fc24b1981d8e11ed35ee2af0d9f43b92285e38a8`
+* [_NVIDIA Nsight Graphics 2026.3.1.0 (build 38722833) (public-release)_](https://developer.nvidia.com/nsight-graphics)
+* [_PIX 2603.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
+* [_DirectX Shader Compiler v1.10.2609.10012_](https://github.com/microsoft/DirectXShaderCompiler) `717b24d7a487efb555e976104a263f93f181fd44`
+* [_libfreetype 2.14.3_](https://gitlab.freedesktop.org/freetype/freetype) `d333439633039de426f943f28a2926c7f97b5ae5`
+* [_stb_image 2.30_](https://github.com/nothings/stb) `2c980bb59875b0d32144a71867fbdebb2f77cd20`
+* [_Vulkan SDK 1.4.357.0_](https://vulkan.lunarg.com/sdk/home)
+* [_Vulkan Validation Layers 1.4.364_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) `4315e7fd4500673692174ed4fee92277a200a7c5`
 
 [↬ table of content ⇧](#table-of-content)
 
@@ -142,7 +142,7 @@ Now you will be able to use [_NVIDIA Aftermath_](https://developer.nvidia.com/ns
 
 <img src="./images/editor-aftermath.png">
 
-ℹ️ Pay attention that [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics) already contains [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) components. So all you need is to activate [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) tool and wait for application crash.
+ℹ️ Pay attention that [_NVIDIA Nsight Graphics_](https://developer.nvidia.com/nsight-graphics) already contains [_NVIDIA Aftermath_](https://developer.nvidia.com/nsight-aftermath) components. So all you need is to activate [_NVIDIA Aftermath Monitor_](https://developer.nvidia.com/nsight-aftermath) tool and wait for application crash.
 
 [↬ table of content ⇧](#table-of-content)
 

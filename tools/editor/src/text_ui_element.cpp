@@ -1,16 +1,11 @@
 #include <precompiled_headers.hpp>
-#include <set_text_event.hpp>
+#include <message_queue.hpp>
 #include <text_ui_element.hpp>
 
 
 namespace editor {
 
-TextUIElement::TextUIElement ( MessageQueue &messageQueue,
-    DIVUIElement &parent,
-    std::string_view text,
-    std::string &&name
-) noexcept:
-    UIElement ( messageQueue ),
+TextUIElement::TextUIElement ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept:
     _text ( new pbr::TextUIElement ( true, &parent.GetNativeElement (), text, std::move ( name ) ) )
 {
     // NOTHING
@@ -18,12 +13,13 @@ TextUIElement::TextUIElement ( MessageQueue &messageQueue,
 
 TextUIElement::~TextUIElement () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UIDeleteElement,
-            ._params = std::exchange ( _text, nullptr ),
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::UIDeleteElement,
+            [ text = std::exchange ( _text, nullptr ) ] () noexcept {
+                delete text;
+                return nullptr;
+            }
+        )
     );
 }
 
@@ -39,23 +35,25 @@ void TextUIElement::SetColor ( pbr::ColorValue const &color ) noexcept
 
 void TextUIElement::SetText ( std::string_view text ) noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UISetText,
-            ._params = SetTextEvent::Create ( *_text, text ),
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::UISetText,
+            [ &element = *_text, t = std::move ( std::string ( text ) ) ] () noexcept {
+                element.SetText ( std::string_view ( t ) );
+                return nullptr;
+            }
+        )
     );
 }
 
 void TextUIElement::SetText ( std::u32string_view text ) noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::UISetText,
-            ._params = SetTextEvent::Create ( *_text, text ),
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::UISetText,
+            [ &element = *_text, t = std::move ( std::u32string ( text ) ) ] () noexcept {
+                element.SetText ( std::u32string_view ( t ) );
+                return nullptr;
+            }
+        )
     );
 }
 

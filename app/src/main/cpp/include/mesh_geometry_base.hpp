@@ -41,9 +41,9 @@ class MeshGeometryBase
 
         struct UploadJob final
         {
-            void const*     _data = nullptr;
-            VkDeviceSize    _dstOffset = 0U;
-            VkDeviceSize    _size = 0U;
+            void const*             _data = nullptr;
+            VkDeviceSize            _dstOffset = 0U;
+            VkDeviceSize            _size = 0U;
         };
 
         using UploadJobs = std::span<UploadJob const>;
@@ -64,8 +64,8 @@ class MeshGeometryBase
         MeshGeometryBase ( MeshGeometryBase const & ) = delete;
         MeshGeometryBase &operator = ( MeshGeometryBase const & ) = delete;
 
-        MeshGeometryBase ( MeshGeometryBase && ) = delete;
-        MeshGeometryBase &operator = ( MeshGeometryBase && ) = delete;
+        MeshGeometryBase ( MeshGeometryBase &&other ) noexcept;
+        MeshGeometryBase &operator = ( MeshGeometryBase &&other ) noexcept;
 
         [[nodiscard]] GXAABB const &GetBounds () const noexcept;
         [[nodiscard]] uint32_t GetVertexBufferVertexCount () const noexcept;

@@ -2,9 +2,9 @@
 #define PBR_TONE_MAPPER_PROGRAM_HPP
 
 
+#include <GXCommon/GXMath.hpp>
 #include "graphics_program.hpp"
 #include <pbr/brightness_info.hpp>
-#include "resource_heap_descriptor_set_layout.hpp"
 #include <vulkan_utils.hpp>
 
 
@@ -17,16 +17,16 @@ class ToneMapperProgram final : public GraphicsProgram
 
         struct PushConstants final
         {
-            uint32_t                        _exposure;
-            uint32_t                        _hdrImage;
-            GXVec2                          _transformRow0;
-            GXVec2                          _transformRow1;
+            [[maybe_unused]] uint32_t       _exposure;
+            [[maybe_unused]] uint32_t       _hdrImage;
+            [[maybe_unused]] uint32_t       _outlineBlurX;
+            [[maybe_unused]] GXVec2         _resolution;
+            [[maybe_unused]] GXVec2         _halfPixelMove;
+            [[maybe_unused]] GXVec2         _transformRow0;
+            [[maybe_unused]] GXVec2         _transformRow1;
         };
 
         AV_DX_ALIGNMENT_END
-
-    private:
-        ResourceHeapDescriptorSetLayout     _layout {};
 
     public:
         explicit ToneMapperProgram () noexcept;
@@ -65,8 +65,6 @@ class ToneMapperProgram final : public GraphicsProgram
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
-
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const noexcept override;
@@ -90,8 +88,7 @@ class ToneMapperProgram final : public GraphicsProgram
             VkPipelineRenderingCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( VkPipelineShaderStageCreateInfo const* &targetInfo,
-            std::vector<uint8_t> &vs,
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( std::vector<uint8_t> &vs,
             std::vector<uint8_t> &fs,
             SpecializationData specializationData,
             VkSpecializationInfo* specializationInfo,

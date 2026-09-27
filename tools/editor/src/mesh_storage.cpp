@@ -1,0 +1,151 @@
+#include <precompiled_headers.hpp>
+#include <file.hpp>
+#include <mesh_storage.hpp>
+#include <message_queue.hpp>
+#include <native_renderer.hpp>
+#include <scope_quard.hpp>
+#include <trace.hpp>
+
+
+namespace editor {
+
+MeshStorage* MeshStorage::_instance = nullptr;
+
+MeshStorage::MeshStorage () noexcept
+{
+    _instance = this;
+}
+
+void MeshStorage::Load ( std::string_view asset, MeshLoadResult &&result ) noexcept
+{
+    // The main goal: minimize the amount of work in rendering thread as much as possible. To achieve that every IO
+    // task will be done in separate thread. Any Vulkan resource allocations will be done is separate thread.
+    // The rendering thread will only record transfer operations into command buffer.
+
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    auto loadAsset = [
+        this,
+        &messageQueue,
+        asset = std::string ( asset ),
+        result = std::move ( result )
+    ] () mutable noexcept -> void* {
+        AV_TRACE ( "Loading %s", asset.c_str () )
+
+        std::string path = android_vulkan::File::ResolvePath ( std::move ( asset ) );
+
+        if ( auto findResult = _storage.find ( path ); findResult != _storage.end () )
+        {
+            Item &item = findResult->second;
+            ++item._references;
+            result ( std::optional<MeshGeometryRef> { item._mesh } );
+            return nullptr;
+        }
+
+        if ( auto findResult = _tasks.find ( path ); findResult != _tasks.cend () )
+        {
+            findResult->second.push_back ( std::move ( result ) );
+            return nullptr;
+        }
+
+        MeshGeometryRef mesh = std::make_shared<android_vulkan::MeshGeometry> ();
+        auto loadResult = mesh->LoadMesh ( NativeRenderer::Instance (), path );
+
+        if ( !loadResult ) [[unlikely]]
+        {
+            result ( std::nullopt );
+            return nullptr;
+        }
+
+        auto uploadResult = [ this, &messageQueue, path ] ( std::optional<MeshGeometryRef> &&mesh ) mutable noexcept {
+            AV_TRACE ( "Upload done %s", path.c_str () )
+
+            auto finishUpload = [ this,
+                path = std::move ( path ),
+                mesh = std::move ( mesh )
+            ] () mutable noexcept -> void* {
+                AV_TRACE ( "Upload done %s", path.c_str () )
+                auto findResult = _tasks.find ( path );
+
+                android_vulkan::ScopeGuard const freeTask (
+                    [ this, findResult ] () noexcept {
+                        _tasks.erase ( findResult );
+                    }
+                );
+
+                std::deque<MeshLoadResult> &results = findResult->second;
+
+                for ( auto &result : results )
+                    result ( std::optional<MeshGeometryRef> ( mesh ) );
+
+                if ( !mesh ) [[unlikely]]
+                    return nullptr;
+
+                _storage.insert (
+                    std::pair ( std::move ( path ),
+                        Item
+                        {
+                            ._mesh = std::move ( *mesh ),
+                            ._references = results.size ()
+                        }
+                    )
+                );
+
+                return nullptr;
+            };
+
+            messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( finishUpload ) ) );
+        };
+
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::UploadMesh,
+                [
+                    info = MeshUploadInfo ( std::move ( mesh ), std::move ( *loadResult ), std::move ( uploadResult ) )
+                ] () mutable noexcept -> void* {
+                    return &info;
+                }
+            )
+        );
+
+        // Can't do std::unordered_map::insert and creation from std::initializer_list. List is holding const objects.
+        // So copy constructor will be involved. This will lead to massive compile error.
+        // Using two steps initialization.
+        _tasks[ std::move ( path ) ].push_back ( std::move ( result ) );
+        return nullptr;
+    };
+
+    messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( loadAsset ) ) );
+}
+
+void MeshStorage::Unload ( MeshGeometryRef &&mesh ) noexcept
+{
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    auto unload = [ this, &messageQueue, mesh = std::move ( mesh ) ] noexcept -> void* {
+        AV_TRACE ( "Unload %s", mesh->GetName ().c_str () )
+        auto findResult = _storage.find ( mesh->GetName () );
+
+        if ( --findResult->second._references > 0U )
+            return nullptr;
+
+        messageQueue.EnqueueBack (
+            Message ( eMessageType::DestroyMesh,
+                [ mesh = std::move ( mesh ) ] () mutable noexcept -> void* {
+                    return &mesh;
+                }
+            )
+        );
+
+        _storage.erase ( findResult );
+        return nullptr;
+    };
+
+    messageQueue.EnqueueBack ( Message ( eMessageType::InvokeIO, std::move ( unload ) ) );
+}
+
+MeshStorage &MeshStorage::Instance () noexcept
+{
+    return *_instance;
+}
+
+} // namespace editor

@@ -7,11 +7,15 @@ namespace pbr {
 void GraphicsProgram::Destroy ( VkDevice device ) noexcept
 {
     GraphicsProgramBase::Destroy ( device );
+
+    if ( _pipelineLayout != VK_NULL_HANDLE ) [[likely]]
+        vkDestroyPipelineLayout ( device, std::exchange ( _pipelineLayout, VK_NULL_HANDLE ), nullptr );
+
     DestroyShaderModules ( device );
 }
 
-GraphicsProgram::GraphicsProgram ( std::string_view name ) noexcept:
-    GraphicsProgramBase ( name )
+GraphicsProgram::GraphicsProgram ( size_t pushConstantSize ) noexcept:
+    GraphicsProgramBase ( pushConstantSize )
 {
     // NOTHING
 }

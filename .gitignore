@@ -15,6 +15,7 @@
 
 # HLSL SPIR-V
 /app/src/main/hlsl/disassm/*.spvasm
+/app/src/main/hlsl/preprocess/*.hlsl
 /app/src/main/hlsl/validation/*.spv
 
 # NVIDIA Nsight Graphics config

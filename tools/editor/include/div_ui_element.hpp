@@ -3,7 +3,6 @@
 
 
 #include <platform/windows/pbr/div_ui_element.hpp>
-
 #include "ui_element.hpp"
 
 
@@ -25,16 +24,8 @@ class DIVUIElement final : public UIElement
         DIVUIElement ( DIVUIElement && ) = delete;
         DIVUIElement &operator = ( DIVUIElement && ) = delete;
 
-        explicit DIVUIElement ( MessageQueue &messageQueue,
-            pbr::CSSComputedValues &&css,
-            std::string &&name
-        ) noexcept;
-
-        explicit DIVUIElement ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
-            pbr::CSSComputedValues &&css,
-            std::string &&name
-        ) noexcept;
+        explicit DIVUIElement ( pbr::CSSComputedValues &&css, std::string &&name ) noexcept;
+        explicit DIVUIElement ( DIVUIElement &parent, pbr::CSSComputedValues &&css, std::string &&name ) noexcept;
 
         ~DIVUIElement () noexcept override;
 

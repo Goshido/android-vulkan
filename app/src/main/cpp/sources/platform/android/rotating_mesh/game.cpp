@@ -108,14 +108,21 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     {
         auto &drawcall = _drawcalls[ i ];
 
-        bool const result = drawcall._diffuse.UploadData ( renderer,
-            textureFiles[ i ],
-            android_vulkan::eColorSpace::Unorm,
-            true,
-            commandBuffers[ i ],
-            false,
-            VK_NULL_HANDLE
-        );
+        bool const result =
+            drawcall._diffuse.UploadToStagingBuffer ( renderer,
+                textureFiles[ i ],
+                android_vulkan::eColorSpace::Unorm,
+                true
+            ) &&
+
+            drawcall._diffuse.UploadToGPU ( renderer,
+                commandBuffers[ i ],
+                VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                false,
+                VK_NULL_HANDLE
+            );
 
         if ( !result ) [[unlikely]]
         {
@@ -125,28 +132,42 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
 
     Drawcall &secondMaterial = _drawcalls[ 1U ];
 
-    bool result = secondMaterial._normal.UploadData ( renderer,
-        MATERIAL_2_NORMAL,
-        android_vulkan::eColorSpace::Unorm,
-        true,
-        commandBuffers[ 3U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    bool result =
+        secondMaterial._normal.UploadToStagingBuffer ( renderer,
+            MATERIAL_2_NORMAL,
+            android_vulkan::eColorSpace::Unorm,
+            true
+        ) &&
+
+        secondMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 3U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;
 
     Drawcall &thirdMaterial = _drawcalls[ 2U ];
 
-    result = thirdMaterial._normal.UploadData ( renderer,
-        MATERIAL_3_NORMAL,
-        android_vulkan::eColorSpace::Unorm,
-        true,
-        commandBuffers[ 4U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    result =
+        thirdMaterial._normal.UploadToStagingBuffer ( renderer,
+            MATERIAL_3_NORMAL,
+            android_vulkan::eColorSpace::Unorm,
+            true
+        ) &&
+
+        thirdMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 4U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;
@@ -154,16 +175,24 @@ bool Game::CreateCommonTextures ( android_vulkan::Renderer &renderer, VkCommandB
     Drawcall &firstMaterial = _drawcalls[ 0U ];
     constexpr uint8_t const defaultNormal[] = { 128U, 128U, 255U, 128U };
 
-    return firstMaterial._normal.UploadData ( renderer,
-        defaultNormal,
-        std::size ( defaultNormal ),
-        VkExtent2D { .width = 1U, .height = 1U },
-        VK_FORMAT_R8G8B8A8_UNORM,
-        false,
-        commandBuffers[ 5U ],
-        false,
-        VK_NULL_HANDLE
-    );
+    return
+        firstMaterial._normal.UploadToStagingBuffer ( renderer,
+            defaultNormal,
+            std::size ( defaultNormal ),
+            VkExtent2D { .width = 1U, .height = 1U },
+            VK_FORMAT_R8G8B8A8_UNORM,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
+            false
+        ) &&
+
+        firstMaterial._normal.UploadToGPU ( renderer,
+            commandBuffers[ 5U ],
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 }
 
 bool Game::CreateMeshes ( android_vulkan::Renderer &renderer ) noexcept
@@ -306,7 +335,7 @@ bool Game::OnFrame ( android_vulkan::Renderer &renderer, double deltaTime ) noex
             0U,
             2U,
             buffers,
-            bufferInfo._vertexDataOffsets
+            bufferInfo._vertexDataOffsets.data ()
         );
 
         vkCmdDraw ( commandBuffer, mesh.GetVertexCount (), 1U, 0U, 0U );
@@ -617,7 +646,18 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = _depthStencilRenderTarget.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),
+
+#ifdef AV_ENABLE_RENDERDOC
+
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+
+#else
+
+        AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
+            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT ),
+
+#endif // AV_ENABLE_RENDERDOC
+
         renderer
     );
 
@@ -664,9 +704,6 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
             return false;
 
         AV_SET_VULKAN_OBJECT_NAME ( device, framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER, "Swapchain image #%zu", i )
-
-
-
         VkSemaphore semaphore;
 
         result = android_vulkan::Renderer::CheckVkResult (
@@ -1040,7 +1077,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
             .format = renderer.GetDefaultDepthStencilFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -1088,12 +1125,14 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         {
             .srcSubpass = VK_SUBPASS_EXTERNAL,
             .dstSubpass = 0U,
-            .srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
 
-            .srcAccessMask = VK_ACCESS_NONE,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
             .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         },

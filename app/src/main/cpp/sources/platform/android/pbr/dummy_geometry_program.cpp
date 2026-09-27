@@ -17,7 +17,7 @@ constexpr uint32_t SUBPASS = 0U;
 
 DummyGeometryProgram::DummyGeometryProgram () noexcept:
     DummyProgram ( "Dummy for layout transitions (G-Buffer)",
-        "shaders/dummy_gbuffer.ps.spv",
+        "shaders/android/dummy_gbuffer.ps.spv",
         SUBPASS
     )
 {
@@ -162,9 +162,12 @@ VkPipelineDepthStencilStateCreateInfo const* DummyGeometryProgram::InitDepthSten
     return &info;
 }
 
-bool DummyGeometryProgram::InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept
+VkPipelineLayout DummyGeometryProgram::InitLayout ( VkDevice device ) noexcept
 {
-    return _layout.Init ( device ) && InitLayoutInternal ( device, layout, _layout.GetLayout () );
+    if ( !_layout.Init ( device ) ) [[unlikely]]
+        return VK_NULL_HANDLE;
+
+    return InitLayoutInternal ( device, _layout.GetLayout () );
 }
 
 VkPipelineRasterizationStateCreateInfo const* DummyGeometryProgram::InitRasterizationInfo (

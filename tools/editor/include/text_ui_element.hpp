@@ -22,11 +22,7 @@ class TextUIElement final : public UIElement
         TextUIElement ( TextUIElement && ) = delete;
         TextUIElement &operator = ( TextUIElement && ) = delete;
 
-        explicit TextUIElement ( MessageQueue &messageQueue,
-            DIVUIElement &parent,
-            std::string_view text,
-            std::string &&name
-        ) noexcept;
+        explicit TextUIElement ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept;
 
         ~TextUIElement () noexcept override;
 

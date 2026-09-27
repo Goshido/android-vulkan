@@ -4,7 +4,7 @@
 
 #include "actor_body.hpp"
 #include "actor_sweep.hpp"
-#include <game.hpp>
+#include <platform/android/game.hpp>
 #include <platform/android/pbr/camera.hpp>
 #include <platform/android/pbr/point_light_component.hpp>
 

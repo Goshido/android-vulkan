@@ -72,6 +72,7 @@ class GeometryPassProgram : public GraphicsProgram
         GeometryPassSamplerDescriptorSetLayout      _samplerLayout {};
         GeometryPassTextureDescriptorSetLayout      _textureLayout {};
         std::string_view const                      _fragmentShaderSource;
+        std::string_view const                      _name {};
 
     public:
         GeometryPassProgram () = delete;
@@ -98,7 +99,7 @@ class GeometryPassProgram : public GraphicsProgram
         ) const noexcept;
 
     protected:
-        explicit GeometryPassProgram ( std::string_view &&name, std::string_view &&fragmentShader ) noexcept;
+        explicit GeometryPassProgram ( std::string_view name, std::string_view &&fragmentShader ) noexcept;
 
     private:
         [[nodiscard]] VkPipelineColorBlendStateCreateInfo const* InitColorBlendInfo (
@@ -118,8 +119,6 @@ class GeometryPassProgram : public GraphicsProgram
             VkPipelineInputAssemblyStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitLayout ( VkDevice device, VkPipelineLayout &layout ) noexcept override;
-
         [[nodiscard]] VkPipelineMultisampleStateCreateInfo const* InitMultisampleInfo (
             VkPipelineMultisampleStateCreateInfo &info
         ) const noexcept override;
@@ -128,19 +127,20 @@ class GeometryPassProgram : public GraphicsProgram
             VkPipelineRasterizationStateCreateInfo &info
         ) const noexcept override;
 
-        [[nodiscard]] bool InitShaderInfo ( android_vulkan::Renderer const &renderer,
-            VkPipelineShaderStageCreateInfo const* &targetInfo,
-            SpecializationData specializationData,
-            VkSpecializationInfo* specializationInfo,
-            VkPipelineShaderStageCreateInfo* sourceInfo
-        ) noexcept override;
-
         [[nodiscard]] VkPipelineViewportStateCreateInfo const* InitViewportInfo (
             VkPipelineViewportStateCreateInfo &info,
             VkRect2D* scissorInfo,
             VkViewport* viewportInfo,
             VkExtent2D const* viewport
         ) const noexcept override;
+
+        [[nodiscard]] VkPipelineLayout InitLayout ( VkDevice device ) noexcept override;
+
+        [[nodiscard]] VkPipelineShaderStageCreateInfo const* InitShaderInfo ( android_vulkan::Renderer const &renderer,
+            SpecializationData specializationData,
+            VkSpecializationInfo* specializationInfo,
+            VkPipelineShaderStageCreateInfo* sourceInfo
+        ) noexcept override;
 
         [[nodiscard]] VkPipelineVertexInputStateCreateInfo const* InitVertexInputInfo (
             VkPipelineVertexInputStateCreateInfo &info,

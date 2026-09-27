@@ -388,7 +388,7 @@ Method performs overlap test of two box shapes.
 
 **Return values:**
 
-- `#1` [_required, readonly, boolean_]: `true` if two shapes overlap. `false` otherwise 
+- `#1` [_required, readonly, boolean_]: `true` if two shapes overlap. `false` otherwise
 
 **Example:**
 

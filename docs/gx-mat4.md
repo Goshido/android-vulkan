@@ -433,7 +433,7 @@ m:MultiplyMatrixVector ( v1, v0 )
 
 ## <a id="method-multiply-as-normal">`MultiplyAsNormal ( out, v )`</a>
 
-Method applies rotation and scale transforms of current matrix to vector `v` and writes the result to vector `out`. 
+Method applies rotation and scale transforms of current matrix to vector `v` and writes the result to vector `out`.
 
 **Parameters:**
 
@@ -464,7 +464,7 @@ r:MultiplyAsNormal ( n, v )
 
 ## <a id="method-multiply-as-point">`MultiplyAsPoint ( out, v )`</a>
 
-Method applies rotation, scale and translation transforms of current matrix to vector `v` and writes the result to vector `out`. 
+Method applies rotation, scale and translation transforms of current matrix to vector `v` and writes the result to vector `out`.
 
 **Parameters:**
 

@@ -7,12 +7,6 @@
 #include "ui_program.hpp"
 #include "ui_vertex_info.hpp"
 
-GX_DISABLE_COMMON_WARNINGS
-
-#include <span>
-
-GX_RESTORE_WARNING_STATE
-
 
 namespace pbr {
 
@@ -48,13 +42,23 @@ class UIPass final
         class BufferStream final
         {
             private:
-                VkBufferMemoryBarrier       _barriers[ 2U ]
+                uint8_t*                    _data = nullptr;
+
+                Buffer                      _staging {};
+                Buffer                      _gpuBuffer {};
+
+                VkDeviceAddress             _bdaStream0 = 0U;
+                VkDeviceAddress             _bdaStream1 = 0U;
+
+                VkBufferMemoryBarrier2      _barriers[ 2U ]
                 {
                     {
-                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
                         .pNext = nullptr,
-                        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+                        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
                         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                         .buffer = VK_NULL_HANDLE,
@@ -62,10 +66,12 @@ class UIPass final
                         .size = 0U
                     },
                     {
-                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+                        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
                         .pNext = nullptr,
-                        .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                        .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+                        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+                        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+                        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
                         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                         .buffer = VK_NULL_HANDLE,
@@ -74,13 +80,18 @@ class UIPass final
                     }
                 };
 
-                uint8_t*                    _data = nullptr;
-
-                Buffer                      _staging {};
-                Buffer                      _gpuBuffer {};
-
-                VkDeviceAddress             _bdaStream0 = 0U;
-                VkDeviceAddress             _bdaStream1 = 0U;
+                VkDependencyInfo const      _depInfo
+                {
+                    .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+                    .pNext = nullptr,
+                    .dependencyFlags = 0U,
+                    .memoryBarrierCount = 0U,
+                    .pMemoryBarriers = nullptr,
+                    .bufferMemoryBarrierCount = 2U,
+                    .pBufferMemoryBarriers = _barriers,
+                    .imageMemoryBarrierCount = 0U,
+                    .pImageMemoryBarriers = nullptr
+                };
 
             public:
                 explicit BufferStream () = default;
@@ -132,7 +143,6 @@ class UIPass final
         std::vector<uint16_t>               _usedImages {};
 
         FontStorage                         _fontStorage;
-        ResourceHeap                        &_resourceHeap;
 
         bool                                _hasChanges = false;
         bool                                _isTransformChanged = false;

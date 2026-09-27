@@ -239,22 +239,30 @@ bool SweepTesting::CreateScene ( android_vulkan::Renderer &renderer ) noexcept
     android_vulkan::Texture2D &t = *_overlay;
     constexpr uint8_t const color[ 4U ] = { 255U, 255U, 255U, 255U };
 
-    result = t.UploadData ( renderer,
-        color,
-        sizeof ( color ),
+    result =
+        t.UploadToStagingBuffer ( renderer,
+            color,
+            sizeof ( color ),
 
-        VkExtent2D
-        {
-            .width = 1U,
-            .height = 1U
-        },
+            VkExtent2D
+            {
+                .width = 1U,
+                .height = 1U
+            },
 
-        VK_FORMAT_R8G8B8A8_SRGB,
-        false,
-        *cb,
-        false,
-        VK_NULL_HANDLE
-    );
+            VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_USAGE_SAMPLED_BIT,
+            false
+        ) &&
+
+        t.UploadToGPU ( renderer,
+            *cb,
+            VK_ACCESS_SHADER_READ_BIT,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+            false,
+            VK_NULL_HANDLE
+        );
 
     if ( !result ) [[unlikely]]
         return false;

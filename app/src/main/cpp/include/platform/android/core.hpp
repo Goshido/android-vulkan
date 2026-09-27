@@ -36,8 +36,6 @@ class Core final
 
     private:
         std::string const           _cacheDirectory {};
-
-        Game*                       _game = nullptr;
         Gamepad                     &_gamepad = Gamepad::GetInstance ();
 
         Renderer                    _renderer {};

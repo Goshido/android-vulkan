@@ -23,7 +23,7 @@ class KeyboardKeyEvent final
         KeyboardKeyEvent ( KeyboardKeyEvent && ) = delete;
         KeyboardKeyEvent &operator = ( KeyboardKeyEvent && ) = delete;
 
-        explicit KeyboardKeyEvent ( Message const &message ) noexcept;
+        explicit KeyboardKeyEvent ( Message &message ) noexcept;
 
         ~KeyboardKeyEvent () = default;
 

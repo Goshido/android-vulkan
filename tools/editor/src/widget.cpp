@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <message_queue.hpp>
 #include <widget.hpp>
 
 
@@ -44,12 +45,12 @@ void Widget::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     if ( event._eventID - std::exchange ( _hoverEventID, event._eventID ) < 2U ) [[likely]]
         return;
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::MouseHover,
-            ._params = this,
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::MouseHover,
+            [ value = this ] () noexcept {
+                return value;
+            }
+        )
     );
 }
 
@@ -85,97 +86,59 @@ bool Widget::IsOverlapped ( int32_t x, int32_t y ) const noexcept
     return _rect.IsOverlapped ( x, y );
 }
 
-Widget::Widget ( MessageQueue &messageQueue ) noexcept:
-    _messageQueue ( messageQueue )
-{
-    // NOTHING
-}
-
 void Widget::CaptureMouse () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StartWidgetCaptureMouse,
-            ._params = this,
-            ._serialNumber = 0U
-        }
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::StartWidgetCaptureMouse,
+            [ value = this ] () noexcept {
+                return value;
+            }
+        )
     );
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::CaptureMouse,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::CaptureMouse ) );
 }
 
 void Widget::ReleaseMouse () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::StopWidgetCaptureMouse,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ReleaseMouse,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.EnqueueBack ( Message ( eMessageType::StopWidgetCaptureMouse ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::ReleaseMouse ) );
 }
 
 void Widget::ChangeCursor ( eCursor cursor ) noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ChangeCursor,
-            ._params = std::bit_cast<void*> ( cursor ),
-            ._serialNumber = 0U
-        }
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::ChangeCursor,
+            [ value = std::bit_cast<void*> ( cursor ) ] () noexcept {
+                return value;
+            }
+        )
     );
 }
 
 void Widget::KillFocus () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::KillFocus,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
-
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::ReleaseKeyboard,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+    messageQueue.EnqueueBack ( Message ( eMessageType::KillFocus ) );
+    messageQueue.EnqueueBack ( Message ( eMessageType::ReleaseKeyboard ) );
 }
 
 void Widget::SetFocus () noexcept
 {
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::SetFocus,
-            ._params = this,
-            ._serialNumber = 0U
-        }
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::SetFocus,
+            [ value = this ] () noexcept {
+                return value;
+            }
+        )
     );
 
-    _messageQueue.EnqueueBack (
-        {
-            ._type = eMessageType::CaptureKeyboard,
-            ._params = nullptr,
-            ._serialNumber = 0U
-        }
-    );
+    messageQueue.EnqueueBack ( Message ( eMessageType::CaptureKeyboard ) );
 }
 
 } // namespace editor

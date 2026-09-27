@@ -210,7 +210,14 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
     {
         {
             .pLayerName = vvlLayerName,
-            .pSettingName = "syncval_submit_time_validation",
+            .pSettingName = "syncval_full_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_record_time_validation",
             .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
             .valueCount = 1U,
             .pValues = &enable

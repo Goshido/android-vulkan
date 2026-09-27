@@ -258,13 +258,6 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
 
         {
             .pLayerName = vvlLayerName,
-            .pSettingName = "gpuav_enable",
-            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
-            .valueCount = 1U,
-            .pValues = &enable
-        },
-        {
-            .pLayerName = vvlLayerName,
             .pSettingName = "gpuav_safe_mode",
             .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
             .valueCount = 1U,
@@ -329,6 +322,13 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
         {
             .pLayerName = vvlLayerName,
             .pSettingName = "gpuav_shared_memory_data_race",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "gpuav_max_indices_count",
             .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
             .valueCount = 1U,
             .pValues = &enable
@@ -405,7 +405,14 @@ void Renderer::DeployValidationFeatures ( VkInstanceCreateInfo &instanceCreateIn
         },
         {
             .pLayerName = vvlLayerName,
-            .pSettingName = "syncval_submit_time_validation",
+            .pSettingName = "syncval_full_validation",
+            .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
+            .valueCount = 1U,
+            .pValues = &enable
+        },
+        {
+            .pLayerName = vvlLayerName,
+            .pSettingName = "syncval_record_time_validation",
             .type = VK_LAYER_SETTING_TYPE_BOOL32_EXT,
             .valueCount = 1U,
             .pValues = &enable

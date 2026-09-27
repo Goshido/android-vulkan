@@ -517,6 +517,9 @@ void Workspace::DrawGizmo ( VkCommandBuffer commandBuffer, pbr::SwapchainInfo co
     _gizmoColorAttachment.imageView = swapchain._view;
     vkCmdBeginRendering ( commandBuffer, &_gizmoRenderingInfo );
 
+    vkCmdSetViewport ( commandBuffer, 0U, 1U, &_idViewport );
+    vkCmdSetScissor ( commandBuffer, 0U, 1U, &_gizmoRenderingInfo.renderArea );
+
     pbr::GizmoPrepassProgram &prepass = *_gizmoPrepassProgram;
     prepass.Bind ( commandBuffer );
 

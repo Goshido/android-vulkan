@@ -15,7 +15,7 @@ $profileMode = ( $args.Length -lt 2 ) ? $false : $args[ 1 ]
 [string] $WINDOWS_SHADER_DIRECTORY = "$CORE_SHADER_DIRECTORY\windows"
 
 [string] $DXC = "$Env:ANDROID_VULKAN_DXC_ROOT\dxc.exe"
-[string] $HLSL_PROFILE = "6_10"
+[string] $HLSL_PROFILE = "6_11"
 
 $global:FLAGS = @(
     "-HV", "2021",

@@ -63,7 +63,7 @@ dxc.exe
     -enable-16bit-types
     -WX
     -O3
-    -T vs_6_10
+    -T vs_6_11
     -E VS
     -I <android-vulkan directory>\app\src\main\hlsl
     -I <android-vulkan directory>\tools\editor\include
@@ -94,7 +94,7 @@ dxc.exe
     -enable-16bit-types
     -WX
     -O3
-    -T ps_6_10
+    -T ps_6_11
     -E PS
     -I <android-vulkan directory>\app\src\main\hlsl
     -I <android-vulkan directory>\tools\editor\include
@@ -125,7 +125,7 @@ dxc.exe
     -enable-16bit-types
     -WX
     -O3
-    -T cs_6_10
+    -T cs_6_11
     -E CS
     -I <android-vulkan directory>\app\src\main\hlsl
     -I <android-vulkan directory>\tools\editor\include

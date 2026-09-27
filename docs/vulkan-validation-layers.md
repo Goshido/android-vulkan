@@ -17,15 +17,15 @@ Starting from _Android NDK_ `23.0.7599858` the _Vulkan_ validation layers have b
 
 ## <a id="compatible-version">Compatible version</a>
 
-The manual is based on `fc24b1981d8e11ed35ee2af0d9f43b92285e38a8` commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) repo. The manual is primary aimed for _Windows OS_ users.
+The manual is based on commit of the [_Vulkan-ValidationLayers_](https://github.com/KhronosGroup/Vulkan-ValidationLayers) noted in [here](./../README.md#requirements). The manual is primary aimed for _Windows OS_ users.
 
 [↬ table of content ⇧](#table-of-content)
 
 ## <a id="requirements">Requirements</a>
 
 - _Windows 11_
-- _PowerShell 7.5.4_
-- _Android NDK 29.0.14206865_
+- _PowerShell 7.6.6_
+- _Android NDK 30.0.16248370_
 - _CMake 4.1.2_
 - _Ninja 1.21.1_
 - _Python 3.11.1_
@@ -64,12 +64,12 @@ Starting from _VVL_ `eca34aae4cc04eb32035a7b1770a276933f37327` building process 
 >>> Main script
 
 [string] $ABI = "arm64-v8a"
-[string] $ANDROID_API = "30"
+[string] $ANDROID_API = "37"
 [string] $ANDROID_SDK_DIR = "D:\Programs\Android\Sdk"
 [string] $ANDROID_VULKAN_DIR = "D:\Development\android-vulkan"
 [string] $BUILD_THREADS = "16"
 [string] $CMAKE = "4.1.2"
-[string] $NDK = "29.0.14206865"
+[string] $NDK = "30.0.16248370"
 
 #-----------------------------------------------------------------------------------------------------------------------
 
@@ -151,6 +151,6 @@ VkRenderPass validation suspicious inconsistency | [#8970](https://github.com/Kh
 Memory leaks in VVL 1.4.303 | [#9022](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/9022) | ⚠️ Submitted
 `vkCmdSetDescriptorBufferOffsetsEXT` crash | [#10697](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/10697) | 🛡️ Not an issue
 Breakpoint option does not work | [#11010](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11010) | 🛡️ Not an issue
-Sync validation does not work anymore | [#11011](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11011) | ⚡ Confirmed: next year fix
+Sync validation does not work anymore | [#11011](https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/11011) | ✔️ Fixed
 
 [↬ table of content ⇧](#table-of-content)

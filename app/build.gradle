@@ -1,19 +1,15 @@
-import org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode
-import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-
 plugins {
     id "com.android.application"
-    id "kotlin-android"
 }
 
 android {
-    buildToolsVersion "36.1.0"
-    ndkVersion "29.0.14206865"
+    buildToolsVersion "37.0.0"
+    ndkVersion "30.0.16248370"
     namespace 'com.goshidoInc.androidVulkan'
 
     defaultConfig {
         applicationId "com.goshidoInc.androidVulkan"
-        compileSdkVersion 36
+        compileSdkVersion 37
         minSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -70,14 +66,6 @@ android {
             java.srcDirs += "src/main/kotlin"
         }
     }
-}
-
-// [2024-11-23] This allows to use recent Kotlin toolchain. Without it you will get the following error:
-// Inconsistent JVM-target compatibility detected for tasks 'compileDebugJavaWithJavac' (1.8) and
-// 'compileDebugKotlin' (21).
-// See https://kotlinlang.org/docs/gradle-configure-project.html#-5yydp1_177
-tasks.withType(KotlinJvmCompile.class).configureEach {
-    jvmTargetValidationMode = JvmTargetValidationMode.IGNORE
 }
 
 dependencies {

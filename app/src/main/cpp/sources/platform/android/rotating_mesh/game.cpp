@@ -646,7 +646,18 @@ bool Game::CreateFramebuffers ( android_vulkan::Renderer &renderer ) noexcept
 
     bool result = _depthStencilRenderTarget.CreateRenderTarget ( resolution,
         renderer.GetDefaultDepthStencilFormat (),
+
+#ifdef AV_ENABLE_RENDERDOC
+
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+
+#else
+
+        AV_VK_FLAG ( VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT ) |
+            AV_VK_FLAG ( VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT ),
+
+#endif // AV_ENABLE_RENDERDOC
+
         renderer
     );
 
@@ -1066,7 +1077,7 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
             .format = renderer.GetDefaultDepthStencilFormat (),
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
             .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -1114,12 +1125,14 @@ bool Game::CreateRenderPass ( android_vulkan::Renderer &renderer ) noexcept
         {
             .srcSubpass = VK_SUBPASS_EXTERNAL,
             .dstSubpass = 0U,
-            .srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+
+            .srcStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
+                AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
 
             .dstStageMask = AV_VK_FLAG ( VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT ) |
                 AV_VK_FLAG ( VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT ),
 
-            .srcAccessMask = VK_ACCESS_NONE,
+            .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
             .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT
         },

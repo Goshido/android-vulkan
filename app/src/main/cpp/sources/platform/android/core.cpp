@@ -21,11 +21,6 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr double FPS_PERIOD = 3.0;
-constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
-constexpr bool VSYNC = true;
-constexpr bool VULKAN_INIT_LOGS = true;
-
 enum class eGame : uint16_t
 {
     CharacterSandbox,
@@ -44,7 +39,14 @@ enum class eGame : uint16_t
     World1x1
 };
 
+constexpr eGame ACTIVE_GAME = eGame::PBR;
+constexpr double FPS_PERIOD = 3.0;
+constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
+constexpr bool VSYNC = true;
+constexpr bool VULKAN_INIT_LOGS = true;
+
 Core* g_Core = nullptr;
+std::unique_ptr<android_vulkan::Game> g_Game {};
 
 } // end of anonymous namespace
 
@@ -68,53 +70,95 @@ Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&
 
     InitCommandHandlers ();
 
-    static std::map<android_vulkan::eGame, std::shared_ptr<android_vulkan::Game>> const games =
+    switch ( ACTIVE_GAME )
     {
-        { eGame::CharacterSandbox, std::make_shared<pbr::UniversalGame> ( "pbr/assets/character-sandbox.scene" ) },
-        { eGame::Collision, std::make_shared<pbr::collision::Collision> () },
-        { eGame::BoxStack, std::make_shared<pbr::box_stack::BoxStack> () },
-        { eGame::MandelbrotAnalyticColor, std::make_shared<mandelbrot::MandelbrotAnalyticColor> () },
-        { eGame::MandelbrotLutColor, std::make_shared<mandelbrot::MandelbrotLUTColor> () },
-        { eGame::PBR, std::make_shared<pbr::PBRGame> () },
-        { eGame::Rainbow, std::make_shared<rainbow::Rainbow> () },
-        { eGame::RayCasting, std::make_shared<pbr::ray_casting::RayCasting> () },
-        { eGame::RotatingMeshAnalytic, std::make_shared<rotating_mesh::GameAnalytic> () },
-        { eGame::RotatingMeshLUT, std::make_shared<rotating_mesh::GameLUT> () },
+        case eGame::CharacterSandbox:
+            g_Game = std::unique_ptr<android_vulkan::Game> (
+                new pbr::UniversalGame ( "pbr/assets/character-sandbox.scene" )
+            );
+        break;
 
-        {
-            eGame::SkeletalMeshSandbox,
-            std::make_shared<pbr::UniversalGame> ( "pbr/assets/skeletal-mesh-sandbox.scene" )
-        },
+        case eGame::Collision:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::collision::Collision () );
+        break;
 
-        { eGame::StippleTest, std::make_shared<pbr::stipple_test::StippleTest> () },
-        { eGame::SweepTesting, std::make_shared<pbr::sweep_testing::SweepTesting> () },
-        { eGame::World1x1, std::make_shared<pbr::UniversalGame> ( "pbr/assets/world-1-1.scene" ) }
-    };
+        case eGame::BoxStack:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::box_stack::BoxStack () );
+        break;
 
-    _game = games.find ( eGame::PBR )->second.get ();
+        case eGame::MandelbrotAnalyticColor:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new mandelbrot::MandelbrotAnalyticColor () );
+        break;
+
+        case eGame::MandelbrotLutColor:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new mandelbrot::MandelbrotLUTColor () );
+        break;
+
+        case eGame::PBR:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::PBRGame () );
+        break;
+
+        case eGame::Rainbow:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new rainbow::Rainbow () );
+        break;
+
+        case eGame::RayCasting:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::ray_casting::RayCasting () );
+        break;
+
+        case eGame::RotatingMeshAnalytic:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new rotating_mesh::GameAnalytic () );
+        break;
+
+        case eGame::RotatingMeshLUT:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new rotating_mesh::GameLUT () );
+        break;
+
+        case eGame::SkeletalMeshSandbox:
+            g_Game = std::unique_ptr<android_vulkan::Game> (
+                new pbr::UniversalGame ( "pbr/assets/skeletal-mesh-sandbox.scene" )
+            );
+        break;
+
+        case eGame::StippleTest:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::stipple_test::StippleTest () );
+        break;
+
+        case eGame::SweepTesting:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::sweep_testing::SweepTesting () );
+        break;
+
+        case eGame::World1x1:
+            g_Game = std::unique_ptr<android_vulkan::Game> ( new pbr::UniversalGame ( "pbr/assets/world-1-1.scene" ) );
+        break;
+
+        default:
+            // IMPOSSIBLE
+        break;
+    }
 
     _thread = std::thread (
         [ this, dpi ] () noexcept {
-            if ( !_game->OnInitSoundSystem () ) [[unlikely]]
+            if ( !g_Game->OnInitSoundSystem () ) [[unlikely]]
             {
-                _game->OnDestroySoundSystem ();
+                g_Game->OnDestroySoundSystem ();
                 return;
             }
 
             if ( !_renderer.OnCreateDevice ( {}, VULKAN_INIT_LOGS ) ) [[unlikely]]
             {
                 _renderer.OnDestroyDevice ();
-                _game->OnDestroySoundSystem ();
+                g_Game->OnDestroySoundSystem ();
                 return;
             }
 
             _renderer.OnSetDPI ( dpi );
 
-            if ( !_game->OnInitDevice ( _renderer ) ) [[unlikely]]
+            if ( !g_Game->OnInitDevice ( _renderer ) ) [[unlikely]]
             {
-                _game->OnDestroyDevice ( _renderer );
+                g_Game->OnDestroyDevice ( _renderer );
                 _renderer.OnDestroyDevice ();
-                _game->OnDestroySoundSystem ();
+                g_Game->OnDestroySoundSystem ();
                 return;
             }
 
@@ -248,13 +292,13 @@ void Core::InitCommandHandlers () noexcept
 
 void Core::OnFrame () noexcept
 {
-    if ( !_game->IsReady () )
+    if ( !g_Game->IsReady () )
         return;
 
     Timestamp const now = std::chrono::steady_clock::now ();
     std::chrono::duration<double> const delta = now - _frameTimestamp;
 
-    if ( _renderer.CheckSwapchainStatus () && !_game->OnFrame ( _renderer, delta.count () ) ) [[unlikely]]
+    if ( _renderer.CheckSwapchainStatus () && !g_Game->OnFrame ( _renderer, delta.count () ) ) [[unlikely]]
         LogError ( "Core::OnFrame - Frame rendering failed." );
 
     _frameTimestamp = now;
@@ -269,14 +313,14 @@ void Core::OnIdle () noexcept
 
 bool Core::OnQuit () noexcept
 {
-    _game->OnDestroyDevice ( _renderer );
+    g_Game->OnDestroyDevice ( _renderer );
     _renderer.OnDestroyDevice ();
     return false;
 }
 
 bool Core::OnQuitRequest () noexcept
 {
-    _game->OnDestroySoundSystem ();
+    g_Game->OnDestroySoundSystem ();
 
     JavaVMAttachArgs args
     {
@@ -306,9 +350,9 @@ bool Core::OnSwapchainCreated () noexcept
         return false;
     }
 
-    if ( !_game->OnSwapchainCreated ( _renderer ) ) [[unlikely]]
+    if ( !g_Game->OnSwapchainCreated ( _renderer ) ) [[unlikely]]
     {
-        _game->OnSwapchainDestroyed ( _renderer );
+        g_Game->OnSwapchainDestroyed ( _renderer );
         _renderer.OnDestroySwapchain ( false );
         return false;
     }
@@ -327,7 +371,7 @@ bool Core::OnSwapchainDestroyed () noexcept
     if ( !_renderer.FinishAllJobs () ) [[unlikely]]
         return false;
 
-    _game->OnSwapchainDestroyed ( _renderer );
+    g_Game->OnSwapchainDestroyed ( _renderer );
     _renderer.OnDestroySwapchain ( false );
 
     return true;

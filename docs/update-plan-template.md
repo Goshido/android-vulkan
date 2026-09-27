@@ -21,6 +21,10 @@
   - ❌ [Binary](https://services.gradle.org/distributions)
   - ❌ Gradle plugin
   - ❌ Readme
+- ❌ PowerShell
+  - ❌ Binary
+  - ❌ Readme main
+  - ❌ Readme editor
 - ❌ HTML validator
   - ❌ Update Visual Studio
   - ❌ Update version
@@ -32,17 +36,19 @@
   - ❌ Update Visual Studio
   - ❌ Update version
   - ❌ Recompile plugin
-  - ❌ Check plugin
+  - ❌ Check plugin (animation 0 - 33 frames)
   - ❌ Readme
 - ❌ VVL
   - ❌ Binary
     - ❌ _Android_
     - ❌ _Windows_
+  - ❌ Check for option changes
   - ❌ Check new validation errors
     - ❌ _Android_
     - ❌ _Windows_
+  - ❌ Check if some issues have been fixed
   - ❌ Compilation script repo
-  - ❌ VVL docs
+  - ❌ VVL docs (NDK version)
   - ❌ Readme
     - ❌ Main page
     - ❌ Editor page
@@ -52,6 +58,8 @@
   - ❌ Compilation script repo
   - ❌ Headers
   - ❌ Readme
+    - ❌ Main page
+    - ❌ Lua scripting frontend
 - ❌ DXC
   - ❌ Update Visual Studio
   - ❌ Binary
@@ -63,7 +71,8 @@
   - ❌ Readme
     - ❌ Main page
     - ❌ Editor page
-- ❌ FreeType
+- ❌ FreeType (use main branch now)
+  - ❌ Check new compile options
   - ❌ Binary
     - ❌ _Android_
     - ❌ _Windows_
@@ -103,7 +112,7 @@
   - ❌ Check
   - ❌ Editor page
 - ❌ Code checks
-- ❌ Update RenderDoc version in documentation
+- ❌ Update RenderDoc version in documentation (fix DXC version lookup)
 - ❌ Set starting project as PBR
 - ❌ Set VSYNC on
 - ❌ Remove old binaries
@@ -123,27 +132,27 @@ Documentation:
 - build requirements have been updated
 
 Project:
-- Android Studio Otter | 2025.2.1 support
-- Android Studio Gradle Plugin has been updated to 8.13.1
-- Android NDK has been updated to 29.0.1420686
-- Android SDK Build-Tools updated to 36.1.0
-- Android SDK Platform-Tools updated to 36.0.0
-- Kotlin has been updated to 2.2.21
-- Kotlin Gradle plugin has been updated to 2.2.21
-- Gradle has been updated to 9.2.0-bin
+- Android Studio Quail 4 | 2026.1.4 Patch 1
+- Android Studio Gradle Plugin has been updated to 9.4.1
+- Android NDK has been updated to 30.0.16248370
+- Android SDK Build-Tools updated to 37.0.0
+- Android SDK Platform-Tools updated to 37.0.1
+- Kotlin has been updated to 2.4.20
+- Kotlin Gradle plugin has been updated to 2.4.20
+- Gradle has been updated to 9.6.0-bin
 - CMake has been updated to 4.1.2
-- DirectX Shader Compiler has been updated to 1.8.2505.10178, b1cf2cad8f19f2ce733bd108e63485b33fbd4774
+- DirectX Shader Compiler has been updated to 1.10.2609.10012, 717b24d7a487efb555e976104a263f93f181fd44
 - SPIR-V shader blobs have been recompiled
-- FreeType 2.14.1 has been updated to fc9cc5038e05edceec3d0f605415540ac76163e9
-- VVL has been updated to 1.4.332, fc24b1981d8e11ed35ee2af0d9f43b92285e38a8
-- Ogg 1.3.6 has been updated to 0288fadac3ac62d453409dfc83e9c4ab617d2472
-- Vorbis 1.3.7 has been updated to 851cce991da34adf5e1f3132588683758a6369ec
-- Vorbisfile 1.3.7 has been updated to 851cce991da34adf5e1f3132588683758a6369ec
-- Lua 5.5.0 has been updated to fca974486d12aa29bb6d731fdb5b25055157ece8
-- stb_image has been updated to 2.30, f1c79c02822848a9bed4315b12c8c8f3761e1296
-- PowerShell has been updated to 7.5.3
-- Shader model has been changed to 6_10
-- Switch to C++23
+- FreeType has been updated to 2.14.3 d333439633039de426f943f28a2926c7f97b5ae5
+- VVL has been updated to 1.4.364, 4315e7fd4500673692174ed4fee92277a200a7c5
+- Ogg 1.3.6 has been updated to 06a5e0262cdc28aa4ae6797627a783b5010440f0
+- Vorbis 1.3.7 has been updated to 1b75110b5a2754ba1931d82dd83cb822b266a21d
+- Vorbisfile 1.3.7 has been updated to 1b75110b5a2754ba1931d82dd83cb822b266a21d
+- Lua has been updated to 5.5.1 0b29f408433e92953cc72b1d3e06c7ac8139e439
+- stb_image has been updated to 2.30, 2c980bb59875b0d32144a71867fbdebb2f77cd20
+- PowerShell has been updated to 7.6.6
+- Shader model has been changed to 6_11
+- RenderDoc 1.46 support
 
 3rd-party:
 - FreeType headers have been updated
@@ -158,25 +167,23 @@ Project:
 - libvorbis and libvorbisfile header files have been updated
 
 Editor:
-- Visual Studio 2026 Community 18.0.0 support
-- Windows 11 SDK has been changed to 10.0.26100.6901
-- MSVC Build Tools for x64/x86 has been updated to v14.50
-- Vulkan SDK has been changed to 1.4.328.1
-- NVIDIA Nsight Graphics 2025.4.1.0 (build 36508989) support
+- Visual Studio 2026 Community 18.10.2 support
+- Windows 11 SDK has been changed to 10.0.28000.2526
+- Using MSVC Build tools v14.51 for x64/x86
+- Vulkan SDK has been changed to 1.4.357.0
+- NVIDIA Nsight Graphics 2026.3.1.0 (build 38722833) support
 - NVIDIA Aftermath support
-- PIX has been updated to 2409.23
-- RenderDoc 1.41 support
-- WinPixEventRuntime.(dll|lib) has been updated to 1.0.240308001
+- PIX has been updated to 2603.25
 
 HTML validator:
-- HTML validator has been updated to 1.0.1.17
-- Visual Studio 2026 Community 18.0.0 support
-- Windows 11 SDK has been updated to 10.0.26100.6901
-- MSVC Build Tools for x64/x86 has been updated to v14.50
+- HTML validator has been updated to 1.0.1.18
+- Visual Studio 2026 Community 18.10.2 support
+- Windows 11 SDK has been updated to 10.0.28000.2526
+- Using MSVC Build tools v14.51 for x64/x86
 - CMake has been updated to 4.2
 
 3ds Max exporter:
-- 3ds Max exporter has been updated to 1.0.1.13
-- Visual Studio 2026 Community 18.0.0 support
-- Windows 11 SDK has been updated to 10.0.26100.6901
-- MSVC Build Tools for x64/x86 has been updated to v14.50
+- 3ds Max exporter has been updated to 1.0.1.14
+- Visual Studio 2026 Community 18.10.2 support
+- Windows 11 SDK has been updated to 10.0.28000.2526
+- Using MSVC Build tools v14.51 for x64/x86

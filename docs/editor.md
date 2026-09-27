@@ -29,7 +29,7 @@
     - _Windows 11 SDK (10.0.28000.2526)_
     - _Windows Universal C Runtime_
 * [_PowerShell 7.6.6_](https://github.com/PowerShell/PowerShell/releases/tag/v7.6.6)
-* [_RenderDoc v1.41_](https://renderdoc.org/)
+* [_RenderDoc v1.46_](https://renderdoc.org/)
 * [_NVIDIA Nsight Graphics 2026.3.1.0 (build 38722833) (public-release)_](https://developer.nvidia.com/nsight-graphics)
 * [_PIX 2603.25 / WinPixEventRuntime.\(dll|lib\) 1.0.240308001_](https://devblogs.microsoft.com/pix/download/)
 * [_DirectX Shader Compiler v1.10.2609.10012_](https://github.com/microsoft/DirectXShaderCompiler) `717b24d7a487efb555e976104a263f93f181fd44`

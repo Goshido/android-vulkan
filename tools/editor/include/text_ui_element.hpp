@@ -29,6 +29,7 @@ class TextUIElement final : public UIElement
         [[nodiscard]] pbr::UIElement &GetNativeElement () noexcept override;
 
         void SetColor ( pbr::ColorValue const &color ) noexcept;
+        void SetText ( std::string &&text ) noexcept;
         void SetText ( std::string_view text ) noexcept;
         void SetText ( std::u32string_view text ) noexcept;
 };

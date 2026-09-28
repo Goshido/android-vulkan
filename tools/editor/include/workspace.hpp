@@ -21,6 +21,7 @@
 #include "reflection_probe_local_node.hpp"
 #include "selection.hpp"
 #include "stream_buffer_ref.hpp"
+#include "ui_props.hpp"
 #include "viewport_widget.hpp"
 
 
@@ -118,6 +119,7 @@ class Workspace final
         VkExtent3D                                      _outlineDispatch {};
         VkExtent3D                                      _gizmoComposeDispatch {};
 
+        UIProps*                                        _uiProps = nullptr;
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 

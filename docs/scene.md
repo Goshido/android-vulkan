@@ -530,7 +530,7 @@ cameraComponent:SetLocal ( transform )
 
 local width = 1920.0
 local height = 1080.0
-cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
+cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1 )
 
 g_scene:SetActiveCamera ( cameraComponent )
 ```

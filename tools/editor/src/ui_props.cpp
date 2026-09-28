@@ -98,6 +98,15 @@ UIProps::UIProps () noexcept:
     _div.PrependChildElement ( _headerLine );
 }
 
+void UIProps::FUCK ( size_t items ) noexcept
+{
+    char buf[ 64U ];
+
+    _editBox.SetText (
+        std::string ( buf, static_cast<size_t> ( std::snprintf ( buf, sizeof ( buf ), "%zu", items ) ) )
+    );
+}
+
 void UIProps::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     if ( _closeButton.IsOverlapped ( event._x, event._y ) )

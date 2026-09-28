@@ -38,8 +38,7 @@ local PITCH_HIGH_DOT = math.cos ( PITCH_HIGH )
 local RIGHT_DEAD_ZONE = 0.25
 local RIGHT_SPEED = 3.777
 
-local Z_NEAR = 6.4
-local Z_FAR = 10000.0
+local NEAR = 6.4
 local FOV_Y = math.rad ( 55.0 )
 
 -- Optimization: the value should be negative.
@@ -182,7 +181,7 @@ local function OnActorConstructed ( self, actor )
     local camera = actor:FindComponent ( "Camera" )
     self._camera = camera
 
-    camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), Z_NEAR, Z_FAR )
+    camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), NEAR )
 end
 
 OnInput = function ( self, inputEvent )
@@ -202,7 +201,7 @@ local function OnRenderTargetChanged ( self )
     local aspect = g_scene:GetRenderTargetAspectRatio ()
     self._camera:SetAspectRatio ( aspect )
 
-    local dY = Z_NEAR * math.tan ( FOV_Y * 0.5 ) * g_scene:GetRendererToPhysicsScaleFactor ()
+    local dY = NEAR * math.tan ( FOV_Y * 0.5 ) * g_scene:GetRendererToPhysicsScaleFactor ()
     local dX = dY * aspect
 
     local corners = self._corners

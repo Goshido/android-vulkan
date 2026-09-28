@@ -11,8 +11,7 @@ namespace pbr::stipple_test {
 namespace {
 
 constexpr float FIELD_OF_VIEW = 75.0F;
-constexpr float Z_NEAR = 0.1F;
-constexpr float Z_FAR = 1.0e+4F;
+constexpr float NEAR = 0.1F;
 
 constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
 constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
@@ -95,8 +94,7 @@ bool StippleTest::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noex
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
-        Z_NEAR,
-        Z_FAR
+        NEAR
     );
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();

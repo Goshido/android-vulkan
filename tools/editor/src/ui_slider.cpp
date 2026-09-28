@@ -348,7 +348,10 @@ void UISlider::UpdateProgress ( double progress ) noexcept
     );
 
     char buf[ 128U ];
-    _number.SetText ( { buf, static_cast<size_t> ( std::snprintf ( buf, std::size ( buf ), "%.05f", _value ) ) } );
+
+    _number.SetText (
+        std::string ( buf, static_cast<size_t> ( std::snprintf ( buf, std::size ( buf ), "%.05f", _value ) ) )
+    );
 }
 
 void UISlider::UpdateValue ( int32_t mouseX ) noexcept

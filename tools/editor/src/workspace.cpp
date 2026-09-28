@@ -13,7 +13,6 @@
 #include <texture2D_storage.hpp>
 #include <trace.hpp>
 #include <transform.hpp>
-#include <ui_props.hpp>
 #include <vulkan_utils.hpp>
 #include <workspace.hpp>
 
@@ -427,6 +426,14 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         ComputeTransformOutline ( frustum );
         ComputeTransformGizmo ( frame._viewProj, _viewport->GetLocal () );
     }
+
+    // FUCK
+    size_t counter = 0U;
+
+    for ( MeshInstance const &instance : _opaqueVisible )
+        counter += instance._count;
+
+    _uiProps->FUCK ( counter );
 
     bool const noOpaque = _opaqueVisible.empty ();
     bool const noStipple = _stippleVisible.empty ();
@@ -1548,6 +1555,7 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = static_cast<bool> ( _viewport ) &
+        static_cast<bool> ( _uiProps ) &
         static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
@@ -2050,13 +2058,15 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
 
     messageQueue.EnqueueBack (
         Message ( eMessageType::UIAppendWidget,
-            [] () noexcept {
-                auto* dialogBox = new UIProps ();
-                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+            [ this ] () noexcept {
+                _uiProps = new UIProps ();
+                _uiProps->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
-                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-                return dialogBox;
+                _uiProps->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F )
+                );
+
+                return _uiProps;
             }
         )
     );

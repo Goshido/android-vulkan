@@ -1,4 +1,4 @@
-// version 1.108
+// version 1.109
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -834,13 +834,10 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] GXVoid Identity () noexcept;
 
-    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians,
-        GXFloat aspectRatio,
-        GXFloat zNear,
-        GXFloat zFar
-    ) noexcept;
+    // Reverse Z, infinite far plane projection matrix.
+    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat near ) noexcept;
 
-    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept;
+    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat near, GXFloat far ) noexcept;
 
     [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
     [[maybe_unused]] GXVoid Translation ( GXVec3 const &location ) noexcept;
@@ -878,12 +875,12 @@ struct [[maybe_unused]] GXMat4 final
     // Result is valid if own matrix is perspective matrix.
     [[maybe_unused]] GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadians,
         GXFloat &aspectRatio,
-        GXFloat &zNear,
-        GXFloat &zFar
+        GXFloat &near,
+        GXFloat &far
     ) noexcept;
 
     // Result is valid if own matrix is ortho matrix.
-    [[maybe_unused]] GXVoid GetOrthoParams ( GXFloat &width, GXFloat &height, GXFloat &zNear, GXFloat &zFar ) noexcept;
+    [[maybe_unused]] GXVoid GetOrthoParams ( GXFloat &width, GXFloat &height, GXFloat &near, GXFloat &far ) noexcept;
 
     // Result is valid if own matrix is perspective matrix.
     [[maybe_unused]] GXVoid GetRayPerspective ( GXVec3 &rayView, GXVec2 const &mouseCVV ) const noexcept;

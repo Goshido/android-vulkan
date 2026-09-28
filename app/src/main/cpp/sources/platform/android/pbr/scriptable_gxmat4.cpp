@@ -342,8 +342,7 @@ int ScriptableGXMat4::OnPerspective ( lua_State* state )
 
     item._matrix.Perspective ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
-        static_cast<float> ( lua_tonumber ( state, 4 ) ),
-        static_cast<float> ( lua_tonumber ( state, 5 ) )
+        static_cast<float> ( lua_tonumber ( state, 4 ) )
     );
 
     return 0;

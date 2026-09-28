@@ -86,6 +86,7 @@ class UIEditBox final : public Widget
         void UpdatedRect () noexcept override;
 
         void Connect ( Callback &&callback ) noexcept;
+        void SetText ( std::string &&text ) noexcept;
 
     private:
         void ApplyClipboard ( std::u32string const &text ) noexcept override;

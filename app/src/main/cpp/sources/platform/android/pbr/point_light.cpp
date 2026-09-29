@@ -157,11 +157,7 @@ void PointLight::UpdateMatrices () noexcept
     alpha.Subtract ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
 
-    _projection.Perspective ( GX_MATH_HALF_PI,
-        1.0F,
-        Z_NEAR,
-        std::max ( _bounds.GetWidth (), std::max ( _bounds.GetHeight (), _bounds.GetDepth () ) )
-    );
+    _projection.Perspective ( GX_MATH_HALF_PI, 1.0F, Z_NEAR );
 
     GXMat4 locals[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
     locals[ static_cast<size_t> ( eFaceIndex::PositiveX ) ].RotationY ( GX_MATH_HALF_PI );

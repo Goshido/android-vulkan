@@ -43,7 +43,6 @@ constexpr float DEFAULT_ASPECT_RATIO = 1920.0F / 1080.0F;
 constexpr float DEFAULT_FOV = 60.0F;
 constexpr GXVec3 DEFAULT_LOCATION ( 0.0F, 0.0F, 0.0F );
 constexpr float DEFAULT_Z_NEAR = 1.0e-1F;
-constexpr float DEFAULT_Z_FAR = 1.0e+4F;
 
 constexpr size_t INITIAL_PENETRATION_SIZE = 32U;
 
@@ -124,7 +123,7 @@ bool Scene::OnInitDevice ( android_vulkan::Renderer &renderer,
     _renderSession = &renderSession;
     CSSUnitToDevicePixel::Init ( renderer.GetDPI (), COMFORTABLE_VIEW_DISTANCE_METERS );
 
-    _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR, DEFAULT_Z_FAR );
+    _defaultCamera.SetProjection ( GXDegToRad ( DEFAULT_FOV ), DEFAULT_ASPECT_RATIO, DEFAULT_Z_NEAR );
     _penetrations.reserve ( INITIAL_PENETRATION_SIZE );
 
     _shapeBoxes[ 0U ] = std::make_shared<android_vulkan::ShapeBox> ( 1.0F, 1.0F, 1.0F );

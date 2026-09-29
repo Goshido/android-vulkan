@@ -28,7 +28,6 @@ constexpr std::string_view MATERIAL_3_NORMAL = "textures/rotating_mesh/sonic-mat
 constexpr float ROTATION_SPEED = GX_MATH_HALF_PI;
 constexpr float FIELD_OF_VIEW = 60.0F;
 constexpr float Z_NEAR = 0.1F;
-constexpr float Z_FAR = 1.0e+3F;
 
 } // end of anonymous namespace
 
@@ -414,8 +413,7 @@ bool Game::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noexcept
 
     _projectionMatrix.Perspective ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( resolution.width ) / static_cast<float> ( resolution.height ),
-        Z_NEAR,
-        Z_FAR
+        Z_NEAR
     );
 
     return CreateRenderPass ( renderer ) &&

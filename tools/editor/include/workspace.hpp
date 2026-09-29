@@ -21,6 +21,7 @@
 #include "reflection_probe_local_node.hpp"
 #include "selection.hpp"
 #include "stream_buffer_ref.hpp"
+#include "ui_props.hpp"
 #include "viewport_widget.hpp"
 
 
@@ -118,6 +119,7 @@ class Workspace final
         VkExtent3D                                      _outlineDispatch {};
         VkExtent3D                                      _gizmoComposeDispatch {};
 
+        UIProps*                                        _uiProps = nullptr;
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 
@@ -723,9 +725,9 @@ class Workspace final
 
         void FUCK () noexcept;
 
-        void ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept;
-        void ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept;
-        void ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept;
+        void ComputeTransformGBufferOnly ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept;
+        void ComputeTransformGBufferWithID ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept;
+        void ComputeTransformOutline ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept;
         void ComputeTransformGizmo ( GXMat4 const &viewProjection, GXMat4 const &cameraLocal ) noexcept;
 
         void FillGBufferOnly ( VkCommandBuffer commandBuffer ) noexcept;

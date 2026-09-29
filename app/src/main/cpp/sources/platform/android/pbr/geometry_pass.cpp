@@ -165,7 +165,7 @@ void GeometryPass::Reset () noexcept
 }
 
 bool GeometryPass::UploadGPUData ( VkDevice device,
-    GXProjectionClipPlanes const &frustum,
+    GXProjectionInfiniteFarClipPlanes const &frustum,
     GXMat4 const &view,
     GXMat4 const &viewProjection
 ) noexcept

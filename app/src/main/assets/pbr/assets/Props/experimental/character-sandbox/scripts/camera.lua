@@ -39,7 +39,6 @@ local RIGHT_DEAD_ZONE = 0.25
 local RIGHT_SPEED = 3.777
 
 local Z_NEAR = 6.4
-local Z_FAR = 10000.0
 local FOV_Y = math.rad ( 55.0 )
 
 -- Optimization: the value should be negative.
@@ -182,7 +181,7 @@ local function OnActorConstructed ( self, actor )
     local camera = actor:FindComponent ( "Camera" )
     self._camera = camera
 
-    camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), Z_NEAR, Z_FAR )
+    camera:SetProjection ( FOV_Y, g_scene:GetRenderTargetAspectRatio (), Z_NEAR )
 end
 
 OnInput = function ( self, inputEvent )

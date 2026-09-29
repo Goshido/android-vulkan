@@ -1229,7 +1229,7 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
             pbr::SwapchainInfo const info = _presentRenderPass.GetSwapchainInfo ( renderer );
             _presentRenderPass.Pause ( commandBuffer );
             _workspace.DrawGizmo ( commandBuffer, info );
-            _presentRenderPass.Continue ( commandBuffer, info._image, info._view );
+            _presentRenderPass.Continue ( commandBuffer, info._view );
         }
 
         if ( !_uiPass.Execute ( commandBuffer, fif ) ) [[unlikely]]

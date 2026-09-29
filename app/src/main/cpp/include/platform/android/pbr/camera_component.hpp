@@ -14,7 +14,6 @@ class CameraComponent final : public Component
         GXMat4          _local {};
         GXMat4          _projection {};
         float           _zNear;
-        float           _zFar;
         float           _fieldOfViewRadians;
 
         static int      _registerCameraComponentIndex;
@@ -38,7 +37,7 @@ class CameraComponent final : public Component
 
         void SetAspectRatio ( float aspectRatio ) noexcept;
         void SetLocal ( GXMat4 const &local ) noexcept;
-        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept;
+        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear ) noexcept;
 
         [[nodiscard]] bool Register ( lua_State &vm ) noexcept;
 

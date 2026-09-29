@@ -11,7 +11,7 @@ require "av://engine/camera_component.lua"
 - [`Constructor`](#constructor)
 - [`SetAspectRatio ( aspectRatio )`](#method-set-aspect-ratio)
 - [`SetLocal ( localMatrix )`](#method-set-local)
-- [`SetProjection ( fieldOfViewRadians, aspectRatio, zNear, zFar )`](#method-set-projection)
+- [`SetProjection ( fieldOfViewRadians, aspectRatio, zNear )`](#method-set-projection)
 
 ## <a id="brief">Brief</a>
 
@@ -160,7 +160,7 @@ cameraComponent:SetLocal ( transform )
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="method-set-projection">`SetProjection ( fieldOfViewRadians, aspectRatio, zNear, zFar )`</a>
+## <a id="method-set-projection">`SetProjection ( fieldOfViewRadians, aspectRatio, zNear )`</a>
 
 Method changes camera projection transformation.
 
@@ -168,8 +168,7 @@ Method changes camera projection transformation.
 
 - `fieldOfViewRadians` [_required, readonly, number_]: field of view angle of _Y_ axis in [radians](https://en.wikipedia.org/wiki/Radian)
 - `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width divided by height
-- `zNear` [_required, readonly, number_]: the distance to near clipping plane
-- `zFar` [_required, readonly, number_]: the distance to far clipping plane
+- `zNear` [_required, readonly, number_]: the distance to zNear clipping plane
 
 **Return values:**
 
@@ -187,7 +186,7 @@ g_scene:AppendActor ( mainCamera )
 
 local width = 1920.0
 local height = 1080.0
-cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1, 1.0e+4 )
+cameraComponent:SetProjection ( math.rad ( 60.0 ), width / height, 1.0e-1 )
 ```
 
 [↬ table of content ⇧](#table-of-content)

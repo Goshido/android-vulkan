@@ -25,7 +25,6 @@ namespace {
 
 constexpr float DEFAULT_FIELD_OF_VIEW = 60.0F;
 constexpr float DEFAULT_Z_NEAR = 1.0e-1F;
-constexpr float DEFAULT_Z_FAR = 1.0e+4F;
 
 } // end of anonymous namespace
 
@@ -36,7 +35,6 @@ int CameraComponent::_registerCameraComponentIndex = std::numeric_limits<int>::m
 CameraComponent::CameraComponent () noexcept:
     Component ( ClassID::Camera, android_vulkan::GUID::GenerateAsString ( "Camera" ) ),
     _zNear ( DEFAULT_Z_NEAR ),
-    _zFar ( DEFAULT_Z_FAR ),
     _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
@@ -54,13 +52,12 @@ CameraComponent::CameraComponent ( CameraComponentDesc const &desc, uint8_t cons
     _name = reinterpret_cast<char const*> ( data + desc._name );
     std::memcpy ( _local._data, &desc._localMatrix, sizeof ( _local ) );
 
-    SetProjection ( desc._fieldOfViewRadians, 1.0F, desc._zNear, desc._zFar );
+    SetProjection ( desc._fieldOfViewRadians, 1.0F, desc._zNear );
 }
 
 CameraComponent::CameraComponent ( std::string &&name ) noexcept:
     Component ( ClassID::Camera, std::move ( name ) ),
     _zNear ( DEFAULT_Z_NEAR ),
-    _zFar ( DEFAULT_Z_FAR ),
     _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
@@ -79,7 +76,7 @@ GXMat4 const &CameraComponent::GetProjectionMatrix () const noexcept
 
 void CameraComponent::SetAspectRatio ( float aspectRatio ) noexcept
 {
-    _projection.Perspective ( _fieldOfViewRadians, aspectRatio, _zNear, _zFar );
+    _projection.Perspective ( _fieldOfViewRadians, aspectRatio, _zNear );
 }
 
 void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
@@ -87,11 +84,10 @@ void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
     _local = local;
 }
 
-void CameraComponent::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept
+void CameraComponent::SetProjection ( float fieldOfViewRadians, float aspectRatio, float near ) noexcept
 {
-    _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
-    _zNear = zNear;
-    _zFar = zFar;
+    _projection.Perspective ( fieldOfViewRadians, aspectRatio, near );
+    _zNear = near;
     _fieldOfViewRadians = fieldOfViewRadians;
 }
 
@@ -187,8 +183,7 @@ int CameraComponent::OnSetProjection ( lua_State* state )
 
     self.SetProjection ( static_cast<float> ( lua_tonumber ( state, 2 ) ),
         static_cast<float> ( lua_tonumber ( state, 3 ) ),
-        static_cast<float> ( lua_tonumber ( state, 4 ) ),
-        static_cast<float> ( lua_tonumber ( state, 5 ) )
+        static_cast<float> ( lua_tonumber ( state, 4 ) )
     );
 
     return 0;

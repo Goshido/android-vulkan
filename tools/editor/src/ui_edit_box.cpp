@@ -304,6 +304,25 @@ void UIEditBox::Connect ( Callback &&callback ) noexcept
     _callback = std::move ( callback );
 }
 
+void UIEditBox::SetText ( std::string &&text ) noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [ this, text = std::move ( text ) ] () noexcept -> void* {
+                _cursor = static_cast<int32_t> ( text.size () );
+                _text.SetText ( std::move ( text ) );
+
+                _selectionDIV.Hide ();
+                _selection = _cursor;
+
+                UpdateMetrics ();
+                UpdateCursor ();
+                return nullptr;
+            }
+        )
+    );
+}
+
 void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
 {
     std::ignore = RemoveSelectedContent ();

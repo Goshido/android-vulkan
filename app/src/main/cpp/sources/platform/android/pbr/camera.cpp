@@ -88,9 +88,9 @@ void Camera::SetMovingSpeed ( float speed ) noexcept
     _movingSpeed = speed;
 }
 
-void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear, float zFar ) noexcept
+void Camera::SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear ) noexcept
 {
-    _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear, zFar );
+    _projection.Perspective ( fieldOfViewRadians, aspectRatio, zNear );
 }
 
 void Camera::SetRotation ( float pitch, float yaw ) noexcept

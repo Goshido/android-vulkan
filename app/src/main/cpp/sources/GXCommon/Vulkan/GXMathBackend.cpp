@@ -1,29 +1,24 @@
-// version 1.10
+// version 1.11
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
 
-
-[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadians,
-    GXFloat aspectRatio,
-    GXFloat zNear,
-    GXFloat zFar
-) noexcept
+[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat zNear ) noexcept
 {
-    // The implementation is using reverse Z trick.
-    // See https://developer.nvidia.com/content/depth-precision-visualized
-
+    // Reverse Z from 0 to 1, infinite far plane projection matrix.
+    // See https://github.com/Goshido/android-vulkan/issues/104
     GXFloat const halfFovy = fieldOfViewYRadians * 0.5F;
-    GXFloat const ctan = std::cos ( halfFovy ) / std::sin ( halfFovy );
-    GXFloat const alpha = zNear / ( zNear - zFar );
+    GXFloat const cot = std::cos ( halfFovy ) / std::sin ( halfFovy );
 
     auto &m = _data;
 
-    m[ 0U ][ 0U ] = ctan / aspectRatio;
-    m[ 1U ][ 1U ] = -ctan;
-    m[ 2U ][ 2U ] = alpha;
+    m[ 0U ][ 0U ] = cot / aspectRatio;
+    m[ 1U ][ 1U ] = -cot;
+
+    m[ 2U ][ 2U ] = 0.0F;
     m[ 2U ][ 3U ] = 1.0F;
-    m[ 3U ][ 2U ] = -alpha * zFar;
+    m[ 3U ][ 2U ] = zNear;
+    m[ 3U ][ 3U ] = 0.0F;
 
     m[ 0U ][ 1U ] = 0.0F;
     m[ 0U ][ 2U ] = 0.0F;
@@ -38,7 +33,6 @@
 
     m[ 3U ][ 0U ] = 0.0F;
     m[ 3U ][ 1U ] = 0.0F;
-    m[ 3U ][ 3U ] = 0.0F;
 }
 
 [[maybe_unused]] GXVoid GXMat4::Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept
@@ -63,30 +57,4 @@
     m[ 2U ][ 3U ] = 0.0F;
     m[ 3U ][ 0U ] = 0.0F;
     m[ 3U ][ 1U ] = 0.0F;
-}
-
-// NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetPerspectiveParams ( GXFloat &/*fieldOfViewYRadians*/,
-    GXFloat &/*aspectRatio*/,
-    GXFloat &/*zNear*/,
-    GXFloat &/*zFar*/
-) noexcept
-{
-    assert ( !"GXMat4::GetPerspectiveParams - Implement me!" );
-}
-
-// NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetOrthoParams ( GXFloat &/*width*/,
-    GXFloat &/*height*/,
-    GXFloat &/*zNear*/,
-    GXFloat &/*zFar*/
-) noexcept
-{
-    assert ( !"GXMat4::GetOrthoParams - Implement me!" );
-}
-
-// NOLINTNEXTLINE
-[[maybe_unused]] GXVoid GXMat4::GetRayPerspective ( GXVec3 &/*rayView*/, const GXVec2 &/*mouseCVV*/ ) const noexcept
-{
-    assert ( !"GXMat4::GetRayPerspective - Implement me!" );
 }

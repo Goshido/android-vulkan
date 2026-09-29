@@ -13,7 +13,6 @@
 #include <texture2D_storage.hpp>
 #include <trace.hpp>
 #include <transform.hpp>
-#include <ui_props.hpp>
 #include <vulkan_utils.hpp>
 #include <workspace.hpp>
 
@@ -416,7 +415,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         frame._viewProj = _viewport->GetViewProjection ();
         frame._toView = _viewport->GetToView ();
 
-        GXProjectionClipPlanes frustum{};
+        GXProjectionInfiniteFarClipPlanes frustum {};
         frustum.From ( frame._viewProj );
 
         if ( pendingSelect ) [[unlikely]]
@@ -1279,7 +1278,7 @@ void Workspace::FUCK () noexcept
     _history.End ();
 }
 
-void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformGBufferOnly ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "G-buffer only" )
 
@@ -1327,7 +1326,7 @@ void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frus
     traverse ( _stippleQueue, _stippleVisible );
 }
 
-void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformGBufferWithID ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "G-buffer with ID" )
     _idStream->Commit ();
@@ -1378,7 +1377,7 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
     traverse ( _stippleQueue, _stippleVisible );
 }
 
-void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformOutline ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "Outline" )
     pbr::StreamBuffer &stream = *_outlineStream;
@@ -1548,6 +1547,7 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = static_cast<bool> ( _viewport ) &
+        static_cast<bool> ( _uiProps ) &
         static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
@@ -2050,13 +2050,15 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
 
     messageQueue.EnqueueBack (
         Message ( eMessageType::UIAppendWidget,
-            [] () noexcept {
-                auto* dialogBox = new UIProps ();
-                dialogBox->SetRect ( Rect ( 44, 444, 133, 333 ) );
+            [ this ] () noexcept {
+                _uiProps = new UIProps ();
+                _uiProps->SetRect ( Rect ( 44, 444, 133, 333 ) );
 
-                dialogBox->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F ) );
-                return dialogBox;
+                _uiProps->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
+                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F )
+                );
+
+                return _uiProps;
             }
         )
     );

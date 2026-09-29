@@ -3,7 +3,7 @@
 ## Used algorithms
 
 1) [_Auto exposure_](./auto-exposure.md)
-1) [_Data compression_](./data-compression.md)
+1) [_Data compression_](./data-compression-and-other-optimizations.md)
 1) [_Gizmo rendering_](./gizmo-rendering.md)
 1) [_Proper UI_](./proper-ui.md)
 1) [_Ray vs cylinder intersection_](./ray-cylinder-intersection.md)

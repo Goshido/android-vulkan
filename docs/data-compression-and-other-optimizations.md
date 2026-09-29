@@ -1,4 +1,4 @@
-# Data compression
+# Data compression and other optimizations
 
 ## <a id="table-of-content">Table of content</a>
 
@@ -22,6 +22,8 @@
   - [_Proper UI_](#opt-5-proper-ui)
 - [_Optimization #6_](#optimization-6)
   - [_Using more UMA_](#opt-6-more-uma)
+- [_Optimization #7_](#optimization-7)
+  - [_Using infinite far reverse Z projection_](#opt-7-inf-far-proj)
 
 ## <a id="brief">Brief</a>
 
@@ -37,9 +39,9 @@ It was not detected any visible quality degradation on benchmark scenes.
 
 **Scene** | **Stock** | **Optimized** | **Absolute difference** | **Relative difference** | **Preview**
 --- | --- | --- | --- | --- | ---
-_PBR_ | 17.846 ms | 16.661 ms | -1.185 ms🟢 | -6.6%🟢 | <img src="./images/compression-pbr.png" width="100">
-_Skeletal mesh_ | 17.344 ms | 15.055 ms | -2.289 ms🟢 | -13.2%🟢 | <img src="./images/compression-skeletal.png" width="100">
-_World 1-1_ | 9.477 ms | 10.504 ms | +1.027🔺 | +10.8%🔺 | <img src="./images/compression-world1x1.png" width="100">
+_PBR_ | 17.846 ms | 16.651 ms | -1.195 ms🟢 | -6.7%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 17.344 ms | 15.029 ms | -2.315 ms🟢 | -13.3%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 9.477 ms | 10.155 ms | +0.678🔺 | +7.2%🔺 | <img src="./images/compression-world1x1.png" width="100">
 
 ⁘ Maximum instances:
 
@@ -871,5 +873,71 @@ Previously the following systems used _PC_ approach with staging buffers, transf
 - _UI_ rendering
 
 Now all systems above were refactored to _UMA_ usage.
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="optimization-7">Optimization #7</a>
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.651 ms | -1.195 ms🟢 | -6.7%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.029 ms | -2.315 ms🟢 | -13.3%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 10.155 ms | +0.678🔺 | +7.2%🔺 | <img src="./images/compression-world1x1.png" width="100">
+
+⁘ Frame time comparison with _Optimization #6_:
+
+**Scene** | **Frame time** | **Absolute difference** | **Relative difference** | **Preview**
+--- | --- | --- | --- | ---
+_PBR_ | 16.651 ms | -0.01 ms🟢 | -0.1%🟢 | <img src="./images/compression-pbr.png" width="100">
+_Skeletal mesh_ | 15.029 ms | -0.026 ms🟢 | -0.2%🟢 | <img src="./images/compression-skeletal.png" width="100">
+_World 1-1_ | 10.155 ms | -0.349 ms🟢 | -3.3%🟢 | <img src="./images/compression-world1x1.png" width="100">
+
+---
+
+⁘ Maximum instances comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | +42🟢 | +100%🟢
+
+⁘ Maximum instances comparison with _Optimization #6_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+84 | 0 | 0%
+
+---
+
+⁘ Bytes per scene vertex comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | -140🟢 | -56.5%🟢
+
+⁘ Bytes per scene vertex comparison with _Optimization #6_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+108 | 0 | 0%
+
+---
+
+⁘ Bytes per _UI_ vertex comparison with stock version:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | -32🟢 | -64%🟢
+
+⁘ Bytes per _UI_ vertex comparison with _Optimization #6_:
+
+**Optimization #6** | **Absolute difference** | **Relative difference**
+--- | --- | ---
+18 | 0 | 0%🟢
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="opt-7-inf-far-proj">Using infinite far reverse Z projection</a>
+
+The key insight here is that testing against the far plane is unnecessary during frustum culling. Because the far plane is positioned at such an extreme distance, all scene geometry naturally falls inside it, meaning the test will always yield a positive result. In short it's needed only 5 test instead of 6.
 
 [↬ table of content ⇧](#table-of-content)

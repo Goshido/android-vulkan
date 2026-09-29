@@ -23,7 +23,7 @@
 - [_Optimization #6_](#optimization-6)
   - [_Using more UMA_](#opt-6-more-uma)
 - [_Optimization #7_](#optimization-7)
-  - [_Using infinite far reverse Z projection_](#opt-7-inf-far-proj)
+  - [_Using infinite far plane reverse Z projection_](#opt-7-inf-far-proj)
 
 ## <a id="brief">Brief</a>
 
@@ -936,8 +936,8 @@ _World 1-1_ | 10.155 ms | -0.349 ms🟢 | -3.3%🟢 | <img src="./images/compres
 
 [↬ table of content ⇧](#table-of-content)
 
-### <a id="opt-7-inf-far-proj">Using infinite far reverse Z projection</a>
+### <a id="opt-7-inf-far-proj">Using infinite far plane reverse Z projection</a>
 
-The key insight here is that testing against the far plane is unnecessary during frustum culling. Because the far plane is positioned at such an extreme distance, all scene geometry naturally falls inside it, meaning the test will always yield a positive result. In short it's needed only 5 test instead of 6.
+The key insight here is that testing against the far plane is unnecessary during frustum culling. Because the far plane is positioned at such an extreme distance, all scene geometry naturally falls inside it, meaning the test will always yield a positive result. In short it's needed only 5 trivial visibility tests instead of 6 for frustum culling.
 
 [↬ table of content ⇧](#table-of-content)

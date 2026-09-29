@@ -12,7 +12,7 @@ namespace {
 constexpr float FREE_FLY_ORIENTATION_SPEED = 4.0e-3F;
 constexpr float FREE_FLY_MOVE_SPEED = 4.0F;
 constexpr float FREE_FLY_SPRINT_SPEED = 10.0F;
-constexpr float NEAR = 0.1F;
+constexpr float Z_NEAR = 0.1F;
 constexpr float FOV_Y = GXDegToRad ( 60.0F );
 constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
@@ -445,7 +445,7 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     // maximize operations produce crashes.
     // Current implementation shows random artifacts after several resize operations. It's random.
     _invHeight = 1.0F / size._data[ 1U ];
-    _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, NEAR );
+    _projection.Perspective ( FOV_Y, size._data[ 0U ] * _invHeight, Z_NEAR );
     UpdateViewProjection ();
     _resolution = viewport;
 

@@ -109,6 +109,7 @@ void PresentPass::Begin ( android_vulkan::Renderer const &renderer, VkCommandBuf
     _depInfo.pImageMemoryBarriers = &_barrierStart;
     vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
 
+    _colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     _colorAttachment.imageView = renderer.GetPresentImageView ( idx );
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }
@@ -118,12 +119,9 @@ void PresentPass::Pause ( VkCommandBuffer commandBuffer ) noexcept
     vkCmdEndRendering ( commandBuffer );
 }
 
-void PresentPass::Continue ( VkCommandBuffer commandBuffer, VkImage swapchainImage, VkImageView swapchainView ) noexcept
+void PresentPass::Continue ( VkCommandBuffer commandBuffer, VkImageView swapchainView) noexcept
 {
-    _barrierContiue.image = swapchainImage;
-    _depInfo.pImageMemoryBarriers = &_barrierContiue;
-    vkCmdPipelineBarrier2 ( commandBuffer, &_depInfo );
-
+    _colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     _colorAttachment.imageView = swapchainView;
     vkCmdBeginRendering ( commandBuffer, &_renderingInfo );
 }

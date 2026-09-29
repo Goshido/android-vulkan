@@ -4,7 +4,7 @@ require "av://engine/script_component.lua"
 
 -- Constants
 local FOVY = math.rad ( 60.0 )
-local NEAR = 1.0e-1
+local Z_NEAR = 1.0e-1
 
 local OFFSET = GXVec3 ()
 OFFSET:Init ( 512.0, 128.0, 0.0 )
@@ -23,7 +23,7 @@ local function OnActorConstructed ( self, actor )
     local camera = actor:FindComponent ( self._cameraComponentName )
     self._cameraComponentName = nil
 
-    camera:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), NEAR )
+    camera:SetProjection ( FOVY, g_scene:GetRenderTargetAspectRatio (), Z_NEAR )
     self._cameraComponent = camera
     g_scene:SetActiveCamera ( camera )
 

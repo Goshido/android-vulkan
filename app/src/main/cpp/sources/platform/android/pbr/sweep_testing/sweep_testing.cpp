@@ -11,7 +11,7 @@ namespace pbr::sweep_testing {
 namespace {
 
 constexpr float FIELD_OF_VIEW = 75.0F;
-constexpr float NEAR = 0.1F;
+constexpr float Z_NEAR = 0.1F;
 
 constexpr uint32_t RESOLUTION_SCALE_WIDTH = 80U;
 constexpr uint32_t RESOLUTION_SCALE_HEIGHT = 70U;
@@ -93,7 +93,7 @@ bool SweepTesting::OnSwapchainCreated ( android_vulkan::Renderer &renderer ) noe
 
     _camera.SetProjection ( GXDegToRad ( FIELD_OF_VIEW ),
         static_cast<float> ( surfaceResolution.width ) / static_cast<float> ( surfaceResolution.height ),
-        NEAR
+        Z_NEAR
     );
 
     if ( !_renderSession.OnSwapchainCreated ( renderer, resolution ) ) [[unlikely]]

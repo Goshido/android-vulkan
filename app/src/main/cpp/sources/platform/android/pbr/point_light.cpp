@@ -20,7 +20,7 @@ constexpr float DEFAULT_LOCATION_Z = 0.0F;
 constexpr float DEFAULT_SIZE = 1.0F;
 constexpr float HALF_DEFAULT_SIZE = 0.5F * DEFAULT_SIZE;
 
-constexpr float NEAR = 0.05F;
+constexpr float Z_NEAR = 0.05F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -157,7 +157,7 @@ void PointLight::UpdateMatrices () noexcept
     alpha.Subtract ( _location, _dimensions );
     _bounds.AddVertex ( alpha );
 
-    _projection.Perspective ( GX_MATH_HALF_PI, 1.0F, NEAR );
+    _projection.Perspective ( GX_MATH_HALF_PI, 1.0F, Z_NEAR );
 
     GXMat4 locals[ PBR_POINT_LIGHT_SHADOW_CASTER_PROJECTION_COUNT ];
     locals[ static_cast<size_t> ( eFaceIndex::PositiveX ) ].RotationY ( GX_MATH_HALF_PI );

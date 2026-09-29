@@ -1,4 +1,4 @@
-// version 1.108
+// version 1.109
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -6,11 +6,9 @@
 
 namespace {
 
-constexpr GXFloat HSVA_FACTOR = 0.016666F;
-constexpr GXFloat HSVA_TO_RGBA_FLOAT = 0.01F;
+constexpr GXFloat HSVA_FACTOR = 1.66666667e-2F;
+constexpr GXFloat HSVA_TO_RGBA_FLOAT = 1.0e-2F;
 constexpr GXFloat RGBA_TO_UBYTE_FACTOR = 255.0F;
-
-constexpr GXFloat INVERSE_RAND_MAX = 3.05185e-5F;
 
 constexpr GXUByte SOLUTION_ALPHA = 0U;
 constexpr GXUByte SOLUTION_BETTA = 1U;
@@ -641,8 +639,8 @@ GXVec3 const GXVec3::FORWARD ( 0.0F, 0.0F, 1.0F );
 
 [[maybe_unused]] GXVoid GXColorHSV::From ( GXColorRGB const &color ) noexcept
 {
-    GXFloat const maxValue = GXMaxf ( GXMaxf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
-    GXFloat const minValue = GXMinf ( GXMinf ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
+    GXFloat const maxValue = std::max ( std::max ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
+    GXFloat const minValue = std::min ( std::min ( color.GetRed (), color.GetGreen () ), color.GetBlue () );
     auto &d = _data;
 
     if ( maxValue == minValue )
@@ -2521,6 +2519,99 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 
 //----------------------------------------------------------------------------------------------------------------------
 
+// NOLINTNEXTLINE
+[[maybe_unused]] GXProjectionInfiniteFarClipPlanes::GXProjectionInfiniteFarClipPlanes ( GXMat4 const &src ) noexcept
+{
+    From ( src );
+}
+
+[[maybe_unused]] GXVoid GXProjectionInfiniteFarClipPlanes::From ( GXMat4 const &src ) noexcept
+{
+    auto const &m = src._data;
+    auto &planes = _planes;
+
+    // Left clipping plane
+    GXPlane &p0 = planes[ 0U ];
+    p0._a = m[ 0U ][ 3U ] + m[ 0U ][ 0U ];
+    p0._b = m[ 1U ][ 3U ] + m[ 1U ][ 0U ];
+    p0._c = m[ 2U ][ 3U ] + m[ 2U ][ 0U ];
+    p0._d = m[ 3U ][ 3U ] + m[ 3U ][ 0U ];
+
+    // Right clipping plane
+    GXPlane &p1 = planes[ 1U ];
+    p1._a = m[ 0U ][ 3U ] - m[ 0U ][ 0U ];
+    p1._b = m[ 1U ][ 3U ] - m[ 1U ][ 0U ];
+    p1._c = m[ 2U ][ 3U ] - m[ 2U ][ 0U ];
+    p1._d = m[ 3U ][ 3U ] - m[ 3U ][ 0U ];
+
+    // Top clipping plane
+    GXPlane &p2 = planes[ 2U ];
+    p2._a = m[ 0U ][ 3U ] - m[ 0U ][ 1U ];
+    p2._b = m[ 1U ][ 3U ] - m[ 1U ][ 1U ];
+    p2._c = m[ 2U ][ 3U ] - m[ 2U ][ 1U ];
+    p2._d = m[ 3U ][ 3U ] - m[ 3U ][ 1U ];
+
+    // Bottom clipping plane
+    GXPlane &p3 = planes[ 3U ];
+    p3._a = m[ 0U ][ 3U ] + m[ 0U ][ 1U ];
+    p3._b = m[ 1U ][ 3U ] + m[ 1U ][ 1U ];
+    p3._c = m[ 2U ][ 3U ] + m[ 2U ][ 1U ];
+    p3._d = m[ 3U ][ 3U ] + m[ 3U ][ 1U ];
+
+    // Near clipping plane
+    GXPlane &p4 = planes[ 4U ];
+    p4._a = m[ 0U ][ 3U ] + m[ 0U ][ 2U ];
+    p4._b = m[ 1U ][ 3U ] + m[ 1U ][ 2U ];
+    p4._c = m[ 2U ][ 3U ] + m[ 2U ][ 2U ];
+    p4._d = m[ 3U ][ 3U ] + m[ 3U ][ 2U ];
+}
+
+[[maybe_unused]] GXBool GXProjectionInfiniteFarClipPlanes::IsVisible ( GXAABB const &bounds ) const noexcept
+{
+    auto const &minData = bounds._min._data;
+    auto const &maxData = bounds._max._data;
+
+    GXUByte flags = PlaneTest ( minData[ 0U ], minData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( minData[ 0U ], maxData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], maxData[ 1U ], minData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], minData[ 1U ], minData[ 2U ] );
+
+    flags &= PlaneTest ( minData[ 0U ], minData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( minData[ 0U ], maxData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], maxData[ 1U ], maxData[ 2U ] );
+    flags &= PlaneTest ( maxData[ 0U ], minData[ 1U ], maxData[ 2U ] );
+
+    return flags == 0U;
+}
+
+[[maybe_unused]] GXUByte GXProjectionInfiniteFarClipPlanes::PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
+{
+    constexpr GXUByte const masks[] =
+    {
+        0b0000'0001U,
+        0b0000'0010U,
+        0b0000'0100U,
+        0b0000'1000U,
+        0b0001'0000U
+    };
+
+    GXUByte result = 0U;
+    auto const &planes = _planes;
+    constexpr GXUPointer count = std::size ( masks );
+
+    for ( GXUPointer i = 0U; i < count; ++i )
+    {
+        if ( planes[ i ].ClassifyVertex ( x, y, z ) != eGXPlaneClassifyVertex::Behind )
+            continue;
+
+        result |= masks[ i ];
+    }
+
+    return result;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 [[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept
 {
     // NOLINTNEXTLINE - do not use std::srand
@@ -2530,6 +2621,7 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 [[maybe_unused]] GXFloat GXCALL GXRandomNormalize () noexcept
 {
     // NOLINTNEXTLINE - do not use std::rand
+    constexpr GXFloat INVERSE_RAND_MAX = 1.0F / static_cast<GXFloat> ( RAND_MAX );
     return static_cast<GXFloat> ( std::rand () ) * INVERSE_RAND_MAX;
 }
 
@@ -2539,7 +2631,7 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
     return from + delta * GXRandomNormalize ();
 }
 
-[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, const GXVec3 &from, const GXVec3 &to ) noexcept
+[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, GXVec3 const &from, GXVec3 const &to ) noexcept
 {
     auto const &fData = from._data;
     auto const &tData = to._data;
@@ -2640,16 +2732,6 @@ constexpr GXMat4 GXMat4::IDENTITY = GXMat4 ( 1.0F,
 [[maybe_unused]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue ) noexcept
 {
     return ( value < minValue ) ? minValue : ( value > maxValue ) ? maxValue : value;
-}
-
-[[maybe_unused]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b ) noexcept
-{
-    return a < b ? a : b;
-}
-
-[[maybe_unused]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b ) noexcept
-{
-    return a > b ? a : b;
 }
 
 [[maybe_unused]] GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out,

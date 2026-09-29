@@ -11,7 +11,7 @@ require "av://engine/camera_component.lua"
 - [`Constructor`](#constructor)
 - [`SetAspectRatio ( aspectRatio )`](#method-set-aspect-ratio)
 - [`SetLocal ( localMatrix )`](#method-set-local)
-- [`SetProjection ( fieldOfViewRadians, aspectRatio, near )`](#method-set-projection)
+- [`SetProjection ( fieldOfViewRadians, aspectRatio, zNear )`](#method-set-projection)
 
 ## <a id="brief">Brief</a>
 
@@ -160,7 +160,7 @@ cameraComponent:SetLocal ( transform )
 
 [↬ table of content ⇧](#table-of-content)
 
-## <a id="method-set-projection">`SetProjection ( fieldOfViewRadians, aspectRatio, near )`</a>
+## <a id="method-set-projection">`SetProjection ( fieldOfViewRadians, aspectRatio, zNear )`</a>
 
 Method changes camera projection transformation.
 
@@ -168,7 +168,7 @@ Method changes camera projection transformation.
 
 - `fieldOfViewRadians` [_required, readonly, number_]: field of view angle of _Y_ axis in [radians](https://en.wikipedia.org/wiki/Radian)
 - `aspectRatio` [_required, readonly, number_]: viewport aspect ratio, i.e. width divided by height
-- `near` [_required, readonly, number_]: the distance to near clipping plane
+- `zNear` [_required, readonly, number_]: the distance to zNear clipping plane
 
 **Return values:**
 

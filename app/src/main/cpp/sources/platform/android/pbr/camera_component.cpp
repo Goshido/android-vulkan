@@ -24,7 +24,7 @@ namespace {
 [[maybe_unused]] constexpr uint32_t CAMERA_COMPONENT_DESC_FORMAT_VERSION = 1U;
 
 constexpr float DEFAULT_FIELD_OF_VIEW = 60.0F;
-constexpr float DEFAULT_NEAR = 1.0e-1F;
+constexpr float DEFAULT_Z_NEAR = 1.0e-1F;
 
 } // end of anonymous namespace
 
@@ -34,7 +34,7 @@ int CameraComponent::_registerCameraComponentIndex = std::numeric_limits<int>::m
 
 CameraComponent::CameraComponent () noexcept:
     Component ( ClassID::Camera, android_vulkan::GUID::GenerateAsString ( "Camera" ) ),
-    _near ( DEFAULT_NEAR ),
+    _zNear ( DEFAULT_Z_NEAR ),
     _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
@@ -57,7 +57,7 @@ CameraComponent::CameraComponent ( CameraComponentDesc const &desc, uint8_t cons
 
 CameraComponent::CameraComponent ( std::string &&name ) noexcept:
     Component ( ClassID::Camera, std::move ( name ) ),
-    _near ( DEFAULT_NEAR ),
+    _zNear ( DEFAULT_Z_NEAR ),
     _fieldOfViewRadians ( GXDegToRad ( DEFAULT_FIELD_OF_VIEW ) )
 {
     _local.Identity ();
@@ -76,7 +76,7 @@ GXMat4 const &CameraComponent::GetProjectionMatrix () const noexcept
 
 void CameraComponent::SetAspectRatio ( float aspectRatio ) noexcept
 {
-    _projection.Perspective ( _fieldOfViewRadians, aspectRatio, _near );
+    _projection.Perspective ( _fieldOfViewRadians, aspectRatio, _zNear );
 }
 
 void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
@@ -87,7 +87,7 @@ void CameraComponent::SetLocal ( GXMat4 const &local ) noexcept
 void CameraComponent::SetProjection ( float fieldOfViewRadians, float aspectRatio, float near ) noexcept
 {
     _projection.Perspective ( fieldOfViewRadians, aspectRatio, near );
-    _near = near;
+    _zNear = near;
     _fieldOfViewRadians = fieldOfViewRadians;
 }
 

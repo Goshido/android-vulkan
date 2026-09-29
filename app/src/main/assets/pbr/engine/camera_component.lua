@@ -26,7 +26,7 @@ local function SetLocal ( self, localMatrix )
     av_CameraComponentSetLocal ( self._handle, localMatrix._handle )
 end
 
-local function SetProjection ( self, fieldOfViewRadians, aspectRatio, near )
+local function SetProjection ( self, fieldOfViewRadians, aspectRatio, zNear )
     assert ( type ( self ) == "table" and self._type == eObjectType.CameraComponent,
         [[CameraComponent:SetProjection - Calling not via ":" syntax.]]
     )
@@ -36,9 +36,9 @@ local function SetProjection ( self, fieldOfViewRadians, aspectRatio, near )
     )
 
     assert ( type ( aspectRatio ) == "number", [[CameraComponent:SetProjection - "aspectRatio" is not number.]] )
-    assert ( type ( near ) == "number", [[CameraComponent:SetProjection - "near" is not number.]] )
+    assert ( type ( zNear ) == "number", [[CameraComponent:SetProjection - "zNear" is not number.]] )
 
-    av_CameraComponentSetProjection ( self._handle, fieldOfViewRadians, aspectRatio, near )
+    av_CameraComponentSetProjection ( self._handle, fieldOfViewRadians, aspectRatio, zNear )
 end
 
 -- Engine event handlers

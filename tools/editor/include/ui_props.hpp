@@ -35,8 +35,6 @@ class UIProps final : public UIDialogBox
 
         ~UIProps () override = default;
 
-        void FUCK ( size_t items ) noexcept;
-
     private:
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;

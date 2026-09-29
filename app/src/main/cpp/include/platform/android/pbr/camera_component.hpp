@@ -13,7 +13,7 @@ class CameraComponent final : public Component
     private:
         GXMat4          _local {};
         GXMat4          _projection {};
-        float           _near;
+        float           _zNear;
         float           _fieldOfViewRadians;
 
         static int      _registerCameraComponentIndex;

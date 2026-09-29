@@ -54,7 +54,7 @@ class Camera final
         // Render units per second.
         void SetMovingSpeed ( float speed ) noexcept;
 
-        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float near ) noexcept;
+        void SetProjection ( float fieldOfViewRadians, float aspectRatio, float zNear ) noexcept;
 
         // Note "pitch" and "yaw" must be in radians.
         void SetRotation ( float pitch, float yaw ) noexcept;

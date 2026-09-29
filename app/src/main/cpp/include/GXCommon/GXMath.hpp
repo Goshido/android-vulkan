@@ -1,4 +1,4 @@
-// version 1.109
+// version 1.110
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
@@ -17,12 +17,12 @@ GX_RESTORE_WARNING_STATE
 
 [[maybe_unused]] constexpr GXFloat GX_MATH_FLOAT_EPSILON = 1.0e-4F;
 
-[[maybe_unused]] constexpr GXFloat GX_MATH_HALF_PI = 1.5707963F;
-[[maybe_unused]] constexpr GXFloat GX_MATH_PI = 3.1415927F;
-[[maybe_unused]] constexpr GXFloat GX_MATH_DOUBLE_PI = 6.2831853F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_HALF_PI = 1.57079633F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_PI = 3.14159265F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_DOUBLE_PI = 6.28318531F;
 
 // 1.0F / 255.0F
-[[maybe_unused]] constexpr GXFloat GX_MATH_UNORM_FACTOR = 3.92157e-3F;
+[[maybe_unused]] constexpr GXFloat GX_MATH_UNORM_FACTOR = 3.92156863e-3F;
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -835,9 +835,11 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused]] GXVoid Identity () noexcept;
 
     // Reverse Z, infinite far plane projection matrix.
-    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat near ) noexcept;
+    // 2026/09/29 - near is declared as define in minwindef.h on Windows platform. Need to avoid that naming.
+    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat zNear ) noexcept;
 
-    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat near, GXFloat far ) noexcept;
+    // 2026/09/29 - near and far are declared as defines in minwindef.h on Windows platform. Need to avoid that naming.
+    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept;
 
     [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
     [[maybe_unused]] GXVoid Translation ( GXVec3 const &location ) noexcept;
@@ -871,19 +873,6 @@ struct [[maybe_unused]] GXMat4 final
 
     // Multiply row-vector [1x3] by own matrix sub matrix [3x3] and add own w-vector.
     [[maybe_unused]] GXVoid MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept;
-
-    // Result is valid if own matrix is perspective matrix.
-    [[maybe_unused]] GXVoid GetPerspectiveParams ( GXFloat &fieldOfViewYRadians,
-        GXFloat &aspectRatio,
-        GXFloat &near,
-        GXFloat &far
-    ) noexcept;
-
-    // Result is valid if own matrix is ortho matrix.
-    [[maybe_unused]] GXVoid GetOrthoParams ( GXFloat &width, GXFloat &height, GXFloat &near, GXFloat &far ) noexcept;
-
-    // Result is valid if own matrix is perspective matrix.
-    [[maybe_unused]] GXVoid GetRayPerspective ( GXVec3 &rayView, GXVec2 const &mouseCVV ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -1004,6 +993,42 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 //---------------------------------------------------------------------------------------------------------------------
 
+class [[maybe_unused]] GXProjectionInfiniteFarClipPlanes final
+{
+    private:
+        GXPlane     _planes[ 5U ];
+
+    public:
+        [[maybe_unused]] GXProjectionInfiniteFarClipPlanes () = default;
+
+        [[maybe_unused]] GXProjectionInfiniteFarClipPlanes ( GXProjectionInfiniteFarClipPlanes const & ) = default;
+
+        [[maybe_unused]] GXProjectionInfiniteFarClipPlanes &operator = (
+            GXProjectionInfiniteFarClipPlanes const &
+        ) = default;
+
+        [[maybe_unused]] GXProjectionInfiniteFarClipPlanes ( GXProjectionInfiniteFarClipPlanes && ) = default;
+
+        [[maybe_unused]] GXProjectionInfiniteFarClipPlanes &operator = (
+            GXProjectionInfiniteFarClipPlanes &&
+        ) = default;
+
+        [[maybe_unused]] explicit GXProjectionInfiniteFarClipPlanes ( GXMat4 const &src ) noexcept;
+
+        [[maybe_unused]] ~GXProjectionInfiniteFarClipPlanes () = default;
+
+        // Normals will be directed inside view volume.
+        [[maybe_unused]] GXVoid From ( GXMat4 const &src ) noexcept;
+
+        // Trivial invisibility test.
+        [[maybe_unused, nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const noexcept;
+
+    private:
+        [[nodiscard]] GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
+};
+
+//---------------------------------------------------------------------------------------------------------------------
+
 [[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
 {
     constexpr GXFloat toRadians = 1.74532925e-2F;
@@ -1032,9 +1057,6 @@ class [[maybe_unused]] GXProjectionClipPlanes final
 
 [[maybe_unused, nodiscard]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue ) noexcept;
 [[maybe_unused, nodiscard]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue ) noexcept;
-
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXMinf ( GXFloat a, GXFloat b ) noexcept;
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXMaxf ( GXFloat a, GXFloat b ) noexcept;
 
 [[maybe_unused]] GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out,
     GXVec3 const &point,

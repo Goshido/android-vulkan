@@ -45,7 +45,7 @@ class OpaqueSubpass final : public GeometrySubpassBase
 
         void UpdateGPUData ( GeometryPool &geometryPool,
             MaterialPool &materialPool,
-            GXProjectionClipPlanes const &frustum,
+            GXProjectionInfiniteFarClipPlanes const &frustum,
             GXMat4 const &view,
             GXMat4 const &viewProjection
         ) noexcept;

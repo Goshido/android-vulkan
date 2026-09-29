@@ -415,7 +415,7 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         frame._viewProj = _viewport->GetViewProjection ();
         frame._toView = _viewport->GetToView ();
 
-        GXProjectionClipPlanes frustum{};
+        GXProjectionInfiniteFarClipPlanes frustum {};
         frustum.From ( frame._viewProj );
 
         if ( pendingSelect ) [[unlikely]]
@@ -426,14 +426,6 @@ void Workspace::UploadGPUData ( VkCommandBuffer commandBuffer, float deltaTime )
         ComputeTransformOutline ( frustum );
         ComputeTransformGizmo ( frame._viewProj, _viewport->GetLocal () );
     }
-
-    // FUCK
-    size_t counter = 0U;
-
-    for ( MeshInstance const &instance : _opaqueVisible )
-        counter += instance._count;
-
-    _uiProps->FUCK ( counter );
 
     bool const noOpaque = _opaqueVisible.empty ();
     bool const noStipple = _stippleVisible.empty ();
@@ -1286,7 +1278,7 @@ void Workspace::FUCK () noexcept
     _history.End ();
 }
 
-void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformGBufferOnly ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "G-buffer only" )
 
@@ -1334,7 +1326,7 @@ void Workspace::ComputeTransformGBufferOnly ( GXProjectionClipPlanes const &frus
     traverse ( _stippleQueue, _stippleVisible );
 }
 
-void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformGBufferWithID ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "G-buffer with ID" )
     _idStream->Commit ();
@@ -1385,7 +1377,7 @@ void Workspace::ComputeTransformGBufferWithID ( GXProjectionClipPlanes const &fr
     traverse ( _stippleQueue, _stippleVisible );
 }
 
-void Workspace::ComputeTransformOutline ( GXProjectionClipPlanes const &frustum ) noexcept
+void Workspace::ComputeTransformOutline ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept
 {
     AV_TRACE ( "Outline" )
     pbr::StreamBuffer &stream = *_outlineStream;

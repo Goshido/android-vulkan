@@ -31,47 +31,47 @@ class RenderSession final
 
         struct CommandInfo final
         {
-            VkCommandBuffer         _buffer = VK_NULL_HANDLE;
-            VkFence                 _fence = VK_NULL_HANDLE;
-            VkCommandPool           _pool = VK_NULL_HANDLE;
-            VkSemaphore             _acquire = VK_NULL_HANDLE;
+            VkCommandBuffer                     _buffer = VK_NULL_HANDLE;
+            VkFence                             _fence = VK_NULL_HANDLE;
+            VkCommandPool                       _pool = VK_NULL_HANDLE;
+            VkSemaphore                         _acquire = VK_NULL_HANDLE;
         };
 
     private:
-        float                       _brightnessBalance = 0.0F;
-        bool                        _brightnessChanged = false;
+        float                                   _brightnessBalance = 0.0F;
+        bool                                    _brightnessChanged = false;
 
-        CommandInfo                 _commandInfo[ FIF_COUNT ];
-        size_t                      _writingCommandInfo = 0U;
+        CommandInfo                             _commandInfo[ FIF_COUNT ];
+        size_t                                  _writingCommandInfo = 0U;
 
-        GXMat4                      _cvvToView {};
-        GXMat4                      _view {};
-        GXMat4                      _viewProjection {};
-        GXMat4                      _viewerLocal {};
+        GXMat4                                  _cvvToView {};
+        GXMat4                                  _view {};
+        GXMat4                                  _viewProjection {};
+        GXMat4                                  _viewerLocal {};
 
-        DefaultTextureManager       _defaultTextureManager {};
+        DefaultTextureManager                   _defaultTextureManager {};
 
-        ExposurePass                _exposurePass {};
+        ExposurePass                            _exposurePass {};
 
-        GXProjectionClipPlanes      _frustum {};
+        GXProjectionInfiniteFarClipPlanes       _frustum {};
 
-        GBuffer                     _gBuffer {};
-        GeometryPass                _geometryPass {};
+        GBuffer                                 _gBuffer {};
+        GeometryPass                            _geometryPass {};
 
-        LightHandler                _lightHandlers[ 3U ] {};
-        LightPass                   _lightPass {};
+        LightHandler                            _lightHandlers[ 3U ] {};
+        LightPass                               _lightPass {};
 
-        MeshHandler                 _meshHandlers[ 2U ] {};
-        size_t                      _opaqueMeshCount = 0U;
+        MeshHandler                             _meshHandlers[ 2U ] {};
+        size_t                                  _opaqueMeshCount = 0U;
 
-        PresentPass                 _presentRenderPass {};
+        PresentPass                             _presentRenderPass {};
 
-        VkRenderPassBeginInfo       _renderPassInfo {};
-        RenderSessionStats          _renderSessionStats {};
-        SamplerManager              _samplerManager {};
+        VkRenderPassBeginInfo                   _renderPassInfo {};
+        RenderSessionStats                      _renderSessionStats {};
+        SamplerManager                          _samplerManager {};
 
-        ToneMapperPass              _toneMapperPass {};
-        UIPass                      _uiPass {};
+        ToneMapperPass                          _toneMapperPass {};
+        UIPass                                  _uiPass {};
 
     public:
         RenderSession () = default;

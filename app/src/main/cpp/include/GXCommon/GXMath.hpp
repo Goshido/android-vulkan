@@ -1,9 +1,8 @@
-// version 1.110
+// version 1.111
 
 #ifndef GX_MATH_HPP
 #define GX_MATH_HPP
 
-#include "GXTypes.hpp"
 #include "GXWarning.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -15,14 +14,23 @@ GX_DISABLE_COMMON_WARNINGS
 GX_RESTORE_WARNING_STATE
 
 
-[[maybe_unused]] constexpr GXFloat GX_MATH_FLOAT_EPSILON = 1.0e-4F;
+[[maybe_unused]] constexpr float GX_MATH_FLOAT_EPSILON = 1.0e-4F;
 
-[[maybe_unused]] constexpr GXFloat GX_MATH_HALF_PI = 1.57079633F;
-[[maybe_unused]] constexpr GXFloat GX_MATH_PI = 3.14159265F;
-[[maybe_unused]] constexpr GXFloat GX_MATH_DOUBLE_PI = 6.28318531F;
+[[maybe_unused]] constexpr float GX_MATH_HALF_PI = 1.57079633F;
+[[maybe_unused]] constexpr float GX_MATH_PI = 3.14159265F;
+[[maybe_unused]] constexpr float GX_MATH_DOUBLE_PI = 6.28318531F;
 
 // 1.0F / 255.0F
-[[maybe_unused]] constexpr GXFloat GX_MATH_UNORM_FACTOR = 3.92156863e-3F;
+[[maybe_unused]] constexpr float GX_MATH_UNORM_FACTOR = 3.92156863e-3F;
+
+//----------------------------------------------------------------------------------------------------------------------
+
+enum class eGXCompareResult : int8_t
+{
+    Less [[maybe_unused]] = INT8_C ( -1 ),
+    Equal [[maybe_unused]] = INT8_C ( 0 ),
+    Greater [[maybe_unused]] = INT8_C ( 1 )
+};
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -33,7 +41,7 @@ struct [[maybe_unused]] GXVec2 final
     [[maybe_unused]] static GXVec2 const    ZERO;
 
     // Stores vector components in x, y order.
-    GXFloat                                 _data[ 2U ];
+    float                                   _data[ 2U ];
 
     [[maybe_unused]] GXVec2 () = default;
 
@@ -45,7 +53,7 @@ struct [[maybe_unused]] GXVec2 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXVec2 ( GXFloat x, GXFloat y ) noexcept:
+    [[maybe_unused]] constexpr GXVec2 ( float x, float y ) noexcept:
         _data { x, y }
     {
         // NOTHING
@@ -53,44 +61,44 @@ struct [[maybe_unused]] GXVec2 final
 
     [[maybe_unused]] ~GXVec2 () = default;
 
-    [[maybe_unused]] GXVoid SetX ( GXFloat x ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetX () const noexcept;
+    [[maybe_unused]] void SetX ( float x ) noexcept;
+    [[maybe_unused, nodiscard]] float GetX () const noexcept;
 
-    [[maybe_unused]] GXVoid SetY ( GXFloat y ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetY () const noexcept;
+    [[maybe_unused]] void SetY ( float y ) noexcept;
+    [[maybe_unused, nodiscard]] float GetY () const noexcept;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y ) noexcept;
-    [[maybe_unused]] GXVoid Normalize () noexcept;
-    [[maybe_unused]] GXVoid Reverse () noexcept;
+    [[maybe_unused]] void Init ( float x, float y ) noexcept;
+    [[maybe_unused]] void Normalize () noexcept;
+    [[maybe_unused]] void Reverse () noexcept;
 
     // No normalization
-    [[maybe_unused]] GXVoid CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept;
 
-    [[maybe_unused]] GXVoid CalculateNormal ( GXVec2 const &a, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void CalculateNormal ( GXVec2 const &a, GXVec2 const &b ) noexcept;
 
-    [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXVec2 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Subtract ( GXVec2 const &a, GXVec2 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec2 const &a, GXVec2 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec2 const &v, GXFloat scale ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec2 const &a, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec2 const &a, float bScale, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void Subtract ( GXVec2 const &a, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec2 const &a, GXVec2 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec2 const &v, float scale ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec2 const &other ) const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat Length () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const noexcept;
+    [[maybe_unused, nodiscard]] float DotProduct ( GXVec2 const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] float Length () const noexcept;
+    [[maybe_unused, nodiscard]] float SquaredLength () const noexcept;
 
-    [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec2 const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] bool IsEqual ( GXVec2 const &other ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-enum class eGXLineRelationship : GXUByte
+enum class eGXLineRelationship : uint8_t
 {
-    NoIntersection [[maybe_unused]] = 0U,
-    Intersection [[maybe_unused]] = 1U,
-    Overlap [[maybe_unused]] = 2U
+    NoIntersection [[maybe_unused]] = UINT8_C ( 0 ),
+    Intersection [[maybe_unused]] = UINT8_C ( 1 ),
+    Overlap [[maybe_unused]] = UINT8_C ( 2 )
 };
 
-[[maybe_unused]] eGXLineRelationship GXCALL GXLineIntersection2D ( GXVec2 &intersectionPoint,
+[[maybe_unused]] eGXLineRelationship GXLineIntersection2D ( GXVec2 &intersectionPoint,
     GXVec2 const &a0,
     GXVec2 const &a1,
     GXVec2 const &b0,
@@ -118,7 +126,7 @@ struct [[maybe_unused]] GXVec3 final
     [[maybe_unused]] static GXVec3 const    FORWARD;
 
     // Stores vector components in x, y, z order.
-    GXFloat                                 _data[ 3U ];
+    float                                   _data[ 3U ];
 
     [[maybe_unused]] GXVec3 () = default;
 
@@ -130,7 +138,7 @@ struct [[maybe_unused]] GXVec3 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXVec3 ( GXFloat x, GXFloat y, GXFloat z ) noexcept:
+    [[maybe_unused]] constexpr GXVec3 ( float x, float y, float z ) noexcept:
         _data { x, y, z }
     {
         // NOTHING
@@ -138,45 +146,45 @@ struct [[maybe_unused]] GXVec3 final
 
     [[maybe_unused]] ~GXVec3 () = default;
 
-    [[maybe_unused]] GXVoid SetX ( GXFloat x ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetX () const noexcept;
+    [[maybe_unused]] void SetX ( float x ) noexcept;
+    [[maybe_unused, nodiscard]] float GetX () const noexcept;
 
-    [[maybe_unused]] GXVoid SetY ( GXFloat y ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetY () const noexcept;
+    [[maybe_unused]] void SetY ( float y ) noexcept;
+    [[maybe_unused, nodiscard]] float GetY () const noexcept;
 
-    [[maybe_unused]] GXVoid SetZ ( GXFloat z ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetZ () const noexcept;
+    [[maybe_unused]] void SetZ ( float z ) noexcept;
+    [[maybe_unused, nodiscard]] float GetZ () const noexcept;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
-    [[maybe_unused]] GXVoid Normalize () noexcept;
-    [[maybe_unused]] GXVoid Reverse () noexcept;
+    [[maybe_unused]] void Init ( float x, float y, float z ) noexcept;
+    [[maybe_unused]] void Normalize () noexcept;
+    [[maybe_unused]] void Reverse () noexcept;
 
-    [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXVec3 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Subtract ( GXVec3 const &a, GXVec3 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXFloat scale ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec3 const &a, GXVec3 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec3 const &a, GXVec3 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec3 const &a, float bScale, GXVec3 const &b ) noexcept;
+    [[maybe_unused]] void Subtract ( GXVec3 const &a, GXVec3 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec3 const &a, float scale ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec3 const &a, GXVec3 const &b ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec3 const &other ) const noexcept;
-    [[maybe_unused]] GXVoid CrossProduct ( GXVec3 const &a, GXVec3 const &b ) noexcept;
+    [[maybe_unused, nodiscard]] float DotProduct ( GXVec3 const &other ) const noexcept;
+    [[maybe_unused]] void CrossProduct ( GXVec3 const &a, GXVec3 const &b ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat Length () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat Distance ( GXVec3 const &other ) const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat SquaredDistance ( GXVec3 const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] float Length () const noexcept;
+    [[maybe_unused, nodiscard]] float SquaredLength () const noexcept;
+    [[maybe_unused, nodiscard]] float Distance ( GXVec3 const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] float SquaredDistance ( GXVec3 const &other ) const noexcept;
 
-    [[maybe_unused]] GXVoid LinearInterpolation ( GXVec3 const &start,
+    [[maybe_unused]] void LinearInterpolation ( GXVec3 const &start,
         GXVec3 const &finish,
-        GXFloat interpolationFactor
+        float interpolationFactor
     ) noexcept;
 
     // Note the axis must be a unit vector.
-    [[maybe_unused]] GXVoid Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept;
+    [[maybe_unused]] void Project ( GXVec3 const &vector, GXVec3 const &axis ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXBool IsEqual ( GXVec3 const &other ) noexcept;
+    [[maybe_unused, nodiscard]] bool IsEqual ( GXVec3 const &other ) noexcept;
 
     // baseX - correct direction, adjustedY - desirable, adjustedZ - calculated.
-    [[maybe_unused]] static GXVoid GXCALL MakeOrthonormalBasis ( GXVec3 &baseX,
+    [[maybe_unused]] static void MakeOrthonormalBasis ( GXVec3 &baseX,
         GXVec3 &adjustedY,
         GXVec3 &adjustedZ
     ) noexcept;
@@ -184,10 +192,10 @@ struct [[maybe_unused]] GXVec3 final
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXBool GXCALL GXRayTriangleIntersection3D ( GXFloat &outT,
+[[maybe_unused]] bool GXRayTriangleIntersection3D ( float &outT,
     GXVec3 const &origin,
     GXVec3 const &direction,
-    GXFloat length,
+    float length,
     GXVec3 const &a,
     GXVec3 const &b,
     GXVec3 const &c
@@ -197,9 +205,9 @@ struct [[maybe_unused]] GXVec3 final
 
 struct [[maybe_unused]] GXEuler final
 {
-    [[maybe_unused]] GXFloat    _pitchRadians;
-    [[maybe_unused]] GXFloat    _yawRadians;
-    [[maybe_unused]] GXFloat    _rollRadians;
+    [[maybe_unused]] float      _pitchRadians;
+    [[maybe_unused]] float      _yawRadians;
+    [[maybe_unused]] float      _rollRadians;
 
     [[maybe_unused]] GXEuler () = default;
 
@@ -211,9 +219,9 @@ struct [[maybe_unused]] GXEuler final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXEuler ( GXFloat pitchRadians,
-        GXFloat yawRadians,
-        GXFloat rollRadians
+    [[maybe_unused]] constexpr GXEuler ( float pitchRadians,
+        float yawRadians,
+        float rollRadians
     ) noexcept:
         _pitchRadians ( pitchRadians ),
         _yawRadians ( yawRadians ),
@@ -231,7 +239,7 @@ struct [[maybe_unused]] GXEuler final
 struct [[maybe_unused]] GXVec4 final
 {
     // Stores vector components in x, y, z, w order.
-    GXFloat     _data[ 4U ];
+    float       _data[ 4U ];
 
     [[maybe_unused]] GXVec4 () = default;
 
@@ -241,7 +249,7 @@ struct [[maybe_unused]] GXVec4 final
     [[maybe_unused]] GXVec4 ( GXVec4 && ) = default;
     [[maybe_unused]] GXVec4 &operator = ( GXVec4 && ) = default;
 
-    [[maybe_unused]] constexpr GXVec4 ( GXVec3 const &vector, GXFloat w ) noexcept:
+    [[maybe_unused]] constexpr GXVec4 ( GXVec3 const &vector, float w ) noexcept:
         _data { vector._data[ 0U ], vector._data[ 1U ], vector._data[ 2U ], w }
     {
         // NOTHING
@@ -249,7 +257,7 @@ struct [[maybe_unused]] GXVec4 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXVec4 ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept:
+    [[maybe_unused]] constexpr GXVec4 ( float x, float y, float z, float w ) noexcept:
         _data { x, y, z, w }
     {
         // NOTHING
@@ -257,37 +265,37 @@ struct [[maybe_unused]] GXVec4 final
 
     [[maybe_unused]] ~GXVec4 () = default;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat x, GXFloat y, GXFloat z, GXFloat w ) noexcept;
+    [[maybe_unused]] void Init ( float x, float y, float z, float w ) noexcept;
 
-    [[maybe_unused]] GXVoid SetX ( GXFloat x ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetX () const noexcept;
+    [[maybe_unused]] void SetX ( float x ) noexcept;
+    [[maybe_unused, nodiscard]] float GetX () const noexcept;
 
-    [[maybe_unused]] GXVoid SetY ( GXFloat y ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetY () const noexcept;
+    [[maybe_unused]] void SetY ( float y ) noexcept;
+    [[maybe_unused, nodiscard]] float GetY () const noexcept;
 
-    [[maybe_unused]] GXVoid SetZ ( GXFloat z ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetZ () const noexcept;
+    [[maybe_unused]] void SetZ ( float z ) noexcept;
+    [[maybe_unused, nodiscard]] float GetZ () const noexcept;
 
-    [[maybe_unused]] GXVoid SetW ( GXFloat w ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetW () const noexcept;
+    [[maybe_unused]] void SetW ( float w ) noexcept;
+    [[maybe_unused, nodiscard]] float GetW () const noexcept;
 
-    [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXFloat scale ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec4 const &a, float bScale, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] void Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec4 const &a, float scale ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec4 const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] float DotProduct ( GXVec4 const &other ) const noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat Length () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat SquaredLength () const noexcept;
+    [[maybe_unused, nodiscard]] float Length () const noexcept;
+    [[maybe_unused, nodiscard]] float SquaredLength () const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXVec6 final
 {
-    GXFloat     _data[ 6U ];
+    float       _data[ 6U ];
 
     [[maybe_unused]] GXVec6 () = default;
 
@@ -299,12 +307,12 @@ struct [[maybe_unused]] GXVec6 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXVec6 ( GXFloat a1,
-        GXFloat a2,
-        GXFloat a3,
-        GXFloat a4,
-        GXFloat a5,
-        GXFloat a6
+    [[maybe_unused]] constexpr GXVec6 ( float a1,
+        float a2,
+        float a3,
+        float a4,
+        float a5,
+        float a6
     ):
         _data { a1, a2, a3, a4, a5, a6 }
     {
@@ -329,13 +337,13 @@ struct [[maybe_unused]] GXVec6 final
 
     [[maybe_unused]] ~GXVec6 () = default;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat a1, GXFloat a2, GXFloat a3, GXFloat a4, GXFloat a5, GXFloat a6 ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXVec3 const &v1, GXVec3 const &v2 ) noexcept;
+    [[maybe_unused]] void Init ( float a1, float a2, float a3, float a4, float a5, float a6 ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &v1, GXVec3 const &v2 ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXFloat DotProduct ( GXVec6 const &other ) const noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXVec6 const &a, GXVec6 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXVec6 const &a, GXFloat factor ) noexcept;
+    [[maybe_unused, nodiscard]] float DotProduct ( GXVec6 const &other ) const noexcept;
+    [[maybe_unused]] void Sum ( GXVec6 const &a, GXVec6 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXVec6 const &a, float bScale, GXVec6 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXVec6 const &a, float factor ) noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -343,7 +351,7 @@ struct [[maybe_unused]] GXVec6 final
 struct [[maybe_unused]] GXColorUNORM final
 {
     // Stores components in red, green, blue, alpha order.
-    GXUByte     _data[ 4U ];
+    uint8_t     _data[ 4U ];
 
     [[maybe_unused]] GXColorUNORM () = default;
 
@@ -353,19 +361,19 @@ struct [[maybe_unused]] GXColorUNORM final
     [[maybe_unused]] GXColorUNORM ( GXColorUNORM && ) = default;
     [[maybe_unused]] GXColorUNORM &operator = ( GXColorUNORM && ) = default;
 
-    [[maybe_unused]] constexpr GXColorUNORM ( GXUInt red, GXUInt green, GXUInt blue, GXUInt alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorUNORM ( uint32_t red, uint32_t green, uint32_t blue, uint32_t alpha ) noexcept:
         _data
         {
-            static_cast<GXUByte> ( red ),
-            static_cast<GXUByte> ( green ),
-            static_cast<GXUByte> ( blue ),
-            static_cast<GXUByte> ( alpha )
+            static_cast<uint8_t> ( red ),
+            static_cast<uint8_t> ( green ),
+            static_cast<uint8_t> ( blue ),
+            static_cast<uint8_t> ( alpha )
         }
     {
         // NOTHING
     }
 
-    [[maybe_unused]] constexpr GXColorUNORM ( GXUByte red, GXUByte green, GXUByte blue, GXUByte alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorUNORM ( uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha ) noexcept:
         _data { red, green, blue, alpha }
     {
         // NOTHING
@@ -380,7 +388,7 @@ struct GXColorHSV;
 struct [[maybe_unused]] GXColorRGB final
 {
     // Stores components in red, green, blue, alpha order.
-    GXFloat     _data[ 4U ];
+    float       _data[ 4U ];
 
     [[maybe_unused]] GXColorRGB () = default;
 
@@ -392,51 +400,51 @@ struct [[maybe_unused]] GXColorRGB final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXColorRGB ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorRGB ( float red, float green, float blue, float alpha ) noexcept:
         _data { red, green, blue, alpha }
     {
         // NOTHING
     }
 
-    [[maybe_unused]] constexpr GXColorRGB ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept:
+    [[maybe_unused]] constexpr GXColorRGB ( uint32_t red, uint32_t green, uint32_t blue, float alpha ) noexcept:
         _data
         {
-            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( red ),
-            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( green ),
-            GX_MATH_UNORM_FACTOR * static_cast<GXFloat> ( blue ),
+            GX_MATH_UNORM_FACTOR * static_cast<float> ( red ),
+            GX_MATH_UNORM_FACTOR * static_cast<float> ( green ),
+            GX_MATH_UNORM_FACTOR * static_cast<float> ( blue ),
             alpha
         }
     {
         // NOTHING
     }
 
-    [[maybe_unused]] GXColorRGB ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
+    [[maybe_unused]] GXColorRGB ( uint8_t red, uint8_t green, uint8_t blue, float alpha ) noexcept;
     [[maybe_unused]] explicit GXColorRGB ( GXColorHSV const &color ) noexcept;
     [[maybe_unused]] explicit GXColorRGB ( GXColorUNORM color ) noexcept;
 
     [[maybe_unused]] ~GXColorRGB () = default;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat red, GXFloat green, GXFloat blue, GXFloat alpha ) noexcept;
+    [[maybe_unused]] void Init ( float red, float green, float blue, float alpha ) noexcept;
 
     // [0.0F +inf)
-    [[maybe_unused]] GXVoid SetRed ( GXFloat red ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetRed () const noexcept;
+    [[maybe_unused]] void SetRed ( float red ) noexcept;
+    [[maybe_unused, nodiscard]] float GetRed () const noexcept;
 
     // [0.0F +inf)
-    [[maybe_unused]] GXVoid SetGreen ( GXFloat green ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetGreen () const noexcept;
+    [[maybe_unused]] void SetGreen ( float green ) noexcept;
+    [[maybe_unused, nodiscard]] float GetGreen () const noexcept;
 
     // [0.0F +inf)
-    [[maybe_unused]] GXVoid SetBlue ( GXFloat blue ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetBlue () const noexcept;
+    [[maybe_unused]] void SetBlue ( float blue ) noexcept;
+    [[maybe_unused, nodiscard]] float GetBlue () const noexcept;
 
     // [0.0f 1.0F]
-    [[maybe_unused]] GXVoid SetAlpha ( GXFloat alpha ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetAlpha () const noexcept;
+    [[maybe_unused]] void SetAlpha ( float alpha ) noexcept;
+    [[maybe_unused, nodiscard]] float GetAlpha () const noexcept;
 
-    [[maybe_unused]] GXVoid From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXColorHSV const &color ) noexcept;
+    [[maybe_unused]] void From ( uint8_t red, uint8_t green, uint8_t blue, float alpha ) noexcept;
+    [[maybe_unused]] void From ( uint32_t red, uint32_t green, uint32_t blue, float alpha ) noexcept;
+    [[maybe_unused]] void From ( GXColorHSV const &color ) noexcept;
 
     // It is assumed that current color space is sRGB.
     [[maybe_unused, nodiscard]] GXColorRGB ToLinearSpace () const noexcept;
@@ -446,10 +454,10 @@ struct [[maybe_unused]] GXColorRGB final
 
     [[maybe_unused, nodiscard]] GXColorUNORM ToColorUNORM () const noexcept;
 
-    [[maybe_unused]] GXVoid ConvertToUByte ( GXUByte &red,
-        GXUByte &green,
-        GXUByte &blue,
-        GXUByte &alpha
+    [[maybe_unused]] void ConvertToUByte ( uint8_t &red,
+        uint8_t &green,
+        uint8_t &blue,
+        uint8_t &alpha
     ) const noexcept;
 };
 
@@ -458,7 +466,7 @@ struct [[maybe_unused]] GXColorRGB final
 struct [[maybe_unused]] GXColorHSV final
 {
     // Stores components in hue, saturation, value, alpha order.
-    GXFloat     _data[ 4U ];
+    float       _data[ 4U ];
 
     [[maybe_unused]] GXColorHSV () = default;
 
@@ -470,10 +478,10 @@ struct [[maybe_unused]] GXColorHSV final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXColorHSV ( GXFloat hue,
-        GXFloat saturation,
-        GXFloat value,
-        GXFloat alpha
+    [[maybe_unused]] constexpr GXColorHSV ( float hue,
+        float saturation,
+        float value,
+        float alpha
     ) noexcept:
         _data { hue, saturation, value, alpha }
     {
@@ -485,30 +493,30 @@ struct [[maybe_unused]] GXColorHSV final
     [[maybe_unused]] ~GXColorHSV () = default;
 
     // [0.0F 360.0F]
-    [[maybe_unused]] GXVoid SetHue ( GXFloat hue ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetHue () const noexcept;
+    [[maybe_unused]] void SetHue ( float hue ) noexcept;
+    [[maybe_unused, nodiscard]] float GetHue () const noexcept;
 
     // [0.0F 100.0F]
-    [[maybe_unused]] GXVoid SetSaturation ( GXFloat saturation ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetSaturation () const noexcept;
+    [[maybe_unused]] void SetSaturation ( float saturation ) noexcept;
+    [[maybe_unused, nodiscard]] float GetSaturation () const noexcept;
 
     // [0.0F 100.0F]
-    [[maybe_unused]] GXVoid SetValue ( GXFloat value ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetValue () const noexcept;
+    [[maybe_unused]] void SetValue ( float value ) noexcept;
+    [[maybe_unused, nodiscard]] float GetValue () const noexcept;
 
     // [0.0F 100.0F]
-    [[maybe_unused]] GXVoid SetAlpha ( GXFloat alpha ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetAlpha () const noexcept;
+    [[maybe_unused]] void SetAlpha ( float alpha ) noexcept;
+    [[maybe_unused, nodiscard]] float GetAlpha () const noexcept;
 
-    [[maybe_unused]] GXVoid From ( GXColorRGB const &color ) noexcept;
+    [[maybe_unused]] void From ( GXColorRGB const &color ) noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXPreciseComplex final
 {
-    GXDouble    _r;
-    GXDouble    _i;
+    double      _r;
+    double      _i;
 
     [[maybe_unused]] GXPreciseComplex () = default;
 
@@ -520,7 +528,7 @@ struct [[maybe_unused]] GXPreciseComplex final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXPreciseComplex ( GXDouble real, GXDouble imaginary ) noexcept:
+    [[maybe_unused]] constexpr GXPreciseComplex ( double real, double imaginary ) noexcept:
         _r ( real ),
         _i ( imaginary )
     {
@@ -529,19 +537,19 @@ struct [[maybe_unused]] GXPreciseComplex final
 
     [[maybe_unused]] ~GXPreciseComplex () = default;
 
-    [[maybe_unused]] GXVoid Init ( GXDouble real, GXDouble imaginary ) noexcept;
+    [[maybe_unused]] void Init ( double real, double imaginary ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXDouble Length () const noexcept;
-    [[maybe_unused, nodiscard]] GXDouble SquaredLength () const noexcept;
+    [[maybe_unused, nodiscard]] double Length () const noexcept;
+    [[maybe_unused, nodiscard]] double SquaredLength () const noexcept;
 
     // Method returns GX_FALSE if ( 0.0 + 0.0i ) ^ 0 will happen.
-    [[maybe_unused]] GXBool Power ( GXUInt power ) noexcept;
+    [[maybe_unused]] bool Power ( uint32_t power ) noexcept;
 
     [[maybe_unused]] GXPreciseComplex operator + ( GXPreciseComplex const &other ) const noexcept;
     [[maybe_unused]] GXPreciseComplex operator - ( GXPreciseComplex const &other ) const noexcept;
     [[maybe_unused]] GXPreciseComplex operator * ( GXPreciseComplex const &other ) const noexcept;
-    [[maybe_unused]] GXPreciseComplex operator * ( GXDouble a ) const noexcept;
-    [[maybe_unused]] GXPreciseComplex operator / ( GXDouble a ) const noexcept;
+    [[maybe_unused]] GXPreciseComplex operator * ( double a ) const noexcept;
+    [[maybe_unused]] GXPreciseComplex operator / ( double a ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -553,10 +561,10 @@ struct GXMat4;
 // By convention stores only orientation without any scale.
 struct [[maybe_unused]] GXQuat final
 {
-    [[maybe_unused]] static GXQuat const        IDENTITY;
+    [[maybe_unused]] static GXQuat const    IDENTITY;
 
     // Stores quaternion components in r, a, b, c order.
-    GXFloat                                     _data[ 4U ];
+    float                                   _data[ 4U ];
 
     [[maybe_unused]] GXQuat () = default;
 
@@ -568,7 +576,7 @@ struct [[maybe_unused]] GXQuat final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXQuat ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept:
+    [[maybe_unused]] constexpr GXQuat ( float r, float a, float b, float c ) noexcept:
         _data { r, a, b, c }
     {
         // NOTHING
@@ -589,95 +597,95 @@ struct [[maybe_unused]] GXQuat final
     // bits 10-19: b component
     // bits 20-29: c component
     // bits 30-31: bitangent reflection scalar
-    [[maybe_unused, nodiscard]] GXUInt ToTBN32 ( bool reflectBitangent ) const noexcept;
+    [[maybe_unused, nodiscard]] uint32_t ToTBN32 ( bool reflectBitangent ) const noexcept;
 
     // "Real" component could be restored using unit quaternion property. It's guarantee to be positive real component
     // eliminating quaternion duality flaw.
     // bits 0-20: a component
     // bits 21-41: b component
     // bits 42-63: c component
-    [[maybe_unused, nodiscard]] GXUBigInt ToTBN64 () const noexcept;
+    [[maybe_unused, nodiscard]] uint64_t ToTBN64 () const noexcept;
 
     // Packing TBN basis into R16G16B16A16_UNORM format.
     // bits 0-15: r component
     // bits 16-31: a component
     // bits 32-47: b component
     // bits 48-63: c component
-    [[maybe_unused, nodiscard]] GXUBigInt ToQuat64 () const noexcept;
+    [[maybe_unused, nodiscard]] uint64_t ToQuat64 () const noexcept;
 
-    [[maybe_unused]] GXVoid Init ( GXFloat r, GXFloat a, GXFloat b, GXFloat c ) noexcept;
+    [[maybe_unused]] void Init ( float r, float a, float b, float c ) noexcept;
 
-    [[maybe_unused]] GXVoid SetR ( GXFloat r ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetR () const noexcept;
+    [[maybe_unused]] void SetR ( float r ) noexcept;
+    [[maybe_unused, nodiscard]] float GetR () const noexcept;
 
-    [[maybe_unused]] GXVoid SetA ( GXFloat a ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetA () const noexcept;
+    [[maybe_unused]] void SetA ( float a ) noexcept;
+    [[maybe_unused, nodiscard]] float GetA () const noexcept;
 
-    [[maybe_unused]] GXVoid SetB ( GXFloat b ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetB () const noexcept;
+    [[maybe_unused]] void SetB ( float b ) noexcept;
+    [[maybe_unused, nodiscard]] float GetB () const noexcept;
 
-    [[maybe_unused]] GXVoid SetC ( GXFloat c ) noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetC () const noexcept;
+    [[maybe_unused]] void SetC ( float c ) noexcept;
+    [[maybe_unused, nodiscard]] float GetC () const noexcept;
 
-    [[maybe_unused]] GXVoid Identity () noexcept;
-    [[maybe_unused]] GXVoid Normalize () noexcept;
-    [[maybe_unused]] GXVoid Inverse ( GXQuat const &q ) noexcept;
+    [[maybe_unused]] void Identity () noexcept;
+    [[maybe_unused]] void Normalize () noexcept;
+    [[maybe_unused]] void Inverse ( GXQuat const &q ) noexcept;
 
     // Result is valid if "unitQuaternion" is normalized.
-    [[maybe_unused]] GXVoid InverseFast ( GXQuat const &unitQuaternion ) noexcept;
+    [[maybe_unused]] void InverseFast ( GXQuat const &unitQuaternion ) noexcept;
 
-    [[maybe_unused]] GXVoid FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle ) noexcept;
-    [[maybe_unused]] GXVoid FromAxisAngle ( GXVec3 const &axis, GXFloat angle ) noexcept;
-
-    // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
-    [[maybe_unused]] GXVoid From ( GXMat3 const &rotationMatrix ) noexcept;
+    [[maybe_unused]] void FromAxisAngle ( float x, float y, float z, float angle ) noexcept;
+    [[maybe_unused]] void FromAxisAngle ( GXVec3 const &axis, float angle ) noexcept;
 
     // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
-    [[maybe_unused]] GXVoid From ( GXMat4 const &rotationMatrix ) noexcept;
+    [[maybe_unused]] void From ( GXMat3 const &rotationMatrix ) noexcept;
+
+    // Result is valid if rotationMatrix is rotation matrix. Any scale will be ignored.
+    [[maybe_unused]] void From ( GXMat4 const &rotationMatrix ) noexcept;
 
     // Result is valid if forward is unit vector.
-    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
 
     // Result is valid if pureRotationMatrix is not scaled rotation matrix.
-    [[maybe_unused]] GXVoid FromFast ( GXMat3 const &pureRotationMatrix ) noexcept;
+    [[maybe_unused]] void FromFast ( GXMat3 const &pureRotationMatrix ) noexcept;
 
     // Result is valid if pureRotationMatrix is not scaled rotation matrix.
-    [[maybe_unused]] GXVoid FromFast ( GXMat4 const &pureRotationMatrix ) noexcept;
+    [[maybe_unused]] void FromFast ( GXMat4 const &pureRotationMatrix ) noexcept;
 
-    [[maybe_unused]] GXVoid Multiply ( GXQuat const &a, GXQuat const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXQuat const &q, GXFloat scale ) noexcept;
-    [[maybe_unused]] GXVoid Sum ( GXQuat const &a, GXQuat const &b ) noexcept;
-    [[maybe_unused]] GXVoid Subtract ( GXQuat const &a, GXQuat const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXQuat const &a, GXQuat const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXQuat const &q, float scale ) noexcept;
+    [[maybe_unused]] void Sum ( GXQuat const &a, GXQuat const &b ) noexcept;
+    [[maybe_unused]] void Subtract ( GXQuat const &a, GXQuat const &b ) noexcept;
 
-    [[maybe_unused]] GXVoid SphericalLinearInterpolation ( GXQuat const &start,
+    [[maybe_unused]] void SphericalLinearInterpolation ( GXQuat const &start,
         GXQuat const &finish,
-        GXFloat interpolationFactor
+        float interpolationFactor
     ) noexcept;
 
-    [[maybe_unused]] GXVoid GetAxisAngle ( GXVec3 &axis, GXFloat &angle ) const noexcept;
-    [[maybe_unused]] GXVoid Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void GetAxisAngle ( GXVec3 &axis, float &angle ) const noexcept;
+    [[maybe_unused]] void Transform ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 
     // X axis of corresponding 3x3 matrix.
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid GetRight ( GXVec3 &out ) const noexcept;
+    [[maybe_unused]] void GetRight ( GXVec3 &out ) const noexcept;
 
     // Y axis of corresponding 3x3 matrix.
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid GetUp ( GXVec3 &out ) const noexcept;
+    [[maybe_unused]] void GetUp ( GXVec3 &out ) const noexcept;
 
     // Z axis of corresponding 3x3 matrix.
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid GetForward ( GXVec3 &out ) const noexcept;
+    [[maybe_unused]] void GetForward ( GXVec3 &out ) const noexcept;
 
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXMat3 final
 {
-    GXFloat     _data[ 3U ][ 3U ];
+    float       _data[ 3U ][ 3U ];
 
     [[maybe_unused]] GXMat3 () = default;
 
@@ -691,26 +699,26 @@ struct [[maybe_unused]] GXMat3 final
 
     [[maybe_unused]] ~GXMat3 () = default;
 
-    [[maybe_unused]] GXVoid From ( GXQuat const &quaternion ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXMat4 const &matrix ) noexcept;
+    [[maybe_unused]] void From ( GXQuat const &quaternion ) noexcept;
+    [[maybe_unused]] void From ( GXMat4 const &matrix ) noexcept;
 
     // Constructs orthonormal basis. Result is valid if zDirection is unit vector.
-    [[maybe_unused]] GXVoid From ( GXVec3 const &zDirection ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &zDirection ) noexcept;
 
     // Constructs orthonormal basis. Result is valid if forward is unit vector.
-    [[maybe_unused]] GXVoid From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &forward, GXVec3 const &up ) noexcept;
 
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid FromFast ( GXQuat const &quaternion ) noexcept;
+    [[maybe_unused]] void FromFast ( GXQuat const &quaternion ) noexcept;
 
-    [[maybe_unused]] GXVoid SetX ( GXVec3 const &x ) noexcept;
-    [[maybe_unused]] GXVoid GetX ( GXVec3 &x ) const noexcept;
+    [[maybe_unused]] void SetX ( GXVec3 const &x ) noexcept;
+    [[maybe_unused]] void GetX ( GXVec3 &x ) const noexcept;
 
-    [[maybe_unused]] GXVoid SetY ( GXVec3 const &y ) noexcept;
-    [[maybe_unused]] GXVoid GetY ( GXVec3 &y ) const noexcept;
+    [[maybe_unused]] void SetY ( GXVec3 const &y ) noexcept;
+    [[maybe_unused]] void GetY ( GXVec3 &y ) const noexcept;
 
-    [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z ) noexcept;
-    [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const noexcept;
+    [[maybe_unused]] void SetZ ( GXVec3 const &z ) noexcept;
+    [[maybe_unused]] void GetZ ( GXVec3 &z ) const noexcept;
 
     [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
     [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
@@ -721,13 +729,13 @@ struct [[maybe_unused]] GXMat3 final
     [[maybe_unused, nodiscard]] GXVec3 const &Forward () const noexcept;
     [[maybe_unused, nodiscard]] GXVec3 &Forward () noexcept;
 
-    [[maybe_unused]] GXVoid Identity () noexcept;
-    [[maybe_unused]] GXVoid Zeros () noexcept;
+    [[maybe_unused]] void Identity () noexcept;
+    [[maybe_unused]] void Zeros () noexcept;
 
-    [[maybe_unused]] GXVoid Inverse ( GXMat3 const &sourceMatrix ) noexcept;
-    [[maybe_unused]] GXVoid Transpose ( GXMat3 const &sourceMatrix ) noexcept;
-    [[maybe_unused]] GXVoid ClearRotation ( GXMat3 const &sourceMatrix ) noexcept;
-    [[maybe_unused]] GXVoid ClearRotation ( GXMat4 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void Inverse ( GXMat3 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void Transpose ( GXMat3 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void ClearRotation ( GXMat3 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void ClearRotation ( GXMat4 const &sourceMatrix ) noexcept;
 
     // It is cross product in matrix form.
     // Proper result will be achieved for this construction only:
@@ -741,25 +749,25 @@ struct [[maybe_unused]] GXMat3 final
     //
     // GXVec3 c;
     // skew.MultiplyVectorMatrix ( c, a );
-    [[maybe_unused]] GXVoid SkewSymmetric ( GXVec3 const &base ) noexcept;
+    [[maybe_unused]] void SkewSymmetric ( GXVec3 const &base ) noexcept;
 
-    [[maybe_unused]] GXVoid Sum ( GXMat3 const &a, GXMat3 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Subtract ( GXMat3 const &a, GXMat3 const &b ) noexcept;
-    [[maybe_unused]] GXVoid Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept;
+    [[maybe_unused]] void Sum ( GXMat3 const &a, GXMat3 const &b ) noexcept;
+    [[maybe_unused]] void Subtract ( GXMat3 const &a, GXMat3 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept;
 
-    [[maybe_unused]] GXVoid MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept;
-    [[maybe_unused]] GXVoid MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 
-    [[maybe_unused]] GXVoid Multiply ( GXMat3 const &a, GXFloat factor ) noexcept;
+    [[maybe_unused]] void Multiply ( GXMat3 const &a, float factor ) noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXMat4 final
 {
-    [[maybe_unused]] static GXMat4 const        IDENTITY;
+    [[maybe_unused]] static GXMat4 const    IDENTITY;
 
-    GXFloat                                     _data[ 4U ][ 4U ];
+    float                                   _data[ 4U ][ 4U ];
 
     [[maybe_unused]] GXMat4 () = default;
 
@@ -771,22 +779,22 @@ struct [[maybe_unused]] GXMat4 final
 
     // constexpr constructor is implicitly inline
     // see https://timsong-cpp.github.io/cppwp/n4140/dcl.constexpr
-    [[maybe_unused]] constexpr GXMat4 ( GXFloat m00,
-        GXFloat m01,
-        GXFloat m02,
-        GXFloat m03,
-        GXFloat m10,
-        GXFloat m11,
-        GXFloat m12,
-        GXFloat m13,
-        GXFloat m20,
-        GXFloat m21,
-        GXFloat m22,
-        GXFloat m23,
-        GXFloat m30,
-        GXFloat m31,
-        GXFloat m32,
-        GXFloat m33
+    [[maybe_unused]] constexpr GXMat4 ( float m00,
+        float m01,
+        float m02,
+        float m03,
+        float m10,
+        float m11,
+        float m12,
+        float m13,
+        float m20,
+        float m21,
+        float m22,
+        float m23,
+        float m30,
+        float m31,
+        float m32,
+        float m33
     ) noexcept:
         _data { { m00, m01, m02, m03 }, { m10, m11, m12, m13 }, { m20, m21, m22, m23 }, { m30, m31, m32, m33 } }
     {
@@ -795,30 +803,30 @@ struct [[maybe_unused]] GXMat4 final
 
     [[maybe_unused]] ~GXMat4 () = default;
 
-    [[maybe_unused]] GXVoid SetRotation ( GXQuat const &quaternion ) noexcept;
+    [[maybe_unused]] void SetRotation ( GXQuat const &quaternion ) noexcept;
 
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid SetRotationFast ( GXQuat const &quaternion ) noexcept;
+    [[maybe_unused]] void SetRotationFast ( GXQuat const &quaternion ) noexcept;
 
-    [[maybe_unused]] GXVoid SetOrigin ( GXVec3 const &origin ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXMat3 const &rotation, GXVec3 const &origin ) noexcept;
-    [[maybe_unused]] GXVoid From ( GXVec3 const &zDirection, GXVec3 const &origin ) noexcept;
+    [[maybe_unused]] void SetOrigin ( GXVec3 const &origin ) noexcept;
+    [[maybe_unused]] void From ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept;
+    [[maybe_unused]] void From ( GXMat3 const &rotation, GXVec3 const &origin ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &zDirection, GXVec3 const &origin ) noexcept;
 
     // Result is valid if quaternion is normalized.
-    [[maybe_unused]] GXVoid FromFast ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept;
+    [[maybe_unused]] void FromFast ( GXQuat const &quaternion, GXVec3 const &origin ) noexcept;
 
-    [[maybe_unused]] GXVoid SetX ( GXVec3 const &x ) noexcept;
-    [[maybe_unused]] GXVoid GetX ( GXVec3 &x ) const noexcept;
+    [[maybe_unused]] void SetX ( GXVec3 const &x ) noexcept;
+    [[maybe_unused]] void GetX ( GXVec3 &x ) const noexcept;
 
-    [[maybe_unused]] GXVoid SetY ( GXVec3 const &y ) noexcept;
-    [[maybe_unused]] GXVoid GetY ( GXVec3 &y ) const noexcept;
+    [[maybe_unused]] void SetY ( GXVec3 const &y ) noexcept;
+    [[maybe_unused]] void GetY ( GXVec3 &y ) const noexcept;
 
-    [[maybe_unused]] GXVoid SetZ ( GXVec3 const &z ) noexcept;
-    [[maybe_unused]] GXVoid GetZ ( GXVec3 &z ) const noexcept;
+    [[maybe_unused]] void SetZ ( GXVec3 const &z ) noexcept;
+    [[maybe_unused]] void GetZ ( GXVec3 &z ) const noexcept;
 
-    [[maybe_unused]] GXVoid SetW ( GXVec3 const &w ) noexcept;
-    [[maybe_unused]] GXVoid GetW ( GXVec3 &w ) const noexcept;
+    [[maybe_unused]] void SetW ( GXVec3 const &w ) noexcept;
+    [[maybe_unused]] void GetW ( GXVec3 &w ) const noexcept;
 
     [[maybe_unused, nodiscard]] GXVec3 const &Right () const noexcept;
     [[maybe_unused, nodiscard]] GXVec3 &Right () noexcept;
@@ -832,62 +840,72 @@ struct [[maybe_unused]] GXMat4 final
     [[maybe_unused, nodiscard]] GXVec3 const &Location () const noexcept;
     [[maybe_unused, nodiscard]] GXVec3 &Location () noexcept;
 
-    [[maybe_unused]] GXVoid Identity () noexcept;
+    [[maybe_unused]] void Identity () noexcept;
 
     // Reverse Z, infinite far plane projection matrix.
     // 2026/09/29 - near is declared as define in minwindef.h on Windows platform. Need to avoid that naming.
-    [[maybe_unused]] GXVoid Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat zNear ) noexcept;
+    [[maybe_unused]] void Perspective ( float fieldOfViewYRadians, float aspectRatio, float zNear ) noexcept;
 
     // 2026/09/29 - near and far are declared as defines in minwindef.h on Windows platform. Need to avoid that naming.
-    [[maybe_unused]] GXVoid Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept;
+    [[maybe_unused]] void Ortho ( float width, float height, float zNear, float zFar ) noexcept;
 
-    [[maybe_unused]] GXVoid Translation ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
-    [[maybe_unused]] GXVoid Translation ( GXVec3 const &location ) noexcept;
+    [[maybe_unused]] void Translation ( float x, float y, float z ) noexcept;
+    [[maybe_unused]] void Translation ( GXVec3 const &location ) noexcept;
 
-    [[maybe_unused]] GXVoid TranslateTo ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
-    [[maybe_unused]] GXVoid TranslateTo ( GXVec3 const &location ) noexcept;
+    [[maybe_unused]] void TranslateTo ( float x, float y, float z ) noexcept;
+    [[maybe_unused]] void TranslateTo ( GXVec3 const &location ) noexcept;
 
-    [[maybe_unused]] GXVoid RotationX ( GXFloat angle ) noexcept;
-    [[maybe_unused]] GXVoid RotationY ( GXFloat angle ) noexcept;
-    [[maybe_unused]] GXVoid RotationZ ( GXFloat angle ) noexcept;
-    [[maybe_unused]] GXVoid RotationXY ( GXFloat pitchRadians, GXFloat yawRadians ) noexcept;
-    [[maybe_unused]] GXVoid RotationXYZ ( GXFloat pitchRadians, GXFloat yawRadians, GXFloat rollRadians ) noexcept;
-    [[maybe_unused]] GXVoid ClearRotation ( GXMat3 const &sourceMatrix ) noexcept;
-    [[maybe_unused]] GXVoid ClearRotation ( GXMat4 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void RotationX ( float angle ) noexcept;
+    [[maybe_unused]] void RotationY ( float angle ) noexcept;
+    [[maybe_unused]] void RotationZ ( float angle ) noexcept;
+    [[maybe_unused]] void RotationXY ( float pitchRadians, float yawRadians ) noexcept;
+    [[maybe_unused]] void RotationXYZ ( float pitchRadians, float yawRadians, float rollRadians ) noexcept;
+    [[maybe_unused]] void ClearRotation ( GXMat3 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void ClearRotation ( GXMat4 const &sourceMatrix ) noexcept;
 
-    [[maybe_unused]] GXVoid Scale ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
-    [[maybe_unused]] GXVoid ClearScale ( GXVec3 &scale ) const noexcept;
+    [[maybe_unused]] void Scale ( float x, float y, float z ) noexcept;
+    [[maybe_unused]] void ClearScale ( GXVec3 &scale ) const noexcept;
 
-    [[maybe_unused]] GXVoid Inverse ( GXMat4 const &sourceMatrix ) noexcept;
+    [[maybe_unused]] void Inverse ( GXMat4 const &sourceMatrix ) noexcept;
 
-    [[maybe_unused]] GXVoid Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept;
+    [[maybe_unused]] void Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept;
 
     // Multiply row-vector [1x4] by own matrix [4x4].
-    [[maybe_unused]] GXVoid MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept;
 
     // Multiply own matrix [4x4] by column-vector [4x1].
-    [[maybe_unused]] GXVoid MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const noexcept;
 
     // Multiply row-vector [1x3] by own matrix sub matrix [3x3].
-    [[maybe_unused]] GXVoid MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 
     // Multiply row-vector [1x3] by own matrix sub matrix [3x3] and add own w-vector.
-    [[maybe_unused]] GXVoid MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept;
+    [[maybe_unused]] void MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
 struct [[maybe_unused]] GXAABB final
 {
-    GXUByte     _vertices;
+    uint8_t     _vertices;
 
     GXVec3      _min;
     GXVec3      _max;
 
     [[maybe_unused]] constexpr GXAABB () noexcept:
-        _vertices ( 0U ),
-        _min ( FLT_MAX, FLT_MAX, FLT_MAX ),
-        _max ( -FLT_MAX, -FLT_MAX, -FLT_MAX )
+        _vertices ( UINT8_C ( 0 ) ),
+
+        _min (
+            std::numeric_limits<float>::max (),
+            std::numeric_limits<float>::max (),
+            std::numeric_limits<float>::max ()
+        ),
+
+        _max (
+            -std::numeric_limits<float>::max (),
+            -std::numeric_limits<float>::max (),
+            -std::numeric_limits<float>::max ()
+        )
     {
         // NOTHING
     }
@@ -900,38 +918,38 @@ struct [[maybe_unused]] GXAABB final
 
     [[maybe_unused]] ~GXAABB () = default;
 
-    [[maybe_unused]] GXVoid Empty () noexcept;
+    [[maybe_unused]] void Empty () noexcept;
 
-    [[maybe_unused]] GXVoid Transform ( GXAABB &bounds, GXMat4 const &transform ) const noexcept;
-    [[maybe_unused]] GXVoid AddVertex ( GXVec3 const &vertex ) noexcept;
-    [[maybe_unused]] GXVoid AddVertex ( GXFloat x, GXFloat y, GXFloat z ) noexcept;
+    [[maybe_unused]] void Transform ( GXAABB &bounds, GXMat4 const &transform ) const noexcept;
+    [[maybe_unused]] void AddVertex ( GXVec3 const &vertex ) noexcept;
+    [[maybe_unused]] void AddVertex ( float x, float y, float z ) noexcept;
 
-    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXAABB const &other ) const noexcept;
-    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXVec3 const &point ) const noexcept;
-    [[maybe_unused, nodiscard]] GXBool IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
+    [[maybe_unused, nodiscard]] bool IsOverlapped ( GXAABB const &other ) const noexcept;
+    [[maybe_unused, nodiscard]] bool IsOverlapped ( GXVec3 const &point ) const noexcept;
+    [[maybe_unused, nodiscard]] bool IsOverlapped ( float x, float y, float z ) const noexcept;
 
-    [[maybe_unused]] GXVoid GetCenter ( GXVec3 &center ) const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetWidth () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetHeight () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetDepth () const noexcept;
-    [[maybe_unused, nodiscard]] GXFloat GetSphereRadius () const noexcept;
+    [[maybe_unused]] void GetCenter ( GXVec3 &center ) const noexcept;
+    [[maybe_unused, nodiscard]] float GetWidth () const noexcept;
+    [[maybe_unused, nodiscard]] float GetHeight () const noexcept;
+    [[maybe_unused, nodiscard]] float GetDepth () const noexcept;
+    [[maybe_unused, nodiscard]] float GetSphereRadius () const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
 
-enum class eGXPlaneClassifyVertex : GXUByte
+enum class eGXPlaneClassifyVertex : uint8_t
 {
-    InFront = 0U,
-    On = 1U,
-    Behind = 2U
+    InFront = UINT8_C ( 0 ),
+    On = UINT8_C ( 1 ),
+    Behind = UINT8_C ( 2 )
 };
 
 struct [[maybe_unused]] GXPlane final
 {
-    GXFloat     _a;
-    GXFloat     _b;
-    GXFloat     _c;
-    GXFloat     _d;
+    float       _a;
+    float       _b;
+    float       _c;
+    float       _d;
 
     [[maybe_unused]] GXPlane () = default;
 
@@ -943,22 +961,18 @@ struct [[maybe_unused]] GXPlane final
 
     [[maybe_unused]] ~GXPlane () = default;
 
-    [[maybe_unused]] GXVoid From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC ) noexcept;
+    [[maybe_unused]] void From ( GXVec3 const &pointA, GXVec3 const &pointB, GXVec3 const &pointC ) noexcept;
 
-    [[maybe_unused]] GXVoid FromLineToPoint ( GXVec3 const &lineStart,
+    [[maybe_unused]] void FromLineToPoint ( GXVec3 const &lineStart,
         GXVec3 const &lineEnd,
         GXVec3 const &point
     ) noexcept;
 
-    [[maybe_unused]] GXVoid Normalize () noexcept;
-    [[maybe_unused]] GXVoid Flip () noexcept;
+    [[maybe_unused]] void Normalize () noexcept;
+    [[maybe_unused]] void Flip () noexcept;
 
     [[maybe_unused, nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXVec3 const &vertex ) const noexcept;
-
-    [[maybe_unused, nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( GXFloat x,
-        GXFloat y,
-        GXFloat z
-    ) const noexcept;
+    [[maybe_unused, nodiscard]] eGXPlaneClassifyVertex ClassifyVertex ( float x, float y, float z ) const noexcept;
 };
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -982,13 +996,13 @@ class [[maybe_unused]] GXProjectionClipPlanes final
         [[maybe_unused]] ~GXProjectionClipPlanes () = default;
 
         // Normals will be directed inside view volume.
-        [[maybe_unused]] GXVoid From ( GXMat4 const &src ) noexcept;
+        [[maybe_unused]] void From ( GXMat4 const &src ) noexcept;
 
         // Trivial invisibility test.
-        [[maybe_unused, nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const noexcept;
+        [[maybe_unused, nodiscard]] bool IsVisible ( GXAABB const &bounds ) const noexcept;
 
     private:
-        [[nodiscard]] GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
+        [[nodiscard]] uint8_t PlaneTest ( float x, float y, float z ) const noexcept;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -1018,59 +1032,59 @@ class [[maybe_unused]] GXProjectionInfiniteFarClipPlanes final
         [[maybe_unused]] ~GXProjectionInfiniteFarClipPlanes () = default;
 
         // Normals will be directed inside view volume.
-        [[maybe_unused]] GXVoid From ( GXMat4 const &src ) noexcept;
+        [[maybe_unused]] void From ( GXMat4 const &src ) noexcept;
 
         // Trivial invisibility test.
-        [[maybe_unused, nodiscard]] GXBool IsVisible ( GXAABB const &bounds ) const noexcept;
+        [[maybe_unused, nodiscard]] bool IsVisible ( GXAABB const &bounds ) const noexcept;
 
     private:
-        [[nodiscard]] GXUByte PlaneTest ( GXFloat x, GXFloat y, GXFloat z ) const noexcept;
+        [[nodiscard]] uint8_t PlaneTest ( float x, float y, float z ) const noexcept;
 };
 
 //---------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXDegToRad ( GXFloat degrees ) noexcept
+[[maybe_unused, nodiscard]] constexpr float GXDegToRad ( float degrees ) noexcept
 {
-    constexpr GXFloat toRadians = 1.74532925e-2F;
+    constexpr float toRadians = 1.74532925e-2F;
     return degrees * toRadians;
 }
 
-[[maybe_unused, nodiscard]] constexpr GXFloat GXCALL GXRadToDeg ( GXFloat radians ) noexcept
+[[maybe_unused, nodiscard]] constexpr float GXRadToDeg ( float radians ) noexcept
 {
-    constexpr GXFloat toDegrees = 5.72957795e+1F;
+    constexpr float toDegrees = 5.72957795e+1F;
     return radians * toDegrees;
 }
 
-[[maybe_unused]] GXVoid GXCALL GXRandomize () noexcept;
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomNormalize () noexcept;
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXRandomBetween ( GXFloat from, GXFloat to ) noexcept;
-[[maybe_unused]] GXVoid GXCALL GXRandomBetween ( GXVec3 &out, GXVec3 const &from, GXVec3 const &to ) noexcept;
+[[maybe_unused]] void GXRandomize () noexcept;
+[[maybe_unused, nodiscard]] float GXRandomNormalize () noexcept;
+[[maybe_unused, nodiscard]] float GXRandomBetween ( float from, float to ) noexcept;
+[[maybe_unused]] void GXRandomBetween ( GXVec3 &out, GXVec3 const &from, GXVec3 const &to ) noexcept;
 
-[[maybe_unused]] GXVoid GXCALL GXGetTangentBitangent ( GXVec3 &outTangent,
+[[maybe_unused]] void GXGetTangentBitangent ( GXVec3 &outTangent,
     GXVec3 &outBitangent,
-    GXUByte vertexID,
-    GXUByte const* vertices,
-    GXUPointer vertexStride,
-    GXUByte const* uvs,
-    GXUPointer uvStride
+    uint8_t vertexID,
+    uint8_t const* vertices,
+    size_t vertexStride,
+    uint8_t const* uvs,
+    size_t uvStride
 ) noexcept;
 
-[[maybe_unused, nodiscard]] GXFloat GXCALL GXClampf ( GXFloat value, GXFloat minValue, GXFloat maxValue ) noexcept;
-[[maybe_unused, nodiscard]] GXInt GXCALL GXClampi ( GXInt value, GXInt minValue, GXInt maxValue ) noexcept;
+[[maybe_unused, nodiscard]] float GXClampf ( float value, float minValue, float maxValue ) noexcept;
+[[maybe_unused, nodiscard]] int32_t GXClampi ( int32_t value, int32_t minValue, int32_t maxValue ) noexcept;
 
-[[maybe_unused]] GXVoid GXCALL GXGetBarycentricCoords ( GXVec3 &out,
+[[maybe_unused]] void GXGetBarycentricCoords ( GXVec3 &out,
     GXVec3 const &point,
     GXVec3 const &aPivot,
     GXVec3 const &bPivot,
     GXVec3 const &cPivot
 ) noexcept;
 
-[[maybe_unused]] GXVoid GXCALL GXGetRayFromViewer ( GXVec3 &origin,
+[[maybe_unused]] void GXGetRayFromViewer ( GXVec3 &origin,
     GXVec3 &direction,
-    GXUShort x,
-    GXUShort y,
-    GXUShort viewportWidth,
-    GXUShort viewportHeight,
+    uint16_t x,
+    uint16_t y,
+    uint16_t viewportWidth,
+    uint16_t viewportHeight,
     GXVec3 const &viewerLocation,
     GXMat4 const &viewProjectionMatrix
 ) noexcept;

@@ -101,10 +101,10 @@ int ScriptableTextUIElement::OnSetColorRGB ( lua_State* state )
 
     self._text.SetColor (
         GXColorUNORM (
-            static_cast<GXUByte> ( lua_tointeger ( state, 2 ) ),
-            static_cast<GXUByte> ( lua_tointeger ( state, 3 ) ),
-            static_cast<GXUByte> ( lua_tointeger ( state, 4 ) ),
-            static_cast<GXUByte> ( lua_tonumber ( state, 5 ) * converter )
+            static_cast<uint8_t> ( lua_tointeger ( state, 2 ) ),
+            static_cast<uint8_t> ( lua_tointeger ( state, 3 ) ),
+            static_cast<uint8_t> ( lua_tointeger ( state, 4 ) ),
+            static_cast<uint8_t> ( lua_tonumber ( state, 5 ) * converter )
         )
     );
 

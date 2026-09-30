@@ -1,4 +1,4 @@
-// version 1.18
+// version 1.19
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
@@ -6,7 +6,7 @@
 
 namespace {
 
-[[nodiscard]] GXBool AABBIsOverlapped ( float32x4_t const &leftA,
+[[nodiscard]] bool AABBIsOverlapped ( float32x4_t const &leftA,
     float32x2_t const &leftB,
     float32x4_t const &rightA,
     float32x2_t const &rightB
@@ -34,51 +34,51 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec2::Reverse () noexcept
+[[maybe_unused]] void GXVec2::Reverse () noexcept
 {
     vst1_f32 ( _data, vneg_f32 ( vld1_f32 ( _data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept
+[[maybe_unused]] void GXVec2::CalculateNormalFast ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {
     float32_t const alpha[ 2U ] = { a._data[ 1U ], b._data[ 0U ] };
     float32_t const beta[ 2U ] = { b._data[ 1U ], a._data[ 0U ] };
     vst1_f32 ( _data, vsub_f32 ( vld1_f32 ( alpha ), vld1_f32 ( beta ) ) );
 }
 
-[[maybe_unused]] GXFloat GXVec2::DotProduct ( GXVec2 const &other ) const noexcept
+[[maybe_unused]] float GXVec2::DotProduct ( GXVec2 const &other ) const noexcept
 {
     return vaddv_f32 ( vmul_f32 ( vld1_f32 ( _data ), vld1_f32 ( other._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b ) noexcept
+[[maybe_unused]] void GXVec2::Sum ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {
     vst1_f32 ( _data, vadd_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::Sum ( GXVec2 const &a, GXFloat bScale, GXVec2 const &b ) noexcept
+[[maybe_unused]] void GXVec2::Sum ( GXVec2 const &a, float bScale, GXVec2 const &b ) noexcept
 {
     vst1_f32 ( _data, vfma_n_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ), bScale ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::Subtract ( GXVec2 const &a, GXVec2 const &b ) noexcept
+[[maybe_unused]] void GXVec2::Subtract ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {
     vst1_f32 ( _data, vsub_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b ) noexcept
+[[maybe_unused]] void GXVec2::Multiply ( GXVec2 const &a, GXVec2 const &b ) noexcept
 {
     vst1_f32 ( _data, vmul_f32 ( vld1_f32 ( a._data ), vld1_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec2::Multiply ( GXVec2 const &v, GXFloat scale ) noexcept
+[[maybe_unused]] void GXVec2::Multiply ( GXVec2 const &v, float scale ) noexcept
 {
     vst1_f32 ( _data, vmul_n_f32 ( vld1_f32 ( v._data ), scale ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec3::Reverse () noexcept
+[[maybe_unused]] void GXVec3::Reverse () noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -88,7 +88,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b ) noexcept
+[[maybe_unused]] void GXVec3::Sum ( GXVec3 const &a, GXVec3 const &b ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -98,7 +98,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Sum ( GXVec3 const &a, GXFloat bScale, GXVec3 const &b ) noexcept
+[[maybe_unused]] void GXVec3::Sum ( GXVec3 const &a, float bScale, GXVec3 const &b ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -108,7 +108,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b ) noexcept
+[[maybe_unused]] void GXVec3::Subtract ( GXVec3 const &a, GXVec3 const &b ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -118,7 +118,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXFloat scale ) noexcept
+[[maybe_unused]] void GXVec3::Multiply ( GXVec3 const &a, float scale ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -128,7 +128,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b ) noexcept
+[[maybe_unused]] void GXVec3::Multiply ( GXVec3 const &a, GXVec3 const &b ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
     // computation anyway.
@@ -138,7 +138,7 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( tmp ), 0 );
 }
 
-[[maybe_unused]] GXFloat GXVec3::DotProduct ( GXVec3 const &other ) const noexcept
+[[maybe_unused]] float GXVec3::DotProduct ( GXVec3 const &other ) const noexcept
 {
     constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
     constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
@@ -153,7 +153,7 @@ namespace {
     return vaddvq_f32 ( vmulq_f32 ( a, b ) );
 }
 
-[[maybe_unused]] GXVoid GXVec3::CrossProduct ( GXVec3 const &a, GXVec3 const &b ) noexcept
+[[maybe_unused]] void GXVec3::CrossProduct ( GXVec3 const &a, GXVec3 const &b ) noexcept
 {
     // The implementation is based on
     // https://developer.arm.com/documentation/den0018/a/NEON-Code-Examples-with-Mixed-Operations/Cross-product/Single-cross-product
@@ -181,9 +181,9 @@ namespace {
     vst1_lane_f32 ( _data + 2U, vget_high_f32 ( result ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXVec3::LinearInterpolation ( GXVec3 const &start,
+[[maybe_unused]] void GXVec3::LinearInterpolation ( GXVec3 const &start,
     GXVec3 const &finish,
-    GXFloat interpolationFactor
+    float interpolationFactor
 ) noexcept
 {
     // Note vld1q_f32 expects float32_t[ 4U ] array as input. So the 4-th component is garbage but it's not used in
@@ -197,39 +197,39 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept
+[[maybe_unused]] void GXVec4::Sum ( GXVec4 const &a, GXVec4 const &b ) noexcept
 {
     vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec4::Sum ( GXVec4 const &a, GXFloat bScale, GXVec4 const &b ) noexcept
+[[maybe_unused]] void GXVec4::Sum ( GXVec4 const &a, float bScale, GXVec4 const &b ) noexcept
 {
     vst1q_f32 ( _data, vfmaq_n_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ), bScale ) );
 }
 
-[[maybe_unused]] GXVoid GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept
+[[maybe_unused]] void GXVec4::Subtract ( GXVec4 const &a, GXVec4 const &b ) noexcept
 {
     vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXFloat scale ) noexcept
+[[maybe_unused]] void GXVec4::Multiply ( GXVec4 const &a, float scale ) noexcept
 {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( a._data ), scale ) );
 }
 
-[[maybe_unused]] GXVoid GXVec4::Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept
+[[maybe_unused]] void GXVec4::Multiply ( GXVec4 const &a, GXVec4 const &b ) noexcept
 {
     vst1q_f32 ( _data, vmulq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXFloat GXVec4::DotProduct ( GXVec4 const &other ) const noexcept
+[[maybe_unused]] float GXVec4::DotProduct ( GXVec4 const &other ) const noexcept
 {
     return vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data ), vld1q_f32 ( other._data ) ) );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXFloat GXVec6::DotProduct ( GXVec6 const &other ) const noexcept
+[[maybe_unused]] float GXVec6::DotProduct ( GXVec6 const &other ) const noexcept
 {
     float32x4_t const part1 = vmulq_f32 ( vld1q_f32 ( _data ), vld1q_f32 ( other._data ) );
 
@@ -244,19 +244,19 @@ namespace {
     return vaddvq_f32 ( vaddq_f32 ( part1, vreinterpretq_u32_f32 ( part2 ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXVec6 const &b ) noexcept
+[[maybe_unused]] void GXVec6::Sum ( GXVec6 const &a, GXVec6 const &b ) noexcept
 {
     vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
     vst1_f32 ( _data + 4U, vadd_f32 ( vld1_f32 ( a._data + 4U ), vld1_f32 ( b._data + 4U ) ) );
 }
 
-[[maybe_unused]] GXVoid GXVec6::Sum ( GXVec6 const &a, GXFloat bScale, GXVec6 const &b ) noexcept
+[[maybe_unused]] void GXVec6::Sum ( GXVec6 const &a, float bScale, GXVec6 const &b ) noexcept
 {
     vst1q_f32 ( _data, vfmaq_n_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ), bScale ) );
     vst1_f32 ( _data + 4U, vfma_n_f32 ( vld1_f32 ( a._data + 4U ), vld1_f32 ( b._data + 4U ), bScale ) );
 }
 
-[[maybe_unused]] GXVoid GXVec6::Multiply ( GXVec6 const &a, GXFloat factor ) noexcept
+[[maybe_unused]] void GXVec6::Multiply ( GXVec6 const &a, float factor ) noexcept
 {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( a._data ), factor ) );
     vst1_f32 ( _data + 4U, vmul_n_f32 ( vld1_f32 ( a._data + 4U ), factor ) );
@@ -278,7 +278,7 @@ namespace {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( tmp ), GX_MATH_UNORM_FACTOR ) );
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::From ( GXUByte red, GXUByte green, GXUByte blue, GXFloat alpha ) noexcept
+[[maybe_unused]] void GXColorRGB::From ( uint8_t red, uint8_t green, uint8_t blue, float alpha ) noexcept
 {
     float32_t const tmp[ 4U ] =
     {
@@ -292,7 +292,7 @@ namespace {
     _data[ 3U ] = alpha;
 }
 
-[[maybe_unused]] GXVoid GXColorRGB::From ( GXUInt red, GXUInt green, GXUInt blue, GXFloat alpha ) noexcept
+[[maybe_unused]] void GXColorRGB::From ( uint32_t red, uint32_t green, uint32_t blue, float alpha ) noexcept
 {
     float32_t const tmp[ 4U ] =
     {
@@ -316,16 +316,16 @@ namespace {
 
     return
     {
-        static_cast<GXUByte> ( tmp[ 0U ] ),
-        static_cast<GXUByte> ( tmp[ 1U ] ),
-        static_cast<GXUByte> ( tmp[ 2U ] ),
-        static_cast<GXUByte> ( tmp[ 3U ] )
+        static_cast<uint8_t> ( tmp[ 0U ] ),
+        static_cast<uint8_t> ( tmp[ 1U ] ),
+        static_cast<uint8_t> ( tmp[ 2U ] ),
+        static_cast<uint8_t> ( tmp[ 3U ] )
     };
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXQuat::Normalize () noexcept
+[[maybe_unused]] void GXQuat::Normalize () noexcept
 {
     float32x4_t const alpha = vld1q_f32 ( _data );
     float32_t squaredLength = vaddvq_f32 ( vmulq_f32 ( alpha, alpha ) );
@@ -335,7 +335,7 @@ namespace {
     vst1q_f32 ( _data, vmulq_n_f32 ( alpha, 1.0F / std::sqrt ( squaredLength ) ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Inverse ( GXQuat const &q ) noexcept
+[[maybe_unused]] void GXQuat::Inverse ( GXQuat const &q ) noexcept
 {
     float32x4_t const alpha = vld1q_f32 ( q._data );
     float32_t squaredLength = vaddvq_f32 ( vmulq_f32 ( alpha, alpha ) );
@@ -346,7 +346,7 @@ namespace {
     _data[ 0U ] = -_data[ 0U ];
 }
 
-[[maybe_unused]] GXVoid GXQuat::FromAxisAngle ( GXFloat x, GXFloat y, GXFloat z, GXFloat angle ) noexcept
+[[maybe_unused]] void GXQuat::FromAxisAngle ( float x, float y, float z, float angle ) noexcept
 {
     float const halfAngle = 0.5F * angle;
 
@@ -356,7 +356,7 @@ namespace {
     _data[ 0U ] = std::cos ( halfAngle );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
+[[maybe_unused]] void GXQuat::Multiply ( GXQuat const &a, GXQuat const &b ) noexcept
 {
     float const *bData = b._data;
 
@@ -414,24 +414,24 @@ namespace {
     _data[ 3U ] = vaddvq_f32 ( tmp3 );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Multiply ( GXQuat const &q, GXFloat scale ) noexcept
+[[maybe_unused]] void GXQuat::Multiply ( GXQuat const &q, float scale ) noexcept
 {
     vst1q_f32 ( _data, vmulq_n_f32 ( vld1q_f32 ( q._data ), scale ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Sum ( GXQuat const &a, GXQuat const &b ) noexcept
+[[maybe_unused]] void GXQuat::Sum ( GXQuat const &a, GXQuat const &b ) noexcept
 {
     vst1q_f32 ( _data, vaddq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::Subtract ( GXQuat const &a, GXQuat const &b ) noexcept
+[[maybe_unused]] void GXQuat::Subtract ( GXQuat const &a, GXQuat const &b ) noexcept
 {
     vst1q_f32 ( _data, vsubq_f32 ( vld1q_f32 ( a._data ), vld1q_f32 ( b._data ) ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
+[[maybe_unused]] void GXQuat::SphericalLinearInterpolation ( GXQuat const &start,
     GXQuat const &finish,
-    GXFloat interpolationFactor
+    float interpolationFactor
 ) noexcept
 {
     float32x4_t const s = vld1q_f32 ( start._data );
@@ -461,7 +461,7 @@ namespace {
     vst1q_f32 ( _data, vfmaq_n_f32 ( vmulq_n_f32 ( s, scale[ 0U ] ), temp, scale[ 1U ] ) );
 }
 
-[[maybe_unused]] GXVoid GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
+[[maybe_unused]] void GXQuat::TransformFast ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     float32x4_t const rabc = vld1q_f32 ( _data );
     float32x4_t const rabc2 = vaddq_f32 ( rabc, rabc );
@@ -557,7 +557,7 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXMat3::Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept
+[[maybe_unused]] void GXMat3::Multiply ( GXMat3 const &a, GXMat3 const &b ) noexcept
 {
     constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
     constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
@@ -596,7 +596,7 @@ namespace {
     vst1_lane_f32 ( _data[ 2U ] + 2U, vget_high_f32 ( c2 ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXMat3::MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept
+[[maybe_unused]] void GXMat3::MultiplyVectorMatrix ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
     float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
@@ -609,7 +609,7 @@ namespace {
     vst1_lane_f32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept
+[[maybe_unused]] void GXMat3::MultiplyMatrixVector ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     constexpr uint32_t max32U = std::numeric_limits<uint32_t>::max ();
     constexpr uint32_t const maskData[ 4U ] = { max32U, max32U, max32U, 0U };
@@ -634,7 +634,7 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXVoid GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
+[[maybe_unused]] void GXMat4::Inverse ( GXMat4 const &sourceMatrix ) noexcept
 {
     // The implementation is based on ideas from
     // https://lxjk.github.io/2017/09/03/Fast-4x4-Matrix-Inverse-with-SSE-SIMD-Explained.html
@@ -860,7 +860,7 @@ namespace {
     vst1_f32 ( _data[ 2U ] + 2U, vrev64_f32 ( w13 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept
+[[maybe_unused]] void GXMat4::Multiply ( GXMat4 const &a, GXMat4 const &b ) noexcept
 {
     // see docs/arm-neon/matrix-multiplication.odt
 
@@ -902,7 +902,7 @@ namespace {
     vst1q_f32 ( _data[ 3U ], c3 );
 }
 
-[[maybe_unused]] GXVoid GXMat4::MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept
+[[maybe_unused]] void GXMat4::MultiplyVectorMatrix ( GXVec4 &out, GXVec4 const &v ) const noexcept
 {
     float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
     float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
@@ -915,7 +915,7 @@ namespace {
     vst1q_f32 ( out._data, vaddq_f32 ( b0, b1 ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const noexcept
+[[maybe_unused]] void GXMat4::MultiplyMatrixVector ( GXVec4 &out, GXVec4 const &v ) const noexcept
 {
     float32x4_t const vec = vld1q_f32 ( v._data );
 
@@ -925,7 +925,7 @@ namespace {
     out._data[ 3U ] = vaddvq_f32 ( vmulq_f32 ( vld1q_f32 ( _data[ 3U ] ), vec ) );
 }
 
-[[maybe_unused]] GXVoid GXMat4::MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept
+[[maybe_unused]] void GXMat4::MultiplyAsNormal ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
     float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
@@ -938,7 +938,7 @@ namespace {
     vst1_lane_f32 ( out._data + 2U, vget_high_f32 ( c ), 0 );
 }
 
-[[maybe_unused]] GXVoid GXMat4::MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept
+[[maybe_unused]] void GXMat4::MultiplyAsPoint ( GXVec3 &out, GXVec3 const &v ) const noexcept
 {
     float32x4_t const a0 = vmulq_n_f32 ( vld1q_f32 ( _data[ 0U ] ), v._data[ 0U ] );
     float32x4_t const a1 = vmulq_n_f32 ( vld1q_f32 ( _data[ 1U ] ), v._data[ 1U ] );
@@ -955,13 +955,13 @@ namespace {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXAABB const &other ) const noexcept
+[[maybe_unused]] bool GXAABB::IsOverlapped ( GXAABB const &other ) const noexcept
 {
-    float32_t const *minBounds = _min._data;
-    float32_t const *maxBounds = _max._data;
+    float32_t const* minBounds = _min._data;
+    float32_t const* maxBounds = _max._data;
 
-    float32_t const *otherMinBounds = other._min._data;
-    float32_t const *otherMaxBounds = other._max._data;
+    float32_t const* otherMinBounds = other._min._data;
+    float32_t const* otherMaxBounds = other._max._data;
 
     float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], otherMinBounds[ 0U ] };
 
@@ -980,12 +980,12 @@ namespace {
     );
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXVec3 const &point ) const noexcept
+[[maybe_unused]] bool GXAABB::IsOverlapped ( GXVec3 const &point ) const noexcept
 {
-    float32_t const *minBounds = _min._data;
-    float32_t const *maxBounds = _max._data;
+    float32_t const* minBounds = _min._data;
+    float32_t const* maxBounds = _max._data;
 
-    float32_t const *p = point._data;
+    float32_t const* p = point._data;
 
     float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], p[ 0U ] };
     float32_t const rightAData[ 4U ] = { p[ 0U ], p[ 1U ], p[ 2U ], maxBounds[ 0U ] };
@@ -997,10 +997,10 @@ namespace {
     );
 }
 
-[[maybe_unused]] GXBool GXAABB::IsOverlapped ( GXFloat x, GXFloat y, GXFloat z ) const noexcept
+[[maybe_unused]] bool GXAABB::IsOverlapped ( float x, float y, float z ) const noexcept
 {
-    float32_t const *minBounds = _min._data;
-    float32_t const *maxBounds = _max._data;
+    float32_t const* minBounds = _min._data;
+    float32_t const* maxBounds = _max._data;
 
     float32_t const leftAData[ 4U ] = { minBounds[ 0U ], minBounds[ 1U ], minBounds[ 2U ], x };
     float32_t const leftBData[ 4U ] = { y, z };

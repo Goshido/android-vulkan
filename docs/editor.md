@@ -19,7 +19,7 @@
 ### <a id="requirements">Requirements</a>
 
 * _Windows 11_+
-* _Visual Studio 2026 Community 18.10.2_
+* _Visual Studio 2026 Community 18.10.3_
   - Workloads: Desktop development with C++
   - Individual components
     - _MSBuild_

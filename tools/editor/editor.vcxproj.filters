@@ -542,12 +542,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp">
       <Filter>Header Files\core\GXCommon</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp">
-      <Filter>Header Files\core\GXCommon</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXTypes.hpp">
-      <Filter>Header Files\core\GXCommon\Windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp">
       <Filter>Header Files\core\GXCommon\Windows</Filter>
     </ClInclude>

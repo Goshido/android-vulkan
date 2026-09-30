@@ -1,14 +1,15 @@
-// version 1.11
+// version 1.12
 
 #include <precompiled_headers.hpp>
 #include <GXCommon/GXMath.hpp>
 
-[[maybe_unused]] GXVoid GXMat4::Perspective ( GXFloat fieldOfViewYRadians, GXFloat aspectRatio, GXFloat zNear ) noexcept
+
+[[maybe_unused]] void GXMat4::Perspective ( float fieldOfViewYRadians, float aspectRatio, float zNear ) noexcept
 {
     // Reverse Z from 0 to 1, infinite far plane projection matrix.
     // See https://github.com/Goshido/android-vulkan/issues/104
-    GXFloat const halfFovy = fieldOfViewYRadians * 0.5F;
-    GXFloat const cot = std::cos ( halfFovy ) / std::sin ( halfFovy );
+    float const halfFovy = fieldOfViewYRadians * 0.5F;
+    float const cot = std::cos ( halfFovy ) / std::sin ( halfFovy );
 
     auto &m = _data;
 
@@ -35,9 +36,9 @@
     m[ 3U ][ 1U ] = 0.0F;
 }
 
-[[maybe_unused]] GXVoid GXMat4::Ortho ( GXFloat width, GXFloat height, GXFloat zNear, GXFloat zFar ) noexcept
+[[maybe_unused]] void GXMat4::Ortho ( float width, float height, float zNear, float zFar ) noexcept
 {
-    GXFloat const invRange = 1.0f / ( zFar - zNear );
+    float const invRange = 1.0f / ( zFar - zNear );
     auto &m = _data;
 
     m[ 0U ][ 0U ] = 2.0F / width;

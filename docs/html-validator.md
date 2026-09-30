@@ -43,7 +43,7 @@ Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 ### <a id="requirements">Requirements</a>
 
 - _Windows 11+_
-- _Visual Studio 2026 Community 18.10.2_
+- _Visual Studio 2026 Community 18.10.3_
 - _Desktop development with C++_
 - _MSBuild_
 - _MSVC Build tools v14.51 for x64/x86_
@@ -51,7 +51,7 @@ Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 - _C++ core features_
 - _Windows 11 SDK (10.0.28000.2526)_
 - _Windows Universal C Runtime_
-- _CMake 4.1.2_
+- _CMake 4.4.3_
 
 ### <a id="source-code">Source code</a>
 

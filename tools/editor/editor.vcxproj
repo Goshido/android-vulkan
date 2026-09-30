@@ -1265,9 +1265,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\file.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXNativeMesh.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXTypes.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp" />
-    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXTypes.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\half_types.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\ktx_header.hpp" />

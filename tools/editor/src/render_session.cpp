@@ -1307,6 +1307,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
             _programStorage._count |
             _meshStorage._count |
             _streamBufferStorage._count |
+            _gpuBufferStorage._count |
             _texture2DStorage._count;
 
         if ( !exit ) [[unlikely]]

@@ -17,7 +17,7 @@ $profileMode = ( $args.Length -lt 2 ) ? $false : $args[ 1 ]
 [string] $DXC = "$Env:ANDROID_VULKAN_DXC_ROOT\dxc.exe"
 [string] $HLSL_PROFILE = "6_11"
 
-$global:FLAGS = @(
+$FLAGS = @(
     "-HV", "2021",
     "-spirv",
     "-fvk-use-dx-layout",

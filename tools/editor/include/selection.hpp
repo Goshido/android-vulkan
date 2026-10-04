@@ -301,8 +301,6 @@ class Selection final
         void Destroy ( MessageQueue &messageQueue, android_vulkan::Renderer &renderer ) noexcept;
         [[nodiscard]] bool IsReady () const noexcept;
         [[nodiscard]] uint32_t GetIDImageResourceIndex () const noexcept;
-
-        // FUCK - could be race condition
         [[nodiscard]] Actors &GetActors () noexcept;
 
         void PrepareIDBuffer ( VkCommandBuffer commandBuffer ) noexcept;

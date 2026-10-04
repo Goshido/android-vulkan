@@ -119,6 +119,8 @@ class RenderSession final
         Workspace                               &_workspace;
         UIManager                               &_uiManager;
 
+        Hotkey                                  _makeVulkanMemorySnapshot {};
+
         // When app is in shutdown state the enqueue back must be switched to enqueue front to avoid deadlock.
         EnqueueHandle                           _enqueueHandle = &MessageQueue::EnqueueBack;
 

@@ -45,7 +45,7 @@ void Renderer::MakeVulkanMemorySnapshot () noexcept
     AV_TRACE ( "Vulkan memory snapshot" )
     std::filesystem::path const directory = editor::OSUtils::ResolvePath ( SNAPSHOT_DIRECTORY );
     std::filesystem::create_directories ( directory );
-    _memoryAllocator.MakeSnapshot ( editor::OSUtils::ToString ( directory ).c_str () );
+    _memoryAllocator.MakeSnapshot ( directory.string ().c_str () );
 }
 
 bool Renderer::DeployNativeSurface ( WindowHandle nativeWindow ) noexcept

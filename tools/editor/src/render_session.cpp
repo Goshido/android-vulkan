@@ -69,9 +69,9 @@ void RenderSession::Destroy () noexcept
     AV_TRACE ( "RenderSession: destroy" )
 
     if ( _thread.joinable () ) [[likely]]
-    {
         _thread.join ();
-    }
+
+    _makeVulkanMemorySnapshot = {};
 }
 
 bool RenderSession::AllocateCommandBuffers ( VkDevice device ) noexcept
@@ -587,6 +587,18 @@ bool RenderSession::InitModules () noexcept
     vkFreeCommandBuffers ( device, pool, 1U, &commandBuffer );
     _exposurePass.FreeTransferResources ( device, pool );
     _timestamp = std::chrono::steady_clock::now ();
+
+    _makeVulkanMemorySnapshot = Hotkey ( eKey::KeyM,
+        true,
+        true,
+        true,
+
+        [ &renderer = renderer ] () noexcept {
+            AV_TRACE ( "Make memory snapshot" )
+            renderer.MakeVulkanMemorySnapshot ();
+        }
+    );
+
     return true;
 }
 
@@ -1307,6 +1319,7 @@ void RenderSession::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) 
             _programStorage._count |
             _meshStorage._count |
             _streamBufferStorage._count |
+            _gpuBufferStorage._count |
             _texture2DStorage._count;
 
         if ( !exit ) [[unlikely]]
@@ -1494,13 +1507,14 @@ void RenderSession::OnSwapchainCreated ( MessageQueue &messageQueue ) noexcept
     _uiPass.OnSwapchainDestroyed ();
     _workspace.OnGBufferResolutionChanged ( _idRenderTarget, *_idRenderTargetIdx );
 
-    bool const result = _uiPass.OnSwapchainCreated ( renderer ) &&
+    bool const result = _exposurePass.SetTarget ( renderer, resourceHeap, _hdrRenderTarget, *_hdrRenderTargetIdx ) &&
+        _uiPass.OnSwapchainCreated ( renderer ) &&
         _toneMapper.SetTarget ( renderer, *_hdrRenderTargetIdx, _exposurePass.GetExposure () );
 
     if ( result ) [[likely]]
         return;
 
-    android_vulkan::LogError ( "editor::RenderSession::OnSwapchainCreated - Can't create UI pass." );
+    android_vulkan::LogError ( "editor::RenderSession::OnSwapchainCreated - Can't handle new swapchain." );
     AV_ASSERT ( false )
 }
 

@@ -661,7 +661,7 @@ void MainWindow::Save () noexcept
     OS sends WM_MOVE with x = 2, y = 25 and only than OS sends WM_SIZE. In order to have correct normal
     windows coordinates we need to translate window back to normal state and receive new x and y coordinates.
     We can't use GetWindowPlacement because it returns coordinates in workspace coordinates and we need
-    screen coordinates. Ignoring coordinate conventions will fuck up users who places taskbar in top or
+    screen coordinates. Ignoring coordinate conventions will "hit" users who places taskbar in top or
     left side of the screen.
 
     Another issue with minimize. Moving to minimized state sends WM_MOVE with x = -32000, y = -32000.

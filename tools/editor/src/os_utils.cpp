@@ -26,7 +26,7 @@ void OSUtils::PrintLastError ( char const* prefix ) noexcept
     LocalFree ( message );
 }
 
-std::filesystem::path OSUtils::ResolvePath ( std::string_view const &file ) noexcept
+std::filesystem::path OSUtils::ResolvePath ( std::string_view file ) noexcept
 {
     AV_TRACE ( "Resolving path" )
     char const* f = file.data ();
@@ -35,13 +35,6 @@ std::filesystem::path OSUtils::ResolvePath ( std::string_view const &file ) noex
     path.resize ( static_cast<size_t> ( len ) );
     ExpandEnvironmentStringsA ( f, path.data (), len );
     return std::filesystem::path ( std::move ( path ) );
-}
-
-std::string OSUtils::ToString ( std::filesystem::path const &/*path*/ ) noexcept
-{
-    // FUCK
-    AV_ASSERT ( false )
-    return {};
 }
 
 } // namespace editor

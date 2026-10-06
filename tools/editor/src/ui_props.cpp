@@ -65,7 +65,7 @@ UIProps::UIProps () noexcept:
             ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
             ._height = theme::HEADER_HEIGHT
         },
 

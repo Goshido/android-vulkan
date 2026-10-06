@@ -498,6 +498,12 @@
     <ClCompile Include="src\tool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui_transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_separator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1089,6 +1095,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\cross_like_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_transform.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\div_ui_element_base.ipp">
+      <Filter>Templates\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element_base.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_separator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

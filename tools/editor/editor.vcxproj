@@ -1235,7 +1235,9 @@
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
     <ClCompile Include="src\ui_props.cpp" />
+    <ClCompile Include="src\ui_separator.cpp" />
     <ClCompile Include="src\ui_slider.cpp" />
+    <ClCompile Include="src\ui_transform.cpp" />
     <ClCompile Include="src\viewport_widget.cpp" />
     <ClCompile Include="src\widget.cpp" />
     <ClCompile Include="src\workspace.cpp" />
@@ -1280,6 +1282,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_computed_values.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_specialization.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
@@ -1348,6 +1351,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\div_ui_element_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\text_ui_element_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp" />
@@ -1460,7 +1464,9 @@
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
     <ClInclude Include="include\ui_props.hpp" />
+    <ClInclude Include="include\ui_separator.hpp" />
     <ClInclude Include="include\ui_slider.hpp" />
+    <ClInclude Include="include\ui_transform.hpp" />
     <ClInclude Include="include\viewport_widget.hpp" />
     <ClInclude Include="include\widget.hpp" />
     <ClInclude Include="include\workspace.hpp" />

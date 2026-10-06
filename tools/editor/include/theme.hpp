@@ -37,6 +37,7 @@ constexpr pbr::LengthValue HEADER_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F
 constexpr pbr::LengthValue HEADER_VERTICAL_PADDING ( pbr::LengthValue::eType::PX, 6.0F );
 constexpr pbr::LengthValue HEADER_HEIGHT ( pbr::LengthValue::eType::PX, 30.0F );
 
+constexpr pbr::LengthValue SEPARATOR_HEIGHT ( pbr::LengthValue::eType::PX, 10.0F );
 constexpr pbr::LengthValue MENU_ITEM_HEIGHT ( pbr::LengthValue::eType::PX, 20.0F );
 constexpr pbr::LengthValue SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40.0F );
 

@@ -22,6 +22,7 @@
 #include "selection.hpp"
 #include "stream_buffer_ref.hpp"
 #include "ui_props.hpp"
+#include "ui_transform.hpp"
 #include "viewport_widget.hpp"
 
 
@@ -120,6 +121,7 @@ class Workspace final
         VkExtent3D                                      _gizmoComposeDispatch {};
 
         UIProps*                                        _uiProps = nullptr;
+        UITransform*                                    _uiTransform = nullptr;
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 

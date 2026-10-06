@@ -1548,6 +1548,7 @@ bool Workspace::IsReady () noexcept
 
     _ready = static_cast<bool> ( _viewport ) &
         static_cast<bool> ( _uiProps ) &
+        static_cast<bool> ( _uiTransform ) &
         static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
@@ -2059,6 +2060,16 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
                 );
 
                 return _uiProps;
+            }
+        )
+    );
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::UIAppendWidget,
+            [ this ] () noexcept {
+                _uiTransform = new UITransform ();
+                _uiTransform->SetRect ( Rect ( 739, 950, 94, 330 ) );
+                return _uiTransform;
             }
         )
     );

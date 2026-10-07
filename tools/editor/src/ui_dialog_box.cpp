@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <message_queue.hpp>
 #include <pbr/css_unit_to_device_pixel.hpp>
-#include <theme.hpp>
 #include <ui_dialog_box.hpp>
 
 
@@ -59,6 +58,13 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
     UpdateMinSize ();
 }
 
+void UIDialogBox::SetMaxSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept
+{
+    _maxWidthCSS = width;
+    _maxHeightCSS = height;
+    UpdateMaxSize ();
+}
+
 UIDialogBox::UIDialogBox ( std::string &&name ) noexcept:
     _div (
         {
@@ -91,7 +97,7 @@ UIDialogBox::UIDialogBox ( std::string &&name ) noexcept:
         std::move ( name )
     )
 {
-    // NOTHING
+    UpdateMaxSize ();
 }
 
 void UIDialogBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
@@ -273,11 +279,11 @@ void UIDialogBox::DoDrag ( MouseMoveEvent const &event ) noexcept
     int32_t const safeDXCases[] = { -_safeDX, _safeDX };
     int32_t const safeDYCases[] = { -_safeDY, _safeDY };
 
-    uint32_t const dXCases[] = { dx, static_cast<uint32_t> ( safeDXCases[ static_cast<size_t> ( deltaX > 0 ) ] ) };
-    uint32_t const dYCases[] = { dy, static_cast<uint32_t> ( safeDYCases[ static_cast<size_t> ( deltaY > 0 ) ] ) };
+    uint32_t const dXCases[] = { dx, static_cast<uint32_t> ( safeDXCases[ static_cast<uint32_t> ( deltaX > 0 ) ] ) };
+    uint32_t const dYCases[] = { dy, static_cast<uint32_t> ( safeDYCases[ static_cast<uint32_t> ( deltaY > 0 ) ] ) };
 
-    dx = dXCases[ static_cast<size_t> ( width < _minWidth ) ];
-    dy = dYCases[ static_cast<size_t> ( height < _minHeight ) ];
+    dx = dXCases[ static_cast<uint32_t> ( ( width < _minWidth ) | ( width > _maxWidth ) ) ];
+    dy = dYCases[ static_cast<uint32_t> ( ( height < _minHeight ) | ( height > _maxHeight ) ) ];
 
     SetRect (
         Rect (
@@ -343,41 +349,50 @@ void UIDialogBox::UpdateAreas () noexcept
 void UIDialogBox::UpdateMinSize () noexcept
 {
     pbr::CSSUnitToDevicePixel const &units = pbr::CSSUnitToDevicePixel::GetInstance ();
+    _minWidth = ResolveLength ( _minWidthCSS, _minWidth, units );
+    _minHeight = ResolveLength ( _minHeightCSS, _minHeight, units );
+}
 
-    auto const apply = [ &units ] ( int32_t &dst, pbr::LengthValue const &src ) noexcept {
-        switch ( src.GetType () )
-        {
-            case pbr::LengthValue::eType::MM:
-                dst = static_cast<int32_t> ( units._fromMM * src.GetValue () );
-            break;
+void UIDialogBox::UpdateMaxSize () noexcept
+{
+    pbr::CSSUnitToDevicePixel const &units = pbr::CSSUnitToDevicePixel::GetInstance ();
+    _maxWidth = ResolveLength ( _maxWidthCSS, _maxWidth, units );
+    _maxHeight = ResolveLength ( _maxHeightCSS, _maxHeight, units );
+}
 
-            case pbr::LengthValue::eType::PT:
-                dst = static_cast<int32_t> ( units._fromPT * src.GetValue () );
-            break;
+int32_t UIDialogBox::ResolveLength ( pbr::LengthValue const &value,
+    int32_t defaultValue,
+    pbr::CSSUnitToDevicePixel const &units
+) noexcept
+{
+    switch ( value.GetType () )
+    {
+        case pbr::LengthValue::eType::MM:
+        return static_cast<int32_t> ( units._fromMM * value.GetValue () );
 
-            case pbr::LengthValue::eType::PX:
-                dst = static_cast<int32_t> ( units._fromPX * src.GetValue () );
-            break;
+        case pbr::LengthValue::eType::PT:
+        return static_cast<int32_t> ( units._fromPT * value.GetValue () );
 
-            case pbr::LengthValue::eType::Auto:
-                [[fallthrough]];
-            case pbr::LengthValue::eType::EM:
-                [[fallthrough]];
-            case pbr::LengthValue::eType::Inherit:
-                [[fallthrough]];
-            case pbr::LengthValue::eType::Percent:
-                [[fallthrough]];
-            case pbr::LengthValue::eType::Unitless:
-                [[fallthrough]];
-            default:
-                android_vulkan::LogWarning ( "UIDialogBox::UpdateMinSize - Only MM, PT and PX units are supported. "
-                    "Skipping." );
-            break;
-        }
-    };
+        case pbr::LengthValue::eType::PX:
+        return static_cast<int32_t> ( units._fromPX * value.GetValue () );
 
-    apply ( _minWidth, _minWidthCSS );
-    apply ( _minHeight, _minHeightCSS );
+        case pbr::LengthValue::eType::Auto:
+            [[fallthrough]];
+        case pbr::LengthValue::eType::EM:
+            [[fallthrough]];
+        case pbr::LengthValue::eType::Inherit:
+            [[fallthrough]];
+        case pbr::LengthValue::eType::Percent:
+            [[fallthrough]];
+        case pbr::LengthValue::eType::Unitless:
+            [[fallthrough]];
+        default:
+            android_vulkan::LogWarning ( "UIDialogBox::ResolveLength - Only MM, PT and PX units are supported. "
+                "Skipping." );
+        break;
+    }
+
+    return defaultValue;
 }
 
 } // namespace editor

@@ -39,6 +39,20 @@ class Rect final
             // NOTHING
         }
 
+        // corner layout:
+        // corners._data[ 0U ] -> left
+        // corners._data[ 1U ] -> right
+        // corners._data[ 2U ] -> top
+        // corners._data[ 3U ] -> bottom
+        constexpr explicit Rect ( GXVec4 const &corners ) noexcept:
+            _left ( static_cast<int32_t> ( corners._data[ 0U ] ) ),
+            _right ( static_cast<int32_t> ( corners._data[ 1U ] ) ),
+            _top ( static_cast<int32_t> ( corners._data[ 2U ] ) ),
+            _bottom ( static_cast<int32_t> ( corners._data[ 3U ] ) )
+        {
+            // NOTHING
+        }
+
         constexpr explicit Rect ( pbr::DIVUIElement::Rect const &rect ) noexcept:
             _left ( static_cast<int32_t> ( rect._topLeft._data[ 0U ] ) ),
             _right ( static_cast<int32_t> ( rect._bottomRight._data[ 0U ] ) ),

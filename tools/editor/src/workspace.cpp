@@ -2068,7 +2068,6 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
         Message ( eMessageType::UIAppendWidget,
             [ this ] () noexcept {
                 _uiTransform = new UITransform ();
-                _uiTransform->SetRect ( Rect ( 739, 950, 94, 330 ) );
                 return _uiTransform;
             }
         )

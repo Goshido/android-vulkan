@@ -168,9 +168,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_value.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>

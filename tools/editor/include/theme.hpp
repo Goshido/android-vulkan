@@ -44,6 +44,7 @@ constexpr pbr::LengthValue SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40
 constexpr pbr::LengthValue AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
 constexpr pbr::LengthValue INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );
 constexpr pbr::LengthValue ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
+constexpr pbr::LengthValue MAX_LENGTH ( pbr::LengthValue::eType::PX, 3.33e+6F );
 
 } // namespace editor::theme
 

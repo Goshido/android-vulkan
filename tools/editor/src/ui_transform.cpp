@@ -1,6 +1,5 @@
 #include <precompiled_headers.hpp>
 #include <logger.hpp>
-#include <theme.hpp>
 #include <ui_transform.hpp>
 
 
@@ -9,10 +8,11 @@ namespace editor {
 namespace {
 
 constexpr pbr::LengthValue MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
+constexpr pbr::LengthValue HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
 
-// FUCK - figure out why min height must add header height
-//constexpr pbr::LengthValue MIN_HEIGHT ( pbr::LengthValue::eType::PX, 203.0F );
-constexpr pbr::LengthValue MIN_HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
+constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 300.0F );
+constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 400.0F );
+constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
 
 } // end of anonymous namespace
 
@@ -82,7 +82,19 @@ UITransform::UITransform () noexcept:
     _scaleZ.Connect ( std::bind ( &UITransform::OnScaleZ, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
-    SetMinSize ( MIN_WIDTH, MIN_HEIGHT );
+
+    constexpr GXVec4 beta ( DEFAULT_X.GetValue (),
+        DEFAULT_X.GetValue () + DEFAULT_WIDTH.GetValue (),
+        DEFAULT_Y.GetValue (),
+        DEFAULT_Y.GetValue () + HEIGHT.GetValue ()
+    );
+
+    GXVec4 zeta {};
+    zeta.Multiply ( beta, pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX );
+
+    SetMinSize ( MIN_WIDTH, HEIGHT );
+    SetMaxSize ( theme::MAX_LENGTH, HEIGHT );
+    SetRect ( Rect ( zeta ) );
 }
 
 void UITransform::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept

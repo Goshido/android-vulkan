@@ -39,16 +39,16 @@ class Rect final
             // NOTHING
         }
 
-        // corner layout:
-        // corners._data[ 0U ] -> left
-        // corners._data[ 1U ] -> right
-        // corners._data[ 2U ] -> top
-        // corners._data[ 3U ] -> bottom
-        constexpr explicit Rect ( GXVec4 const &corners ) noexcept:
-            _left ( static_cast<int32_t> ( corners._data[ 0U ] ) ),
-            _right ( static_cast<int32_t> ( corners._data[ 1U ] ) ),
-            _top ( static_cast<int32_t> ( corners._data[ 2U ] ) ),
-            _bottom ( static_cast<int32_t> ( corners._data[ 3U ] ) )
+        // The layout:
+        // sides._data[ 0U ] -> left
+        // sides._data[ 1U ] -> right
+        // sides._data[ 2U ] -> top
+        // sides._data[ 3U ] -> bottom
+        constexpr explicit Rect ( GXVec4 const &sides ) noexcept:
+            _left ( static_cast<int32_t> ( sides._data[ 0U ] ) ),
+            _right ( static_cast<int32_t> ( sides._data[ 1U ] ) ),
+            _top ( static_cast<int32_t> ( sides._data[ 2U ] ) ),
+            _bottom ( static_cast<int32_t> ( sides._data[ 3U ] ) )
         {
             // NOTHING
         }
@@ -75,6 +75,7 @@ class Rect final
 
         [[nodiscard]] int32_t GetWidth () const noexcept;
         [[nodiscard]] int32_t GetHeight () const noexcept;
+        [[nodiscard]] VkOffset2D GetSize () const noexcept;
 
         void Normalize () noexcept;
         void ToCSSBounds ( pbr::CSSComputedValues &css ) noexcept;

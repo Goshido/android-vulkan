@@ -121,6 +121,8 @@ class SaveState final
                 [[nodiscard]] Container const &ReadContainer () const noexcept;
                 [[nodiscard]] Container const &ReadContainer ( std::string_view key ) const noexcept;
 
+                // [2026/10/08] Attention do not use inplace array reading in function calls.
+                // Function parameter evaluation order is not defined in C++.
                 [[nodiscard]] int8_t Read ( int8_t defaultValue ) const noexcept;
                 [[nodiscard]] uint8_t Read ( uint8_t defaultValue ) const noexcept;
                 [[nodiscard]] int16_t Read ( int16_t defaultValue ) const noexcept;

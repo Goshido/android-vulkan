@@ -16,6 +16,7 @@ constexpr float Z_NEAR = 0.1F;
 constexpr float FOV_Y = GXDegToRad ( 60.0F );
 constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
+constexpr std::string_view CONFIG_KEY_SECTION = "viewport";
 constexpr std::string_view CONFIG_KEY_TOOL_COORDINATES = "tool coordinates";
 constexpr std::string_view CONFIG_KEY_ACTIVE_TOOL = "active tool";
 
@@ -221,15 +222,15 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
         },
 
         "Selection (left)"
-    ),
-
-    _coordinates (
-        static_cast<eCoordinates> (
-            save.Read ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( DEFAULT_COORDINATES ) )
-        )
     )
 {
-    switch ( static_cast<eTool> ( save.Read ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( DEFAULT_TOOL ) ) ) )
+    SaveState::Container const &root = save.ReadContainer ( CONFIG_KEY_SECTION );
+
+    _coordinates = static_cast<eCoordinates> (
+        root.Read ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( DEFAULT_COORDINATES ) )
+    );
+
+    switch ( static_cast<eTool> ( root.Read ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( DEFAULT_TOOL ) ) ) )
     {
         case eTool::Move:
             _activeTool = &_moveTool;
@@ -313,21 +314,22 @@ void ViewportWidget::Destroy ( SaveState::Container &save ) noexcept
     _useRotateTool = {};
     _useScaleTool = {};
 
-    save.Write ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( _coordinates ) );
+    SaveState::Container &root = save.WriteContainer ( CONFIG_KEY_SECTION );
+    root.Write ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( _coordinates ) );
 
     if ( _activeTool == &_moveTool )
     {
-        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Move ) );
+        root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Move ) );
         return;
     }
 
     if ( _activeTool == &_rotateTool )
     {
-        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Rotate ) );
+        root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Rotate ) );
         return;
     }
 
-    save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Scale ) );
+    root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Scale ) );
 }
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept

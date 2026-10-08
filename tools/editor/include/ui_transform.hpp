@@ -2,6 +2,7 @@
 #define EDITOR_UI_TRANSFORM_HPP
 
 
+#include "save_state.hpp"
 #include "ui_close_button.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_edit_box.hpp"
@@ -26,7 +27,7 @@ class UITransform final : public UIDialogBox
         UIEditBox           _scaleZ;
 
     public:
-        explicit UITransform () noexcept;
+        UITransform () = delete;
 
         UITransform ( UITransform const & ) = delete;
         UITransform &operator = ( UITransform const & ) = delete;
@@ -34,7 +35,11 @@ class UITransform final : public UIDialogBox
         UITransform ( UITransform && ) = delete;
         UITransform &operator = ( UITransform && ) = delete;
 
+        explicit UITransform ( SaveState::Container const &save ) noexcept;
+
         ~UITransform () override = default;
+
+        void Save ( SaveState::Container &save ) const noexcept;
 
     private:
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;

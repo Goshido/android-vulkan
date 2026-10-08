@@ -48,11 +48,16 @@ void UIDialogBox::SetRect ( Rect const &rect ) noexcept
 {
     _isChanged = true;
     _rect = rect;
+
+    VkOffset2D const size = rect.GetSize ();
+    ApplyMinSizeConstraints ( size );
+    ApplyMaxSizeConstraints ( size );
     UpdateAreas ();
 }
 
 void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept
 {
+    _isChanged = true;
     _minWidthCSS = width;
     _minHeightCSS = height;
     UpdateMinSize ();
@@ -60,6 +65,7 @@ void UIDialogBox::SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue c
 
 void UIDialogBox::SetMaxSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept
 {
+    _isChanged = true;
     _maxWidthCSS = width;
     _maxHeightCSS = height;
     UpdateMaxSize ();
@@ -113,16 +119,23 @@ void UIDialogBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
     auto const startDrag = [ this, x, y ] ( uint32_t left, uint32_t top, uint32_t right, uint32_t bottom ) noexcept {
         _dragState = true;
         _initialRect = _rect;
-        _initialX = x;
-        _initialY = y;
+
+        _initialMouse =
+        {
+            .x = x,
+            .y = y
+        };
 
         _leftMask = left;
         _topMask = top;
         _rightMask = right;
         _bottomMask = bottom;
 
-        _safeDX = _rect.GetWidth () - _minWidth;
-        _safeDY = _rect.GetHeight () - _minHeight;
+        _safeDelta =
+        {
+            .x = _rect.GetWidth () - _minSize.x,
+            .y = _rect.GetHeight () - _minSize.y
+        };
 
         CaptureMouse ();
     };
@@ -183,11 +196,11 @@ void UIDialogBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 
 void UIDialogBox::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
 {
-    if ( !_dragState | ( event._key != eKey::LeftMouseButton ) ) [[likely]]
-        return;
-
-    _dragState = false;
-    ReleaseMouse ();
+    if ( _dragState & ( event._key == eKey::LeftMouseButton ) ) [[likely]]
+    {
+        _dragState = false;
+        ReleaseMouse ();
+    }
 }
 
 void UIDialogBox::OnMouseMove ( MouseMoveEvent const &event ) noexcept
@@ -253,15 +266,35 @@ bool UIDialogBox::UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const 
     return _div.UpdateCache ( info );
 }
 
+void UIDialogBox::ApplyMinSizeConstraints ( VkOffset2D const &size ) noexcept
+{
+    int32_t const dW[] = { 0, _minSize.x - size.x };
+    int32_t const dH[] = { 0, _minSize.y - size.y };
+
+    _rect._right += dW[ static_cast<uint32_t> ( size.x < _minSize.x ) ];
+    _rect._bottom += dH[ static_cast<uint32_t> ( size.y < _minSize.y ) ];
+}
+
+void UIDialogBox::ApplyMaxSizeConstraints ( VkOffset2D const &size ) noexcept
+{
+    int32_t const dW[] = { 0, _maxSize.x - size.x };
+    int32_t const dH[] = { 0, _maxSize.y - size.y };
+
+    _rect._right += dW[ static_cast<uint32_t> ( size.x > _maxSize.x ) ];
+    _rect._bottom += dH[ static_cast<uint32_t> ( size.y > _maxSize.y ) ];
+}
+
 void UIDialogBox::DoDrag ( MouseMoveEvent const &event ) noexcept
 {
-    int32_t const deltaX = event._x - _initialX;
-    int32_t const deltaY = event._y - _initialY;
+    VkOffset2D const delta
+    {
+        .x = event._x - _initialMouse.x,
+        .y = event._y - _initialMouse.y
+    };
 
     // Step 1. Blindly applying delta size...
-
-    auto dx = static_cast<uint32_t> ( deltaX );
-    auto dy = static_cast<uint32_t> ( deltaY );
+    auto dx = static_cast<uint32_t> ( delta.x );
+    auto dy = static_cast<uint32_t> ( delta.y );
 
     Rect const newRect (
         _initialRect._left + static_cast<int32_t> ( dx & _leftMask ),
@@ -270,20 +303,18 @@ void UIDialogBox::DoDrag ( MouseMoveEvent const &event ) noexcept
         _initialRect._bottom + static_cast<int32_t> ( dy & _bottomMask )
     );
 
-    // Step 2. Checking safe boundaries with respect of minimal size...
-
-    int32_t const width = newRect.GetWidth ();
-    int32_t const height = newRect.GetHeight ();
+    // Step 2. Checking safe boundaries with respect of min/max size...
+    VkOffset2D const size = newRect.GetSize ();
 
     // Taking into account input delta size sign...
-    int32_t const safeDXCases[] = { -_safeDX, _safeDX };
-    int32_t const safeDYCases[] = { -_safeDY, _safeDY };
+    int32_t const safeDXCases[] = { -_safeDelta.x, _safeDelta.x };
+    int32_t const safeDYCases[] = { -_safeDelta.y, _safeDelta.y };
 
-    uint32_t const dXCases[] = { dx, static_cast<uint32_t> ( safeDXCases[ static_cast<uint32_t> ( deltaX > 0 ) ] ) };
-    uint32_t const dYCases[] = { dy, static_cast<uint32_t> ( safeDYCases[ static_cast<uint32_t> ( deltaY > 0 ) ] ) };
+    uint32_t const dXCases[] = { dx, static_cast<uint32_t> ( safeDXCases[ static_cast<uint32_t> ( delta.x > 0 ) ] ) };
+    uint32_t const dYCases[] = { dy, static_cast<uint32_t> ( safeDYCases[ static_cast<uint32_t> ( delta.y > 0 ) ] ) };
 
-    dx = dXCases[ static_cast<uint32_t> ( ( width < _minWidth ) | ( width > _maxWidth ) ) ];
-    dy = dYCases[ static_cast<uint32_t> ( ( height < _minHeight ) | ( height > _maxHeight ) ) ];
+    dx = dXCases[ static_cast<uint32_t> ( ( size.x < _minSize.x ) | ( size.x > _maxSize.x ) ) ];
+    dy = dYCases[ static_cast<uint32_t> ( ( size.y < _minSize.y ) | ( size.y > _maxSize.y ) ) ];
 
     SetRect (
         Rect (
@@ -349,15 +380,29 @@ void UIDialogBox::UpdateAreas () noexcept
 void UIDialogBox::UpdateMinSize () noexcept
 {
     pbr::CSSUnitToDevicePixel const &units = pbr::CSSUnitToDevicePixel::GetInstance ();
-    _minWidth = ResolveLength ( _minWidthCSS, _minWidth, units );
-    _minHeight = ResolveLength ( _minHeightCSS, _minHeight, units );
+
+    _minSize =
+    {
+        .x = ResolveLength ( _minWidthCSS, _minSize.x, units ),
+        .y = ResolveLength ( _minHeightCSS, _minSize.y, units )
+    };
+
+    ApplyMinSizeConstraints ( _rect.GetSize () );
+    UpdateAreas ();
 }
 
 void UIDialogBox::UpdateMaxSize () noexcept
 {
     pbr::CSSUnitToDevicePixel const &units = pbr::CSSUnitToDevicePixel::GetInstance ();
-    _maxWidth = ResolveLength ( _maxWidthCSS, _maxWidth, units );
-    _maxHeight = ResolveLength ( _maxHeightCSS, _maxHeight, units );
+
+    _maxSize =
+    {
+        .x = ResolveLength ( _maxWidthCSS, _maxSize.x, units ),
+        .y = ResolveLength ( _maxHeightCSS, _maxSize.y, units )
+    };
+
+    ApplyMaxSizeConstraints ( _rect.GetSize () );
+    UpdateAreas ();
 }
 
 int32_t UIDialogBox::ResolveLength ( pbr::LengthValue const &value,

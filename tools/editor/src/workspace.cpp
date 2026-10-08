@@ -162,6 +162,7 @@ void Workspace::Destroy ( SaveState::Container &save ) noexcept
     AV_TRACE ( "Workspace destroy" )
 
     _viewport->Destroy ( save );
+    _uiTransform->Save ( save );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
@@ -2064,11 +2065,12 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
         )
     );
 
+    _uiTransform = new UITransform ( save );
+
     messageQueue.EnqueueBack (
         Message ( eMessageType::UIAppendWidget,
-            [ this ] () noexcept {
-                _uiTransform = new UITransform ();
-                return _uiTransform;
+            [ uiTransform = _uiTransform ] () noexcept {
+                return uiTransform;
             }
         )
     );

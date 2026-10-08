@@ -14,11 +14,14 @@ constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 300.0F );
 constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 400.0F );
 constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
 
+constexpr std::string_view CONFIG_KEY_SECTION = "transform dialog";
+constexpr std::string_view CONFIG_KEY_UI = "UI";
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UITransform::UITransform () noexcept:
+UITransform::UITransform ( SaveState::Container const &save ) noexcept:
     UIDialogBox ( "Transform" ),
 
     _headerLine ( _div,
@@ -83,6 +86,9 @@ UITransform::UITransform () noexcept:
 
     _div.PrependChildElement ( _headerLine );
 
+    SetMinSize ( MIN_WIDTH, HEIGHT );
+    SetMaxSize ( theme::MAX_LENGTH, HEIGHT );
+
     constexpr GXVec4 beta ( DEFAULT_X.GetValue (),
         DEFAULT_X.GetValue () + DEFAULT_WIDTH.GetValue (),
         DEFAULT_Y.GetValue (),
@@ -91,10 +97,29 @@ UITransform::UITransform () noexcept:
 
     GXVec4 zeta {};
     zeta.Multiply ( beta, pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX );
+    Rect const defaultUI ( zeta );
 
-    SetMinSize ( MIN_WIDTH, HEIGHT );
-    SetMaxSize ( theme::MAX_LENGTH, HEIGHT );
-    SetRect ( Rect ( zeta ) );
+    SaveState::Container const &root = save.ReadContainer ( CONFIG_KEY_SECTION );
+    SaveState::Container const &ui = root.ReadArray ( CONFIG_KEY_UI );
+
+    // [2026/10/08] Attention do not use inplace array reading when constructing Rect. Constructor parameter evaluation
+    // order is not defined in C++.
+    // For example MSVC is using reverse order which would be incorrect for current algorithm.
+    int32_t const left = ui.Read ( defaultUI._left );
+    int32_t const right = ui.Read ( defaultUI._right );
+    int32_t const top = ui.Read ( defaultUI._top );
+    int32_t const bottom = ui.Read ( defaultUI._bottom );
+    SetRect ( Rect ( left, right, top, bottom ) );
+}
+
+void UITransform::Save ( SaveState::Container &save ) const noexcept
+{
+    SaveState::Container &root = save.WriteContainer ( CONFIG_KEY_SECTION );
+    SaveState::Container &ui = root.WriteArray ( CONFIG_KEY_UI );
+    ui.Write ( _rect._left );
+    ui.Write ( _rect._right );
+    ui.Write ( _rect._top );
+    ui.Write ( _rect._bottom );
 }
 
 void UITransform::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept

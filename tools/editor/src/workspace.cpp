@@ -162,7 +162,7 @@ void Workspace::Destroy ( SaveState::Container &save ) noexcept
     AV_TRACE ( "Workspace destroy" )
 
     _viewport->Destroy ( save );
-    _uiTransform->Save ( save );
+    _transformTool.Destroy ( save );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
@@ -1549,7 +1549,6 @@ bool Workspace::IsReady () noexcept
 
     _ready = static_cast<bool> ( _viewport ) &
         static_cast<bool> ( _uiProps ) &
-        static_cast<bool> ( _uiTransform ) &
         static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
@@ -2065,15 +2064,7 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
         )
     );
 
-    _uiTransform = new UITransform ( save );
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAppendWidget,
-            [ uiTransform = _uiTransform ] () noexcept {
-                return uiTransform;
-            }
-        )
-    );
+    _transformTool.Init ( save );
 
     _viewport = new ViewportWidget ( save );
     _viewport->SetLocal ( 0.104000151F, -1.07599998F, GXVec3 ( 6.62516165F, 2.08657217F, -2.31031871F ) );

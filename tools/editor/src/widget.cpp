@@ -10,6 +10,11 @@ void Widget::ApplyClipboard ( std::u32string const &/*text*/ ) noexcept
     // NOTHING
 }
 
+bool Widget::HasChild ( Widget const &child ) const noexcept
+{
+    return this == &child;
+}
+
 void Widget::OnDoubleClick ( MouseButtonEvent const &event ) noexcept
 {
     OnMouseButtonDown ( event );

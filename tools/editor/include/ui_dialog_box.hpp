@@ -106,11 +106,11 @@ class UIDialogBox : public Widget
     private:
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
-        ) noexcept override;
+        ) noexcept override final;
 
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
             VkExtent2D const &viewport
-        ) noexcept override;
+        ) noexcept override final;
 
         void ApplyMinSizeConstraints ( VkOffset2D const &size ) noexcept;
         void ApplyMaxSizeConstraints ( VkOffset2D const &size ) noexcept;

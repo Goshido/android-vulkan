@@ -1,27 +1,12 @@
 #include <precompiled_headers.hpp>
 #include <logger.hpp>
+#include <message_queue.hpp>
 #include <ui_transform.hpp>
 
 
 namespace editor {
 
-namespace {
-
-constexpr pbr::LengthValue MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
-constexpr pbr::LengthValue HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
-
-constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 300.0F );
-constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 400.0F );
-constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
-
-constexpr std::string_view CONFIG_KEY_SECTION = "transform dialog";
-constexpr std::string_view CONFIG_KEY_UI = "UI";
-
-} // end of anonymous namespace
-
-//----------------------------------------------------------------------------------------------------------------------
-
-UITransform::UITransform ( SaveState::Container const &save ) noexcept:
+UITransform::UITransform ( CloseHandler &&onClose ) noexcept:
     UIDialogBox ( "Transform" ),
 
     _headerLine ( _div,
@@ -64,7 +49,8 @@ UITransform::UITransform ( SaveState::Container const &save ) noexcept:
     _separator ( _div, "Separator" ),
     _scaleX ( _div, "Scale X", "0", "EditBox[scale-x]" ),
     _scaleY ( _div, "Scale Y", "0", "EditBox[scale-y]" ),
-    _scaleZ ( _div, "Scale Z", "0", "EditBox[scale-z]" )
+    _scaleZ ( _div, "Scale Z", "0", "EditBox[scale-z]" ),
+    _onClose ( std::move ( onClose ) )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -76,7 +62,7 @@ UITransform::UITransform ( SaveState::Container const &save ) noexcept:
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    _closeButton.Connect ( std::bind ( &UITransform::OnClose, this ) );
+    _closeButton.Connect ( std::bind ( &UITransform::Close, this ) );
     _locationX.Connect ( std::bind ( &UITransform::OnLocationX, this, std::placeholders::_1 ) );
     _locationY.Connect ( std::bind ( &UITransform::OnLocationY, this, std::placeholders::_1 ) );
     _locationZ.Connect ( std::bind ( &UITransform::OnLocationZ, this, std::placeholders::_1 ) );
@@ -85,41 +71,35 @@ UITransform::UITransform ( SaveState::Container const &save ) noexcept:
     _scaleZ.Connect ( std::bind ( &UITransform::OnScaleZ, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
-
-    SetMinSize ( MIN_WIDTH, HEIGHT );
-    SetMaxSize ( theme::MAX_LENGTH, HEIGHT );
-
-    constexpr GXVec4 beta ( DEFAULT_X.GetValue (),
-        DEFAULT_X.GetValue () + DEFAULT_WIDTH.GetValue (),
-        DEFAULT_Y.GetValue (),
-        DEFAULT_Y.GetValue () + HEIGHT.GetValue ()
-    );
-
-    GXVec4 zeta {};
-    zeta.Multiply ( beta, pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX );
-    Rect const defaultUI ( zeta );
-
-    SaveState::Container const &root = save.ReadContainer ( CONFIG_KEY_SECTION );
-    SaveState::Container const &ui = root.ReadArray ( CONFIG_KEY_UI );
-
-    // [2026/10/08] Attention do not use inplace array reading when constructing Rect. Constructor parameter evaluation
-    // order is not defined in C++.
-    // For example MSVC is using reverse order which would be incorrect for current algorithm.
-    int32_t const left = ui.Read ( defaultUI._left );
-    int32_t const right = ui.Read ( defaultUI._right );
-    int32_t const top = ui.Read ( defaultUI._top );
-    int32_t const bottom = ui.Read ( defaultUI._bottom );
-    SetRect ( Rect ( left, right, top, bottom ) );
 }
 
-void UITransform::Save ( SaveState::Container &save ) const noexcept
+void UITransform::GetRect ( Rect &target ) const noexcept
 {
-    SaveState::Container &root = save.WriteContainer ( CONFIG_KEY_SECTION );
-    SaveState::Container &ui = root.WriteArray ( CONFIG_KEY_UI );
-    ui.Write ( _rect._left );
-    ui.Write ( _rect._right );
-    ui.Write ( _rect._top );
-    ui.Write ( _rect._bottom );
+    target.From ( _div.GetAbsoluteRect () );
+}
+
+void UITransform::Close () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::UIRemoveWidget,
+            [ this ] () noexcept {
+                _onClose ();
+                return this;
+            }
+        )
+    );
+}
+
+bool UITransform::HasChild ( Widget const &child ) const noexcept
+{
+    return this == &child ||
+        _closeButton.HasChild ( child ) ||
+        _locationX.HasChild ( child ) ||
+        _locationY.HasChild ( child ) ||
+        _locationZ.HasChild ( child ) ||
+        _scaleX.HasChild ( child ) ||
+        _scaleY.HasChild ( child ) ||
+        _scaleZ.HasChild ( child );
 }
 
 void UITransform::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
@@ -279,11 +259,6 @@ void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _scaleX.UpdatedRect ();
     _scaleY.UpdatedRect ();
     _scaleZ.UpdatedRect ();
-}
-
-void UITransform::OnClose () noexcept
-{
-    android_vulkan::LogDebug ( "OnClose" );
 }
 
 void UITransform::OnLocationX ( std::string const &/*value*/ ) noexcept

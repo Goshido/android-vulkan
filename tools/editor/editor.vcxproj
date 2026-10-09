@@ -1216,6 +1216,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\transform_component.cpp" />
+    <ClCompile Include="src\transform_tool.cpp" />
     <ClCompile Include="src\ui_check_box.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
     <ClCompile Include="src\ui_combo_box.cpp" />
@@ -1445,6 +1446,7 @@
     </ClInclude>
     <ClInclude Include="include\transform.hpp" />
     <ClInclude Include="include\transform_component.hpp" />
+    <ClInclude Include="include\transform_tool.hpp" />
     <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
     <ClInclude Include="include\ui_combo_box.hpp" />

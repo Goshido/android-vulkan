@@ -21,8 +21,8 @@
 #include "reflection_probe_local_node.hpp"
 #include "selection.hpp"
 #include "stream_buffer_ref.hpp"
+#include "transform_tool.hpp"
 #include "ui_props.hpp"
-#include "ui_transform.hpp"
 #include "viewport_widget.hpp"
 
 
@@ -121,7 +121,7 @@ class Workspace final
         VkExtent3D                                      _gizmoComposeDispatch {};
 
         UIProps*                                        _uiProps = nullptr;
-        UITransform*                                    _uiTransform = nullptr;
+        TransformTool                                   _transformTool {};
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 

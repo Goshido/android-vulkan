@@ -38,7 +38,7 @@ class Widget
         virtual ~Widget () = default;
 
         virtual void ApplyClipboard ( std::u32string const &text ) noexcept;
-
+        [[nodiscard]] virtual bool HasChild ( Widget const &child ) const noexcept;
         virtual void OnDoubleClick ( MouseButtonEvent const &event ) noexcept;
 
         virtual void OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept;

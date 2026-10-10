@@ -896,16 +896,20 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _swapchainDepth->_storageIndex = std::move ( idx );
 }
 
-void Workspace::OnSelectionChanged () noexcept
-{
-    AV_TRACE ( "Selection changed" )
-    _viewport->OnSelectionChanged ( _selection.GetActors () );
-}
-
 void Workspace::OnContentUpdated () noexcept
 {
     AV_TRACE ( "Content updated" )
-    _viewport->OnSelectionChanged ( _selection.GetActors () );
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnContentUpdated ( actors );
+    _transformTool.OnContentUpdated ( actors );
+}
+
+void Workspace::OnSelectionChanged () noexcept
+{
+    AV_TRACE ( "Selection changed" )
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnSelectionChanged ( actors );
+    _transformTool.OnSelectionChanged ( actors );
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept

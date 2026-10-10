@@ -25,18 +25,18 @@ class ViewportWidget final : public Widget
     private:
         struct State final
         {
-            uint8_t                         _forward: 1 = 0U;
-            uint8_t                         _backward: 1 = 0U;
-            uint8_t                         _left: 1 = 0U;
-            uint8_t                         _right: 1 = 0U;
-            uint8_t                         _ctrl: 1 = 0U;
-            uint8_t                         _shift: 1 = 0U;
-            uint8_t                         _alt: 1 = 0U;
-            uint8_t                         _mmb: 1 = 0U;
-            uint8_t                         _lmb: 1 = 0U;
-            uint8_t                         _rmb: 1 = 0U;
-            uint8_t                         _esc: 1 = 0U;
-            uint8_t                         _toolHit: 1 = 0U;
+            uint8_t                         _forward: 1 = UINT8_C ( 0 );
+            uint8_t                         _backward: 1 = UINT8_C ( 0 );
+            uint8_t                         _left: 1 = UINT8_C ( 0 );
+            uint8_t                         _right: 1 = UINT8_C ( 0 );
+            uint8_t                         _ctrl: 1 = UINT8_C ( 0 );
+            uint8_t                         _shift: 1 = UINT8_C ( 0 );
+            uint8_t                         _alt: 1 = UINT8_C ( 0 );
+            uint8_t                         _mmb: 1 = UINT8_C ( 0 );
+            uint8_t                         _lmb: 1 = UINT8_C ( 0 );
+            uint8_t                         _rmb: 1 = UINT8_C ( 0 );
+            uint8_t                         _esc: 1 = UINT8_C ( 0 );
+            uint8_t                         _toolHit: 1 = UINT8_C ( 0 );
         };
 
         using Handler = void ( ViewportWidget::* ) () noexcept;
@@ -77,7 +77,7 @@ class ViewportWidget final : public Widget
         GXMat4                              _local = GXMat4::IDENTITY;
         GXMat4                              _projection = GXMat4::IDENTITY;
         GXMat4                              _viewProjection = GXMat4::IDENTITY;
-        uint64_t                            _toView = 0U;
+        uint64_t                            _toView = 0UZ;
 
         VkExtent2D                          _resolution {};
         std::vector<float>                  _lineHeights = { 0.0F };
@@ -88,7 +88,7 @@ class ViewportWidget final : public Widget
 
         VkOffset2D                          _mouseNow {};
         VkOffset2D                          _mouseCommit {};
-        size_t                              _eventID = 0U;
+        size_t                              _eventID = 0UZ;
         GXVec2                              _eulerAngles = GXVec2::ZERO;
 
         Selection::eMode                    _selectionMode = Selection::eMode::Standby;
@@ -126,6 +126,7 @@ class ViewportWidget final : public Widget
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
         [[nodiscard]] GXVec3 GetVI () const noexcept;
 
+        void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors &actors ) noexcept;
 
     private:
@@ -144,12 +145,12 @@ class ViewportWidget final : public Widget
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
 
         [[nodiscard]] GXVec3 ComputeRayDirection ( GXMat3 const &basis ) const noexcept;
+        [[nodiscard]] GXQuat ResolveToolRotation ( Selection::Actors const &actors ) const noexcept;
         void UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept;
         void UpdateMouseState ( MouseButtonEvent const &event, uint8_t matchValue ) noexcept;
         void UpdateRotation () noexcept;
         void UpdateSelection ( int32_t left, int32_t top, int32_t width, int32_t height ) noexcept;
         void UpdateSelectionMode () noexcept;
-        void UpdateToolCoordinates ( Selection::Actors &actors ) noexcept;
         void UpdateViewProjection () noexcept;
 
         void OnFreeFlyKeyUp () noexcept;

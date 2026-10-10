@@ -227,12 +227,40 @@ void MoveTool::Cancel () noexcept
 {
     AV_TRACE ( "Move tool cancel" )
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         Item const &backup = *items++;
         actor->SetLocation ( backup._location );
     }
+
+    workspace.OnContentUpdated ();
+}
+
+void MoveTool::OnContentUpdated ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
+{
+    AV_TRACE ( "Move tool content updated" )
+    GXVec3 const c = GetCenter ( actors );
+    _location = c;
+    _rotation = rotation;
+
+    _origin.OnParentUpdated ( c, rotation );
+    _xLine.OnParentUpdated ( c, rotation );
+    _xPlane.OnParentUpdated ( c, rotation );
+    _xCone.OnParentUpdated ( c, rotation );
+    _yLine.OnParentUpdated ( c, rotation );
+    _yPlane.OnParentUpdated ( c, rotation );
+    _yCone.OnParentUpdated ( c, rotation );
+    _zLine.OnParentUpdated ( c, rotation );
+    _zPlane.OnParentUpdated ( c, rotation );
+    _zCone.OnParentUpdated ( c, rotation );
+    _xPlaneY.OnParentUpdated ( c, rotation );
+    _xPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneY.OnParentUpdated ( c, rotation );
 }
 
 bool MoveTool::Update ( GXVec3 const &rayDirection,
@@ -507,8 +535,9 @@ void MoveTool::UpdateChildren () noexcept
 {
     GXVec3 alpha {};
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         alpha.Sum ( _location, ( items++ )->_offset );
         actor->SetLocation ( alpha );
@@ -530,6 +559,8 @@ void MoveTool::UpdateChildren () noexcept
     _yPlaneX.OnParentUpdated ( _location, _rotation );
     _zPlaneX.OnParentUpdated ( _location, _rotation );
     _zPlaneY.OnParentUpdated ( _location, _rotation );
+
+    workspace.OnContentUpdated ();
 }
 
 bool MoveTool::LockAxis () noexcept

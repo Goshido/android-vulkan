@@ -125,19 +125,19 @@ void RotateTool::Deactivate () noexcept
     _tangentDirectionB.Hide ();
 }
 
-void RotateTool::Begin ( Selection::Actors &items, GXQuat const &rotation ) noexcept
+void RotateTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
 {
     AV_TRACE ( "Rotate tool begin" )
-    size_t const count = items.size ();
+    size_t const count = actors.size ();
 
     _items.clear ();
     _items.reserve ( count );
 
-    GXVec3 const c = GetCenter ( items );
+    GXVec3 const c = GetCenter ( actors );
     GXQuat toGizmo {};
     toGizmo.Inverse ( rotation );
 
-    for ( Actor const *actor : items )
+    for ( Actor const *actor : actors )
     {
         Item item
         {
@@ -202,12 +202,27 @@ void RotateTool::Cancel () noexcept
 {
     AV_TRACE ( "Rotate tool cancel" )
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         Item const &backup = *items++;
         actor->SetLocal ( backup._actorRotation, backup._actorLocation );
     }
+
+    workspace.OnContentUpdated ();
+}
+
+void RotateTool::OnContentUpdated ( Selection::Actors const &actors, GXQuat const &/*rotation*/ ) noexcept
+{
+    AV_TRACE ( "Rotate tool content updated" )
+    GXVec3 const c = GetCenter ( actors );
+    _location = c;
+
+    _x.OnParentUpdated ( c, _rotation );
+    _y.OnParentUpdated ( c, _rotation );
+    _z.OnParentUpdated ( c, _rotation );
+    _ring.OnParentUpdated ( c, _rotation );
 }
 
 bool RotateTool::Update ( GXVec3 const &rayDirection,
@@ -637,11 +652,13 @@ void RotateTool::UpdateChildren () noexcept
     _z.OnParentUpdated ( _location, _rotation );
 
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
+
     GXVec3 alpha {};
     GXVec3 beta {};
     GXQuat zeta {};
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         Item const &item = *items++;
         zeta.Multiply ( _rotation, item._gizmoRotation );
@@ -649,6 +666,8 @@ void RotateTool::UpdateChildren () noexcept
         beta.Sum ( alpha, _location );
         actor->SetLocal ( zeta, beta );
     }
+
+    workspace.OnContentUpdated ();
 }
 
 RotateTool::TangentLine RotateTool::ResolveTangentLine ( GXVec3 const &ringPosition,

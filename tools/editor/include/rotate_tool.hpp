@@ -137,7 +137,7 @@ class RotateTool final : public Tool
         std::vector<Item>                           _items {};
 
         GXVec3                                      _rotateAxisVector {};
-        float                                       _initialScalarDistance;
+        float                                       _initialScalarDistance = 1.0F;
 
         GXVec3                                      _tangentLocation {};
 
@@ -176,6 +176,7 @@ class RotateTool final : public Tool
         void Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept override;
         void End () noexcept override;
         void Cancel () noexcept override;
+        void OnContentUpdated ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept override;
 
         // Method returns true if mouse interacts with any of gizmo control.
         [[nodiscard]] bool Update ( GXVec3 const &rayDirection,

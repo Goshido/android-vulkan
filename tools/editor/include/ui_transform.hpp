@@ -20,9 +20,9 @@ class UITransform final : public UIDialogBox
         DIVUIElement        _headerLine;
         UILabel             _headerText;
         UICloseButton       _closeButton;
-        UIEditBox           _locationX;
-        UIEditBox           _locationY;
-        UIEditBox           _locationZ;
+        UIEditBox           _x;
+        UIEditBox           _y;
+        UIEditBox           _z;
         UISeparator         _separator;
         UIEditBox           _scaleX;
         UIEditBox           _scaleY;
@@ -45,6 +45,14 @@ class UITransform final : public UIDialogBox
         void GetRect ( Rect &target ) const noexcept;
         void Close () noexcept;
 
+        void SetX ( std::string &&value ) noexcept;
+        void SetY ( std::string &&value ) noexcept;
+        void SetZ ( std::string &&value ) noexcept;
+
+        void SetScaleX ( std::string &&value ) noexcept;
+        void SetScaleY ( std::string &&value ) noexcept;
+        void SetScaleZ ( std::string &&value ) noexcept;
+
     private:
         [[nodiscard]] bool HasChild ( Widget const &child ) const noexcept override;
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
@@ -52,9 +60,9 @@ class UITransform final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-        void OnLocationX ( std::string const &value ) noexcept;
-        void OnLocationY ( std::string const &value ) noexcept;
-        void OnLocationZ ( std::string const &value ) noexcept;
+        void OnX ( std::string const &value ) noexcept;
+        void OnY ( std::string const &value ) noexcept;
+        void OnZ ( std::string const &value ) noexcept;
 
         void OnScaleX ( std::string const &value ) noexcept;
         void OnScaleY ( std::string const &value ) noexcept;

@@ -312,6 +312,9 @@ void UIEditBox::SetText ( std::string &&text ) noexcept
                 _cursor = static_cast<int32_t> ( text.size () );
                 _text.SetText ( std::move ( text ) );
 
+                if ( auto str = pbr::UTF8Parser::ToU32String ( text ); str ) [[likely]]
+                    _content = std::move ( *str );
+
                 _selectionDIV.Hide ();
                 _selection = _cursor;
 

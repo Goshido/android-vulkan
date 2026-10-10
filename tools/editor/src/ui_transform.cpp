@@ -43,9 +43,9 @@ UITransform::UITransform ( CloseHandler &&onClose ) noexcept:
 
     _headerText ( _headerLine, "Transform", "Header"),
     _closeButton ( _headerLine, "Close button" ),
-    _locationX ( _div, "X", "0", "EditBox[x]" ),
-    _locationY ( _div, "Y", "0", "EditBox[y]" ),
-    _locationZ ( _div, "Z", "0", "EditBox[z]" ),
+    _x ( _div, "X", "0", "EditBox[x]" ),
+    _y ( _div, "Y", "0", "EditBox[y]" ),
+    _z ( _div, "Z", "0", "EditBox[z]" ),
     _separator ( _div, "Separator" ),
     _scaleX ( _div, "Scale X", "0", "EditBox[scale-x]" ),
     _scaleY ( _div, "Scale Y", "0", "EditBox[scale-y]" ),
@@ -63,9 +63,9 @@ UITransform::UITransform ( CloseHandler &&onClose ) noexcept:
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
     _closeButton.Connect ( std::bind ( &UITransform::Close, this ) );
-    _locationX.Connect ( std::bind ( &UITransform::OnLocationX, this, std::placeholders::_1 ) );
-    _locationY.Connect ( std::bind ( &UITransform::OnLocationY, this, std::placeholders::_1 ) );
-    _locationZ.Connect ( std::bind ( &UITransform::OnLocationZ, this, std::placeholders::_1 ) );
+    _x.Connect ( std::bind ( &UITransform::OnX, this, std::placeholders::_1 ) );
+    _y.Connect ( std::bind ( &UITransform::OnY, this, std::placeholders::_1 ) );
+    _z.Connect ( std::bind ( &UITransform::OnZ, this, std::placeholders::_1 ) );
     _scaleX.Connect ( std::bind ( &UITransform::OnScaleX, this, std::placeholders::_1 ) );
     _scaleY.Connect ( std::bind ( &UITransform::OnScaleY, this, std::placeholders::_1 ) );
     _scaleZ.Connect ( std::bind ( &UITransform::OnScaleZ, this, std::placeholders::_1 ) );
@@ -90,13 +90,43 @@ void UITransform::Close () noexcept
     );
 }
 
+void UITransform::SetX ( std::string &&value ) noexcept
+{
+    _x.SetText ( std::move ( value ) );
+}
+
+void UITransform::SetY ( std::string &&value ) noexcept
+{
+    _y.SetText ( std::move ( value ) );
+}
+
+void UITransform::SetZ ( std::string &&value ) noexcept
+{
+    _z.SetText ( std::move ( value ) );
+}
+
+void UITransform::SetScaleX ( std::string &&value ) noexcept
+{
+    _scaleX.SetText ( std::move ( value ) );
+}
+
+void UITransform::SetScaleY ( std::string &&value ) noexcept
+{
+    _scaleY.SetText ( std::move ( value ) );
+}
+
+void UITransform::SetScaleZ ( std::string &&value ) noexcept
+{
+    _scaleZ.SetText ( std::move ( value ) );
+}
+
 bool UITransform::HasChild ( Widget const &child ) const noexcept
 {
     return this == &child ||
         _closeButton.HasChild ( child ) ||
-        _locationX.HasChild ( child ) ||
-        _locationY.HasChild ( child ) ||
-        _locationZ.HasChild ( child ) ||
+        _x.HasChild ( child ) ||
+        _y.HasChild ( child ) ||
+        _z.HasChild ( child ) ||
         _scaleX.HasChild ( child ) ||
         _scaleY.HasChild ( child ) ||
         _scaleZ.HasChild ( child );
@@ -110,21 +140,21 @@ void UITransform::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
         return;
     }
 
-    if ( _locationX.IsOverlapped ( event._x, event._y ) )
+    if ( _x.IsOverlapped ( event._x, event._y ) )
     {
-        _locationX.OnMouseButtonDown ( event );
+        _x.OnMouseButtonDown ( event );
         return;
     }
 
-    if ( _locationY.IsOverlapped ( event._x, event._y ) )
+    if ( _y.IsOverlapped ( event._x, event._y ) )
     {
-        _locationY.OnMouseButtonDown ( event );
+        _y.OnMouseButtonDown ( event );
         return;
     }
 
-    if ( _locationZ.IsOverlapped ( event._x, event._y ) )
+    if ( _z.IsOverlapped ( event._x, event._y ) )
     {
-        _locationZ.OnMouseButtonDown ( event );
+        _z.OnMouseButtonDown ( event );
         return;
     }
 
@@ -157,21 +187,21 @@ void UITransform::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
         return;
     }
 
-    if ( _locationX.IsOverlapped ( event._x, event._y ) )
+    if ( _x.IsOverlapped ( event._x, event._y ) )
     {
-        _locationX.OnMouseButtonUp ( event );
+        _x.OnMouseButtonUp ( event );
         return;
     }
 
-    if ( _locationY.IsOverlapped ( event._x, event._y ) )
+    if ( _y.IsOverlapped ( event._x, event._y ) )
     {
-        _locationY.OnMouseButtonUp ( event );
+        _y.OnMouseButtonUp ( event );
         return;
     }
 
-    if ( _locationZ.IsOverlapped ( event._x, event._y ) )
+    if ( _z.IsOverlapped ( event._x, event._y ) )
     {
-        _locationZ.OnMouseButtonUp ( event );
+        _z.OnMouseButtonUp ( event );
         return;
     }
 
@@ -210,21 +240,21 @@ void UITransform::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
-    if ( _locationX.IsOverlapped ( event._x, event._y ) )
+    if ( _x.IsOverlapped ( event._x, event._y ) )
     {
-        _locationX.OnMouseMove ( event );
+        _x.OnMouseMove ( event );
         return;
     }
 
-    if ( _locationY.IsOverlapped ( event._x, event._y ) )
+    if ( _y.IsOverlapped ( event._x, event._y ) )
     {
-        _locationY.OnMouseMove ( event );
+        _y.OnMouseMove ( event );
         return;
     }
 
-    if ( _locationZ.IsOverlapped ( event._x, event._y ) )
+    if ( _z.IsOverlapped ( event._x, event._y ) )
     {
-        _locationZ.OnMouseMove ( event );
+        _z.OnMouseMove ( event );
         return;
     }
 
@@ -253,27 +283,27 @@ void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
     _closeButton.UpdatedRect ();
-    _locationX.UpdatedRect ();
-    _locationY.UpdatedRect ();
-    _locationZ.UpdatedRect ();
+    _x.UpdatedRect ();
+    _y.UpdatedRect ();
+    _z.UpdatedRect ();
     _scaleX.UpdatedRect ();
     _scaleY.UpdatedRect ();
     _scaleZ.UpdatedRect ();
 }
 
-void UITransform::OnLocationX ( std::string const &/*value*/ ) noexcept
+void UITransform::OnX ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnLocationX" );
+    android_vulkan::LogDebug ( "OnX" );
 }
 
-void UITransform::OnLocationY ( std::string const &/*value*/ ) noexcept
+void UITransform::OnY ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnLocationY" );
+    android_vulkan::LogDebug ( "OnY" );
 }
 
-void UITransform::OnLocationZ ( std::string const &/*value*/ ) noexcept
+void UITransform::OnZ ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnLocationZ" );
+    android_vulkan::LogDebug ( "OnZ" );
 }
 
 void UITransform::OnScaleX ( std::string const &/*value*/ ) noexcept

@@ -60,13 +60,29 @@ class UITransform final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-        void OnX ( std::string const &value ) noexcept;
-        void OnY ( std::string const &value ) noexcept;
-        void OnZ ( std::string const &value ) noexcept;
+        void CancelX ( std::string const &value ) noexcept;
+        void ChangeX ( std::string const &value ) noexcept;
+        void NewX ( std::string const &value ) noexcept;
 
-        void OnScaleX ( std::string const &value ) noexcept;
-        void OnScaleY ( std::string const &value ) noexcept;
-        void OnScaleZ ( std::string const &value ) noexcept;
+        void CancelY ( std::string const &value ) noexcept;
+        void ChangeY ( std::string const &value ) noexcept;
+        void NewY ( std::string const &value ) noexcept;
+
+        void CancelZ ( std::string const &value ) noexcept;
+        void ChangeZ ( std::string const &value ) noexcept;
+        void NewZ ( std::string const &value ) noexcept;
+
+        void CancelScaleX ( std::string const &value ) noexcept;
+        void ChangeScaleX ( std::string const &value ) noexcept;
+        void NewScaleX ( std::string const &value ) noexcept;
+
+        void CancelScaleY ( std::string const &value ) noexcept;
+        void ChangeScaleY ( std::string const &value ) noexcept;
+        void NewScaleY ( std::string const &value ) noexcept;
+
+        void CancelScaleZ ( std::string const &value ) noexcept;
+        void ChangeScaleZ ( std::string const &value ) noexcept;
+        void NewScaleZ ( std::string const &value ) noexcept;
 };
 
 } // namespace editor

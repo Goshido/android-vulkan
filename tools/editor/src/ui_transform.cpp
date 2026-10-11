@@ -63,12 +63,30 @@ UITransform::UITransform ( CloseHandler &&onClose ) noexcept:
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
     _closeButton.Connect ( std::bind ( &UITransform::Close, this ) );
-    _x.Connect ( std::bind ( &UITransform::OnX, this, std::placeholders::_1 ) );
-    _y.Connect ( std::bind ( &UITransform::OnY, this, std::placeholders::_1 ) );
-    _z.Connect ( std::bind ( &UITransform::OnZ, this, std::placeholders::_1 ) );
-    _scaleX.Connect ( std::bind ( &UITransform::OnScaleX, this, std::placeholders::_1 ) );
-    _scaleY.Connect ( std::bind ( &UITransform::OnScaleY, this, std::placeholders::_1 ) );
-    _scaleZ.Connect ( std::bind ( &UITransform::OnScaleZ, this, std::placeholders::_1 ) );
+
+    _x.ConnectOnCancel ( std::bind ( &UITransform::CancelX, this, std::placeholders::_1 ) );
+    _x.ConnectOnChange ( std::bind ( &UITransform::ChangeX, this, std::placeholders::_1 ) );
+    _x.ConnectOnNewValue ( std::bind ( &UITransform::NewX, this, std::placeholders::_1 ) );
+
+    _y.ConnectOnCancel ( std::bind ( &UITransform::CancelY, this, std::placeholders::_1 ) );
+    _y.ConnectOnChange ( std::bind ( &UITransform::ChangeY, this, std::placeholders::_1 ) );
+    _y.ConnectOnNewValue ( std::bind ( &UITransform::NewY, this, std::placeholders::_1 ) );
+
+    _z.ConnectOnCancel ( std::bind ( &UITransform::CancelZ, this, std::placeholders::_1 ) );
+    _z.ConnectOnChange ( std::bind ( &UITransform::ChangeZ, this, std::placeholders::_1 ) );
+    _z.ConnectOnNewValue ( std::bind ( &UITransform::NewZ, this, std::placeholders::_1 ) );
+
+    _scaleX.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleX, this, std::placeholders::_1 ) );
+    _scaleX.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleX, this, std::placeholders::_1 ) );
+    _scaleX.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleX, this, std::placeholders::_1 ) );
+
+    _scaleY.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleY, this, std::placeholders::_1 ) );
+    _scaleY.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleY, this, std::placeholders::_1 ) );
+    _scaleY.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleY, this, std::placeholders::_1 ) );
+
+    _scaleZ.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleZ, this, std::placeholders::_1 ) );
+    _scaleZ.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleZ, this, std::placeholders::_1 ) );
+    _scaleZ.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleZ, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
 }
@@ -291,34 +309,94 @@ void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _scaleZ.UpdatedRect ();
 }
 
-void UITransform::OnX ( std::string const &/*value*/ ) noexcept
+void UITransform::CancelX ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnX" );
+    android_vulkan::LogDebug ( "CancelX" );
 }
 
-void UITransform::OnY ( std::string const &/*value*/ ) noexcept
+void UITransform::ChangeX ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnY" );
+    android_vulkan::LogDebug ( "ChangeX" );
 }
 
-void UITransform::OnZ ( std::string const &/*value*/ ) noexcept
+void UITransform::NewX ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnZ" );
+    android_vulkan::LogDebug ( "NewX" );
 }
 
-void UITransform::OnScaleX ( std::string const &/*value*/ ) noexcept
+void UITransform::CancelY ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnScaleX" );
+    android_vulkan::LogDebug ( "CancelY" );
 }
 
-void UITransform::OnScaleY ( std::string const &/*value*/ ) noexcept
+void UITransform::ChangeY ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnScaleY" );
+    android_vulkan::LogDebug ( "ChangeY" );
 }
 
-void UITransform::OnScaleZ ( std::string const &/*value*/ ) noexcept
+void UITransform::NewY ( std::string const &/*value*/ ) noexcept
 {
-    android_vulkan::LogDebug ( "OnScaleZ" );
+    android_vulkan::LogDebug ( "NewY" );
+}
+
+void UITransform::CancelZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "CancelZ" );
+}
+
+void UITransform::ChangeZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "ChangeZ" );
+}
+
+void UITransform::NewZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NewZ" );
+}
+
+void UITransform::CancelScaleX ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "CancelScaleX" );
+}
+
+void UITransform::ChangeScaleX ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "ChangeScaleX" );
+}
+
+void UITransform::NewScaleX ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NewScaleX" );
+}
+
+void UITransform::CancelScaleY ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "CancelScaleY" );
+}
+
+void UITransform::ChangeScaleY ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "ChangeScaleY" );
+}
+
+void UITransform::NewScaleY ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NewScaleY" );
+}
+
+void UITransform::CancelScaleZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "CancelScaleZ" );
+}
+
+void UITransform::ChangeScaleZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "ChangeScaleZ" );
+}
+
+void UITransform::NewScaleZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NewScaleZ" );
 }
 
 } // namespace editor

@@ -6,6 +6,7 @@
 #include <pbr/utf8_parser.hpp>
 #include <theme.hpp>
 #include <ui_edit_box.hpp>
+#include <scope_quard.hpp>
 
 
 namespace editor {
@@ -299,9 +300,19 @@ void UIEditBox::UpdatedRect () noexcept
     ( this->*_updateRect ) ();
 }
 
-void UIEditBox::Connect ( Callback &&callback ) noexcept
+void UIEditBox::ConnectOnCancel ( ValueHandler &&callback ) noexcept
 {
-    _callback = std::move ( callback );
+    _onCancel = std::move ( callback );
+}
+
+void UIEditBox::ConnectOnChange ( ValueHandler &&callback ) noexcept
+{
+    _onChange = std::move ( callback );
+}
+
+void UIEditBox::ConnectOnNewValue ( ValueHandler &&callback ) noexcept
+{
+    _onNewValue = std::move ( callback );
 }
 
 void UIEditBox::SetText ( std::string &&text ) noexcept
@@ -333,6 +344,7 @@ void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
     _content.insert ( static_cast<size_t> ( _cursor ), text );
     _cursor += static_cast<int32_t> ( text.size () );
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -365,6 +377,10 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
 
         case eKey::KeyEnd:
             MoveCursor ( static_cast<int32_t> ( _content.size () ), !modifier.AnyShiftPressed () );
+        break;
+
+        case eKey::KeyEsc:
+            Cancel ();
         break;
 
         case eKey::KeyEnter:
@@ -618,6 +634,7 @@ void UIEditBox::Append ( char32_t character ) noexcept
 
     _content.insert ( static_cast<size_t> ( _cursor ), 1U, character );
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -630,12 +647,35 @@ void UIEditBox::Append ( char32_t character ) noexcept
     ResetBlinkTimer ();
 }
 
+void UIEditBox::Cancel () noexcept
+{
+    android_vulkan::ScopeGuard const toNormal (
+        [ this ] () noexcept {
+            SwitchToNormalState ();
+        }
+    );
+
+    if ( auto v = pbr::UTF8Parser::ToU32String ( _committed ); *v == _content ) [[unlikely]]
+        return;
+
+    SetText ( std::string ( _committed ) );
+
+    if ( _onCancel ) [[likely]]
+    {
+        _onCancel ( _committed );
+    }
+}
+
 void UIEditBox::Commit () noexcept
 {
     if ( auto v = pbr::UTF8Parser::ToUTF8 ( _content ); *v != _committed ) [[likely]]
     {
         _committed = std::move ( *v );
-        _callback ( _committed );
+
+        if ( _onNewValue ) [[likely]]
+        {
+            _onNewValue ( _committed );
+        }
     }
 
     SwitchToNormalState ();
@@ -668,6 +708,7 @@ void UIEditBox::Cut () noexcept
         return;
 
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -693,6 +734,7 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
     }
 
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -958,6 +1000,14 @@ void UIEditBox::SwitchToNormalState () noexcept
     _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
     _onMouseMove = &UIEditBox::OnMouseMoveNormal;
     _updateRect = &UIEditBox::UpdatedRectNormal;
+}
+
+void UIEditBox::NotifyChange () noexcept
+{
+    if ( _onChange ) [[likely]]
+    {
+        _onChange ( *pbr::UTF8Parser::ToUTF8 ( _content ) );
+    }
 }
 
 void UIEditBox::UpdateCursor () noexcept

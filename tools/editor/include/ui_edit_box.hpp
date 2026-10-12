@@ -64,6 +64,7 @@ class UIEditBox final : public Widget
         ValueHandler                        _onCancel = nullptr;
         ValueHandler                        _onChange = nullptr;
         ValueHandler                        _onNewValue = nullptr;
+        ValueHandler                        _onNext = nullptr;
 
     public:
         UIEditBox () = delete;
@@ -90,6 +91,10 @@ class UIEditBox final : public Widget
         void ConnectOnCancel ( ValueHandler &&callback ) noexcept;
         void ConnectOnChange ( ValueHandler &&callback ) noexcept;
         void ConnectOnNewValue ( ValueHandler &&callback ) noexcept;
+        void ConnectOnNext ( ValueHandler &&callback ) noexcept;
+
+        void Focus () noexcept;
+        void SelectAll () noexcept;
         void SetText ( std::string &&text ) noexcept;
 
     private:
@@ -119,6 +124,7 @@ class UIEditBox final : public Widget
         void Copy () noexcept;
         void Cut () noexcept;
         void Erase ( int32_t offset ) noexcept;
+        void Next () noexcept;
         void Paste () noexcept;
 
         [[nodiscard]] int32_t FindClosestSymbol ( int32_t x ) const noexcept;
@@ -135,7 +141,7 @@ class UIEditBox final : public Widget
         [[nodiscard]] bool RemoveSelectedContent () noexcept;
 
         void ResetBlinkTimer () noexcept;
-        void SelectAll () noexcept;
+        void DoSelectAll () noexcept;
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;

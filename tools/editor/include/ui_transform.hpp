@@ -63,26 +63,32 @@ class UITransform final : public UIDialogBox
         void CancelX ( std::string const &value ) noexcept;
         void ChangeX ( std::string const &value ) noexcept;
         void NewX ( std::string const &value ) noexcept;
+        void NextX ( std::string const &value ) noexcept;
 
         void CancelY ( std::string const &value ) noexcept;
         void ChangeY ( std::string const &value ) noexcept;
         void NewY ( std::string const &value ) noexcept;
+        void NextY ( std::string const &value ) noexcept;
 
         void CancelZ ( std::string const &value ) noexcept;
         void ChangeZ ( std::string const &value ) noexcept;
         void NewZ ( std::string const &value ) noexcept;
+        void NextZ ( std::string const &value ) noexcept;
 
         void CancelScaleX ( std::string const &value ) noexcept;
         void ChangeScaleX ( std::string const &value ) noexcept;
         void NewScaleX ( std::string const &value ) noexcept;
+        void NextScaleX ( std::string const &value ) noexcept;
 
         void CancelScaleY ( std::string const &value ) noexcept;
         void ChangeScaleY ( std::string const &value ) noexcept;
         void NewScaleY ( std::string const &value ) noexcept;
+        void NextScaleY ( std::string const &value ) noexcept;
 
         void CancelScaleZ ( std::string const &value ) noexcept;
         void ChangeScaleZ ( std::string const &value ) noexcept;
         void NewScaleZ ( std::string const &value ) noexcept;
+        void NextScaleZ ( std::string const &value ) noexcept;
 };
 
 } // namespace editor

@@ -67,26 +67,32 @@ UITransform::UITransform ( CloseHandler &&onClose ) noexcept:
     _x.ConnectOnCancel ( std::bind ( &UITransform::CancelX, this, std::placeholders::_1 ) );
     _x.ConnectOnChange ( std::bind ( &UITransform::ChangeX, this, std::placeholders::_1 ) );
     _x.ConnectOnNewValue ( std::bind ( &UITransform::NewX, this, std::placeholders::_1 ) );
+    _x.ConnectOnNext ( std::bind ( &UITransform::NextX, this, std::placeholders::_1 ) );
 
     _y.ConnectOnCancel ( std::bind ( &UITransform::CancelY, this, std::placeholders::_1 ) );
     _y.ConnectOnChange ( std::bind ( &UITransform::ChangeY, this, std::placeholders::_1 ) );
     _y.ConnectOnNewValue ( std::bind ( &UITransform::NewY, this, std::placeholders::_1 ) );
+    _y.ConnectOnNext ( std::bind ( &UITransform::NextY, this, std::placeholders::_1 ) );
 
     _z.ConnectOnCancel ( std::bind ( &UITransform::CancelZ, this, std::placeholders::_1 ) );
     _z.ConnectOnChange ( std::bind ( &UITransform::ChangeZ, this, std::placeholders::_1 ) );
     _z.ConnectOnNewValue ( std::bind ( &UITransform::NewZ, this, std::placeholders::_1 ) );
+    _z.ConnectOnNext ( std::bind ( &UITransform::NextZ, this, std::placeholders::_1 ) );
 
     _scaleX.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleX, this, std::placeholders::_1 ) );
     _scaleX.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleX, this, std::placeholders::_1 ) );
     _scaleX.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleX, this, std::placeholders::_1 ) );
+    _scaleX.ConnectOnNext ( std::bind ( &UITransform::NextScaleX, this, std::placeholders::_1 ) );
 
     _scaleY.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleY, this, std::placeholders::_1 ) );
     _scaleY.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleY, this, std::placeholders::_1 ) );
     _scaleY.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleY, this, std::placeholders::_1 ) );
+    _scaleY.ConnectOnNext ( std::bind ( &UITransform::NextScaleY, this, std::placeholders::_1 ) );
 
     _scaleZ.ConnectOnCancel ( std::bind ( &UITransform::CancelScaleZ, this, std::placeholders::_1 ) );
     _scaleZ.ConnectOnChange ( std::bind ( &UITransform::ChangeScaleZ, this, std::placeholders::_1 ) );
     _scaleZ.ConnectOnNewValue ( std::bind ( &UITransform::NewScaleZ, this, std::placeholders::_1 ) );
+    _scaleZ.ConnectOnNext ( std::bind ( &UITransform::NextScaleZ, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );
 }
@@ -324,6 +330,13 @@ void UITransform::NewX ( std::string const &/*value*/ ) noexcept
     android_vulkan::LogDebug ( "NewX" );
 }
 
+void UITransform::NextX ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextX" );
+    _y.Focus ();
+    _y.SelectAll ();
+}
+
 void UITransform::CancelY ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "CancelY" );
@@ -337,6 +350,13 @@ void UITransform::ChangeY ( std::string const &/*value*/ ) noexcept
 void UITransform::NewY ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "NewY" );
+}
+
+void UITransform::NextY ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextY" );
+    _z.Focus ();
+    _z.SelectAll ();
 }
 
 void UITransform::CancelZ ( std::string const &/*value*/ ) noexcept
@@ -354,6 +374,13 @@ void UITransform::NewZ ( std::string const &/*value*/ ) noexcept
     android_vulkan::LogDebug ( "NewZ" );
 }
 
+void UITransform::NextZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextZ" );
+    _scaleX.Focus ();
+    _scaleX.SelectAll ();
+}
+
 void UITransform::CancelScaleX ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "CancelScaleX" );
@@ -367,6 +394,13 @@ void UITransform::ChangeScaleX ( std::string const &/*value*/ ) noexcept
 void UITransform::NewScaleX ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "NewScaleX" );
+}
+
+void UITransform::NextScaleX ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextScaleX" );
+    _scaleY.Focus ();
+    _scaleY.SelectAll ();
 }
 
 void UITransform::CancelScaleY ( std::string const &/*value*/ ) noexcept
@@ -384,6 +418,13 @@ void UITransform::NewScaleY ( std::string const &/*value*/ ) noexcept
     android_vulkan::LogDebug ( "NewScaleY" );
 }
 
+void UITransform::NextScaleY ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextScaleY" );
+    _scaleZ.Focus ();
+    _scaleZ.SelectAll ();
+}
+
 void UITransform::CancelScaleZ ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "CancelScaleZ" );
@@ -397,6 +438,13 @@ void UITransform::ChangeScaleZ ( std::string const &/*value*/ ) noexcept
 void UITransform::NewScaleZ ( std::string const &/*value*/ ) noexcept
 {
     android_vulkan::LogDebug ( "NewScaleZ" );
+}
+
+void UITransform::NextScaleZ ( std::string const &/*value*/ ) noexcept
+{
+    android_vulkan::LogDebug ( "NextScaleZ" );
+    _x.Focus ();
+    _x.SelectAll ();
 }
 
 } // namespace editor

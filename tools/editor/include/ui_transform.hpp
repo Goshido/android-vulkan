@@ -14,20 +14,32 @@ namespace editor {
 class UITransform final : public UIDialogBox
 {
     public:
-        using CloseHandler = std::move_only_function<void ()>;
+        using ActionHandler = std::move_only_function<void ()>;
 
     private:
-        DIVUIElement        _headerLine;
-        UILabel             _headerText;
-        UICloseButton       _closeButton;
-        UIEditBox           _x;
-        UIEditBox           _y;
-        UIEditBox           _z;
-        UISeparator         _separator;
-        UIEditBox           _scaleX;
-        UIEditBox           _scaleY;
-        UIEditBox           _scaleZ;
-        CloseHandler        _onClose;
+        DIVUIElement                _headerLine;
+        UILabel                     _headerText;
+        UICloseButton               _closeButton;
+
+        UIEditBox                   _x;
+        UIEditBox                   _y;
+        UIEditBox                   _z;
+
+        UISeparator                 _separator;
+
+        UIEditBox                   _scaleX;
+        UIEditBox                   _scaleY;
+        UIEditBox                   _scaleZ;
+
+        ActionHandler               _onClose;
+
+        UIEditBox::ValueHandler     _onNextX = nullptr;
+        UIEditBox::ValueHandler     _onNextY = nullptr;
+        UIEditBox::ValueHandler     _onNextZ = nullptr;
+
+        UIEditBox::ValueHandler     _onNextScaleX = nullptr;
+        UIEditBox::ValueHandler     _onNextScaleY = nullptr;
+        UIEditBox::ValueHandler     _onNextScaleZ = nullptr;
 
     public:
         UITransform () = delete;
@@ -38,7 +50,37 @@ class UITransform final : public UIDialogBox
         UITransform ( UITransform && ) = delete;
         UITransform &operator = ( UITransform && ) = delete;
 
-        explicit UITransform ( CloseHandler &&onClose ) noexcept;
+        explicit UITransform ( ActionHandler &&onClose,
+            ActionHandler &&onCancelX,
+            UIEditBox::ValueHandler &&onChangeX,
+            UIEditBox::ValueHandler &&onNewX,
+            UIEditBox::ValueHandler &&onNextX,
+
+            ActionHandler &&onCancelY,
+            UIEditBox::ValueHandler &&onChangeY,
+            UIEditBox::ValueHandler &&onNewY,
+            UIEditBox::ValueHandler &&onNextY,
+
+            ActionHandler &&onCancelZ,
+            UIEditBox::ValueHandler &&onChangeZ,
+            UIEditBox::ValueHandler &&onNewZ,
+            UIEditBox::ValueHandler &&onNextZ,
+
+            ActionHandler &&onCancelScaleX,
+            UIEditBox::ValueHandler &&onChangeScaleX,
+            UIEditBox::ValueHandler &&onNewScaleX,
+            UIEditBox::ValueHandler &&onNextScaleX,
+
+            ActionHandler &&onCancelScaleY,
+            UIEditBox::ValueHandler &&onChangeScaleY,
+            UIEditBox::ValueHandler &&onNewScaleY,
+            UIEditBox::ValueHandler &&onNextScaleY,
+
+            ActionHandler &&onCancelScaleZ,
+            UIEditBox::ValueHandler &&onChangeScaleZ,
+            UIEditBox::ValueHandler &&onNewScaleZ,
+            UIEditBox::ValueHandler &&onNextScaleZ
+        ) noexcept;
 
         ~UITransform () override = default;
 
@@ -60,34 +102,12 @@ class UITransform final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-        void CancelX ( std::string const &value ) noexcept;
-        void ChangeX ( std::string const &value ) noexcept;
-        void NewX ( std::string const &value ) noexcept;
         void NextX ( std::string const &value ) noexcept;
-
-        void CancelY ( std::string const &value ) noexcept;
-        void ChangeY ( std::string const &value ) noexcept;
-        void NewY ( std::string const &value ) noexcept;
         void NextY ( std::string const &value ) noexcept;
-
-        void CancelZ ( std::string const &value ) noexcept;
-        void ChangeZ ( std::string const &value ) noexcept;
-        void NewZ ( std::string const &value ) noexcept;
         void NextZ ( std::string const &value ) noexcept;
 
-        void CancelScaleX ( std::string const &value ) noexcept;
-        void ChangeScaleX ( std::string const &value ) noexcept;
-        void NewScaleX ( std::string const &value ) noexcept;
         void NextScaleX ( std::string const &value ) noexcept;
-
-        void CancelScaleY ( std::string const &value ) noexcept;
-        void ChangeScaleY ( std::string const &value ) noexcept;
-        void NewScaleY ( std::string const &value ) noexcept;
         void NextScaleY ( std::string const &value ) noexcept;
-
-        void CancelScaleZ ( std::string const &value ) noexcept;
-        void ChangeScaleZ ( std::string const &value ) noexcept;
-        void NewScaleZ ( std::string const &value ) noexcept;
         void NextScaleZ ( std::string const &value ) noexcept;
 };
 

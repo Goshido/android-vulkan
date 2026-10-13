@@ -46,6 +46,38 @@ class TransformTool final
     private:
         void CreateUI () noexcept;
         void UpdateUI () noexcept;
+
+        void CancelX () noexcept;
+        void ChangeX ( std::string const &value ) noexcept;
+        void NewX ( std::string const &value ) noexcept;
+        void NextX ( std::string const &value ) noexcept;
+
+        void CancelY () noexcept;
+        void ChangeY ( std::string const &value ) noexcept;
+        void NewY ( std::string const &value ) noexcept;
+        void NextY ( std::string const &value ) noexcept;
+
+        void CancelZ () noexcept;
+        void ChangeZ ( std::string const &value ) noexcept;
+        void NewZ ( std::string const &value ) noexcept;
+        void NextZ ( std::string const &value ) noexcept;
+
+        void CancelScaleX () noexcept;
+        void ChangeScaleX ( std::string const &value ) noexcept;
+        void NewScaleX ( std::string const &value ) noexcept;
+        void NextScaleX ( std::string const &value ) noexcept;
+
+        void CancelScaleY () noexcept;
+        void ChangeScaleY ( std::string const &value ) noexcept;
+        void NewScaleY ( std::string const &value ) noexcept;
+        void NextScaleY ( std::string const &value ) noexcept;
+
+        void CancelScaleZ () noexcept;
+        void ChangeScaleZ ( std::string const &value ) noexcept;
+        void NewScaleZ ( std::string const &value ) noexcept;
+        void NextScaleZ ( std::string const &value ) noexcept;
+
+        [[nodiscard]] static std::optional<float> ToFloat ( std::string const &string ) noexcept;
 };
 
 } // namespace editor

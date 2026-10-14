@@ -1156,6 +1156,7 @@
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\hotkey.cpp" />
     <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\move_actor_action.cpp" />
     <ClCompile Include="src\move_tool.cpp" />
     <ClCompile Include="src\outline_mesh_node.cpp" />
     <ClCompile Include="src\program_info.cpp" />
@@ -1367,6 +1368,7 @@
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\hotkey.hpp" />
     <ClInclude Include="include\model.hpp" />
+    <ClInclude Include="include\move_actor_action.hpp" />
     <ClInclude Include="include\move_tool.hpp" />
     <ClInclude Include="include\outline_mesh_info.hpp" />
     <ClInclude Include="include\outline_mesh_node.hpp" />

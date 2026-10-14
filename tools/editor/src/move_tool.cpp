@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <gizmo_box_collider.hpp>
 #include <gizmo_cylinder_collider.hpp>
+#include <move_actor_action.hpp>
 #include <move_tool.hpp>
 #include <sdf_size.hpp>
 #include <trace.hpp>
@@ -23,67 +24,6 @@ constexpr float     CONE_ACTIVE_LENGTH = 1.55F;
 constexpr float     CONE_STANDBY_LENGTH = 1.5F;
 constexpr float     CONE_ACTIVE_SIZE = 0.5F;
 constexpr float     CONE_STANDBY_SIZE = 0.45F;
-
-//----------------------------------------------------------------------------------------------------------------------
-
-class MoveActorAction final : public Action
-{
-    public:
-        struct Item final
-        {
-            Actor*      _actor = nullptr;
-            GXVec3      _before {};
-            GXVec3      _after {};
-        };
-
-        using Items = std::vector<Item>;
-
-    private:
-        Items           _items {};
-
-    public:
-        MoveActorAction () = delete;
-
-        MoveActorAction ( MoveActorAction const & ) = delete;
-        MoveActorAction &operator = ( MoveActorAction const & ) = delete;
-
-        MoveActorAction ( MoveActorAction && ) = default;
-        MoveActorAction &operator = ( MoveActorAction && ) = default;
-
-        explicit MoveActorAction ( Items &&items ) noexcept;
-
-        ~MoveActorAction () override = default;
-
-    private:
-        void Redo () noexcept override;
-        void Undo () noexcept override;
-};
-
-MoveActorAction::MoveActorAction ( Items &&items ) noexcept:
-    _items ( std::move ( items ) )
-{
-    // NOTHING
-}
-
-void MoveActorAction::Redo () noexcept
-{
-    AV_TRACE ( "Redo move" )
-
-    for ( Item &item : _items )
-        item._actor->SetLocation ( item._after );
-
-    Workspace::Instance ().OnContentUpdated ();
-}
-
-void MoveActorAction::Undo () noexcept
-{
-    AV_TRACE ( "Undo move" )
-
-    for ( Item &item : _items )
-        item._actor->SetLocation ( item._before );
-
-    Workspace::Instance ().OnContentUpdated ();
-}
 
 } // end of anonymous namespace
 

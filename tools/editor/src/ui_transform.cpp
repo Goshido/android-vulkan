@@ -9,32 +9,26 @@ UITransform::UITransform ( ActionHandler &&onClose,
     ActionHandler &&onCancelX,
     UIEditBox::ValueHandler &&onChangeX,
     UIEditBox::ValueHandler &&onNewX,
-    UIEditBox::ValueHandler &&onNextX,
 
     ActionHandler &&onCancelY,
     UIEditBox::ValueHandler &&onChangeY,
     UIEditBox::ValueHandler &&onNewY,
-    UIEditBox::ValueHandler &&onNextY,
 
     ActionHandler &&onCancelZ,
     UIEditBox::ValueHandler &&onChangeZ,
     UIEditBox::ValueHandler &&onNewZ,
-    UIEditBox::ValueHandler &&onNextZ,
 
     ActionHandler &&onCancelScaleX,
     UIEditBox::ValueHandler &&onChangeScaleX,
     UIEditBox::ValueHandler &&onNewScaleX,
-    UIEditBox::ValueHandler &&onNextScaleX,
 
     ActionHandler &&onCancelScaleY,
     UIEditBox::ValueHandler &&onChangeScaleY,
     UIEditBox::ValueHandler &&onNewScaleY,
-    UIEditBox::ValueHandler &&onNextScaleY,
 
     ActionHandler &&onCancelScaleZ,
     UIEditBox::ValueHandler &&onChangeScaleZ,
-    UIEditBox::ValueHandler &&onNewScaleZ,
-    UIEditBox::ValueHandler &&onNextScaleZ
+    UIEditBox::ValueHandler &&onNewScaleZ
 ) noexcept:
     UIDialogBox ( "Transform" ),
 
@@ -73,24 +67,25 @@ UITransform::UITransform ( ActionHandler &&onClose,
     _headerText ( _headerLine, "Transform", "Header"),
     _closeButton ( _headerLine, "Close button" ),
 
-    _x ( _div, "X", "0", "EditBox[x]" ),
-    _y ( _div, "Y", "0", "EditBox[y]" ),
-    _z ( _div, "Z", "0", "EditBox[z]" ),
+    _x ( _div, "X", "", "EditBox[x]" ),
+    _y ( _div, "Y", "", "EditBox[y]" ),
+    _z ( _div, "Z", "", "EditBox[z]" ),
 
     _separator ( _div, "Separator" ),
 
-    _scaleX ( _div, "Scale X", "0", "EditBox[scale-x]" ),
-    _scaleY ( _div, "Scale Y", "0", "EditBox[scale-y]" ),
-    _scaleZ ( _div, "Scale Z", "0", "EditBox[scale-z]" ),
+    _scaleX ( _div, "Scale X", "", "EditBox[scale-x]" ),
+    _scaleY ( _div, "Scale Y", "", "EditBox[scale-y]" ),
+    _scaleZ ( _div, "Scale Z", "", "EditBox[scale-z]" ),
 
     _onClose ( std::move ( onClose ) ),
-    _onNextX ( std::move ( onNextX ) ),
-    _onNextY ( std::move ( onNextY ) ),
-    _onNextZ ( std::move ( onNextZ ) ),
 
-    _onNextScaleX ( std::move ( onNextScaleX ) ),
-    _onNextScaleY ( std::move ( onNextScaleY ) ),
-    _onNextScaleZ ( ( std::move ( onNextScaleZ ) ) )
+    _onNewX ( std::move ( onNewX ) ),
+    _onNewY ( std::move ( onNewY ) ),
+    _onNewZ ( std::move ( onNewZ ) ),
+
+    _onNewScaleX ( std::move ( onNewScaleX ) ),
+    _onNewScaleY ( std::move ( onNewScaleY ) ),
+    _onNewScaleZ ( ( std::move ( onNewScaleZ ) ) )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -111,8 +106,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _x.ConnectOnChange ( std::move ( onChangeX ) );
-    _x.ConnectOnNewValue ( std::move ( onNewX ) );
-    _x.ConnectOnNext ( std::bind ( &UITransform::NextX, this, std::placeholders::_1 ) );
+
+    _x.ConnectOnNewValue (
+        [ &handler = _onNewX ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _x.ConnectOnNext (
+        [ &axis = _y, &handler = _onNewX ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _y.ConnectOnCancel (
         [ onCancel = std::move ( onCancelY ) ] ( std::string const &/*value*/ ) mutable noexcept {
@@ -121,8 +126,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _y.ConnectOnChange ( std::move ( onChangeY ) );
-    _y.ConnectOnNewValue ( std::move ( onNewY ) );
-    _y.ConnectOnNext ( std::bind ( &UITransform::NextY, this, std::placeholders::_1 ) );
+
+    _y.ConnectOnNewValue (
+        [ &handler = _onNewY ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _y.ConnectOnNext (
+        [ &axis = _z, &handler = _onNewY ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _z.ConnectOnCancel (
         [ onCancel = std::move ( onCancelZ ) ] ( std::string const &/*value*/ ) mutable noexcept {
@@ -131,8 +146,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _z.ConnectOnChange ( std::move ( onChangeZ ) );
-    _z.ConnectOnNewValue ( std::move ( onNewZ ) );
-    _z.ConnectOnNext ( std::bind ( &UITransform::NextZ, this, std::placeholders::_1 ) );
+
+    _z.ConnectOnNewValue (
+        [ &handler = _onNewZ ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _z.ConnectOnNext (
+        [ &axis = _scaleX, &handler = _onNewZ ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _scaleX.ConnectOnCancel (
         [ onCancel = std::move ( onCancelScaleX ) ] ( std::string const &/*value*/ ) mutable noexcept {
@@ -141,8 +166,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleX.ConnectOnChange ( std::move ( onChangeScaleX ) );
-    _scaleX.ConnectOnNewValue ( std::move ( onNewScaleX ) );
-    _scaleX.ConnectOnNext ( std::bind ( &UITransform::NextScaleX, this, std::placeholders::_1 ) );
+
+    _scaleX.ConnectOnNewValue (
+        [ &handler = _onNewScaleX ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _scaleX.ConnectOnNext (
+        [ &axis = _scaleY, &handler = _onNewScaleX ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _scaleY.ConnectOnCancel (
         [ onCancel = std::move ( onCancelScaleY ) ] ( std::string const &/*value*/ ) mutable noexcept {
@@ -151,8 +186,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleY.ConnectOnChange ( std::move ( onChangeScaleY ) );
-    _scaleY.ConnectOnNewValue ( std::move ( onNewScaleY ) );
-    _scaleY.ConnectOnNext ( std::bind ( &UITransform::NextScaleY, this, std::placeholders::_1 ) );
+
+    _scaleY.ConnectOnNewValue (
+        [ &handler = _onNewScaleY ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _scaleY.ConnectOnNext (
+        [ &axis = _scaleZ, &handler = _onNewScaleY ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _scaleZ.ConnectOnCancel (
         [ onCancel = std::move ( onCancelScaleZ ) ] ( std::string const &/*value*/ ) mutable noexcept {
@@ -161,8 +206,18 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleZ.ConnectOnChange ( std::move ( onChangeScaleZ ) );
-    _scaleZ.ConnectOnNewValue ( std::move ( onNewScaleZ ) );
-    _scaleZ.ConnectOnNext ( std::bind ( &UITransform::NextScaleZ, this, std::placeholders::_1 ) );
+
+    _scaleZ.ConnectOnNewValue (
+        [ &handler = _onNewScaleZ ] ( std::string const &value ) noexcept {
+            handler ( value );
+        }
+    );
+
+    _scaleZ.ConnectOnNext (
+        [ &axis = _x, &handler = _onNewScaleZ ] ( std::string const &value ) noexcept {
+            Next ( value, axis, handler );
+        }
+    );
 
     _div.PrependChildElement ( _headerLine );
 }
@@ -385,46 +440,11 @@ void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _scaleZ.UpdatedRect ();
 }
 
-void UITransform::NextX ( std::string const &value ) noexcept
+void UITransform::Next ( std::string const &value, UIEditBox &axis, UIEditBox::ValueHandler &handler ) noexcept
 {
-    _y.Focus ();
-    _y.SelectAll ();
-    _onNextX ( value );
-}
-
-void UITransform::NextY ( std::string const &value ) noexcept
-{
-    _z.Focus ();
-    _z.SelectAll ();
-    _onNextY ( value );
-}
-
-void UITransform::NextZ ( std::string const &value ) noexcept
-{
-    _scaleX.Focus ();
-    _scaleX.SelectAll ();
-    _onNextZ ( value );
-}
-
-void UITransform::NextScaleX ( std::string const &value ) noexcept
-{
-    _scaleY.Focus ();
-    _scaleY.SelectAll ();
-    _onNextScaleX ( value );
-}
-
-void UITransform::NextScaleY ( std::string const &value ) noexcept
-{
-    _scaleZ.Focus ();
-    _scaleZ.SelectAll ();
-    _onNextScaleY ( value );
-}
-
-void UITransform::NextScaleZ ( std::string const &value ) noexcept
-{
-    _x.Focus ();
-    _x.SelectAll ();
-    _onNextScaleZ ( value );
+    axis.Focus ();
+    axis.SelectAll ();
+    handler ( value );
 }
 
 } // namespace editor

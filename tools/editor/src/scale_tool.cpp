@@ -80,7 +80,7 @@ ScaleActorAction::ScaleActorAction ( Items &&items ) noexcept:
 
 void ScaleActorAction::Redo () noexcept
 {
-    AV_TRACE ( "Redo scale" )
+    AV_TRACE ( "Scale tool: redo scale" )
 
     for ( Item &item : _items )
     {
@@ -93,7 +93,7 @@ void ScaleActorAction::Redo () noexcept
 
 void ScaleActorAction::Undo () noexcept
 {
-    AV_TRACE ( "Undo scale" )
+    AV_TRACE ( "Scale tool: undo scale" )
 
     for ( Item &item : _items )
     {

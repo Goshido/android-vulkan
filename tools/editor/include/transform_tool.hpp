@@ -57,37 +57,33 @@ class TransformTool final
         void CreateUI () noexcept;
         void UpdateUI () noexcept;
 
-        void NewLocation ( std::string const &value, Float &axis ) const noexcept;
-        void CommitLocation () const noexcept;
+        void NewLocation ( std::string const &value, Float &axis ) noexcept;
+        void CommitLocation () noexcept;
         void RevertLocation () const noexcept;
+
+        void NewScale ( std::string const &value, Float &axis ) noexcept;
+        void CommitScale () noexcept;
+        void RevertScale () const noexcept;
 
         void CancelX () noexcept;
         void ChangeX ( std::string const &value ) noexcept;
-        void NextX ( std::string const &value ) noexcept;
 
         void CancelY () noexcept;
         void ChangeY ( std::string const &value ) noexcept;
-        void NextY ( std::string const &value ) noexcept;
 
         void CancelZ () noexcept;
         void ChangeZ ( std::string const &value ) noexcept;
-        void NextZ ( std::string const &value ) noexcept;
 
         void CancelScaleX () noexcept;
         void ChangeScaleX ( std::string const &value ) noexcept;
-        void NewScaleX ( std::string const &value ) noexcept;
-        void NextScaleX ( std::string const &value ) noexcept;
 
         void CancelScaleY () noexcept;
         void ChangeScaleY ( std::string const &value ) noexcept;
-        void NewScaleY ( std::string const &value ) noexcept;
-        void NextScaleY ( std::string const &value ) noexcept;
 
         void CancelScaleZ () noexcept;
         void ChangeScaleZ ( std::string const &value ) noexcept;
-        void NewScaleZ ( std::string const &value ) noexcept;
-        void NextScaleZ ( std::string const &value ) noexcept;
 
+        [[nodiscard]] static bool CheckAxis ( float &before, Float const &after ) noexcept;
         [[nodiscard]] static Float ToFloat ( std::string const &string ) noexcept;
 };
 

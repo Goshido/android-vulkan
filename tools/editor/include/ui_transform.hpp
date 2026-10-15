@@ -33,13 +33,13 @@ class UITransform final : public UIDialogBox
 
         ActionHandler               _onClose;
 
-        UIEditBox::ValueHandler     _onNextX = nullptr;
-        UIEditBox::ValueHandler     _onNextY = nullptr;
-        UIEditBox::ValueHandler     _onNextZ = nullptr;
+        UIEditBox::ValueHandler     _onNewX = nullptr;
+        UIEditBox::ValueHandler     _onNewY = nullptr;
+        UIEditBox::ValueHandler     _onNewZ = nullptr;
 
-        UIEditBox::ValueHandler     _onNextScaleX = nullptr;
-        UIEditBox::ValueHandler     _onNextScaleY = nullptr;
-        UIEditBox::ValueHandler     _onNextScaleZ = nullptr;
+        UIEditBox::ValueHandler     _onNewScaleX = nullptr;
+        UIEditBox::ValueHandler     _onNewScaleY = nullptr;
+        UIEditBox::ValueHandler     _onNewScaleZ = nullptr;
 
     public:
         UITransform () = delete;
@@ -54,32 +54,26 @@ class UITransform final : public UIDialogBox
             ActionHandler &&onCancelX,
             UIEditBox::ValueHandler &&onChangeX,
             UIEditBox::ValueHandler &&onNewX,
-            UIEditBox::ValueHandler &&onNextX,
 
             ActionHandler &&onCancelY,
             UIEditBox::ValueHandler &&onChangeY,
             UIEditBox::ValueHandler &&onNewY,
-            UIEditBox::ValueHandler &&onNextY,
 
             ActionHandler &&onCancelZ,
             UIEditBox::ValueHandler &&onChangeZ,
             UIEditBox::ValueHandler &&onNewZ,
-            UIEditBox::ValueHandler &&onNextZ,
 
             ActionHandler &&onCancelScaleX,
             UIEditBox::ValueHandler &&onChangeScaleX,
             UIEditBox::ValueHandler &&onNewScaleX,
-            UIEditBox::ValueHandler &&onNextScaleX,
 
             ActionHandler &&onCancelScaleY,
             UIEditBox::ValueHandler &&onChangeScaleY,
             UIEditBox::ValueHandler &&onNewScaleY,
-            UIEditBox::ValueHandler &&onNextScaleY,
 
             ActionHandler &&onCancelScaleZ,
             UIEditBox::ValueHandler &&onChangeScaleZ,
-            UIEditBox::ValueHandler &&onNewScaleZ,
-            UIEditBox::ValueHandler &&onNextScaleZ
+            UIEditBox::ValueHandler &&onNewScaleZ
         ) noexcept;
 
         ~UITransform () override = default;
@@ -102,13 +96,7 @@ class UITransform final : public UIDialogBox
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
-        void NextX ( std::string const &value ) noexcept;
-        void NextY ( std::string const &value ) noexcept;
-        void NextZ ( std::string const &value ) noexcept;
-
-        void NextScaleX ( std::string const &value ) noexcept;
-        void NextScaleY ( std::string const &value ) noexcept;
-        void NextScaleZ ( std::string const &value ) noexcept;
+        static void Next ( std::string const &value, UIEditBox &axis, UIEditBox::ValueHandler &handler ) noexcept;
 };
 
 } // namespace editor

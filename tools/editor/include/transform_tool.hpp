@@ -57,31 +57,29 @@ class TransformTool final
         void CreateUI () noexcept;
         void UpdateUI () noexcept;
 
-        void NewLocation ( std::string const &value, Float &axis ) noexcept;
+        void ChangeLocation ( std::string const &value, Float &axis ) const noexcept;
         void CommitLocation () noexcept;
+        void NewLocation ( std::string const &value, Float &axis ) noexcept;
         void RevertLocation () const noexcept;
 
-        void NewScale ( std::string const &value, Float &axis ) noexcept;
+        void ChangeScale ( std::string const &value, Float &axis ) const noexcept;
         void CommitScale () noexcept;
+        void NewScale ( std::string const &value, Float &axis ) noexcept;
         void RevertScale () const noexcept;
 
+        // Note - sending 'before' by value is intentional.
+        [[nodiscard]] std::optional<GXVec3> ResolveLocation ( GXVec3 before ) const noexcept;
+
+        // Note - sending 'before' by value is intentional.
+        [[nodiscard]] std::optional<GXVec3> ResolveScale ( GXVec3 before ) const noexcept;
+
         void CancelX () noexcept;
-        void ChangeX ( std::string const &value ) noexcept;
-
         void CancelY () noexcept;
-        void ChangeY ( std::string const &value ) noexcept;
-
         void CancelZ () noexcept;
-        void ChangeZ ( std::string const &value ) noexcept;
 
         void CancelScaleX () noexcept;
-        void ChangeScaleX ( std::string const &value ) noexcept;
-
         void CancelScaleY () noexcept;
-        void ChangeScaleY ( std::string const &value ) noexcept;
-
         void CancelScaleZ () noexcept;
-        void ChangeScaleZ ( std::string const &value ) noexcept;
 
         [[nodiscard]] static bool CheckAxis ( float &before, Float const &after ) noexcept;
         [[nodiscard]] static Float ToFloat ( std::string const &string ) noexcept;

@@ -6,27 +6,24 @@
 namespace editor {
 
 UITransform::UITransform ( ActionHandler &&onClose,
-    ActionHandler &&onCancelX,
+    ActionHandler &&onRevertLocation,
+    ActionHandler &&onRevertScale,
+
     UIEditBox::ValueHandler &&onChangeX,
     UIEditBox::ValueHandler &&onNewX,
 
-    ActionHandler &&onCancelY,
     UIEditBox::ValueHandler &&onChangeY,
     UIEditBox::ValueHandler &&onNewY,
 
-    ActionHandler &&onCancelZ,
     UIEditBox::ValueHandler &&onChangeZ,
     UIEditBox::ValueHandler &&onNewZ,
 
-    ActionHandler &&onCancelScaleX,
     UIEditBox::ValueHandler &&onChangeScaleX,
     UIEditBox::ValueHandler &&onNewScaleX,
 
-    ActionHandler &&onCancelScaleY,
     UIEditBox::ValueHandler &&onChangeScaleY,
     UIEditBox::ValueHandler &&onNewScaleY,
 
-    ActionHandler &&onCancelScaleZ,
     UIEditBox::ValueHandler &&onChangeScaleZ,
     UIEditBox::ValueHandler &&onNewScaleZ
 ) noexcept:
@@ -78,6 +75,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     _scaleZ ( _div, "Scale Z", "", "EditBox[scale-z]" ),
 
     _onClose ( std::move ( onClose ) ),
+    _onRevertLocation ( std::move ( onRevertLocation ) ),
+    _onRevertScale ( std::move ( onRevertScale ) ),
 
     _onNewX ( std::move ( onNewX ) ),
     _onNewY ( std::move ( onNewY ) ),
@@ -100,8 +99,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     _closeButton.Connect ( std::bind ( &UITransform::Close, this ) );
 
     _x.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelX ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertLocation ();
         }
     );
 
@@ -120,8 +119,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _y.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelY ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertLocation ();
         }
     );
 
@@ -140,8 +139,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _z.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelZ ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertLocation ();
         }
     );
 
@@ -160,8 +159,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleX.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelScaleX ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertScale ();
         }
     );
 
@@ -180,8 +179,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleY.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelScaleY ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertScale ();
         }
     );
 
@@ -200,8 +199,8 @@ UITransform::UITransform ( ActionHandler &&onClose,
     );
 
     _scaleZ.ConnectOnCancel (
-        [ onCancel = std::move ( onCancelScaleZ ) ] ( std::string const &/*value*/ ) mutable noexcept {
-            onCancel ();
+        [ this ] ( std::string const &/*value*/ ) noexcept {
+            _onRevertScale ();
         }
     );
 
@@ -440,11 +439,11 @@ void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
     _scaleZ.UpdatedRect ();
 }
 
-void UITransform::Next ( std::string const &value, UIEditBox &axis, UIEditBox::ValueHandler &handler ) noexcept
+void UITransform::Next ( std::string const &value, UIEditBox& axis, UIEditBox::ValueHandler &handler ) noexcept
 {
+    handler ( value );
     axis.Focus ();
     axis.SelectAll ();
-    handler ( value );
 }
 
 } // namespace editor

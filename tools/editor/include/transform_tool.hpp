@@ -73,14 +73,6 @@ class TransformTool final
         // Note - sending 'before' by value is intentional.
         [[nodiscard]] std::optional<GXVec3> ResolveScale ( GXVec3 before ) const noexcept;
 
-        void CancelX () noexcept;
-        void CancelY () noexcept;
-        void CancelZ () noexcept;
-
-        void CancelScaleX () noexcept;
-        void CancelScaleY () noexcept;
-        void CancelScaleZ () noexcept;
-
         [[nodiscard]] static bool CheckAxis ( float &before, Float const &after ) noexcept;
         [[nodiscard]] static Float ToFloat ( std::string const &string ) noexcept;
 };

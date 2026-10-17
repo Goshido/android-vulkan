@@ -31,7 +31,9 @@ class UITransform final : public UIDialogBox
         UIEditBox                   _scaleY;
         UIEditBox                   _scaleZ;
 
-        ActionHandler               _onClose;
+        ActionHandler               _onClose = nullptr;
+        ActionHandler               _onRevertLocation = nullptr;
+        ActionHandler               _onRevertScale = nullptr;
 
         UIEditBox::ValueHandler     _onNewX = nullptr;
         UIEditBox::ValueHandler     _onNewY = nullptr;
@@ -51,27 +53,24 @@ class UITransform final : public UIDialogBox
         UITransform &operator = ( UITransform && ) = delete;
 
         explicit UITransform ( ActionHandler &&onClose,
-            ActionHandler &&onCancelX,
+            ActionHandler &&onRevertLocation,
+            ActionHandler &&onRevertScale,
+
             UIEditBox::ValueHandler &&onChangeX,
             UIEditBox::ValueHandler &&onNewX,
 
-            ActionHandler &&onCancelY,
             UIEditBox::ValueHandler &&onChangeY,
             UIEditBox::ValueHandler &&onNewY,
 
-            ActionHandler &&onCancelZ,
             UIEditBox::ValueHandler &&onChangeZ,
             UIEditBox::ValueHandler &&onNewZ,
 
-            ActionHandler &&onCancelScaleX,
             UIEditBox::ValueHandler &&onChangeScaleX,
             UIEditBox::ValueHandler &&onNewScaleX,
 
-            ActionHandler &&onCancelScaleY,
             UIEditBox::ValueHandler &&onChangeScaleY,
             UIEditBox::ValueHandler &&onNewScaleY,
 
-            ActionHandler &&onCancelScaleZ,
             UIEditBox::ValueHandler &&onChangeScaleZ,
             UIEditBox::ValueHandler &&onNewScaleZ
         ) noexcept;

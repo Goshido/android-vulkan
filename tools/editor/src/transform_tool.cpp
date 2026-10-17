@@ -193,7 +193,8 @@ void TransformTool::CreateUI () noexcept
             _ui = nullptr;
         },
 
-        std::bind ( &TransformTool::CancelX, this ),
+        std::bind ( &TransformTool::RevertLocation, this ),
+        std::bind ( &TransformTool::RevertScale, this ),
 
         [ this, &axis = _x ] ( std::string const &value ) noexcept {
             ChangeLocation ( value, axis );
@@ -203,8 +204,6 @@ void TransformTool::CreateUI () noexcept
             NewLocation ( value, axis );
         },
 
-        std::bind ( &TransformTool::CancelY, this ),
-
         [ this, &axis = _y ] ( std::string const &value ) noexcept {
             ChangeLocation ( value, axis );
         },
@@ -212,8 +211,6 @@ void TransformTool::CreateUI () noexcept
         [ this, &axis = _y ] ( std::string const &value ) noexcept {
             NewLocation ( value, axis );
         },
-
-        std::bind ( &TransformTool::CancelZ, this ),
 
         [ this, &axis = _z ] ( std::string const &value ) noexcept {
             ChangeLocation ( value, axis );
@@ -223,8 +220,6 @@ void TransformTool::CreateUI () noexcept
             NewLocation ( value, axis );
         },
 
-        std::bind ( &TransformTool::CancelScaleX, this ),
-
         [ this, &axis = _scaleX ] ( std::string const &value ) noexcept {
             ChangeScale ( value, axis );
         },
@@ -233,8 +228,6 @@ void TransformTool::CreateUI () noexcept
             NewScale ( value, axis );
         },
 
-        std::bind ( &TransformTool::CancelScaleY, this ),
-
         [ this, &axis = _scaleY ] ( std::string const &value ) noexcept {
             ChangeScale ( value, axis );
         },
@@ -242,8 +235,6 @@ void TransformTool::CreateUI () noexcept
         [ this, &axis = _scaleY ] ( std::string const &value ) noexcept {
             NewScale ( value, axis );
         },
-
-        std::bind ( &TransformTool::CancelScaleZ, this ),
 
         [ this, &axis = _scaleZ ] ( std::string const &value ) noexcept {
             ChangeScale ( value, axis );
@@ -541,42 +532,6 @@ std::optional<GXVec3> TransformTool::ResolveScale ( GXVec3 before ) const noexce
 
     std::optional<GXVec3> cases[] = { std::nullopt, std::optional<GXVec3> { std::move ( before ) } };
     return cases[ static_cast<uint32_t> ( change ) ];
-}
-
-void TransformTool::CancelX () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel X" )
-    android_vulkan::LogDebug ( "CancelX" );
-}
-
-void TransformTool::CancelY () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel Y" )
-    android_vulkan::LogDebug ( "CancelY" );
-}
-
-void TransformTool::CancelZ () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel Z" )
-    android_vulkan::LogDebug ( "CancelZ" );
-}
-
-void TransformTool::CancelScaleX () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel scale X" )
-    android_vulkan::LogDebug ( "CancelScaleX" );
-}
-
-void TransformTool::CancelScaleY () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel scale Y" )
-    android_vulkan::LogDebug ( "CancelScaleY" );
-}
-
-void TransformTool::CancelScaleZ () noexcept
-{
-    AV_TRACE ( "Transform tool: cancel scale Z" )
-    android_vulkan::LogDebug ( "CancelScaleZ" );
 }
 
 bool TransformTool::CheckAxis ( float &before, Float const &after ) noexcept

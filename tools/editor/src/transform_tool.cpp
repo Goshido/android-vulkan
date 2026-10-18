@@ -155,6 +155,13 @@ void TransformTool::Destroy ( SaveState::Container &save ) noexcept
     ui.Write ( _rect._bottom );
 }
 
+void TransformTool::OnContentCommitted ( Selection::Actors const &actors ) noexcept
+{
+    AV_TRACE ( "Transform tool: content committed" )
+    OnContentUpdated ( actors );
+    _items = std::move ( _updated );
+}
+
 void TransformTool::OnContentUpdated ( Selection::Actors const &actors ) noexcept
 {
     AV_TRACE ( "Transform tool: content updated" )
@@ -196,58 +203,61 @@ void TransformTool::CreateUI () noexcept
         std::bind ( &TransformTool::RevertLocation, this ),
         std::bind ( &TransformTool::RevertScale, this ),
 
-        [ this, &axis = _x ] ( std::string const &value ) noexcept {
-            ChangeLocation ( value, axis );
+        [ this, &control = _x ] ( std::string const &value ) noexcept {
+            ChangeLocation ( value, control );
         },
 
-        [ this, &axis = _x ] ( std::string const &value ) noexcept {
-            NewLocation ( value, axis );
+        [ this, &control = _x ] ( std::string const &value ) noexcept {
+            NewLocation ( value, control );
         },
 
-        [ this, &axis = _y ] ( std::string const &value ) noexcept {
-            ChangeLocation ( value, axis );
+        [ this, &control = _y ] ( std::string const &value ) noexcept {
+            ChangeLocation ( value, control );
         },
 
-        [ this, &axis = _y ] ( std::string const &value ) noexcept {
-            NewLocation ( value, axis );
+        [ this, &control = _y ] ( std::string const &value ) noexcept {
+            NewLocation ( value, control );
         },
 
-        [ this, &axis = _z ] ( std::string const &value ) noexcept {
-            ChangeLocation ( value, axis );
+        [ this, &control = _z ] ( std::string const &value ) noexcept {
+            ChangeLocation ( value, control );
         },
 
-        [ this, &axis = _z ] ( std::string const &value ) noexcept {
-            NewLocation ( value, axis );
+        [ this, &control = _z ] ( std::string const &value ) noexcept {
+            NewLocation ( value, control );
         },
 
-        [ this, &axis = _scaleX ] ( std::string const &value ) noexcept {
-            ChangeScale ( value, axis );
+        [ this, &control = _scaleX ] ( std::string const &value ) noexcept {
+            ChangeScale ( value, control );
         },
 
-        [ this, &axis = _scaleX ] ( std::string const &value ) noexcept {
-            NewScale ( value, axis );
+        [ this, &control = _scaleX ] ( std::string const &value ) noexcept {
+            NewScale ( value, control );
         },
 
-        [ this, &axis = _scaleY ] ( std::string const &value ) noexcept {
-            ChangeScale ( value, axis );
+        [ this, &control = _scaleY ] ( std::string const &value ) noexcept {
+            ChangeScale ( value, control );
         },
 
-        [ this, &axis = _scaleY ] ( std::string const &value ) noexcept {
-            NewScale ( value, axis );
+        [ this, &control = _scaleY ] ( std::string const &value ) noexcept {
+            NewScale ( value, control );
         },
 
-        [ this, &axis = _scaleZ ] ( std::string const &value ) noexcept {
-            ChangeScale ( value, axis );
+        [ this, &control = _scaleZ ] ( std::string const &value ) noexcept {
+            ChangeScale ( value, control );
         },
 
-        [ this, &axis = _scaleZ ] ( std::string const &value ) noexcept {
-            NewScale ( value, axis );
+        [ this, &control = _scaleZ ] ( std::string const &value ) noexcept {
+            NewScale ( value, control );
         }
     );
 
     _ui->SetRect ( _rect );
     _ui->SetMinSize ( MIN_WIDTH, HEIGHT );
     _ui->SetMaxSize ( theme::MAX_LENGTH, HEIGHT );
+
+    _updated = _items;
+    UpdateUI ();
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::UIPrependWidget,
@@ -277,14 +287,14 @@ void TransformTool::UpdateUI () noexcept
     auto i = _updated.cbegin ();
 
     GXVec3 const &firstLocation = i->_location;
-    _x = Float { firstLocation._data[ 0U ] };
-    _y = Float { firstLocation._data[ 1U ] };
-    _z = Float { firstLocation._data[ 2U ] };
+    _x._value = Float { firstLocation._data[ 0U ] };
+    _y._value = Float { firstLocation._data[ 1U ] };
+    _z._value = Float { firstLocation._data[ 2U ] };
 
     GXVec3 const &firstScale = ( i++ )->_scale;
-    _scaleX = Float { firstScale._data[ 0U ] };
-    _scaleY = Float { firstScale._data[ 1U ] };
-    _scaleZ = Float { firstScale._data[ 2U ] };
+    _scaleX._value = Float { firstScale._data[ 0U ] };
+    _scaleY._value = Float { firstScale._data[ 1U ] };
+    _scaleZ._value = Float { firstScale._data[ 2U ] };
 
     constexpr auto check = [] ( Float &&current, float other ) noexcept -> Float {
         Float cases[] = { std::move ( current ), std::nullopt };
@@ -294,14 +304,14 @@ void TransformTool::UpdateUI () noexcept
     for ( auto const end = _updated.cend (); i != end; ++i )
     {
         GXVec3 const &location = i->_location;
-        _x = check ( std::move ( _x ), location._data[ 0U ] );
-        _y = check ( std::move ( _y ), location._data[ 1U ] );
-        _z = check ( std::move ( _z ), location._data[ 2U ] );
+        _x._value = check ( std::move ( _x._value ), location._data[ 0U ] );
+        _y._value = check ( std::move ( _y._value ), location._data[ 1U ] );
+        _z._value = check ( std::move ( _z._value ), location._data[ 2U ] );
 
         GXVec3 const &scale = i->_scale;
-        _scaleX = check ( std::move ( _scaleX ), scale._data[ 0U ] );
-        _scaleY = check ( std::move ( _scaleY ), scale._data[ 1U ] );
-        _scaleZ = check ( std::move ( _scaleZ ), scale._data[ 2U ] );
+        _scaleX._value = check ( std::move ( _scaleX._value ), scale._data[ 0U ] );
+        _scaleY._value = check ( std::move ( _scaleY._value ), scale._data[ 1U ] );
+        _scaleZ._value = check ( std::move ( _scaleZ._value ), scale._data[ 2U ] );
     }
 
     constexpr auto resolve = [] ( Float const &value ) noexcept -> std::string {
@@ -313,16 +323,28 @@ void TransformTool::UpdateUI () noexcept
         return std::string ( buf, static_cast<size_t> ( symbols ) );
     };
 
-    ui.SetX ( resolve ( _x ) );
-    ui.SetY ( resolve ( _y ) );
-    ui.SetZ ( resolve ( _z ) );
+    if ( !std::exchange ( _x._ignoreUpdate, false ) )
+        ui.SetX ( resolve ( _x._value ) );
 
-    ui.SetScaleX ( resolve ( _scaleX ) );
-    ui.SetScaleY ( resolve ( _scaleY ) );
-    ui.SetScaleZ ( resolve ( _scaleZ ) );
+    if ( !std::exchange ( _y._ignoreUpdate, false ) )
+        ui.SetY ( resolve ( _y._value ) );
+
+    if ( !std::exchange ( _z._ignoreUpdate, false ) )
+        ui.SetZ ( resolve ( _z._value ) );
+
+    if ( !std::exchange ( _scaleX._ignoreUpdate, false ) )
+        ui.SetScaleX ( resolve ( _scaleX._value ) );
+
+    if ( !std::exchange ( _scaleY._ignoreUpdate, false ) )
+        ui.SetScaleY ( resolve ( _scaleY._value ) );
+
+    if ( !std::exchange ( _scaleZ._ignoreUpdate, false ) )
+    {
+        ui.SetScaleZ ( resolve ( _scaleZ._value ) );
+    }
 }
 
-void TransformTool::ChangeLocation ( std::string const &value, Float &axis ) const noexcept
+void TransformTool::ChangeLocation ( std::string const &value, Control &control ) noexcept
 {
     AV_TRACE ( "Transform tool: change location" )
 
@@ -334,15 +356,23 @@ void TransformTool::ChangeLocation ( std::string const &value, Float &axis ) con
     if ( !v ) [[unlikely]]
         return;
 
-    axis = std::move ( v );
+    control =
+    {
+        ._value = std::move ( v ),
+        ._ignoreUpdate = true
+    };
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    Workspace &workspace = Workspace::Instance ();
+
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         if ( auto const after = ResolveLocation ( actor->GetLocation () ); after ) [[likely]]
         {
             actor->SetLocation ( *after );
         }
     }
+
+    workspace.OnContentUpdated ();
 }
 
 void TransformTool::CommitLocation () noexcept
@@ -383,7 +413,7 @@ void TransformTool::CommitLocation () noexcept
     history.End ();
 }
 
-void TransformTool::NewLocation ( std::string const &value, Float &axis ) noexcept
+void TransformTool::NewLocation ( std::string const &value, Control &control ) noexcept
 {
     AV_TRACE ( "Transform tool: new location" )
 
@@ -392,7 +422,7 @@ void TransformTool::NewLocation ( std::string const &value, Float &axis ) noexce
 
     if ( Float v = ToFloat ( value ); v ) [[likely]]
     {
-        axis = std::move ( v );
+        control._value = std::move ( v );
         CommitLocation ();
         return;
     }
@@ -412,7 +442,7 @@ void TransformTool::RevertLocation () const noexcept
     workspace.OnContentUpdated ();
 }
 
-void TransformTool::ChangeScale ( std::string const &value, Float &axis ) const noexcept
+void TransformTool::ChangeScale ( std::string const &value, Control &control ) const noexcept
 {
     AV_TRACE ( "Transform tool: change scale" )
 
@@ -424,7 +454,11 @@ void TransformTool::ChangeScale ( std::string const &value, Float &axis ) const 
     if ( !v ) [[unlikely]]
         return;
 
-    axis = std::move ( v );
+    control =
+    {
+        ._value = std::move ( v ),
+        ._ignoreUpdate = true
+    };
 
     for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
     {
@@ -447,9 +481,9 @@ void TransformTool::CommitScale () noexcept
     auto const resolve = [ &x = _scaleX, &y = _scaleY, &z = _scaleZ ] (
         GXVec3 before
     ) noexcept -> std::optional<GXVec3> {
-        bool const change = CheckAxis ( before._data[ 0U ], x ) |
-            CheckAxis ( before._data[ 1U ], y ) |
-            CheckAxis ( before._data[ 2U ], z );
+        bool const change = CheckAxis ( before._data[ 0U ], x._value ) |
+            CheckAxis ( before._data[ 1U ], y._value ) |
+            CheckAxis ( before._data[ 2U ], z._value );
 
         std::optional<GXVec3> cases[] = { std::nullopt, std::optional<GXVec3> { std::move ( before ) } };
         return cases[ static_cast<uint32_t> ( change ) ];
@@ -485,7 +519,7 @@ void TransformTool::CommitScale () noexcept
     history.End ();
 }
 
-void TransformTool::NewScale ( std::string const &value, Float &axis ) noexcept
+void TransformTool::NewScale ( std::string const &value, Control &control ) noexcept
 {
     AV_TRACE ( "Transform tool: new scale" )
 
@@ -494,7 +528,7 @@ void TransformTool::NewScale ( std::string const &value, Float &axis ) noexcept
 
     if ( Float v = ToFloat ( value ); v ) [[likely]]
     {
-        axis = std::move ( v );
+        control._value = std::move ( v );
         CommitScale ();
         return;
     }
@@ -516,9 +550,9 @@ void TransformTool::RevertScale () const noexcept
 
 std::optional<GXVec3> TransformTool::ResolveLocation ( GXVec3 before ) const noexcept
 {
-    bool const change = CheckAxis ( before._data[ 0U ], _x ) |
-        CheckAxis ( before._data[ 1U ], _y ) |
-        CheckAxis ( before._data[ 2U ], _z );
+    bool const change = CheckAxis ( before._data[ 0U ], _x._value ) |
+        CheckAxis ( before._data[ 1U ], _y._value ) |
+        CheckAxis ( before._data[ 2U ], _z._value );
 
     std::optional<GXVec3> cases[] = { std::nullopt, std::optional<GXVec3> { std::move ( before ) } };
     return cases[ static_cast<uint32_t> ( change ) ];
@@ -526,9 +560,9 @@ std::optional<GXVec3> TransformTool::ResolveLocation ( GXVec3 before ) const noe
 
 std::optional<GXVec3> TransformTool::ResolveScale ( GXVec3 before ) const noexcept
 {
-    bool const change = CheckAxis ( before._data[ 0U ], _scaleX ) |
-        CheckAxis ( before._data[ 1U ], _scaleY ) |
-        CheckAxis ( before._data[ 2U ], _scaleZ );
+    bool const change = CheckAxis ( before._data[ 0U ], _scaleX._value ) |
+        CheckAxis ( before._data[ 1U ], _scaleY._value ) |
+        CheckAxis ( before._data[ 2U ], _scaleZ._value );
 
     std::optional<GXVec3> cases[] = { std::nullopt, std::optional<GXVec3> { std::move ( before ) } };
     return cases[ static_cast<uint32_t> ( change ) ];

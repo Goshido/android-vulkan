@@ -697,6 +697,7 @@ class Workspace final
         [[nodiscard]] std::optional<uint32_t> GetOutlineBlurX () noexcept;
 
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
+        void OnContentCommitted () noexcept;
         void OnContentUpdated () noexcept;
         void OnSelectionChanged () noexcept;
 

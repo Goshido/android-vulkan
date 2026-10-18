@@ -697,10 +697,8 @@ void UIEditBox::Cancel () noexcept
         }
     );
 
-    if ( auto v = pbr::UTF8Parser::ToU32String ( _committed ); *v == _content ) [[unlikely]]
-        return;
-
-    SetText ( std::string ( _committed ) );
+    if ( auto v = pbr::UTF8Parser::ToU32String ( _committed ); *v != _content ) [[unlikely]]
+        SetText ( std::string ( _committed ) );
 
     if ( _onCancel ) [[likely]]
     {

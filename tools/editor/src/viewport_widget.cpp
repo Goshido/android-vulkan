@@ -375,6 +375,12 @@ GXVec3 ViewportWidget::GetVI () const noexcept
     return result;
 }
 
+void ViewportWidget::OnContentCommitted ( Selection::Actors const &actors ) noexcept
+{
+    AV_TRACE ( "Viewport: content committed" )
+    _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
+}
+
 void ViewportWidget::OnContentUpdated ( Selection::Actors const &actors ) noexcept
 {
     AV_TRACE ( "Viewport: content updated" )

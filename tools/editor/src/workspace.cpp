@@ -896,6 +896,14 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _swapchainDepth->_storageIndex = std::move ( idx );
 }
 
+void Workspace::OnContentCommitted () noexcept
+{
+    AV_TRACE ( "Content committed" )
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnContentCommitted ( actors );
+    _transformTool.OnContentCommitted ( actors );
+}
+
 void Workspace::OnContentUpdated () noexcept
 {
     AV_TRACE ( "Content updated" )

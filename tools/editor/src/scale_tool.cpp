@@ -88,7 +88,7 @@ void ScaleActorAction::Redo () noexcept
         item._actor->SetLocal ( state._location, state._scale );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 void ScaleActorAction::Undo () noexcept
@@ -101,7 +101,7 @@ void ScaleActorAction::Undo () noexcept
         item._actor->SetLocal ( state._location, state._scale );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 } // end of anonymous namespace
@@ -171,7 +171,7 @@ void ScaleTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void ScaleTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
+void ScaleTool::Begin ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
 {
     AV_TRACE ( "Scale tool begin" )
     size_t const count = actors.size ();

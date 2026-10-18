@@ -82,7 +82,7 @@ void RotateActorAction::Redo () noexcept
         item._actor->SetLocal ( state._rotation, state._location );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 void RotateActorAction::Undo () noexcept
@@ -95,7 +95,7 @@ void RotateActorAction::Undo () noexcept
         item._actor->SetLocal ( state._rotation, state._location );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 } // end of anonymous namespace
@@ -125,7 +125,7 @@ void RotateTool::Deactivate () noexcept
     _tangentDirectionB.Hide ();
 }
 
-void RotateTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
+void RotateTool::Begin ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
 {
     AV_TRACE ( "Rotate tool begin" )
     size_t const count = actors.size ();

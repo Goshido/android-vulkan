@@ -19,7 +19,7 @@ void MoveActorAction::Redo () noexcept
     for ( Item &item : _items )
         item._actor->SetLocation ( item._after );
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 void MoveActorAction::Undo () noexcept
@@ -29,7 +29,7 @@ void MoveActorAction::Undo () noexcept
     for ( Item &item : _items )
         item._actor->SetLocation ( item._before );
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 } // namespace editor

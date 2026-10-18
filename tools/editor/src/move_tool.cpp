@@ -92,7 +92,7 @@ void MoveTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void MoveTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
+void MoveTool::Begin ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
 {
     AV_TRACE ( "Move tool begin" )
     size_t const count = actors.size ();

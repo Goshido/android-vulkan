@@ -126,6 +126,7 @@ class ViewportWidget final : public Widget
         // See <repo>/docs/gizmo-rendering.md#pixel-coverage
         [[nodiscard]] GXVec3 GetVI () const noexcept;
 
+        void OnContentCommitted ( Selection::Actors const &actors ) noexcept;
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors &actors ) noexcept;
 

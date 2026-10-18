@@ -19,7 +19,7 @@ class Tool
         virtual void Activate () noexcept = 0;
         virtual void Deactivate () noexcept = 0;
 
-        virtual void Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept = 0;
+        virtual void Begin ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept = 0;
         virtual void End () noexcept = 0;
         virtual void Cancel () noexcept = 0;
         virtual void OnContentUpdated ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept = 0;

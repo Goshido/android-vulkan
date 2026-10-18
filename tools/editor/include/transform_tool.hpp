@@ -13,13 +13,19 @@ namespace editor {
 class TransformTool final
 {
     private:
+        using Float = std::optional<float>;
+
+        struct Control final
+        {
+            Float               _value = std::nullopt;
+            bool                _ignoreUpdate = false;
+        };
+
         struct Item final
         {
             GXVec3              _location {};
             GXVec3              _scale {};
         };
-
-        using Float = std::optional<float>;
 
     private:
         UITransform*            _ui = nullptr;
@@ -28,13 +34,13 @@ class TransformTool final
         std::vector<Item>       _updated {};
         std::vector<Item>       _items {};
 
-        Float                   _x = std::nullopt;
-        Float                   _y = std::nullopt;
-        Float                   _z = std::nullopt;
+        Control                 _x {};
+        Control                 _y {};
+        Control                 _z {};
 
-        Float                   _scaleX = std::nullopt;
-        Float                   _scaleY = std::nullopt;
-        Float                   _scaleZ = std::nullopt;
+        Control                 _scaleX {};
+        Control                 _scaleY {};
+        Control                 _scaleZ {};
 
     public:
         TransformTool () = default;
@@ -50,6 +56,7 @@ class TransformTool final
         void Init ( SaveState::Container const &save ) noexcept;
         void Destroy ( SaveState::Container &save ) noexcept;
 
+        void OnContentCommitted ( Selection::Actors const &actors ) noexcept;
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
 
@@ -57,14 +64,14 @@ class TransformTool final
         void CreateUI () noexcept;
         void UpdateUI () noexcept;
 
-        void ChangeLocation ( std::string const &value, Float &axis ) const noexcept;
+        void ChangeLocation ( std::string const &value, Control &control ) noexcept;
         void CommitLocation () noexcept;
-        void NewLocation ( std::string const &value, Float &axis ) noexcept;
+        void NewLocation ( std::string const &value, Control &control ) noexcept;
         void RevertLocation () const noexcept;
 
-        void ChangeScale ( std::string const &value, Float &axis ) const noexcept;
+        void ChangeScale ( std::string const &value, Control &control ) const noexcept;
         void CommitScale () noexcept;
-        void NewScale ( std::string const &value, Float &axis ) noexcept;
+        void NewScale ( std::string const &value, Control &control ) noexcept;
         void RevertScale () const noexcept;
 
         // Note - sending 'before' by value is intentional.

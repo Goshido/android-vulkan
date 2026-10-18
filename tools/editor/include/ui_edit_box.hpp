@@ -12,7 +12,7 @@ namespace editor {
 class UIEditBox final : public Widget
 {
     public:
-        using Callback = std::move_only_function<void ( std::string const &value )>;
+        using ValueHandler = std::move_only_function<void ( std::string const &value )>;
 
     private:
         using MouseButtonHandler = void ( UIEditBox::* ) ( MouseButtonEvent const &event ) noexcept;
@@ -61,7 +61,10 @@ class UIEditBox final : public Widget
         UpdateRectHandler                   _updateRect = &UIEditBox::UpdatedRectNormal;
 
         std::unique_ptr<Timer>              _blink {};
-        Callback                            _callback {};
+        ValueHandler                        _onCancel = nullptr;
+        ValueHandler                        _onChange = nullptr;
+        ValueHandler                        _onNewValue = nullptr;
+        ValueHandler                        _onNext = nullptr;
 
     public:
         UIEditBox () = delete;
@@ -85,7 +88,13 @@ class UIEditBox final : public Widget
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
-        void Connect ( Callback &&callback ) noexcept;
+        void ConnectOnCancel ( ValueHandler &&callback ) noexcept;
+        void ConnectOnChange ( ValueHandler &&callback ) noexcept;
+        void ConnectOnNewValue ( ValueHandler &&callback ) noexcept;
+        void ConnectOnNext ( ValueHandler &&callback ) noexcept;
+
+        void Focus () noexcept;
+        void SelectAll () noexcept;
         void SetText ( std::string &&text ) noexcept;
 
     private:
@@ -110,10 +119,12 @@ class UIEditBox final : public Widget
         void UpdatedRectNormal () noexcept;
 
         void Append ( char32_t character ) noexcept;
+        void Cancel () noexcept;
         void Commit () noexcept;
         void Copy () noexcept;
         void Cut () noexcept;
         void Erase ( int32_t offset ) noexcept;
+        void Next () noexcept;
         void Paste () noexcept;
 
         [[nodiscard]] int32_t FindClosestSymbol ( int32_t x ) const noexcept;
@@ -130,11 +141,12 @@ class UIEditBox final : public Widget
         [[nodiscard]] bool RemoveSelectedContent () noexcept;
 
         void ResetBlinkTimer () noexcept;
-        void SelectAll () noexcept;
+        void DoSelectAll () noexcept;
 
         void SwitchToEditState () noexcept;
         void SwitchToNormalState () noexcept;
 
+        void NotifyChange () noexcept;
         void UpdateCursor () noexcept;
         void UpdateMetrics () noexcept;
 

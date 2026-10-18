@@ -711,16 +711,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Aftermath|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Nsight|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='RenderDoc|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\length_value.obj</ObjectFileName>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
@@ -1166,6 +1156,7 @@
     <ClCompile Include="src\history.cpp" />
     <ClCompile Include="src\hotkey.cpp" />
     <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\move_actor_action.cpp" />
     <ClCompile Include="src\move_tool.cpp" />
     <ClCompile Include="src\outline_mesh_node.cpp" />
     <ClCompile Include="src\program_info.cpp" />
@@ -1226,6 +1217,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\transform_component.cpp" />
+    <ClCompile Include="src\transform_tool.cpp" />
     <ClCompile Include="src\ui_check_box.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
     <ClCompile Include="src\ui_combo_box.cpp" />
@@ -1235,7 +1227,9 @@
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
     <ClCompile Include="src\ui_props.cpp" />
+    <ClCompile Include="src\ui_separator.cpp" />
     <ClCompile Include="src\ui_slider.cpp" />
+    <ClCompile Include="src\ui_transform.cpp" />
     <ClCompile Include="src\viewport_widget.cpp" />
     <ClCompile Include="src\widget.cpp" />
     <ClCompile Include="src\workspace.cpp" />
@@ -1280,6 +1274,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_computed_values.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_unit_to_device_pixel.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\descriptor_set_layout.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\exposure_specialization.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\graphics_program_base.hpp" />
@@ -1348,6 +1343,7 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_api.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_loader.hpp" />
     <ClInclude Include="..\..\app\src\main\cpp\include\vulkan_utils.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\div_ui_element_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\text_ui_element_base.ipp" />
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\ui_element_base.ipp" />
@@ -1372,6 +1368,7 @@
     <ClInclude Include="include\history.hpp" />
     <ClInclude Include="include\hotkey.hpp" />
     <ClInclude Include="include\model.hpp" />
+    <ClInclude Include="include\move_actor_action.hpp" />
     <ClInclude Include="include\move_tool.hpp" />
     <ClInclude Include="include\outline_mesh_info.hpp" />
     <ClInclude Include="include\outline_mesh_node.hpp" />
@@ -1451,6 +1448,7 @@
     </ClInclude>
     <ClInclude Include="include\transform.hpp" />
     <ClInclude Include="include\transform_component.hpp" />
+    <ClInclude Include="include\transform_tool.hpp" />
     <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
     <ClInclude Include="include\ui_combo_box.hpp" />
@@ -1460,7 +1458,9 @@
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
     <ClInclude Include="include\ui_props.hpp" />
+    <ClInclude Include="include\ui_separator.hpp" />
     <ClInclude Include="include\ui_slider.hpp" />
+    <ClInclude Include="include\ui_transform.hpp" />
     <ClInclude Include="include\viewport_widget.hpp" />
     <ClInclude Include="include\widget.hpp" />
     <ClInclude Include="include\workspace.hpp" />

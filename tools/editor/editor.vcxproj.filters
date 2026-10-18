@@ -168,9 +168,6 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_value.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
-      <Filter>Source Files\core\pbr</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
@@ -496,6 +493,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_separator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\transform_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\move_actor_action.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1089,6 +1098,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\cross_like_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_transform.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\div_ui_element_base.ipp">
+      <Filter>Templates\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_ui_element_base.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_separator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\transform_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\move_actor_action.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

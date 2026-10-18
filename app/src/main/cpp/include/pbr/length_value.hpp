@@ -50,8 +50,15 @@ class LengthValue final
 
         ~LengthValue () = default;
 
-        [[nodiscard]] eType GetType () const noexcept;
-        [[nodiscard]] float GetValue () const noexcept;
+        [[nodiscard]] constexpr eType GetType () const noexcept
+        {
+            return _type;
+        }
+
+        [[nodiscard]] constexpr float GetValue () const noexcept
+        {
+            return _value;
+        }
 };
 
 } // namespace pbr

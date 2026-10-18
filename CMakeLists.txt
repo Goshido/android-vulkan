@@ -65,7 +65,6 @@ add_library ( android-vulkan SHARED
     app/src/main/cpp/sources/pbr/length_property.cpp
     app/src/main/cpp/sources/pbr/length_shorthand_property_checker.cpp
     app/src/main/cpp/sources/pbr/length_value_parser.cpp
-    app/src/main/cpp/sources/pbr/length_value.cpp
     app/src/main/cpp/sources/pbr/line_height_property_checker.cpp
     app/src/main/cpp/sources/pbr/link_html5_element.cpp
     app/src/main/cpp/sources/pbr/node_link.cpp

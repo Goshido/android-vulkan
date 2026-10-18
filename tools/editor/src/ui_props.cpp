@@ -65,7 +65,7 @@ UIProps::UIProps () noexcept:
             ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width =  pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
             ._height = theme::HEADER_HEIGHT
         },
 
@@ -92,7 +92,7 @@ UIProps::UIProps () noexcept:
     _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
     _checkBox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
     _comboBox.Connect ( std::bind ( &UIProps::OnComboBox, this, std::placeholders::_1 ) );
-    _editBox.Connect ( std::bind ( &UIProps::OnEditBox, this, std::placeholders::_1 ) );
+    _editBox.ConnectOnNewValue ( std::bind ( &UIProps::OnEditBox, this, std::placeholders::_1 ) );
     _slider.Connect ( std::bind ( &UIProps::OnSlider, this, std::placeholders::_1 ) );
 
     _div.PrependChildElement ( _headerLine );

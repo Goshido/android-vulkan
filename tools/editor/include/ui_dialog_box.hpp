@@ -5,6 +5,7 @@
 #include "cursor.hpp"
 #include "div_ui_element.hpp"
 #include "widget.hpp"
+#include "theme.hpp"
 
 
 namespace editor {
@@ -45,10 +46,7 @@ class UIDialogBox : public Widget
         size_t                      _eventID = 0U;
 
         Rect                        _initialRect {};
-        int32_t                     _initialX = 0;
-        int32_t                     _initialY = 0;
-
-        bool                        _isChanged = false;
+        VkOffset2D                  _initialMouse {};
 
         uint32_t                    _leftMask = 0U;
         uint32_t                    _topMask = 0U;
@@ -56,13 +54,19 @@ class UIDialogBox : public Widget
         uint32_t                    _bottomMask = 0U;
 
         pbr::LengthValue            _minWidthCSS { pbr::LengthValue::eType::PX, 0.0F };
+        pbr::LengthValue            _maxWidthCSS = theme::MAX_LENGTH;
+
         pbr::LengthValue            _minHeightCSS { pbr::LengthValue::eType::PX, 0.0F };
+        pbr::LengthValue            _maxHeightCSS = theme::MAX_LENGTH;
 
-        int32_t                     _minWidth = 0;
-        int32_t                     _minHeight = 0;
+        VkOffset2D                  _minSize
+        {
+            .x = 0,
+            .y = 0
+        };
 
-        int32_t                     _safeDX = 0;
-        int32_t                     _safeDY = 0;
+        VkOffset2D                  _maxSize {};
+        VkOffset2D                  _safeDelta {};
 
         Gizmo                       _dragArea { eCursor::Cross };
         Gizmo                       _resizeUp { eCursor::NorthSouth };
@@ -73,6 +77,8 @@ class UIDialogBox : public Widget
         Gizmo                       _resizeTopRight { eCursor::NorthEastSouthWest };
         Gizmo                       _resizeBottomLeft { eCursor::NorthEastSouthWest };
         Gizmo                       _resizeBottomRight { eCursor::NorthWestSouthEast };
+
+        bool                        _isChanged = false;
 
     public:
         UIDialogBox () = delete;
@@ -85,6 +91,7 @@ class UIDialogBox : public Widget
 
         void SetRect ( Rect const &rect ) noexcept;
         void SetMinSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept;
+        void SetMaxSize ( pbr::LengthValue const &width, pbr::LengthValue const &height ) noexcept;
 
     protected:
         explicit UIDialogBox ( std::string &&name ) noexcept;
@@ -99,16 +106,25 @@ class UIDialogBox : public Widget
     private:
         [[nodiscard]] LayoutStatus ApplyLayout ( android_vulkan::Renderer &renderer,
             pbr::FontStorage &fontStorage
-        ) noexcept override;
+        ) noexcept override final;
 
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage,
             VkExtent2D const &viewport
-        ) noexcept override;
+        ) noexcept override final;
+
+        void ApplyMinSizeConstraints ( VkOffset2D const &size ) noexcept;
+        void ApplyMaxSizeConstraints ( VkOffset2D const &size ) noexcept;
 
         void DoDrag ( MouseMoveEvent const &event ) noexcept;
         void DoHover ( MouseMoveEvent const &event ) noexcept;
         void UpdateAreas () noexcept;
         void UpdateMinSize () noexcept;
+        void UpdateMaxSize () noexcept;
+
+        [[nodiscard]] static int32_t ResolveLength ( pbr::LengthValue const &value,
+            int32_t defaultValue,
+            pbr::CSSUnitToDevicePixel const &units
+        ) noexcept;
 };
 
 } // namespace editor

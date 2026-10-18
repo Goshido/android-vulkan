@@ -80,7 +80,7 @@ ScaleActorAction::ScaleActorAction ( Items &&items ) noexcept:
 
 void ScaleActorAction::Redo () noexcept
 {
-    AV_TRACE ( "Redo scale" )
+    AV_TRACE ( "Scale tool: redo scale" )
 
     for ( Item &item : _items )
     {
@@ -88,12 +88,12 @@ void ScaleActorAction::Redo () noexcept
         item._actor->SetLocal ( state._location, state._scale );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 void ScaleActorAction::Undo () noexcept
 {
-    AV_TRACE ( "Undo scale" )
+    AV_TRACE ( "Scale tool: undo scale" )
 
     for ( Item &item : _items )
     {
@@ -101,7 +101,7 @@ void ScaleActorAction::Undo () noexcept
         item._actor->SetLocal ( state._location, state._scale );
     }
 
-    Workspace::Instance ().OnContentUpdated ();
+    Workspace::Instance ().OnContentCommitted ();
 }
 
 } // end of anonymous namespace
@@ -171,7 +171,7 @@ void ScaleTool::Deactivate () noexcept
     _zPlaneY.Hide ();
 }
 
-void ScaleTool::Begin ( Selection::Actors &actors, GXQuat const &rotation ) noexcept
+void ScaleTool::Begin ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
 {
     AV_TRACE ( "Scale tool begin" )
     size_t const count = actors.size ();
@@ -257,12 +257,40 @@ void ScaleTool::Cancel () noexcept
 {
     AV_TRACE ( "Scale tool cancel" )
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         Item const &backup = *items++;
         actor->SetLocal ( backup._location, backup._scale );
     }
+
+    workspace.OnContentUpdated ();
+}
+
+void ScaleTool::OnContentUpdated ( Selection::Actors const &actors, GXQuat const &rotation ) noexcept
+{
+    AV_TRACE ( "Scale tool content updated" )
+    GXVec3 const c = GetCenter ( actors );
+    _location = c;
+    _rotation = rotation;
+
+    _origin.OnParentUpdated ( c, rotation );
+    _xLine.OnParentUpdated ( c, rotation );
+    _xPlane.OnParentUpdated ( c, rotation );
+    _xBox.OnParentUpdated ( c, rotation );
+    _yLine.OnParentUpdated ( c, rotation );
+    _yPlane.OnParentUpdated ( c, rotation );
+    _yBox.OnParentUpdated ( c, rotation );
+    _zLine.OnParentUpdated ( c, rotation );
+    _zPlane.OnParentUpdated ( c, rotation );
+    _zBox.OnParentUpdated ( c, rotation );
+    _xPlaneY.OnParentUpdated ( c, rotation );
+    _xPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneZ.OnParentUpdated ( c, rotation );
+    _yPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneX.OnParentUpdated ( c, rotation );
+    _zPlaneY.OnParentUpdated ( c, rotation );
 }
 
 bool ScaleTool::Update ( GXVec3 const &rayDirection,
@@ -629,10 +657,11 @@ void ScaleTool::ResetVisuals () noexcept
 void ScaleTool::UpdateChildren ( GXVec3 const &scale ) noexcept
 {
     auto items = _items.cbegin ();
+    Workspace &workspace = Workspace::Instance ();
     GXVec3 alpha {};
     GXVec3 beta {};
 
-    for ( Actor* actor : Workspace::Instance ().GetSelection ().GetActors () )
+    for ( Actor* actor : workspace.GetSelection ().GetActors () )
     {
         Item const &item = *items++;
         alpha.Multiply ( item._offset, scale );
@@ -640,6 +669,8 @@ void ScaleTool::UpdateChildren ( GXVec3 const &scale ) noexcept
         beta.Multiply ( item._scale, scale );
         actor->SetLocal ( alpha, beta );
     }
+
+    workspace.OnContentUpdated ();
 }
 
 bool ScaleTool::LockPlane () noexcept

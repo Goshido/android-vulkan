@@ -16,6 +16,7 @@ constexpr float Z_NEAR = 0.1F;
 constexpr float FOV_Y = GXDegToRad ( 60.0F );
 constexpr float MOVE_SPEED_THRESHOLD = 1.0e-4F;
 
+constexpr std::string_view CONFIG_KEY_SECTION = "viewport";
 constexpr std::string_view CONFIG_KEY_TOOL_COORDINATES = "tool coordinates";
 constexpr std::string_view CONFIG_KEY_ACTIVE_TOOL = "active tool";
 
@@ -221,15 +222,15 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
         },
 
         "Selection (left)"
-    ),
-
-    _coordinates (
-        static_cast<eCoordinates> (
-            save.Read ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( DEFAULT_COORDINATES ) )
-        )
     )
 {
-    switch ( static_cast<eTool> ( save.Read ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( DEFAULT_TOOL ) ) ) )
+    SaveState::Container const &root = save.ReadContainer ( CONFIG_KEY_SECTION );
+
+    _coordinates = static_cast<eCoordinates> (
+        root.Read ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( DEFAULT_COORDINATES ) )
+    );
+
+    switch ( static_cast<eTool> ( root.Read ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( DEFAULT_TOOL ) ) ) )
     {
         case eTool::Move:
             _activeTool = &_moveTool;
@@ -313,21 +314,22 @@ void ViewportWidget::Destroy ( SaveState::Container &save ) noexcept
     _useRotateTool = {};
     _useScaleTool = {};
 
-    save.Write ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( _coordinates ) );
+    SaveState::Container &root = save.WriteContainer ( CONFIG_KEY_SECTION );
+    root.Write ( CONFIG_KEY_TOOL_COORDINATES, static_cast<uint8_t> ( _coordinates ) );
 
     if ( _activeTool == &_moveTool )
     {
-        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Move ) );
+        root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Move ) );
         return;
     }
 
     if ( _activeTool == &_rotateTool )
     {
-        save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Rotate ) );
+        root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Rotate ) );
         return;
     }
 
-    save.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Scale ) );
+    root.Write ( CONFIG_KEY_ACTIVE_TOOL, static_cast<uint8_t> ( eTool::Scale ) );
 }
 
 void ViewportWidget::Update ( float deltaTime, float dpi ) noexcept
@@ -373,6 +375,18 @@ GXVec3 ViewportWidget::GetVI () const noexcept
     return result;
 }
 
+void ViewportWidget::OnContentCommitted ( Selection::Actors const &actors ) noexcept
+{
+    AV_TRACE ( "Viewport: content committed" )
+    _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
+}
+
+void ViewportWidget::OnContentUpdated ( Selection::Actors const &actors ) noexcept
+{
+    AV_TRACE ( "Viewport: content updated" )
+    _activeTool->OnContentUpdated ( actors, ResolveToolRotation ( actors ) );
+}
+
 void ViewportWidget::OnSelectionChanged ( Selection::Actors &actors ) noexcept
 {
     AV_TRACE ( "Viewport: selection change" )
@@ -385,7 +399,7 @@ void ViewportWidget::OnSelectionChanged ( Selection::Actors &actors ) noexcept
         return;
     }
 
-    UpdateToolCoordinates ( actors );
+    _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
     _activeTool->Activate ();
     _toolVisible = true;
 }
@@ -516,6 +530,19 @@ GXVec3 ViewportWidget::ComputeRayDirection ( GXMat3 const &basis ) const noexcep
     basis.MultiplyVectorMatrix ( result, GXVec3 ( alpha._data[ 0U ], alpha._data[ 1U ], 1.0F ) );
     result.Normalize ();
     return result;
+}
+
+GXQuat ViewportWidget::ResolveToolRotation ( Selection::Actors const &actors ) const noexcept
+{
+    GXQuat const rCases[] = { GXQuat::IDENTITY, ( *actors.cbegin () )->GetRotation () };
+    eCoordinates const cCases[] = { _coordinates, eCoordinates::Local };
+
+    return rCases[
+        static_cast<uint32_t> (
+            ( actors.size () == 1UZ ) &
+            ( cCases[ static_cast<uint32_t> ( _activeTool == &_scaleTool ) ] == eCoordinates::Local )
+        )
+    ];
 }
 
 void ViewportWidget::UpdateKeyboardState ( eKey key, KeyModifier modifier, uint8_t matchValue ) noexcept
@@ -652,21 +679,6 @@ void ViewportWidget::UpdateSelectionMode () noexcept
     ];
 }
 
-void ViewportWidget::UpdateToolCoordinates ( Selection::Actors &actors ) noexcept
-{
-    GXQuat const rCases[] = { GXQuat::IDENTITY, ( *actors.cbegin () )->GetRotation () };
-    eCoordinates const cCases[] = { _coordinates, eCoordinates::Local };
-
-    _activeTool->Begin ( actors,
-        rCases[
-            static_cast<uint32_t> (
-                ( actors.size () == 1UZ ) &
-                ( cCases[ static_cast<uint32_t> ( _activeTool == &_scaleTool ) ] == eCoordinates::Local )
-            )
-        ]
-    );
-}
-
 void ViewportWidget::UpdateViewProjection () noexcept
 {
     _local.FromFast ( _rotation, _location );
@@ -775,7 +787,8 @@ void ViewportWidget::OnIdleStateEnter () noexcept
 {
     if ( _toolVisible ) [[likely]]
     {
-        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
+        Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+        _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
     }
 }
 
@@ -892,7 +905,9 @@ void ViewportWidget::OnToolStateEnter () noexcept
 {
     CaptureMouse ();
     SetFocus ();
-    UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
+
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
 }
 
 void ViewportWidget::StopTool () noexcept
@@ -1026,11 +1041,12 @@ void ViewportWidget::SwitchTool ( Tool &tool ) noexcept
     if ( old ) [[likely]]
         old->Deactivate ();
 
-    if ( _toolVisible )
-    {
-        UpdateToolCoordinates ( Workspace::Instance ().GetSelection ().GetActors () );
-        _activeTool->Activate ();
-    }
+    if ( !_toolVisible )
+        return;
+
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    _activeTool->Begin ( actors, ResolveToolRotation ( actors ) );
+    _activeTool->Activate ();
 }
 
 } // namespace editor

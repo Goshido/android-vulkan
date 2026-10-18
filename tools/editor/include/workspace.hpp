@@ -21,6 +21,7 @@
 #include "reflection_probe_local_node.hpp"
 #include "selection.hpp"
 #include "stream_buffer_ref.hpp"
+#include "transform_tool.hpp"
 #include "ui_props.hpp"
 #include "viewport_widget.hpp"
 
@@ -120,6 +121,7 @@ class Workspace final
         VkExtent3D                                      _gizmoComposeDispatch {};
 
         UIProps*                                        _uiProps = nullptr;
+        TransformTool                                   _transformTool {};
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};
 
@@ -695,8 +697,9 @@ class Workspace final
         [[nodiscard]] std::optional<uint32_t> GetOutlineBlurX () noexcept;
 
         void OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage, uint32_t idResourceIdx ) noexcept;
-        void OnSelectionChanged () noexcept;
+        void OnContentCommitted () noexcept;
         void OnContentUpdated () noexcept;
+        void OnSelectionChanged () noexcept;
 
         void ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept;
         [[nodiscard]] Selection &GetSelection () noexcept;

@@ -162,6 +162,7 @@ void Workspace::Destroy ( SaveState::Container &save ) noexcept
     AV_TRACE ( "Workspace destroy" )
 
     _viewport->Destroy ( save );
+    _transformTool.Destroy ( save );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
@@ -895,16 +896,28 @@ void Workspace::OnGBufferResolutionChanged ( android_vulkan::Texture2D &idImage,
     _swapchainDepth->_storageIndex = std::move ( idx );
 }
 
-void Workspace::OnSelectionChanged () noexcept
+void Workspace::OnContentCommitted () noexcept
 {
-    AV_TRACE ( "Selection changed" )
-    _viewport->OnSelectionChanged ( _selection.GetActors () );
+    AV_TRACE ( "Content committed" )
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnContentCommitted ( actors );
+    _transformTool.OnContentCommitted ( actors );
 }
 
 void Workspace::OnContentUpdated () noexcept
 {
     AV_TRACE ( "Content updated" )
-    _viewport->OnSelectionChanged ( _selection.GetActors () );
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnContentUpdated ( actors );
+    _transformTool.OnContentUpdated ( actors );
+}
+
+void Workspace::OnSelectionChanged () noexcept
+{
+    AV_TRACE ( "Selection changed" )
+    Selection::Actors &actors = _selection.GetActors ();
+    _viewport->OnSelectionChanged ( actors );
+    _transformTool.OnSelectionChanged ( actors );
 }
 
 void Workspace::ComputeSelect ( VkCommandBuffer commandBuffer ) noexcept
@@ -2062,6 +2075,8 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
             }
         )
     );
+
+    _transformTool.Init ( save );
 
     _viewport = new ViewportWidget ( save );
     _viewport->SetLocal ( 0.104000151F, -1.07599998F, GXVec3 ( 6.62516165F, 2.08657217F, -2.31031871F ) );

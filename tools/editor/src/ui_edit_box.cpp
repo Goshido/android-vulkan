@@ -5,7 +5,9 @@
 #include <pbr/css_unit_to_device_pixel.hpp>
 #include <pbr/utf8_parser.hpp>
 #include <theme.hpp>
+#include <trace.hpp>
 #include <ui_edit_box.hpp>
+#include <scope_quard.hpp>
 
 
 namespace editor {
@@ -299,9 +301,49 @@ void UIEditBox::UpdatedRect () noexcept
     ( this->*_updateRect ) ();
 }
 
-void UIEditBox::Connect ( Callback &&callback ) noexcept
+void UIEditBox::ConnectOnCancel ( ValueHandler &&callback ) noexcept
 {
-    _callback = std::move ( callback );
+    _onCancel = std::move ( callback );
+}
+
+void UIEditBox::ConnectOnChange ( ValueHandler &&callback ) noexcept
+{
+    _onChange = std::move ( callback );
+}
+
+void UIEditBox::ConnectOnNewValue ( ValueHandler &&callback ) noexcept
+{
+    _onNewValue = std::move ( callback );
+}
+
+void UIEditBox::ConnectOnNext ( ValueHandler &&callback ) noexcept
+{
+    _onNext = std::move ( callback );
+}
+
+void UIEditBox::Focus () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [ this ] () noexcept -> void* {
+                AV_TRACE ( "Edit box: focus" )
+                SwitchToEditState ();
+                return nullptr;
+            }
+        )
+    );
+}
+
+void UIEditBox::SelectAll () noexcept
+{
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [ this ] () noexcept -> void* {
+                DoSelectAll ();
+                return nullptr;
+            }
+        )
+    );
 }
 
 void UIEditBox::SetText ( std::string &&text ) noexcept
@@ -309,7 +351,11 @@ void UIEditBox::SetText ( std::string &&text ) noexcept
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeUI,
             [ this, text = std::move ( text ) ] () noexcept -> void* {
+                AV_TRACE ( "Edit box: set text" )
+
+                _content = std::move ( *pbr::UTF8Parser::ToU32String ( text ) );
                 _cursor = static_cast<int32_t> ( text.size () );
+                _committed = text;
                 _text.SetText ( std::move ( text ) );
 
                 _selectionDIV.Hide ();
@@ -325,11 +371,13 @@ void UIEditBox::SetText ( std::string &&text ) noexcept
 
 void UIEditBox::ApplyClipboard ( std::u32string const &text ) noexcept
 {
+    AV_TRACE ( "Edit box: apply clipboard" )
     std::ignore = RemoveSelectedContent ();
 
     _content.insert ( static_cast<size_t> ( _cursor ), text );
     _cursor += static_cast<int32_t> ( text.size () );
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -364,12 +412,20 @@ void UIEditBox::OnKeyboardKeyDown ( eKey key, KeyModifier modifier ) noexcept
             MoveCursor ( static_cast<int32_t> ( _content.size () ), !modifier.AnyShiftPressed () );
         break;
 
+        case eKey::KeyEsc:
+            Cancel ();
+        break;
+
         case eKey::KeyEnter:
             Commit ();
         break;
 
         case eKey::KeyHome:
             MoveCursor ( 0, !modifier.AnyShiftPressed () );
+        break;
+
+        case eKey::KeyTab:
+            Next ();
         break;
 
         case eKey::KeyLeft:
@@ -395,6 +451,7 @@ void UIEditBox::OnMouseLeave () noexcept
 
 void UIEditBox::OnTyping ( char32_t character ) noexcept
 {
+    AV_TRACE ( "Edit box: typing" )
     if ( character >= U' ' ) [[likely]]
     {
         Append ( character );
@@ -404,7 +461,7 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
     switch ( character )
     {
         case CTRL_A:
-            SelectAll ();
+            DoSelectAll ();
         break;
 
         case CTRL_C:
@@ -427,6 +484,7 @@ void UIEditBox::OnTyping ( char32_t character ) noexcept
 
 void UIEditBox::OnDoubleClickEdit ( MouseButtonEvent const &event ) noexcept
 {
+    AV_TRACE ( "Edit box: double click" )
     auto const limit = static_cast<int32_t> ( _content.size () );
 
     if ( limit < 1 ) [[unlikely]]
@@ -611,10 +669,12 @@ void UIEditBox::UpdatedRectNormal () noexcept
 
 void UIEditBox::Append ( char32_t character ) noexcept
 {
+    AV_TRACE ( "Edit box: append" )
     std::ignore = RemoveSelectedContent ();
 
     _content.insert ( static_cast<size_t> ( _cursor ), 1U, character );
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -627,12 +687,37 @@ void UIEditBox::Append ( char32_t character ) noexcept
     ResetBlinkTimer ();
 }
 
+void UIEditBox::Cancel () noexcept
+{
+    AV_TRACE ( "Edit box: cancel" )
+
+    android_vulkan::ScopeGuard const toNormal (
+        [ this ] () noexcept {
+            SwitchToNormalState ();
+        }
+    );
+
+    if ( auto v = pbr::UTF8Parser::ToU32String ( _committed ); *v != _content ) [[unlikely]]
+        SetText ( std::string ( _committed ) );
+
+    if ( _onCancel ) [[likely]]
+    {
+        _onCancel ( _committed );
+    }
+}
+
 void UIEditBox::Commit () noexcept
 {
+    AV_TRACE ( "Edit box: commit" )
+
     if ( auto v = pbr::UTF8Parser::ToUTF8 ( _content ); *v != _committed ) [[likely]]
     {
         _committed = std::move ( *v );
-        _callback ( _committed );
+
+        if ( _onNewValue ) [[likely]]
+        {
+            _onNewValue ( _committed );
+        }
     }
 
     SwitchToNormalState ();
@@ -640,6 +725,8 @@ void UIEditBox::Commit () noexcept
 
 void UIEditBox::Copy () noexcept
 {
+    AV_TRACE ( "Edit box: copy" )
+
     if ( _cursor == _selection ) [[unlikely]]
         return;
 
@@ -659,12 +746,14 @@ void UIEditBox::Copy () noexcept
 
 void UIEditBox::Cut () noexcept
 {
+    AV_TRACE ( "Edit box: cut" )
     Copy ();
 
     if ( !RemoveSelectedContent () ) [[unlikely]]
         return;
 
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -678,6 +767,8 @@ void UIEditBox::Cut () noexcept
 
 void UIEditBox::Erase ( int32_t offset ) noexcept
 {
+    AV_TRACE ( "Edit box: erase" )
+
     if ( !RemoveSelectedContent () ) [[likely]]
     {
         int32_t const c = _cursor + offset;
@@ -690,6 +781,7 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
     }
 
     _text.SetText ( _content );
+    NotifyChange ();
 
     _cursorDIV.Show ();
     _selectionDIV.Hide ();
@@ -701,6 +793,18 @@ void UIEditBox::Erase ( int32_t offset ) noexcept
     ResetBlinkTimer ();
 }
 
+void UIEditBox::Next () noexcept
+{
+    AV_TRACE ( "Edit box: next" )
+    _committed = std::move ( *pbr::UTF8Parser::ToUTF8 ( _content ) );
+    SwitchToNormalState ();
+
+    if ( _onNext ) [[likely]]
+    {
+        _onNext ( _committed );
+    }
+}
+
 void UIEditBox::Paste () noexcept
 {
     MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::ReadClipboardRequest ) );
@@ -708,6 +812,8 @@ void UIEditBox::Paste () noexcept
 
 int32_t UIEditBox::FindClosestSymbol ( int32_t x ) const noexcept
 {
+    AV_TRACE ( "Edit box: find closest" )
+
     auto const rawOffset = static_cast<float> ( x - _rect._left );
     float closest = std::numeric_limits<float>::max ();
     int32_t c = -1;
@@ -823,6 +929,8 @@ void UIEditBox::JumpOverWord ( int32_t offset, bool cancelSelection ) noexcept
 
 int32_t UIEditBox::JumpOverWordLeft ( int32_t limit ) const noexcept
 {
+    AV_TRACE ( "Edit box: jump left" )
+
     if ( limit < 1 ) [[unlikely]]
         return 0;
 
@@ -849,6 +957,8 @@ int32_t UIEditBox::JumpOverWordLeft ( int32_t limit ) const noexcept
 
 int32_t UIEditBox::JumpOverWordRight ( int32_t limit ) const noexcept
 {
+    AV_TRACE ( "Edit box: jump right" )
+
     if ( limit < 1 ) [[unlikely]]
         return 0;
 
@@ -881,6 +991,8 @@ int32_t UIEditBox::JumpOverWordRight ( int32_t limit ) const noexcept
 
 bool UIEditBox::RemoveSelectedContent () noexcept
 {
+    AV_TRACE ( "Edit box: remove content" )
+
     if ( _cursor == _selection ) [[likely]]
         return false;
 
@@ -910,8 +1022,9 @@ void UIEditBox::ResetBlinkTimer () noexcept
     );
 }
 
-void UIEditBox::SelectAll () noexcept
+void UIEditBox::DoSelectAll () noexcept
 {
+    AV_TRACE ( "Edit box: select all" )
     _selection = 0;
     _cursor = static_cast<int32_t> ( _content.size () );
 
@@ -955,6 +1068,14 @@ void UIEditBox::SwitchToNormalState () noexcept
     _onMouseLeave = &UIEditBox::OnMouseLeaveNormal;
     _onMouseMove = &UIEditBox::OnMouseMoveNormal;
     _updateRect = &UIEditBox::UpdatedRectNormal;
+}
+
+void UIEditBox::NotifyChange () noexcept
+{
+    if ( _onChange ) [[likely]]
+    {
+        _onChange ( *pbr::UTF8Parser::ToUTF8 ( _content ) );
+    }
 }
 
 void UIEditBox::UpdateCursor () noexcept

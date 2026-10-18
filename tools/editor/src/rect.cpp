@@ -35,6 +35,15 @@ int32_t Rect::GetHeight () const noexcept
     return _bottom - _top;
 }
 
+VkOffset2D Rect::GetSize () const noexcept
+{
+    return
+    {
+        .x = _right - _left,
+        .y = _bottom - _top
+    };
+}
+
 void Rect::From ( pbr::DIVUIElement::Rect const& rect ) noexcept
 {
     _left = static_cast<int32_t> ( rect._topLeft._data[ 0U ] );

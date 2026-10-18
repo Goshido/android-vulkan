@@ -37,7 +37,6 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 {
     AV_TRACE ( "Compute UI layout" )
 
-    _needRefill = false;
     _neededUIVertices = 0U;
     pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
@@ -50,7 +49,7 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
         _neededUIVertices += status._neededUIVertices;
     }
 
-    if ( _neededUIVertices == 0U )
+    if ( _neededUIVertices == 0UZ )
     {
         pass.RequestEmptyUI ();
     }
@@ -58,7 +57,7 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 
 void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
-    if ( !_neededUIVertices )
+    if ( _neededUIVertices == 0UZ )
         return;
 
     AV_TRACE ( "Submit UI" )
@@ -90,9 +89,10 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
     };
 
     for ( auto it = begin; it != end; ++it )
-    {
         ( *it )->Submit ( info );
-    }
+
+    std::lock_guard const lock ( _mutex );
+    _needRefill = false;
 }
 
 void UIManager::EventLoop () noexcept
@@ -522,7 +522,10 @@ void UIManager::OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message
 
     if ( findResult != end ) [[likely]]
     {
+        Widget* const cases[] = { _hoverWidget, nullptr };
+        _hoverWidget = cases[ static_cast<uint32_t> ( _hoverWidget && widget->HasChild ( *_hoverWidget ) ) ];
         _widgets.erase ( findResult );
+        _needRefill = true;
         return;
     }
 

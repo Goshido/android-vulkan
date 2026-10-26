@@ -162,6 +162,7 @@ void Workspace::Destroy ( SaveState::Container &save ) noexcept
     AV_TRACE ( "Workspace destroy" )
 
     _viewport->Destroy ( save );
+    _propertyTool.Destroy ( save );
     _transformTool.Destroy ( save );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
@@ -901,6 +902,7 @@ void Workspace::OnContentCommitted () noexcept
     AV_TRACE ( "Content committed" )
     Selection::Actors &actors = _selection.GetActors ();
     _viewport->OnContentCommitted ( actors );
+    _propertyTool.OnContentCommitted ( actors );
     _transformTool.OnContentCommitted ( actors );
 }
 
@@ -909,6 +911,7 @@ void Workspace::OnContentUpdated () noexcept
     AV_TRACE ( "Content updated" )
     Selection::Actors &actors = _selection.GetActors ();
     _viewport->OnContentUpdated ( actors );
+    _propertyTool.OnContentUpdated ( actors );
     _transformTool.OnContentUpdated ( actors );
 }
 
@@ -917,6 +920,7 @@ void Workspace::OnSelectionChanged () noexcept
     AV_TRACE ( "Selection changed" )
     Selection::Actors &actors = _selection.GetActors ();
     _viewport->OnSelectionChanged ( actors );
+    _propertyTool.OnSelectionChanged ( actors );
     _transformTool.OnSelectionChanged ( actors );
 }
 
@@ -2076,6 +2080,7 @@ void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
         )
     );
 
+    _propertyTool.Init ( save );
     _transformTool.Init ( save );
 
     _viewport = new ViewportWidget ( save );

@@ -24,7 +24,7 @@ The manual is based on commit of the [_Vulkan-ValidationLayers_](https://github.
 ## <a id="requirements">Requirements</a>
 
 - _Windows 11_
-- _PowerShell 7.6.6_
+- _PowerShell 7.6.8_
 - _Android NDK 30.0.16248370_
 - _CMake 4.1.2_
 - _Ninja 1.21.1_

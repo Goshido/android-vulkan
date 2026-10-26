@@ -507,6 +507,12 @@
     <ClCompile Include="src\move_actor_action.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\property_tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui_property_dialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1116,6 +1122,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\move_actor_action.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\property_tool.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_property_dialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

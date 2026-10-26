@@ -15,8 +15,8 @@ constexpr std::string_view CONFIG_KEY_SECTION = "transform dialog";
 constexpr std::string_view CONFIG_KEY_UI = "UI";
 constexpr pbr::LengthValue MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
 constexpr pbr::LengthValue HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
-constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 300.0F );
-constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 400.0F );
+constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 350.0F );
+constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 18.0F );
 constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
 
 constexpr std::string_view CONFIG_KEY_SHOW = "show";
@@ -89,6 +89,8 @@ void ScaleActorAction::Undo () noexcept
 
 void TransformTool::Init ( SaveState::Container const &save ) noexcept
 {
+    AV_TRACE ( "Transform tool: init" )
+
     _toggle = Hotkey ( eKey::KeyF2,
         false,
         false,
@@ -194,14 +196,15 @@ void TransformTool::OnSelectionChanged ( Selection::Actors const &actors ) noexc
 void TransformTool::CreateUI () noexcept
 {
     AV_TRACE ( "Transform tool: create UI" )
+
     _ui = new UITransform (
         [ this ] () noexcept {
             _ui->GetRect ( _rect );
             _ui = nullptr;
         },
 
-        std::bind ( &TransformTool::RevertLocation, this ),
-        std::bind ( &TransformTool::RevertScale, this ),
+        std::bind_front ( &TransformTool::RevertLocation, this ),
+        std::bind_front ( &TransformTool::RevertScale, this ),
 
         [ this, &control = _x ] ( std::string const &value ) noexcept {
             ChangeLocation ( value, control );

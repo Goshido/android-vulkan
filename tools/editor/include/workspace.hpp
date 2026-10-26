@@ -17,6 +17,7 @@
 #include <platform/windows/pbr/outline_mask_program.hpp>
 #include <platform/windows/pbr/swapchain_info.hpp>
 #include "point_light_node.hpp"
+#include "property_tool.hpp"
 #include "reflection_probe_global_node.hpp"
 #include "reflection_probe_local_node.hpp"
 #include "selection.hpp"
@@ -121,6 +122,7 @@ class Workspace final
         VkExtent3D                                      _gizmoComposeDispatch {};
 
         UIProps*                                        _uiProps = nullptr;
+        PropertyTool                                    _propertyTool {};
         TransformTool                                   _transformTool {};
         ViewportWidget*                                 _viewport = nullptr;
         std::mutex                                      _mutex {};

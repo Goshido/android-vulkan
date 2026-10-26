@@ -3,9 +3,9 @@
 
 
 #include "hotkey.hpp"
-#include "ui_transform.hpp"
 #include "save_state.hpp"
 #include "selection.hpp"
+#include "ui_transform.hpp"
 
 
 namespace editor {
@@ -43,7 +43,7 @@ class TransformTool final
         Control                 _scaleZ {};
 
     public:
-        TransformTool () = default;
+        explicit TransformTool () = default;
 
         TransformTool ( TransformTool const & ) = delete;
         TransformTool &operator = ( TransformTool const & ) = delete;

@@ -96,7 +96,7 @@ UITransform::UITransform ( ActionHandler &&onClose,
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    _closeButton.Connect ( std::bind ( &UITransform::Close, this ) );
+    _closeButton.Connect ( std::bind_front ( &UITransform::Close, this ) );
 
     _x.ConnectOnCancel (
         [ this ] ( std::string const &/*value*/ ) noexcept {

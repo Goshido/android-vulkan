@@ -1160,6 +1160,7 @@
     <ClCompile Include="src\move_tool.cpp" />
     <ClCompile Include="src\outline_mesh_node.cpp" />
     <ClCompile Include="src\program_info.cpp" />
+    <ClCompile Include="src\property_tool.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\ring_math.cpp" />
     <ClCompile Include="src\rotate_tool.cpp" />
@@ -1226,6 +1227,7 @@
     <ClCompile Include="src\ui_element.cpp" />
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
+    <ClCompile Include="src\ui_property_dialog.cpp" />
     <ClCompile Include="src\ui_props.cpp" />
     <ClCompile Include="src\ui_separator.cpp" />
     <ClCompile Include="src\ui_slider.cpp" />
@@ -1374,6 +1376,7 @@
     <ClInclude Include="include\outline_mesh_node.hpp" />
     <ClInclude Include="include\program_info.hpp" />
     <ClInclude Include="include\program_ref.hpp" />
+    <ClInclude Include="include\property_tool.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\ring_math.hpp" />
     <ClInclude Include="include\rotate_tool.hpp" />
@@ -1457,6 +1460,7 @@
     <ClInclude Include="include\ui_element.hpp" />
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
+    <ClInclude Include="include\ui_property_dialog.hpp" />
     <ClInclude Include="include\ui_props.hpp" />
     <ClInclude Include="include\ui_separator.hpp" />
     <ClInclude Include="include\ui_slider.hpp" />

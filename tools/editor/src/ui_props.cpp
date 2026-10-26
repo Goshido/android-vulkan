@@ -89,11 +89,11 @@ UIProps::UIProps () noexcept:
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    _closeButton.Connect ( std::bind ( &UIProps::OnClose, this ) );
-    _checkBox.Connect ( std::bind ( &UIProps::OnCheckBox, this, std::placeholders::_1 ) );
-    _comboBox.Connect ( std::bind ( &UIProps::OnComboBox, this, std::placeholders::_1 ) );
-    _editBox.ConnectOnNewValue ( std::bind ( &UIProps::OnEditBox, this, std::placeholders::_1 ) );
-    _slider.Connect ( std::bind ( &UIProps::OnSlider, this, std::placeholders::_1 ) );
+    _closeButton.Connect ( std::bind_front ( &UIProps::OnClose, this ) );
+    _checkBox.Connect ( std::bind_front ( &UIProps::OnCheckBox, this ) );
+    _comboBox.Connect ( std::bind_front ( &UIProps::OnComboBox, this ) );
+    _editBox.ConnectOnNewValue ( std::bind_front ( &UIProps::OnEditBox, this ) );
+    _slider.Connect ( std::bind_front ( &UIProps::OnSlider, this ) );
 
     _div.PrependChildElement ( _headerLine );
 }

@@ -19,6 +19,7 @@
   - [`left`](#left)
   - [`right`](#right)
   - [`top`](#top)
+  - [`calc`](#calc)
   - [`color`](#color)
   - [`display`](#display)
   - [`font-family`](#font-family)
@@ -283,7 +284,7 @@ Default style: _N/A_, all _CSS_ properties are `inherit`.
 
 [↬ table of content ⇧](#table-of-content)
 
-### <a id="css-constraints">_CSS_ constraints</a>
+## <a id="css-constraints">_CSS_ constraints</a>
 
 _UI_ system only supports the following _CSS_ entities:
 
@@ -331,6 +332,24 @@ Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
 Supported values: `em`, `px`, `pt`, `mm`, `%` and `auto`.
 
 [↬ table of content ⇧](#table-of-content)
+
+### <a id="calc">`calc`</a>
+
+Supported pattern: $calc\left(C_0 \text{ } \omega_{0} \text{ } C_1 \text{ } \omega_{1} ... C_N \text{ } \omega_{N} \text{ } C_{N+1}\right)$
+
+Where:
+
+- $C_i$ is value: `em`, `px`, `pt`, `mm` and `%`
+- $\omega_{i}$ is operator: `+` and `-`
+
+Example:
+
+```css
+width: calc(100% - 100px);
+```
+
+[↬ table of content ⇧](#table-of-content)
+
 
 ### <a id="color">`color`</a>
 
@@ -442,7 +461,7 @@ Supported values: `bottom`, `middle`, `top` and `inherit`.
 
 ### <a id="width">`width`</a>
 
-Supported values: `auto`, `em`, `px`, `pt`, `mm` and `%`.
+Supported values: `auto`, `em`, `px`, `pt`, `mm`, `%` and [`calc`](#calc).
 
 [↬ table of content ⇧](#table-of-content)
 

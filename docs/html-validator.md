@@ -51,13 +51,12 @@ Or just drag'n'drop main _HTML_ file on `html-validator.exe`.
 - _C++ core features_
 - _Windows 11 SDK (10.0.28000.2526)_
 - _Windows Universal C Runtime_
-- _CMake 4.4.3_
 
 ### <a id="source-code">Source code</a>
 
-The project file is written on _CMake_. It's located in
+The project solution is located in
 
-`<repo>/tools/html-validator/CMakeLists.txt`
+`<repo>/tools/html-validator/html-validator.slnx`
 
 It's expected that the project will build out of the box for toolchain from [_requirements_](#requirements).
 

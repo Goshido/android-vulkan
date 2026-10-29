@@ -10,12 +10,12 @@ namespace {
 constexpr std::string_view CONFIG_KEY_SECTION = "property dialog";
 
 constexpr std::string_view CONFIG_KEY_UI = "UI";
-constexpr pbr::LengthValue MIN_WIDTH ( pbr::LengthValue::eType::PX, 255.0F );
-constexpr pbr::LengthValue MIN_HEIGHT ( pbr::LengthValue::eType::PX, 70.0F );
-constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 22.0F );
-constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 218.0F );
-constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 300.0F );
-constexpr pbr::LengthValue DEFAULT_HEIGHT ( pbr::LengthValue::eType::PX, 200.0F );
+pbr::LengthValue const MIN_WIDTH ( pbr::LengthValue::eType::PX, 255.0F );
+pbr::LengthValue const MIN_HEIGHT ( pbr::LengthValue::eType::PX, 70.0F );
+pbr::LengthValue const DEFAULT_X ( pbr::LengthValue::eType::PX, 22.0F );
+pbr::LengthValue const DEFAULT_Y ( pbr::LengthValue::eType::PX, 218.0F );
+pbr::LengthValue const DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 300.0F );
+pbr::LengthValue const DEFAULT_HEIGHT ( pbr::LengthValue::eType::PX, 200.0F );
 
 constexpr std::string_view CONFIG_KEY_SHOW = "show";
 constexpr bool DEFAULT_SHOW = true;
@@ -44,7 +44,7 @@ void PropertyTool::Init ( SaveState::Container const &save ) noexcept
         }
     );
 
-    constexpr GXVec4 beta ( DEFAULT_X.GetValue (),
+    GXVec4 const beta ( DEFAULT_X.GetValue (),
         DEFAULT_X.GetValue () + DEFAULT_WIDTH.GetValue (),
         DEFAULT_Y.GetValue (),
         DEFAULT_Y.GetValue () + DEFAULT_HEIGHT.GetValue ()

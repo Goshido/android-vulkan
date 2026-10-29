@@ -22,13 +22,17 @@ PropertyChecker::Result LengthPropertyChecker::Process ( PropertyParser::Result 
     if ( !baseCheck || !baseCheck.value () )
         return baseCheck;
 
-    if ( auto const length = LengthValueParser::Parse ( _css, result._newStream._line, result._value ); length )
-    {
-        _target = *length;
-        return true;
-    }
+    auto length = LengthValueParser::Parse ( _css,
+        result._newStream._line,
+        result._value,
+        _property == Property::eType::Width
+    );
 
-    return std::nullopt;
+    if ( !length )
+        return std::nullopt;
+
+    _target = std::move ( *length );
+    return true;
 }
 
 } // namespace pbr

@@ -31,10 +31,6 @@ class PropertyParser final
             std::u32string                                                      _value;
         };
 
-    private:
-        static std::unordered_map<std::string_view, Property::eType> const      _properties;
-        static std::unordered_map<Property::eType, std::string_view> const      _names;
-
     public:
         PropertyParser () = delete;
 
@@ -48,7 +44,15 @@ class PropertyParser final
 
         [[nodiscard]] static std::optional<Result> Parse ( char const* css, Stream stream ) noexcept;
         [[nodiscard]] static char const* ToString ( Property::eType property ) noexcept;
-        [[nodiscard]] static std::list<std::u32string> Tokenize ( std::u32string const &value ) noexcept;
+
+        [[nodiscard]] static std::list<std::u32string> TokenizeGeneric ( std::u32string const &value ) noexcept;
+        [[nodiscard]] static std::list<std::u32string_view> TokenizeGeneric ( std::u32string_view value ) noexcept;
+
+        [[nodiscard]] static std::list<std::u32string> TokenizeMathExpression ( std::u32string const &value ) noexcept;
+
+        [[nodiscard]] static std::list<std::u32string_view> TokenizeMathExpression (
+            std::u32string_view value
+        ) noexcept;
     };
 
 } // namespace pbr

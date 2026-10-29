@@ -222,6 +222,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -268,6 +269,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -315,6 +317,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -362,6 +365,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -408,6 +412,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -454,6 +459,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -500,6 +506,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -546,6 +553,7 @@
       <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
       <ShowIncludes>
       </ShowIncludes>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -711,6 +719,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release + ASAN|x64'">$(IntDir)core\pbr\graphics_program_base.obj</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp" />
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\program.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug - GPU select|x64'">$(IntDir)core\pbr\program.obj</ObjectFileName>

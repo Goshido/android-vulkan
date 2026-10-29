@@ -7,7 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <optional>
-#include <string>
+#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 

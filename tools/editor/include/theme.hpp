@@ -30,21 +30,22 @@ constexpr pbr::ColorValue WIDGET_BACKGROUND_COLOR ( 0U, 0U, 0U, 51U );
 constexpr pbr::ColorValue YELLOW_PAINT_COLOR ( 235U, 220U, 15U, 255U );
 constexpr pbr::ColorValue YELLOW_PAINT_TRANSPARENT_COLOR ( 235U, 220U, 15U, 67U );
 
-constexpr pbr::LengthValue NORMAL_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
-constexpr pbr::LengthValue NORMAL_LINE_HEIGHT ( pbr::LengthValue::eType::Auto, 42.0F );
+// [2026/10/28] About 'inline' here: https://knowledge.pablopugaperalta.com/programming/cpp-global-constants
+inline pbr::LengthValue const NORMAL_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
+inline pbr::LengthValue const NORMAL_LINE_HEIGHT ( pbr::LengthValue::eType::Auto, 42.0F );
 
-constexpr pbr::LengthValue HEADER_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
-constexpr pbr::LengthValue HEADER_VERTICAL_PADDING ( pbr::LengthValue::eType::PX, 6.0F );
-constexpr pbr::LengthValue HEADER_HEIGHT ( pbr::LengthValue::eType::PX, 30.0F );
+inline pbr::LengthValue const HEADER_FONT_SIZE ( pbr::LengthValue::eType::PX, 14.0F );
+inline pbr::LengthValue const HEADER_VERTICAL_PADDING ( pbr::LengthValue::eType::PX, 6.0F );
+inline pbr::LengthValue const HEADER_HEIGHT ( pbr::LengthValue::eType::PX, 30.0F );
 
-constexpr pbr::LengthValue SEPARATOR_HEIGHT ( pbr::LengthValue::eType::PX, 10.0F );
-constexpr pbr::LengthValue MENU_ITEM_HEIGHT ( pbr::LengthValue::eType::PX, 20.0F );
-constexpr pbr::LengthValue SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40.0F );
+inline pbr::LengthValue const SEPARATOR_HEIGHT ( pbr::LengthValue::eType::PX, 10.0F );
+inline pbr::LengthValue const MENU_ITEM_HEIGHT ( pbr::LengthValue::eType::PX, 20.0F );
+inline pbr::LengthValue const SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40.0F );
 
-constexpr pbr::LengthValue AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
-constexpr pbr::LengthValue INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );
-constexpr pbr::LengthValue ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
-constexpr pbr::LengthValue MAX_LENGTH ( pbr::LengthValue::eType::PX, 3.33e+6F );
+inline pbr::LengthValue const AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
+inline pbr::LengthValue const INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );
+inline pbr::LengthValue const ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
+inline pbr::LengthValue const MAX_LENGTH ( pbr::LengthValue::eType::PX, 3.33e+6F );
 
 } // namespace editor::theme
 

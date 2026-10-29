@@ -25,8 +25,11 @@
 /app/src/main/profiling/.~lock.results.ods#
 
 # Tools
-/tools/html-validator/.vscode/
+/tools/bin/html-validator.pdb
+/tools/html-validator/.vs/
+/tools/html-validator/bin/
 /tools/html-validator/build/
+/tools/html-validator/html-validator.vcxproj.user
 
 /tools/3ds-max-plugin/.vs/
 /tools/3ds-max-plugin/bin/
@@ -40,3 +43,4 @@
 /tools/editor/bin
 /tools/editor/build
 /tools/editor/editor.vcxproj.user
+

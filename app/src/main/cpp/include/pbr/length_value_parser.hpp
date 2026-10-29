@@ -30,7 +30,21 @@ class LengthValueParser final
 
         [[nodiscard]] static std::optional<LengthValue> Parse ( char const* css,
             size_t line,
+            std::u32string_view value,
+            bool allowCalc
+        ) noexcept;
+
+    private:
+        [[nodiscard]] static std::optional<LengthValue> ParseCalc ( char const* css,
+            size_t line,
             std::u32string_view value
+        ) noexcept;
+
+        static void ReportError ( char const* css,
+            size_t line,
+            bool includeSpecialTypes,
+            std::u32string_view errorType,
+            char const* where
         ) noexcept;
 };
 

@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f68e0b8b-166b-4e87-a9db-0d280fd30bec}</ProjectGuid>
+    <RootNamespace>htmlvalidator</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.28000.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)..\bin\</OutDir>
+    <IntDir>$(SolutionDir)build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>true</EnableSegmentHeap>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>false</ExceptionHandling>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
+      <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+      <ManifestFile />
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>false</EnableSegmentHeap>
+      <OutputManifestFile />
+      <EnableDpiAwareness />
+    </Manifest>
+    <ManifestResourceCompile>
+      <ResourceOutputFileName />
+    </ManifestResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\app\src\main\cpp\include;$(SolutionDir)..\..\app\src\main\cpp\templates;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ExceptionHandling>false</ExceptionHandling>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>precompiled_headers.hpp</PrecompiledHeaderFile>
+      <AdditionalOptions>/wd4514 /wd4577 /wd4710 /wd4711 /wd4820 /wd5045 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+      <ManifestFile />
+    </Link>
+    <Manifest>
+      <EnableSegmentHeap>false</EnableSegmentHeap>
+      <EnableDpiAwareness />
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\app\src\main\cpp\include\file.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXMath.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\GXWarning.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\GXCommon\Windows\GXWarning.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ascii_string.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\attribute_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\color_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\color_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\color_value.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\common_css_rule.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_computed_values.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\css_rule.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\display_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\display_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\div_html5_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\doctype_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\fail_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_face_css_rule.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_family_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_family_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\href_attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\html5_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\html5_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\html5_tag.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\image_attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\img_html5_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_shorthand_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\length_value_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\line_height_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\link_html5_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\number_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\parse_result.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\position_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\position_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\property_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\set_attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\src_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stream.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\stylesheet_rel_attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\tag_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_align_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_align_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\text_html5_element.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\unique_attribute_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\utf8_parser.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\vertical_align_property.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\vertical_align_property_checker.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\whitespace.hpp" />
+    <ClInclude Include="..\..\app\src\main\cpp\include\precompiled_headers.hpp" />
+    <ClInclude Include="include\version.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\GXMath.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\GXCommon\Intrinsics\GXMathCPU.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\ascii_string.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\attribute_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\color_value.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\common_css_rule.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\css_computed_values.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\css_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\display_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\display_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\div_html5_element.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\doctype_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\fail_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\font_face_css_rule.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\font_family_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\font_family_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\href_attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\html5_element.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\html5_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\html5_tag.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\image_attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\img_html5_element.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_shorthand_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\line_height_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\link_html5_element.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\number_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\position_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\position_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\property_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\set_attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\src_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\stream.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\stylesheet_rel_attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\tag_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_align_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_align_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\text_html5_element.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\unique_attribute_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\utf8_parser.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\vertical_align_property.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\vertical_align_property_checker.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\whitespace.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\file.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\platform\windows\logger.cpp" />
+    <ClCompile Include="..\..\app\src\main\cpp\sources\precompiled_headers.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="sources\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sources\windows\icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="sources\windows\main.rc" />
+    <ResourceCompile Include="sources\windows\version.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

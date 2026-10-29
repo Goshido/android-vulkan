@@ -39,7 +39,7 @@ enum class eGame : uint16_t
     World1x1
 };
 
-constexpr eGame ACTIVE_GAME = eGame::PBR;
+constexpr eGame ACTIVE_GAME = eGame::World1x1;
 constexpr double FPS_PERIOD = 3.0;
 constexpr auto TIMEOUT = std::chrono::milliseconds ( 10U );
 constexpr bool VSYNC = true;
@@ -57,9 +57,6 @@ AAssetManager* g_AssetManager = nullptr;
 Core::Core ( JNIEnv* env, jobject activity, jobject assetManager, std::string &&cacheDirectory, float dpi ) noexcept:
     _cacheDirectory ( std::move ( cacheDirectory ) )
 {
-    // It's needed for various parsers from string data. For example for float parsers.
-    std::locale::global ( std::locale::classic () );
-
     env->GetJavaVM ( &_vm );
 
     _assetManager = env->NewGlobalRef ( assetManager );

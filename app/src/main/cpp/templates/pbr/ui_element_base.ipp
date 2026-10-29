@@ -136,7 +136,7 @@ float UIElementBase<F, P, S>::ResolveFontSize () const noexcept
 }
 
 template<typename F, typename P, typename S>
-float UIElementBase<F, P, S>::ResolveLineHeight ( F::Font font) const noexcept
+float UIElementBase<F, P, S>::ResolveLineHeight ( F::Font font ) const noexcept
 {
     CSSUnitToDevicePixel const &cssUnits = CSSUnitToDevicePixel::GetInstance ();
     float const rootValue = _css._lineHeight.GetValue ();
@@ -229,6 +229,7 @@ float UIElementBase<F, P, S>::ResolvePixelLength ( LengthValue const &length,
 ) const noexcept
 {
     CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
+    // FUCK - implement 'calc'
 
     switch ( length.GetType () )
     {

@@ -14,6 +14,7 @@ GX_DISABLE_COMMON_WARNINGS
 #include <cassert>
 #include <cctype>
 #include <cfloat>
+#include <charconv>
 #include <chrono>
 #include <cinttypes>
 #include <climits>
@@ -32,7 +33,6 @@ GX_DISABLE_COMMON_WARNINGS
 #include <fstream>
 #include <functional>
 #include <list>
-#include <locale>
 #include <map>
 #include <math.h>
 #include <memory>

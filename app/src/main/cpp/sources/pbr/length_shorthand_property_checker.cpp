@@ -29,7 +29,7 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process ( PropertyParser
     if ( !baseCheck || !baseCheck.value () )
         return baseCheck;
 
-    auto const values = PropertyParser::Tokenize ( result._value );
+    auto const values = PropertyParser::TokenizeGeneric ( result._value );
     size_t const line = result._newStream._line;
 
     switch ( values.size () )
@@ -47,8 +47,8 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process ( PropertyParser
         return Process4Values ( values, line );
 
         default:
-            android_vulkan::LogError ( "pbr::LengthShorthandPropertyChecker::Process - %s:%zu: 'padding' property should "
-                "contain no more than 4 values.",
+            android_vulkan::LogError ( "pbr::LengthShorthandPropertyChecker::Process - %s:%zu: "
+                "'padding' property should contain no more than 4 values.",
                 _css,
                 result._newStream._line
             );
@@ -57,14 +57,16 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process ( PropertyParser
     }
 }
 
-PropertyChecker::Result LengthShorthandPropertyChecker::Process1Value ( std::u32string_view value, size_t line ) noexcept
+PropertyChecker::Result LengthShorthandPropertyChecker::Process1Value ( std::u32string_view value,
+    size_t line
+) noexcept
 {
-    auto const length = LengthValueParser::Parse ( _css, line, value );
+    auto length = LengthValueParser::Parse ( _css, line, value, false );
 
     if ( !length )
         return std::nullopt;
 
-    _top = *length;
+    _top = std::move ( *length );
     _bottom = _top;
     _left = _top;
     _right = _top;
@@ -77,21 +79,21 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process2Values ( std::li
 ) noexcept
 {
     auto it = value.cbegin ();
-    auto length = LengthValueParser::Parse ( _css, line, *it );
+    auto length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _top = *length;
+    _top = std::move ( *length );
     _bottom = _top;
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _right = *length;
+    _right = std::move ( *length );
     _left = _right;
 
     return true;
@@ -102,29 +104,29 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process3Values ( std::li
 ) noexcept
 {
     auto it = value.cbegin ();
-    auto length = LengthValueParser::Parse ( _css, line, *it );
+    auto length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _top = *length;
+    _top = std::move ( *length );
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _right = *length;
+    _right = std::move ( *length );
     _left = _right;
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _bottom = *length;
+    _bottom = std::move ( *length );
     return true;
 }
 
@@ -133,36 +135,36 @@ PropertyChecker::Result LengthShorthandPropertyChecker::Process4Values ( std::li
 ) noexcept
 {
     auto it = value.cbegin ();
-    auto length = LengthValueParser::Parse ( _css, line, *it );
+    auto length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _top = *length;
+    _top = std::move ( *length );
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _right = *length;
+    _right = std::move ( *length );
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _bottom = *length;
+    _bottom = std::move ( *length );
 
     ++it;
-    length = LengthValueParser::Parse ( _css, line, *it );
+    length = LengthValueParser::Parse ( _css, line, *it, false );
 
     if ( !length )
         return std::nullopt;
 
-    _left = *length;
+    _left = std::move ( *length );
     return true;
 }
 

@@ -14,9 +14,6 @@ constexpr auto RETRY_TIMEOUT = std::chrono::seconds ( 2U );
 
 [[nodiscard]] int main ( int argc, char* argv[] )
 {
-    // Make sure that string to number parsers will be consistent.
-    std::locale::global ( std::locale::classic () );
-
     if ( argc < 2 ) [[unlikely]]
     {
         android_vulkan::LogError ( "Specify HTML file to check. Abort." );

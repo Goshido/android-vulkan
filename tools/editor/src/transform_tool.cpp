@@ -13,11 +13,11 @@ namespace {
 constexpr std::string_view CONFIG_KEY_SECTION = "transform dialog";
 
 constexpr std::string_view CONFIG_KEY_UI = "UI";
-constexpr pbr::LengthValue MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
-constexpr pbr::LengthValue HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
-constexpr pbr::LengthValue DEFAULT_X ( pbr::LengthValue::eType::PX, 350.0F );
-constexpr pbr::LengthValue DEFAULT_Y ( pbr::LengthValue::eType::PX, 18.0F );
-constexpr pbr::LengthValue DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
+pbr::LengthValue const MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
+pbr::LengthValue const HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
+pbr::LengthValue const DEFAULT_X ( pbr::LengthValue::eType::PX, 350.0F );
+pbr::LengthValue const DEFAULT_Y ( pbr::LengthValue::eType::PX, 18.0F );
+pbr::LengthValue const DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );
 
 constexpr std::string_view CONFIG_KEY_SHOW = "show";
 constexpr bool DEFAULT_SHOW = true;
@@ -107,7 +107,7 @@ void TransformTool::Init ( SaveState::Container const &save ) noexcept
         }
     );
 
-    constexpr GXVec4 beta ( DEFAULT_X.GetValue (),
+    GXVec4 const beta ( DEFAULT_X.GetValue (),
         DEFAULT_X.GetValue () + DEFAULT_WIDTH.GetValue (),
         DEFAULT_Y.GetValue (),
         DEFAULT_Y.GetValue () + HEIGHT.GetValue ()

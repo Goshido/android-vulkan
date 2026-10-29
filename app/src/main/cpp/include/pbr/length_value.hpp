@@ -28,9 +28,16 @@ class LengthValue final
             Unitless
         };
 
+        struct CalcRest final
+        {
+            float                   _value = 1.0F;
+            eType                   _type = eType::MM;
+        };
+
     private:
-        eType       _type = eType::MM;
-        float       _value = 1.0F;
+        eType                       _type = eType::MM;
+        float                       _value = 1.0F;
+        std::vector<CalcRest>       _calcRest {};
 
     public:
         LengthValue () = default;
@@ -41,24 +48,17 @@ class LengthValue final
         LengthValue ( LengthValue && ) = default;
         LengthValue &operator = ( LengthValue && ) = default;
 
-        constexpr explicit LengthValue ( eType type, float value ) noexcept:
-            _type ( type ),
-            _value ( value )
-        {
-            // NOTHING
-        }
+        explicit LengthValue ( eType type, float value ) noexcept;
+
+        // Constructor for 'calc' CSS constraint.
+        // See <repo>/doc/ui-system.md#calc
+        explicit LengthValue ( eType firstType, float firstValue, std::vector<CalcRest> &&rest ) noexcept;
 
         ~LengthValue () = default;
 
-        [[nodiscard]] constexpr eType GetType () const noexcept
-        {
-            return _type;
-        }
-
-        [[nodiscard]] constexpr float GetValue () const noexcept
-        {
-            return _value;
-        }
+        [[nodiscard]] eType GetType () const noexcept;
+        [[nodiscard]] float GetValue () const noexcept;
+        [[nodiscard]] std::vector<CalcRest> const &GetCalcInfo () const noexcept;
 };
 
 } // namespace pbr

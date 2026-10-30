@@ -34,7 +34,6 @@ class UIEditBox final : public Widget
         pbr::FontStorage::StringMetrics     _metrics {};
 
         DIVUIElement                        _lineDIV;
-        DIVUIElement                        _columnDIV;
 
         DIVUIElement                        _captionDIV;
         TextUIElement                       _captionText;

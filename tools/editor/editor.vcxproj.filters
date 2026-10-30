@@ -180,9 +180,6 @@
     <ClCompile Include="src\ui_label.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui_props.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ui_close_button.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -705,9 +702,6 @@
       <Filter>Header Files\core\GXCommon</Filter>
     </ClInclude>
     <ClInclude Include="include\ui_label.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\ui_props.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\ui_close_button.hpp">

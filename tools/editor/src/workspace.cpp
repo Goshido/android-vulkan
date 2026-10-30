@@ -1564,7 +1564,6 @@ bool Workspace::IsReady () noexcept
         return true;
 
     _ready = static_cast<bool> ( _viewport ) &
-        static_cast<bool> ( _uiProps ) &
         static_cast<bool> ( _gizmoComposeProgram ) &
         static_cast<bool> ( _gizmoPrepassProgram ) &
         static_cast<bool> ( _opaqueProgram ) &
@@ -2064,21 +2063,6 @@ void Workspace::InitHotkeys () noexcept
 void Workspace::InitWidgets ( SaveState::Container const &save ) noexcept
 {
     MessageQueue &messageQueue = MessageQueue::Instance ();
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::UIAppendWidget,
-            [ this ] () noexcept {
-                _uiProps = new UIProps ();
-                _uiProps->SetRect ( Rect ( 44, 444, 133, 333 ) );
-
-                _uiProps->SetMinSize ( pbr::LengthValue ( pbr::LengthValue::eType::PX, 150.0F ),
-                    pbr::LengthValue ( pbr::LengthValue::eType::PX, 90.0F )
-                );
-
-                return _uiProps;
-            }
-        )
-    );
 
     _propertyTool.Init ( save );
     _transformTool.Init ( save );

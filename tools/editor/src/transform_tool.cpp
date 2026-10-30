@@ -14,7 +14,7 @@ constexpr std::string_view CONFIG_KEY_SECTION = "transform dialog";
 
 constexpr std::string_view CONFIG_KEY_UI = "UI";
 pbr::LengthValue const MIN_WIDTH ( pbr::LengthValue::eType::PX, 155.0F );
-pbr::LengthValue const HEIGHT ( pbr::LengthValue::eType::PX, 233.0F );
+pbr::LengthValue const HEIGHT ( pbr::LengthValue::eType::PX, 204.0F );
 pbr::LengthValue const DEFAULT_X ( pbr::LengthValue::eType::PX, 350.0F );
 pbr::LengthValue const DEFAULT_Y ( pbr::LengthValue::eType::PX, 18.0F );
 pbr::LengthValue const DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 247.0F );

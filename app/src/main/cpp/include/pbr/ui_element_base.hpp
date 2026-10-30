@@ -3,6 +3,7 @@
 
 
 #include <pbr/css_computed_values.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
 #include <renderer.hpp>
 
 
@@ -110,6 +111,14 @@ class UIElementBase
         [[nodiscard]] static float AlignToCenter ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToStart ( float pen, float parentSize, float lineSize ) noexcept;
         [[nodiscard]] static float AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept;
+
+    private:
+        [[nodiscard]] float ComputePixelLength ( CSSUnitToDevicePixel const &units,
+            LengthValue::eType type,
+            float value,
+            float referenceLength,
+            bool isHeight
+        ) const noexcept;
 };
 
 } // namespace pbr

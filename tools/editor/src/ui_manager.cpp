@@ -6,7 +6,6 @@
 #include <logger.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
-#include <ui_props.hpp>
 
 
 namespace editor {

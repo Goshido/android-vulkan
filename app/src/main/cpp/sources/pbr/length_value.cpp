@@ -29,7 +29,7 @@ float LengthValue::GetValue () const noexcept
     return _value;
 }
 
-std::vector<LengthValue::CalcRest> const &LengthValue::GetCalcInfo () const noexcept
+std::vector<LengthValue::CalcRest> const &LengthValue::GetCalcRest () const noexcept
 {
     return _calcRest;
 }

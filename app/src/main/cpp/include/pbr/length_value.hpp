@@ -58,7 +58,7 @@ class LengthValue final
 
         [[nodiscard]] eType GetType () const noexcept;
         [[nodiscard]] float GetValue () const noexcept;
-        [[nodiscard]] std::vector<CalcRest> const &GetCalcInfo () const noexcept;
+        [[nodiscard]] std::vector<CalcRest> const &GetCalcRest () const noexcept;
 };
 
 } // namespace pbr

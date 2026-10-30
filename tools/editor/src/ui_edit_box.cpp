@@ -50,7 +50,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 9.0F ),
+            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
             ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 6.0F ),
             ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
@@ -64,39 +64,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
         name + " (line)"
     ),
 
-    _columnDIV ( _lineDIV,
-
-        {
-            ._backgroundColor = theme::TRANSPARENT_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::AUTO_LENGTH,
-            ._left = theme::AUTO_LENGTH,
-            ._right = theme::ZERO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = theme::TRANSPARENT_COLOR,
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile {},
-            ._fontSize = theme::INHERIT_LENGTH,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = theme::ZERO_LENGTH,
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
-        },
-
-        name + " (column)"
-    ),
-
-    _captionDIV ( _columnDIV,
+    _captionDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::TRANSPARENT_COLOR,
@@ -121,8 +89,8 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 35.0F ),
-            ._height = theme::AUTO_LENGTH
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 58.0F ),
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F )
         },
 
         name + " (caption)"
@@ -130,7 +98,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
 
     _captionText ( _captionDIV, caption, name + " (caption)" ),
 
-    _valueDIV ( _columnDIV,
+    _valueDIV ( _lineDIV,
 
         {
             ._backgroundColor = theme::WIDGET_BACKGROUND_COLOR,
@@ -148,15 +116,26 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._marginLeft = theme::ZERO_LENGTH,
             ._marginRight = theme::ZERO_LENGTH,
             ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
+            ._paddingBottom = theme::ZERO_LENGTH,
             ._paddingLeft = theme::ZERO_LENGTH,
             ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 0.0F ),
+            ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
             ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 65.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent,
+                100.0F,
+
+                {
+                    { 
+                        ._value = -58.0F,
+                        ._type = pbr::LengthValue::eType::PX
+                    }
+                }
+            ),
+
+            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F )
         },
 
         name + " (value)"
@@ -261,17 +240,15 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
     _text ( _textDIV, value, name + " (text)" )
 {
     _captionDIV.AppendChildElement ( _captionText );
-    _columnDIV.AppendChildElement ( _captionDIV );
+    _lineDIV.AppendChildElement ( _captionDIV );
 
     _textDIV.AppendChildElement ( _text );
     _valueDIV.AppendChildElement ( _textDIV );
 
     _valueDIV.AppendChildElement ( _selectionDIV );
     _valueDIV.AppendChildElement ( _cursorDIV );
+    _lineDIV.AppendChildElement ( _valueDIV );
 
-    _columnDIV.AppendChildElement ( _valueDIV );
-
-    _lineDIV.AppendChildElement ( _columnDIV );
     parent.AppendChildElement ( _lineDIV );
 
     if ( auto str = pbr::UTF8Parser::ToU32String ( value ); str ) [[likely]]

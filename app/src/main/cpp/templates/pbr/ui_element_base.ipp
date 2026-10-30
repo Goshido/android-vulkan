@@ -4,7 +4,6 @@
 
 #include <av_assert.hpp>
 #include <logger.hpp>
-#include <pbr/css_unit_to_device_pixel.hpp>
 
 
 namespace pbr {
@@ -229,53 +228,12 @@ float UIElementBase<F, P, S>::ResolvePixelLength ( LengthValue const &length,
 ) const noexcept
 {
     CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
-    // FUCK - implement 'calc'
+    float result = ComputePixelLength ( units, length.GetType (), length.GetValue (), referenceLength, isHeight );
 
-    switch ( length.GetType () )
-    {
-        case LengthValue::eType::EM:
-        return ResolveFontSize () * length.GetValue ();
+    for ( auto const &calcRest : length.GetCalcRest () )
+        result += ComputePixelLength ( units, calcRest._type, calcRest._value, referenceLength, isHeight );
 
-        case LengthValue::eType::MM:
-        return units._fromMM * length.GetValue ();
-
-        case LengthValue::eType::PT:
-        return units._fromPT * length.GetValue ();
-
-        case LengthValue::eType::PX:
-        return units._fromPX * length.GetValue ();
-
-        case LengthValue::eType::Percent:
-        {
-            if ( _parent )
-            {
-                UIElementBase<F, P, S> const &div = *_parent;
-
-                LengthValue const* cases[] = { &div._css._width, &div._css._height };
-                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
-
-                if ( isAuto & isHeight )
-                {
-                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
-                    return 0.0F;
-                }
-            }
-
-            return 1.0e-2F * referenceLength * length.GetValue ();
-        }
-
-        case LengthValue::eType::Unitless:
-        return referenceLength * length.GetValue ();
-
-        case LengthValue::eType::Auto:
-        return 0.0F;
-
-        case LengthValue::eType::Inherit:
-            [[fallthrough]];
-        default:
-            AV_ASSERT ( false )
-        return 0.0F;
-    }
+    return result;
 }
 
 template<typename F, typename P, typename S>
@@ -360,6 +318,61 @@ template<typename F, typename P, typename S>
 float UIElementBase<F, P, S>::AlignToEnd ( float pen, float parentSize, float lineSize ) noexcept
 {
     return pen + parentSize - lineSize;
+}
+
+template<typename F, typename P, typename S>
+float UIElementBase<F, P, S>::ComputePixelLength ( CSSUnitToDevicePixel const &units,
+    LengthValue::eType type,
+    float value,
+    float referenceLength,
+    bool isHeight
+) const noexcept
+{
+    switch ( type )
+    {
+        case LengthValue::eType::EM:
+        return ResolveFontSize () * value;
+
+        case LengthValue::eType::MM:
+        return units._fromMM * value;
+
+        case LengthValue::eType::PT:
+        return units._fromPT * value;
+
+        case LengthValue::eType::PX:
+        return units._fromPX * value;
+
+        case LengthValue::eType::Percent:
+        {
+            if ( _parent )
+            {
+                UIElementBase<F, P, S> const &div = *_parent;
+
+                LengthValue const* cases[] = { &div._css._width, &div._css._height };
+                bool const isAuto = cases[ static_cast<size_t> ( isHeight ) ]->GetType () == LengthValue::eType::Auto;
+
+                if ( isAuto & isHeight )
+                {
+                    // It's recursion. Doing exactly the same as Google Chrome v114.0.5735.110 does.
+                    return 0.0F;
+                }
+            }
+
+            return 1.0e-2F * referenceLength * value;
+        }
+
+        case LengthValue::eType::Unitless:
+        return referenceLength * value;
+
+        case LengthValue::eType::Auto:
+        return 0.0F;
+
+        case LengthValue::eType::Inherit:
+            [[fallthrough]];
+        default:
+            AV_ASSERT ( false )
+        return 0.0F;
+    }
 }
 
 } // namespace pbr

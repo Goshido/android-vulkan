@@ -1237,7 +1237,6 @@
     <ClCompile Include="src\ui_label.cpp" />
     <ClCompile Include="src\ui_manager.cpp" />
     <ClCompile Include="src\ui_property_dialog.cpp" />
-    <ClCompile Include="src\ui_props.cpp" />
     <ClCompile Include="src\ui_separator.cpp" />
     <ClCompile Include="src\ui_slider.cpp" />
     <ClCompile Include="src\ui_transform.cpp" />
@@ -1470,7 +1469,6 @@
     <ClInclude Include="include\ui_label.hpp" />
     <ClInclude Include="include\ui_manager.hpp" />
     <ClInclude Include="include\ui_property_dialog.hpp" />
-    <ClInclude Include="include\ui_props.hpp" />
     <ClInclude Include="include\ui_separator.hpp" />
     <ClInclude Include="include\ui_slider.hpp" />
     <ClInclude Include="include\ui_transform.hpp" />

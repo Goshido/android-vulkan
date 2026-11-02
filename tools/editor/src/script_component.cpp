@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <property_tool.hpp>
 #include <script_component.hpp>
 
 
@@ -42,6 +43,11 @@ void ScriptComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );
     root.Write ( TYPE_KEY, TYPE );
+    // FUCK
+}
+
+void ScriptComponent::ShowProperties ( PropertyTool &/*propertyTool*/ ) noexcept
+{
     // FUCK
 }
 

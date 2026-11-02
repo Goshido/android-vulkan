@@ -1,6 +1,8 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <glyphs.hpp>
 #include <mesh_storage.hpp>
+#include <property_tool.hpp>
 #include <static_mesh_component.hpp>
 #include <texture2D_storage.hpp>
 #include <workspace.hpp>
@@ -106,6 +108,13 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
     Component::Save ( root );
     root.Write ( TYPE_KEY, TYPE );
     root.Write ( MESH_KEY, _mesh->GetName () );
+}
+
+void StaticMeshComponent::ShowProperties ( PropertyTool &propertyTool ) noexcept
+{
+    propertyTool.BeginComponent ( std::string ( _name ), glyph::COMPONENT_STATIC_MESH );
+    // FUCK
+    propertyTool.EndComponent ();
 }
 
 void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_view emission ) noexcept

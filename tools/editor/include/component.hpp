@@ -17,6 +17,7 @@ GX_RESTORE_WARNING_STATE
 namespace editor {
 
 class Actor;
+class PropertyTool;
 
 class Component;
 using ComponentRef = std::unique_ptr<Component>;
@@ -33,6 +34,9 @@ class Component
     protected:
         Actor*              _actor = nullptr;
 
+        std::string         _name {};
+        // FUCK - add collapse boolean property
+
         GXQuat              _rotation = GXQuat::IDENTITY;
         GXVec3              _scale = GXVec3::ONE;
         GXVec3              _location = GXVec3::ZERO;
@@ -40,7 +44,6 @@ class Component
         uint32_t            _version;
 
     private:
-        std::string         _name {};
         static Spawners     _spawners;
 
     public:
@@ -68,6 +71,7 @@ class Component
 
         virtual void ActorTransformChanged () noexcept;
         virtual void Save ( SaveState::Container &root ) const noexcept;
+        virtual void ShowProperties ( PropertyTool &propertyTool ) noexcept = 0;
 
         void SetName ( std::string_view name ) noexcept;
 

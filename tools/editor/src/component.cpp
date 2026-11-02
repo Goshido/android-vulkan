@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <camera_component.hpp>
 #include <point_light_component.hpp>
+#include <property_tool.hpp>
 #include <reflection_component.hpp>
 #include <rigid_body_component.hpp>
 #include <script_component.hpp>
@@ -30,8 +31,8 @@ constexpr std::string_view SCALE_KEY = "scale";
 Component::Spawners Component::_spawners {};
 
 Component::Component ( uint32_t version, std::string &&name ) noexcept:
-    _version ( version ),
-    _name ( std::move ( name ) )
+    _name ( std::move ( name ) ),
+    _version ( version )
 {
     // NOTHING
 }

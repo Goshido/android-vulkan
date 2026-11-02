@@ -29,6 +29,7 @@ class SkeletalMeshComponent final : public Component
         void Register ( Actor &actor ) noexcept override;
         void Unregister () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
+        void ShowProperties ( PropertyTool &propertyTool ) noexcept override;
 };
 
 } // namespace editor

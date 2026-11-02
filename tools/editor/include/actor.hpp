@@ -52,6 +52,7 @@ class Actor final
         [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
 
         void Save ( SaveState::Container &root ) const noexcept;
+        void ShowProperties ( PropertyTool &propertyTool ) noexcept;
 
         [[nodiscard]] GXQuat const &GetRotation () const noexcept;
         void SetRotation ( GXQuat const &rotation ) noexcept;

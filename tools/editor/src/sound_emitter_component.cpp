@@ -1,5 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
+#include <property_tool.hpp>
 #include <sound_emitter_component.hpp>
 
 
@@ -42,6 +43,11 @@ void SoundEmitterComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );
     root.Write ( TYPE_KEY, TYPE );
+    // FUCK
+}
+
+void SoundEmitterComponent::ShowProperties ( PropertyTool &/*propertyTool*/ ) noexcept
+{
     // FUCK
 }
 

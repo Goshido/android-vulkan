@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <actor.hpp>
 #include <av_assert.hpp>
+#include <property_tool.hpp>
 
 
 namespace editor {
@@ -120,6 +121,21 @@ void Actor::Save ( SaveState::Container &root ) const noexcept
     for ( auto const &component : _components )
     {
         component->Save ( components.WriteContainer () );
+    }
+}
+
+void Actor::ShowProperties ( PropertyTool &propertyTool ) noexcept
+{
+    propertyTool.AddString ( "Name", std::string ( _name ) );
+
+    if ( _components.empty () ) [[unlikely]]
+        return;
+
+    propertyTool.AddSeparator ();
+
+    for ( auto &component : _components )
+    {
+        component->ShowProperties ( propertyTool );
     }
 }
 

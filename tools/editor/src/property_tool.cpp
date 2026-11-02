@@ -5,6 +5,8 @@
 
 namespace editor {
 
+extern Actor* fuck_actor;
+
 namespace {
 
 constexpr std::string_view CONFIG_KEY_SECTION = "property dialog";
@@ -93,7 +95,22 @@ void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
 
 void PropertyTool::OnContentCommitted ( Selection::Actors const &/*actors*/ ) noexcept
 {
-    // FUCK
+    AV_TRACE ( "Property tool: content committed" )
+
+    if ( !fuck_actor | !_ui )
+        return;
+
+    if ( _ui )
+        _ui->Close ();
+
+    MessageQueue::Instance ().EnqueueBack (
+        Message ( eMessageType::InvokeUI,
+            [ this ] () noexcept -> void* {
+                CreateUI ();
+                return nullptr;
+            }
+        )
+    );
 }
 
 void PropertyTool::OnContentUpdated ( Selection::Actors const &/*actors*/ ) noexcept
@@ -102,6 +119,26 @@ void PropertyTool::OnContentUpdated ( Selection::Actors const &/*actors*/ ) noex
 }
 
 void PropertyTool::OnSelectionChanged ( Selection::Actors const &/*actors*/ ) noexcept
+{
+    // FUCK
+}
+
+void PropertyTool::AddString ( std::string_view /*name*/, std::string &&/*value*/ ) noexcept
+{
+    // FUCK
+}
+
+void PropertyTool::AddSeparator () noexcept
+{
+    // FUCK
+}
+
+void PropertyTool::BeginComponent ( std::string &&/*name*/, std::string_view /*glyph*/ ) noexcept
+{
+    // FUCK
+}
+
+void PropertyTool::EndComponent () noexcept
 {
     // FUCK
 }
@@ -119,6 +156,9 @@ void PropertyTool::CreateUI () noexcept
 
     _ui->SetRect ( _rect );
     _ui->SetMinSize ( MIN_WIDTH, MIN_HEIGHT );
+
+    if ( fuck_actor )
+        fuck_actor->ShowProperties ( *this );
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::UIPrependWidget,

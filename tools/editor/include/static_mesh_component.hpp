@@ -43,6 +43,7 @@ class StaticMeshComponent final : public Component
         void Deselect () noexcept override;
         void ActorTransformChanged () noexcept override;
         void Save ( SaveState::Container &root ) const noexcept override;
+        void ShowProperties ( PropertyTool &propertyTool ) noexcept override;
 
         void LoadResources ( std::string_view mesh, std::string_view emission ) noexcept;
 

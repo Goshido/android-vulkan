@@ -1,6 +1,7 @@
 #include <precompiled_headers.hpp>
 #include <av_assert.hpp>
 #include <point_light_component.hpp>
+#include <property_tool.hpp>
 
 
 namespace editor {
@@ -42,6 +43,11 @@ void PointLightComponent::Save ( SaveState::Container &root ) const noexcept
 {
     Component::Save ( root );
     root.Write ( TYPE_KEY, TYPE );
+    // FUCK
+}
+
+void PointLightComponent::ShowProperties ( PropertyTool &/*propertyTool*/ ) noexcept
+{
     // FUCK
 }
 

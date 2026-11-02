@@ -35,6 +35,16 @@ class PropertyTool final
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
 
+        // FUCK - implement duplex property system for 'value'
+        void AddString ( std::string_view name, std::string &&value ) noexcept;
+
+        void AddSeparator () noexcept;
+
+        // FUCK - implement duplex property system for 'name'
+        // FUCK - add collapse property which owns by component
+        void BeginComponent ( std::string &&name, std::string_view glyph ) noexcept;
+        void EndComponent () noexcept;
+
     private:
         void CreateUI () noexcept;
 };

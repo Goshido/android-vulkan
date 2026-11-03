@@ -44,8 +44,9 @@ inline pbr::LengthValue const SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX,
 
 inline pbr::LengthValue const AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
 inline pbr::LengthValue const INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );
-inline pbr::LengthValue const ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
 inline pbr::LengthValue const MAX_LENGTH ( pbr::LengthValue::eType::PX, 3.33e+6F );
+inline pbr::LengthValue const WHOLE_LENGTH ( pbr::LengthValue::eType::Percent, 100.0F );
+inline pbr::LengthValue const ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
 
 } // namespace editor::theme
 

@@ -57,8 +57,8 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         "viewport"
@@ -121,7 +121,7 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = theme::WHOLE_LENGTH,
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F )
         },
 
@@ -154,7 +154,7 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         "Selection (right)"
@@ -185,7 +185,7 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = theme::WHOLE_LENGTH,
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F )
         },
 
@@ -218,7 +218,7 @@ ViewportWidget::ViewportWidget ( SaveState::Container const &save ) noexcept:
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         "Selection (left)"

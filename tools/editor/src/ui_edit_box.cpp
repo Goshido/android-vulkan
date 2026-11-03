@@ -26,6 +26,7 @@ constexpr char32_t CTRL_X = 0x18;
 //----------------------------------------------------------------------------------------------------------------------
 
 UIEditBox::UIEditBox ( DIVUIElement &parent,
+    pbr::LengthValue const &firstColumnWidth,
     std::string_view caption,
     std::string_view value,
     std::string &&name
@@ -89,7 +90,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 58.0F ),
+            ._width = firstColumnWidth,
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F )
         },
 
@@ -128,9 +129,9 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
                 100.0F,
 
                 {
-                    { 
-                        ._value = -58.0F,
-                        ._type = pbr::LengthValue::eType::PX
+                    {
+                        ._value = -firstColumnWidth.GetValue (),
+                        ._type = firstColumnWidth.GetType ()
                     }
                 }
             ),
@@ -167,7 +168,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (cursor)"
@@ -199,7 +200,7 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (selection)"
@@ -230,8 +231,8 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (text)"

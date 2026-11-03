@@ -75,7 +75,7 @@ UIDialogBox::UIDialogBox ( std::string &&name ) noexcept:
     _div (
         {
             ._backgroundColor = theme::BACKGROUND_COLOR,
-            ._backgroundSize = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._backgroundSize = theme::WHOLE_LENGTH,
             ._bottom = theme::AUTO_LENGTH,
             ._left = theme::ZERO_LENGTH,
             ._right = theme::AUTO_LENGTH,

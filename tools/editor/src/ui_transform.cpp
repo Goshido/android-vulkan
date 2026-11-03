@@ -5,6 +5,14 @@
 
 namespace editor {
 
+namespace {
+
+pbr::LengthValue const FIRST_COLUMN_WIDTH ( pbr::LengthValue::eType::PX, 58.0F );
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 UITransform::UITransform ( ActionHandler &&onClose,
     ActionHandler &&onRevertLocation,
     ActionHandler &&onRevertScale,
@@ -54,7 +62,7 @@ UITransform::UITransform ( ActionHandler &&onClose,
             ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = theme::WHOLE_LENGTH,
             ._height = theme::HEADER_HEIGHT
         },
 
@@ -64,15 +72,15 @@ UITransform::UITransform ( ActionHandler &&onClose,
     _headerText ( _headerLine, "Transform", "Header"),
     _closeButton ( _headerLine, "Close button" ),
 
-    _x ( _div, "X", "", "EditBox[x]" ),
-    _y ( _div, "Y", "", "EditBox[y]" ),
-    _z ( _div, "Z", "", "EditBox[z]" ),
+    _x ( _div, FIRST_COLUMN_WIDTH, "X", "", "EditBox[x]" ),
+    _y ( _div, FIRST_COLUMN_WIDTH, "Y", "", "EditBox[y]" ),
+    _z ( _div, FIRST_COLUMN_WIDTH, "Z", "", "EditBox[z]" ),
 
     _separator ( _div, "Separator" ),
 
-    _scaleX ( _div, "Scale X", "", "EditBox[scale-x]" ),
-    _scaleY ( _div, "Scale Y", "", "EditBox[scale-y]" ),
-    _scaleZ ( _div, "Scale Z", "", "EditBox[scale-z]" ),
+    _scaleX ( _div, FIRST_COLUMN_WIDTH, "Scale X", "", "EditBox[scale-x]" ),
+    _scaleY ( _div, FIRST_COLUMN_WIDTH, "Scale Y", "", "EditBox[scale-y]" ),
+    _scaleZ ( _div, FIRST_COLUMN_WIDTH, "Scale Z", "", "EditBox[scale-z]" ),
 
     _onClose ( std::move ( onClose ) ),
     _onRevertLocation ( std::move ( onRevertLocation ) ),
@@ -90,7 +98,7 @@ UITransform::UITransform ( ActionHandler &&onClose,
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
     headerTextStyle._textAlign = pbr::TextAlignProperty::eValue::Center;
     headerTextStyle._paddingTop = theme::HEADER_VERTICAL_PADDING;
-    headerTextStyle._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F );
+    headerTextStyle._width = theme::WHOLE_LENGTH;
 
     pbr::CSSComputedValues &closeButtonStyle = _closeButton.GetCSS ();
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );

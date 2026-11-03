@@ -75,6 +75,7 @@ class UIEditBox final : public Widget
         UIEditBox &operator = ( UIEditBox && ) = delete;
 
         explicit UIEditBox ( DIVUIElement &parent,
+            pbr::LengthValue const &firstColumnWidth,
             std::string_view caption,
             std::string_view value,
             std::string &&name

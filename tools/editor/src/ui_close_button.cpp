@@ -65,8 +65,8 @@ UICloseButton::UICloseButton ( DIVUIElement &parent, std::string &&name ) noexce
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (background DIV)"
@@ -99,8 +99,8 @@ UICloseButton::UICloseButton ( DIVUIElement &parent, std::string &&name ) noexce
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (border DIV)"
@@ -133,8 +133,8 @@ UICloseButton::UICloseButton ( DIVUIElement &parent, std::string &&name ) noexce
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (cross DIV)"

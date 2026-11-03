@@ -61,7 +61,7 @@ UIComboBox::Popup::Popup ( DIVUIElement const &positionAnchor,
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = theme::WHOLE_LENGTH,
             ._height = theme::AUTO_LENGTH
         },
 
@@ -123,7 +123,7 @@ UIComboBox::Popup::Popup ( DIVUIElement const &positionAnchor,
                 ._position = pbr::PositionProperty::eValue::Static,
                 ._textAlign = pbr::TextAlignProperty::eValue::Left,
                 ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+                ._width = theme::WHOLE_LENGTH,
                 ._height = theme::MENU_ITEM_HEIGHT
             },
 
@@ -338,8 +338,8 @@ UIComboBox::UIComboBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (column)"
@@ -405,7 +405,7 @@ UIComboBox::UIComboBox ( DIVUIElement &parent,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 65.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (value)"
@@ -436,8 +436,8 @@ UIComboBox::UIComboBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (text)"
@@ -504,7 +504,7 @@ UIComboBox::UIComboBox ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Relative,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
+            ._width = theme::WHOLE_LENGTH,
             ._height = theme::ZERO_LENGTH
         },
 

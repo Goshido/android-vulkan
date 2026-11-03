@@ -72,8 +72,8 @@ UISlider::UISlider ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Static,
             ._textAlign = pbr::TextAlignProperty::eValue::Left,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (column)"
@@ -139,7 +139,7 @@ UISlider::UISlider ( DIVUIElement &parent,
             ._textAlign = pbr::TextAlignProperty::eValue::Center,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 65.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (value)"
@@ -171,7 +171,7 @@ UISlider::UISlider ( DIVUIElement &parent,
             ._textAlign = pbr::TextAlignProperty::eValue::Inherit,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
             ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 10.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (progress)"
@@ -202,8 +202,8 @@ UISlider::UISlider ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Center,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F ),
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::Percent, 100.0F )
+            ._width = theme::WHOLE_LENGTH,
+            ._height = theme::WHOLE_LENGTH
         },
 
         name + " (number)"

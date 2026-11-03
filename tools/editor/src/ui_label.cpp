@@ -44,6 +44,18 @@ UILabel::UILabel ( DIVUIElement &parent, std::string_view text, std::string &&na
     parent.AppendChildElement ( _div );
 }
 
+UILabel::UILabel ( DIVUIElement &parent,
+    pbr::CSSComputedValues &&css,
+    std::string_view text,
+    std::string &&name
+) noexcept:
+    _div ( parent, std::move ( css ), name + " (DIV)" ),
+    _text ( _div, text, name + " (text)" )
+{
+    _div.AppendChildElement ( _text );
+    parent.AppendChildElement ( _div );
+}
+
 pbr::CSSComputedValues &UILabel::GetCSS () noexcept
 {
     return _div.GetCSS ();

@@ -25,6 +25,12 @@ class UILabel final
 
         explicit UILabel ( DIVUIElement &parent, std::string_view text, std::string &&name ) noexcept;
 
+        explicit UILabel ( DIVUIElement &parent,
+            pbr::CSSComputedValues &&css,
+            std::string_view text,
+            std::string &&name
+        ) noexcept;
+
         ~UILabel () = default;
 
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;

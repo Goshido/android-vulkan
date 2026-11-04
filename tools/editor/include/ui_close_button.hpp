@@ -54,6 +54,7 @@ class UICloseButton final : public Widget
 
         void Connect ( Callback &&callback ) noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept override;
 
     private:
         void OnMouseLeave () noexcept override;

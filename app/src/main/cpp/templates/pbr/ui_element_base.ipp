@@ -56,6 +56,12 @@ std::string_view UIElementBase<F, P, S>::ResolveFont () const noexcept
 }
 
 template<typename F, typename P, typename S>
+std::string_view UIElementBase<F, P, S>::GetName () const noexcept
+{
+    return _name;
+}
+
+template<typename F, typename P, typename S>
 float UIElementBase<F, P, S>::ResolveFontSize () const noexcept
 {
     LengthValue const* target = nullptr;

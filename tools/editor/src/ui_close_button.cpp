@@ -198,6 +198,14 @@ pbr::CSSComputedValues &UICloseButton::GetCSS () noexcept
     return _base.GetCSS ();
 }
 
+void UICloseButton::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _base.DumpLayout ( writer );
+    _backgroundDIV.DumpLayout ( writer );
+    _borderDIV.DumpLayout ( writer );
+    _crossDIV.DumpLayout ( writer );
+}
+
 void UICloseButton::OnMouseLeave () noexcept
 {
     _backgroundText.SetColor ( theme::MAIN_COLOR );

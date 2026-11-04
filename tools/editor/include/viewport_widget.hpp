@@ -142,6 +142,7 @@ class ViewportWidget final : public Widget
             pbr::FontStorage &fontStorage
         ) noexcept override;
 
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
         [[nodiscard]] bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept override;
 

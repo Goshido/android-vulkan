@@ -41,4 +41,13 @@ UISeparator::UISeparator ( DIVUIElement &parent, std::string &&name ) noexcept:
     parent.AppendChildElement ( _div );
 }
 
+void UISeparator::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    if ( !_div.IsVisible () )
+        return;
+
+    pbr::DIVUIElement::Rect const &rect = _div.GetAbsoluteRect ();
+    writer.AddRect ( _div.GetName (), rect._topLeft, rect._bottomRight );
+}
+
 } // namespace editor

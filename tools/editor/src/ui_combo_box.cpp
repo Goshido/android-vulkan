@@ -221,6 +221,16 @@ Widget::LayoutStatus UIComboBox::Popup::ApplyLayout ( android_vulkan::Renderer &
     };
 }
 
+void UIComboBox::Popup::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _div.DumpLayout ( writer );
+
+    for ( auto const &item : _menuItems )
+    {
+        item._div->DumpLayout ( writer );
+    }
+}
+
 void UIComboBox::Popup::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     _div.Submit ( info );
@@ -578,6 +588,21 @@ void UIComboBox::UpdatedRect () noexcept
 void UIComboBox::Connect ( Callback &&callback ) noexcept
 {
     _callback = std::move ( callback );
+}
+
+void UIComboBox::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _lineDIV.DumpLayout ( writer );
+    _captionDIV.DumpLayout ( writer );
+    _valueDIV.DumpLayout ( writer );
+    _textDIV.DumpLayout ( writer );
+    _iconDIV.DumpLayout ( writer );
+    _menuAnchorDIV.DumpLayout ( writer );
+
+    if ( _popup )
+    {
+        _popup->DumpLayout ( writer );
+    }
 }
 
 void UIComboBox::OnMouseLeave () noexcept

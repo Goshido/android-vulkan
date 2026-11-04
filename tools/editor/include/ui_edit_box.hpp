@@ -88,6 +88,8 @@ class UIEditBox final : public Widget
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
         void UpdatedRect () noexcept override;
 
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept override;
+
         void ConnectOnCancel ( ValueHandler &&callback ) noexcept;
         void ConnectOnChange ( ValueHandler &&callback ) noexcept;
         void ConnectOnNewValue ( ValueHandler &&callback ) noexcept;

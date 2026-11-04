@@ -201,75 +201,75 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
         )
     );
 
-    _labels.push_back (
-        std::make_unique<UILabel> ( info,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
-                ._right = theme::ZERO_LENGTH,
-                ._top = theme::ZERO_LENGTH,
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { theme::NORMAL_FONT_FAMILY },
-                ._fontSize = theme::NORMAL_FONT_SIZE,
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Static,
-                ._textAlign = pbr::TextAlignProperty::eValue::Left,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = theme::WHOLE_LENGTH,
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
-            },
+    //_labels.push_back (
+    //    std::make_unique<UILabel> ( info,
+    //        pbr::CSSComputedValues
+    //        {
+    //            ._backgroundColor = theme::TRANSPARENT_COLOR,
+    //            ._backgroundSize = theme::ZERO_LENGTH,
+    //            ._bottom = theme::ZERO_LENGTH,
+    //            ._left = theme::ZERO_LENGTH,
+    //            ._right = theme::ZERO_LENGTH,
+    //            ._top = theme::ZERO_LENGTH,
+    //            ._color = theme::MAIN_COLOR,
+    //            ._display = pbr::DisplayProperty::eValue::Block,
+    //            ._fontFile { theme::NORMAL_FONT_FAMILY },
+    //            ._fontSize = theme::NORMAL_FONT_SIZE,
+    //            ._lineHeight = theme::AUTO_LENGTH,
+    //            ._marginBottom = theme::ZERO_LENGTH,
+    //            ._marginLeft = theme::ZERO_LENGTH,
+    //            ._marginRight = theme::ZERO_LENGTH,
+    //            ._marginTop = theme::ZERO_LENGTH,
+    //            ._paddingBottom = theme::ZERO_LENGTH,
+    //            ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
+    //            ._paddingRight = theme::ZERO_LENGTH,
+    //            ._paddingTop = theme::ZERO_LENGTH,
+    //            ._position = pbr::PositionProperty::eValue::Static,
+    //            ._textAlign = pbr::TextAlignProperty::eValue::Left,
+    //            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+    //            ._width = theme::WHOLE_LENGTH,
+    //            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
+    //        },
 
-            glyph,
-            name + " (component header name)"
-        )
-    );
+    //        glyph,
+    //        name + " (component header name)"
+    //    )
+    //);
 
-    _labels.push_back (
-        std::make_unique<UILabel> ( info,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::AUTO_LENGTH,
-                ._left = theme::AUTO_LENGTH,
-                ._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 5.0F ),
-                ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { glyph::FONT_FAMILY },
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 11.0F ),
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = theme::ZERO_LENGTH,
-                ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Absolute,
-                ._textAlign = pbr::TextAlignProperty::eValue::Right,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
-            },
+    //_labels.push_back (
+    //    std::make_unique<UILabel> ( info,
+    //        pbr::CSSComputedValues
+    //        {
+    //            ._backgroundColor = theme::TRANSPARENT_COLOR,
+    //            ._backgroundSize = theme::ZERO_LENGTH,
+    //            ._bottom = theme::AUTO_LENGTH,
+    //            ._left = theme::AUTO_LENGTH,
+    //            ._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 5.0F ),
+    //            ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
+    //            ._color = theme::MAIN_COLOR,
+    //            ._display = pbr::DisplayProperty::eValue::Block,
+    //            ._fontFile { glyph::FONT_FAMILY },
+    //            ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 11.0F ),
+    //            ._lineHeight = theme::AUTO_LENGTH,
+    //            ._marginBottom = theme::ZERO_LENGTH,
+    //            ._marginLeft = theme::ZERO_LENGTH,
+    //            ._marginRight = theme::ZERO_LENGTH,
+    //            ._marginTop = theme::ZERO_LENGTH,
+    //            ._paddingBottom = theme::ZERO_LENGTH,
+    //            ._paddingLeft = theme::ZERO_LENGTH,
+    //            ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
+    //            ._paddingTop = theme::ZERO_LENGTH,
+    //            ._position = pbr::PositionProperty::eValue::Absolute,
+    //            ._textAlign = pbr::TextAlignProperty::eValue::Right,
+    //            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+    //            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
+    //            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
+    //        },
 
-            glyph,
-            name + " (component header collapse)"
-        )
-    );
+    //        glyph,
+    //        name + " (component header collapse)"
+    //    )
+    //);
 
     std::unique_ptr<DIVUIElement> underlineElement = std::make_unique<DIVUIElement> ( root,
         pbr::CSSComputedValues
@@ -388,6 +388,29 @@ void UIPropertyDialog::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     }
 
     UIDialogBox::OnMouseMove ( event );
+}
+
+void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _div.DumpLayout ( writer );
+    _headerLine.DumpLayout ( writer );
+
+    _headerText.DumpLayout ( writer );
+    _closeButton.DumpLayout ( writer );
+
+    for ( auto const &control : _editBoxes )
+        control->DumpLayout ( writer );
+
+    for ( auto const &div : _divs )
+        div->DumpLayout ( writer );
+
+    for ( auto const &label : _labels )
+        label->DumpLayout ( writer );
+
+    for ( auto const& separator : _separators )
+    {
+        separator->DumpLayout ( writer );
+    }
 }
 
 void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept

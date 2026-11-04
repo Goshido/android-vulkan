@@ -2,6 +2,7 @@
 #define EDITOR_DIV_UI_ELEMENT_HPP
 
 
+#include <pbr/svg_writer.hpp>
 #include <platform/windows/pbr/div_ui_element.hpp>
 #include "ui_element.hpp"
 
@@ -45,7 +46,10 @@ class DIVUIElement final : public UIElement
         [[nodiscard]] pbr::DIVUIElement::Rect const &GetAbsoluteRect () const noexcept;
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
 
+        [[nodiscard]] std::string_view GetName () const noexcept;
+
         void ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept;
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
         [[nodiscard]] bool UpdateCache ( pbr::UIElement::UpdateInfo &info ) noexcept;
 };

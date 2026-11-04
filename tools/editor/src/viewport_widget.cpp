@@ -487,6 +487,16 @@ Widget::LayoutStatus ViewportWidget::ApplyLayout ( android_vulkan::Renderer &ren
     };
 }
 
+void ViewportWidget::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _div.DumpLayout ( writer );
+    _selectionBody.DumpLayout ( writer );
+    _selectionTop.DumpLayout ( writer );
+    _selectionRight.DumpLayout ( writer );
+    _selectionBottom.DumpLayout ( writer );
+    _selectionLeft.DumpLayout ( writer );
+}
+
 void ViewportWidget::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     AV_TRACE ( "Viewport: submit UI" )

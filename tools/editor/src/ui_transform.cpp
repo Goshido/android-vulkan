@@ -435,6 +435,25 @@ void UITransform::OnMouseMove ( MouseMoveEvent const &event ) noexcept
     UIDialogBox::OnMouseMove ( event );
 }
 
+void UITransform::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _div.DumpLayout ( writer );
+    _headerLine.DumpLayout ( writer );
+
+    _headerText.DumpLayout ( writer );
+    _closeButton.DumpLayout ( writer );
+
+    _x.DumpLayout ( writer );
+    _y.DumpLayout ( writer );
+    _z.DumpLayout ( writer );
+
+    _separator.DumpLayout ( writer );
+
+    _scaleX.DumpLayout ( writer );
+    _scaleY.DumpLayout ( writer );
+    _scaleZ.DumpLayout ( writer );
+}
+
 void UITransform::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );

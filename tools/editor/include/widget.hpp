@@ -5,6 +5,7 @@
 #include "cursor.hpp"
 #include "mouse_button_event.hpp"
 #include "mouse_move_event.hpp"
+#include <pbr/svg_writer.hpp>
 #include <platform/windows/pbr/font_storage.hpp>
 #include <platform/windows/pbr/ui_element.hpp>
 
@@ -37,6 +38,8 @@ class Widget
 
         virtual ~Widget () = default;
 
+        virtual void DumpLayout ( pbr::SVGWriter &writer ) const noexcept = 0;
+
         virtual void ApplyClipboard ( std::u32string const &text ) noexcept;
         [[nodiscard]] virtual bool HasChild ( Widget const &child ) const noexcept;
         virtual void OnDoubleClick ( MouseButtonEvent const &event ) noexcept;
@@ -58,7 +61,6 @@ class Widget
         ) noexcept;
 
         virtual void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept;
-
         [[nodiscard]] virtual bool UpdateCache ( pbr::FontStorage &fontStorage, VkExtent2D const &viewport ) noexcept;
         virtual void UpdatedRect () noexcept;
 

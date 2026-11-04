@@ -61,4 +61,10 @@ pbr::CSSComputedValues &UILabel::GetCSS () noexcept
     return _div.GetCSS ();
 }
 
+void UILabel::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    pbr::DIVUIElement::Rect const &rect = _div.GetAbsoluteRect ();
+    writer.AddRect ( _div.GetName (), rect._topLeft, rect._bottomRight );
+}
+
 } // namespace editor

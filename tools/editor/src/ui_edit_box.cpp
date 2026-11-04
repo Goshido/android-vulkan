@@ -279,6 +279,16 @@ void UIEditBox::UpdatedRect () noexcept
     ( this->*_updateRect ) ();
 }
 
+void UIEditBox::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _lineDIV.DumpLayout ( writer );
+    _captionDIV.DumpLayout ( writer );
+    _valueDIV.DumpLayout ( writer );
+    _cursorDIV.DumpLayout ( writer );
+    _selectionDIV.DumpLayout ( writer );
+    _textDIV.DumpLayout ( writer );
+}
+
 void UIEditBox::ConnectOnCancel ( ValueHandler &&callback ) noexcept
 {
     _onCancel = std::move ( callback );

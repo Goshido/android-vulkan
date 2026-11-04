@@ -134,9 +134,23 @@ pbr::CSSComputedValues &DIVUIElement::GetCSS () noexcept
     return _div->GetCSS ();
 }
 
+std::string_view DIVUIElement::GetName () const noexcept
+{
+    return _div->GetName ();
+}
+
 void DIVUIElement::ApplyLayout ( pbr::UIElement::ApplyInfo &info ) noexcept
 {
     _div->ApplyLayout ( info );
+}
+
+void DIVUIElement::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    if ( !_div->IsVisible () )
+        return;
+
+    pbr::DIVUIElement::Rect const &rect = _div->GetAbsoluteRect ();
+    writer.AddRect ( _div->GetName (), rect._topLeft, rect._bottomRight );
 }
 
 void DIVUIElement::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept

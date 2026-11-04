@@ -4,11 +4,21 @@
 #include <hotkey.hpp>
 #include <keyboard_key_event.hpp>
 #include <logger.hpp>
+#include <os_utils.hpp>
+#include <scope_quard.hpp>
 #include <trace.hpp>
 #include <ui_manager.hpp>
 
 
 namespace editor {
+
+namespace {
+
+constexpr char const SNAPSHOT_DIRECTORY[] = R"__(%APPDATA%\Goshido Inc\Editor\Layout)__";
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
 
 void UIManager::Init () noexcept
 {
@@ -17,6 +27,18 @@ void UIManager::Init () noexcept
     _thread = std::thread (
         [ this ]() noexcept {
             AV_THREAD_NAME ( "UI" )
+
+            _triggerLayoutDumping = Hotkey ( eKey::KeyU,
+                true,
+                true,
+                true,
+
+                [ this ] () noexcept {
+                    std::lock_guard const lock ( _mutex );
+                    _dumpLayoutRequested = true;
+                }
+            );
+
             EventLoop ();
         }
     );
@@ -27,9 +49,9 @@ void UIManager::Destroy () noexcept
     AV_TRACE ( "UI: destroy" )
 
     if ( _thread.joinable () ) [[likely]]
-    {
         _thread.join ();
-    }
+
+    _triggerLayoutDumping = {};
 }
 
 void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
@@ -40,6 +62,9 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
     pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
     std::shared_lock const lock ( _mutex );
+
+    _dumpLayout = std::exchange ( _dumpLayoutRequested, false );
+    _needRefill |= _dumpLayout;
 
     for ( auto &widget : _widgets )
     {
@@ -56,6 +81,12 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
 
 void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
 {
+    android_vulkan::ScopeGuard const dumpReset (
+        [ this ] () noexcept {
+            _dumpLayout = false;
+        }
+    );
+
     if ( _neededUIVertices == 0UZ )
         return;
 
@@ -89,6 +120,18 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
 
     for ( auto it = begin; it != end; ++it )
         ( *it )->Submit ( info );
+
+    if ( _dumpLayout ) [[unlikely]]
+    {
+        std::filesystem::path const directory = editor::OSUtils::ResolvePath ( SNAPSHOT_DIRECTORY );
+        std::filesystem::create_directories ( directory );
+        pbr::SVGWriter writer ( directory.string ().c_str (), viewport.width, viewport.height );
+
+        for ( auto it = begin; it != end; ++it )
+        {
+            ( *it )->DumpLayout ( writer );
+        }
+    }
 
     std::lock_guard const lock ( _mutex );
     _needRefill = false;

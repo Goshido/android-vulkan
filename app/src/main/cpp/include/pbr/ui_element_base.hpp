@@ -85,6 +85,8 @@ class UIElementBase
         [[nodiscard]] CSSComputedValues &GetCSS () noexcept;
         [[nodiscard]] CSSComputedValues const &GetCSS () const noexcept;
 
+        [[nodiscard]] std::string_view GetName () const noexcept;
+
         [[nodiscard]] std::string_view ResolveFont () const noexcept;
         [[nodiscard]] float ResolveFontSize () const noexcept;
         [[nodiscard]] float ResolveLineHeight ( F::Font font ) const noexcept;

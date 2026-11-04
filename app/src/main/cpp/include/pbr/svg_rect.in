@@ -1,0 +1,9 @@
+R"__(    <rect
+        style="fill:none;stroke:%s;stroke-width:1;"
+        id="%s"
+        width="%f"
+        height="%f"
+        x="%f"
+        y="%f">
+    </rect>
+)__"

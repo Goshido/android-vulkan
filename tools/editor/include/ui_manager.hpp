@@ -3,6 +3,7 @@
 
 
 #include "message_queue.hpp"
+#include "hotkey.hpp"
 #include "widget.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
@@ -26,12 +27,16 @@ class UIManager final
         std::thread                             _thread {};
         Widget*                                 _typingCapture = nullptr;
         std::deque<std::unique_ptr<Widget>>     _widgets {};
+        Hotkey                                  _triggerLayoutDumping {};
 
         int32_t                                 _lastMouseX = std::numeric_limits<int32_t>::min ();
         int32_t                                 _lastMouseY = std::numeric_limits<int32_t>::min ();
 
-        size_t                                  _neededUIVertices = 0U;
+        size_t                                  _neededUIVertices = 0UZ;
         bool                                    _needRefill = false;
+
+        bool                                    _dumpLayoutRequested = false;
+        bool                                    _dumpLayout = false;
 
     public:
         explicit UIManager () = default;

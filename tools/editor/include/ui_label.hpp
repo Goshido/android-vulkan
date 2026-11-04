@@ -4,6 +4,7 @@
 
 #include "div_ui_element.hpp"
 #include "text_ui_element.hpp"
+#include <pbr/svg_writer.hpp>
 
 
 namespace editor {
@@ -34,6 +35,7 @@ class UILabel final
         ~UILabel () = default;
 
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
 };
 
 } // namespace editor

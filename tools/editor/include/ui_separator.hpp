@@ -3,6 +3,7 @@
 
 
 #include "div_ui_element.hpp"
+#include <pbr/svg_writer.hpp>
 
 
 namespace editor {
@@ -24,6 +25,8 @@ class UISeparator final
         explicit UISeparator ( DIVUIElement &parent, std::string &&name ) noexcept;
 
         ~UISeparator () = default;
+
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
 };
 
 } // namespace editor

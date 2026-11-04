@@ -513,6 +513,9 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\length_value.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\svg_writer.cpp">
+      <Filter>Source Files\core\pbr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -857,9 +860,6 @@
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\font_storage_base.hpp">
       <Filter>Header Files\core\pbr</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\templates\pbr\font_storage_base.ipp">
       <Filter>Templates\pbr</Filter>
     </ClInclude>
@@ -1127,6 +1127,12 @@
     <ClInclude Include="include\ui_property_dialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\svg_writer.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp">
+      <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\version.rc">
@@ -1201,6 +1207,12 @@
     </None>
     <None Include="..\..\app\src\main\cpp\include\platform\windows\pbr\gizmo_compose.inc">
       <Filter>Header Files\core\platform\window\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\svg_prefix.in">
+      <Filter>Source Files\core\pbr</Filter>
+    </None>
+    <None Include="..\..\app\src\main\cpp\include\pbr\svg_rect.in">
+      <Filter>Source Files\core\pbr</Filter>
     </None>
   </ItemGroup>
 </Project>

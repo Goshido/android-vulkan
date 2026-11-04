@@ -93,6 +93,8 @@ class UITransform final : public UIDialogBox
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept;
         void OnMouseMove ( MouseMoveEvent const &event ) noexcept override;
+
+        void DumpLayout ( pbr::SVGWriter &writer ) const noexcept override;
         void Submit ( pbr::UIElement::SubmitInfo &info ) noexcept override;
 
         static void Next ( std::string const &value, UIEditBox &axis, UIEditBox::ValueHandler &handler ) noexcept;

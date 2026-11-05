@@ -16,9 +16,10 @@ namespace pbr {
 class SVGWriter final
 {
     private:
-        std::string             _content {};
-        std::string const       _directory {};
-        uint32_t                _color = 0U;
+        std::string                                 _content {};
+        std::string const                           _directory {};
+        std::unordered_map<std::string, size_t>     _names {};
+        uint32_t                                    _color = 0U;
 
     public:
         SVGWriter () = delete;

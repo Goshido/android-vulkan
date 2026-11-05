@@ -323,6 +323,8 @@ bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcep
             info._pen._data[ 1U ] = pen._data[ 1U ];
             info._line = _parentLine;
         }
+
+        info._pen._data[ 0U ] += _blockSize._data[ 0U ];
     }
     else
     {
@@ -407,7 +409,6 @@ bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcep
     for ( auto* child : _children )
         needRefill |= child->UpdateCache ( updateInfo );
 
-    info._pen._data[ 0U ] += _blockSize._data[ 0U ];
     return needRefill;
 }
 

@@ -1,6 +1,6 @@
 R"__(    <rect
-        style="fill:none;stroke:%s;stroke-width:1;"
-        id="%s"
+        style="fill:none;stroke:%s;stroke-width:1;opacity:0.5;"
+        id="%s%s"
         width="%f"
         height="%f"
         x="%f"

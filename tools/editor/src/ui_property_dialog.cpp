@@ -236,40 +236,40 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
         )
     );
 
-    //_labels.push_back (
-    //    std::make_unique<UILabel> ( info,
-    //        pbr::CSSComputedValues
-    //        {
-    //            ._backgroundColor = theme::TRANSPARENT_COLOR,
-    //            ._backgroundSize = theme::ZERO_LENGTH,
-    //            ._bottom = theme::AUTO_LENGTH,
-    //            ._left = theme::AUTO_LENGTH,
-    //            ._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 5.0F ),
-    //            ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-    //            ._color = theme::MAIN_COLOR,
-    //            ._display = pbr::DisplayProperty::eValue::Block,
-    //            ._fontFile { glyph::FONT_FAMILY },
-    //            ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 11.0F ),
-    //            ._lineHeight = theme::AUTO_LENGTH,
-    //            ._marginBottom = theme::ZERO_LENGTH,
-    //            ._marginLeft = theme::ZERO_LENGTH,
-    //            ._marginRight = theme::ZERO_LENGTH,
-    //            ._marginTop = theme::ZERO_LENGTH,
-    //            ._paddingBottom = theme::ZERO_LENGTH,
-    //            ._paddingLeft = theme::ZERO_LENGTH,
-    //            ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
-    //            ._paddingTop = theme::ZERO_LENGTH,
-    //            ._position = pbr::PositionProperty::eValue::Absolute,
-    //            ._textAlign = pbr::TextAlignProperty::eValue::Right,
-    //            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-    //            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
-    //            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
-    //        },
+    _labels.push_back (
+        std::make_unique<UILabel> ( info,
+            pbr::CSSComputedValues
+            {
+                ._backgroundColor = theme::TRANSPARENT_COLOR,
+                ._backgroundSize = theme::ZERO_LENGTH,
+                ._bottom = theme::AUTO_LENGTH,
+                ._left = theme::AUTO_LENGTH,
+                ._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 5.0F ),
+                ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
+                ._color = theme::MAIN_COLOR,
+                ._display = pbr::DisplayProperty::eValue::Block,
+                ._fontFile { glyph::FONT_FAMILY },
+                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 11.0F ),
+                ._lineHeight = theme::AUTO_LENGTH,
+                ._marginBottom = theme::ZERO_LENGTH,
+                ._marginLeft = theme::ZERO_LENGTH,
+                ._marginRight = theme::ZERO_LENGTH,
+                ._marginTop = theme::ZERO_LENGTH,
+                ._paddingBottom = theme::ZERO_LENGTH,
+                ._paddingLeft = theme::ZERO_LENGTH,
+                ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
+                ._paddingTop = theme::ZERO_LENGTH,
+                ._position = pbr::PositionProperty::eValue::Absolute,
+                ._textAlign = pbr::TextAlignProperty::eValue::Right,
+                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+                ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
+                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
+            },
 
-    //        glyph,
-    //        name + " (component header collapse)"
-    //    )
-    //);
+            glyph::COMBOBOX_DOWN,
+            name + " (component header collapse)"
+        )
+    );
 
     std::unique_ptr<DIVUIElement> underlineElement = std::make_unique<DIVUIElement> ( root,
         pbr::CSSComputedValues
@@ -306,6 +306,17 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
     DIVUIElement &underline = *underlineElement;
     _divs.push_back ( std::move ( underlineElement ) );
     root.AppendChildElement ( underline );
+
+    // FUCK - check collapse
+    _editBoxes.push_back (
+        std::make_unique<UIEditBox> (
+            _div,
+            theme::PROPERTY_FIRST_COLUMN_WIDTH,
+            "Name",
+            name,
+            "property name: " + std::string ( name )
+        )
+    );
 }
 
 bool UIPropertyDialog::HasChild ( Widget const &child ) const noexcept

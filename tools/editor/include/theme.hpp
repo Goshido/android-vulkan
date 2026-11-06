@@ -41,6 +41,7 @@ inline pbr::LengthValue const HEADER_HEIGHT ( pbr::LengthValue::eType::PX, 30.0F
 inline pbr::LengthValue const SEPARATOR_HEIGHT ( pbr::LengthValue::eType::PX, 10.0F );
 inline pbr::LengthValue const MENU_ITEM_HEIGHT ( pbr::LengthValue::eType::PX, 20.0F );
 inline pbr::LengthValue const SMALL_BUTTON_HEIGHT ( pbr::LengthValue::eType::PX, 40.0F );
+inline pbr::LengthValue const PROPERTY_FIRST_COLUMN_WIDTH ( pbr::LengthValue::eType::PX, 100.0F );
 
 inline pbr::LengthValue const AUTO_LENGTH ( pbr::LengthValue::eType::Auto, 42.0F );
 inline pbr::LengthValue const INHERIT_LENGTH ( pbr::LengthValue::eType::Inherit, 42.0F );

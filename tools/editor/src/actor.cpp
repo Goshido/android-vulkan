@@ -131,10 +131,9 @@ void Actor::ShowProperties ( PropertyTool &propertyTool ) noexcept
     if ( _components.empty () ) [[unlikely]]
         return;
 
-    propertyTool.AddSeparator ();
-
     for ( auto &component : _components )
     {
+        propertyTool.AddSeparator ();
         component->ShowProperties ( propertyTool );
     }
 }

@@ -18,7 +18,6 @@ pbr::LengthValue const DEFAULT_X ( pbr::LengthValue::eType::PX, 22.0F );
 pbr::LengthValue const DEFAULT_Y ( pbr::LengthValue::eType::PX, 218.0F );
 pbr::LengthValue const DEFAULT_WIDTH ( pbr::LengthValue::eType::PX, 300.0F );
 pbr::LengthValue const DEFAULT_HEIGHT ( pbr::LengthValue::eType::PX, 200.0F );
-pbr::LengthValue const FIRST_COLUMN_WIDTH ( pbr::LengthValue::eType::PX, 100.0F );
 
 constexpr std::string_view CONFIG_KEY_SHOW = "show";
 constexpr bool DEFAULT_SHOW = true;
@@ -129,7 +128,7 @@ void PropertyTool::AddString ( std::string_view name, std::string &&value ) noex
     _ui->Append (
         std::make_unique<UIEditBox> (
             _ui->GetBody (),
-            FIRST_COLUMN_WIDTH,
+            theme::PROPERTY_FIRST_COLUMN_WIDTH,
             name,
             value,
             "property: " + std::string ( name )

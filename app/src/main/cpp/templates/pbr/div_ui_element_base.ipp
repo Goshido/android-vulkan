@@ -4,6 +4,7 @@
 
 #include <av_assert.hpp>
 #include <file.hpp>
+#include <pbr/css_unit_to_device_pixel.hpp>
 
 
 namespace pbr {
@@ -305,13 +306,15 @@ bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcep
         return needRefill;
 
     GXVec2 pen {};
+    auto &outPen = info._pen._data;
     auto verticalAlign = &E::AlignToStart;
     float parentHeight = 0.0F;
     PositionProperty::eValue const position = E::_css._position;
+    uint32_t staticOrRelative = 0U;
 
     if ( ( position == PositionProperty::eValue::Static ) | ( position == PositionProperty::eValue::Relative ) )
     {
-        pen = info._pen;
+        pen = GXVec2 ( outPen[ 0U ], outPen[ 1U ] );
         verticalAlign = E::ResolveVerticalAlignment ( *this );
         parentHeight = info._parentLineHeights[ _parentLine ];
 
@@ -320,11 +323,12 @@ bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcep
             pen._data[ 0U ] = info._parentTopLeft._data[ 0U ];
             pen._data[ 1U ] += info._parentLineHeights[ info._line ];
 
-            info._pen._data[ 1U ] = pen._data[ 1U ];
+            outPen[ 1U ] = pen._data[ 1U ];
             info._line = _parentLine;
         }
 
-        info._pen._data[ 0U ] += _blockSize._data[ 0U ];
+        outPen[ 0U ] += _blockSize._data[ 0U ];
+        staticOrRelative = 1U;
     }
     else
     {
@@ -372,26 +376,52 @@ bool DIVUIElementBase<E, S0, S1, U>::UpdateCache ( E::UpdateInfo &info ) noexcep
 
     pen._data[ 1U ] = verticalAlign ( pen._data[ 1U ], parentHeight, _blockSize._data[ 1U ] );
 
-    _absoluteRect._topLeft.Sum ( pen, _marginTopLeft );
-    _absoluteRect._bottomRight.Sum ( _absoluteRect._topLeft, _borderSize );
+    GXVec2 topLeft {};
+    topLeft.Sum ( pen, _marginTopLeft );
+
+    // [2026/11/07] The goal is to maintain visual consistency of thin objects:
+    // https://github.com/Goshido/android-vulkan/issues/113#issuecomment-6677138688
+
+    CSSUnitToDevicePixel const &units = CSSUnitToDevicePixel::GetInstance ();
+    auto const jndX = static_cast<uint32_t> ( _borderSize._data[ 0U ] < units._jndDevicePX );
+    auto const jndY = static_cast<uint32_t> ( _borderSize._data[ 1U ] < units._jndDevicePX );
+
+    float const casesX[] = { topLeft._data[ 0U ], std::floor ( topLeft._data[ 0U ] ) };
+    float const casesY[] = { topLeft._data[ 1U ], std::floor ( topLeft._data[ 1U ] ) };
+
+    GXVec2 &absoluteTopLeft = _absoluteRect._topLeft;
+    GXVec2 &absoluteBottomRight = _absoluteRect._bottomRight;
+    auto &tl = absoluteTopLeft._data;
+    tl[ 0U ] = casesX[ jndX ];
+    tl[ 1U ] = casesY[ jndY ];
+    absoluteBottomRight.Sum ( absoluteTopLeft, _borderSize );
 
     if ( _hasBackground )
     {
         U::AppendRectangle ( _stream0,
             _stream1,
             E::_css._backgroundColor.GetSRGB (),
-            _absoluteRect._topLeft,
-            _absoluteRect._bottomRight
+            absoluteTopLeft,
+            absoluteBottomRight
         );
     }
 
-    GXVec2 topLeft {};
-    topLeft.Sum ( pen, _canvasTopLeftOffset );
+    float const casesPenX[] = { outPen[ 0U ], std::floor ( outPen[ 0U ] ) };
+    float const casesPenY[] = { outPen[ 1U ], std::floor ( outPen[ 1U ] ) };
+    outPen[ 0U ] = casesPenX[ jndX & staticOrRelative ];
+    outPen[ 1U ] = casesPenY[ jndY & staticOrRelative ];
 
     auto fontProbe = info._fontStorage->GetFont ( E::ResolveFont (), static_cast<uint32_t> ( E::ResolveFontSize () ) );
 
     if ( !fontProbe ) [[unlikely]]
         return needRefill;
+
+    topLeft.Sum ( pen, _canvasTopLeftOffset );
+
+    float const casesOffsetX[] = { topLeft._data[ 0U ], std::floor ( topLeft._data[ 0U ] ) };
+    float const casesOffsetY[] = { topLeft._data[ 1U ], std::floor ( topLeft._data[ 1U ] ) };
+    topLeft._data[ 0U ] = casesOffsetX[ jndX ];
+    topLeft._data[ 1U ] = casesOffsetY[ jndY ];
 
     typename E::UpdateInfo updateInfo
     {

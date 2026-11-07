@@ -4,6 +4,14 @@
 
 namespace pbr {
 
+namespace {
+
+constexpr static float JND_CSS_PX = 34.0F;
+
+} // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
 CSSUnitToDevicePixel CSSUnitToDevicePixel::_instance {};
 
 CSSUnitToDevicePixel const &CSSUnitToDevicePixel::GetInstance () noexcept
@@ -32,6 +40,8 @@ void CSSUnitToDevicePixel::Init ( float dpi, float comfortableViewDistanceMeters
     constexpr float inchToPT = 72.0F;
     constexpr float pxToPT = inchToPX / inchToPT;
     _instance._fromPT = pxToPT * _instance._fromPX;
+
+    _instance._jndDevicePX = _instance._fromPX * JND_CSS_PX;
 }
 
 } // namespace pbr

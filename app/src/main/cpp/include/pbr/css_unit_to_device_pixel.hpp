@@ -13,6 +13,11 @@ class CSSUnitToDevicePixel final
 
         float                           _devicePXtoCSSPX = 1.0F;
 
+        // [2026/11/07] Just noticable difference in device pixels.
+        // The goal is to maintain visual consistency of thin objects:
+        // https://github.com/Goshido/android-vulkan/issues/113#issuecomment-6677138688
+        float                           _jndDevicePX = 34.0F;
+
     private:
         static CSSUnitToDevicePixel     _instance;
 
@@ -29,7 +34,6 @@ class CSSUnitToDevicePixel final
     private:
         explicit CSSUnitToDevicePixel () = default;
         ~CSSUnitToDevicePixel () = default;
-
 };
 
 } // namespace pbr

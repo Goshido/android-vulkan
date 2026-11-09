@@ -42,7 +42,7 @@
 
 ### <a id="building">Building</a>
 
-To begin you have to run script
+To begin you have to run script with **administrator privileges**
 
 `<repo>tools\editor\scripts\prepare-environment.ps1`
 

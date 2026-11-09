@@ -427,7 +427,10 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
 void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
+
+    for ( auto &control : _editBoxes )
+        control->UpdatedRect ();
+ 
     _closeButton.UpdatedRect ();
-}
 
 } // namespace editor

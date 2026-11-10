@@ -112,7 +112,7 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::ShowProperties ( PropertyTool &propertyTool ) noexcept
 {
-    propertyTool.BeginComponent ( std::string ( _name ), glyph::COMPONENT_STATIC_MESH );
+    propertyTool.BeginComponent ( _name, glyph::COMPONENT_STATIC_MESH );
     // FUCK
     propertyTool.EndComponent ();
 }

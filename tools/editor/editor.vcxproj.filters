@@ -516,6 +516,12 @@
     <ClCompile Include="..\..\app\src\main\cpp\sources\pbr\svg_writer.cpp">
       <Filter>Source Files\core\pbr</Filter>
     </ClCompile>
+    <ClCompile Include="src\property.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\string_property.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1132,6 +1138,15 @@
     </ClInclude>
     <ClInclude Include="..\..\app\src\main\cpp\include\pbr\ui_element_base.hpp">
       <Filter>Header Files\core\pbr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\property.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stream_buffer_info.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\string_property.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -23,7 +23,7 @@ constexpr std::string_view COMPONENTS_KEY = "components";
 //----------------------------------------------------------------------------------------------------------------------
 
 Actor::Actor ( SaveState::Container const &info ) noexcept:
-    _name ( info.Read ( NAME_KEY, DEFAULT_NAME ) )
+    _name ( std::string ( info.Read ( NAME_KEY, DEFAULT_NAME ) ) )
 {
     _rotation = info.Read ( ROTATION_KEY, GXQuat::IDENTITY );
     _scale = info.Read ( SCALE_KEY, GXVec3::ZERO );
@@ -49,9 +49,9 @@ Actor::~Actor () noexcept
     }
 }
 
-void Actor::SetName ( std::string_view name ) noexcept
+void Actor::SetName ( std::string &&name ) noexcept
 {
-    _name = name;
+    _name.Set ( std::move ( name ) );
 }
 
 void Actor::Append ( ComponentRef &&component ) noexcept
@@ -126,7 +126,7 @@ void Actor::Save ( SaveState::Container &root ) const noexcept
 
 void Actor::ShowProperties ( PropertyTool &propertyTool ) noexcept
 {
-    propertyTool.AddString ( "Name", std::string ( _name ) );
+    propertyTool.AddString ( "Name", _name );
 
     if ( _components.empty () ) [[unlikely]]
         return;

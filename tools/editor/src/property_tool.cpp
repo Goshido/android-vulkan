@@ -123,15 +123,17 @@ void PropertyTool::OnSelectionChanged ( Selection::Actors const &/*actors*/ ) no
     // FUCK
 }
 
-void PropertyTool::AddString ( std::string_view name, std::string &&value ) noexcept
+void PropertyTool::AddString ( std::string_view name, StringProperty &value ) noexcept
 {
+    std::string const &n = value.Get ();
+
     _ui->Append (
         std::make_unique<UIEditBox> (
             _ui->GetBody (),
             theme::PROPERTY_FIRST_COLUMN_WIDTH,
             name,
-            value,
-            "property: " + std::string ( name )
+            n,
+            "property: " + n
         )
     );
 }
@@ -141,7 +143,7 @@ void PropertyTool::AddSeparator () noexcept
     _ui->AddSeparator ();
 }
 
-void PropertyTool::BeginComponent ( std::string &&name, std::string_view glyph ) noexcept
+void PropertyTool::BeginComponent ( StringProperty &name, std::string_view glyph ) noexcept
 {
     _ui->AddComponentHeader ( name, glyph );
 }

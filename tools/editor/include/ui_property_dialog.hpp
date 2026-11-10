@@ -2,6 +2,7 @@
 #define EDITOR_UI_PROPERTY_DIALOG_HPP
 
 
+#include "string_property.hpp"
 #include "ui_close_button.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_edit_box.hpp"
@@ -17,6 +18,30 @@ class UIPropertyDialog final : public UIDialogBox
         using ActionHandler = std::move_only_function<void ()>;
 
     private:
+        class HeaderInfo final
+        {
+            private:
+                StringProperty*                         _property = nullptr;
+                std::unique_ptr<UILabel>                _label {};
+                Property::Connection                    _connection = 42UZ;
+
+            public:
+                HeaderInfo () = delete;
+
+                HeaderInfo ( HeaderInfo const & ) = delete;
+                HeaderInfo &operator = ( HeaderInfo const & ) = delete;
+
+                HeaderInfo ( HeaderInfo &&other ) noexcept;
+                HeaderInfo &operator = ( HeaderInfo &&other ) noexcept;
+
+                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept;
+
+                ~HeaderInfo () noexcept;
+
+                void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
+        };
+
+    private:
         DIVUIElement                                    _headerLine;
         UILabel                                         _headerText;
         UICloseButton                                   _closeButton;
@@ -26,6 +51,7 @@ class UIPropertyDialog final : public UIDialogBox
         std::vector<std::unique_ptr<DIVUIElement>>      _divs {};
         std::vector<std::unique_ptr<UILabel>>           _labels {};
         std::vector<std::unique_ptr<UISeparator>>       _separators {};
+        std::vector<HeaderInfo>                         _headers {};
 
     public:
         UIPropertyDialog () = delete;
@@ -46,7 +72,7 @@ class UIPropertyDialog final : public UIDialogBox
 
         void Append ( std::unique_ptr<UIEditBox> control ) noexcept;
         void AddSeparator () noexcept;
-        void AddComponentHeader ( std::string const &name, std::string_view glyph ) noexcept;
+        void AddComponentHeader ( StringProperty &name, std::string_view glyph ) noexcept;
 
     private:
         [[nodiscard]] bool HasChild ( Widget const &child ) const noexcept override;

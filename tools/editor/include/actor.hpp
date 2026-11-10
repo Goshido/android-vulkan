@@ -3,6 +3,7 @@
 
 
 #include "component.hpp"
+#include "string_property.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
@@ -25,7 +26,7 @@ class Actor final
         GXQuat                                  _rotation = GXQuat::IDENTITY;
         GXVec3                                  _scale = GXVec3::ONE;
         GXVec3                                  _location = GXVec3::ZERO;
-        std::string                             _name = std::string ( DEFAULT_NAME );
+        StringProperty                          _name { std::string ( DEFAULT_NAME ) };
 
     public:
         explicit Actor () = default;
@@ -40,7 +41,7 @@ class Actor final
 
         ~Actor () noexcept;
 
-        void SetName ( std::string_view name ) noexcept;
+        void SetName ( std::string &&name ) noexcept;
 
         void Append ( ComponentRef &&component ) noexcept;
         void Insert ( size_t before, ComponentRef &&component ) noexcept;

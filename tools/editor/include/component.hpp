@@ -3,13 +3,12 @@
 
 
 #include "save_state.hpp"
+#include "string_property.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
 #include <memory>
 #include <optional>
-#include <string>
-#include <string_view>
 
 GX_RESTORE_WARNING_STATE
 
@@ -34,7 +33,7 @@ class Component
     protected:
         Actor*              _actor = nullptr;
 
-        std::string         _name {};
+        StringProperty      _name {};
         // FUCK - add collapse boolean property
 
         GXQuat              _rotation = GXQuat::IDENTITY;
@@ -73,7 +72,7 @@ class Component
         virtual void Save ( SaveState::Container &root ) const noexcept;
         virtual void ShowProperties ( PropertyTool &propertyTool ) noexcept = 0;
 
-        void SetName ( std::string_view name ) noexcept;
+        void SetName ( std::string &&name ) noexcept;
 
         static void InitSpawners () noexcept;
 

@@ -1179,6 +1179,7 @@
     <ClCompile Include="src\move_tool.cpp" />
     <ClCompile Include="src\outline_mesh_node.cpp" />
     <ClCompile Include="src\program_info.cpp" />
+    <ClCompile Include="src\property.cpp" />
     <ClCompile Include="src\property_tool.cpp" />
     <ClCompile Include="src\resource_heap.cpp" />
     <ClCompile Include="src\ring_math.cpp" />
@@ -1196,6 +1197,7 @@
     <ClCompile Include="src\sdf_sphere.cpp" />
     <ClCompile Include="src\selection.cpp" />
     <ClCompile Include="src\stream_buffer_info.cpp" />
+    <ClCompile Include="src\string_property.cpp" />
     <ClCompile Include="src\texture2D_storage.cpp" />
     <ClCompile Include="src\io.cpp" />
     <ClCompile Include="src\keyboard_key_event.cpp" />
@@ -1395,6 +1397,7 @@
     <ClInclude Include="include\outline_mesh_node.hpp" />
     <ClInclude Include="include\program_info.hpp" />
     <ClInclude Include="include\program_ref.hpp" />
+    <ClInclude Include="include\property.hpp" />
     <ClInclude Include="include\property_tool.hpp" />
     <ClInclude Include="include\resource_heap.hpp" />
     <ClInclude Include="include\ring_math.hpp" />
@@ -1417,6 +1420,8 @@
     <ClInclude Include="include\sdf_vertex.hpp" />
     <ClInclude Include="include\selection.hpp" />
     <ClInclude Include="include\shading.hpp" />
+    <ClInclude Include="include\stream_buffer_info.hpp" />
+    <ClInclude Include="include\string_property.hpp" />
     <ClInclude Include="include\texture2D_storage.hpp" />
     <ClInclude Include="include\image_ui_element.hpp" />
     <ClInclude Include="include\io.hpp" />

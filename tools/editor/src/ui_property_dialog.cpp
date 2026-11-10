@@ -7,6 +7,86 @@
 
 namespace editor {
 
+UIPropertyDialog::HeaderInfo::HeaderInfo ( HeaderInfo &&other ) noexcept:
+    _property ( std::exchange ( other._property, nullptr ) ),
+    _label ( std::move ( other._label ) ),
+    _connection ( std::exchange ( other._connection, 42UZ ) )
+{
+    // NOTHING
+}
+
+UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPropertyDialog::HeaderInfo &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _property = std::exchange ( other._property, nullptr );
+    _label = std::move ( other._label );
+    _connection = std::exchange ( other._connection, 42UZ );
+    return *this;
+}
+
+UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept:
+    _property ( &name ),
+
+    _label (
+        std::make_unique<UILabel> ( root,
+            pbr::CSSComputedValues
+            {
+                ._backgroundColor = theme::TRANSPARENT_COLOR,
+                ._backgroundSize = theme::ZERO_LENGTH,
+                ._bottom = theme::ZERO_LENGTH,
+                ._left = theme::ZERO_LENGTH,
+                ._right = theme::ZERO_LENGTH,
+                ._top = theme::ZERO_LENGTH,
+                ._color = theme::MAIN_COLOR,
+                ._display = pbr::DisplayProperty::eValue::Block,
+                ._fontFile { theme::NORMAL_FONT_FAMILY },
+                ._fontSize = theme::NORMAL_FONT_SIZE,
+                ._lineHeight = theme::AUTO_LENGTH,
+                ._marginBottom = theme::ZERO_LENGTH,
+                ._marginLeft = theme::ZERO_LENGTH,
+                ._marginRight = theme::ZERO_LENGTH,
+                ._marginTop = theme::ZERO_LENGTH,
+                ._paddingBottom = theme::ZERO_LENGTH,
+                ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
+                ._paddingRight = theme::ZERO_LENGTH,
+                ._paddingTop = theme::ZERO_LENGTH,
+                ._position = pbr::PositionProperty::eValue::Static,
+                ._textAlign = pbr::TextAlignProperty::eValue::Left,
+                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+                ._width = theme::WHOLE_LENGTH,
+                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
+            },
+
+            name.Get (),
+            name.Get () + " (component header name)"
+        )
+    )
+{
+    _connection = name.Connect (
+        [ &label = *_label.get () ]() noexcept {
+            // FUCK
+            android_vulkan::LogDebug ( "%p", &label );
+        }
+    );
+}
+
+UIPropertyDialog::HeaderInfo::~HeaderInfo () noexcept
+{
+    if ( _property )
+    {
+        _property->Disconnect ( _connection );
+    }
+}
+
+void UIPropertyDialog::HeaderInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _label->DumpLayout ( writer );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 UIPropertyDialog::UIPropertyDialog ( ActionHandler &&onClose ) noexcept:
     UIDialogBox ( "Properties" ),
 
@@ -92,8 +172,10 @@ void UIPropertyDialog::AddSeparator () noexcept
     _separators.push_back ( std::make_unique<UISeparator> ( _div, "property: separator" ) );
 }
 
-void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string_view glyph ) noexcept
+void UIPropertyDialog::AddComponentHeader ( StringProperty &name, std::string_view glyph ) noexcept
 {
+    std::string const &n = name.Get ();
+
     std::unique_ptr<DIVUIElement> rootElement = std::make_unique<DIVUIElement> ( _div,
         pbr::CSSComputedValues
         {
@@ -123,7 +205,7 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 21.0F )
         },
 
-        name + " (component header root)"
+        n + " (component header root)"
     );
 
     DIVUIElement &root = *rootElement;
@@ -159,7 +241,7 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 18.0F )
         },
 
-        name + " (component header info)"
+        n + " (component header info)"
     );
 
     DIVUIElement &info = *infoElement;
@@ -197,44 +279,11 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             },
 
             glyph,
-            name + " (component header icon)"
+            n + " (component header icon)"
         )
     );
 
-    _labels.push_back (
-        std::make_unique<UILabel> ( info,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
-                ._right = theme::ZERO_LENGTH,
-                ._top = theme::ZERO_LENGTH,
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { theme::NORMAL_FONT_FAMILY },
-                ._fontSize = theme::NORMAL_FONT_SIZE,
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Static,
-                ._textAlign = pbr::TextAlignProperty::eValue::Left,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = theme::WHOLE_LENGTH,
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
-            },
-
-            name,
-            name + " (component header name)"
-        )
-    );
+    _headers.push_back ( HeaderInfo ( info, name ) );
 
     _labels.push_back (
         std::make_unique<UILabel> ( info,
@@ -267,7 +316,7 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             },
 
             glyph::COMBOBOX_DOWN,
-            name + " (component header collapse)"
+            n + " (component header collapse)"
         )
     );
 
@@ -300,7 +349,7 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F )
         },
 
-        name + " (component header underline)"
+        n + " (component header underline)"
     );
 
     DIVUIElement &underline = *underlineElement;
@@ -313,8 +362,8 @@ void UIPropertyDialog::AddComponentHeader ( std::string const &name, std::string
             _div,
             theme::PROPERTY_FIRST_COLUMN_WIDTH,
             "Name",
-            name,
-            "property name: " + std::string ( name )
+            n,
+            "property name: " + n
         )
     );
 }
@@ -418,6 +467,9 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     for ( auto const &label : _labels )
         label->DumpLayout ( writer );
 
+    for ( auto const &header : _headers )
+        header.DumpLayout ( writer );
+
     for ( auto const& separator : _separators )
     {
         separator->DumpLayout ( writer );
@@ -430,7 +482,8 @@ void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 
     for ( auto &control : _editBoxes )
         control->UpdatedRect ();
- 
+
     _closeButton.UpdatedRect ();
+}
 
 } // namespace editor

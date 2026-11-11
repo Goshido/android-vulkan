@@ -35,13 +35,10 @@ class PropertyTool final
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
 
-        void AddString ( std::string_view name, StringProperty &value ) noexcept;
+        void Append ( std::string_view name, StringProperty &property ) noexcept;
+        void Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept;
+        void AppendSeparator () noexcept;
 
-        void AddSeparator () noexcept;
-
-        // FUCK - add collapse property which owns by component
-        void BeginComponent ( StringProperty &name, std::string_view glyph ) noexcept;
-        void EndComponent () noexcept;
 
     private:
         void CreateUI () noexcept;

@@ -84,6 +84,7 @@ void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
     {
         root.Write ( CONFIG_KEY_SHOW, true );
         _ui->GetRect ( _rect );
+        _ui->Disconnect ();
     }
 
     SaveState::Container &ui = root.WriteArray ( CONFIG_KEY_UI );
@@ -123,34 +124,19 @@ void PropertyTool::OnSelectionChanged ( Selection::Actors const &/*actors*/ ) no
     // FUCK
 }
 
-void PropertyTool::AddString ( std::string_view name, StringProperty &value ) noexcept
+void PropertyTool::Append ( std::string_view name, StringProperty &property ) noexcept
 {
-    std::string const &n = value.Get ();
-
-    _ui->Append (
-        std::make_unique<UIEditBox> (
-            _ui->GetBody (),
-            theme::PROPERTY_FIRST_COLUMN_WIDTH,
-            name,
-            n,
-            "property: " + n
-        )
-    );
+    _ui->Append ( name, property );
 }
 
-void PropertyTool::AddSeparator () noexcept
+void PropertyTool::AppendSeparator () noexcept
 {
-    _ui->AddSeparator ();
+    _ui->AppendSeparator ();
 }
 
-void PropertyTool::BeginComponent ( StringProperty &name, std::string_view glyph ) noexcept
+void PropertyTool::Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept
 {
-    _ui->AddComponentHeader ( name, glyph );
-}
-
-void PropertyTool::EndComponent () noexcept
-{
-    // FUCK
+    _ui->Append ( componentName, componentGlyph );
 }
 
 void PropertyTool::CreateUI () noexcept

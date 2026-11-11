@@ -38,6 +38,7 @@ class UIPropertyDialog final : public UIDialogBox
 
                 ~HeaderInfo () noexcept;
 
+                void Disconnect () noexcept;
                 void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
         };
 
@@ -68,11 +69,12 @@ class UIPropertyDialog final : public UIDialogBox
 
         void GetRect ( Rect &target ) const noexcept;
         void Close () noexcept;
+        void Disconnect () noexcept;
         [[nodiscard]] DIVUIElement &GetBody () noexcept;
 
-        void Append ( std::unique_ptr<UIEditBox> control ) noexcept;
-        void AddSeparator () noexcept;
-        void AddComponentHeader ( StringProperty &name, std::string_view glyph ) noexcept;
+        void Append ( std::string_view name, StringProperty &property ) noexcept;
+        void Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept;
+        void AppendSeparator () noexcept;
 
     private:
         [[nodiscard]] bool HasChild ( Widget const &child ) const noexcept override;

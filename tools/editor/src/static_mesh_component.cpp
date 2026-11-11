@@ -112,9 +112,8 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::ShowProperties ( PropertyTool &propertyTool ) noexcept
 {
-    propertyTool.BeginComponent ( _name, glyph::COMPONENT_STATIC_MESH );
-    // FUCK
-    propertyTool.EndComponent ();
+    propertyTool.Append ( _name, glyph::COMPONENT_STATIC_MESH );
+    // FUCK - respect collapse property
 }
 
 void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_view emission ) noexcept

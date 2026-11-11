@@ -60,7 +60,7 @@ UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &n
             },
 
             name.Get (),
-            name.Get () + " (component header name)"
+            name.Get () + " (component header componentName)"
         )
     )
 {
@@ -78,6 +78,11 @@ UIPropertyDialog::HeaderInfo::~HeaderInfo () noexcept
     {
         _property->Disconnect ( _connection );
     }
+}
+
+void UIPropertyDialog::HeaderInfo::Disconnect () noexcept
+{
+    std::exchange ( _property, nullptr )->Disconnect ( _connection );
 }
 
 void UIPropertyDialog::HeaderInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
@@ -157,24 +162,37 @@ void UIPropertyDialog::Close () noexcept
     );
 }
 
+void UIPropertyDialog::Disconnect () noexcept
+{
+    for ( auto &header : _headers )
+    {
+        header.Disconnect ();
+    }
+}
+
 DIVUIElement &UIPropertyDialog::GetBody () noexcept
 {
     return _div;
 }
 
-void UIPropertyDialog::Append ( std::unique_ptr<UIEditBox> control ) noexcept
+void UIPropertyDialog::Append ( std::string_view name, StringProperty &property ) noexcept
 {
-    _editBoxes.push_back ( std::move ( control ) );
+    std::string const &n = property.Get ();
+
+    _editBoxes.push_back (
+        std::make_unique<UIEditBox> (
+            _div,
+            theme::PROPERTY_FIRST_COLUMN_WIDTH,
+            name,
+            n,
+            "property: " + n
+        )
+    );
 }
 
-void UIPropertyDialog::AddSeparator () noexcept
+void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept
 {
-    _separators.push_back ( std::make_unique<UISeparator> ( _div, "property: separator" ) );
-}
-
-void UIPropertyDialog::AddComponentHeader ( StringProperty &name, std::string_view glyph ) noexcept
-{
-    std::string const &n = name.Get ();
+    std::string const &n = componentName.Get ();
 
     std::unique_ptr<DIVUIElement> rootElement = std::make_unique<DIVUIElement> ( _div,
         pbr::CSSComputedValues
@@ -278,12 +296,12 @@ void UIPropertyDialog::AddComponentHeader ( StringProperty &name, std::string_vi
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F )
             },
 
-            glyph,
+            componentGlyph,
             n + " (component header icon)"
         )
     );
 
-    _headers.push_back ( HeaderInfo ( info, name ) );
+    _headers.push_back ( HeaderInfo ( info, componentName ) );
 
     _labels.push_back (
         std::make_unique<UILabel> ( info,
@@ -363,9 +381,14 @@ void UIPropertyDialog::AddComponentHeader ( StringProperty &name, std::string_vi
             theme::PROPERTY_FIRST_COLUMN_WIDTH,
             "Name",
             n,
-            "property name: " + n
+            "property componentName: " + n
         )
     );
+}
+
+void UIPropertyDialog::AppendSeparator () noexcept
+{
+    _separators.push_back ( std::make_unique<UISeparator> ( _div, "property: separator" ) );
 }
 
 bool UIPropertyDialog::HasChild ( Widget const &child ) const noexcept

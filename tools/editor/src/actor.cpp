@@ -126,14 +126,14 @@ void Actor::Save ( SaveState::Container &root ) const noexcept
 
 void Actor::ShowProperties ( PropertyTool &propertyTool ) noexcept
 {
-    propertyTool.AddString ( "Name", _name );
+    propertyTool.Append ( "Name", _name );
 
     if ( _components.empty () ) [[unlikely]]
         return;
 
     for ( auto &component : _components )
     {
-        propertyTool.AddSeparator ();
+        propertyTool.AppendSeparator ();
         component->ShowProperties ( propertyTool );
     }
 }

@@ -2,6 +2,7 @@
 #define EDITOR_UI_PROPERTY_DIALOG_HPP
 
 
+#include "bool_property.hpp"
 #include "string_property.hpp"
 #include "ui_close_button.hpp"
 #include "ui_dialog_box.hpp"
@@ -73,7 +74,12 @@ class UIPropertyDialog final : public UIDialogBox
         [[nodiscard]] DIVUIElement &GetBody () noexcept;
 
         void Append ( std::string_view name, StringProperty &property ) noexcept;
-        void Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept;
+
+        void Append ( StringProperty &componentName,
+            BoolProperty &componentCollapse,
+            std::string_view componentGlyph
+        ) noexcept;
+
         void AppendSeparator () noexcept;
 
     private:

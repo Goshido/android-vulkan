@@ -59,8 +59,8 @@ UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &n
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
             },
 
-            name.Get (),
-            name.Get () + " (component header componentName)"
+            name,
+            name + " (component header componentName)"
         )
     )
 {
@@ -177,23 +177,22 @@ DIVUIElement &UIPropertyDialog::GetBody () noexcept
 
 void UIPropertyDialog::Append ( std::string_view name, StringProperty &property ) noexcept
 {
-    std::string const &n = property.Get ();
-
     _editBoxes.push_back (
         std::make_unique<UIEditBox> (
             _div,
             theme::PROPERTY_FIRST_COLUMN_WIDTH,
             name,
-            n,
-            "property: " + n
+            property,
+            "property: " + property
         )
     );
 }
 
-void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept
+void UIPropertyDialog::Append ( StringProperty &componentName,
+    BoolProperty &componentCollapse,
+    std::string_view componentGlyph
+) noexcept
 {
-    std::string const &n = componentName.Get ();
-
     std::unique_ptr<DIVUIElement> rootElement = std::make_unique<DIVUIElement> ( _div,
         pbr::CSSComputedValues
         {
@@ -223,7 +222,7 @@ void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view 
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 21.0F )
         },
 
-        n + " (component header root)"
+        componentName + " (component header root)"
     );
 
     DIVUIElement &root = *rootElement;
@@ -259,7 +258,7 @@ void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view 
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 18.0F )
         },
 
-        n + " (component header info)"
+        componentName + " (component header info)"
     );
 
     DIVUIElement &info = *infoElement;
@@ -297,7 +296,7 @@ void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view 
             },
 
             componentGlyph,
-            n + " (component header icon)"
+            componentName + " (component header icon)"
         )
     );
 
@@ -333,8 +332,8 @@ void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view 
                 ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
             },
 
-            glyph::COMBOBOX_DOWN,
-            n + " (component header collapse)"
+            componentCollapse ? glyph::COMBOBOX_UP : glyph::COMBOBOX_DOWN,
+            componentName + " (component header collapse)"
         )
     );
 
@@ -367,21 +366,23 @@ void UIPropertyDialog::Append ( StringProperty &componentName, std::string_view 
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F )
         },
 
-        n + " (component header underline)"
+        componentName + " (component header underline)"
     );
 
     DIVUIElement &underline = *underlineElement;
     _divs.push_back ( std::move ( underlineElement ) );
     root.AppendChildElement ( underline );
 
-    // FUCK - check collapse
+    if ( componentCollapse )
+        return;
+
     _editBoxes.push_back (
         std::make_unique<UIEditBox> (
             _div,
             theme::PROPERTY_FIRST_COLUMN_WIDTH,
             "Name",
-            n,
-            "property componentName: " + n
+            componentName,
+            "property componentName: " + componentName
         )
     );
 }

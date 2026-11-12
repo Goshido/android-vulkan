@@ -51,7 +51,7 @@ Actor::~Actor () noexcept
 
 void Actor::SetName ( std::string &&name ) noexcept
 {
-    _name.Set ( std::move ( name ) );
+    _name = std::move ( name );
 }
 
 void Actor::Append ( ComponentRef &&component ) noexcept

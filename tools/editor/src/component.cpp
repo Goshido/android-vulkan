@@ -19,6 +19,9 @@ constexpr std::string_view VERSION_KEY = "version";
 constexpr uint32_t DEFAULT_VERSION = 0U;
 
 constexpr std::string_view DEFAULT_NAME = "component";
+constexpr bool DEFAULT_COLLAPSE = false;
+
+constexpr std::string_view COLLAPSE_KEY = "collapse";
 constexpr std::string_view LOCATION_KEY = "location";
 constexpr std::string_view NAME_KEY = "name";
 constexpr std::string_view ROTATION_KEY = "rotation";
@@ -31,19 +34,22 @@ constexpr std::string_view SCALE_KEY = "scale";
 Component::Spawners Component::_spawners {};
 
 Component::Component ( uint32_t version, std::string &&name ) noexcept:
+    _collapse ( DEFAULT_COLLAPSE ),
     _name ( std::move ( name ) ),
     _version ( version )
 {
     // NOTHING
 }
 
-Component::Component ( SaveState::Container const &info ) noexcept
+Component::Component ( SaveState::Container const &info ) noexcept:
+    _collapse ( info.Read ( COLLAPSE_KEY, DEFAULT_COLLAPSE ) ),
+    _name ( std::string ( info.Read ( NAME_KEY, DEFAULT_NAME ) ) ),
+    _rotation ( info.Read ( ROTATION_KEY, GXQuat::IDENTITY ) ),
+    _scale ( info.Read ( SCALE_KEY, GXVec3::ZERO ) ),
+    _location ( info.Read ( LOCATION_KEY, GXVec3::ZERO ) ),
+    _version ( info.Read ( VERSION_KEY, DEFAULT_VERSION ) )
 {
-    _version = info.Read ( VERSION_KEY, DEFAULT_VERSION );
-    _name.Set ( std::string ( info.Read ( NAME_KEY, DEFAULT_NAME ) ) );
-    _rotation = info.Read ( ROTATION_KEY, GXQuat::IDENTITY );
-    _scale = info.Read ( SCALE_KEY, GXVec3::ZERO );
-    _location = info.Read ( LOCATION_KEY, GXVec3::ZERO );
+    // NOTHING
 }
 
 void Component::Register ( Actor &actor ) noexcept
@@ -74,7 +80,8 @@ void Component::ActorTransformChanged () noexcept
 void Component::Save ( SaveState::Container &root ) const noexcept
 {
     root.Write ( VERSION_KEY, _version );
-    root.Write ( NAME_KEY, std::string_view ( _name.Get () ) );
+    root.Write ( NAME_KEY, _name );
+    root.Write ( COLLAPSE_KEY, _collapse );
     root.Write ( ROTATION_KEY, _rotation );
     root.Write ( SCALE_KEY, _scale );
     root.Write ( LOCATION_KEY, _location );
@@ -82,7 +89,7 @@ void Component::Save ( SaveState::Container &root ) const noexcept
 
 void Component::SetName ( std::string &&name ) noexcept
 {
-    _name.Set ( std::move ( name ) );
+    _name = std::move ( name );
 }
 
 void Component::InitSpawners () noexcept

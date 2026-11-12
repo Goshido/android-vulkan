@@ -2,12 +2,12 @@
 #define EDITOR_COMPONENT_HPP
 
 
+#include "bool_property.hpp"
 #include "save_state.hpp"
 #include "string_property.hpp"
 
 GX_DISABLE_COMMON_WARNINGS
 
-#include <memory>
 #include <optional>
 
 GX_RESTORE_WARNING_STATE
@@ -33,8 +33,8 @@ class Component
     protected:
         Actor*              _actor = nullptr;
 
+        BoolProperty        _collapse {};
         StringProperty      _name {};
-        // FUCK - add collapse boolean property
 
         GXQuat              _rotation = GXQuat::IDENTITY;
         GXVec3              _scale = GXVec3::ONE;

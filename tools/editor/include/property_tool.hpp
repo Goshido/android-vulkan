@@ -36,9 +36,13 @@ class PropertyTool final
         void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
 
         void Append ( std::string_view name, StringProperty &property ) noexcept;
-        void Append ( StringProperty &componentName, std::string_view componentGlyph ) noexcept;
-        void AppendSeparator () noexcept;
 
+        void Append ( StringProperty &componentName,
+            BoolProperty &componentCollapse,
+            std::string_view componentGlyph
+        ) noexcept;
+
+        void AppendSeparator () noexcept;
 
     private:
         void CreateUI () noexcept;

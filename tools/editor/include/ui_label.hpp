@@ -36,6 +36,7 @@ class UILabel final
 
         [[nodiscard]] pbr::CSSComputedValues &GetCSS () noexcept;
         void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
+        void SetText ( std::string const &text ) noexcept;
 };
 
 } // namespace editor

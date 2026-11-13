@@ -67,4 +67,9 @@ void UILabel::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     writer.AddRect ( _div.GetName (), rect._topLeft, rect._bottomRight );
 }
 
+void UILabel::SetText ( std::string const &text ) noexcept
+{
+    _text.SetText ( std::string ( text ) );
+}
+
 } // namespace editor

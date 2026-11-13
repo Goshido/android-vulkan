@@ -21,9 +21,11 @@ class UIPropertyDialog final : public UIDialogBox
     private:
         class HeaderInfo final
         {
+            public:
+                std::unique_ptr<UILabel>                _label {};
+
             private:
                 StringProperty*                         _property = nullptr;
-                std::unique_ptr<UILabel>                _label {};
                 Property::Connection                    _connection = 42UZ;
 
             public:

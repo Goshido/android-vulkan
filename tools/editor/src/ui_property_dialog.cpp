@@ -8,8 +8,8 @@
 namespace editor {
 
 UIPropertyDialog::HeaderInfo::HeaderInfo ( HeaderInfo &&other ) noexcept:
-    _property ( std::exchange ( other._property, nullptr ) ),
     _label ( std::move ( other._label ) ),
+    _property ( std::exchange ( other._property, nullptr ) ),
     _connection ( std::exchange ( other._connection, 42UZ ) )
 {
     // NOTHING
@@ -27,8 +27,6 @@ UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPrope
 }
 
 UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept:
-    _property ( &name ),
-
     _label (
         std::make_unique<UILabel> ( root,
             pbr::CSSComputedValues
@@ -62,7 +60,9 @@ UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &n
             name,
             name + " (component header componentName)"
         )
-    )
+    ),
+
+    _property ( &name )
 {
     _connection = name.Connect (
         [ &label = *_label.get () ]() noexcept {
@@ -300,7 +300,9 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
         )
     );
 
-    _headers.push_back ( HeaderInfo ( info, componentName ) );
+    HeaderInfo headerInfo ( info, componentName );
+    UILabel &label = *headerInfo._label;
+    _headers.push_back ( std::move ( headerInfo ) );
 
     _labels.push_back (
         std::make_unique<UILabel> ( info,
@@ -376,15 +378,36 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
     if ( componentCollapse )
         return;
 
-    _editBoxes.push_back (
-        std::make_unique<UIEditBox> (
-            _div,
-            theme::PROPERTY_FIRST_COLUMN_WIDTH,
-            "Name",
-            componentName,
-            "property componentName: " + componentName
-        )
+    std::unique_ptr<UIEditBox> control = std::make_unique<UIEditBox> (
+        _div,
+        theme::PROPERTY_FIRST_COLUMN_WIDTH,
+        "Name",
+        componentName,
+        "property componentName: " + componentName
     );
+
+    UIEditBox &c = *control;
+
+    c.ConnectOnCancel (
+        [ &label ] ( std::string const &value ) noexcept {
+            label.SetText ( value );
+        }
+    );
+
+    c.ConnectOnChange (
+        [ &label ] ( std::string const &value ) noexcept {
+            label.SetText ( value );
+        }
+    );
+
+    c.ConnectOnNewValue (
+        [ &label ] ( std::string const &value ) noexcept {
+            // FUCK - issue history, remove label update here
+            label.SetText ( value );
+        }
+    );
+
+    _editBoxes.push_back ( std::move ( control ) );
 }
 
 void UIPropertyDialog::AppendSeparator () noexcept

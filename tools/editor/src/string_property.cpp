@@ -9,6 +9,13 @@ std::string operator + ( char const* left, StringProperty const &right ) noexcep
     return left + right._value;
 }
 
+StringProperty &StringProperty::operator = ( std::string const &value ) noexcept
+{
+    _value = value;
+    OnUpdated ();
+    return *this;
+}
+
 StringProperty &StringProperty::operator = ( std::string &&value ) noexcept
 {
     _value = value;

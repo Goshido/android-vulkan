@@ -7,7 +7,7 @@
 GX_DISABLE_COMMON_WARNINGS
 
 #include <functional>
-#include <vector>
+#include <unordered_map>
 
 GX_RESTORE_WARNING_STATE
 
@@ -18,10 +18,11 @@ class Property
 {
     public:
         using Handler = std::move_only_function<void ()>;
-        using Connection = size_t;
+        using Connection = uint32_t;
 
     private:
-        std::vector<Handler>    _connections {};
+        std::unordered_map<uint32_t, Handler>       _connections {};
+        uint32_t                                    _id = 0U;
 
     public:
         Property ( Property const & ) = delete;

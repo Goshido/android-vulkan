@@ -1139,7 +1139,6 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     _writingCommandInfo = ++_writingCommandInfo % pbr::FIF_COUNT;
 
     android_vulkan::Renderer &renderer = NativeRenderer::Instance ();
-    _uiManager.ComputeLayout ( renderer, _uiPass );
     VkDevice device = renderer.GetDevice ();
 
     if ( !PrepareCommandBuffer ( device, commandInfo ) ) [[unlikely]]
@@ -1204,16 +1203,10 @@ void RenderSession::OnRenderFrame ( MessageQueue &messageQueue ) noexcept
     pbr::ResourceHeap &resourceHeap = ResourceHeap::Instance ();
     resourceHeap.Bind ( commandBuffer );
 
-    if ( !_uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
-    {
-        AV_ASSERT ( false )
+    if ( !_uiManager.Submit ( renderer, _uiPass, commandBuffer ) ) [[unlikely]]
         return;
-    }
 
-    _uiManager.Submit ( renderer, _uiPass );
-    _uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
     _workspace.UploadGPUData ( commandBuffer, deltaTime );
-
     resourceHeap.UploadGPUData ( commandBuffer );
 
     _workspace.PrepareGizmo ( commandBuffer );

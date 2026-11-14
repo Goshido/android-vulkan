@@ -32,6 +32,7 @@ class StringProperty final : public Property
 
         StringProperty ( StringProperty && ) = delete;
         StringProperty &operator = ( StringProperty && ) = delete;
+        StringProperty &operator = ( std::string const &value ) noexcept;
         StringProperty &operator = ( std::string &&value ) noexcept;
 
         StringProperty ( std::string &&value ) noexcept;

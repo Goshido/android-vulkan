@@ -6,20 +6,20 @@ namespace editor {
 
 Property::Connection Property::Connect ( Handler &&handler ) noexcept
 {
-    _connections.push_back ( std::move ( handler ) );
-    return _connections.size () - 1UZ;
+    _connections.insert ( std::pair ( _id, std::move ( handler ) ) );
+    return _id++;
 }
 
 void Property::Disconnect ( Connection connection ) noexcept
 {
-    _connections.erase ( _connections.cbegin () + static_cast<ptrdiff_t> ( connection ) );
+    _connections.erase ( connection );
 }
 
 void Property::OnUpdated () noexcept
 {
     for ( auto &handler : _connections )
     {
-        handler ();
+        handler.second ();
     }
 }
 

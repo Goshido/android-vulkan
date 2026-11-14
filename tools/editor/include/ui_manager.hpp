@@ -52,8 +52,10 @@ class UIManager final
         void Init () noexcept;
         void Destroy () noexcept;
 
-        void ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
-        void Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept;
+        [[nodiscard]] bool Submit ( android_vulkan::Renderer &renderer,
+            pbr::UIPass &uiPass,
+            VkCommandBuffer commandBuffer
+        ) noexcept;
 
     private:
         void EventLoop () noexcept;

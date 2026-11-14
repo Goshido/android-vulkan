@@ -54,13 +54,12 @@ void UIManager::Destroy () noexcept
     _triggerLayoutDumping = {};
 }
 
-void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
+bool UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &uiPass, VkCommandBuffer commandBuffer ) noexcept
 {
-    AV_TRACE ( "Compute UI layout" )
+    AV_TRACE ( "UI submit" )
 
-    _neededUIVertices = 0U;
+    _neededUIVertices = 0UZ;
     pbr::FontStorage &fontStorage = FontStorage::Instance ();
-
     std::shared_lock const lock ( _mutex );
 
     _dumpLayout = std::exchange ( _dumpLayoutRequested, false );
@@ -74,26 +73,25 @@ void UIManager::ComputeLayout ( android_vulkan::Renderer &renderer, pbr::UIPass 
     }
 
     if ( _neededUIVertices == 0UZ )
-    {
-        pass.RequestEmptyUI ();
-    }
-}
+        uiPass.RequestEmptyUI ();
 
-void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass ) noexcept
-{
+    if ( !uiPass.UploadGPUFontData ( renderer, commandBuffer ) ) [[unlikely]]
+    {
+        AV_ASSERT ( false )
+        return false;
+    }
+
     android_vulkan::ScopeGuard const dumpReset (
-        [ this ] () noexcept {
+        [ this, &renderer, &uiPass, commandBuffer ] () noexcept {
             _dumpLayout = false;
+            uiPass.UploadGPUGeometryData ( renderer, commandBuffer );
         }
     );
 
     if ( _neededUIVertices == 0UZ )
-        return;
-
-    AV_TRACE ( "Submit UI" )
+        return true;
 
     VkExtent2D const &viewport = renderer.GetViewportResolution ();
-    pbr::FontStorage &fontStorage = FontStorage::Instance ();
 
     auto const end = _widgets.rend ();
     auto begin = _widgets.rbegin ();
@@ -102,19 +100,16 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
         _needRefill |= ( *it )->UpdateCache ( fontStorage, viewport );
 
     if ( !_needRefill )
-        return;
+        return true;
 
-    pbr::UIPass::UIBufferResponse response = pass.RequestUIBuffer ( _neededUIVertices );
+    pbr::UIPass::UIBufferResponse response = uiPass.RequestUIBuffer ( _neededUIVertices );
 
-    if ( !response )
-    {
-        pass.RequestEmptyUI ();
-        return;
-    }
+    if ( !response ) [[unlikely]]
+        return false;
 
     pbr::UIElement::SubmitInfo info
     {
-        ._uiPass = &pass,
+        ._uiPass = &uiPass,
         ._uiBufferStreams = *response
     };
 
@@ -133,8 +128,8 @@ void UIManager::Submit ( android_vulkan::Renderer &renderer, pbr::UIPass &pass )
         }
     }
 
-    std::lock_guard const lock ( _mutex );
     _needRefill = false;
+    return true;
 }
 
 void UIManager::EventLoop () noexcept

@@ -4,7 +4,6 @@
 #include <message_queue.hpp>
 #include <theme.hpp>
 #include <ui_property_dialog.hpp>
-#include <workspace.hpp>
 
 
 namespace editor {
@@ -47,16 +46,170 @@ SetStringPropertyAction::SetStringPropertyAction ( StringProperty &property, std
 void SetStringPropertyAction::Redo () noexcept
 {
     *_property = _after;
-    Workspace::Instance ().OnContentCommitted ();
 }
 
 void SetStringPropertyAction::Undo () noexcept
 {
     *_property = _before;
-    Workspace::Instance ().OnContentCommitted ();
 }
 
 } // end of anonymous namespace
+
+//----------------------------------------------------------------------------------------------------------------------
+
+UIPropertyDialog::EditBoxInfo::EditBoxInfo ( EditBoxInfo &&other ) noexcept:
+    _editBox ( std::move ( other._editBox ) ),
+    _property ( std::exchange ( other._property, nullptr ) ),
+    _connection ( std::exchange ( other._connection, 42U ) )
+{
+    // NOTHING
+}
+
+UIPropertyDialog::EditBoxInfo &UIPropertyDialog::EditBoxInfo::operator = ( UIPropertyDialog::EditBoxInfo &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _property = std::exchange ( other._property, nullptr );
+    _editBox = std::move ( other._editBox );
+    _connection = std::exchange ( other._connection, 42U );
+    return *this;
+}
+
+UIPropertyDialog::EditBoxInfo::EditBoxInfo ( DIVUIElement &root,
+    std::string_view caption,
+    StringProperty &property
+) noexcept:
+    _editBox (
+        std::make_unique<UIEditBox> ( root,
+            theme::PROPERTY_FIRST_COLUMN_WIDTH,
+            caption,
+            property,
+            "property " + std::string ( caption ) + ": " + property
+        )
+    ),
+
+    _property ( &property )
+{
+    UIEditBox &editBox = *_editBox;
+
+    editBox.ConnectOnNewValue (
+        [ &property ] ( std::string const &value ) noexcept {
+            History &history = History::Instance ();
+            history.Begin ();
+            history.Append ( std::make_unique<SetStringPropertyAction> ( property, value ) );
+            history.End ();
+        }
+    );
+
+    _connection = property.Connect (
+        [ &editBox, &property ] () noexcept {
+            editBox.SetText ( property );
+        }
+    );
+}
+
+UIPropertyDialog::EditBoxInfo::~EditBoxInfo () noexcept
+{
+    if ( _property )
+    {
+        _property->Disconnect ( _connection );
+    }
+}
+
+void UIPropertyDialog::EditBoxInfo::Disconnect () noexcept
+{
+    std::exchange ( _property, nullptr )->Disconnect ( _connection );
+}
+
+void UIPropertyDialog::EditBoxInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _editBox->DumpLayout ( writer );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+UIPropertyDialog::HeaderInfo::HeaderInfo ( HeaderInfo &&other ) noexcept:
+    _label ( std::move ( other._label ) ),
+    _property ( std::exchange ( other._property, nullptr ) ),
+    _connection ( std::exchange ( other._connection, 42U ) )
+{
+    // NOTHING
+}
+
+UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPropertyDialog::HeaderInfo &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _property = std::exchange ( other._property, nullptr );
+    _label = std::move ( other._label );
+    _connection = std::exchange ( other._connection, 42U );
+    return *this;
+}
+
+UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept:
+    _label (
+        std::make_unique<UILabel> ( root,
+            pbr::CSSComputedValues
+            {
+                ._backgroundColor = theme::TRANSPARENT_COLOR,
+                ._backgroundSize = theme::ZERO_LENGTH,
+                ._bottom = theme::ZERO_LENGTH,
+                ._left = theme::ZERO_LENGTH,
+                ._right = theme::ZERO_LENGTH,
+                ._top = theme::ZERO_LENGTH,
+                ._color = theme::MAIN_COLOR,
+                ._display = pbr::DisplayProperty::eValue::Block,
+                ._fontFile { theme::NORMAL_FONT_FAMILY },
+                ._fontSize = theme::NORMAL_FONT_SIZE,
+                ._lineHeight = theme::AUTO_LENGTH,
+                ._marginBottom = theme::ZERO_LENGTH,
+                ._marginLeft = theme::ZERO_LENGTH,
+                ._marginRight = theme::ZERO_LENGTH,
+                ._marginTop = theme::ZERO_LENGTH,
+                ._paddingBottom = theme::ZERO_LENGTH,
+                ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
+                ._paddingRight = theme::ZERO_LENGTH,
+                ._paddingTop = theme::ZERO_LENGTH,
+                ._position = pbr::PositionProperty::eValue::Static,
+                ._textAlign = pbr::TextAlignProperty::eValue::Left,
+                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
+                ._width = theme::WHOLE_LENGTH,
+                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
+            },
+
+            name,
+            name + " (component header componentName)"
+        )
+    ),
+
+    _property ( &name )
+{
+    _connection = name.Connect (
+        [ &label = *_label.get (), &name ] () noexcept {
+            label.SetText ( name );
+        }
+    );
+}
+
+UIPropertyDialog::HeaderInfo::~HeaderInfo () noexcept
+{
+    if ( _property )
+    {
+        _property->Disconnect ( _connection );
+    }
+}
+
+void UIPropertyDialog::HeaderInfo::Disconnect () noexcept
+{
+    std::exchange ( _property, nullptr )->Disconnect ( _connection );
+}
+
+void UIPropertyDialog::HeaderInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
+{
+    _label->DumpLayout ( writer );
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -130,6 +283,17 @@ void UIPropertyDialog::Close () noexcept
     );
 }
 
+void UIPropertyDialog::Disconnect () noexcept
+{
+    for ( auto &editBox : _editBoxes )
+        editBox.Disconnect ();
+
+    for ( auto &header : _headers )
+    {
+        header.Disconnect ();
+    }
+}
+
 DIVUIElement &UIPropertyDialog::GetBody () noexcept
 {
     return _div;
@@ -137,25 +301,7 @@ DIVUIElement &UIPropertyDialog::GetBody () noexcept
 
 void UIPropertyDialog::Append ( std::string_view name, StringProperty &property ) noexcept
 {
-    std::unique_ptr<UIEditBox> control = std::make_unique<UIEditBox> (
-        _div,
-        theme::PROPERTY_FIRST_COLUMN_WIDTH,
-        name,
-        property,
-        "property: " + property
-    );
-
-    UIEditBox &c = *control;
-    _editBoxes.push_back ( std::move ( control ) );
-
-    c.ConnectOnNewValue (
-        [ &property ] ( std::string const &value ) noexcept {
-            History &history = History::Instance ();
-            history.Begin ();
-            history.Append ( std::make_unique<SetStringPropertyAction> ( property, value ) );
-            history.End ();
-        }
-    );
+    _editBoxes.push_back ( EditBoxInfo ( _div, name, property ) );
 }
 
 void UIPropertyDialog::Append ( StringProperty &componentName,
@@ -270,41 +416,9 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
         )
     );
 
-    std::unique_ptr<UILabel> headerLabel = std::make_unique<UILabel> ( info,
-        pbr::CSSComputedValues
-        {
-            ._backgroundColor = theme::TRANSPARENT_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::ZERO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
-            ._right = theme::ZERO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = theme::MAIN_COLOR,
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile { theme::NORMAL_FONT_FAMILY },
-            ._fontSize = theme::NORMAL_FONT_SIZE,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = theme::WHOLE_LENGTH,
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
-        },
-
-        componentName,
-        componentName + " (component header componentName)"
-    );
-
-    UILabel &label = *headerLabel;
-    _labels.push_back ( std::move ( headerLabel ) );
+    HeaderInfo headerInfo ( info, componentName );
+    UILabel &label = *headerInfo._label;
+    _headers.push_back ( std::move ( headerInfo ) );
 
     _labels.push_back (
         std::make_unique<UILabel> ( info,
@@ -380,15 +494,9 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
     if ( componentCollapse )
         return;
 
-    std::unique_ptr<UIEditBox> control = std::make_unique<UIEditBox> (
-        _div,
-        theme::PROPERTY_FIRST_COLUMN_WIDTH,
-        "Name",
-        componentName,
-        "property componentName: " + componentName
-    );
-
-    UIEditBox &c = *control;
+    EditBoxInfo control ( _div, "Name", componentName );
+    UIEditBox &c = *control._editBox;
+    _editBoxes.push_back ( std::move ( control ) );
 
     c.ConnectOnCancel (
         [ &label ] ( std::string const &value ) noexcept {
@@ -401,17 +509,6 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
             label.SetText ( value );
         }
     );
-
-    c.ConnectOnNewValue (
-        [ &componentName ] ( std::string const &value ) noexcept {
-            History &history = History::Instance ();
-            history.Begin ();
-            history.Append ( std::make_unique<SetStringPropertyAction> ( componentName, value ) );
-            history.End ();
-        }
-    );
-
-    _editBoxes.push_back ( std::move ( control ) );
 }
 
 void UIPropertyDialog::AppendSeparator () noexcept
@@ -424,9 +521,9 @@ bool UIPropertyDialog::HasChild ( Widget const &child ) const noexcept
     if ( this == &child || _closeButton.HasChild ( child ) )
         return true;
 
-    for ( auto &control : _editBoxes )
+    for ( auto &info : _editBoxes )
     {
-        if ( control.get () == &child )
+        if ( info._editBox.get () == &child )
         {
             return true;
         }
@@ -443,11 +540,11 @@ void UIPropertyDialog::OnMouseButtonDown ( MouseButtonEvent const &event ) noexc
         return;
     }
 
-    for ( auto &control : _editBoxes )
+    for ( auto &editBox : _editBoxes )
     {
-        if ( control->IsOverlapped ( event._x, event._y ) )
+        if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
-            control->OnMouseButtonDown ( event );
+            control.OnMouseButtonDown ( event );
             return;
         }
     }
@@ -463,11 +560,11 @@ void UIPropertyDialog::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcep
         return;
     }
 
-    for ( auto &control : _editBoxes )
+    for ( auto &editBox : _editBoxes )
     {
-        if ( control->IsOverlapped ( event._x, event._y ) )
+        if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
-            control->OnMouseButtonUp ( event );
+            control.OnMouseButtonUp ( event );
             return;
         }
     }
@@ -489,11 +586,11 @@ void UIPropertyDialog::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
-    for ( auto &control : _editBoxes )
+    for ( auto &editBox : _editBoxes )
     {
-        if ( control->IsOverlapped ( event._x, event._y ) )
+        if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
-            control->OnMouseMove ( event );
+            control.OnMouseMove ( event );
             return;
         }
     }
@@ -509,11 +606,14 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     _headerText.DumpLayout ( writer );
     _closeButton.DumpLayout ( writer );
 
-    for ( auto const &control : _editBoxes )
-        control->DumpLayout ( writer );
+    for ( auto &editBox : _editBoxes )
+        editBox.DumpLayout ( writer );
 
     for ( auto const &div : _divs )
         div->DumpLayout ( writer );
+
+    for ( auto const &header : _headers )
+        header.DumpLayout ( writer );
 
     for ( auto const &label : _labels )
         label->DumpLayout ( writer );
@@ -528,8 +628,8 @@ void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
 
-    for ( auto &control : _editBoxes )
-        control->UpdatedRect ();
+    for ( auto &editBox : _editBoxes )
+        editBox._editBox->UpdatedRect ();
 
     _closeButton.UpdatedRect ();
 }

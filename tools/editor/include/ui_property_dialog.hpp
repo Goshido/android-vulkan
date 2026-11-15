@@ -19,13 +19,70 @@ class UIPropertyDialog final : public UIDialogBox
         using ActionHandler = std::move_only_function<void ()>;
 
     private:
+        class EditBoxInfo final
+        {
+            public:
+                std::unique_ptr<UIEditBox>              _editBox {};
+
+            private:
+                StringProperty*                         _property = nullptr;
+                Property::Connection                    _connection = 42U;
+
+            public:
+                EditBoxInfo () = delete;
+
+                EditBoxInfo ( EditBoxInfo const & ) = delete;
+                EditBoxInfo &operator = ( EditBoxInfo const & ) = delete;
+
+                EditBoxInfo ( EditBoxInfo &&other ) noexcept;
+                EditBoxInfo &operator = ( EditBoxInfo &&other ) noexcept;
+
+                explicit EditBoxInfo ( DIVUIElement &root,
+                    std::string_view caption,
+                    StringProperty &property
+                ) noexcept;
+
+                ~EditBoxInfo () noexcept;
+
+                void Disconnect () noexcept;
+                void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
+        };
+
+        class HeaderInfo final
+        {
+            public:
+                std::unique_ptr<UILabel>                _label {};
+
+            private:
+                StringProperty*                         _property = nullptr;
+                Property::Connection                    _connection = 42U;
+
+            public:
+                HeaderInfo () = delete;
+
+                HeaderInfo ( HeaderInfo const & ) = delete;
+                HeaderInfo &operator = ( HeaderInfo const & ) = delete;
+
+                HeaderInfo ( HeaderInfo &&other ) noexcept;
+                HeaderInfo &operator = ( HeaderInfo &&other ) noexcept;
+
+                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept;
+
+                ~HeaderInfo () noexcept;
+
+                void Disconnect () noexcept;
+                void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
+        };
+
+    private:
         DIVUIElement                                    _headerLine;
         UILabel                                         _headerText;
         UICloseButton                                   _closeButton;
         ActionHandler                                   _onClose = nullptr;
 
-        std::vector<std::unique_ptr<UIEditBox>>         _editBoxes {};
+        std::vector<EditBoxInfo>                        _editBoxes {};
         std::vector<std::unique_ptr<DIVUIElement>>      _divs {};
+        std::vector<HeaderInfo>                         _headers {};
         std::vector<std::unique_ptr<UILabel>>           _labels {};
         std::vector<std::unique_ptr<UISeparator>>       _separators {};
 
@@ -44,6 +101,7 @@ class UIPropertyDialog final : public UIDialogBox
 
         void GetRect ( Rect &target ) const noexcept;
         void Close () noexcept;
+        void Disconnect () noexcept;
         [[nodiscard]] DIVUIElement &GetBody () noexcept;
 
         void Append ( std::string_view name, StringProperty &property ) noexcept;

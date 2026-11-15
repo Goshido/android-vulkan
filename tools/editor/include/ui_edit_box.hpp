@@ -97,6 +97,7 @@ class UIEditBox final : public Widget
 
         void Focus () noexcept;
         void SelectAll () noexcept;
+        void SetText ( std::string const &text ) noexcept;
         void SetText ( std::string &&text ) noexcept;
 
     private:

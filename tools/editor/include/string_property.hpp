@@ -16,10 +16,12 @@ namespace editor {
 
 class StringProperty;
 [[nodiscard]] std::string operator + ( char const* left, StringProperty const &right ) noexcept;
+[[nodiscard]] std::string operator + ( std::string &&left, StringProperty const &right ) noexcept;
 
 class StringProperty final : public Property
 {
     friend std::string operator + ( char const* left, StringProperty const &right ) noexcept;
+    friend std::string operator + ( std::string &&left, StringProperty const &right ) noexcept;
 
     private:
         std::string     _value {};

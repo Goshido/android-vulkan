@@ -84,6 +84,7 @@ void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
     {
         root.Write ( CONFIG_KEY_SHOW, true );
         _ui->GetRect ( _rect );
+        _ui->Disconnect ();
     }
 
     SaveState::Container &ui = root.WriteArray ( CONFIG_KEY_UI );

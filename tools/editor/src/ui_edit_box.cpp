@@ -334,6 +334,11 @@ void UIEditBox::SelectAll () noexcept
     );
 }
 
+void UIEditBox::SetText ( std::string const& text ) noexcept
+{
+    SetText ( std::string ( text ) );
+}
+
 void UIEditBox::SetText ( std::string &&text ) noexcept
 {
     MessageQueue::Instance ().EnqueueBack (

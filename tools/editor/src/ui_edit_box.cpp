@@ -259,6 +259,14 @@ UIEditBox::UIEditBox ( DIVUIElement &parent,
     SwitchToNormalState ();
 }
 
+UIEditBox::~UIEditBox ()
+{
+    if ( _blink )
+    {
+        _blink->Cancel ();
+    }
+}
+
 void UIEditBox::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
     ( this->*_onMouseKeyDown ) ( event );

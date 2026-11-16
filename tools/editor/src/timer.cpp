@@ -1,4 +1,5 @@
 #include <precompiled_headers.hpp>
+#include <av_assert.hpp>
 #include <message_queue.hpp>
 #include <timer.hpp>
 
@@ -19,6 +20,20 @@ bool Timer::State::Invoke ( Timestamp const &now ) noexcept
     if ( now < _schedule ) [[likely]]
         return false;
 
+    bool expected = false;
+
+    while ( !_lock.compare_exchange_weak ( expected, true ) )
+        expected = false;
+
+    AV_ASSERT ( !expected )
+
+    if ( _cancel ) [[unlikely]]
+    {
+        _lock.store ( false );
+        return true;
+    }
+
+    _lock.store ( false );
     _callback ( _interval + _schedule - now );
 
     switch ( _type )
@@ -28,7 +43,9 @@ bool Timer::State::Invoke ( Timestamp const &now ) noexcept
         return false;
 
         case eType::SingleShot:
-            [[fallthrough]];
+            // NOTHING
+        return true;
+
         default:
             // IMPOSSIBLE
         return true;
@@ -58,6 +75,19 @@ Timer::~Timer () noexcept
             }
         )
     );
+}
+
+void Timer::Cancel () noexcept
+{
+    bool expected = false;
+    std::atomic_bool &lock = _state->_lock;
+
+    while ( !lock.compare_exchange_weak ( expected, true ) )
+        expected = false;
+
+    AV_ASSERT ( !expected )
+    _state->_cancel = true;
+    lock.store ( false );
 }
 
 } // namespace editor

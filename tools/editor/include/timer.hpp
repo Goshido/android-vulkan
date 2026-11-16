@@ -16,7 +16,7 @@ namespace editor {
 
 class TimerManager;
 
-// Time resolution is 1ms.
+// Time resolution is 1 millisecond.
 class Timer final
 {
     friend class TimerManager;
@@ -40,7 +40,9 @@ class Timer final
                 Callback            _callback;
                 Interval const      _interval {};
                 Timestamp           _schedule {};
+                std::atomic_bool    _lock { false };
                 eType const         _type = eType::SingleShot;
+                bool                _cancel = false;
 
             public:
                 State () = delete;
@@ -75,6 +77,8 @@ class Timer final
         explicit Timer ( eType type, Interval const &interval, Callback &&callback ) noexcept;
 
         ~Timer () noexcept;
+
+        void Cancel () noexcept;
 };
 
 } // namespace editor

@@ -81,7 +81,7 @@ class UIEditBox final : public Widget
             std::string &&name
         ) noexcept;
 
-        ~UIEditBox () = default;
+        ~UIEditBox () noexcept override;
 
         void OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept override;
         void OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept override;

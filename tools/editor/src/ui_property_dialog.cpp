@@ -131,6 +131,7 @@ void UIPropertyDialog::EditBoxInfo::DumpLayout ( pbr::SVGWriter &writer ) const 
 
 UIPropertyDialog::HeaderInfo::HeaderInfo ( HeaderInfo &&other ) noexcept:
     _label ( std::move ( other._label ) ),
+    _collapse ( std::move ( other._collapse ) ),
     _property ( std::exchange ( other._property, nullptr ) ),
     _connection ( std::exchange ( other._connection, 42U ) )
 {
@@ -142,13 +143,14 @@ UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPrope
     if ( this == &other ) [[unlikely]]
         return *this;
 
-    _property = std::exchange ( other._property, nullptr );
     _label = std::move ( other._label );
+    _collapse = std::move ( other._collapse );
+    _property = std::exchange ( other._property, nullptr );
     _connection = std::exchange ( other._connection, 42U );
     return *this;
 }
 
-UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept:
+UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name, BoolProperty &collapse ) noexcept:
     _label (
         std::make_unique<UILabel> ( root,
             pbr::CSSComputedValues
@@ -180,10 +182,11 @@ UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &n
             },
 
             name,
-            name + " (component header componentName)"
+            name + " (component header name)"
         )
     ),
 
+    _collapse ( std::make_unique<UICollapseButton> ( root, collapse, std::string ( name ) ) ),
     _property ( &name )
 {
     _connection = name.Connect (
@@ -209,6 +212,7 @@ void UIPropertyDialog::HeaderInfo::Disconnect () noexcept
 void UIPropertyDialog::HeaderInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
 {
     _label->DumpLayout ( writer );
+    _collapse->DumpLayout ( writer );
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -416,44 +420,9 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
         )
     );
 
-    HeaderInfo headerInfo ( info, componentName );
+    HeaderInfo headerInfo ( info, componentName, componentCollapse );
     UILabel &label = *headerInfo._label;
     _headers.push_back ( std::move ( headerInfo ) );
-
-    _labels.push_back (
-        std::make_unique<UILabel> ( info,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::AUTO_LENGTH,
-                ._left = theme::AUTO_LENGTH,
-                ._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 5.0F ),
-                ._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { glyph::FONT_FAMILY },
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 11.0F ),
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = theme::ZERO_LENGTH,
-                ._paddingRight = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F ),
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Absolute,
-                ._textAlign = pbr::TextAlignProperty::eValue::Right,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
-            },
-
-            componentCollapse ? glyph::COMBOBOX_UP : glyph::COMBOBOX_DOWN,
-            componentName + " (component header collapse)"
-        )
-    );
 
     std::unique_ptr<DIVUIElement> underlineElement = std::make_unique<DIVUIElement> ( root,
         pbr::CSSComputedValues
@@ -521,9 +490,17 @@ bool UIPropertyDialog::HasChild ( Widget const &child ) const noexcept
     if ( this == &child || _closeButton.HasChild ( child ) )
         return true;
 
-    for ( auto &info : _editBoxes )
+    for ( auto const &info : _editBoxes )
     {
         if ( info._editBox.get () == &child )
+        {
+            return true;
+        }
+    }
+
+    for ( auto const &header : _headers )
+    {
+        if ( header._collapse.get () == &child )
         {
             return true;
         }
@@ -540,11 +517,20 @@ void UIPropertyDialog::OnMouseButtonDown ( MouseButtonEvent const &event ) noexc
         return;
     }
 
-    for ( auto &editBox : _editBoxes )
+    for ( auto const &editBox : _editBoxes )
     {
         if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
             control.OnMouseButtonDown ( event );
+            return;
+        }
+    }
+
+    for ( auto const &header : _headers )
+    {
+        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        {
+            button.OnMouseButtonDown ( event );
             return;
         }
     }
@@ -560,11 +546,20 @@ void UIPropertyDialog::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcep
         return;
     }
 
-    for ( auto &editBox : _editBoxes )
+    for ( auto const &editBox : _editBoxes )
     {
         if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
             control.OnMouseButtonUp ( event );
+            return;
+        }
+    }
+
+    for ( auto const &header : _headers )
+    {
+        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        {
+            button.OnMouseButtonUp ( event );
             return;
         }
     }
@@ -586,11 +581,20 @@ void UIPropertyDialog::OnMouseMove ( MouseMoveEvent const &event ) noexcept
         return;
     }
 
-    for ( auto &editBox : _editBoxes )
+    for ( auto const &editBox : _editBoxes )
     {
         if ( UIEditBox &control = *editBox._editBox; control.IsOverlapped ( event._x, event._y ) )
         {
             control.OnMouseMove ( event );
+            return;
+        }
+    }
+
+    for ( auto const &header : _headers )
+    {
+        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        {
+            button.OnMouseMove ( event );
             return;
         }
     }
@@ -606,7 +610,7 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     _headerText.DumpLayout ( writer );
     _closeButton.DumpLayout ( writer );
 
-    for ( auto &editBox : _editBoxes )
+    for ( auto const &editBox : _editBoxes )
         editBox.DumpLayout ( writer );
 
     for ( auto const &div : _divs )
@@ -618,7 +622,7 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     for ( auto const &label : _labels )
         label->DumpLayout ( writer );
 
-    for ( auto const& separator : _separators )
+    for ( auto const &separator : _separators )
     {
         separator->DumpLayout ( writer );
     }
@@ -628,8 +632,11 @@ void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
 {
     UIDialogBox::Submit ( info );
 
-    for ( auto &editBox : _editBoxes )
+    for ( auto const &editBox : _editBoxes )
         editBox._editBox->UpdatedRect ();
+
+    for ( auto const &header : _headers )
+        header._collapse->UpdatedRect ();
 
     _closeButton.UpdatedRect ();
 }

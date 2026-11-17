@@ -5,6 +5,7 @@
 #include "bool_property.hpp"
 #include "string_property.hpp"
 #include "ui_close_button.hpp"
+#include "ui_collapse_button.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_edit_box.hpp"
 #include "ui_label.hpp"
@@ -52,6 +53,7 @@ class UIPropertyDialog final : public UIDialogBox
         {
             public:
                 std::unique_ptr<UILabel>                _label {};
+                std::unique_ptr<UICollapseButton>       _collapse {};
 
             private:
                 StringProperty*                         _property = nullptr;
@@ -66,7 +68,7 @@ class UIPropertyDialog final : public UIDialogBox
                 HeaderInfo ( HeaderInfo &&other ) noexcept;
                 HeaderInfo &operator = ( HeaderInfo &&other ) noexcept;
 
-                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name ) noexcept;
+                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name, BoolProperty &collapse ) noexcept;
 
                 ~HeaderInfo () noexcept;
 

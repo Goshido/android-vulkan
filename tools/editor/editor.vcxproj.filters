@@ -525,6 +525,9 @@
     <ClCompile Include="src\bool_property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui_collapse_button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\app\src\main\cpp\include\logger.hpp">
@@ -1152,6 +1155,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\bool_property.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ui_collapse_button.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

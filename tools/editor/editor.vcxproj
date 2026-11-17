@@ -1243,6 +1243,7 @@
     <ClCompile Include="src\transform_tool.cpp" />
     <ClCompile Include="src\ui_check_box.cpp" />
     <ClCompile Include="src\ui_close_button.cpp" />
+    <ClCompile Include="src\ui_collapse_button.cpp" />
     <ClCompile Include="src\ui_combo_box.cpp" />
     <ClCompile Include="src\ui_dialog_box.cpp" />
     <ClCompile Include="src\ui_edit_box.cpp" />
@@ -1480,6 +1481,7 @@
     <ClInclude Include="include\transform_tool.hpp" />
     <ClInclude Include="include\ui_check_box.hpp" />
     <ClInclude Include="include\ui_close_button.hpp" />
+    <ClInclude Include="include\ui_collapse_button.hpp" />
     <ClInclude Include="include\ui_combo_box.hpp" />
     <ClInclude Include="include\ui_dialog_box.hpp" />
     <ClInclude Include="include\ui_edit_box.hpp" />

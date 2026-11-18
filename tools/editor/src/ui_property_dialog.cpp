@@ -2,6 +2,7 @@
 #include <glyphs.hpp>
 #include <history.hpp>
 #include <message_queue.hpp>
+#include <property_tool.hpp>
 #include <theme.hpp>
 #include <ui_property_dialog.hpp>
 
@@ -150,7 +151,7 @@ UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPrope
     return *this;
 }
 
-UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name, BoolProperty &collapse ) noexcept:
+UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name, bool &collapse ) noexcept:
     _label (
         std::make_unique<UILabel> ( root,
             pbr::CSSComputedValues
@@ -192,6 +193,13 @@ UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &n
     _connection = name.Connect (
         [ &label = *_label.get (), &name ] () noexcept {
             label.SetText ( name );
+        }
+    );
+
+    _collapse->Connect (
+        [ &collapse ] ( bool shrink ) noexcept {
+            collapse = shrink;
+            PropertyTool::Instance ().Rebuild ();
         }
     );
 }
@@ -309,7 +317,7 @@ void UIPropertyDialog::Append ( std::string_view name, StringProperty &property 
 }
 
 void UIPropertyDialog::Append ( StringProperty &componentName,
-    BoolProperty &componentCollapse,
+    bool &componentCollapse,
     std::string_view componentGlyph
 ) noexcept
 {

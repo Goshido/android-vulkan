@@ -17,8 +17,10 @@ class PropertyTool final
         Rect                    _rect {};
         UIPropertyDialog*       _ui = nullptr;
 
+        static PropertyTool*    _instance;
+
     public:
-        explicit PropertyTool () = default;
+        explicit PropertyTool () noexcept;
 
         PropertyTool ( PropertyTool const & ) = delete;
         PropertyTool &operator = ( PropertyTool const & ) = delete;
@@ -31,6 +33,8 @@ class PropertyTool final
         void Init ( SaveState::Container const &save ) noexcept;
         void Destroy ( SaveState::Container &save ) noexcept;
 
+        void Rebuild () noexcept;
+
         void OnContentCommitted ( Selection::Actors const &actors ) noexcept;
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
         void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
@@ -38,11 +42,13 @@ class PropertyTool final
         void Append ( std::string_view name, StringProperty &property ) noexcept;
 
         void Append ( StringProperty &componentName,
-            BoolProperty &componentCollapse,
+            bool &componentCollapse,
             std::string_view componentGlyph
         ) noexcept;
 
         void AppendSeparator () noexcept;
+
+        [[nodiscard]] static PropertyTool &Instance () noexcept;
 
     private:
         void CreateUI () noexcept;

@@ -2,7 +2,6 @@
 #define EDITOR_UI_PROPERTY_DIALOG_HPP
 
 
-#include "bool_property.hpp"
 #include "string_property.hpp"
 #include "ui_close_button.hpp"
 #include "ui_collapse_button.hpp"
@@ -68,7 +67,7 @@ class UIPropertyDialog final : public UIDialogBox
                 HeaderInfo ( HeaderInfo &&other ) noexcept;
                 HeaderInfo &operator = ( HeaderInfo &&other ) noexcept;
 
-                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name, BoolProperty &collapse ) noexcept;
+                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name, bool &collapse ) noexcept;
 
                 ~HeaderInfo () noexcept;
 
@@ -109,7 +108,7 @@ class UIPropertyDialog final : public UIDialogBox
         void Append ( std::string_view name, StringProperty &property ) noexcept;
 
         void Append ( StringProperty &componentName,
-            BoolProperty &componentCollapse,
+            bool &componentCollapse,
             std::string_view componentGlyph
         ) noexcept;
 

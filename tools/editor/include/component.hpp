@@ -2,7 +2,6 @@
 #define EDITOR_COMPONENT_HPP
 
 
-#include "bool_property.hpp"
 #include "save_state.hpp"
 #include "string_property.hpp"
 
@@ -33,7 +32,7 @@ class Component
     protected:
         Actor*              _actor = nullptr;
 
-        BoolProperty        _collapse {};
+        bool                _collapse = false;
         StringProperty      _name {};
 
         GXQuat              _rotation = GXQuat::IDENTITY;

@@ -17,7 +17,7 @@ namespace editor {
 class UICollapseButton final : public Widget
 {
     public:
-        using Callback = std::move_only_function<void ( bool collapse )>;
+        using Callback = std::move_only_function<void ( bool shrink )>;
 
     private:
         DIVUIElement        _div;

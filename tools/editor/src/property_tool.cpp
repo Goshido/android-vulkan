@@ -26,6 +26,13 @@ constexpr bool DEFAULT_SHOW = true;
 
 //----------------------------------------------------------------------------------------------------------------------
 
+PropertyTool* PropertyTool::_instance = nullptr;
+
+PropertyTool::PropertyTool () noexcept
+{
+    _instance = this;
+}
+
 void PropertyTool::Init ( SaveState::Container const &save ) noexcept
 {
     AV_TRACE ( "Property tool: init" )
@@ -94,9 +101,9 @@ void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
     ui.Write ( _rect._bottom );
 }
 
-void PropertyTool::OnContentCommitted ( Selection::Actors const &/*actors*/ ) noexcept
+void PropertyTool::Rebuild () noexcept
 {
-    AV_TRACE ( "Property tool: content committed" )
+    AV_TRACE ( "Property tool: rebuild" )
 
     if ( !fuck_actor | !_ui )
         return;
@@ -112,6 +119,12 @@ void PropertyTool::OnContentCommitted ( Selection::Actors const &/*actors*/ ) no
             }
         )
     );
+}
+
+void PropertyTool::OnContentCommitted ( Selection::Actors const &/*actors*/ ) noexcept
+{
+    AV_TRACE ( "Property tool: content committed" )
+    Rebuild ();
 }
 
 void PropertyTool::OnContentUpdated ( Selection::Actors const &/*actors*/ ) noexcept
@@ -134,8 +147,13 @@ void PropertyTool::AppendSeparator () noexcept
     _ui->AppendSeparator ();
 }
 
+PropertyTool &PropertyTool::Instance () noexcept
+{
+    return *_instance;
+}
+
 void PropertyTool::Append ( StringProperty &componentName,
-    BoolProperty &componentCollapse,
+    bool &componentCollapse,
     std::string_view componentGlyph
 ) noexcept
 {

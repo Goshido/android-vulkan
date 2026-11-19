@@ -525,7 +525,7 @@
     <ClCompile Include="src\bool_property.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui_collapse_button.cpp">
+    <ClCompile Include="src\ui_component_header.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1157,7 +1157,7 @@
     <ClInclude Include="include\bool_property.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\ui_collapse_button.hpp">
+    <ClInclude Include="include\ui_component_header.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

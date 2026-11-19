@@ -72,4 +72,14 @@ void UILabel::SetText ( std::string const &text ) noexcept
     _text.SetText ( std::string ( text ) );
 }
 
+void UILabel::SetText ( std::string_view text ) noexcept
+{
+    _text.SetText ( std::string ( text ) );
+}
+
+void UILabel::SetColor ( pbr::ColorValue const &color ) noexcept
+{
+    _text.SetColor ( color );
+}
+
 } // namespace editor

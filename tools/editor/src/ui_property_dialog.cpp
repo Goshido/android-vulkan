@@ -1,5 +1,4 @@
 #include <precompiled_headers.hpp>
-#include <glyphs.hpp>
 #include <history.hpp>
 #include <message_queue.hpp>
 #include <property_tool.hpp>
@@ -130,101 +129,6 @@ void UIPropertyDialog::EditBoxInfo::DumpLayout ( pbr::SVGWriter &writer ) const 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIPropertyDialog::HeaderInfo::HeaderInfo ( HeaderInfo &&other ) noexcept:
-    _label ( std::move ( other._label ) ),
-    _collapse ( std::move ( other._collapse ) ),
-    _property ( std::exchange ( other._property, nullptr ) ),
-    _connection ( std::exchange ( other._connection, 42U ) )
-{
-    // NOTHING
-}
-
-UIPropertyDialog::HeaderInfo& UIPropertyDialog::HeaderInfo::operator = ( UIPropertyDialog::HeaderInfo &&other ) noexcept
-{
-    if ( this == &other ) [[unlikely]]
-        return *this;
-
-    _label = std::move ( other._label );
-    _collapse = std::move ( other._collapse );
-    _property = std::exchange ( other._property, nullptr );
-    _connection = std::exchange ( other._connection, 42U );
-    return *this;
-}
-
-UIPropertyDialog::HeaderInfo::HeaderInfo ( DIVUIElement &root, StringProperty &name, bool &collapse ) noexcept:
-    _label (
-        std::make_unique<UILabel> ( root,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::ZERO_LENGTH,
-                ._left = theme::ZERO_LENGTH,
-                ._right = theme::ZERO_LENGTH,
-                ._top = theme::ZERO_LENGTH,
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { theme::NORMAL_FONT_FAMILY },
-                ._fontSize = theme::NORMAL_FONT_SIZE,
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = pbr::LengthValue ( pbr::LengthValue::eType::PX, 25.0F ),
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = theme::ZERO_LENGTH,
-                ._position = pbr::PositionProperty::eValue::Static,
-                ._textAlign = pbr::TextAlignProperty::eValue::Left,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = theme::WHOLE_LENGTH,
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 10.0F )
-            },
-
-            name,
-            name + " (component header name)"
-        )
-    ),
-
-    _collapse ( std::make_unique<UICollapseButton> ( root, collapse, std::string ( name ) ) ),
-    _property ( &name )
-{
-    _connection = name.Connect (
-        [ &label = *_label.get (), &name ] () noexcept {
-            label.SetText ( name );
-        }
-    );
-
-    _collapse->Connect (
-        [ &collapse ] ( bool shrink ) noexcept {
-            collapse = shrink;
-            PropertyTool::Instance ().Rebuild ();
-        }
-    );
-}
-
-UIPropertyDialog::HeaderInfo::~HeaderInfo () noexcept
-{
-    if ( _property )
-    {
-        _property->Disconnect ( _connection );
-    }
-}
-
-void UIPropertyDialog::HeaderInfo::Disconnect () noexcept
-{
-    std::exchange ( _property, nullptr )->Disconnect ( _connection );
-}
-
-void UIPropertyDialog::HeaderInfo::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
-{
-    _label->DumpLayout ( writer );
-    _collapse->DumpLayout ( writer );
-}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 UIPropertyDialog::UIPropertyDialog ( ActionHandler &&onClose ) noexcept:
     UIDialogBox ( "Properties" ),
 
@@ -300,9 +204,9 @@ void UIPropertyDialog::Disconnect () noexcept
     for ( auto &editBox : _editBoxes )
         editBox.Disconnect ();
 
-    for ( auto &header : _headers )
+    for ( auto const &header : _headers )
     {
-        header.Disconnect ();
+        header->Disconnect ();
     }
 }
 
@@ -321,152 +225,14 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
     std::string_view componentGlyph
 ) noexcept
 {
-    std::unique_ptr<DIVUIElement> rootElement = std::make_unique<DIVUIElement> ( _div,
-        pbr::CSSComputedValues
-        {
-            ._backgroundColor = theme::TRANSPARENT_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::ZERO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
-            ._right = theme::ZERO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = theme::MAIN_COLOR,
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile { theme::NORMAL_FONT_FAMILY },
-            ._fontSize = theme::NORMAL_FONT_SIZE,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = theme::ZERO_LENGTH,
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = theme::WHOLE_LENGTH,
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 21.0F )
-        },
-
-        componentName + " (component header root)"
+    std::unique_ptr<UIComponentHeader> header = std::make_unique<UIComponentHeader> ( _div,
+        componentName,
+        componentGlyph,
+        componentCollapse
     );
 
-    DIVUIElement &root = *rootElement;
-    _divs.push_back ( std::move ( rootElement ) );
-    _div.AppendChildElement ( root );
-
-    std::unique_ptr<DIVUIElement> infoElement = std::make_unique<DIVUIElement> ( root,
-        pbr::CSSComputedValues
-        {
-            ._backgroundColor = theme::TRANSPARENT_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::ZERO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
-            ._right = theme::ZERO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = theme::MAIN_COLOR,
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile { theme::NORMAL_FONT_FAMILY.data (), theme::NORMAL_FONT_FAMILY.size () },
-            ._fontSize = theme::NORMAL_FONT_SIZE,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = theme::ZERO_LENGTH,
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Relative,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = theme::WHOLE_LENGTH,
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 18.0F )
-        },
-
-        componentName + " (component header info)"
-    );
-
-    DIVUIElement &info = *infoElement;
-    _divs.push_back ( std::move ( infoElement ) );
-    root.AppendChildElement ( info );
-
-    _labels.push_back (
-        std::make_unique<UILabel> ( info,
-            pbr::CSSComputedValues
-            {
-                ._backgroundColor = theme::TRANSPARENT_COLOR,
-                ._backgroundSize = theme::ZERO_LENGTH,
-                ._bottom = theme::AUTO_LENGTH,
-                ._left = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F ),
-                ._right = theme::AUTO_LENGTH,
-                ._top = theme::ZERO_LENGTH,
-                ._color = theme::MAIN_COLOR,
-                ._display = pbr::DisplayProperty::eValue::Block,
-                ._fontFile { glyph::FONT_FAMILY },
-                ._fontSize = pbr::LengthValue ( pbr::LengthValue::eType::PX, 15.0F ),
-                ._lineHeight = theme::AUTO_LENGTH,
-                ._marginBottom = theme::ZERO_LENGTH,
-                ._marginLeft = theme::ZERO_LENGTH,
-                ._marginRight = theme::ZERO_LENGTH,
-                ._marginTop = theme::ZERO_LENGTH,
-                ._paddingBottom = theme::ZERO_LENGTH,
-                ._paddingLeft = theme::ZERO_LENGTH,
-                ._paddingRight = theme::ZERO_LENGTH,
-                ._paddingTop = pbr::LengthValue ( pbr::LengthValue::eType::PX, 1.0F ),
-                ._position = pbr::PositionProperty::eValue::Absolute,
-                ._textAlign = pbr::TextAlignProperty::eValue::Center,
-                ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-                ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
-                ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F )
-            },
-
-            componentGlyph,
-            componentName + " (component header icon)"
-        )
-    );
-
-    HeaderInfo headerInfo ( info, componentName, componentCollapse );
-    UILabel &label = *headerInfo._label;
-    _headers.push_back ( std::move ( headerInfo ) );
-
-    std::unique_ptr<DIVUIElement> underlineElement = std::make_unique<DIVUIElement> ( root,
-        pbr::CSSComputedValues
-        {
-            ._backgroundColor = theme::MAIN_COLOR,
-            ._backgroundSize = theme::ZERO_LENGTH,
-            ._bottom = theme::ZERO_LENGTH,
-            ._left = theme::ZERO_LENGTH,
-            ._right = theme::ZERO_LENGTH,
-            ._top = theme::ZERO_LENGTH,
-            ._color = pbr::ColorValue ( 255U, 255U, 255U, 255U ),
-            ._display = pbr::DisplayProperty::eValue::Block,
-            ._fontFile{ theme::NORMAL_FONT_FAMILY },
-            ._fontSize = theme::NORMAL_FONT_SIZE,
-            ._lineHeight = theme::AUTO_LENGTH,
-            ._marginBottom = theme::ZERO_LENGTH,
-            ._marginLeft = theme::ZERO_LENGTH,
-            ._marginRight = theme::ZERO_LENGTH,
-            ._marginTop = theme::ZERO_LENGTH,
-            ._paddingBottom = theme::ZERO_LENGTH,
-            ._paddingLeft = theme::ZERO_LENGTH,
-            ._paddingRight = theme::ZERO_LENGTH,
-            ._paddingTop = theme::ZERO_LENGTH,
-            ._position = pbr::PositionProperty::eValue::Static,
-            ._textAlign = pbr::TextAlignProperty::eValue::Left,
-            ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-            ._width = theme::WHOLE_LENGTH,
-            ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 3.0F )
-        },
-
-        componentName + " (component header underline)"
-    );
-
-    DIVUIElement &underline = *underlineElement;
-    _divs.push_back ( std::move ( underlineElement ) );
-    root.AppendChildElement ( underline );
+    UIComponentHeader &h = *header;
+    _headers.push_back ( std::move ( header ) );
 
     if ( componentCollapse )
         return;
@@ -476,14 +242,14 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
     _editBoxes.push_back ( std::move ( control ) );
 
     c.ConnectOnCancel (
-        [ &label ] ( std::string const &value ) noexcept {
-            label.SetText ( value );
+        [ &h ] ( std::string const &value ) noexcept {
+            h.SetName ( value );
         }
     );
 
     c.ConnectOnChange (
-        [ &label ] ( std::string const &value ) noexcept {
-            label.SetText ( value );
+        [ &h ] ( std::string const &value ) noexcept {
+            h.SetName ( value );
         }
     );
 }
@@ -508,7 +274,7 @@ bool UIPropertyDialog::HasChild ( Widget const &child ) const noexcept
 
     for ( auto const &header : _headers )
     {
-        if ( header._collapse.get () == &child )
+        if ( header.get () == &child )
         {
             return true;
         }
@@ -536,9 +302,9 @@ void UIPropertyDialog::OnMouseButtonDown ( MouseButtonEvent const &event ) noexc
 
     for ( auto const &header : _headers )
     {
-        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        if ( UIComponentHeader &control = *header; control.IsOverlapped ( event._x, event._y ) )
         {
-            button.OnMouseButtonDown ( event );
+            control.OnMouseButtonDown ( event );
             return;
         }
     }
@@ -565,9 +331,9 @@ void UIPropertyDialog::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcep
 
     for ( auto const &header : _headers )
     {
-        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        if ( UIComponentHeader &control = *header; control.IsOverlapped ( event._x, event._y ) )
         {
-            button.OnMouseButtonUp ( event );
+            control.OnMouseButtonUp ( event );
             return;
         }
     }
@@ -600,9 +366,9 @@ void UIPropertyDialog::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 
     for ( auto const &header : _headers )
     {
-        if ( UICollapseButton &button = *header._collapse; button.IsOverlapped ( event._x, event._y ) )
+        if ( UIComponentHeader &control = *header; control.IsOverlapped ( event._x, event._y ) )
         {
-            button.OnMouseMove ( event );
+            control.OnMouseMove ( event );
             return;
         }
     }
@@ -621,14 +387,8 @@ void UIPropertyDialog::DumpLayout ( pbr::SVGWriter &writer ) const noexcept
     for ( auto const &editBox : _editBoxes )
         editBox.DumpLayout ( writer );
 
-    for ( auto const &div : _divs )
-        div->DumpLayout ( writer );
-
     for ( auto const &header : _headers )
-        header.DumpLayout ( writer );
-
-    for ( auto const &label : _labels )
-        label->DumpLayout ( writer );
+        header->DumpLayout ( writer );
 
     for ( auto const &separator : _separators )
     {
@@ -644,7 +404,7 @@ void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
         editBox._editBox->UpdatedRect ();
 
     for ( auto const &header : _headers )
-        header._collapse->UpdatedRect ();
+        header->UpdatedRect ();
 
     _closeButton.UpdatedRect ();
 }

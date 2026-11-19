@@ -4,10 +4,9 @@
 
 #include "string_property.hpp"
 #include "ui_close_button.hpp"
-#include "ui_collapse_button.hpp"
+#include "ui_component_header.hpp"
 #include "ui_dialog_box.hpp"
 #include "ui_edit_box.hpp"
-#include "ui_label.hpp"
 #include "ui_separator.hpp"
 
 
@@ -22,11 +21,11 @@ class UIPropertyDialog final : public UIDialogBox
         class EditBoxInfo final
         {
             public:
-                std::unique_ptr<UIEditBox>              _editBox {};
+                std::unique_ptr<UIEditBox>                  _editBox {};
 
             private:
-                StringProperty*                         _property = nullptr;
-                Property::Connection                    _connection = 42U;
+                StringProperty*                             _property = nullptr;
+                Property::Connection                        _connection = 42U;
 
             public:
                 EditBoxInfo () = delete;
@@ -48,44 +47,16 @@ class UIPropertyDialog final : public UIDialogBox
                 void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
         };
 
-        class HeaderInfo final
-        {
-            public:
-                std::unique_ptr<UILabel>                _label {};
-                std::unique_ptr<UICollapseButton>       _collapse {};
-
-            private:
-                StringProperty*                         _property = nullptr;
-                Property::Connection                    _connection = 42U;
-
-            public:
-                HeaderInfo () = delete;
-
-                HeaderInfo ( HeaderInfo const & ) = delete;
-                HeaderInfo &operator = ( HeaderInfo const & ) = delete;
-
-                HeaderInfo ( HeaderInfo &&other ) noexcept;
-                HeaderInfo &operator = ( HeaderInfo &&other ) noexcept;
-
-                explicit HeaderInfo ( DIVUIElement &root, StringProperty &name, bool &collapse ) noexcept;
-
-                ~HeaderInfo () noexcept;
-
-                void Disconnect () noexcept;
-                void DumpLayout ( pbr::SVGWriter &writer ) const noexcept;
-        };
-
     private:
-        DIVUIElement                                    _headerLine;
-        UILabel                                         _headerText;
-        UICloseButton                                   _closeButton;
-        ActionHandler                                   _onClose = nullptr;
+        DIVUIElement                                        _headerLine;
+        UILabel                                             _headerText;
+        UICloseButton                                       _closeButton;
+        ActionHandler                                       _onClose = nullptr;
 
-        std::vector<EditBoxInfo>                        _editBoxes {};
-        std::vector<std::unique_ptr<DIVUIElement>>      _divs {};
-        std::vector<HeaderInfo>                         _headers {};
-        std::vector<std::unique_ptr<UILabel>>           _labels {};
-        std::vector<std::unique_ptr<UISeparator>>       _separators {};
+        std::vector<EditBoxInfo>                            _editBoxes {};
+        std::vector<std::unique_ptr<UIComponentHeader>>     _headers {};
+        std::vector<std::unique_ptr<UILabel>>               _labels {};
+        std::vector<std::unique_ptr<UISeparator>>           _separators {};
 
     public:
         UIPropertyDialog () = delete;

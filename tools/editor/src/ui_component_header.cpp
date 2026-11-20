@@ -11,7 +11,8 @@ namespace editor {
 UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     StringProperty &name,
     std::string_view glyph,
-    bool &collapse
+    bool &collapse,
+    bool &select
 ) noexcept:
     _root ( parent,
 
@@ -189,7 +190,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     _underline ( _root,
         pbr::CSSComputedValues
         {
-            ._backgroundColor = theme::MAIN_COLOR,
+            ._backgroundColor = select ? theme::PRESS_COLOR : theme::MAIN_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::ZERO_LENGTH,
             ._left = theme::ZERO_LENGTH,
@@ -219,6 +220,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     ),
 
     _collapse ( collapse ),
+    _select ( select ),
     _property ( &name )
 {
     _info.AppendChildElement ( _underline );
@@ -244,10 +246,18 @@ UIComponentHeader::~UIComponentHeader () noexcept
 
 void UIComponentHeader::OnMouseButtonDown ( MouseButtonEvent const &event ) noexcept
 {
-    if ( event._key == eKey::LeftMouseButton ) [[likely]]
+    if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
+        return;
+
+    if ( !event._modifier.AnyCtrlPressed () ) [[likely]]
     {
         SetColor ( theme::PRESS_COLOR );
+        return;
     }
+
+    _select = !_select;
+    _underline.GetCSS ()._backgroundColor = _select ? theme::PRESS_COLOR : theme::HOVER_COLOR;
+    _underline.Update ();
 }
 
 void UIComponentHeader::OnMouseButtonUp ( MouseButtonEvent const &event ) noexcept
@@ -255,10 +265,12 @@ void UIComponentHeader::OnMouseButtonUp ( MouseButtonEvent const &event ) noexce
     if ( event._key != eKey::LeftMouseButton ) [[unlikely]]
         return;
 
-    _collapse = !_collapse;
     SetColor ( theme::HOVER_COLOR );
-    _expand.SetText ( _collapse ? glyph::COMBOBOX_UP : glyph::COMBOBOX_DOWN );
 
+    if ( event._modifier.AnyCtrlPressed () ) [[unlikely]]
+        return;
+
+    _collapse = !_collapse;
     PropertyTool::Instance ().Rebuild ();
 }
 
@@ -266,7 +278,7 @@ void UIComponentHeader::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 {
     Widget::OnMouseMove ( event );
 
-    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2U ) [[likely]]
+    if ( event._eventID - std::exchange ( _eventID, event._eventID ) < 2UZ ) [[likely]]
         return;
 
     ChangeCursor ( eCursor::Arrow );
@@ -308,6 +320,9 @@ void UIComponentHeader::SetColor ( pbr::ColorValue const &color ) noexcept
     _glyph.SetColor ( color );
     _name.SetColor ( color );
     _expand.SetColor ( color );
+
+    if ( _select ) [[unlikely]]
+        return;
 
     _underline.GetCSS ()._backgroundColor = color;
     _underline.Update ();

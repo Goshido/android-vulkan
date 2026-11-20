@@ -142,6 +142,15 @@ void PropertyTool::Append ( std::string_view name, StringProperty &property ) no
     _ui->Append ( name, property );
 }
 
+void PropertyTool::Append ( StringProperty &componentName,
+    bool &componentCollapse,
+    bool &componentSelect,
+    std::string_view componentGlyph
+) noexcept
+{
+    _ui->Append ( componentName, componentCollapse, componentSelect, componentGlyph );
+}
+
 void PropertyTool::AppendSeparator () noexcept
 {
     _ui->AppendSeparator ();
@@ -150,14 +159,6 @@ void PropertyTool::AppendSeparator () noexcept
 PropertyTool &PropertyTool::Instance () noexcept
 {
     return *_instance;
-}
-
-void PropertyTool::Append ( StringProperty &componentName,
-    bool &componentCollapse,
-    std::string_view componentGlyph
-) noexcept
-{
-    _ui->Append ( componentName, componentCollapse, componentGlyph );
 }
 
 void PropertyTool::CreateUI () noexcept

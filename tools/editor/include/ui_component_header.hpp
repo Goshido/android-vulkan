@@ -23,6 +23,7 @@ class UIComponentHeader final : public Widget
 
         size_t                  _eventID = 0U;
         bool                    &_collapse;
+        bool                    &_select;
 
         StringProperty*         _property = nullptr;
         Property::Connection    _connection = 42U;
@@ -39,7 +40,8 @@ class UIComponentHeader final : public Widget
         explicit UIComponentHeader ( DIVUIElement &parent,
             StringProperty &name,
             std::string_view glyph,
-            bool &collapse
+            bool &collapse,
+            bool &select
         ) noexcept;
 
         ~UIComponentHeader () noexcept override;

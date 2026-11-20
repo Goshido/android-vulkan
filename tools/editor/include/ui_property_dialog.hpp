@@ -80,6 +80,7 @@ class UIPropertyDialog final : public UIDialogBox
 
         void Append ( StringProperty &componentName,
             bool &componentCollapse,
+            bool &componentSelect,
             std::string_view componentGlyph
         ) noexcept;
 

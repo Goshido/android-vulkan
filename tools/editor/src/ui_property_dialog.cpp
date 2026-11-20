@@ -222,13 +222,15 @@ void UIPropertyDialog::Append ( std::string_view name, StringProperty &property 
 
 void UIPropertyDialog::Append ( StringProperty &componentName,
     bool &componentCollapse,
+    bool &componentSelect,
     std::string_view componentGlyph
 ) noexcept
 {
     std::unique_ptr<UIComponentHeader> header = std::make_unique<UIComponentHeader> ( _div,
         componentName,
         componentGlyph,
-        componentCollapse
+        componentCollapse,
+        componentSelect
     );
 
     UIComponentHeader &h = *header;

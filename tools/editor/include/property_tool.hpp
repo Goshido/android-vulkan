@@ -43,6 +43,7 @@ class PropertyTool final
 
         void Append ( StringProperty &componentName,
             bool &componentCollapse,
+            bool &componentSelect,
             std::string_view componentGlyph
         ) noexcept;
 

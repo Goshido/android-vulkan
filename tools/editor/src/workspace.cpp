@@ -174,6 +174,7 @@ void Workspace::Destroy ( SaveState::Container &save ) noexcept
     FreeSwapchainResources ();
 
     _delete = {};
+    _deleteAlternative = {};
     _openWorkspace = {};
     _saveWorkspace = {};
     _saveAsWorkspace = {};
@@ -2007,6 +2008,16 @@ void Workspace::InitHotkeys () noexcept
     _delete = Hotkey ( eKey::KeyDel,
         false,
         false,
+        false,
+
+        [] () noexcept {
+            android_vulkan::LogDebug ( ">>> Delete" );
+        }
+    );
+
+    _deleteAlternative = Hotkey ( eKey::KeyX,
+        false,
+        true,
         false,
 
         [] () noexcept {

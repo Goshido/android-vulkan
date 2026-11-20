@@ -34,20 +34,20 @@ constexpr std::string_view SCALE_KEY = "scale";
 Component::Spawners Component::_spawners {};
 
 Component::Component ( uint32_t version, std::string &&name ) noexcept:
-    _collapse ( DEFAULT_COLLAPSE ),
     _name ( std::move ( name ) ),
-    _version ( version )
+    _version ( version ),
+    _collapse ( DEFAULT_COLLAPSE )
 {
     // NOTHING
 }
 
 Component::Component ( SaveState::Container const &info ) noexcept:
-    _collapse ( info.Read ( COLLAPSE_KEY, DEFAULT_COLLAPSE ) ),
     _name ( std::string ( info.Read ( NAME_KEY, DEFAULT_NAME ) ) ),
     _rotation ( info.Read ( ROTATION_KEY, GXQuat::IDENTITY ) ),
     _scale ( info.Read ( SCALE_KEY, GXVec3::ZERO ) ),
     _location ( info.Read ( LOCATION_KEY, GXVec3::ZERO ) ),
-    _version ( info.Read ( VERSION_KEY, DEFAULT_VERSION ) )
+    _version ( info.Read ( VERSION_KEY, DEFAULT_VERSION ) ),
+    _collapse ( info.Read ( COLLAPSE_KEY, DEFAULT_COLLAPSE ) )
 {
     // NOTHING
 }

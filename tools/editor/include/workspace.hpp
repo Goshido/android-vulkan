@@ -126,6 +126,7 @@ class Workspace final
         std::mutex                                      _mutex {};
 
         Hotkey                                          _delete {};
+        Hotkey                                          _deleteAlternative {};
         Hotkey                                          _openWorkspace {};
         Hotkey                                          _saveWorkspace {};
         Hotkey                                          _saveAsWorkspace {};

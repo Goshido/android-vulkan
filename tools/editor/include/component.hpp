@@ -31,8 +31,6 @@ class Component
 
     protected:
         Actor*              _actor = nullptr;
-
-        bool                _collapse = false;
         StringProperty      _name {};
 
         GXQuat              _rotation = GXQuat::IDENTITY;
@@ -40,6 +38,9 @@ class Component
         GXVec3              _location = GXVec3::ZERO;
 
         uint32_t            _version;
+
+        bool                _collapse = false;
+        bool                _select = false;
 
     private:
         static Spawners     _spawners;

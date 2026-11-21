@@ -179,12 +179,16 @@ void UIManager::EventLoop () noexcept
                 OnMouseButtonUp ( messageQueue, std::move ( message ) );
             break;
 
-            case eMessageType::MouseMoved:
-                OnMouseMoved ( messageQueue, std::move ( message ) );
+            case eMessageType::MouseMove:
+                OnMouseMove ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::ReadClipboardResponse:
                 OnReadClipboardResponse ( messageQueue, std::move ( message ) );
+            break;
+
+            case eMessageType::RepeatMouseMove:
+                OnRepeatMouseMove ( messageQueue, std::move ( message ) );
             break;
 
             case eMessageType::SetFocus:
@@ -427,50 +431,11 @@ void UIManager::OnMouseButtonUp ( MessageQueue &messageQueue, Message &&message 
     }
 }
 
-void UIManager::OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) noexcept
+void UIManager::OnMouseMove ( MessageQueue &messageQueue, Message &&message ) noexcept
 {
-    AV_TRACE ( "Mouse moved" )
+    AV_TRACE ( "Mouse move" )
     messageQueue.DequeueEnd ();
-
-    auto const &event = *static_cast<MouseMoveEvent const*> ( message._action () );
-    int32_t const x = event._x;
-    int32_t const y = event._y;
-    _lastMouseX = x;
-    _lastMouseY = y;
-
-    if ( _mouseCapture ) [[unlikely]]
-    {
-        _mouseCapture->OnMouseMove ( event );
-        return;
-    }
-
-    {
-        std::shared_lock const lock ( _mutex );
-
-        for ( auto &widget : _widgets )
-        {
-            Widget &w = *widget;
-
-            if ( w.IsOverlapped ( x, y ) )
-            {
-                w.OnMouseMove ( event );
-                return;
-            }
-        }
-    }
-
-    size_t const eventID = event._eventID;
-
-    if ( eventID - std::exchange ( _eventID, eventID ) <= 1U ) [[likely]]
-        return;
-
-    messageQueue.EnqueueBack (
-        Message ( eMessageType::ChangeCursor,
-            [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
-                return value;
-            }
-        )
-    );
+    HandleMouseMove ( messageQueue, *static_cast<MouseMoveEvent const*> ( message._action () ) );
 }
 
 void UIManager::OnReadClipboardResponse ( MessageQueue &messageQueue, Message &&message ) noexcept
@@ -482,6 +447,20 @@ void UIManager::OnReadClipboardResponse ( MessageQueue &messageQueue, Message &&
     {
         _typingCapture->ApplyClipboard ( *static_cast<std::u32string const*> ( message._action () ) );
     }
+}
+
+void UIManager::OnRepeatMouseMove ( MessageQueue &messageQueue, Message &&message ) noexcept
+{
+    AV_TRACE ( "Repeat mouse move" )
+    messageQueue.DequeueEnd ();
+
+    HandleMouseMove ( messageQueue,
+        {
+            ._x = _lastMouseX,
+            ._y = _lastMouseY,
+            ._eventID = std::bit_cast<size_t> ( message._action () )
+        }
+    );
 }
 
 void UIManager::OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept
@@ -568,6 +547,48 @@ void UIManager::OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message
 
     android_vulkan::LogWarning ( "UIManager::OnUIRemoveWidget - Can't find widget!" );
     AV_ASSERT ( false );
+}
+
+void UIManager::HandleMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept
+{
+    int32_t const x = event._x;
+    int32_t const y = event._y;
+    _lastMouseX = x;
+    _lastMouseY = y;
+
+    if ( _mouseCapture ) [[unlikely]]
+    {
+        _mouseCapture->OnMouseMove ( event );
+        return;
+    }
+
+    {
+        std::shared_lock const lock ( _mutex );
+
+        for ( auto &widget : _widgets )
+        {
+            Widget &w = *widget;
+
+            if ( w.IsOverlapped ( x, y ) )
+            {
+                w.OnMouseMove ( event );
+                return;
+            }
+        }
+    }
+
+    size_t const eventID = event._eventID;
+
+    if ( eventID - std::exchange ( _eventID, eventID ) <= 1U ) [[likely]]
+        return;
+
+    messageQueue.EnqueueBack (
+        Message ( eMessageType::ChangeCursor,
+            [ value = std::bit_cast<void*> ( eCursor::Arrow ) ] () noexcept {
+                return value;
+            }
+        )
+    );
 }
 
 } // namespace editor

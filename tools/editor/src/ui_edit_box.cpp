@@ -544,7 +544,7 @@ void UIEditBox::OnMouseButtonDownEdit ( MouseButtonEvent const &event ) noexcept
         MessageQueue &messageQueue = MessageQueue::Instance ();
 
         messageQueue.EnqueueBack (
-            Message ( eMessageType::MouseMoved,
+            Message ( eMessageType::MouseMove,
                 [ moveEvent = std::move ( moveEvent ) ] () mutable noexcept {
                     return &moveEvent;
                 }

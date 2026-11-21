@@ -178,7 +178,9 @@ void PropertyTool::CreateUI () noexcept
     if ( fuck_actor )
         fuck_actor->ShowProperties ( *this );
 
-    MessageQueue::Instance ().EnqueueBack (
+    MessageQueue &messageQueue = MessageQueue::Instance ();
+
+    messageQueue.EnqueueBack (
         Message ( eMessageType::UIPrependWidget,
             [ ui = _ui ] () noexcept {
                 return ui;

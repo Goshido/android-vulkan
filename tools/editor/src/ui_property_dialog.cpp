@@ -409,6 +409,11 @@ void UIPropertyDialog::Submit ( pbr::UIElement::SubmitInfo &info ) noexcept
         header->UpdatedRect ();
 
     _closeButton.UpdatedRect ();
+
+    if ( std::exchange ( _firstSubmit, false ) ) [[unlikely]]
+    {
+        MessageQueue::Instance ().EnqueueBack ( Message ( eMessageType::TriggerMouseMove ) );
+    }
 }
 
 } // namespace editor

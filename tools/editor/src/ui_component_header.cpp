@@ -168,18 +168,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
             ._position = pbr::PositionProperty::eValue::Absolute,
             ._textAlign = pbr::TextAlignProperty::eValue::Right,
             ._verticalAlign = pbr::VerticalAlignProperty::eValue::Top,
-
-            ._width = pbr::LengthValue ( pbr::LengthValue::eType::Percent,
-                100.0F,
-
-                {
-                    {
-                        ._value = -8.0F,
-                        ._type = pbr::LengthValue::eType::PX
-                    }
-                }
-            ),
-
+            ._width = pbr::LengthValue ( pbr::LengthValue::eType::PX, 20.0F ),
             ._height = pbr::LengthValue ( pbr::LengthValue::eType::PX, 14.0F )
         },
 

@@ -365,6 +365,10 @@ void Editor::EventLoop () noexcept
                 OnRunEvent ();
             break;
 
+            case eMessageType::TriggerMouseMove:
+                OnTriggerMouseMove ();
+            break;
+
             case eMessageType::WindowVisibilityChanged:
                 OnWindowVisibilityChanged ( std::move ( message ) );
             break;
@@ -525,6 +529,13 @@ void Editor::OnShutdown () noexcept
     ShutdownWorkspace ( lastRefund );
     ShutdownAllExceptIO ( lastRefund );
     ShutdownIO ( lastRefund );
+}
+
+void Editor::OnTriggerMouseMove () noexcept
+{
+    AV_TRACE ( "Trigger mouse move" )
+    _messageQueue.DequeueEnd ();
+    _mainWindow.TriggerMouseMove ();
 }
 
 void Editor::OnWindowVisibilityChanged ( Message &&message ) noexcept

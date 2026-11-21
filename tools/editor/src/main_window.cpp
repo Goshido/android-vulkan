@@ -378,6 +378,17 @@ void MainWindow::WriteClipboard ( std::u32string const &string ) const noexcept
     CloseClipboard ();
 }
 
+void MainWindow::TriggerMouseMove () noexcept
+{
+    _messageQueue->EnqueueBack (
+        Message ( eMessageType::RepeatMouseMove,
+            [ eventID = ++_mouseMoveEventID ] () noexcept {
+                return std::bit_cast<void*> ( eventID );
+            }
+        )
+    );
+}
+
 void MainWindow::OnChar ( WPARAM wParam ) noexcept
 {
     AV_TRACE ( "Main window: character" )
@@ -530,16 +541,16 @@ void MainWindow::OnMouseMove ( LPARAM lParam ) noexcept
 {
     AV_TRACE ( "Main window: mouse move" )
 
-    MouseMoveEvent event
-    {
-        ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
-        ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
-        ._eventID = ++_mouseMoveEventID
-    };
-
     _messageQueue->EnqueueBack (
-        Message ( eMessageType::MouseMoved,
-            [ event = std::move ( event) ] () mutable noexcept {
+        Message ( eMessageType::MouseMove,
+            [
+                event = MouseMoveEvent
+                {
+                    ._x = static_cast<int32_t> ( GET_X_LPARAM ( lParam ) ),
+                    ._y = static_cast<int32_t> ( GET_Y_LPARAM ( lParam ) ),
+                    ._eventID = ++_mouseMoveEventID
+                }
+            ] () mutable noexcept {
                 return &event;
             }
         )

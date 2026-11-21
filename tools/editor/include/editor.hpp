@@ -91,6 +91,7 @@ class Editor final
         void OnRecreateSwapchain () noexcept;
         void OnRunEvent () noexcept;
         void OnShutdown () noexcept;
+        void OnTriggerMouseMove () noexcept;
         void OnWindowVisibilityChanged ( Message &&message ) noexcept;
         void OnWriteClipboard ( Message &&message ) noexcept;
         void ScheduleEventLoop () noexcept;

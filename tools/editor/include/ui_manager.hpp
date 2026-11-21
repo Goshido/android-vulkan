@@ -68,8 +68,9 @@ class UIManager final
         void OnMouseHover ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnMouseButtonDown ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnMouseButtonUp ( MessageQueue &messageQueue, Message &&message ) noexcept;
-        void OnMouseMoved ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnMouseMove ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnReadClipboardResponse ( MessageQueue &messageQueue, Message &&message ) noexcept;
+        void OnRepeatMouseMove ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnShutdown ( MessageQueue &messageQueue, Message &&refund ) noexcept;
         void OnStartWidgetCaptureMouse ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnStopWidgetCaptureMouse ( MessageQueue &messageQueue ) noexcept;
@@ -77,6 +78,8 @@ class UIManager final
         void OnUIAppendWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnUIPrependWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
         void OnUIRemoveWidget ( MessageQueue &messageQueue, Message &&message ) noexcept;
+
+        void HandleMouseMove ( MessageQueue &messageQueue, MouseMoveEvent const &event ) noexcept;
 };
 
 } // namespace editor

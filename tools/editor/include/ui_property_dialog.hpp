@@ -58,6 +58,8 @@ class UIPropertyDialog final : public UIDialogBox
         std::vector<std::unique_ptr<UILabel>>               _labels {};
         std::vector<std::unique_ptr<UISeparator>>           _separators {};
 
+        bool                                                _firstSubmit = true;
+
     public:
         UIPropertyDialog () = delete;
 

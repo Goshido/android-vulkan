@@ -25,7 +25,7 @@ class MainWindow final
         std::optional<char16_t>                 _highSurrogate = std::nullopt;
         HWND                                    _hwnd = nullptr;
         MessageQueue*                           _messageQueue = nullptr;
-        size_t                                  _mouseMoveEventID = 0U;
+        size_t                                  _mouseMoveEventID = 0UZ;
         std::unordered_map<WPARAM, eKey>        _keyboardKeyMapper {};
 
     public:
@@ -56,6 +56,8 @@ class MainWindow final
 
         void ReadClipboard () const noexcept;
         void WriteClipboard ( std::u32string const &string ) const noexcept;
+
+        void TriggerMouseMove () noexcept;
 
     private:
         void OnChar ( WPARAM wParam ) noexcept;

@@ -342,7 +342,7 @@ void UIEditBox::SelectAll () noexcept
     );
 }
 
-void UIEditBox::SetText ( std::string const& text ) noexcept
+void UIEditBox::SetText ( std::string const &text ) noexcept
 {
     SetText ( std::string ( text ) );
 }
@@ -355,9 +355,9 @@ void UIEditBox::SetText ( std::string &&text ) noexcept
                 AV_TRACE ( "Edit box: set text" )
 
                 _content = std::move ( *pbr::UTF8Parser::ToU32String ( text ) );
-                _cursor = static_cast<int32_t> ( text.size () );
+                _cursor = static_cast<int32_t> ( _content.size () );
                 _committed = text;
-                _text.SetText ( std::move ( text ) );
+                _text.SetText ( std::u32string_view ( _content ) );
 
                 _selectionDIV.Hide ();
                 _selection = _cursor;
@@ -1107,7 +1107,7 @@ void UIEditBox::UpdateMetrics () noexcept
 {
     pbr::CSSComputedValues const &css = _textDIV.GetCSS ();
 
-    FontStorage::Instance ().GetStringMetrics (_metrics,
+    FontStorage::Instance ().GetStringMetrics ( _metrics,
         css._fontFile,
         static_cast<uint32_t> ( css._fontSize.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromPX ),
         _content

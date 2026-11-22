@@ -49,6 +49,8 @@ inline pbr::LengthValue const MAX_LENGTH ( pbr::LengthValue::eType::PX, 3.33e+6F
 inline pbr::LengthValue const WHOLE_LENGTH ( pbr::LengthValue::eType::Percent, 100.0F );
 inline pbr::LengthValue const ZERO_LENGTH ( pbr::LengthValue::eType::PX, 0.0F );
 
+inline pbr::LengthValue const RESIZE_THICKNESS ( pbr::LengthValue::eType::MM, 2.0F );
+
 } // namespace editor::theme
 
 

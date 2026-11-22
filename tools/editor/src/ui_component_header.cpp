@@ -276,7 +276,17 @@ void UIComponentHeader::OnMouseMove ( MouseMoveEvent const &event ) noexcept
 
 void UIComponentHeader::UpdatedRect () noexcept
 {
-    _rect.From ( _root.GetAbsoluteRect () );
+    // Preventing overlapping with resize areas of parent dialog which is critical for UX.
+    float const resizeArea = theme::RESIZE_THICKNESS.GetValue () * pbr::CSSUnitToDevicePixel::GetInstance ()._fromMM;
+
+    pbr::DIVUIElement::Rect rect = _root.GetAbsoluteRect ();
+    GXVec2 adjust ( rect._topLeft._data[ 0U ], rect._bottomRight._data[ 0U ] );
+    adjust.Sum ( adjust, GXVec2 ( resizeArea, -resizeArea ) );
+
+    rect._topLeft._data[ 0U ] = adjust._data[ 0U ];
+    rect._bottomRight._data[ 0U ] = adjust._data[ 1U ];
+
+    _rect.From ( rect );
 }
 
 void UIComponentHeader::Disconnect () noexcept

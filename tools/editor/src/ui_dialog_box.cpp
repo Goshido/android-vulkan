@@ -10,7 +10,6 @@ namespace editor {
 
 namespace {
 
-constexpr float RESIZE_THICKNESS = 2.0F;
 constexpr float DRAG_THICKNESS = 5.5F;
 
 } // end of anonymous namespace
@@ -353,7 +352,7 @@ void UIDialogBox::UpdateAreas () noexcept
     GXVec2 const b = _rect.GetBottomRight ();
 
     float const fromMM = pbr::CSSUnitToDevicePixel::GetInstance ()._fromMM;
-    float const resizeThickness = RESIZE_THICKNESS * fromMM;
+    float const resizeThickness = fromMM * theme::RESIZE_THICKNESS.GetValue ();
     GXVec2 const t ( resizeThickness, resizeThickness );
 
     GXVec2 c {};

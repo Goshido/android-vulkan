@@ -21,7 +21,7 @@ class UIComponentHeader final : public Widget
         UILabel                 _expand;
         DIVUIElement            _underline;
 
-        size_t                  _eventID = 0U;
+        size_t                  _eventID = 0UZ;
         bool                    &_collapse;
         bool                    &_select;
 

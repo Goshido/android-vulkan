@@ -108,12 +108,19 @@ void PropertyTool::Rebuild () noexcept
     if ( !fuck_actor | !_ui )
         return;
 
-    if ( _ui )
-        _ui->Close ();
-
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeUI,
             [ this ] () noexcept -> void* {
+                _ui->GetRect ( _rect );
+
+                MessageQueue::Instance ().EnqueueBack (
+                    Message ( eMessageType::UIRemoveWidget,
+                        [ ui = std::exchange ( _ui, nullptr ) ] () noexcept {
+                            return ui;
+                        }
+                    )
+                );
+
                 CreateUI ();
                 return nullptr;
             }

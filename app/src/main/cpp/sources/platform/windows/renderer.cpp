@@ -12,7 +12,7 @@ namespace android_vulkan {
 
 namespace {
 
-constexpr char const SNAPSHOT_DIRECTORY[] = R"__(%APPDATA%\Goshido Inc\Editor\Vulkan Memory)__";
+constexpr char const SNAPSHOT_DIRECTORY[] = R"__(%APPDATA%\Goshido Inc\Editor\Vulkan memory)__";
 
 constexpr Renderer::VulkanVersion VERSION
 {

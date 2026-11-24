@@ -248,6 +248,7 @@ Hold `Shift` | Multi-selection is in progress | Append to selection
 `E` | - | Select rotate tool
 `R` | - | Select scale tool
 `X` | - | Toggle between local and world coordinate systems
+`RMB` | Operation is in progress | Cancel active operation
 `Esc` | Operation is in progress | Cancel active operation
 
 [↬ table of content ⇧](#table-of-content)

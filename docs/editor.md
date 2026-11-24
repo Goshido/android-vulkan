@@ -13,6 +13,12 @@
   - [_ASAN integration_](#asan-integration)
   - [_Debug build_](#debug-build)
   - [_Release build_](#release-build)
+- [_Hotkeys_](#hotkeys)
+  - [_Global_](#global-hotkeys)
+  - [_Viewport_](#viewport-hotkeys)
+  - [_Gizmo_](#gizmo-hotkeys)
+  - [_Property tool_](#property-tool-hotkeys)
+  - [_Transform tool_](#transform-tool-hotkeys)
 
 ## <a id="quck-start">Quick start instructions</a>
 
@@ -204,5 +210,62 @@ Build features:
 
 - all _CPU_ optimizations are enabled
 - _VVL_ are disabled
+
+[↬ table of content ⇧](#table-of-content)
+
+## <a id="hotkeys">_Hotkeys_</a>
+
+### <a id="global-hotkeys">_Global_</a>
+
+**Hotkey** | **Action**
+--- | ---
+`Ctrl+Z` | Undo
+`Ctrl+Shift+Z` | Redo
+`Ctrl+Shift+Alt+U` | Make _UI_ layout snapshot. The `.svg` file will be located in `%APPDATA%\Goshido Inc\Editor\Layout` directory
+`Ctrl+Shift+Alt+M` | Make _Vulkan_ memory snapshot. The `.json` file will be located in `%APPDATA%\Goshido Inc\Editor\Vulkan memory` directory. More about it is [here](./vulkan-memory-view.md)
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="viewport-hotkeys">_Viewport_</a>
+
+**Hotkey** | **Context** | **Action**
+--- | --- | ---
+`MMB + WASD` | - | Free-fly mode: navigate the scene using first-person shooter controls
+Hold `LMB` + mouse move | - | Multi-selection
+`Ctrl+LMB` | Without multi-selection | Toggle selection
+Hold `Ctrl` | Multi-selection is in progress | Remove from selection
+`Shift+LMB` | Without multi-selection | Toggle selection
+Hold `Shift` | Multi-selection is in progress | Append to selection
+`Esc` | Multi-selection is in progress | Cancel changes in selection
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="gizmo-hotkeys">_Gizmo_</a>
+
+**Hotkey** | **Context** | **Action**
+--- | --- | ---
+`W` | - | Select move tool
+`E` | - | Select rotate tool
+`R` | - | Select scale tool
+`X` | - | Toggle between local and world coordinate systems
+`Esc` | Operation is in progress | Cancel active operation
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="property-tool-hotkeys">_Property tool_</a>
+
+**Hotkey** | **Action**
+--- | ---
+`F1` | Show/hide tool
+
+[↬ table of content ⇧](#table-of-content)
+
+### <a id="transform-tool-hotkeys">_Transform tool_</a>
+
+**Hotkey** | **Context** | **Action**
+--- | --- | ---
+`F2` | - | Show/hide tool
+`Tab` | Editing is in progress | Switch to the next property
+`Esc` | Editing is in progress | Cancel changes
 
 [↬ table of content ⇧](#table-of-content)

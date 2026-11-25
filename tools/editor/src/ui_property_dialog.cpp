@@ -1,7 +1,6 @@
 #include <precompiled_headers.hpp>
 #include <history.hpp>
 #include <message_queue.hpp>
-#include <property_tool.hpp>
 #include <theme.hpp>
 #include <ui_property_dialog.hpp>
 
@@ -178,25 +177,13 @@ UIPropertyDialog::UIPropertyDialog ( ActionHandler &&onClose ) noexcept:
     closeButtonStyle._top = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
     closeButtonStyle._right = pbr::LengthValue ( pbr::LengthValue::eType::PX, 4.0F );
 
-    _closeButton.Connect ( std::bind_front ( &UIPropertyDialog::Close, this ) );
+    _closeButton.Connect ( std::move ( onClose ) );
     _div.PrependChildElement ( _headerLine );
 }
 
 void UIPropertyDialog::GetRect ( Rect &target ) const noexcept
 {
     target.From ( _div.GetAbsoluteRect () );
-}
-
-void UIPropertyDialog::Close () noexcept
-{
-    MessageQueue::Instance ().EnqueueBack (
-        Message ( eMessageType::UIRemoveWidget,
-            [ this ] () noexcept {
-                _onClose ();
-                return this;
-            }
-        )
-    );
 }
 
 void UIPropertyDialog::Disconnect () noexcept

@@ -255,9 +255,11 @@ Hold `Shift` | Multi-selection is in progress | Append to selection
 
 ### <a id="property-tool-hotkeys">_Property tool_</a>
 
-**Hotkey** | **Action**
---- | ---
-`F1` | Show/hide tool
+**Hotkey** | **Context** | **Action**
+--- | --- | ---
+`F1` | | Show/hide tool
+`LMB` | Cursor above component header | Collapse/expand component
+`Ctrl+LMB` | Cursor above component header | Toggle component selection
 
 [↬ table of content ⇧](#table-of-content)
 

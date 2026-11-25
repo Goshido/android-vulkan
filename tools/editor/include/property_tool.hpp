@@ -33,11 +33,8 @@ class PropertyTool final
         void Init ( SaveState::Container const &save ) noexcept;
         void Destroy ( SaveState::Container &save ) noexcept;
 
-        void Rebuild () noexcept;
-
-        void OnContentCommitted ( Selection::Actors const &actors ) noexcept;
+        void Rebuild ( Selection::Actors const &actors ) noexcept;
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
-        void OnSelectionChanged ( Selection::Actors const &actors ) noexcept;
 
         void Append ( std::string_view name, StringProperty &property ) noexcept;
 
@@ -52,7 +49,7 @@ class PropertyTool final
         [[nodiscard]] static PropertyTool &Instance () noexcept;
 
     private:
-        void CreateUI () noexcept;
+        void CreateUI ( Selection::Actors const &actors ) noexcept;
 };
 
 } // namespace editor

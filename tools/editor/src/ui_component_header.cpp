@@ -1,9 +1,9 @@
 #include <precompiled_headers.hpp>
 #include <cursor.hpp>
 #include <glyphs.hpp>
-#include <property_tool.hpp>
 #include <theme.hpp>
 #include <ui_component_header.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
@@ -260,7 +260,7 @@ void UIComponentHeader::OnMouseButtonUp ( MouseButtonEvent const &event ) noexce
         return;
 
     _collapse = !_collapse;
-    PropertyTool::Instance ().Rebuild ();
+    PropertyTool::Instance ().Rebuild ( Workspace::Instance ().GetSelection ().GetActors () );
 }
 
 void UIComponentHeader::OnMouseMove ( MouseMoveEvent const &event ) noexcept

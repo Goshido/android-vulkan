@@ -1,11 +1,10 @@
 #include <precompiled_headers.hpp>
 #include <property_tool.hpp>
 #include <trace.hpp>
+#include <workspace.hpp>
 
 
 namespace editor {
-
-extern Actor* fuck_actor;
 
 namespace {
 
@@ -35,7 +34,7 @@ PropertyTool::PropertyTool () noexcept
 
 void PropertyTool::Init ( SaveState::Container const &save ) noexcept
 {
-    AV_TRACE ( "Property tool: init" )
+    AV_TRACE ( "Init property tool" )
 
     _toggle = Hotkey ( eKey::KeyF1,
         false,
@@ -45,11 +44,19 @@ void PropertyTool::Init ( SaveState::Container const &save ) noexcept
         [ this ] () noexcept {
             if ( !_ui )
             {
-                CreateUI ();
+                CreateUI ( Workspace::Instance ().GetSelection ().GetActors () );
                 return;
             }
 
-            _ui->Close ();
+            _ui->GetRect ( _rect );
+
+            MessageQueue::Instance ().EnqueueBack (
+                Message ( eMessageType::UIRemoveWidget,
+                    [ ui = std::exchange ( _ui, nullptr ) ] () noexcept {
+                        return ui;
+                    }
+                )
+            );
         }
     );
 
@@ -74,13 +81,13 @@ void PropertyTool::Init ( SaveState::Container const &save ) noexcept
 
     if ( root.Read ( CONFIG_KEY_SHOW, DEFAULT_SHOW ) )
     {
-        CreateUI ();
+        CreateUI ( Workspace::Instance ().GetSelection ().GetActors () );
     }
 }
 
 void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
 {
-    AV_TRACE ( "Property tool: destroy" )
+    AV_TRACE ( "Destroy property tool" )
     SaveState::Container &root = save.WriteContainer ( CONFIG_KEY_SECTION );
 
     if ( !_ui )
@@ -101,16 +108,17 @@ void PropertyTool::Destroy ( SaveState::Container &save ) noexcept
     ui.Write ( _rect._bottom );
 }
 
-void PropertyTool::Rebuild () noexcept
+void PropertyTool::Rebuild ( Selection::Actors const &actors ) noexcept
 {
-    AV_TRACE ( "Property tool: rebuild" )
+    AV_TRACE ( "Rebuild properties" )
 
-    if ( !fuck_actor | !_ui )
+    if ( !_ui )
         return;
 
     MessageQueue::Instance ().EnqueueBack (
         Message ( eMessageType::InvokeUI,
-            [ this ] () noexcept -> void* {
+            [ this, actors ] () noexcept -> void* {
+                AV_TRACE ( "Rebuild properties" )
                 _ui->GetRect ( _rect );
 
                 MessageQueue::Instance ().EnqueueBack (
@@ -121,25 +129,14 @@ void PropertyTool::Rebuild () noexcept
                     )
                 );
 
-                CreateUI ();
+                CreateUI ( actors );
                 return nullptr;
             }
         )
     );
 }
 
-void PropertyTool::OnContentCommitted ( Selection::Actors const &/*actors*/ ) noexcept
-{
-    AV_TRACE ( "Property tool: content committed" )
-    Rebuild ();
-}
-
 void PropertyTool::OnContentUpdated ( Selection::Actors const &/*actors*/ ) noexcept
-{
-    // FUCK
-}
-
-void PropertyTool::OnSelectionChanged ( Selection::Actors const &/*actors*/ ) noexcept
 {
     // FUCK
 }
@@ -168,9 +165,9 @@ PropertyTool &PropertyTool::Instance () noexcept
     return *_instance;
 }
 
-void PropertyTool::CreateUI () noexcept
+void PropertyTool::CreateUI ( Selection::Actors const &actors ) noexcept
 {
-    AV_TRACE ( "Property tool: create UI" )
+    AV_TRACE ( "Create properties" )
 
     _ui = new UIPropertyDialog (
         [ this ] () noexcept {
@@ -182,8 +179,8 @@ void PropertyTool::CreateUI () noexcept
     _ui->SetRect ( _rect );
     _ui->SetMinSize ( MIN_WIDTH, MIN_HEIGHT );
 
-    if ( fuck_actor )
-        fuck_actor->ShowProperties ( *this );
+    if ( !actors.empty () )
+        ( *actors.cbegin () )->ShowProperties ( *this );
 
     MessageQueue &messageQueue = MessageQueue::Instance ();
 

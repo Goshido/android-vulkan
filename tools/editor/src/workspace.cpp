@@ -19,9 +19,6 @@
 
 namespace editor {
 
-// FUCK
-Actor* fuck_actor = nullptr;
-
 namespace {
 
 constexpr size_t PER_MESH_ELEMENTS = 1'000'000UZ;
@@ -906,7 +903,7 @@ void Workspace::OnContentCommitted () noexcept
     AV_TRACE ( "Content committed" )
     Selection::Actors &actors = _selection.GetActors ();
     _viewport->OnContentCommitted ( actors );
-    _propertyTool.OnContentCommitted ( actors );
+    _propertyTool.Rebuild ( actors );
     _transformTool.OnContentCommitted ( actors );
 }
 
@@ -924,7 +921,7 @@ void Workspace::OnSelectionChanged () noexcept
     AV_TRACE ( "Selection changed" )
     Selection::Actors &actors = _selection.GetActors ();
     _viewport->OnSelectionChanged ( actors );
-    _propertyTool.OnSelectionChanged ( actors );
+    _propertyTool.Rebuild ( actors );
     _transformTool.OnSelectionChanged ( actors );
 }
 
@@ -1227,7 +1224,6 @@ void Workspace::FUCK () noexcept
     ActorRef actor = std::make_unique<Actor> ();
     actor->SetName ( "Full" );
     Actor &a0 = *actor;
-    Actor* fuck = &a0;
 
     ComponentRef mesh1 = std::make_unique<StaticMeshComponent> ( "meshes/rotating_mesh/sonic-material-1.mesh2",
         "../editor-assets/textures/sonic-material-1-diffuse.png"
@@ -1298,7 +1294,6 @@ void Workspace::FUCK () noexcept
     _history.Append ( std::make_unique<AppendComponentAction> ( a3, std::move ( mesh3 ) ) );
 
     _history.End ();
-    fuck_actor = fuck;
 }
 
 void Workspace::ComputeTransformGBufferOnly ( GXProjectionInfiniteFarClipPlanes const &frustum ) noexcept

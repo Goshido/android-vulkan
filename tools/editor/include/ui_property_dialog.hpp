@@ -74,7 +74,6 @@ class UIPropertyDialog final : public UIDialogBox
         ~UIPropertyDialog () override = default;
 
         void GetRect ( Rect &target ) const noexcept;
-        void Close () noexcept;
         void Disconnect () noexcept;
         [[nodiscard]] DIVUIElement &GetBody () noexcept;
 

@@ -16,6 +16,27 @@ namespace editor {
 
 class Actor final
 {
+    public:
+        class ComponentInfo final
+        {
+            public:
+                ComponentRef                    _component {};
+                size_t                          _index = 0UZ;
+
+            public:
+                // Implemented for std::vector compatibility. Must be avoided. Any usage will raise assert.
+                explicit ComponentInfo () noexcept;
+                ComponentInfo ( ComponentInfo const &other ) noexcept;
+                ComponentInfo &operator = ( ComponentInfo const &other ) noexcept;
+
+                ComponentInfo ( ComponentInfo &&other ) noexcept;
+                ComponentInfo &operator = ( ComponentInfo &&other ) noexcept;
+
+                explicit ComponentInfo ( ComponentRef &&component, size_t index ) noexcept;
+
+                ~ComponentInfo () = default;
+        };
+
     private:
         constexpr static std::string_view       DEFAULT_NAME = "actor";
 
@@ -43,14 +64,11 @@ class Actor final
 
         void SetName ( std::string &&name ) noexcept;
 
-        void Append ( ComponentRef &&component ) noexcept;
-        void Insert ( size_t before, ComponentRef &&component ) noexcept;
+        void Attach ( ComponentInfo &&component ) noexcept;
+        [[nodiscard]] ComponentInfo Detach ( Component const &component ) noexcept;
 
         void Select () noexcept;
         void Deselect () noexcept;
-
-        // Method returns just removed component.
-        [[nodiscard]] ComponentRef Remove ( Component const &component ) noexcept;
 
         void Save ( SaveState::Container &root ) const noexcept;
         void ShowProperties ( PropertyTool &propertyTool ) noexcept;

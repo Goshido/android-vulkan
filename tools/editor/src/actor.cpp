@@ -22,6 +22,49 @@ constexpr std::string_view COMPONENTS_KEY = "components";
 
 //----------------------------------------------------------------------------------------------------------------------
 
+Actor::ComponentInfo::ComponentInfo () noexcept
+{
+    AV_ASSERT ( false )
+}
+
+Actor::ComponentInfo::ComponentInfo ( ComponentInfo const &/*other*/ ) noexcept
+{
+    AV_ASSERT ( false )
+}
+
+Actor::ComponentInfo &Actor::ComponentInfo::operator = ( ComponentInfo const &/*other*/ ) noexcept
+{
+    AV_ASSERT ( false )
+    return *this;
+}
+
+Actor::ComponentInfo::ComponentInfo ( Actor::ComponentInfo &&other ) noexcept:
+    _component ( std::move ( other._component ) ),
+    _index ( std::exchange ( other._index, 0UZ ) )
+{
+    // NOTHING
+}
+
+Actor::ComponentInfo &Actor::ComponentInfo::operator = ( Actor::ComponentInfo &&other ) noexcept
+{
+    if ( this == &other ) [[unlikely]]
+        return *this;
+
+    _component = std::move ( other._component );
+    _index = std::exchange ( other._index, 0UZ );
+
+    return *this;
+}
+
+Actor::ComponentInfo::ComponentInfo ( ComponentRef &&component, size_t index ) noexcept:
+    _component ( std::move ( component ) ),
+    _index ( index )
+{
+    // NOTHING
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
 Actor::Actor ( SaveState::Container const &info ) noexcept:
     _name ( std::string ( info.Read ( NAME_KEY, DEFAULT_NAME ) ) )
 {
@@ -34,7 +77,11 @@ Actor::Actor ( SaveState::Container const &info ) noexcept:
     {
         if ( auto component = Component::Spawn ( components.ReadContainer () ); component ) [[likely]]
         {
-            Append ( std::move ( *component ) );
+            ComponentRef &ref = *component;
+            Component &c = *ref;
+            _components.push_back ( std::move ( ref ) );
+            c.Register ( *this );
+            c.ActorTransformChanged ();
         }
     }
 }
@@ -54,24 +101,38 @@ void Actor::SetName ( std::string &&name ) noexcept
     _name = std::move ( name );
 }
 
-void Actor::Append ( ComponentRef &&component ) noexcept
+void Actor::Attach ( ComponentInfo &&component ) noexcept
 {
-    Component &c = *component;
-    _components.push_back ( std::move ( component ) );
-    c.Register ( *this );
-    c.ActorTransformChanged ();
-}
+    Component &c = *component._component;
 
-void Actor::Insert ( size_t before, ComponentRef &&component ) noexcept
-{
-    Component &c = *component;
-
-    _components.insert ( _components.cbegin () + static_cast<Components::const_iterator::difference_type> ( before ),
-        std::move ( component )
+    _components.insert (
+        _components.cbegin () + static_cast<Components::const_iterator::difference_type> ( component._index ),
+        std::move ( component._component )
     );
 
     c.Register ( *this );
     c.ActorTransformChanged ();
+}
+
+Actor::ComponentInfo Actor::Detach ( Component const &component ) noexcept
+{
+    auto end = _components.end ();
+
+    auto findResult = std::find_if ( _components.begin (),
+        _components.end (),
+
+        [ target = &component ] ( ComponentRef const &item ) noexcept -> bool {
+            return item.get () == target;
+        }
+    );
+
+    AV_ASSERT ( findResult != end )
+    ComponentRef result = std::move ( *findResult );
+    result->Unregister ();
+    _components.erase ( findResult );
+
+    // FUCK - compute index correct
+    return Actor::ComponentInfo ( std::move ( result ), 0UZ );
 }
 
 void Actor::Select () noexcept
@@ -88,25 +149,6 @@ void Actor::Deselect () noexcept
     {
         component->Deselect ();
     }
-}
-
-ComponentRef Actor::Remove ( Component const &component ) noexcept
-{
-    auto end = _components.end ();
-
-    auto findResult = std::find_if ( _components.begin (),
-        _components.end (),
-
-        [ target = &component ] ( ComponentRef const &item ) noexcept -> bool {
-            return item.get () == target;
-        }
-    );
-
-    AV_ASSERT ( findResult != end )
-    ComponentRef result = std::move ( *findResult );
-    result->Unregister ();
-    _components.erase ( findResult );
-    return result;
 }
 
 void Actor::Save ( SaveState::Container &root ) const noexcept

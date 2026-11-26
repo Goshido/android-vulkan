@@ -21,6 +21,67 @@ pbr::LengthValue const DEFAULT_HEIGHT ( pbr::LengthValue::eType::PX, 200.0F );
 constexpr std::string_view CONFIG_KEY_SHOW = "show";
 constexpr bool DEFAULT_SHOW = true;
 
+//----------------------------------------------------------------------------------------------------------------------
+
+class DeleteComponentAction final : public Action
+{
+    public:
+        struct Item final
+        {
+            Actor*                  _actor = nullptr;
+            Actor::ComponentInfo    _componentInfo;
+            Component*              _key = _componentInfo._component.get ();
+        };
+
+        using Items = std::vector<Item>;
+
+    private:
+        Items               _items {};
+
+    public:
+        DeleteComponentAction () = delete;
+
+        DeleteComponentAction ( DeleteComponentAction const & ) = delete;
+        DeleteComponentAction &operator = ( DeleteComponentAction const & ) = delete;
+
+        DeleteComponentAction ( DeleteComponentAction && ) = default;
+        DeleteComponentAction &operator = ( DeleteComponentAction && ) = default;
+
+        explicit DeleteComponentAction ( Items &&items ) noexcept;
+
+        ~DeleteComponentAction () override = default;
+
+    private:
+        void Redo () noexcept override;
+        void Undo () noexcept override;
+};
+
+DeleteComponentAction::DeleteComponentAction ( Items &&items ) noexcept:
+    _items ( std::move ( items ) )
+{
+    // NOTHING
+}
+
+void DeleteComponentAction::Redo () noexcept
+{
+    AV_TRACE ( "Redo delete component" )
+
+    for ( Item &item : _items )
+        item._componentInfo = item._actor->Detach ( *item._key );
+
+    Workspace::Instance ().OnContentCommitted ();
+}
+
+void DeleteComponentAction::Undo () noexcept
+{
+    AV_TRACE ( "Undo delete component" )
+
+    for ( Item &item : _items )
+        item._actor->Attach ( std::move ( item._componentInfo ) );
+
+    Workspace::Instance ().OnContentCommitted ();
+}
+
 } // end of anonymous namespace
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -134,6 +195,28 @@ void PropertyTool::Rebuild ( Selection::Actors const &actors ) noexcept
             }
         )
     );
+}
+
+bool PropertyTool::DeleteComponents () noexcept
+{
+    AV_TRACE ( "Delete components" )
+
+    if ( !_ui )
+        return false;
+
+    Selection::Actors &actors = Workspace::Instance ().GetSelection ().GetActors ();
+    DeleteComponentAction::Items items {};
+
+    for ( Actor* actor : actors )
+    {
+        android_vulkan::LogDebug ( "FUCK %p", actor );
+    }
+
+    if ( items.empty () )
+        return false;
+
+    DeleteComponentAction action ( std::move ( items ) );
+    return true;
 }
 
 void PropertyTool::OnContentUpdated ( Selection::Actors const &/*actors*/ ) noexcept

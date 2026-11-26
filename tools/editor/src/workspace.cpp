@@ -93,9 +93,9 @@ AV_DX_ALIGNMENT_END
 class AppendComponentAction final : public Action
 {
     private:
-        Actor*          _actor = nullptr;
-        ComponentRef    _component {};
-        Component*      _key = _component.get ();
+        Actor*                  _actor = nullptr;
+        Actor::ComponentInfo    _componentInfo;
+        Component*              _key = _componentInfo._component.get ();
 
     public:
         AppendComponentAction () = delete;
@@ -106,7 +106,7 @@ class AppendComponentAction final : public Action
         AppendComponentAction ( AppendComponentAction && ) = default;
         AppendComponentAction &operator = ( AppendComponentAction && ) = default;
 
-        explicit AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept;
+        explicit AppendComponentAction ( Actor &actor, Actor::ComponentInfo &&componentInfo ) noexcept;
 
         ~AppendComponentAction () override = default;
 
@@ -115,21 +115,21 @@ class AppendComponentAction final : public Action
         void Undo () noexcept override;
 };
 
-AppendComponentAction::AppendComponentAction ( Actor &actor, ComponentRef &&compoent ) noexcept:
+AppendComponentAction::AppendComponentAction ( Actor &actor, Actor::ComponentInfo &&componentInfo ) noexcept:
     _actor ( &actor ),
-    _component ( std::move ( compoent ) )
+    _componentInfo ( std::move ( componentInfo ) )
 {
     // NOTHING
 }
 
 void AppendComponentAction::Redo () noexcept
 {
-    _actor->Append ( std::move ( _component ) );
+    _actor->Attach ( std::move ( _componentInfo ) );
 }
 
 void AppendComponentAction::Undo () noexcept
 {
-    _component = _actor->Remove ( *_key );
+    _componentInfo = _actor->Detach ( *_key );
 }
 
 } // end of anonymous namespace
@@ -1245,9 +1245,18 @@ void Workspace::FUCK () noexcept
     a0.SetLocation ( GXVec3 ( -1.2F, -1.0F, 3.0F ) );
 
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh1 ) ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh2 ) ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a0, std::move ( mesh3 ) ) );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a0, Actor::ComponentInfo ( std::move ( mesh1 ), 0UZ ) )
+    );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a0, Actor::ComponentInfo ( std::move ( mesh2 ), 1UZ ) )
+    );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a0, Actor::ComponentInfo ( std::move ( mesh3 ), 2UZ ) )
+    );
 
     actor = std::make_unique<Actor> ();
     actor->SetName ( "Part #1" );
@@ -1263,7 +1272,10 @@ void Workspace::FUCK () noexcept
     a1.SetLocation ( parts );
 
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a1, std::move ( mesh1 ) ) );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a1, Actor::ComponentInfo ( std::move ( mesh1 ), 0UZ ) )
+    );
 
     actor = std::make_unique<Actor> ();
     actor->SetName ( "Part #2" );
@@ -1277,7 +1289,10 @@ void Workspace::FUCK () noexcept
     a2.SetLocation ( parts );
 
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a2, std::move ( mesh2 ) ) );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a2, Actor::ComponentInfo ( std::move ( mesh2 ), 0UZ ) )
+    );
 
     actor = std::make_unique<Actor> ();
     actor->SetName ( "Part #3" );
@@ -1291,7 +1306,10 @@ void Workspace::FUCK () noexcept
     a3.SetLocation ( parts );
 
     _history.Append ( std::make_unique<CreateActorAction> ( std::move ( actor ), _actors ) );
-    _history.Append ( std::make_unique<AppendComponentAction> ( a3, std::move ( mesh3 ) ) );
+
+    _history.Append (
+        std::make_unique<AppendComponentAction> ( a3, Actor::ComponentInfo ( std::move ( mesh3 ), 0UZ ) )
+    );
 
     _history.End ();
 }
@@ -2005,8 +2023,8 @@ void Workspace::InitHotkeys () noexcept
         false,
         false,
 
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Delete" );
+        [ &propertyTool = _propertyTool ] () noexcept {
+            [[maybe_unused]] bool const handled = propertyTool.DeleteComponents ();
         }
     );
 
@@ -2015,8 +2033,8 @@ void Workspace::InitHotkeys () noexcept
         true,
         false,
 
-        [] () noexcept {
-            android_vulkan::LogDebug ( ">>> Delete" );
+        [ &propertyTool = _propertyTool ] () noexcept {
+            [[maybe_unused]] bool const handled = propertyTool.DeleteComponents ();
         }
     );
 

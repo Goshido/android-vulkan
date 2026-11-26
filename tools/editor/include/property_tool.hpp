@@ -34,6 +34,10 @@ class PropertyTool final
         void Destroy ( SaveState::Container &save ) noexcept;
 
         void Rebuild ( Selection::Actors const &actors ) noexcept;
+
+        // Method return true if there is anything to delete. Otherwise method return false.
+        [[nodiscard]] bool DeleteComponents () noexcept;
+
         void OnContentUpdated ( Selection::Actors const &actors ) noexcept;
 
         void Append ( std::string_view name, StringProperty &property ) noexcept;

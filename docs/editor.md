@@ -258,8 +258,9 @@ Hold `Shift` | Multi-selection is in progress | Append to selection
 **Hotkey** | **Context** | **Action**
 --- | --- | ---
 `F1` | | Show/hide tool
-`LMB` | Cursor above component header | Collapse/expand component
-`Ctrl+LMB` | Cursor above component header | Toggle component selection
+`LMB` | Cursor is above component header | Collapse/expand component
+`Ctrl+LMB` | Cursor is above component header | Toggle component selection
+`Del` | At least one component is selected | Delete components
 
 [↬ table of content ⇧](#table-of-content)
 

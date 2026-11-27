@@ -29,8 +29,8 @@ class DeleteComponentAction final : public Action
         struct Item final
         {
             Actor*                  _actor = nullptr;
-            Actor::ComponentInfo    _componentInfo;
-            Component*              _key = _componentInfo._component.get ();
+            Actor::ComponentInfo    _componentInfo {};
+            Component const*        _key = nullptr;
         };
 
         using Items = std::vector<Item>;
@@ -75,9 +75,10 @@ void DeleteComponentAction::Redo () noexcept
 void DeleteComponentAction::Undo () noexcept
 {
     AV_TRACE ( "Undo delete component" )
+    auto const end = _items.rend ();
 
-    for ( Item &item : _items )
-        item._actor->Attach ( std::move ( item._componentInfo ) );
+    for ( auto item = _items.rbegin (); item != end; ++item )
+        ( *item )._actor->Attach ( std::move ( item->_componentInfo ) );
 
     Workspace::Instance ().OnContentCommitted ();
 }
@@ -209,13 +210,28 @@ bool PropertyTool::DeleteComponents () noexcept
 
     for ( Actor* actor : actors )
     {
-        android_vulkan::LogDebug ( "FUCK %p", actor );
+        for ( ComponentRef &component : actor->GetComponents () )
+        {
+            if ( Component *c = component.get (); c->IsEditing () )
+            {
+                items.push_back (
+                    {
+                        ._actor = actor,
+                        ._key = c
+                    }
+                );
+            }
+        }
     }
 
-    if ( items.empty () )
+    if ( items.empty () ) [[likely]]
         return false;
 
-    DeleteComponentAction action ( std::move ( items ) );
+    History &history = History::Instance ();
+    history.Begin ();
+    history.Append ( std::make_unique<DeleteComponentAction> ( std::move ( items ) ) );
+    history.End ();
+
     return true;
 }
 
@@ -231,11 +247,11 @@ void PropertyTool::Append ( std::string_view name, StringProperty &property ) no
 
 void PropertyTool::Append ( StringProperty &componentName,
     bool &componentCollapse,
-    bool &componentSelect,
+    bool &componentEdit,
     std::string_view componentGlyph
 ) noexcept
 {
-    _ui->Append ( componentName, componentCollapse, componentSelect, componentGlyph );
+    _ui->Append ( componentName, componentCollapse, componentEdit, componentGlyph );
 }
 
 void PropertyTool::AppendSeparator () noexcept
@@ -255,7 +271,14 @@ void PropertyTool::CreateUI ( Selection::Actors const &actors ) noexcept
     _ui = new UIPropertyDialog (
         [ this ] () noexcept {
             _ui->GetRect ( _rect );
-            _ui = nullptr;
+
+            MessageQueue::Instance ().EnqueueBack (
+                Message ( eMessageType::UIRemoveWidget,
+                    [ ui = std::exchange ( _ui, nullptr ) ] () noexcept {
+                        return ui;
+                    }
+                )
+            );
         }
     );
 

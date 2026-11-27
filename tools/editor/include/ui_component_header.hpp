@@ -23,7 +23,7 @@ class UIComponentHeader final : public Widget
 
         size_t                  _eventID = 0UZ;
         bool                    &_collapse;
-        bool                    &_select;
+        bool                    &_edit;
 
         StringProperty*         _property = nullptr;
         Property::Connection    _connection = 42U;
@@ -41,7 +41,7 @@ class UIComponentHeader final : public Widget
             StringProperty &name,
             std::string_view glyph,
             bool &collapse,
-            bool &select
+            bool &edit
         ) noexcept;
 
         ~UIComponentHeader () noexcept override;

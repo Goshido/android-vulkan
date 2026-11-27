@@ -14,9 +14,6 @@ namespace editor {
 
 class UIPropertyDialog final : public UIDialogBox
 {
-    public:
-        using ActionHandler = std::move_only_function<void ()>;
-
     private:
         class EditBoxInfo final
         {
@@ -51,7 +48,6 @@ class UIPropertyDialog final : public UIDialogBox
         DIVUIElement                                        _headerLine;
         UILabel                                             _headerText;
         UICloseButton                                       _closeButton;
-        ActionHandler                                       _onClose = nullptr;
 
         std::vector<EditBoxInfo>                            _editBoxes {};
         std::vector<std::unique_ptr<UIComponentHeader>>     _headers {};
@@ -69,7 +65,7 @@ class UIPropertyDialog final : public UIDialogBox
         UIPropertyDialog ( UIPropertyDialog && ) = delete;
         UIPropertyDialog &operator = ( UIPropertyDialog && ) = delete;
 
-        explicit UIPropertyDialog ( ActionHandler &&onClose ) noexcept;
+        explicit UIPropertyDialog ( UICloseButton::Callback &&onClose ) noexcept;
 
         ~UIPropertyDialog () override = default;
 
@@ -81,7 +77,7 @@ class UIPropertyDialog final : public UIDialogBox
 
         void Append ( StringProperty &componentName,
             bool &componentCollapse,
-            bool &componentSelect,
+            bool &componentEdit,
             std::string_view componentGlyph
         ) noexcept;
 

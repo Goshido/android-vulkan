@@ -35,9 +35,9 @@ constexpr float DEFAULT_BRIGHTNESS_BALLANCE = 0.0F;
 class CreateActorAction final : public Action
 {
     private:
-        std::unordered_map<Actor const*, ActorRef>      *_actors = nullptr;
+        std::unordered_map<Actor const*, ActorRef>*     _actors = nullptr;
         ActorRef                                        _actor {};
-        Actor*                                          _key = _actor.get ();
+        Actor const*                                    _key = _actor.get ();
 
     public:
         CreateActorAction () = delete;

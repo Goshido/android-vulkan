@@ -24,8 +24,9 @@ class Actor final
                 size_t                          _index = 0UZ;
 
             public:
+                explicit ComponentInfo () = default;
+
                 // Implemented for std::vector compatibility. Must be avoided. Any usage will raise assert.
-                explicit ComponentInfo () noexcept;
                 ComponentInfo ( ComponentInfo const &other ) noexcept;
                 ComponentInfo &operator = ( ComponentInfo const &other ) noexcept;
 
@@ -37,10 +38,10 @@ class Actor final
                 ~ComponentInfo () = default;
         };
 
+        using Components = std::deque<ComponentRef>;
+
     private:
         constexpr static std::string_view       DEFAULT_NAME = "actor";
-
-        using Components = std::deque<ComponentRef>;
 
     private:
         Components                              _components {};
@@ -48,6 +49,8 @@ class Actor final
         GXVec3                                  _scale = GXVec3::ONE;
         GXVec3                                  _location = GXVec3::ZERO;
         StringProperty                          _name { std::string ( DEFAULT_NAME ) };
+
+        bool                                    _select = false;
 
     public:
         explicit Actor () = default;
@@ -69,9 +72,12 @@ class Actor final
 
         void Select () noexcept;
         void Deselect () noexcept;
+        [[nodiscard]] bool IsSelected () const noexcept;
 
         void Save ( SaveState::Container &root ) const noexcept;
         void ShowProperties ( PropertyTool &propertyTool ) noexcept;
+
+        [[nodiscard]] Components &GetComponents () noexcept;
 
         [[nodiscard]] GXQuat const &GetRotation () const noexcept;
         void SetRotation ( GXQuat const &rotation ) noexcept;

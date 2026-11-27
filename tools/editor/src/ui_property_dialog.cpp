@@ -128,7 +128,7 @@ void UIPropertyDialog::EditBoxInfo::DumpLayout ( pbr::SVGWriter &writer ) const 
 
 //----------------------------------------------------------------------------------------------------------------------
 
-UIPropertyDialog::UIPropertyDialog ( ActionHandler &&onClose ) noexcept:
+UIPropertyDialog::UIPropertyDialog ( UICloseButton::Callback &&onClose ) noexcept:
     UIDialogBox ( "Properties" ),
 
     _headerLine ( _div,
@@ -164,8 +164,7 @@ UIPropertyDialog::UIPropertyDialog ( ActionHandler &&onClose ) noexcept:
     ),
 
     _headerText ( _headerLine, "Properties", "Header"),
-    _closeButton ( _headerLine, "Close button" ),
-    _onClose ( std::move ( onClose ) )
+    _closeButton ( _headerLine, "Close button" )
 {
     pbr::CSSComputedValues &headerTextStyle = _headerText.GetCSS ();
     headerTextStyle._fontSize = theme::HEADER_FONT_SIZE;
@@ -209,7 +208,7 @@ void UIPropertyDialog::Append ( std::string_view name, StringProperty &property 
 
 void UIPropertyDialog::Append ( StringProperty &componentName,
     bool &componentCollapse,
-    bool &componentSelect,
+    bool &componentEdit,
     std::string_view componentGlyph
 ) noexcept
 {
@@ -217,7 +216,7 @@ void UIPropertyDialog::Append ( StringProperty &componentName,
         componentName,
         componentGlyph,
         componentCollapse,
-        componentSelect
+        componentEdit
     );
 
     UIComponentHeader &h = *header;

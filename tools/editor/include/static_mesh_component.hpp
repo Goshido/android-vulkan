@@ -17,7 +17,6 @@ class StaticMeshComponent final : public Component
         GBufferMeshNode                         _gbufferNode {};
         OutlineMeshNode                         _outlineNode {};
         PBRMaterial                             _material {};
-        bool                                    _selected = false;
 
     public:
         constexpr static std::string_view       TYPE = "StaticMesh";

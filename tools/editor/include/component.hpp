@@ -40,7 +40,7 @@ class Component
         uint32_t            _version;
 
         bool                _collapse = false;
-        bool                _select = false;
+        bool                _edit = false;
 
     private:
         static Spawners     _spawners;
@@ -73,6 +73,7 @@ class Component
         virtual void ShowProperties ( PropertyTool &propertyTool ) noexcept = 0;
 
         void SetName ( std::string &&name ) noexcept;
+        [[nodiscard]] bool IsEditing () const noexcept;
 
         static void InitSpawners () noexcept;
 

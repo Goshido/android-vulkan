@@ -12,7 +12,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     StringProperty &name,
     std::string_view glyph,
     bool &collapse,
-    bool &select
+    bool &edit
 ) noexcept:
     _root ( parent,
 
@@ -179,7 +179,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     _underline ( _root,
         pbr::CSSComputedValues
         {
-            ._backgroundColor = select ? theme::PRESS_COLOR : theme::MAIN_COLOR,
+            ._backgroundColor = edit ? theme::PRESS_COLOR : theme::MAIN_COLOR,
             ._backgroundSize = theme::ZERO_LENGTH,
             ._bottom = theme::ZERO_LENGTH,
             ._left = theme::ZERO_LENGTH,
@@ -209,7 +209,7 @@ UIComponentHeader::UIComponentHeader ( DIVUIElement &parent,
     ),
 
     _collapse ( collapse ),
-    _select ( select ),
+    _edit ( edit ),
     _property ( &name )
 {
     _info.AppendChildElement ( _underline );
@@ -244,8 +244,8 @@ void UIComponentHeader::OnMouseButtonDown ( MouseButtonEvent const &event ) noex
         return;
     }
 
-    _select = !_select;
-    _underline.GetCSS ()._backgroundColor = _select ? theme::PRESS_COLOR : theme::HOVER_COLOR;
+    _edit = !_edit;
+    _underline.GetCSS ()._backgroundColor = _edit ? theme::PRESS_COLOR : theme::HOVER_COLOR;
     _underline.Update ();
 }
 
@@ -320,7 +320,7 @@ void UIComponentHeader::SetColor ( pbr::ColorValue const &color ) noexcept
     _name.SetColor ( color );
     _expand.SetColor ( color );
 
-    if ( _select ) [[unlikely]]
+    if ( _edit ) [[unlikely]]
         return;
 
     _underline.GetCSS ()._backgroundColor = color;

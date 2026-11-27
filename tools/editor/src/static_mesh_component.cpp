@@ -70,20 +70,13 @@ StaticMeshComponent::~StaticMeshComponent () noexcept
 void StaticMeshComponent::Register ( Actor &actor ) noexcept
 {
     Component::Register ( actor );
-
-    if ( _selected )
-        Select ();
-
     JoinRendering ();
 }
 
 void StaticMeshComponent::Unregister () noexcept
 {
     QuitRendering ();
-
-    if ( _selected )
-        Deselect ();
-
+    Deselect ();
     Component::Unregister ();
 }
 
@@ -112,7 +105,7 @@ void StaticMeshComponent::Save ( SaveState::Container &root ) const noexcept
 
 void StaticMeshComponent::ShowProperties ( PropertyTool &propertyTool ) noexcept
 {
-    propertyTool.Append ( _name, _collapse, _select, glyph::COMPONENT_STATIC_MESH );
+    propertyTool.Append ( _name, _collapse, _edit, glyph::COMPONENT_STATIC_MESH );
 }
 
 void StaticMeshComponent::LoadResources ( std::string_view mesh, std::string_view emission ) noexcept
@@ -145,7 +138,7 @@ void StaticMeshComponent::JoinRendering () noexcept
     _gbufferNode.SetMaterial ( _material );
     _gbufferNode.SetID ( _actor );
 
-    if ( _selected )
+    if ( _actor->IsSelected () )
         Select ();
 
     UpdateTransform ();

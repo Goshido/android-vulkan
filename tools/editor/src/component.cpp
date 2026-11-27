@@ -92,6 +92,11 @@ void Component::SetName ( std::string &&name ) noexcept
     _name = std::move ( name );
 }
 
+bool Component::IsEditing () const noexcept
+{
+    return _edit;
+}
+
 void Component::InitSpawners () noexcept
 {
     InitSpawner<CameraComponent> ();

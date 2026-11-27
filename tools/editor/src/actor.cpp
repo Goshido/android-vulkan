@@ -22,11 +22,6 @@ constexpr std::string_view COMPONENTS_KEY = "components";
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Actor::ComponentInfo::ComponentInfo () noexcept
-{
-    AV_ASSERT ( false )
-}
-
 Actor::ComponentInfo::ComponentInfo ( ComponentInfo const &/*other*/ ) noexcept
 {
     AV_ASSERT ( false )
@@ -116,27 +111,33 @@ void Actor::Attach ( ComponentInfo &&component ) noexcept
 
 Actor::ComponentInfo Actor::Detach ( Component const &component ) noexcept
 {
-    auto end = _components.end ();
+    size_t const limit = _components.size ();
+    auto item = _components.begin ();
 
-    auto findResult = std::find_if ( _components.begin (),
-        _components.end (),
+    for ( size_t i = 0UZ; i < limit; ++i )
+    {
+        ComponentRef &ref = *item;
 
-        [ target = &component ] ( ComponentRef const &item ) noexcept -> bool {
-            return item.get () == target;
+        if ( ref.get () != &component )
+        {
+            ++item;
+            continue;
         }
-    );
 
-    AV_ASSERT ( findResult != end )
-    ComponentRef result = std::move ( *findResult );
-    result->Unregister ();
-    _components.erase ( findResult );
+        ref->Unregister ();
+        ComponentInfo info ( std::move ( ref ), i );
+        _components.erase ( item );
+        return info;
+    }
 
-    // FUCK - compute index correct
-    return Actor::ComponentInfo ( std::move ( result ), 0UZ );
+    AV_ASSERT ( false )
+    return ComponentInfo {};
 }
 
 void Actor::Select () noexcept
 {
+    _select = true;
+
     for ( auto &component : _components )
     {
         component->Select ();
@@ -145,10 +146,17 @@ void Actor::Select () noexcept
 
 void Actor::Deselect () noexcept
 {
+    _select = false;
+
     for ( auto &component : _components )
     {
         component->Deselect ();
     }
+}
+
+bool Actor::IsSelected () const noexcept
+{
+    return _select;
 }
 
 void Actor::Save ( SaveState::Container &root ) const noexcept
@@ -178,6 +186,11 @@ void Actor::ShowProperties ( PropertyTool &propertyTool ) noexcept
         propertyTool.AppendSeparator ();
         component->ShowProperties ( propertyTool );
     }
+}
+
+Actor::Components &Actor::GetComponents () noexcept
+{
+    return _components;
 }
 
 GXQuat const &Actor::GetRotation () const noexcept
